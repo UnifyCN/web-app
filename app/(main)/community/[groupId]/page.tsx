@@ -1,0 +1,103 @@
+"use client";
+
+import { use, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { GroupMemberAvatarStack } from "@/components/community/GroupMemberAvatarStack";
+import { PostCard } from "@/components/home/PostCard";
+import { getGroupById } from "@/lib/mock/groups";
+import { posts } from "@/lib/mock/posts";
+
+export default function GroupDetailPage({
+  params,
+}: {
+  params: Promise<{ groupId: string }>;
+}) {
+  const { groupId } = use(params);
+  const group = getGroupById(groupId);
+  const [joined, setJoined] = useState(group?.joinedByMe ?? false);
+
+  if (!group) {
+    return (
+      <div className="mx-auto max-w-[680px] px-6 py-16 text-center">
+        <p className="text-sm text-ink-muted">This group could not be found.</p>
+        <Link
+          href="/community"
+          className="mt-3 inline-block text-sm font-semibold text-primary"
+        >
+          Back to Community
+        </Link>
+      </div>
+    );
+  }
+
+  const groupPosts = posts.filter((post) => post.groupId === group.id);
+  const memberCount =
+    group.memberCount + (joined ? 1 : 0) - (group.joinedByMe ? 1 : 0);
+
+  return (
+    <div className="mx-auto max-w-[680px] px-6 py-6">
+      <Link
+        href="/community"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Community
+      </Link>
+
+      {/* Group header */}
+      <div className="overflow-hidden rounded-card border border-border-card bg-surface">
+        <div className="relative aspect-[3/1] w-full">
+          {group.coverPhotoUrl && (
+            <Image
+              src={group.coverPhotoUrl}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="680px"
+            />
+          )}
+        </div>
+        <div className="p-5">
+          <h1 className="text-lg font-semibold text-ink-secondary">
+            {group.groupName}
+          </h1>
+          <GroupMemberAvatarStack
+            avatars={group.memberAvatars}
+            totalCount={memberCount}
+            className="mt-2"
+          />
+          <p className="mt-3 text-sm leading-relaxed text-ink-muted">
+            {group.groupDescription}
+          </p>
+          <Button
+            variant={joined ? "secondary" : "primary"}
+            size="sm"
+            className="mt-4"
+            onClick={() => setJoined((value) => !value)}
+          >
+            {joined ? "Joined" : "Join group"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Group posts */}
+      <h2 className="mb-2 mt-6 text-sm font-semibold text-ink-secondary">
+        Recent posts
+      </h2>
+      {groupPosts.length > 0 ? (
+        <div className="divide-y divide-border-card overflow-hidden rounded-card border border-border-card bg-surface">
+          {groupPosts.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </div>
+      ) : (
+        <p className="rounded-card border border-border-card bg-surface px-5 py-12 text-center text-sm text-ink-placeholder">
+          No posts in this group yet.
+        </p>
+      )}
+    </div>
+  );
+}

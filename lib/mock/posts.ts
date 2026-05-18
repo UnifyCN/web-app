@@ -1,0 +1,138 @@
+import type { Post } from "@/types";
+import { currentUser, priya, ahmed, mei, carlos, olena } from "./users";
+
+// TODO: replace with real data — mock Canadian-newcomer feed content.
+
+export const posts: Post[] = [
+  {
+    id: "p1",
+    title: "Got my SIN the same day — here's how",
+    content:
+      "Walked into the Service Canada office downtown with my PR confirmation and passport, no appointment. About 40 minutes total and I left with my Social Insurance Number on paper. If you just landed, do this first — you can't start a job or open most bank accounts without it.",
+    likeCount: 312,
+    commentCount: 47,
+    saveCount: 89,
+    userId: "u1",
+    groupId: "g-toronto",
+    isPinned: true,
+    postImageUrls: [],
+    createdAt: "2026-05-14T15:20:00Z",
+    author: priya,
+    groupName: "Newcomers to Toronto",
+    likedByMe: true,
+    savedByMe: false,
+  },
+  {
+    id: "p2",
+    title: "Renting in Vancouver with no Canadian credit history",
+    content:
+      "Landlords kept asking for a credit score I didn't have yet. What worked: a reference letter from my employer, proof of funds, and offering first + last month upfront. Don't give up after the first few rejections — it took me three weeks.",
+    likeCount: 198,
+    commentCount: 63,
+    saveCount: 71,
+    userId: "u2",
+    groupId: null,
+    isPinned: false,
+    postImageUrls: ["https://picsum.photos/seed/vanrental/960/640"],
+    createdAt: "2026-05-13T18:05:00Z",
+    author: ahmed,
+    likedByMe: false,
+    savedByMe: false,
+  },
+  {
+    id: "p3",
+    title: "BC MSP card finally arrived — the 3-month wait is real",
+    content:
+      "Health coverage in BC has a waiting period of up to three months after you arrive. I bought private interim insurance for that gap and I'm glad I did — one walk-in clinic visit would have cost more than the premium. Apply for MSP the week you land.",
+    likeCount: 156,
+    commentCount: 38,
+    saveCount: 54,
+    userId: "u3",
+    groupId: "g-bc",
+    isPinned: false,
+    postImageUrls: [],
+    createdAt: "2026-05-11T09:30:00Z",
+    author: mei,
+    groupName: "Settling in BC",
+    likedByMe: false,
+    savedByMe: false,
+  },
+  {
+    id: "p4",
+    title: "First Canadian winter — what gear actually matters",
+    content:
+      "After surviving my first winter in Edmonton: a proper insulated parka rated to -30, waterproof boots with real traction, and thin merino base layers beat any number of cotton sweaters. Skip the fashion coats. Your feet and your core are what keep you functional.",
+    likeCount: 421,
+    commentCount: 88,
+    saveCount: 203,
+    userId: "u4",
+    groupId: null,
+    isPinned: false,
+    postImageUrls: [
+      "https://picsum.photos/seed/winter1/720/720",
+      "https://picsum.photos/seed/winter2/720/720",
+    ],
+    createdAt: "2026-05-08T21:15:00Z",
+    author: carlos,
+    likedByMe: false,
+    savedByMe: true,
+  },
+  {
+    id: "p5",
+    title: "WES credential evaluation: 5-week timeline + tips",
+    content:
+      "My engineering degree needed a WES evaluation before employers would take it seriously. Get your university to send transcripts directly — that's the slowest step. Total cost was around $250 and it took five weeks end to end. Start it before you arrive if you can.",
+    likeCount: 134,
+    commentCount: 29,
+    saveCount: 96,
+    userId: "u5",
+    groupId: null,
+    isPinned: false,
+    postImageUrls: [],
+    createdAt: "2026-05-05T12:00:00Z",
+    author: olena,
+    likedByMe: false,
+    savedByMe: false,
+  },
+  {
+    id: "p6",
+    title: "What surprised me most about my first months in Canada",
+    content:
+      "Three things I didn't expect: how much a transit pass simplifies life, how friendly people are once you start a conversation, and how early everything closes. Settling in is a hundred small adjustments — be patient with yourself.",
+    likeCount: 167,
+    commentCount: 41,
+    saveCount: 58,
+    userId: "u-me",
+    groupId: null,
+    isPinned: false,
+    postImageUrls: [],
+    createdAt: "2026-05-12T16:40:00Z",
+    author: currentUser,
+    likedByMe: false,
+    savedByMe: false,
+  },
+  {
+    id: "p7",
+    title: "The newcomer bank account that waived all my fees",
+    content:
+      "I almost missed this: most big banks have a newcomer package with no monthly fee for the first year, and some add a small welcome bonus. Ask specifically for the 'newcomer' offer — the regular accounts don't advertise it.",
+    likeCount: 94,
+    commentCount: 22,
+    saveCount: 73,
+    userId: "u-me",
+    groupId: null,
+    isPinned: false,
+    postImageUrls: [],
+    createdAt: "2026-05-07T13:10:00Z",
+    author: currentUser,
+    likedByMe: false,
+    savedByMe: false,
+  },
+];
+
+/** Usernames the current user follows — drives the "Following" feed tab. */
+export const followedUsernames = [
+  "Priya Sharma",
+  "Mei Chen",
+  "Olena Kovalenko",
+];

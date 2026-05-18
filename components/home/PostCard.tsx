@@ -1,0 +1,146 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import { Heart, MessageCircle, Bookmark, Pin } from "lucide-react";
+import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
+import { cn, formatRelativeTime } from "@/lib/utils";
+import type { Post } from "@/types";
+
+/** A single feed post — header, body, optional images, and an action row. */
+export function PostCard({ post }: { post: Post }) {
+  const [liked, setLiked] = useState(post.likedByMe ?? false);
+  const [saved, setSaved] = useState(post.savedByMe ?? false);
+  const [popping, setPopping] = useState(false);
+
+  const likeCount =
+    post.likeCount + (liked ? 1 : 0) - (post.likedByMe ? 1 : 0);
+  const saveCount =
+    post.saveCount + (saved ? 1 : 0) - (post.savedByMe ? 1 : 0);
+
+  function toggleLike() {
+    const next = !liked;
+    setLiked(next);
+    if (next) {
+      setPopping(true);
+      window.setTimeout(() => setPopping(false), 220);
+    }
+  }
+
+  const hasImages = post.postImageUrls.length > 0;
+  const multiImage = post.postImageUrls.length > 1;
+
+  return (
+    <article className="px-5 py-4">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Avatar
+          username={post.author.username}
+          profilePictureUrl={post.author.profilePictureUrl}
+          size={40}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-semibold text-ink-secondary">
+              {post.author.username}
+            </span>
+            <span className="shrink-0 text-xs text-ink-placeholder">
+              {formatRelativeTime(post.createdAt)}
+            </span>
+          </div>
+          {post.groupName && <Badge className="mt-1">{post.groupName}</Badge>}
+        </div>
+        {post.isPinned && (
+          <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary">
+            <Pin className="h-3.5 w-3.5" aria-hidden />
+            Pinned
+          </span>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="mt-3">
+        {post.title && (
+          <h3 className="text-base font-semibold text-ink-secondary">
+            {post.title}
+          </h3>
+        )}
+        <p className="mt-1 text-sm leading-relaxed text-ink-muted">
+          {post.content}
+        </p>
+      </div>
+
+      {/* Images */}
+      {hasImages && (
+        <div
+          className={cn(
+            "mt-3 grid gap-2",
+            multiImage ? "grid-cols-2" : "grid-cols-1",
+          )}
+        >
+          {post.postImageUrls.map((url, index) => (
+            <div
+              key={url}
+              className={cn(
+                "relative overflow-hidden rounded-lg border border-border-card",
+                multiImage ? "aspect-square" : "aspect-[3/2]",
+              )}
+            >
+              <Image
+                src={url}
+                alt={`${post.title} — image ${index + 1}`}
+                fill
+                className="object-cover"
+                sizes="(max-width: 680px) 100vw, 340px"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="mt-4 flex items-center gap-6">
+        <button
+          type="button"
+          onClick={toggleLike}
+          aria-pressed={liked}
+          aria-label={liked ? "Unlike post" : "Like post"}
+          className="flex cursor-pointer items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
+        >
+          <Heart
+            className={cn(
+              "h-5 w-5",
+              popping && "animate-like-pop",
+              liked && "fill-destructive text-destructive",
+            )}
+            aria-hidden
+          />
+          <span className={cn(liked && "text-destructive")}>{likeCount}</span>
+        </button>
+
+        <span className="flex items-center gap-1.5 text-sm text-ink-muted">
+          <MessageCircle className="h-5 w-5" aria-hidden />
+          {post.commentCount}
+        </span>
+
+        <button
+          type="button"
+          onClick={() => setSaved((value) => !value)}
+          aria-pressed={saved}
+          aria-label={saved ? "Remove from saved" : "Save post"}
+          className="flex cursor-pointer items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
+        >
+          <Bookmark
+            className={cn(
+              "h-5 w-5",
+              saved && "fill-mention-blue text-mention-blue",
+            )}
+            aria-hidden
+          />
+          <span className={cn(saved && "text-mention-blue")}>{saveCount}</span>
+        </button>
+      </div>
+    </article>
+  );
+}

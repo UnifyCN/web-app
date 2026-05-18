@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * Unify brand tokens — Tailwind v4 @theme.
+ * Source of truth: design-system/MASTER.md (derived from CLAUDE.md).
+ * Never add a colour that is not in MASTER.md.
+ * ------------------------------------------------------------------ */
+@theme {
+  /* Primary (orange) */
+  --color-primary: #f68b26;
+  --color-primary-light: #ff9d40;
+  --color-primary-dark: #ff820b;
+  --color-primary-disabled: rgba(246, 139, 38, 0.6);
+  --color-primary-subtle: #ffdfc1;
+  --color-primary-bg: #fff8f1;
+
+  /* Neutrals (ink) */
+  --color-ink: #000000;
+  --color-ink-secondary: #171616;
+  --color-ink-tertiary: #575757;
+  --color-ink-muted: #686464;
+  --color-ink-placeholder: #9f9d9d;
+  --color-ink-inactive: #b5b1b1;
+
+  /* Surfaces */
+  --color-surface: #ffffff;
+  --color-surface-input: #e6e6e6;
+  --color-surface-gray: #f0f0f0;
+  --color-surface-card: #f9f9f9;
+  --color-surface-chatbot: #f3f2f2;
+
+  /* Borders */
+  --color-border: #c1c1c1;
+  --color-border-card: #cdcbcb;
+
+  /* Semantic */
+  --color-destructive: #ff3b30;
+  --color-mention-blue: #007aff;
+
+  /* Checklist priority system */
+  --color-priority-do-now: #e03b3b;
+  --color-priority-do-now-bg: #fbcfcf;
+  --color-priority-do-soon: #f47734;
+  --color-priority-do-soon-bg: #fbe4cf;
+  --color-priority-explore: #f49e34;
+  --color-priority-explore-bg: #ffedbd;
+  --color-priority-optional: #5e8651;
+  --color-priority-optional-bg: #cde9d2;
+
+  /* Logo mark circles — used ONLY inside UnifyLogo.tsx */
+  --color-logo-orange: #f68b26;
+  --color-logo-blue: #4a90d9;
+  --color-logo-green: #5cb85c;
+  --color-logo-red: #e05c5c;
+
+  /* Radius — cards use 10–12px */
+  --radius-card: 0.625rem;
+}
+
+/* Fonts wired from next/font (see app/layout.tsx). `inline` so the
+ * utilities resolve the underlying CSS variable. */
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ------------------------------------------------------------------ *
+ * Base — light-only product (no dark mode per CLAUDE.md).
+ * ------------------------------------------------------------------ */
+body {
+  background: var(--color-surface-gray);
+  color: var(--color-ink-muted);
+  font-family: var(--font-sans), sans-serif;
+}
+
+::selection {
+  background: var(--color-primary-subtle);
+  color: var(--color-ink-secondary);
+}
+
+/* ------------------------------------------------------------------ *
+ * Component utilities.
+ * ------------------------------------------------------------------ */
+@layer components {
+  /* Thin, unobtrusive scrollbar for sidebars / conversation lists */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 9999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Fully hidden scrollbar — for carousels where dots are the indicator. */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Like-button pop — emil-design-eng micro-interaction (≤200ms ease-out). */
+@keyframes like-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-like-pop {
+  animation: like-pop 200ms ease-out;
+}
+
+/* Companion — flowing dashed background lines. */
+@keyframes companion-dash {
+  to {
+    stroke-dashoffset: -30;
+  }
+}
+.animate-companion-dash {
+  animation: companion-dash 1.8s linear infinite;
+}
+
+/* Companion — chat message entrance (emil-design-eng, ≤200ms ease-out). */
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-message-in {
+  animation: message-in 180ms ease-out;
+}
+
+/* Companion — typing indicator dot pulse (smooth, no bounce easing). */
+@keyframes typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-typing-dot {
+  animation: typing-dot 1.2s ease-in-out infinite;
+}
+
+/* Checklist — checkbox tick pop (emil-design-eng, ≤150ms). */
+@keyframes checkbox-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-checkbox-pop {
+  animation: checkbox-pop 150ms ease-out;
+}
+
+/* Checklist — animated strikethrough line on a completed task title. */
+.task-strike {
+  position: relative;
+}
+.task-strike::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 55%;
+  height: 1.5px;
+  width: 100%;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 200ms ease-out;
+}
+.task-strike-done::after {
+  transform: scaleX(1);
+}
+
+/* Respect reduced-motion — disable non-essential animation */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
