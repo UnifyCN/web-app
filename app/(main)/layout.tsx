@@ -11,7 +11,7 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-surface-gray">
+    <div className="flex min-h-screen bg-surface">
       <Sidebar />
       <main className="min-w-0 flex-1">{children}</main>
     </div>

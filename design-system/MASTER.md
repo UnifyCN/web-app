@@ -5,7 +5,7 @@
 > This file was authored from the **Unify mobile-app brand tokens in `CLAUDE.md`**.
 > The raw `ui-ux-pro-max` generator output lives at `design-system/unify/MASTER.md`
 > for provenance only — its rose/Inter recommendations are **generic and were
-> rejected**: CLAUDE.md's core design rule (orange-first brand, Geist font, never
+> rejected**: CLAUDE.md's core design rule (orange-first brand, Inter font, never
 > invent colours) overrides the generator. Use only the tokens below.
 
 ---
@@ -49,7 +49,7 @@
 |---|---|---|
 | `surface` | `#FFFFFF` | Default surface |
 | `surface-input` | `#E6E6E6` | Input field backgrounds |
-| `surface-gray` | `#F0F0F0` | Page background, hover states |
+| `surface-gray` | `#F0F0F0` | Hover states, secondary surfaces |
 | `surface-card` | `#F9F9F9` | Card backgrounds |
 | `surface-chatbot` | `#F3F2F2` | AI chat background |
 
@@ -87,9 +87,8 @@ bottom-right red `#E05C5C`. Use **only** inside `UnifyLogo.tsx`.
 
 ## Typography
 
-- **Font:** Geist (Next.js built-in via `next/font`). Geist Sans for everything.
-  Geist Mono only for code-like content if ever needed.
-- **Forbidden:** Inter, Roboto, Arial, Space Grotesk.
+- **Font:** Inter (loaded via `next/font/google`) — used for everything.
+- **Forbidden:** Roboto, Arial, Space Grotesk.
 - Dense information app — sizes feel slightly **compact**, not marketing-large.
 
 | Role | Size | Weight |
@@ -196,7 +195,7 @@ hover `bg-surface-gray text-ink`.
 ## Anti-Patterns (do NOT use)
 
 - ❌ Colours sampled from Figma or invented hex values — tokens only.
-- ❌ Inter / Roboto / Arial / Space Grotesk — Geist only.
+- ❌ Roboto / Arial / Space Grotesk — Inter only.
 - ❌ Emojis as icons — use `lucide-react`.
 - ❌ Layout-shifting hover transforms (`translateY`/`scale` that reflow).
 - ❌ Missing `cursor-pointer` on clickable elements.
@@ -210,7 +209,7 @@ hover `bg-surface-gray text-ink`.
 ## Pre-Delivery Checklist (run before every `/impeccable audit`)
 
 - [ ] Every colour traces to a token in this file.
-- [ ] Geist font only.
+- [ ] Inter font only.
 - [ ] All icons from `lucide-react` — no emoji icons.
 - [ ] `cursor-pointer` on all clickable elements.
 - [ ] Hover + focus states present, transitions 150–300ms.

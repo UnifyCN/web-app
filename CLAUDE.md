@@ -131,7 +131,7 @@ ink-inactive:     '#B5B1B1'   // inactive tab labels
 // Surfaces
 surface:          '#FFFFFF'
 surface-input:    '#E6E6E6'   // input field backgrounds
-surface-gray:     '#F0F0F0'   // page background, hover states
+surface-gray:     '#F0F0F0'   // hover states, secondary surfaces
 surface-card:     '#F9F9F9'   // card backgrounds
 surface-chatbot:  '#F3F2F2'   // AI chat background
 
@@ -166,11 +166,11 @@ landing-page repo, stored in `public/logo/`) via `next/image`:
 - `unify-lockup.png` — symbol + "unify" wordmark in the brand's custom typeface
 
 Variants: `mark` (default) and `lockup`. The wordmark uses a custom typeface, so the
-lockup is the real image asset — do not re-typeset "unify" in Geist or any other font.
+lockup is the real image asset — do not re-typeset "unify" in Inter or any other font.
 
 ### Typography
 
-Use Next.js built-in Geist font. Font sizes should feel slightly compact — this is a dense information app, not a marketing site. No Inter, Roboto, Arial, or Space Grotesk.
+Use the Inter font (loaded via `next/font/google`). Font sizes should feel slightly compact — this is a dense information app, not a marketing site. No Roboto, Arial, or Space Grotesk.
 
 ### Spacing & Radius
 
