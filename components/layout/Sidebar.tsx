@@ -44,7 +44,11 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(true);
 
   const signOut = async () => {
-    await createClient().auth.signOut();
+    const { error } = await createClient().auth.signOut();
+    if (error) {
+      console.error("Sign out failed", error);
+      return; // stay put rather than pretend the session is cleared
+    }
     router.push("/login");
   };
 
