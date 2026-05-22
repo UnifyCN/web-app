@@ -27,6 +27,15 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
 
 ---
 
+## Pending Tasks
+
+- **Refactor direct Supabase calls out of components into the `hooks/` / `services/`
+  layer.** The login page (`app/(auth)/login/page.tsx`) and sidebar
+  (`components/layout/Sidebar.tsx`) call `createClient()` directly. Flagged by
+  CodeRabbit on PR #1 — do as a separate PR after PR #1 merges.
+
+---
+
 ## Core Design Rule — Read This First
 
 **Layout and structure: follow the Figma mockups.**
