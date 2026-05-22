@@ -1,5 +1,9 @@
-import Link from "next/link";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { UnifyLogo } from "@/components/UnifyLogo";
+import { createClient } from "@/lib/supabase/client";
 
 /** Multi-colour Google "G" — lucide-react ships no brand glyphs. */
 function GoogleIcon({ className }: { className?: string }) {
@@ -47,11 +51,47 @@ const BUTTON_BASE =
   "focus-visible:ring-offset-primary-bg";
 
 /**
- * Login screen — full-screen, no sidebar. UI only; no auth is wired.
- * "Continue with Google" routes to /home so the prototype loop closes;
- * "Continue with Apple" is a visual stub.
+ * Login screen — full-screen, no sidebar.
+ * "Continue with Google" runs the Supabase OAuth flow; "Continue with Apple"
+ * is still a visual stub (priority 2).
  */
 export default function LoginPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    const redirectIfSignedIn = async (hard: boolean) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        if (hard) window.location.assign("/home");
+        else router.replace("/home");
+      }
+    };
+
+    // Fresh load / client navigation: send an already-authed user home.
+    redirectIfSignedIn(false);
+
+    // Pressing back can restore this page from the browser's bfcache, which
+    // bypasses the proxy auth gate and strands an authed user on a stale login
+    // page (the Continue button no longer works). Force them home instead.
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) redirectIfSignedIn(true);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [router]);
+
+  const signInWithGoogle = async () => {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-primary-bg px-6">
       <div className="w-full max-w-sm">
@@ -65,13 +105,14 @@ export default function LoginPage() {
 
         {/* Sign-in options */}
         <div className="mt-16 space-y-3">
-          <Link
-            href="/home"
+          <button
+            type="button"
+            onClick={signInWithGoogle}
             className={`${BUTTON_BASE} border border-border-card bg-surface text-ink-secondary hover:bg-surface-gray`}
           >
             <GoogleIcon className="h-5 w-5" />
             Continue with Google
-          </Link>
+          </button>
 
           {/* Stub — not wired (Apple SSO is a later, second priority) */}
           <button

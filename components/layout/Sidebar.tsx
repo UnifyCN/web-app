@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   Users,
@@ -15,6 +15,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { UnifyLogo } from "@/components/UnifyLogo";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -39,7 +40,13 @@ const PROFILE_ITEM: NavItem = { label: "Profile", href: "/profile", icon: User }
  */
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(true);
+
+  const signOut = async () => {
+    await createClient().auth.signOut();
+    router.push("/login");
+  };
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -101,18 +108,19 @@ export function Sidebar() {
       {/* Profile + sign out, separated by a border */}
       <div className="flex flex-col gap-1.5 border-t border-border-card px-3 py-3">
         {renderNavLink(PROFILE_ITEM)}
-        <Link
-          href="/login"
+        <button
+          type="button"
+          onClick={signOut}
           title={collapsed ? "Sign out" : undefined}
           className={cn(
             "flex items-center rounded-lg text-sm font-medium",
-            "text-ink-muted transition-colors duration-150 hover:bg-surface-gray hover:text-ink",
+            "cursor-pointer text-ink-muted transition-colors duration-150 hover:bg-surface-gray hover:text-ink",
             itemShape,
           )}
         >
           <LogOut className="h-5 w-5 shrink-0" />
           {!collapsed && <span className="truncate">Sign out</span>}
-        </Link>
+        </button>
       </div>
 
       {/* Collapse / expand toggle */}

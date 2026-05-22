@@ -8,10 +8,22 @@ The mobile app repo (read-only reference) is at `github.com/UnifyCN/mobile-app`.
 
 ## Build Status
 
-The **frontend build is complete** — all sections (Login, Home, Community, Companion,
-Checklist, Learn, Profile) are built on realistic mock data, with a stubbed
-`services/` + `hooks/` React Query layer ready for backend wiring. No Supabase, auth,
-or real content is connected yet. See `PLAN.md` for the phase-by-phase build record.
+The frontend is complete on mock data. **Supabase integration is underway** on the
+web-app project (ID `pbiszrycmcxmzxrnkkwr`):
+
+- **Auth — Google SSO is wired and working.** Login runs `signInWithOAuth`;
+  `app/(auth)/auth/callback/route.ts` exchanges the code for a session; `proxy.ts`
+  refreshes the session and redirects unauthenticated traffic to `/login`; sign-out
+  lives in the sidebar. The browser client is a singleton (`lib/supabase/client.ts`)
+  to avoid multiple GoTrueClient instances.
+- **Database — schema lives in `supabase/migrations/`** (the web-app's own schema,
+  separate from the mobile back-end), with **RLS enabled and own-row policies** on
+  every table, plus a grants migration restoring public-schema API-role access.
+- **Profile is wired to real Supabase data** (`users` + `user_onboarding_profiles`).
+  The `public.users` row is bootstrapped app-side by `lib/supabase/ensureUserRow.ts`
+  (in the OAuth callback and as a self-heal in `getCurrentUser`).
+- Every other section still runs on mock data via the stubbed `services/` + `hooks/`
+  layer. See `PLAN.md` for the phase-by-phase build record.
 
 ---
 
@@ -487,8 +499,7 @@ NEXT_PUBLIC_SANITY_DATASET=production
 
 ## What NOT to build yet
 
-- No Supabase auth wiring (login page UI only — buttons don't need to work)
-- No real data fetching (mock data everywhere)
+- No real data fetching beyond Profile (other sections still on mock data)
 - No edge function calls
 - No image upload
 - No push notifications

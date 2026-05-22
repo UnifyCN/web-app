@@ -5,7 +5,8 @@ import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileTabs, PROFILE_TABS } from "@/components/profile/ProfileTabs";
 import { HighlightCard } from "@/components/profile/HighlightCard";
 import { PostCard } from "@/components/home/PostCard";
-import { currentUser, lessonHighlights } from "@/lib/mock/users";
+import { useCurrentUser } from "@/hooks/useProfile";
+import { lessonHighlights } from "@/lib/mock/users";
 import { posts } from "@/lib/mock/posts";
 import type { Post } from "@/types";
 
@@ -28,8 +29,17 @@ function PostFeed({ items, emptyText }: { items: Post[]; emptyText: string }) {
 
 export default function ProfilePage() {
   const [tab, setTab] = useState(PROFILE_TABS[0]);
+  const { data: profile, isLoading } = useCurrentUser();
 
-  const myPosts = posts.filter((post) => post.author.id === currentUser.id);
+  if (isLoading || !profile) {
+    return (
+      <div className="mx-auto max-w-[680px] px-6 py-16 text-center text-sm text-ink-placeholder">
+        {isLoading ? "Loading your profile…" : "Sign in to view your profile."}
+      </div>
+    );
+  }
+
+  const myPosts = posts.filter((post) => post.author.id === profile.id);
   const savedPosts = posts.filter((post) => post.savedByMe);
 
   return (
@@ -39,7 +49,7 @@ export default function ProfilePage() {
       </h1>
 
       <ProfileHeader
-        profile={currentUser}
+        profile={profile}
         postCount={myPosts.length}
         isOwnProfile
       />
