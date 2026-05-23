@@ -70,17 +70,27 @@ export function ProfileHeader({
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <PersonaBadge persona={profile.onboarding.persona} />
-        <span className="flex items-center gap-1 text-xs text-ink-muted">
-          <MapPin className="h-3.5 w-3.5" aria-hidden />
-          {profile.onboarding.city}, {profile.onboarding.province}
-        </span>
-      </div>
+      {profile.onboarding ? (
+        <>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <PersonaBadge persona={profile.onboarding.persona} />
+            <span className="flex items-center gap-1 text-xs text-ink-muted">
+              <MapPin className="h-3.5 w-3.5" aria-hidden />
+              {profile.onboarding.city}, {profile.onboarding.province}
+            </span>
+          </div>
 
-      <div className="mt-3">
-        <StageIndicator stage={profile.onboarding.stage} />
-      </div>
+          <div className="mt-3">
+            <StageIndicator stage={profile.onboarding.stage} />
+          </div>
+        </>
+      ) : (
+        isOwnProfile && (
+          <p className="mt-3 text-xs text-ink-muted">
+            Complete your profile to add your persona, location, and stage.
+          </p>
+        )
+      )}
 
       <div className="mt-3 flex gap-3 text-ink-placeholder">
         <InstagramIcon className="h-4 w-4" />

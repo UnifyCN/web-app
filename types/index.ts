@@ -47,7 +47,8 @@ export interface User {
 }
 
 export interface UserProfile extends User {
-  onboarding: UserOnboardingProfile;
+  /** Null until the user finishes onboarding (no row in user_onboarding_profiles). */
+  onboarding: UserOnboardingProfile | null;
   followingCount: number;
   followerCount: number;
 }
