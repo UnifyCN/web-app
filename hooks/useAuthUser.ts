@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { getAuthUser } from "@/services/auth";
 
 /** The authenticated Supabase user (auth.users), or null when signed out. */
 export const AUTH_USER_KEY = ["auth-user"] as const;
@@ -11,6 +11,8 @@ export const AUTH_USER_KEY = ["auth-user"] as const;
 export function useAuthUser() {
   const queryClient = useQueryClient();
 
+  // onAuthStateChange is a subscription, not a one-shot call, so it stays on
+  // the client directly. The services layer exposes one-shot calls only.
   useEffect(() => {
     const supabase = createClient();
     const {
@@ -23,11 +25,8 @@ export function useAuthUser() {
 
   return useQuery({
     queryKey: AUTH_USER_KEY,
-    queryFn: async (): Promise<User | null> => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    queryFn: async () => {
+      const { user } = await getAuthUser();
       return user;
     },
   });

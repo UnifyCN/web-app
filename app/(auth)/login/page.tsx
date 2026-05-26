@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { UnifyLogo } from "@/components/UnifyLogo";
-import { createClient } from "@/lib/supabase/client";
+import { getAuthUser, signInWithGoogle } from "@/services/auth";
 
 /** Multi-colour Google "G" — lucide-react ships no brand glyphs. */
 function GoogleIcon({ className }: { className?: string }) {
@@ -68,12 +68,8 @@ function LoginScreen() {
       : null);
 
   useEffect(() => {
-    const supabase = createClient();
-
     const redirectIfSignedIn = async (hard: boolean) => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { user } = await getAuthUser();
       if (user) {
         if (hard) window.location.assign("/home");
         else router.replace("/home");
@@ -93,13 +89,9 @@ function LoginScreen() {
     return () => window.removeEventListener("pageshow", onPageShow);
   }, [router]);
 
-  const signInWithGoogle = async () => {
+  const handleGoogleSignIn = async () => {
     setOauthError(null);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
+    const { error } = await signInWithGoogle();
     if (error) {
       console.error("Google sign-in failed", error);
       setOauthError("Couldn't start Google sign-in. Please try again.");
@@ -121,7 +113,7 @@ function LoginScreen() {
         <div className="mt-16 space-y-3">
           <button
             type="button"
-            onClick={signInWithGoogle}
+            onClick={handleGoogleSignIn}
             className={`${BUTTON_BASE} border border-border-card bg-surface text-ink-secondary hover:bg-surface-gray`}
           >
             <GoogleIcon className="h-5 w-5" />

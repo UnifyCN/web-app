@@ -15,7 +15,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { UnifyLogo } from "@/components/UnifyLogo";
-import { createClient } from "@/lib/supabase/client";
+import { signOut as signOutService } from "@/services/auth";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -44,7 +44,7 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(true);
 
   const signOut = async () => {
-    const { error } = await createClient().auth.signOut();
+    const { error } = await signOutService();
     if (error) {
       console.error("Sign out failed", error);
       return; // stay put rather than pretend the session is cleared
