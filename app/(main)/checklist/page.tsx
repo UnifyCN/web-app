@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { OverallProgressBar } from "@/components/checklist/OverallProgressBar";
 import { PrioritySection } from "@/components/checklist/PrioritySection";
 import { AddCustomTask } from "@/components/checklist/AddCustomTask";
-import { tasks as seedTasks } from "@/lib/mock/tasks";
-import type { ChecklistTask, Priority } from "@/types";
+import {
+  useAddCustomTask,
+  useTasks,
+  useToggleTask,
+} from "@/hooks/useChecklist";
+import type { Priority } from "@/types";
 
 const PRIORITY_ORDER: Priority[] = [
   "Do now",
@@ -15,45 +18,28 @@ const PRIORITY_ORDER: Priority[] = [
 ];
 
 export default function ChecklistPage() {
-  const [tasks, setTasks] = useState<ChecklistTask[]>(seedTasks);
+  const { data: tasks = [], isLoading, error } = useTasks();
+  const toggle = useToggleTask();
+  const add = useAddCustomTask();
 
   const completedCount = tasks.filter((task) => task.completed).length;
 
-  function toggleTask(id: string) {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id
-          ? {
-              ...task,
-              completed: !task.completed,
-              completedAt: task.completed ? null : new Date().toISOString(),
-            }
-          : task,
-      ),
-    );
+  function handleToggle(id: string) {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    toggle.mutate({
+      id: task.id,
+      isCustom: task.isCustom,
+      completed: task.completed,
+    });
   }
 
-  function addTask({
-    title,
-    description,
-    priority,
-  }: {
+  function handleAdd(input: {
     title: string;
     description: string;
     priority: Priority;
   }) {
-    setTasks((prev) => [
-      ...prev,
-      {
-        id: `custom-${Date.now()}`,
-        priority,
-        title,
-        description,
-        completed: false,
-        completedAt: null,
-        isCustom: true,
-      },
-    ]);
+    add.mutate(input);
   }
 
   return (
@@ -63,23 +49,35 @@ export default function ChecklistPage() {
         Your step-by-step guide to settling into Canada.
       </p>
 
-      <div className="mt-5 space-y-4">
-        <OverallProgressBar
-          completed={completedCount}
-          total={tasks.length}
-        />
+      {isLoading && (
+        <p className="mt-5 text-sm text-ink-muted">Loading your checklist…</p>
+      )}
 
-        {PRIORITY_ORDER.map((priority) => (
-          <PrioritySection
-            key={priority}
-            priority={priority}
-            tasks={tasks.filter((task) => task.priority === priority)}
-            onToggle={toggleTask}
+      {error && (
+        <p role="alert" className="mt-5 text-sm text-destructive">
+          Couldn&apos;t load your checklist.
+        </p>
+      )}
+
+      {!isLoading && !error && (
+        <div className="mt-5 space-y-4">
+          <OverallProgressBar
+            completed={completedCount}
+            total={tasks.length}
           />
-        ))}
 
-        <AddCustomTask onAdd={addTask} />
-      </div>
+          {PRIORITY_ORDER.map((priority) => (
+            <PrioritySection
+              key={priority}
+              priority={priority}
+              tasks={tasks.filter((task) => task.priority === priority)}
+              onToggle={handleToggle}
+            />
+          ))}
+
+          <AddCustomTask onAdd={handleAdd} />
+        </div>
+      )}
     </div>
   );
 }
