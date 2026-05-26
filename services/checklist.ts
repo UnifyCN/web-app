@@ -115,6 +115,12 @@ export async function getTasks(): Promise<ChecklistTask[]> {
       .order("created_at", { ascending: true }),
   ]);
 
+  // Sanity errors are swallowed inside getChecklistByPersonaAndStage so a CMS
+  // outage doesn't blank out the user's saved progress. Supabase errors must
+  // bubble up — React Query surfaces them via useTasks().error.
+  if (userTasksRes.error) throw userTasksRes.error;
+  if (customRes.error) throw customRes.error;
+
   const userRowBySanityId = new Map<
     string,
     { completed: boolean; completed_at: string | null }
@@ -225,13 +231,19 @@ export async function toggleTask(input: ToggleTaskInput): Promise<void> {
     return;
   }
 
-  // Going uncompleted → completed: no row yet, INSERT one.
-  const { error } = await supabase.from("user_tasks").insert({
-    user_id: user.id,
-    sanity_checklist_id: input.id,
-    completed: true,
-    completed_at: nextCompletedAt,
-  });
+  // Going uncompleted → completed. Upsert handles both first-time complete
+  // (no row) and re-complete after an uncomplete (row exists with
+  // completed=false). The UNIQUE (user_id, sanity_checklist_id) constraint
+  // is what onConflict targets.
+  const { error } = await supabase.from("user_tasks").upsert(
+    {
+      user_id: user.id,
+      sanity_checklist_id: input.id,
+      completed: true,
+      completed_at: nextCompletedAt,
+    },
+    { onConflict: "user_id,sanity_checklist_id" },
+  );
   if (error) throw error;
 }
 
