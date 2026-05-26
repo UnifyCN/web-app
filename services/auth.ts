@@ -22,10 +22,14 @@ export async function signOut(): Promise<{ error: AuthError | null }> {
   return { error };
 }
 
-export async function getAuthUser(): Promise<User | null> {
+export async function getAuthUser(): Promise<{
+  user: User | null;
+  error: AuthError | null;
+}> {
   const supabase = createClient();
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
-  return user;
+  return { user, error };
 }

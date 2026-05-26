@@ -25,6 +25,9 @@ export function useAuthUser() {
 
   return useQuery({
     queryKey: AUTH_USER_KEY,
-    queryFn: getAuthUser,
+    queryFn: async () => {
+      const { user } = await getAuthUser();
+      return user;
+    },
   });
 }

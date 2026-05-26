@@ -69,7 +69,7 @@ function LoginScreen() {
 
   useEffect(() => {
     const redirectIfSignedIn = async (hard: boolean) => {
-      const user = await getAuthUser();
+      const { user } = await getAuthUser();
       if (user) {
         if (hard) window.location.assign("/home");
         else router.replace("/home");
