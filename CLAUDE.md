@@ -22,8 +22,9 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
 - **Profile, Home/Feed, Community, and Companion are wired to real Supabase data.**
   Each follows the Community wiring pattern (`services/community.ts` +
   `hooks/useCommunity.ts`): `isSupabaseConfigured()` + `getAuthUserId()` guards,
-  snake_case row mappers, mock fallback for the signed-out/unconfigured case,
-  React Query hooks with stable query keys and `onSuccess` invalidation.
+  snake_case row mappers, mock fallback for the local-dev / env-not-configured
+  case (no Supabase env vars), React Query hooks with stable query keys and
+  `onSuccess` invalidation.
   The `public.users` row is bootstrapped app-side by `lib/supabase/ensureUserRow.ts`
   (in the OAuth callback and as a self-heal in `getCurrentUser`).
 - **Checklist still runs on mock data**; Learn is a clean stub awaiting Savar's
@@ -435,9 +436,9 @@ Style: underline tabs — `border-b-2 border-primary` on active, orange text
 
 ## Key Patterns
 
-1. **Service layer separation** — Supabase queries in `services/`, React Query hooks in `hooks/`, components call hooks only. Follow the Community pattern (`services/community.ts` + `hooks/useCommunity.ts`): `isSupabaseConfigured()` + `getAuthUserId()` guards, snake_case row mappers, mock fallback when signed-out or env-less, React Query hooks with stable query keys and `onSuccess` invalidation.
+1. **Service layer separation** — Supabase queries in `services/`, React Query hooks in `hooks/`, components call hooks only. Follow the Community pattern (`services/community.ts` + `hooks/useCommunity.ts`): `isSupabaseConfigured()` + `getAuthUserId()` guards, snake_case row mappers, mock fallback when env vars aren't set (local dev), React Query hooks with stable query keys and `onSuccess` invalidation.
 
-2. **Mock data** — realistic Canadian newcomer context everywhere. Lives in `lib/mock/` and serves as the signed-out / unconfigured fallback for wired sections; pure mock for Checklist and Learn until those phases land.
+2. **Mock data** — realistic Canadian newcomer context everywhere. Lives in `lib/mock/` and serves as the local-dev / env-not-configured fallback for wired sections; pure mock for Checklist and Learn until those phases land.
 
 3. **Feed pagination** — keyset cursor pagination. Cursors = `created_at` timestamps (not offset).
 
