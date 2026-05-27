@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Heart, MessageCircle, Bookmark, Pin } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+import { useLikePost, useSavePost } from "@/hooks/useFeed";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import type { Post } from "@/types";
 
@@ -13,6 +14,8 @@ export function PostCard({ post }: { post: Post }) {
   const [liked, setLiked] = useState(post.likedByMe ?? false);
   const [saved, setSaved] = useState(post.savedByMe ?? false);
   const [popping, setPopping] = useState(false);
+  const likeMutation = useLikePost();
+  const saveMutation = useSavePost();
 
   const likeCount =
     post.likeCount + (liked ? 1 : 0) - (post.likedByMe ? 1 : 0);
@@ -20,12 +23,25 @@ export function PostCard({ post }: { post: Post }) {
     post.saveCount + (saved ? 1 : 0) - (post.savedByMe ? 1 : 0);
 
   function toggleLike() {
-    const next = !liked;
-    setLiked(next);
-    if (next) {
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    if (!wasLiked) {
       setPopping(true);
       window.setTimeout(() => setPopping(false), 220);
     }
+    likeMutation.mutate(
+      { postId: post.id, liked: wasLiked },
+      { onError: () => setLiked(wasLiked) },
+    );
+  }
+
+  function toggleSave() {
+    const wasSaved = saved;
+    setSaved(!wasSaved);
+    saveMutation.mutate(
+      { postId: post.id, saved: wasSaved },
+      { onError: () => setSaved(wasSaved) },
+    );
   }
 
   const hasImages = post.postImageUrls.length > 0;
@@ -126,7 +142,7 @@ export function PostCard({ post }: { post: Post }) {
 
         <button
           type="button"
-          onClick={() => setSaved((value) => !value)}
+          onClick={toggleSave}
           aria-pressed={saved}
           aria-label={saved ? "Remove from saved" : "Save post"}
           className="flex cursor-pointer items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"

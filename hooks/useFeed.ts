@@ -1,38 +1,104 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { FeedTab } from "@/types";
 import * as feed from "@/services/feed";
 
 /** React Query hooks for feed / posts data. */
 
-export function useFeedPosts(tab: FeedTab = "For You") {
+const FEED_KEY = ["feed"] as const;
+
+/* ---- Per-tab feed queries (first-page-only) --------------------------- */
+
+export function useForYouFeed(enabled: boolean = true) {
   return useQuery({
-    queryKey: ["feed", tab],
-    queryFn: () => feed.getFeedPosts(tab),
+    queryKey: [...FEED_KEY, "forYou"],
+    queryFn: () => feed.getForYouFeed(),
+    enabled,
   });
 }
 
+export function useFollowingFeed(enabled: boolean = true) {
+  return useQuery({
+    queryKey: [...FEED_KEY, "following"],
+    queryFn: () => feed.getFollowingFeed(),
+    enabled,
+  });
+}
+
+export function useGroupsFeed(enabled: boolean = true) {
+  return useQuery({
+    queryKey: [...FEED_KEY, "groups"],
+    queryFn: () => feed.getGroupsFeed(),
+    enabled,
+  });
+}
+
+/** Backwards-compatible single-hook entry point — picks the right per-tab
+ *  query under the hood. Returns just the posts array (no nextCursor). */
+export function useFeedPosts(tab: FeedTab = "For You") {
+  const forYou = useForYouFeed(tab === "For You");
+  const following = useFollowingFeed(tab === "Following");
+  const groups = useGroupsFeed(tab === "Groups");
+
+  const active =
+    tab === "Following" ? following : tab === "Groups" ? groups : forYou;
+
+  return {
+    ...active,
+    data: active.data?.posts,
+  };
+}
+
+/* ---- Unwired mock-only hooks ----------------------------------------- */
+
 export function useGroupPosts(groupId: string) {
   return useQuery({
-    queryKey: ["feed", "group", groupId],
+    queryKey: [...FEED_KEY, "group", groupId],
     queryFn: () => feed.getGroupPosts(groupId),
   });
 }
 
 export function useUserPosts(userId: string) {
   return useQuery({
-    queryKey: ["feed", "user", userId],
+    queryKey: [...FEED_KEY, "user", userId],
     queryFn: () => feed.getUserPosts(userId),
   });
 }
 
 export function useSavedPosts() {
-  return useQuery({ queryKey: ["feed", "saved"], queryFn: feed.getSavedPosts });
+  return useQuery({
+    queryKey: [...FEED_KEY, "saved"],
+    queryFn: feed.getSavedPosts,
+  });
+}
+
+/* ---- Mutations -------------------------------------------------------- */
+
+interface LikeInput {
+  postId: number;
+  /** Current like state — the mutation flips it. */
+  liked: boolean;
 }
 
 export function useLikePost() {
-  return useMutation({ mutationFn: feed.likePost });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, liked }: LikeInput) =>
+      liked ? feed.unlikePost(postId) : feed.likePost(postId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: FEED_KEY }),
+  });
+}
+
+interface SaveInput {
+  postId: number;
+  /** Current save state — the mutation flips it. */
+  saved: boolean;
 }
 
 export function useSavePost() {
-  return useMutation({ mutationFn: feed.savePost });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, saved }: SaveInput) =>
+      saved ? feed.unsavePost(postId) : feed.savePost(postId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: FEED_KEY }),
+  });
 }
