@@ -40,7 +40,7 @@ export function MessageBubble({
           <p className="whitespace-pre-wrap">{message.content}</p>
         </div>
 
-        {message.sources.length > 0 && (
+        {message.sources && message.sources.length > 0 && (
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {message.sources.map((source) => (
               <a

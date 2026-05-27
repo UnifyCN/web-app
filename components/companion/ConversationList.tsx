@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { Search, SquarePen } from "lucide-react";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import type { ConversationThread } from "@/lib/mock/conversations";
+import type { Conversation } from "@/types";
 
 interface ConversationListProps {
-  conversations: ConversationThread[];
+  conversations: Conversation[];
   activeId: string | null;
   onSelect: (id: string) => void;
   onNew: () => void;
@@ -20,8 +20,9 @@ export function ConversationList({
   onNew,
 }: ConversationListProps) {
   const [search, setSearch] = useState("");
+  const term = search.trim().toLowerCase();
   const filtered = conversations.filter((conversation) =>
-    conversation.title.toLowerCase().includes(search.trim().toLowerCase()),
+    (conversation.title ?? "").toLowerCase().includes(term),
   );
 
   return (
@@ -71,7 +72,7 @@ export function ConversationList({
                     active ? "text-primary" : "text-ink-secondary",
                   )}
                 >
-                  {conversation.title}
+                  {conversation.title ?? "New conversation"}
                 </span>
                 <span className="mt-0.5 text-xs text-ink-placeholder">
                   {formatRelativeTime(conversation.updatedAt)}

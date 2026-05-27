@@ -1,107 +1,77 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ConversationList } from "@/components/companion/ConversationList";
 import { ChatPanel } from "@/components/companion/ChatPanel";
 import {
-  conversations as seedConversations,
-  type ConversationThread,
-} from "@/lib/mock/conversations";
+  messagesKey,
+  useChatbotUsage,
+  useConversationMessages,
+  useConversations,
+  useCreateConversation,
+  useSendMessage,
+} from "@/hooks/useCompanion";
 import type { ChatMessage } from "@/types";
 
-const CANNED_REPLY =
-  "Thanks for asking! Here's a general overview to point you in the right " +
-  "direction. Details can vary by province and change over time, so for " +
-  "anything official — applications, deadlines, or eligibility — confirm with " +
-  "the relevant government website or a settlement counsellor.";
-
-function makeId(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-}
+// Cosmetic free-tier cap shown next to the input. Real enforcement is deferred
+// until the AI backend lands; see /Users/luis/.claude/plans/* and BACKLOG.
+const FREE_TIER_DAILY_LIMIT = 6;
 
 export default function CompanionPage() {
-  const [threads, setThreads] =
-    useState<ConversationThread[]>(seedConversations);
+  const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
-  const [freeTierRemaining, setFreeTierRemaining] = useState(3);
 
-  const activeThread = threads.find((thread) => thread.id === activeId) ?? null;
+  const conversationsQuery = useConversations();
+  const messagesQuery = useConversationMessages(activeId);
+  const usageQuery = useChatbotUsage();
+  const createConversation = useCreateConversation();
+  const sendMessage = useSendMessage();
 
-  // TODO: replace with real data — canned reply stands in for the RAG backend.
-  function handleSend(text: string) {
-    const now = new Date().toISOString();
-    setFreeTierRemaining((remaining) => Math.max(0, remaining - 1));
+  const conversations = conversationsQuery.data ?? [];
+  const messages = messagesQuery.data ?? [];
+  const activeConversation = activeId
+    ? (conversations.find((c) => c.id === activeId) ?? null)
+    : null;
 
-    const isNew = activeId === null;
-    const targetId = activeId ?? makeId("conv");
+  const messageCount = usageQuery.data?.messageCount ?? 0;
+  const freeTierRemaining = Math.max(0, FREE_TIER_DAILY_LIMIT - messageCount);
 
-    if (isNew) {
-      const title = text.length > 44 ? `${text.slice(0, 44)}…` : text;
-      setThreads((prev) => [
-        { id: targetId, title, updatedAt: now, messages: [] },
-        ...prev,
-      ]);
-      setActiveId(targetId);
+  async function handleSend(text: string) {
+    try {
+      let conversationIdentifier = activeId;
+      if (!conversationIdentifier) {
+        const created = await createConversation.mutateAsync(text);
+        conversationIdentifier = created.id;
+        // Pre-seed an empty messages list for the new conversation. Without
+        // this, useConversationMessages mounts and fires a server fetch that
+        // can race the optimistic user-bubble write inside useSendMessage's
+        // onMutate (Supabase round-trip returns [] before the user-save lands,
+        // wiping the optimistic message).
+        queryClient.setQueryData<ChatMessage[]>(
+          messagesKey(conversationIdentifier),
+          [],
+        );
+        setActiveId(conversationIdentifier);
+      }
+      sendMessage.mutate({ conversationIdentifier, text });
+    } catch (err) {
+      console.error("Companion: failed to send message", err);
     }
-
-    const userMsg: ChatMessage = {
-      id: makeId("m"),
-      conversationId: targetId,
-      role: "user",
-      content: text,
-      sources: [],
-      createdAt: now,
-    };
-    setThreads((prev) =>
-      prev.map((thread) =>
-        thread.id === targetId
-          ? {
-              ...thread,
-              messages: [...thread.messages, userMsg],
-              updatedAt: now,
-            }
-          : thread,
-      ),
-    );
-
-    setIsTyping(true);
-    window.setTimeout(() => {
-      const replyTime = new Date().toISOString();
-      const aiMsg: ChatMessage = {
-        id: makeId("m"),
-        conversationId: targetId,
-        role: "assistant",
-        content: CANNED_REPLY,
-        sources: [],
-        createdAt: replyTime,
-      };
-      setThreads((prev) =>
-        prev.map((thread) =>
-          thread.id === targetId
-            ? {
-                ...thread,
-                messages: [...thread.messages, aiMsg],
-                updatedAt: replyTime,
-              }
-            : thread,
-        ),
-      );
-      setIsTyping(false);
-    }, 900);
   }
 
   return (
     <div className="flex h-screen">
       <ConversationList
-        conversations={threads}
+        conversations={conversations}
         activeId={activeId}
         onSelect={setActiveId}
         onNew={() => setActiveId(null)}
       />
       <ChatPanel
-        thread={activeThread}
-        isTyping={isTyping}
+        conversation={activeConversation}
+        messages={messages}
+        isTyping={sendMessage.isPending}
         freeTierRemaining={freeTierRemaining}
         onSend={handleSend}
       />

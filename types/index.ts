@@ -146,21 +146,33 @@ export interface CommunityCircle {
 
 export type MessageRole = "user" | "assistant";
 
+export interface ChatSource {
+  title: string;
+  url: string;
+}
+
 export interface ChatMessage {
-  id: string;
+  /** Bigint primary key of `messages.id` — stable React key. */
+  id: number;
+  /** UUID conversation identifier (matches Conversation.id). */
   conversationId: string;
   role: MessageRole;
   content: string;
-  sources: { title: string; url: string }[];
+  /** Citations from the RAG backend; null when the assistant didn't cite. */
+  sources: ChatSource[] | null;
   createdAt: string;
 }
 
 export interface Conversation {
+  /** UUID `conversation_identifier`; the stable handle the UI selects with. */
   id: string;
-  conversationIdentifier: string;
-  userId: string;
-  title: string;
+  title: string | null;
   updatedAt: string;
+}
+
+export interface ChatbotUsage {
+  messageCount: number;
+  lastMessageAt: string | null;
 }
 
 /* ----- Checklist --------------------------------------------------- */
