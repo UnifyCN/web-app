@@ -148,11 +148,14 @@ function mockForTab(tab: FeedTab): Post[] {
 }
 
 async function getAuthUserId(): Promise<string | null> {
+  // getSession reads from the local cache (no network); getUser would hit the
+  // auth server on every feed/like/save call. The bearer token is the same
+  // either way, so the subsequent PostgREST request authority is identical.
   const supabase = createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user?.id ?? null;
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.user?.id ?? null;
 }
 
 export async function getForYouFeed(
