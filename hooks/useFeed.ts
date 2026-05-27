@@ -35,9 +35,9 @@ export function useGroupsFeed(enabled: boolean = true) {
 /** Backwards-compatible single-hook entry point — picks the right per-tab
  *  query under the hood. Returns just the posts array (no nextCursor). */
 export function useFeedPosts(tab: FeedTab = "For You") {
-  const forYou = useForYouFeed();
-  const following = useFollowingFeed();
-  const groups = useGroupsFeed();
+  const forYou = useForYouFeed(tab === "For You");
+  const following = useFollowingFeed(tab === "Following");
+  const groups = useGroupsFeed(tab === "Groups");
 
   const active =
     tab === "Following" ? following : tab === "Groups" ? groups : forYou;

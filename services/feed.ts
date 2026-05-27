@@ -268,7 +268,7 @@ export async function getFollowingFeed(
   if (followingIds.length === 0) return { posts: [], nextCursor: undefined };
 
   const parsed = cursor ? parseInt(cursor, 10) : 0;
-  const offset = Number.isFinite(parsed) ? parsed : 0;
+  const offset = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
   const { data, error } = await supabase
     .from("posts")
     .select(POSTS_SELECT)
@@ -308,7 +308,7 @@ export async function getGroupsFeed(
   if (groupIds.length === 0) return { posts: [], nextCursor: undefined };
 
   const parsed = cursor ? parseInt(cursor, 10) : 0;
-  const offset = Number.isFinite(parsed) ? parsed : 0;
+  const offset = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
   const { data, error } = await supabase
     .from("posts")
     .select(POSTS_SELECT)
