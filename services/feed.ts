@@ -67,7 +67,7 @@ function rowToPost(row: JoinedPostRow): Post {
     commentCount: row.comment_count ?? 0,
     saveCount: 0, // filled in by enrichPostsWithMetadata
     userId: row.user_id,
-    groupId: row.group_id == null ? null : String(row.group_id),
+    groupId: row.group_id,
     isPinned: row.is_pinned ?? false,
     postImageUrls: row.post_image_urls ?? [],
     createdAt: row.created_at,
@@ -327,7 +327,7 @@ export async function getGroupsFeed(
 
 /* ---- mock-only helpers (kept for unwired surfaces) -------------------- */
 
-export async function getGroupPosts(groupId: string): Promise<Post[]> {
+export async function getGroupPosts(groupId: number): Promise<Post[]> {
   return mockPosts.filter((post) => post.groupId === groupId);
 }
 

@@ -23,7 +23,10 @@ export default async function EventDetailPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const event = getEventById(eventId);
+  const parsedId = Number(eventId);
+  const event = Number.isFinite(parsedId) && parsedId > 0
+    ? getEventById(parsedId)
+    : undefined;
 
   if (!event) {
     return (
@@ -102,15 +105,17 @@ export default async function EventDetailPage({
         )}
       </div>
 
-      <a
-        href={event.externalLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-      >
-        View Event Details
-        <ExternalLink className="h-4 w-4" aria-hidden />
-      </a>
+      {event.externalLink && (
+        <a
+          href={event.externalLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        >
+          View Event Details
+          <ExternalLink className="h-4 w-4" aria-hidden />
+        </a>
+      )}
 
       <h2 className="mt-7 text-base font-semibold text-ink-secondary">
         About Event

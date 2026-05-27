@@ -10,9 +10,12 @@ import { EventCard } from "@/components/community/EventCard";
 import { NewsArticleItem } from "@/components/community/NewsArticleItem";
 import { CirclesEntryCard } from "@/components/community/CirclesEntryCard";
 import { RequestGroupModal } from "@/components/community/RequestGroupModal";
-import { groups } from "@/lib/mock/groups";
-import { events } from "@/lib/mock/events";
-import { newsItems } from "@/lib/mock/news";
+import {
+  useEvents,
+  useGroups,
+  useJoinedGroups,
+  useNews,
+} from "@/hooks/useCommunity";
 
 const TAB_GROUPS = "Join Groups";
 const TAB_EVENTS = "Community Events";
@@ -43,7 +46,16 @@ export default function CommunityPage() {
   const [search, setSearch] = useState("");
   const [requestOpen, setRequestOpen] = useState(false);
 
-  const joinedGroups = groups.filter((group) => group.joinedByMe);
+  const groupsQuery = useGroups();
+  const joinedGroupsQuery = useJoinedGroups();
+  const eventsQuery = useEvents();
+  const newsQuery = useNews();
+
+  const groups = groupsQuery.data ?? [];
+  const joinedGroups = joinedGroupsQuery.data ?? [];
+  const events = eventsQuery.data ?? [];
+  const newsItems = newsQuery.data ?? [];
+
   const filteredGroups = groups.filter((group) =>
     group.groupName.toLowerCase().includes(search.trim().toLowerCase()),
   );
@@ -76,7 +88,16 @@ export default function CommunityPage() {
 
             {search.trim() === "" && <MyGroupsStrip groups={joinedGroups} />}
 
-            {filteredGroups.length > 0 ? (
+            {groupsQuery.isLoading ? (
+              <p className="py-12 text-center text-sm text-ink-muted">Loading…</p>
+            ) : groupsQuery.error ? (
+              <p
+                role="alert"
+                className="py-12 text-center text-sm text-destructive"
+              >
+                Couldn&apos;t load groups.
+              </p>
+            ) : filteredGroups.length > 0 ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredGroups.map((group) => (
                   <GroupCard key={group.id} group={group} />
@@ -84,7 +105,9 @@ export default function CommunityPage() {
               </div>
             ) : (
               <p className="py-12 text-center text-sm text-ink-placeholder">
-                No groups match your search.
+                {search.trim() === ""
+                  ? "No groups yet."
+                  : "No groups match your search."}
               </p>
             )}
 
@@ -99,19 +122,43 @@ export default function CommunityPage() {
         )}
 
         {activeTab === TAB_EVENTS && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+          eventsQuery.isLoading ? (
+            <p className="py-12 text-center text-sm text-ink-muted">Loading…</p>
+          ) : eventsQuery.error ? (
+            <p role="alert" className="py-12 text-center text-sm text-destructive">
+              Couldn&apos;t load events.
+            </p>
+          ) : events.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {events.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          ) : (
+            <p className="py-12 text-center text-sm text-ink-placeholder">
+              No upcoming events.
+            </p>
+          )
         )}
 
         {activeTab === TAB_NEWS && (
-          <div className="divide-y divide-border-card rounded-card border border-border-card bg-surface px-4">
-            {newsItems.map((item) => (
-              <NewsArticleItem key={item.id} item={item} />
-            ))}
-          </div>
+          newsQuery.isLoading ? (
+            <p className="py-12 text-center text-sm text-ink-muted">Loading…</p>
+          ) : newsQuery.error ? (
+            <p role="alert" className="py-12 text-center text-sm text-destructive">
+              Couldn&apos;t load news.
+            </p>
+          ) : newsItems.length > 0 ? (
+            <div className="divide-y divide-border-card rounded-card border border-border-card bg-surface px-4">
+              {newsItems.map((item) => (
+                <NewsArticleItem key={item.id} item={item} />
+              ))}
+            </div>
+          ) : (
+            <p className="py-12 text-center text-sm text-ink-placeholder">
+              No news yet.
+            </p>
+          )
         )}
 
         {activeTab === TAB_CIRCLES && (

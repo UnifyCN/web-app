@@ -1,38 +1,54 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as community from "@/services/community";
 
 /** React Query hooks for Community data (groups, events, news, circles). */
 
+const GROUPS_KEY = ["groups"] as const;
+
 export function useGroups() {
-  return useQuery({ queryKey: ["groups"], queryFn: community.getGroups });
+  return useQuery({ queryKey: GROUPS_KEY, queryFn: community.getGroups });
 }
 
-export function useGroup(id: string) {
+export function useGroup(id: number) {
   return useQuery({
-    queryKey: ["groups", id],
+    queryKey: [...GROUPS_KEY, id],
     queryFn: () => community.getGroupById(id),
+    enabled: Number.isFinite(id) && id > 0,
   });
 }
 
 export function useJoinedGroups() {
   return useQuery({
-    queryKey: ["groups", "joined"],
+    queryKey: [...GROUPS_KEY, "joined"],
     queryFn: community.getJoinedGroups,
   });
 }
 
 export function useJoinGroup() {
-  return useMutation({ mutationFn: community.joinGroup });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: community.joinGroup,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: GROUPS_KEY }),
+  });
+}
+
+export function useLeaveGroup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: community.leaveGroup,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: GROUPS_KEY }),
+  });
 }
 
 export function useEvents() {
   return useQuery({ queryKey: ["events"], queryFn: community.getEvents });
 }
 
-export function useEvent(id: string) {
+export function useEvent(id: number) {
   return useQuery({
     queryKey: ["events", id],
     queryFn: () => community.getEventById(id),
+    enabled: Number.isFinite(id) && id > 0,
   });
 }
 

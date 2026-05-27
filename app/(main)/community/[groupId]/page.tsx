@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GroupMemberAvatarStack } from "@/components/community/GroupMemberAvatarStack";
 import { PostCard } from "@/components/home/PostCard";
-import { getGroupById } from "@/lib/mock/groups";
+import { useGroup, useJoinGroup, useLeaveGroup } from "@/hooks/useCommunity";
 import { posts } from "@/lib/mock/posts";
 
 export default function GroupDetailPage({
@@ -16,8 +16,24 @@ export default function GroupDetailPage({
   params: Promise<{ groupId: string }>;
 }) {
   const { groupId } = use(params);
-  const group = getGroupById(groupId);
-  const [joined, setJoined] = useState(group?.joinedByMe ?? false);
+  const parsedId = Number(groupId);
+  const id = Number.isFinite(parsedId) && parsedId > 0 ? parsedId : 0;
+
+  const groupQuery = useGroup(id);
+  const joinMutation = useJoinGroup();
+  const leaveMutation = useLeaveGroup();
+
+  const group = groupQuery.data;
+  const [joinedOverride, setJoinedOverride] = useState<boolean | null>(null);
+  const joined = joinedOverride ?? group?.joinedByMe ?? false;
+
+  if (groupQuery.isLoading) {
+    return (
+      <div className="mx-auto max-w-[680px] px-6 py-16 text-center">
+        <p className="text-sm text-ink-muted">Loading…</p>
+      </div>
+    );
+  }
 
   if (!group) {
     return (
@@ -33,9 +49,19 @@ export default function GroupDetailPage({
     );
   }
 
-  const groupPosts = posts.filter((post) => post.groupId === group.id);
   const memberCount =
     group.memberCount + (joined ? 1 : 0) - (group.joinedByMe ? 1 : 0);
+  const groupPosts = posts.filter((post) => post.groupId === group.id);
+
+  function toggleJoin() {
+    if (!group) return;
+    const wasJoined = joined;
+    setJoinedOverride(!wasJoined);
+    const mutation = wasJoined ? leaveMutation : joinMutation;
+    mutation.mutate(group.id, {
+      onError: () => setJoinedOverride(wasJoined),
+    });
+  }
 
   return (
     <div className="mx-auto max-w-[680px] px-6 py-6">
@@ -76,7 +102,7 @@ export default function GroupDetailPage({
             variant={joined ? "secondary" : "primary"}
             size="sm"
             className="mt-4"
-            onClick={() => setJoined((value) => !value)}
+            onClick={toggleJoin}
           >
             {joined ? "Joined" : "Join group"}
           </Button>

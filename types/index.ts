@@ -65,9 +65,7 @@ export interface Post {
   commentCount: number;
   saveCount: number;
   userId: string;
-  /** Group id is stringified at the transform boundary so it lines up with the
-   * (still-mock) Group.id shape until Community gets wired. */
-  groupId: string | null;
+  groupId: number | null;
   isPinned: boolean;
   postImageUrls: string[];
   createdAt: string;
@@ -97,7 +95,7 @@ export interface PostComment {
 /* ----- Community --------------------------------------------------- */
 
 export interface Group {
-  id: string;
+  id: number;
   groupName: string;
   groupDescription: string;
   memberCount: number;
@@ -110,25 +108,25 @@ export interface Group {
 export type EventType = "in-person" | "online" | "hybrid";
 
 export interface CommunityEvent {
-  id: string;
+  id: number;
   title: string;
   eventDatetime: string;
   eventEndDatetime?: string;
   location: string;
   eventType: EventType;
   coverPhotoUrl: string | null;
-  externalLink: string;
+  externalLink: string | null;
   description: string;
   hostedBy: string | null;
 }
 
 export interface NewsItem {
-  id: string;
+  id: number;
   title: string;
   description: string;
-  author: string;
+  author: string | null;
   date: string;
-  category: string;
+  category: string | null;
   imageLink: string | null;
 }
 
