@@ -23,13 +23,6 @@ Like/save mutations roll back local liked/saved boolean state on error (fixed in
 
 ---
 
-## Profile
-
-**Wrong column on user_onboarding_profiles query**
-Fixed in PR #4. No action needed.
-
----
-
 ## Security
 
 **Broad anon grant on live DB**

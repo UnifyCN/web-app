@@ -542,3 +542,10 @@ NEXT_PUBLIC_SANITY_DATASET=production
 20. Stub `services/` + `hooks/` file structure
 21. `app/page.tsx` → redirect to `/home`
 22. Run `/impeccable audit` on every section. Run gstack `/design-review`. Fix everything flagged.
+
+---
+
+## Common Bugs to Avoid
+
+**Always wire mutations to the component**
+When adding a service function and hook mutation, verify the component that renders the relevant button actually imports and calls the hook. It is easy to wire the service and hook correctly but leave the component calling local state only. Before committing any mutation work, grep for the hook name in the component file to confirm it is imported and called.
