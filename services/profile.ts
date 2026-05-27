@@ -36,7 +36,7 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
       .select(
         "id, persona, arrival_date, city, province, stage, goals, learning_interests",
       )
-      .eq("user_id", user.id)
+      .eq("id", user.id)
       .maybeSingle(),
     supabase
       .from("user_followers")
