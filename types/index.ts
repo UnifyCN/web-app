@@ -58,22 +58,30 @@ export interface UserProfile extends User {
 export type FeedTab = "For You" | "Following" | "Groups";
 
 export interface Post {
-  id: string;
+  id: number;
   title: string;
   content: string;
   likeCount: number;
   commentCount: number;
   saveCount: number;
   userId: string;
+  /** Group id is stringified at the transform boundary so it lines up with the
+   * (still-mock) Group.id shape until Community gets wired. */
   groupId: string | null;
   isPinned: boolean;
   postImageUrls: string[];
   createdAt: string;
-  /** Convenience fields denormalised for the mock UI. */
+  /** Convenience fields denormalised at the service layer (joined users/groups
+   * and per-user enrichment from get_post_metadata_batch). */
   author: User;
   groupName?: string;
   likedByMe?: boolean;
   savedByMe?: boolean;
+}
+
+export interface FeedResponse {
+  posts: Post[];
+  nextCursor: string | undefined;
 }
 
 export interface PostComment {

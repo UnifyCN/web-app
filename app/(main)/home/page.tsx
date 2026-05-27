@@ -6,7 +6,11 @@ import { PostCard } from "@/components/home/PostCard";
 import { ComposeButton } from "@/components/home/ComposeButton";
 import { RightPanel } from "@/components/home/RightPanel";
 import { JoinGroupsCard } from "@/components/home/JoinGroupsCard";
-import { posts, followedUsernames } from "@/lib/mock/posts";
+import {
+  useFollowingFeed,
+  useForYouFeed,
+  useGroupsFeed,
+} from "@/hooks/useFeed";
 
 const FEED_EMPTY: Record<string, { title: string; sub: string }> = {
   "For You": {
@@ -26,21 +30,14 @@ const FEED_EMPTY: Record<string, { title: string; sub: string }> = {
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState(FEED_TABS[0]);
 
-  const visiblePosts = posts.filter((post) => {
-    if (activeTab === "Following") {
-      return followedUsernames.includes(post.author.username);
-    }
-    if (activeTab === "Groups") {
-      return post.groupId !== null;
-    }
-    return true;
-  });
+  const forYou = useForYouFeed();
+  const following = useFollowingFeed();
+  const groups = useGroupsFeed();
 
-  // Pinned posts float to the top of the feed.
-  const orderedPosts = [...visiblePosts].sort(
-    (a, b) => Number(b.isPinned) - Number(a.isPinned),
-  );
+  const active =
+    activeTab === "Following" ? following : activeTab === "Groups" ? groups : forYou;
 
+  const posts = active.data?.posts ?? [];
   const empty = FEED_EMPTY[activeTab];
 
   return (
@@ -63,9 +60,19 @@ export default function HomePage() {
               </div>
             )}
 
-            {orderedPosts.length > 0 ? (
+            {active.isLoading ? (
+              <div className="px-5 py-14 text-center">
+                <p className="text-sm text-ink-muted">Loading…</p>
+              </div>
+            ) : active.error ? (
+              <div className="px-5 py-14 text-center">
+                <p role="alert" className="text-sm text-destructive">
+                  Couldn&apos;t load the feed.
+                </p>
+              </div>
+            ) : posts.length > 0 ? (
               <div className="divide-y divide-border-card">
-                {orderedPosts.map((post) => (
+                {posts.map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}
               </div>
