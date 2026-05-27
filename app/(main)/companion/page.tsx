@@ -15,7 +15,7 @@ import {
 import type { ChatMessage } from "@/types";
 
 // Cosmetic free-tier cap shown next to the input. Real enforcement is deferred
-// until the AI backend lands; see /Users/luis/.claude/plans/* and BACKLOG.
+// until the AI backend lands; see BACKLOG.md.
 const FREE_TIER_DAILY_LIMIT = 6;
 
 export default function CompanionPage() {
@@ -54,7 +54,7 @@ export default function CompanionPage() {
         );
         setActiveId(conversationIdentifier);
       }
-      sendMessage.mutate({ conversationIdentifier, text });
+      await sendMessage.mutateAsync({ conversationIdentifier, text });
     } catch (err) {
       console.error("Companion: failed to send message", err);
     }

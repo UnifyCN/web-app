@@ -74,7 +74,6 @@ interface SendMessageInput {
 
 interface SendMessageContext {
   key: ReturnType<typeof messagesKey>;
-  previous: ChatMessage[] | undefined;
 }
 
 /**
@@ -112,7 +111,6 @@ export function useSendMessage() {
     onMutate: async ({ conversationIdentifier, text }) => {
       const key = messagesKey(conversationIdentifier);
       await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData<ChatMessage[]>(key);
       const optimisticUserMessage: ChatMessage = {
         // Negative ids avoid collision with the bigint server ids and read as
         // "not yet persisted" anywhere keying on the value.
@@ -127,10 +125,14 @@ export function useSendMessage() {
         ...(prev ?? []),
         optimisticUserMessage,
       ]);
-      return { key, previous };
+      return { key };
     },
     onError: (_err, _vars, context) => {
-      if (context) queryClient.setQueryData(context.key, context.previous);
+      // Partial failures (user-save ok, assistant-save not) leave a row on the
+      // server the cache wouldn't otherwise show. Re-fetch to converge.
+      if (context) {
+        queryClient.invalidateQueries({ queryKey: context.key });
+      }
     },
     onSuccess: ({ conversationIdentifier }) => {
       queryClient.invalidateQueries({
