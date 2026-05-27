@@ -55,10 +55,12 @@ export default function GroupDetailPage({
 
   function toggleJoin() {
     if (!group) return;
+    if (joinMutation.isPending || leaveMutation.isPending) return;
     const wasJoined = joined;
     setJoinedOverride(!wasJoined);
     const mutation = wasJoined ? leaveMutation : joinMutation;
     mutation.mutate(group.id, {
+      onSuccess: () => setJoinedOverride(null),
       onError: () => setJoinedOverride(wasJoined),
     });
   }
