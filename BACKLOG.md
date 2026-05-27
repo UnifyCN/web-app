@@ -15,6 +15,12 @@ Deferred from Phase 4. Phase 4 fetches only the first page (20 posts) per tab. T
 **Pinned post ordering**
 Deferred from Phase 4. Pinned posts are currently ordered by created_at because the web app's posts table has no pinned_at column (mobile has one). When pinned post management is added, a migration should add pinned_at timestamptz to posts and the getForYouFeed service should order pinned posts by pinned_at DESC.
 
+**Post.groupId type mismatch**
+Deferred from Phase 4. Post.groupId is kept as string|null even though the database stores group_id as bigint. It is stringified at the transform boundary in services/feed.ts to avoid breaking app/(main)/community/[groupId]/page.tsx which compares post.groupId === group.id where Group.id is still string. When Phase 5 (Community wiring) runs, change Group.id to number, remove the stringify in rowToPost, and change Post.groupId to number|null in types/index.ts.
+
+**Optimistic update count rollback**
+Like/save mutations roll back local liked/saved boolean state on error (fixed in PR #5). However the displayed likeCount and saveCount are derived from post.likeCount + local toggle delta and will not roll back correctly if the mutation fails. A full fix requires tracking the pre-mutation count and restoring it on error. Deferred until optimistic updates are revisited.
+
 ---
 
 ## Profile
