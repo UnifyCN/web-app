@@ -6,10 +6,11 @@ import { StarterPromptChips } from "./StarterPromptChips";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
 import { FreeTierIndicator } from "./FreeTierIndicator";
-import type { ConversationThread } from "@/lib/mock/conversations";
+import type { ChatMessage, Conversation } from "@/types";
 
 interface ChatPanelProps {
-  thread: ConversationThread | null;
+  conversation: Conversation | null;
+  messages: ChatMessage[];
   isTyping: boolean;
   freeTierRemaining: number;
   onSend: (text: string) => void;
@@ -33,7 +34,8 @@ function TypingIndicator() {
 
 /** Companion right panel — empty state or an active conversation. */
 export function ChatPanel({
-  thread,
+  conversation,
+  messages,
   isTyping,
   freeTierRemaining,
   onSend,
@@ -42,25 +44,25 @@ export function ChatPanel({
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [thread?.messages.length, isTyping]);
+  }, [messages.length, isTyping]);
 
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col bg-surface">
       {/* Conversation header — shows the full title (the list is narrow). */}
-      {thread && (
+      {conversation && (
         <header className="flex h-14 shrink-0 items-center border-b border-border-card px-6">
           <h1 className="truncate text-sm font-semibold text-ink-secondary">
-            {thread.title}
+            {conversation.title ?? "New conversation"}
           </h1>
         </header>
       )}
 
-      {thread ? (
+      {conversation ? (
         <div className="scrollbar-thin flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-2xl px-6 py-6">
-            {thread.messages.map((message, index) => {
-              const prev = thread.messages[index - 1];
-              const next = thread.messages[index + 1];
+            {messages.map((message, index) => {
+              const prev = messages[index - 1];
+              const next = messages[index + 1];
               return (
                 <MessageBubble
                   key={message.id}

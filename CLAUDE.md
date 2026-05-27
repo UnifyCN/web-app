@@ -19,11 +19,16 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
 - **Database — schema lives in `supabase/migrations/`** (the web-app's own schema,
   separate from the mobile back-end), with **RLS enabled and own-row policies** on
   every table, plus a grants migration restoring public-schema API-role access.
-- **Profile is wired to real Supabase data** (`users` + `user_onboarding_profiles`).
+- **Profile, Home/Feed, Community, and Companion are wired to real Supabase data.**
+  Each follows the Community wiring pattern (`services/community.ts` +
+  `hooks/useCommunity.ts`): `isSupabaseConfigured()` + `getAuthUserId()` guards,
+  snake_case row mappers, mock fallback for the local-dev / env-not-configured
+  case (no Supabase env vars), React Query hooks with stable query keys and
+  `onSuccess` invalidation.
   The `public.users` row is bootstrapped app-side by `lib/supabase/ensureUserRow.ts`
   (in the OAuth callback and as a self-heal in `getCurrentUser`).
-- Every other section still runs on mock data via the stubbed `services/` + `hooks/`
-  layer. See `PLAN.md` for the phase-by-phase build record.
+- **Checklist still runs on mock data**; Learn is a clean stub awaiting Savar's
+  pickup. See `PLAN.md` for the phase-by-phase build record.
 
 ---
 
@@ -251,8 +256,8 @@ components/
 ├── learn/
 └── profile/
 
-hooks/                        ← React Query hooks (stubbed, wired up later)
-services/                     ← Supabase query functions (stubbed, wired up later)
+hooks/                        ← React Query hooks over Supabase + mock fallback
+services/                     ← Supabase query functions with mock fallback
 lib/
 ├── supabase/
 │   ├── client.ts             ← createBrowserClient
@@ -431,9 +436,9 @@ Style: underline tabs — `border-b-2 border-primary` on active, orange text
 
 ## Key Patterns
 
-1. **Service layer separation** — Supabase queries in `services/`, React Query hooks in `hooks/`, components call hooks only. Stub everything now, wire later.
+1. **Service layer separation** — Supabase queries in `services/`, React Query hooks in `hooks/`, components call hooks only. Follow the Community pattern (`services/community.ts` + `hooks/useCommunity.ts`): `isSupabaseConfigured()` + `getAuthUserId()` guards, snake_case row mappers, mock fallback when env vars aren't set (local dev), React Query hooks with stable query keys and `onSuccess` invalidation.
 
-2. **Mock data** — realistic Canadian newcomer context everywhere. `// TODO: replace with real data` on every stub.
+2. **Mock data** — realistic Canadian newcomer context everywhere. Lives in `lib/mock/` and serves as the local-dev / env-not-configured fallback for wired sections; pure mock for Checklist and Learn until those phases land.
 
 3. **Feed pagination** — keyset cursor pagination. Cursors = `created_at` timestamps (not offset).
 
@@ -508,7 +513,7 @@ NEXT_PUBLIC_SANITY_DATASET=production
 
 ## What NOT to build yet
 
-- No real data fetching beyond Profile (other sections still on mock data)
+- No real data fetching for Checklist or Learn yet — wire when those phases land
 - No edge function calls
 - No image upload
 - No push notifications

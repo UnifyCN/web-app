@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { Search, SquarePen } from "lucide-react";
 import { cn, formatRelativeTime } from "@/lib/utils";
-import type { ConversationThread } from "@/lib/mock/conversations";
+import type { Conversation } from "@/types";
 
 interface ConversationListProps {
-  conversations: ConversationThread[];
+  conversations: Conversation[];
   activeId: string | null;
   onSelect: (id: string) => void;
   onNew: () => void;
@@ -20,9 +20,15 @@ export function ConversationList({
   onNew,
 }: ConversationListProps) {
   const [search, setSearch] = useState("");
-  const filtered = conversations.filter((conversation) =>
-    conversation.title.toLowerCase().includes(search.trim().toLowerCase()),
-  );
+  const term = search.trim().toLowerCase();
+  const items = conversations
+    .map((conversation) => ({
+      conversation,
+      displayTitle: conversation.title ?? "New conversation",
+    }))
+    .filter(({ displayTitle }) =>
+      displayTitle.toLowerCase().includes(term),
+    );
 
   return (
     <aside className="flex w-[200px] shrink-0 flex-col border-r border-border-card bg-surface">
@@ -52,8 +58,8 @@ export function ConversationList({
       </div>
 
       <div className="scrollbar-thin flex-1 overflow-y-auto px-2 pb-2">
-        {filtered.length > 0 ? (
-          filtered.map((conversation) => {
+        {items.length > 0 ? (
+          items.map(({ conversation, displayTitle }) => {
             const active = conversation.id === activeId;
             return (
               <button
@@ -71,7 +77,7 @@ export function ConversationList({
                     active ? "text-primary" : "text-ink-secondary",
                   )}
                 >
-                  {conversation.title}
+                  {displayTitle}
                 </span>
                 <span className="mt-0.5 text-xs text-ink-placeholder">
                   {formatRelativeTime(conversation.updatedAt)}
