@@ -5,14 +5,32 @@ import Image from "next/image";
 import Link from "next/link";
 import { Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { useJoinGroup, useLeaveGroup } from "@/hooks/useCommunity";
 import type { Group } from "@/types";
 
-/** Group card for the Community → Groups grid. Join state toggles locally. */
+/** Group card for the Community → Groups grid. Join state flips optimistically;
+ *  rolls back on mutation error. The override pattern (null falls back to the
+ *  prop) means a refetched group.joinedByMe takes over automatically — no
+ *  prop→state sync effect needed. */
 export function GroupCard({ group }: { group: Group }) {
-  const [joined, setJoined] = useState(group.joinedByMe);
+  const [joinedOverride, setJoinedOverride] = useState<boolean | null>(null);
+  const joinMutation = useJoinGroup();
+  const leaveMutation = useLeaveGroup();
+  const joined = joinedOverride ?? group.joinedByMe;
 
   const memberCount =
     group.memberCount + (joined ? 1 : 0) - (group.joinedByMe ? 1 : 0);
+
+  function toggleJoin() {
+    if (joinMutation.isPending || leaveMutation.isPending) return;
+    const wasJoined = joined;
+    setJoinedOverride(!wasJoined);
+    const mutation = wasJoined ? leaveMutation : joinMutation;
+    mutation.mutate(group.id, {
+      onSuccess: () => setJoinedOverride(null),
+      onError: () => setJoinedOverride(wasJoined),
+    });
+  }
 
   return (
     <div className="flex flex-col overflow-hidden rounded-card border border-border-card bg-surface">
@@ -47,7 +65,7 @@ export function GroupCard({ group }: { group: Group }) {
           <Button
             variant={joined ? "secondary" : "primary"}
             size="sm"
-            onClick={() => setJoined((value) => !value)}
+            onClick={toggleJoin}
           >
             {joined ? "Joined" : "Join"}
           </Button>

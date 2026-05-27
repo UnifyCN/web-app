@@ -20,7 +20,7 @@ interface CreatePostModalProps {
 /** Create-post composer. Frontend stub — no post is actually created. */
 export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
   const [destination, setDestination] = useState<Destination>("For You");
-  const [groupId, setGroupId] = useState<string | null>(null);
+  const [groupId, setGroupId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [posted, setPosted] = useState(false);

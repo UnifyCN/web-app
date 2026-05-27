@@ -50,7 +50,7 @@ export function useFeedPosts(tab: FeedTab = "For You") {
 
 /* ---- Unwired mock-only hooks ----------------------------------------- */
 
-export function useGroupPosts(groupId: string) {
+export function useGroupPosts(groupId: number) {
   return useQuery({
     queryKey: [...FEED_KEY, "group", groupId],
     queryFn: () => feed.getGroupPosts(groupId),

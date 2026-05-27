@@ -4,7 +4,7 @@ import type { NewsItem } from "@/types";
 // The Home widget shows the first 3; the Community News tab shows all.
 export const newsItems: NewsItem[] = [
   {
-    id: "n1",
+    id: 1,
     title: "Express Entry draw invites 3,000 skilled-worker candidates",
     description:
       "The latest federal draw lowered the CRS cut-off score — the third invitation round this month.",
@@ -14,7 +14,7 @@ export const newsItems: NewsItem[] = [
     imageLink: "https://picsum.photos/seed/news-immigration/240/240",
   },
   {
-    id: "n2",
+    id: 2,
     title: "2026 rent-increase guideline capped at 2.5%",
     description:
       "Provinces confirm the maximum allowable annual rent increase for existing tenancies.",
@@ -24,7 +24,7 @@ export const newsItems: NewsItem[] = [
     imageLink: "https://picsum.photos/seed/news-housing/240/240",
   },
   {
-    id: "n3",
+    id: 3,
     title: "Free settlement workshops expand to 12 new cities",
     description:
       "Newcomer service agencies add evening sessions on banking, taxes, and job search.",
@@ -34,7 +34,7 @@ export const newsItems: NewsItem[] = [
     imageLink: "https://picsum.photos/seed/news-settlement/240/240",
   },
   {
-    id: "n4",
+    id: 4,
     title: "Provincial Nominee Program streams reopen for healthcare workers",
     description:
       "Several provinces resume nominations targeting nurses, care aides, and allied health roles.",
@@ -44,7 +44,7 @@ export const newsItems: NewsItem[] = [
     imageLink: "https://picsum.photos/seed/news-pnp/240/240",
   },
   {
-    id: "n5",
+    id: 5,
     title: "New tax-filing guide published for first-time residents",
     description:
       "The CRA releases a plain-language walkthrough for newcomers filing a Canadian return for the first time.",
@@ -54,7 +54,7 @@ export const newsItems: NewsItem[] = [
     imageLink: "https://picsum.photos/seed/news-tax/240/240",
   },
   {
-    id: "n6",
+    id: 6,
     title: "Language-class waitlists shorten as funding expands",
     description:
       "Federal funding adds thousands of LINC and CLB assessment seats across the country.",
