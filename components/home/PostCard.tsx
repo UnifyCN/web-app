@@ -29,13 +29,19 @@ export function PostCard({ post }: { post: Post }) {
       setPopping(true);
       window.setTimeout(() => setPopping(false), 220);
     }
-    likeMutation.mutate({ postId: post.id, liked: wasLiked });
+    likeMutation.mutate(
+      { postId: post.id, liked: wasLiked },
+      { onError: () => setLiked(wasLiked) },
+    );
   }
 
   function toggleSave() {
     const wasSaved = saved;
     setSaved(!wasSaved);
-    saveMutation.mutate({ postId: post.id, saved: wasSaved });
+    saveMutation.mutate(
+      { postId: post.id, saved: wasSaved },
+      { onError: () => setSaved(wasSaved) },
+    );
   }
 
   const hasImages = post.postImageUrls.length > 0;

@@ -8,24 +8,27 @@ const FEED_KEY = ["feed"] as const;
 
 /* ---- Per-tab feed queries (first-page-only) --------------------------- */
 
-export function useForYouFeed() {
+export function useForYouFeed(enabled: boolean = true) {
   return useQuery({
     queryKey: [...FEED_KEY, "forYou"],
     queryFn: () => feed.getForYouFeed(),
+    enabled,
   });
 }
 
-export function useFollowingFeed() {
+export function useFollowingFeed(enabled: boolean = true) {
   return useQuery({
     queryKey: [...FEED_KEY, "following"],
     queryFn: () => feed.getFollowingFeed(),
+    enabled,
   });
 }
 
-export function useGroupsFeed() {
+export function useGroupsFeed(enabled: boolean = true) {
   return useQuery({
     queryKey: [...FEED_KEY, "groups"],
     queryFn: () => feed.getGroupsFeed(),
+    enabled,
   });
 }
 

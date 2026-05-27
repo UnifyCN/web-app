@@ -30,9 +30,9 @@ const FEED_EMPTY: Record<string, { title: string; sub: string }> = {
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState(FEED_TABS[0]);
 
-  const forYou = useForYouFeed();
-  const following = useFollowingFeed();
-  const groups = useGroupsFeed();
+  const forYou = useForYouFeed(activeTab === "For You");
+  const following = useFollowingFeed(activeTab === "Following");
+  const groups = useGroupsFeed(activeTab === "Groups");
 
   const active =
     activeTab === "Following" ? following : activeTab === "Groups" ? groups : forYou;

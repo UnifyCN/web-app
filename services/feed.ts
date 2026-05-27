@@ -191,18 +191,30 @@ export async function getForYouFeed(
     if (pinnedRes.error) throw pinnedRes.error;
     if (nonPinnedRes.error) throw nonPinnedRes.error;
 
-    const pinned = (pinnedRes.data as unknown as JoinedPostRow[]).map(rowToPost);
-    const remaining = Math.max(0, limit - pinned.length);
+    const pinnedPosts = (pinnedRes.data as unknown as JoinedPostRow[]).map(
+      rowToPost,
+    );
+    // Cap pinned at the page limit so a flood of pinned posts can't blow past
+    // it; fill remaining slots with non-pinned.
+    const cappedPinned = pinnedPosts.slice(0, limit);
+    const remaining = limit - cappedPinned.length;
     const nonPinnedRows = (nonPinnedRes.data as unknown as JoinedPostRow[]).slice(
       0,
       remaining,
     );
     const nonPinned = nonPinnedRows.map(rowToPost);
 
-    const enriched = await enrichPostsWithMetadata([...pinned, ...nonPinned]);
+    const enriched = await enrichPostsWithMetadata([
+      ...cappedPinned,
+      ...nonPinned,
+    ]);
 
+    // Fall back to the last pinned post's createdAt when there are no
+    // non-pinned posts on this page, so page 2 still has a starting point.
     const lastNonPinned = nonPinnedRows[nonPinnedRows.length - 1];
-    const nextCursor = lastNonPinned?.created_at;
+    const nextCursor =
+      lastNonPinned?.created_at ??
+      cappedPinned[cappedPinned.length - 1]?.createdAt;
 
     return { posts: enriched, nextCursor };
   }
@@ -252,7 +264,8 @@ export async function getFollowingFeed(
   const followingIds = (followingRes.data ?? []).map((r) => r.following_id);
   if (followingIds.length === 0) return { posts: [], nextCursor: undefined };
 
-  const offset = cursor ? parseInt(cursor, 10) : 0;
+  const parsed = cursor ? parseInt(cursor, 10) : 0;
+  const offset = Number.isFinite(parsed) ? parsed : 0;
   const { data, error } = await supabase
     .from("posts")
     .select(POSTS_SELECT)
@@ -291,7 +304,8 @@ export async function getGroupsFeed(
   const groupIds = (membershipRes.data ?? []).map((r) => r.group_id);
   if (groupIds.length === 0) return { posts: [], nextCursor: undefined };
 
-  const offset = cursor ? parseInt(cursor, 10) : 0;
+  const parsed = cursor ? parseInt(cursor, 10) : 0;
+  const offset = Number.isFinite(parsed) ? parsed : 0;
   const { data, error } = await supabase
     .from("posts")
     .select(POSTS_SELECT)
