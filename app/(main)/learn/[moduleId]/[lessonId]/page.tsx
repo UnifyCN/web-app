@@ -60,17 +60,20 @@ export default function LessonDetailPage({
     .slice()
     .sort((a, b) => a.order - b.order);
 
-  function handleMarkComplete() {
+  function handleToggleComplete() {
+    const next = !isCompleted;
     setLessonProgress.mutate(
       {
         lessonId,
-        progressPercent: 100,
-        isCompleted: true,
+        progressPercent: next ? 100 : 0,
+        isCompleted: next,
         moduleId,
       },
       {
         onSuccess: () => {
-          router.push(`/learn/${moduleId}`);
+          // Routing back is part of the "I finished this" flow; on undo we
+          // stay so the label flip is the visible feedback.
+          if (next) router.push(`/learn/${moduleId}`);
         },
       },
     );
@@ -128,11 +131,10 @@ export default function LessonDetailPage({
           type="button"
           variant="primary"
           size="lg"
-          onClick={handleMarkComplete}
+          onClick={handleToggleComplete}
           loading={setLessonProgress.isPending}
-          disabled={isCompleted}
         >
-          {isCompleted ? "Completed" : "Mark as complete"}
+          {isCompleted ? "Mark as incomplete" : "Mark as complete"}
         </Button>
         <Link
           href={`/learn/${moduleId}`}
