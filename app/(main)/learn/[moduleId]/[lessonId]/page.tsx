@@ -2,7 +2,6 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
@@ -24,7 +23,6 @@ export default function LessonDetailPage({
   const lessonQuery = useLesson(lessonId);
   const progressesQuery = useAllLessonProgresses();
   const setLessonProgress = useSetLessonProgress();
-  const router = useRouter();
 
   const mod = moduleQuery.data;
   const lesson = lessonQuery.data;
@@ -62,21 +60,12 @@ export default function LessonDetailPage({
 
   function handleToggleComplete() {
     const next = !isCompleted;
-    setLessonProgress.mutate(
-      {
-        lessonId,
-        progressPercent: next ? 100 : 0,
-        isCompleted: next,
-        moduleId,
-      },
-      {
-        onSuccess: () => {
-          // Routing back is part of the "I finished this" flow; on undo we
-          // stay so the label flip is the visible feedback.
-          if (next) router.push(`/learn/${moduleId}`);
-        },
-      },
-    );
+    setLessonProgress.mutate({
+      lessonId,
+      progressPercent: next ? 100 : 0,
+      isCompleted: next,
+      moduleId,
+    });
   }
 
   return (
@@ -129,7 +118,7 @@ export default function LessonDetailPage({
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <Button
           type="button"
-          variant="primary"
+          variant={isCompleted ? "secondary" : "primary"}
           size="lg"
           onClick={handleToggleComplete}
           loading={setLessonProgress.isPending}
