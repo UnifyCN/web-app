@@ -136,6 +136,68 @@ export const mockLessonsById: Record<string, SanityLesson> = {
       },
     ],
   },
+  "mock-lesson-id": {
+    _id: "mock-lesson-id",
+    _type: "lesson",
+    title: "Getting a provincial photo ID",
+    description: "An ID you can carry day-to-day.",
+    order: 2,
+    pages: [
+      {
+        _key: "p1",
+        _type: "page",
+        title: "Why you'll want one",
+        order: 1,
+        content: [
+          {
+            _key: "b1",
+            _type: "block",
+            style: "normal",
+            markDefs: [],
+            children: [
+              {
+                _key: "s1",
+                _type: "span",
+                marks: [],
+                text: "A provincial photo ID lets you prove your identity day-to-day without carrying your passport.",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  "mock-lesson-bank": {
+    _id: "mock-lesson-bank",
+    _type: "lesson",
+    title: "Newcomer bank accounts",
+    description: "Fee-free options for your first year.",
+    order: 1,
+    pages: [
+      {
+        _key: "p1",
+        _type: "page",
+        title: "What banks offer newcomers",
+        order: 1,
+        content: [
+          {
+            _key: "b1",
+            _type: "block",
+            style: "normal",
+            markDefs: [],
+            children: [
+              {
+                _key: "s1",
+                _type: "span",
+                marks: [],
+                text: "Most major Canadian banks waive monthly fees for your first year — bring your passport and one more piece of ID to open an account.",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 };
 
 export function getMockModuleById(id: string): LearnModuleView | undefined {

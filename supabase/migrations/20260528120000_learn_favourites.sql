@@ -9,8 +9,9 @@ create table public.learn_favourites (
   primary key (user_id, sanity_module_id)
 );
 
-create index idx_learn_favourites_user
-  on public.learn_favourites(user_id);
+-- No separate index on user_id — the primary key (user_id,
+-- sanity_module_id) is already a btree with user_id as its leftmost
+-- column, so single-column user_id lookups use the PK index.
 
 alter table public.learn_favourites enable row level security;
 

@@ -5,6 +5,7 @@ import type {
   ModuleStatus,
   SanityLesson,
   SanityModule,
+  SanitySubmodule,
 } from "@/types";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
@@ -62,11 +63,25 @@ function rowToLessonProgress(row: LessonProgressRow): LessonProgress {
   };
 }
 
-/** Cosmetic percent for the list view; detail view computes the real value. */
-function percentForStatus(status: ModuleStatus): number {
-  if (status === "completed") return 100;
-  if (status === "in_progress") return 50;
-  return 0;
+/** Real percent from a set of completed-lesson IDs over the module's total. */
+function computeModulePercent(
+  lessonIds: string[],
+  completedSet: Set<string>,
+): number {
+  if (lessonIds.length === 0) return 0;
+  const done = lessonIds.filter((id) => completedSet.has(id)).length;
+  return Math.round((done / lessonIds.length) * 100);
+}
+
+/** MODULES_LIST_QUERY adds `lessonIds` to each submodule — service-local
+ * shape so the public SanitySubmodule type stays slim. Use Omit so the
+ * extension fully replaces the (lessons-less) submodule field rather than
+ * intersecting (which TS resolves inconsistently for optional arrays). */
+interface ListSubmodule extends Omit<SanitySubmodule, "lessons"> {
+  lessonIds?: string[];
+}
+interface ListModule extends Omit<SanityModule, "submodules"> {
+  submodules?: ListSubmodule[];
 }
 
 /* ---- Modules ---------------------------------------------------------- */
@@ -74,20 +89,22 @@ function percentForStatus(status: ModuleStatus): number {
 export async function getModules(): Promise<LearnModuleView[]> {
   if (!isSanityConfigured()) return mockModules;
 
-  const sanityModules = await sanityClient.fetch<SanityModule[]>(
+  const sanityModules = await sanityClient.fetch<ListModule[]>(
     MODULES_LIST_QUERY,
   );
 
   // Per-user merge: only when Supabase is configured AND the caller is
-  // signed in. Otherwise return the Sanity modules with default state.
+  // signed in. Otherwise return the Sanity modules with default state
+  // (no progress, no favourites).
   let progressByModuleId: Record<string, LearnProgressRow> = {};
   let favouriteIds = new Set<string>();
+  let completedLessonIds = new Set<string>();
 
   if (isSupabaseConfigured()) {
     const userId = await getAuthUserId();
     if (userId) {
       const supabase = createClient();
-      const [progressRes, favRes] = await Promise.all([
+      const [progressRes, favRes, lessonsRes] = await Promise.all([
         supabase
           .from("learn_progress")
           .select("module_id, status, completed_at, updated_at")
@@ -96,9 +113,15 @@ export async function getModules(): Promise<LearnModuleView[]> {
           .from("learn_favourites")
           .select("sanity_module_id")
           .eq("user_id", userId),
+        supabase
+          .from("user_lesson_progress")
+          .select("sanity_lesson_id, is_completed")
+          .eq("user_id", userId)
+          .eq("is_completed", true),
       ]);
       if (progressRes.error) throw progressRes.error;
       if (favRes.error) throw favRes.error;
+      if (lessonsRes.error) throw lessonsRes.error;
 
       progressByModuleId = Object.fromEntries(
         ((progressRes.data ?? []) as LearnProgressRow[]).map((r) => [
@@ -111,16 +134,24 @@ export async function getModules(): Promise<LearnModuleView[]> {
           (r) => r.sanity_module_id,
         ),
       );
+      completedLessonIds = new Set(
+        ((lessonsRes.data ?? []) as { sanity_lesson_id: string }[]).map(
+          (r) => r.sanity_lesson_id,
+        ),
+      );
     }
   }
 
   return sanityModules.map((mod) => {
-    const progress = progressByModuleId[mod._id];
-    const status: ModuleStatus = progress?.status ?? "not_started";
+    const status: ModuleStatus =
+      progressByModuleId[mod._id]?.status ?? "not_started";
+    const lessonIds = (mod.submodules ?? []).flatMap(
+      (s) => s.lessonIds ?? [],
+    );
     return {
       ...mod,
       status,
-      progressPercent: percentForStatus(status),
+      progressPercent: computeModulePercent(lessonIds, completedLessonIds),
       isFavourite: favouriteIds.has(mod._id),
     };
   });
@@ -246,11 +277,14 @@ export async function getAllLessonProgresses(): Promise<
 export async function getLearningProgressSummary(): Promise<
   LearningProgressSummary[]
 > {
+  // Mock fallback only kicks in when env vars aren't set (local dev). A
+  // signed-out user in a configured environment gets an empty list — they
+  // shouldn't see other-people's-shaped placeholder data.
   if (!isSupabaseConfigured() || !isSanityConfigured()) {
     return mockLearningProgress;
   }
   const userId = await getAuthUserId();
-  if (!userId) return mockLearningProgress;
+  if (!userId) return [];
 
   const supabase = createClient();
   const { data, error } = await supabase
@@ -264,14 +298,36 @@ export async function getLearningProgressSummary(): Promise<
   const rows = (data ?? []) as { module_id: string; updated_at: string }[];
   if (rows.length === 0) return [];
 
+  // Pull the title/colour + lesson IDs for the in-progress modules so we
+  // can compute real percent. One Sanity query + one Supabase query, both
+  // in parallel.
   const moduleIds = rows.map((r) => r.module_id);
-  const sanityModules = await sanityClient.fetch<
-    Pick<SanityModule, "_id" | "title" | "colorTheme">[]
-  >(
-    `*[_type == "module" && _id in $ids]{
-      _id, title, colorTheme { hex }
-    }`,
-    { ids: moduleIds },
+  const [sanityModules, lessonsRes] = await Promise.all([
+    sanityClient.fetch<
+      (Pick<SanityModule, "_id" | "title" | "colorTheme"> & {
+        lessonIds?: string[];
+      })[]
+    >(
+      `*[_type == "module" && _id in $ids]{
+        _id, title, colorTheme { hex },
+        "lessonIds": *[_type == "submodule" && references(^._id)][]{
+          "ids": *[_type == "lesson" && references(^._id)]._id
+        }.ids[]
+      }`,
+      { ids: moduleIds },
+    ),
+    supabase
+      .from("user_lesson_progress")
+      .select("sanity_lesson_id, is_completed")
+      .eq("user_id", userId)
+      .eq("is_completed", true),
+  ]);
+  if (lessonsRes.error) throw lessonsRes.error;
+
+  const completedSet = new Set(
+    ((lessonsRes.data ?? []) as { sanity_lesson_id: string }[]).map(
+      (r) => r.sanity_lesson_id,
+    ),
   );
   const sanityById = new Map(sanityModules.map((m) => [m._id, m]));
 
@@ -283,7 +339,10 @@ export async function getLearningProgressSummary(): Promise<
       return {
         moduleId: mod._id,
         moduleName: mod.title,
-        progressPercent: percentForStatus("in_progress"),
+        progressPercent: computeModulePercent(
+          mod.lessonIds ?? [],
+          completedSet,
+        ),
         colorHex: mod.colorTheme?.hex ?? null,
       } satisfies LearningProgressSummary;
     })

@@ -121,6 +121,7 @@ export function useSetLessonProgress() {
     onSuccess: (_data, { moduleId }) => {
       queryClient.invalidateQueries({ queryKey: LESSON_PROGRESSES_KEY });
       queryClient.invalidateQueries({ queryKey: MODULES_KEY });
+      queryClient.invalidateQueries({ queryKey: LEARNING_PROGRESS_KEY });
       if (moduleId) {
         queryClient.invalidateQueries({
           queryKey: [...MODULES_KEY, moduleId],

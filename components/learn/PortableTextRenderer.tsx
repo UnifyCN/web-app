@@ -1,4 +1,5 @@
 import { PortableText, type PortableTextComponents } from "@portabletext/react";
+import { cn } from "@/lib/utils";
 import type { SanityBlock } from "@/types";
 
 /**
@@ -97,7 +98,7 @@ export function PortableTextRenderer({
 }: PortableTextRendererProps) {
   if (!value || value.length === 0) return null;
   return (
-    <div className={className ?? "space-y-3"}>
+    <div className={cn("space-y-3", className)}>
       <PortableText value={value} components={components} />
     </div>
   );
