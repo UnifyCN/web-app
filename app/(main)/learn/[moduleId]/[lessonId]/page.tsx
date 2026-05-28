@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import { Button } from "@/components/ui/Button";
@@ -118,10 +118,13 @@ export default function LessonDetailPage({
       <div className="mt-8 flex flex-wrap items-center gap-3">
         <Button
           type="button"
-          variant={isCompleted ? "secondary" : "primary"}
+          variant="primary"
           size="lg"
           onClick={handleToggleComplete}
           loading={setLessonProgress.isPending}
+          leftIcon={
+            isCompleted ? <Check className="h-4 w-4" aria-hidden /> : undefined
+          }
         >
           {isCompleted ? "Mark as incomplete" : "Mark as complete"}
         </Button>
