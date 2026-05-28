@@ -2,10 +2,10 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
-import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 import {
   useAllLessonProgresses,
   useLesson,
@@ -80,6 +80,14 @@ export default function LessonDetailPage({
         ]}
       />
 
+      <Link
+        href={`/learn/${moduleId}`}
+        className="mt-3 inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Back to module
+      </Link>
+
       <h1 className="mt-4 text-2xl font-bold text-ink-secondary">
         {lesson.title}
       </h1>
@@ -115,26 +123,48 @@ export default function LessonDetailPage({
         </div>
       )}
 
-      <div className="mt-8 flex flex-wrap items-center gap-3">
-        <Button
+      <div className="mt-10 border-t border-border-card pt-6">
+        <button
           type="button"
-          variant="primary"
-          size="lg"
           onClick={handleToggleComplete}
-          loading={setLessonProgress.isPending}
-          leftIcon={
-            isCompleted ? <Check className="h-4 w-4" aria-hidden /> : undefined
-          }
+          aria-pressed={isCompleted}
+          disabled={setLessonProgress.isPending}
+          className={cn(
+            "group flex items-center gap-3",
+            setLessonProgress.isPending ? "cursor-wait" : "cursor-pointer",
+          )}
         >
-          {isCompleted ? "Mark as incomplete" : "Mark as complete"}
-        </Button>
-        <Link
-          href={`/learn/${moduleId}`}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-border-card bg-surface px-6 text-sm font-semibold text-ink-secondary transition-colors hover:bg-surface-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-        >
-          Back to module
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
+          <span
+            className={cn(
+              "flex h-6 w-6 items-center justify-center rounded-md transition-colors",
+              isCompleted
+                ? "bg-primary text-white"
+                : "border-2 border-primary",
+            )}
+          >
+            {setLessonProgress.isPending ? (
+              <Loader2
+                className={cn(
+                  "h-3.5 w-3.5 animate-spin",
+                  isCompleted ? "text-white" : "text-ink-muted",
+                )}
+                aria-hidden
+              />
+            ) : isCompleted ? (
+              <Check className="h-4 w-4" aria-hidden />
+            ) : null}
+          </span>
+          <span
+            className={cn(
+              "text-sm font-semibold transition-colors",
+              isCompleted
+                ? "text-primary"
+                : "text-ink-secondary group-hover:text-primary",
+            )}
+          >
+            {isCompleted ? "Completed" : "Mark as complete"}
+          </span>
+        </button>
       </div>
     </div>
   );
