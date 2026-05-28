@@ -68,6 +68,7 @@ export default function CompanionPage() {
       if (conversationIdentifier === activeId) setActiveId(null);
     } catch (err) {
       console.error("Companion: failed to delete conversation", err);
+      throw err;
     }
   }
 

@@ -69,14 +69,16 @@ export function ConversationList({
     if (!deleteTarget) return;
     try {
       await onDelete(deleteTarget.id);
-    } finally {
       setDeleteTarget(null);
+    } catch {
+      // Parent already logged. Keep the modal open with re-enabled buttons
+      // (isDeleting flips false) so the user can retry or cancel.
     }
   }
 
   return (
     <>
-      <aside className="flex w-[200px] shrink-0 flex-col border-r border-border-card bg-surface">
+      <aside className="flex w-[280px] shrink-0 flex-col border-r border-border-card bg-surface">
         <div className="space-y-3 p-3">
           <button
             type="button"
