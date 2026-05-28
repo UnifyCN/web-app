@@ -142,3 +142,44 @@ export function useSendMessage() {
     },
   });
 }
+
+/**
+ * Deletes a conversation row (cascades to its messages). Optimistically
+ * removes it from the conversation list and drops the cached message thread.
+ * Restores the previous list on error; safety-net invalidate on success.
+ */
+export function useDeleteConversation() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    void,
+    Error,
+    string,
+    { previous: Conversation[] | undefined }
+  >({
+    mutationFn: (conversationIdentifier) =>
+      companion.deleteConversation(conversationIdentifier),
+    onMutate: async (conversationIdentifier) => {
+      await queryClient.cancelQueries({ queryKey: CONVERSATIONS_KEY });
+      const previous = queryClient.getQueryData<Conversation[]>(
+        CONVERSATIONS_KEY,
+      );
+      queryClient.setQueryData<Conversation[]>(
+        CONVERSATIONS_KEY,
+        (prev) =>
+          (prev ?? []).filter((c) => c.id !== conversationIdentifier),
+      );
+      queryClient.removeQueries({
+        queryKey: messagesKey(conversationIdentifier),
+      });
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(CONVERSATIONS_KEY, context.previous);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
+    },
+  });
+}
