@@ -142,3 +142,84 @@ Goal: A running, empty Next.js 14 app.
 - Confirm which Figma frames map to each section (only entry node 3701-3084 given).
 - Real Supabase/Sanity env values needed before any data wiring.
 - Auth flow (Google → Apple SSO) deferred per CLAUDE.md.
+
+---
+
+# Backend Wiring Phases
+
+After the frontend build closed out (Phase 14), wiring is happening one section
+per PR against the live web-app Supabase project. Each phase follows the
+Community wiring pattern (`services/community.ts` + `hooks/useCommunity.ts`):
+`isSupabaseConfigured()` guard, snake_case row mappers, React Query hooks with
+stable keys + `onSuccess` invalidation. Earlier wiring phases (Auth, Profile,
+Home/Feed, Community) are tracked in their PR descriptions; the current entries
+below pick up at Companion.
+
+## Phase 6 — Companion (persistence)
+
+**Status:** ✅ Merged — PR #7 (`feat: wire companion to Supabase persistence`).
+
+Wired `/companion` to real Supabase `conversations` / `messages` /
+`chatbot_usage` tables. Service layer mirrors the Community pattern;
+`useSendMessage` orchestrates create → optimistic user bubble → save user →
+~900ms canned reply → save assistant → invalidate. Schema already migrated in
+`supabase/migrations/20260518100300_companion.sql` (own-row RLS, cascade on
+delete, trigger to bump `conversations.updated_at`).
+
+### Phase 6 add-on — Conversation delete
+
+**Status:** ✅ Merged — PR #8 (`feat: add conversation delete to Companion`).
+
+Includes:
+
+- Hover `•••` ellipsis menu per row, popover with a Delete item.
+- Confirm modal (destructive variant) matching the Unify design system.
+- Optimistic delete with rollback on error (`useDeleteConversation`).
+- Portal clipping fix — `RowMenu` sub-component renders via
+  `createPortal(…, document.body)` with position recomputed on scroll/resize
+  (capture phase) so the popover isn't clipped by the sidebar's
+  `overflow-y-auto`.
+- Focus trap in the delete modal — auto-focus Cancel on open, Tab cycles
+  between Cancel and Delete only.
+- Stale delete detection — `deleteConversation` chains `.select()` and throws
+  on zero affected rows (cross-device "already deleted" surfaces as an error
+  so the optimistic remove rolls back instead of silently sticking).
+- Message stream widened: `ChatPanel` `max-w-2xl` → `max-w-4xl`
+  (preview-driven; bubbles read better on wide viewports).
+- Sidebar 240px — preview-driven adjustment from the original 280px.
+
+### Key technical decisions — Phase 6
+
+- **Rate limit deferred to Phase 6.5.** No client-side increment shipped;
+  `chatbot_usage` is read-only for display via `useChatbotUsage`. Atomic
+  `check_and_increment_chatbot_usage` RPC will land in 6.5 to enforce daily
+  caps server-side (matches mobile's `rag-query` pattern).
+- **AI generation deferred to Phase 6.5.** Blocked on Savar providing the
+  Gemini API key. Phase 6 ships persistence + a `CANNED_REPLY` stand-in in
+  `useSendMessage`. When the key lands, replace the `setTimeout` + canned
+  string with a Next.js route-handler streaming call (or port mobile's
+  `rag-query` edge function).
+- **Sidebar 240px (deliberate override).** CLAUDE.md originally specified
+  ~280px; preview showed the sidebar overpowering the chat panel. Spec
+  updated to ~240px in commit `c0de382`. Documented for future readers so
+  the override doesn't get "fixed back" to spec.
+
+## Phase 6.5 — Companion AI + rate limit (next, blocked on Gemini key)
+
+Awaiting Savar's Gemini API key. When unblocked:
+
+- Add `app/api/companion/route.ts` Next.js route handler streaming from
+  Gemini (or port the mobile `rag-query` edge function for full RAG parity).
+- Replace `CANNED_REPLY` in `useSendMessage` with an SSE consumer; persist
+  the streamed assistant text + sources via the existing `saveMessage`.
+- Migration: add `check_and_increment_chatbot_usage(p_user_id, p_daily_limit)`
+  RPC (security-definer) and optional `total_tokens_used` /
+  `total_estimated_cost_usd` columns on `chatbot_usage`.
+- Call the RPC before each send; flip `FreeTierIndicator` from cosmetic to
+  enforced. Surface a 429 toast/inline message when the limit hits.
+
+## Phase 7 — Learn (after 6.5)
+
+Wire `learn_progress`, `user_lesson_progress`, `lesson_highlights` to Sanity
+content. Savar to scope and own per the CLAUDE.md note ("Savar will take over
+the Learn page once the base app is built").
