@@ -143,7 +143,7 @@ export function ConversationList({
 
   return (
     <>
-      <aside className="flex w-[280px] shrink-0 flex-col border-r border-border-card bg-surface">
+      <aside className="flex w-[240px] shrink-0 flex-col border-r border-border-card bg-surface">
         <div className="space-y-3 p-3">
           <button
             type="button"
