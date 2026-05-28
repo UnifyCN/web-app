@@ -4,33 +4,25 @@ import { useState } from "react";
 import { LearnHeaderDropdown } from "@/components/learn/LearnHeaderDropdown";
 import { WelcomeCard } from "@/components/learn/WelcomeCard";
 import { LearnSection } from "@/components/learn/LearnSection";
-import { modules } from "@/lib/mock/modules";
+import { useModules, useToggleFavouriteModule } from "@/hooks/useLearn";
 
 export default function LearnPage() {
-  const [favourites, setFavourites] = useState<Set<string>>(
-    () => new Set(modules.filter((mod) => mod.isFavourite).map((mod) => mod.id)),
-  );
+  const modulesQuery = useModules();
+  const toggleFavourite = useToggleFavouriteModule();
   const [search, setSearch] = useState("");
 
-  function toggleFavourite(id: string) {
-    setFavourites((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }
-
+  const modules = modulesQuery.data ?? [];
   const query = search.trim().toLowerCase();
   const library = query
     ? modules.filter((mod) => mod.title.toLowerCase().includes(query))
     : modules;
   const inProgress = modules.filter((mod) => mod.status === "in_progress");
   const completed = modules.filter((mod) => mod.status === "completed");
-  const favourite = modules.filter((mod) => favourites.has(mod.id));
+  const favourite = modules.filter((mod) => mod.isFavourite);
+
+  function handleToggleFavourite(moduleId: string, next: boolean) {
+    toggleFavourite.mutate({ moduleId, isFavourite: next });
+  }
 
   return (
     <div className="mx-auto max-w-[1080px] px-6 py-6">
@@ -43,26 +35,22 @@ export default function LearnPage() {
           <LearnSection
             title="Lesson Library"
             modules={library}
-            favourites={favourites}
-            onToggleFavourite={toggleFavourite}
+            onToggleFavourite={handleToggleFavourite}
           />
           <LearnSection
             title="In Progress"
             modules={inProgress}
-            favourites={favourites}
-            onToggleFavourite={toggleFavourite}
+            onToggleFavourite={handleToggleFavourite}
           />
           <LearnSection
             title="Completed"
             modules={completed}
-            favourites={favourites}
-            onToggleFavourite={toggleFavourite}
+            onToggleFavourite={handleToggleFavourite}
           />
           <LearnSection
             title="Favourite"
             modules={favourite}
-            favourites={favourites}
-            onToggleFavourite={toggleFavourite}
+            onToggleFavourite={handleToggleFavourite}
           />
         </div>
 

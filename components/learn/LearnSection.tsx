@@ -1,19 +1,17 @@
 import { ChevronRight } from "lucide-react";
 import { ModuleCard } from "./ModuleCard";
-import type { LearnModule } from "@/types";
+import type { LearnModuleView } from "@/types";
 
 interface LearnSectionProps {
   title: string;
-  modules: LearnModule[];
-  favourites: Set<string>;
-  onToggleFavourite: (id: string) => void;
+  modules: LearnModuleView[];
+  onToggleFavourite: (moduleId: string, next: boolean) => void;
 }
 
 /** A Learn home section card — heading + a horizontal row of module cards. */
 export function LearnSection({
   title,
   modules,
-  favourites,
   onToggleFavourite,
 }: LearnSectionProps) {
   if (modules.length === 0) return null;
@@ -27,9 +25,8 @@ export function LearnSection({
       <div className="scrollbar-thin mt-3 flex gap-3 overflow-x-auto pb-1">
         {modules.map((mod) => (
           <ModuleCard
-            key={mod.id}
+            key={mod._id}
             mod={mod}
-            isFavourite={favourites.has(mod.id)}
             onToggleFavourite={onToggleFavourite}
           />
         ))}

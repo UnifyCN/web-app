@@ -1,10 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
-import { learningProgress } from "@/lib/mock/progress";
+import { useLearningProgressSummary } from "@/hooks/useLearn";
 
 /**
  * Right-panel widget — a swipeable carousel of in-progress learning modules.
@@ -16,6 +15,8 @@ import { learningProgress } from "@/lib/mock/progress";
 export function LearningProgressWidget() {
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const { data } = useLearningProgressSummary();
+  const items = data ?? [];
 
   function handleScroll() {
     const track = trackRef.current;
@@ -29,6 +30,8 @@ export function LearningProgressWidget() {
     track.scrollTo({ left: index * track.clientWidth, behavior: "smooth" });
   }
 
+  if (items.length === 0) return null;
+
   return (
     <Card className="overflow-hidden p-0">
       <div
@@ -36,20 +39,16 @@ export function LearningProgressWidget() {
         onScroll={handleScroll}
         className="scrollbar-none flex snap-x snap-mandatory overflow-x-auto"
       >
-        {learningProgress.map((item) => (
+        {items.map((item) => (
           <div
-            key={item.id}
+            key={item.moduleId}
             className="w-full shrink-0 snap-start snap-always"
           >
-            <div className="relative aspect-[16/7] w-full">
-              <Image
-                src={item.bannerUrl}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="320px"
-              />
-            </div>
+            <div
+              className="relative aspect-[16/7] w-full"
+              style={{ backgroundColor: item.colorHex ?? "#9F9D9D" }}
+            />
+
             <div className="p-4">
               <h3 className="text-sm font-semibold text-ink-secondary">
                 Learning Progress
@@ -76,22 +75,24 @@ export function LearningProgressWidget() {
         ))}
       </div>
 
-      <div className="flex items-center justify-center gap-1.5 pb-3.5">
-        {learningProgress.map((item, index) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => goToSlide(index)}
-            aria-label={`Show ${item.moduleName}`}
-            className={cn(
-              "h-1.5 w-1.5 cursor-pointer rounded-full transition-colors duration-150",
-              index === activeIndex
-                ? "bg-ink-secondary"
-                : "bg-border-card hover:bg-ink-inactive",
-            )}
-          />
-        ))}
-      </div>
+      {items.length > 1 && (
+        <div className="flex items-center justify-center gap-1.5 pb-3.5">
+          {items.map((item, index) => (
+            <button
+              key={item.moduleId}
+              type="button"
+              onClick={() => goToSlide(index)}
+              aria-label={`Show ${item.moduleName}`}
+              className={cn(
+                "h-1.5 w-1.5 cursor-pointer rounded-full transition-colors duration-150",
+                index === activeIndex
+                  ? "bg-ink-secondary"
+                  : "bg-border-card hover:bg-ink-inactive",
+              )}
+            />
+          ))}
+        </div>
+      )}
     </Card>
   );
 }

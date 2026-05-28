@@ -1,23 +1,16 @@
 import type { LearningProgressSummary } from "@/types";
 
-// TODO: replace with real data — mock learning progress for the Home widget.
-export const learningProgress: LearningProgressSummary[] = [
+/**
+ * Home right-panel mock fallback. Used by services/learn.ts when Supabase
+ * isn't configured. Real source: learn_progress joined with Sanity module
+ * metadata via getLearningProgressSummary().
+ */
+
+export const mockLearningProgress: LearningProgressSummary[] = [
   {
-    id: "lp1",
-    moduleName: "Banking & Credit in Canada",
-    progressPercent: 20,
-    bannerUrl: "https://picsum.photos/seed/learn-banking/640/280",
-  },
-  {
-    id: "lp2",
-    moduleName: "Finding Your First Home",
-    progressPercent: 60,
-    bannerUrl: "https://picsum.photos/seed/learn-housing/640/280",
-  },
-  {
-    id: "lp3",
-    moduleName: "Healthcare Essentials",
-    progressPercent: 100,
-    bannerUrl: "https://picsum.photos/seed/learn-health/640/280",
+    moduleId: "mock-mod-docs",
+    moduleName: "Documentation & Identification",
+    progressPercent: 50,
+    colorHex: "#5182C7",
   },
 ];

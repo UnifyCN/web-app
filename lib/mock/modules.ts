@@ -1,227 +1,147 @@
-import type { LearnModule } from "@/types";
+import type { LearnModuleView, SanityLesson } from "@/types";
 
-// TODO: replace with real data — mock newcomer learning modules.
-export const modules: LearnModule[] = [
+/**
+ * Mock fallback used by services/learn.ts when Sanity isn't configured
+ * (local dev without env vars). The real source is the
+ * `fercgabp/production` Sanity dataset (13 modules / 54 submodules /
+ * 199 lessons). Small placeholder set.
+ */
+
+export const mockModules: LearnModuleView[] = [
   {
-    id: "m-docs",
+    _id: "mock-mod-docs",
+    _type: "module",
     title: "Documentation & Identification",
-    description:
-      "The SIN, PR card, and provincial ID you need in your first weeks.",
-    colorToken: "var(--color-primary)",
-    bannerUrl: "https://picsum.photos/seed/learn-paperwork/640/360",
-    status: "in_progress",
-    progressPercent: 65,
-    isFavourite: true,
-    lessons: [
+    description: "Get your SIN, health card, and other essentials set up.",
+    colorTheme: { hex: "#5182C7" },
+    icon: null,
+    submodules: [
       {
-        id: "l-docs-1",
-        title: "Understanding your PR confirmation",
-        description: "What the COPR document is and why it matters.",
-        imageUrl: "https://picsum.photos/seed/lesson-docs1/480/320",
-        progressPercent: 100,
-        isCompleted: true,
-      },
-      {
-        id: "l-docs-2",
-        title: "Applying for a Social Insurance Number",
-        description: "A walk-through of getting your SIN at Service Canada.",
-        imageUrl: "https://picsum.photos/seed/lesson-docs2/480/320",
-        progressPercent: 100,
-        isCompleted: true,
-      },
-      {
-        id: "l-docs-3",
-        title: "Getting provincial photo ID",
-        description: "Provincial ID cards and driver's licences explained.",
-        imageUrl: "https://picsum.photos/seed/lesson-docs3/480/320",
-        progressPercent: 30,
-        isCompleted: false,
+        _id: "mock-sub-docs-1",
+        _type: "submodule",
+        title: "First-week essentials",
+        description: "Apply for your SIN and find an address.",
+        order: 1,
+        lessons: [
+          {
+            _id: "mock-lesson-sin",
+            _type: "lesson",
+            title: "Applying for a SIN",
+            order: 1,
+            description: "What to bring and where to go.",
+            lesson_page_count: 2,
+          },
+          {
+            _id: "mock-lesson-id",
+            _type: "lesson",
+            title: "Getting a provincial photo ID",
+            order: 2,
+            description: "An ID you can carry day-to-day.",
+            lesson_page_count: 3,
+          },
+        ],
       },
     ],
+    status: "in_progress",
+    progressPercent: 50,
+    isFavourite: true,
   },
   {
-    id: "m-banking",
-    title: "Banking & Credit in Canada",
-    description:
-      "Open an account, understand fees, and build a credit history.",
-    colorToken: "var(--color-mention-blue)",
-    bannerUrl: "https://picsum.photos/seed/learn-banking/640/360",
-    status: "in_progress",
-    progressPercent: 80,
-    isFavourite: false,
-    lessons: [
+    _id: "mock-mod-banking",
+    _type: "module",
+    title: "Banking & Credit",
+    description: "Open an account and start building Canadian credit.",
+    colorTheme: { hex: "#FFB570" },
+    icon: null,
+    submodules: [
       {
-        id: "l-banking-1",
+        _id: "mock-sub-banking-1",
+        _type: "submodule",
         title: "Choosing a bank",
-        description: "Compare the big banks and what they offer newcomers.",
-        imageUrl: "https://picsum.photos/seed/lesson-bank1/480/320",
-        progressPercent: 100,
-        isCompleted: true,
-      },
-      {
-        id: "l-banking-2",
-        title: "Newcomer banking packages",
-        description: "No-fee newcomer packages and how to qualify.",
-        imageUrl: "https://picsum.photos/seed/lesson-bank2/480/320",
-        progressPercent: 100,
-        isCompleted: true,
-      },
-      {
-        id: "l-banking-3",
-        title: "Building your credit score",
-        description: "How credit works and how to start building it.",
-        imageUrl: "https://picsum.photos/seed/lesson-bank3/480/320",
-        progressPercent: 50,
-        isCompleted: false,
+        description: "Newcomer packages compared.",
+        order: 1,
+        lessons: [
+          {
+            _id: "mock-lesson-bank",
+            _type: "lesson",
+            title: "Newcomer bank accounts",
+            order: 1,
+            description: "Fee-free options for your first year.",
+            lesson_page_count: 2,
+          },
+        ],
       },
     ],
-  },
-  {
-    id: "m-home",
-    title: "Finding a Home",
-    description: "Leases, tenant rights, and running a rental search.",
-    colorToken: "var(--color-priority-explore)",
-    bannerUrl: "https://picsum.photos/seed/learn-home/640/360",
-    status: "not_started",
-    progressPercent: 0,
-    isFavourite: true,
-    lessons: [
-      {
-        id: "l-home-1",
-        title: "Understanding a lease",
-        description: "Lease terms, deposits, and what to check before signing.",
-        imageUrl: "https://picsum.photos/seed/lesson-home1/480/320",
-        progressPercent: 0,
-        isCompleted: false,
-      },
-      {
-        id: "l-home-2",
-        title: "Your rights as a tenant",
-        description: "What landlords can and cannot do.",
-        imageUrl: "https://picsum.photos/seed/lesson-home2/480/320",
-        progressPercent: 0,
-        isCompleted: false,
-      },
-      {
-        id: "l-home-3",
-        title: "Running a rental search",
-        description: "Where to look and how to stand out to landlords.",
-        imageUrl: "https://picsum.photos/seed/lesson-home3/480/320",
-        progressPercent: 0,
-        isCompleted: false,
-      },
-    ],
-  },
-  {
-    id: "m-health",
-    title: "Healthcare Essentials",
-    description: "Provincial coverage and navigating the care system.",
-    colorToken: "var(--color-priority-do-now)",
-    bannerUrl: "https://picsum.photos/seed/learn-health/640/360",
     status: "not_started",
     progressPercent: 0,
     isFavourite: false,
-    lessons: [
-      {
-        id: "l-health-1",
-        title: "Applying for a health card",
-        description: "How to register for provincial health coverage.",
-        imageUrl: "https://picsum.photos/seed/lesson-health1/480/320",
-        progressPercent: 0,
-        isCompleted: false,
-      },
-      {
-        id: "l-health-2",
-        title: "The coverage waiting period",
-        description: "Bridging the gap with interim private insurance.",
-        imageUrl: "https://picsum.photos/seed/lesson-health2/480/320",
-        progressPercent: 0,
-        isCompleted: false,
-      },
-      {
-        id: "l-health-3",
-        title: "Finding a family doctor",
-        description: "Walk-in clinics, telehealth, and doctor waitlists.",
-        imageUrl: "https://picsum.photos/seed/lesson-health3/480/320",
-        progressPercent: 0,
-        isCompleted: false,
-      },
-    ],
-  },
-  {
-    id: "m-work",
-    title: "Working in Canada",
-    description: "Land your first role and learn Canadian workplace norms.",
-    colorToken: "var(--color-priority-do-soon)",
-    bannerUrl: "https://picsum.photos/seed/learn-work/640/360",
-    status: "not_started",
-    progressPercent: 0,
-    isFavourite: false,
-    lessons: [
-      {
-        id: "l-work-1",
-        title: "Writing a Canadian resume",
-        description: "Formatting and tailoring your resume for Canada.",
-        imageUrl: "https://picsum.photos/seed/lesson-work1/480/320",
-        progressPercent: 0,
-        isCompleted: false,
-      },
-      {
-        id: "l-work-2",
-        title: "Running your job search",
-        description: "Job boards, networking, and working with recruiters.",
-        imageUrl: "https://picsum.photos/seed/lesson-work2/480/320",
-        progressPercent: 0,
-        isCompleted: false,
-      },
-      {
-        id: "l-work-3",
-        title: "Canadian workplace culture",
-        description: "Communication norms and your rights as an employee.",
-        imageUrl: "https://picsum.photos/seed/lesson-work3/480/320",
-        progressPercent: 0,
-        isCompleted: false,
-      },
-    ],
-  },
-  {
-    id: "m-daily",
-    title: "Canadian Daily Life",
-    description: "Transit, groceries, and the everyday essentials.",
-    colorToken: "var(--color-priority-optional)",
-    bannerUrl: "https://picsum.photos/seed/learn-daily/640/360",
-    status: "completed",
-    progressPercent: 100,
-    isFavourite: false,
-    lessons: [
-      {
-        id: "l-daily-1",
-        title: "Using public transit",
-        description: "Transit passes, apps, and getting around your city.",
-        imageUrl: "https://picsum.photos/seed/lesson-daily1/480/320",
-        progressPercent: 100,
-        isCompleted: true,
-      },
-      {
-        id: "l-daily-2",
-        title: "Getting a driver's licence",
-        description: "Exchanging or earning a Canadian driver's licence.",
-        imageUrl: "https://picsum.photos/seed/lesson-daily2/480/320",
-        progressPercent: 100,
-        isCompleted: true,
-      },
-      {
-        id: "l-daily-3",
-        title: "Grocery shopping on a budget",
-        description: "Where to shop and how to keep grocery costs down.",
-        imageUrl: "https://picsum.photos/seed/lesson-daily3/480/320",
-        progressPercent: 100,
-        isCompleted: true,
-      },
-    ],
   },
 ];
 
-export function getModuleById(id: string): LearnModule | undefined {
-  return modules.find((mod) => mod.id === id);
+export const mockLessonsById: Record<string, SanityLesson> = {
+  "mock-lesson-sin": {
+    _id: "mock-lesson-sin",
+    _type: "lesson",
+    title: "Applying for a SIN",
+    description: "What to bring and where to go.",
+    order: 1,
+    pages: [
+      {
+        _key: "p1",
+        _type: "page",
+        title: "What is a SIN?",
+        order: 1,
+        content: [
+          {
+            _key: "b1",
+            _type: "block",
+            style: "normal",
+            markDefs: [],
+            children: [
+              {
+                _key: "s1",
+                _type: "span",
+                marks: [],
+                text: "Your Social Insurance Number (SIN) is a 9-digit number you'll need to work in Canada and access most government services.",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    ending_pages: [
+      {
+        _key: "e1",
+        _type: "endingPage",
+        title: "You now know how to:",
+        order: 1,
+        content: [
+          {
+            _key: "b1",
+            _type: "block",
+            style: "normal",
+            listItem: "bullet",
+            level: 1,
+            markDefs: [],
+            children: [
+              {
+                _key: "s1",
+                _type: "span",
+                marks: [],
+                text: "Apply for a Social Insurance Number in person.",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+};
+
+export function getMockModuleById(id: string): LearnModuleView | undefined {
+  return mockModules.find((m) => m._id === id);
+}
+
+export function getMockLessonById(id: string): SanityLesson | undefined {
+  return mockLessonsById[id];
 }

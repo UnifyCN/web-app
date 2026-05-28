@@ -220,6 +220,12 @@ Awaiting Savar's Gemini API key. When unblocked:
 
 ## Phase 7 — Learn (after 6.5)
 
-Wire `learn_progress`, `user_lesson_progress`, `lesson_highlights` to Sanity
-content. Savar to scope and own per the CLAUDE.md note ("Savar will take over
-the Learn page once the base app is built").
+Wire the Learn section end-to-end:
+- Sanity content (modules, submodules, lessons + full lesson body via
+  `@portabletext/react`).
+- Supabase progress (`learn_progress`, `user_lesson_progress`) + a new
+  `learn_favourites` table for the heart-icon UI.
+- Drop the hardcoded `OBJECTIVES` / `KEY_TERMS` placeholders on the lesson
+  detail page — Sanity has no fields for them (verified 0/199 lessons).
+- Personalization, quizzes/practices/tasks, page-by-page resume, activity
+  pages, and highlights UI are out of scope for this phase.

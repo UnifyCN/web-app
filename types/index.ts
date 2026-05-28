@@ -200,33 +200,101 @@ export interface ChecklistTask {
 
 export type ModuleStatus = "not_started" | "in_progress" | "completed";
 
-export interface Lesson {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  progressPercent: number;
-  isCompleted: boolean;
+/* Sanity content types — mirror the deployed `fercgabp/production` schema.
+ * Content lives in Sanity; per-user progress lives in Supabase (see below). */
+
+export interface SanityImage {
+  _type: "image";
+  asset: { _ref: string; _type: "reference" };
 }
 
-export interface LearnModule {
-  id: string;
+/** A Sanity Portable Text span (inline run inside a block). */
+export interface SanitySpan {
+  _key: string;
+  _type: "span";
+  marks: string[];
+  text: string;
+}
+
+/** A Sanity Portable Text block (paragraph, heading, or list item). */
+export interface SanityBlock {
+  _key: string;
+  _type: "block";
+  style?: string;
+  listItem?: "bullet" | "number";
+  level?: number;
+  markDefs?: { _key: string; _type: string; [k: string]: unknown }[];
+  children: SanitySpan[];
+}
+
+/** A lesson body page (or ending page) — title + portable-text content. */
+export interface SanityLessonPage {
+  _key: string;
+  _type: "page" | "endingPage";
+  title?: string;
+  order: number;
+  content: SanityBlock[];
+}
+
+export interface SanityLesson {
+  _id: string;
+  _type: "lesson";
   title: string;
-  description: string;
-  /** Accent dot colour — must be a brand token value. */
-  colorToken: string;
-  /** Banner image URL. */
-  bannerUrl: string;
+  slug?: { current: string };
+  description?: string | null;
+  order: number;
+  /** Available on detail queries only (LESSON_DETAIL_QUERY). */
+  pages?: SanityLessonPage[];
+  /** Schema-defined but empty across all production lessons today. */
+  activity_pages?: SanityLessonPage[];
+  /** Optional summary pages — present on ~17% of production lessons. */
+  ending_pages?: SanityLessonPage[];
+  /** Populated by MODULE_DETAIL_QUERY's count(pages) projection. */
+  lesson_page_count?: number;
+}
+
+export interface SanitySubmodule {
+  _id: string;
+  _type: "submodule";
+  title: string;
+  description?: string | null;
+  order: number;
+  lessons?: SanityLesson[];
+}
+
+export interface SanityModule {
+  _id: string;
+  _type: "module";
+  title: string;
+  description?: string | null;
+  colorTheme?: { hex: string } | null;
+  /** Material-style icon name (e.g. "school", "language"); not a Sanity
+   * image asset. No web-side glyph mapping yet — UI leans on
+   * `colorTheme.hex` for visual identity. */
+  icon?: string | null;
+  submodules?: SanitySubmodule[];
+}
+
+/* Supabase per-user state. */
+
+export interface LessonProgress {
+  sanityLessonId: string;
+  progressPercent: number;
+  isCompleted: boolean;
+  updatedAt: string;
+}
+
+/** UI viewmodel: Sanity module + merged per-user state. */
+export interface LearnModuleView extends SanityModule {
   status: ModuleStatus;
   progressPercent: number;
   isFavourite: boolean;
-  lessons: Lesson[];
 }
 
 /** Compact learning-progress entry for the Home right-panel widget. */
 export interface LearningProgressSummary {
-  id: string;
+  moduleId: string;
   moduleName: string;
   progressPercent: number;
-  bannerUrl: string;
+  colorHex: string | null;
 }
