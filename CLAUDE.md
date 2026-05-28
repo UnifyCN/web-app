@@ -344,7 +344,7 @@ All other pages: **2-column** — sidebar (fixed) | full content area
 
 **Layout:** Sidebar + 2-panel chat layout
 
-- Left panel (~280px): conversation list + "New Conversation" button
+- Left panel (~240px): conversation list + "New Conversation" button
 - Right panel: active chat
   - User bubbles: right-aligned, `#ff9d40` bg, white text
   - AI bubbles: left-aligned, `#F3F4F6` bg, dark text

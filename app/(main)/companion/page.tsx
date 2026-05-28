@@ -10,6 +10,7 @@ import {
   useConversationMessages,
   useConversations,
   useCreateConversation,
+  useDeleteConversation,
   useSendMessage,
 } from "@/hooks/useCompanion";
 import type { ChatMessage } from "@/types";
@@ -27,6 +28,7 @@ export default function CompanionPage() {
   const usageQuery = useChatbotUsage();
   const createConversation = useCreateConversation();
   const sendMessage = useSendMessage();
+  const deleteConversation = useDeleteConversation();
 
   const conversations = conversationsQuery.data ?? [];
   const messages = messagesQuery.data ?? [];
@@ -60,6 +62,16 @@ export default function CompanionPage() {
     }
   }
 
+  async function handleDelete(conversationIdentifier: string) {
+    try {
+      await deleteConversation.mutateAsync(conversationIdentifier);
+      if (conversationIdentifier === activeId) setActiveId(null);
+    } catch (err) {
+      console.error("Companion: failed to delete conversation", err);
+      throw err;
+    }
+  }
+
   return (
     <div className="flex h-screen">
       <ConversationList
@@ -67,6 +79,8 @@ export default function CompanionPage() {
         activeId={activeId}
         onSelect={setActiveId}
         onNew={() => setActiveId(null)}
+        onDelete={handleDelete}
+        isDeleting={deleteConversation.isPending}
       />
       <ChatPanel
         conversation={activeConversation}
