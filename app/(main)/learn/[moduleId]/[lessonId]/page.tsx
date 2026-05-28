@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import { cn } from "@/lib/utils";
@@ -57,6 +57,16 @@ export default function LessonDetailPage({
   const endingPages = (lesson.ending_pages ?? [])
     .slice()
     .sort((a, b) => a.order - b.order);
+
+  // Flat ordered lesson list across all submodules (GROQ already orders
+  // submodules + nested lessons by `order`). Drives prev/next nav below.
+  const allLessons = (mod?.submodules ?? []).flatMap((s) => s.lessons ?? []);
+  const currentIndex = allLessons.findIndex((l) => l._id === lessonId);
+  const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
+  const nextLesson =
+    currentIndex >= 0 && currentIndex < allLessons.length - 1
+      ? allLessons[currentIndex + 1]
+      : null;
 
   function handleToggleComplete() {
     const next = !isCompleted;
@@ -166,6 +176,31 @@ export default function LessonDetailPage({
           </span>
         </button>
       </div>
+
+      <nav className="mt-8 flex items-center justify-between gap-3">
+        <div>
+          {prevLesson && (
+            <Link
+              href={`/learn/${moduleId}/${prevLesson._id}`}
+              className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              Previous lesson
+            </Link>
+          )}
+        </div>
+        <div>
+          {nextLesson && (
+            <Link
+              href={`/learn/${moduleId}/${nextLesson._id}`}
+              className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
+            >
+              Next lesson
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          )}
+        </div>
+      </nav>
     </div>
   );
 }
