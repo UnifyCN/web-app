@@ -59,7 +59,7 @@ export function ChatPanel({
 
       {conversation ? (
         <div className="scrollbar-thin flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-2xl px-6 py-6">
+          <div className="mx-auto w-full max-w-4xl px-6 py-6">
             {messages.map((message, index) => {
               const prev = messages[index - 1];
               const next = messages[index + 1];
