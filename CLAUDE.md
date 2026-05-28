@@ -27,8 +27,9 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
   `onSuccess` invalidation.
   The `public.users` row is bootstrapped app-side by `lib/supabase/ensureUserRow.ts`
   (in the OAuth callback and as a self-heal in `getCurrentUser`).
-- **Checklist still runs on mock data**; Learn is a clean stub awaiting Savar's
-  pickup. See `PLAN.md` for the phase-by-phase build record.
+- **Checklist still runs on mock data.** Learn is wired in Phase 7 (Sanity
+  content + Supabase progress, including the lesson detail page). See
+  `PLAN.md` for the phase-by-phase build record.
 
 ---
 
@@ -507,7 +508,7 @@ NEXT_PUBLIC_SANITY_DATASET=production
 
 **CodeRabbit** is set up for automated code reviews on all PRs. Never merge directly to main — always open a PR so CodeRabbit can review it first. It will comment on the PR with issues it finds. Claude Code can then review that feedback and decide if it is valid (CodeRabbit sometimes flags things without full app context, since it only sees files touched in the PR).
 
-**Learn section** — Savar will take over the Learn page once the base app is built. Build it as a clean stub with realistic mock data and solid component structure, but do not over-engineer it. Savar needs to be able to pick it up and extend it independently.
+**Learn section** — Wired in Phase 7. Content comes from Sanity (modules, submodules, lessons, full lesson body rendered via `@portabletext/react`); per-user state comes from Supabase (`learn_progress`, `user_lesson_progress`, `learn_favourites`). The lesson detail page renders real Sanity `pages` + `ending_pages` portable text — no placeholder objectives/key terms (those fields don't exist in the Sanity schema).
 
 ---
 

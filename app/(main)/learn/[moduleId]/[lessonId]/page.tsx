@@ -1,43 +1,43 @@
-import Image from "next/image";
+"use client";
+
+import { use } from "react";
 import Link from "next/link";
-import { Clock, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
-import { Button } from "@/components/ui/Button";
-import { getModuleById } from "@/lib/mock/modules";
+import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
+import { cn } from "@/lib/utils";
+import {
+  useAllLessonProgresses,
+  useLesson,
+  useModule,
+  useSetLessonProgress,
+} from "@/hooks/useLearn";
 
-// TODO: replace with real data — Savar fills in the real lesson content.
-const OBJECTIVES = [
-  "Understand the key steps this lesson walks through.",
-  "Know which documents and information to have ready.",
-  "Feel confident taking the next action on your own.",
-];
-
-const KEY_TERMS = [
-  {
-    term: "Key term",
-    definition: "A short, plain-language definition will go here.",
-  },
-  {
-    term: "Second term",
-    definition:
-      "Definitions help newcomers learn the vocabulary they'll encounter.",
-  },
-  {
-    term: "Third term",
-    definition: "Savar will replace these with the lesson's real key terms.",
-  },
-];
-
-export default async function LessonDetailPage({
+export default function LessonDetailPage({
   params,
 }: {
   params: Promise<{ moduleId: string; lessonId: string }>;
 }) {
-  const { moduleId, lessonId } = await params;
-  const mod = getModuleById(moduleId);
-  const lesson = mod?.lessons.find((item) => item.id === lessonId);
+  const { moduleId, lessonId } = use(params);
+  const moduleQuery = useModule(moduleId);
+  const lessonQuery = useLesson(lessonId);
+  const progressesQuery = useAllLessonProgresses();
+  const setLessonProgress = useSetLessonProgress();
 
-  if (!mod || !lesson) {
+  const mod = moduleQuery.data;
+  const lesson = lessonQuery.data;
+  const progress = progressesQuery.data?.[lessonId];
+  const isCompleted = !!progress?.isCompleted;
+
+  if (lessonQuery.isLoading || moduleQuery.isLoading) {
+    return (
+      <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
+        <p className="text-sm text-ink-muted">Loading…</p>
+      </div>
+    );
+  }
+
+  if (!lesson) {
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
         <p className="text-sm text-ink-muted">
@@ -53,81 +53,175 @@ export default async function LessonDetailPage({
     );
   }
 
+  // Flat ordered lesson list across all submodules (GROQ already orders
+  // submodules + nested lessons by `order`). Drives prev/next nav below
+  // and the cross-module guard below.
+  const allLessons = (mod?.submodules ?? []).flatMap((s) => s.lessons ?? []);
+  const currentIndex = allLessons.findIndex((l) => l._id === lessonId);
+
+  // Module loaded but lesson isn't in its lesson list — bad URL or stale
+  // data. Don't render a misleading breadcrumb pointing at a module the
+  // lesson doesn't belong to.
+  if (!mod || currentIndex === -1) {
+    return (
+      <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
+        <p className="text-sm text-ink-muted">
+          This lesson isn&rsquo;t part of this module.
+        </p>
+        <Link
+          href={`/learn/${moduleId}`}
+          className="mt-3 inline-block text-sm font-semibold text-primary"
+        >
+          Back to module
+        </Link>
+      </div>
+    );
+  }
+
+  const pages = (lesson.pages ?? []).slice().sort((a, b) => a.order - b.order);
+  const endingPages = (lesson.ending_pages ?? [])
+    .slice()
+    .sort((a, b) => a.order - b.order);
+
+  const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
+  const nextLesson =
+    currentIndex >= 0 && currentIndex < allLessons.length - 1
+      ? allLessons[currentIndex + 1]
+      : null;
+
+  function handleToggleComplete() {
+    const next = !isCompleted;
+    setLessonProgress.mutate({
+      lessonId,
+      progressPercent: next ? 100 : 0,
+      isCompleted: next,
+      moduleId,
+    });
+  }
+
   return (
     <div className="mx-auto max-w-[760px] px-6 py-6">
       <Breadcrumb
         items={[
           { label: "Learn", href: "/learn" },
-          { label: mod.title, href: `/learn/${mod.id}` },
+          ...(mod
+            ? [{ label: mod.title, href: `/learn/${moduleId}` }]
+            : []),
           { label: lesson.title },
         ]}
       />
 
+      <Link
+        href={`/learn/${moduleId}`}
+        className="mt-3 inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
+      >
+        <ArrowLeft className="h-4 w-4" aria-hidden />
+        Back to module
+      </Link>
+
       <h1 className="mt-4 text-2xl font-bold text-ink-secondary">
         {lesson.title}
       </h1>
-      <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-placeholder">
-        <Clock className="h-3.5 w-3.5" aria-hidden />
-        45 min read
-      </p>
+      {lesson.description && (
+        <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+          {lesson.description}
+        </p>
+      )}
 
-      <div className="relative mt-4 aspect-[16/7] w-full overflow-hidden rounded-card">
-        <Image
-          src={lesson.imageUrl}
-          alt=""
-          fill
-          priority
-          className="object-cover"
-          sizes="760px"
-        />
-      </div>
+      {pages.map((page) => (
+        <section key={page._key} className="mt-7">
+          {page.title && (
+            <h2 className="mb-3 text-lg font-bold text-ink-secondary">
+              {page.title}
+            </h2>
+          )}
+          <PortableTextRenderer value={page.content} />
+        </section>
+      ))}
 
-      <section className="mt-7">
-        <h2 className="text-lg font-bold text-ink-secondary">
-          By the end of this lesson, you should be able to:
-        </h2>
-        <ul className="mt-2 space-y-2">
-          {OBJECTIVES.map((objective) => (
-            <li
-              key={objective}
-              className="flex gap-2.5 text-sm leading-relaxed text-ink-muted"
-            >
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-              {objective}
-            </li>
+      {endingPages.length > 0 && (
+        <div className="mt-8 border-t border-border-card pt-6">
+          {endingPages.map((page) => (
+            <section key={page._key} className="mt-4 first:mt-0">
+              {page.title && (
+                <h2 className="mb-3 text-lg font-bold text-ink-secondary">
+                  {page.title}
+                </h2>
+              )}
+              <PortableTextRenderer value={page.content} />
+            </section>
           ))}
-        </ul>
-      </section>
+        </div>
+      )}
 
-      <section className="mt-7">
-        <h2 className="text-lg font-bold text-ink-secondary">Key Terms</h2>
-        <dl className="mt-2 space-y-3">
-          {KEY_TERMS.map((entry) => (
-            <div key={entry.term}>
-              <dt className="text-sm font-semibold text-ink-secondary">
-                {entry.term}
-              </dt>
-              <dd className="mt-0.5 text-sm leading-relaxed text-ink-muted">
-                {entry.definition}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      {/* TODO: wire completion once lesson content is real. */}
-      <div className="mt-8 flex flex-wrap items-center gap-3">
-        <Button type="button" variant="primary" size="lg">
-          Mark as complete
-        </Button>
-        <Link
-          href={`/learn/${mod.id}`}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-border-card bg-surface px-6 text-sm font-semibold text-ink-secondary transition-colors hover:bg-surface-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      <div className="mt-10 border-t border-border-card pt-6">
+        <button
+          type="button"
+          onClick={handleToggleComplete}
+          aria-pressed={isCompleted}
+          disabled={setLessonProgress.isPending}
+          className={cn(
+            "group flex items-center gap-3",
+            setLessonProgress.isPending ? "cursor-wait" : "cursor-pointer",
+          )}
         >
-          Next
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
+          <span
+            className={cn(
+              "flex h-6 w-6 items-center justify-center rounded-md transition-colors",
+              isCompleted
+                ? "bg-primary text-white"
+                : "border-2 border-primary",
+            )}
+          >
+            {setLessonProgress.isPending ? (
+              <Loader2
+                className={cn(
+                  "h-3.5 w-3.5 animate-spin",
+                  isCompleted ? "text-white" : "text-ink-muted",
+                )}
+                aria-hidden
+              />
+            ) : isCompleted ? (
+              <Check className="h-4 w-4" aria-hidden />
+            ) : null}
+          </span>
+          <span
+            className={cn(
+              "text-sm font-semibold transition-colors",
+              isCompleted
+                ? "text-primary"
+                : "text-ink-secondary group-hover:text-primary",
+            )}
+          >
+            {isCompleted ? "Completed" : "Mark as complete"}
+          </span>
+        </button>
       </div>
+
+      <nav className="mt-8 flex items-center justify-between gap-3">
+        <div>
+          {prevLesson && (
+            <Link
+              href={`/learn/${moduleId}/${prevLesson._id}`}
+              className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              Previous lesson
+            </Link>
+          )}
+        </div>
+        <div>
+          {nextLesson && (
+            <Link
+              href={`/learn/${moduleId}/${nextLesson._id}`}
+              className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
+            >
+              Next lesson
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          )}
+        </div>
+      </nav>
     </div>
   );
 }

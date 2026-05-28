@@ -1,39 +1,34 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ProgressRing } from "./ProgressRing";
-import type { Lesson } from "@/types";
+import type { LessonProgress, SanityLesson } from "@/types";
 
 interface LessonRowProps {
   moduleId: string;
-  lesson: Lesson;
+  lesson: SanityLesson;
+  progress?: LessonProgress;
 }
 
-/** A lesson row on the module detail page — image left, progress + copy right. */
-export function LessonRow({ moduleId, lesson }: LessonRowProps) {
-  const percent = lesson.isCompleted ? 100 : lesson.progressPercent;
+/** A lesson row on the module detail page — progress ring + title + copy. */
+export function LessonRow({ moduleId, lesson, progress }: LessonRowProps) {
+  const percent = progress?.isCompleted
+    ? 100
+    : (progress?.progressPercent ?? 0);
 
   return (
     <Link
-      href={`/learn/${moduleId}/${lesson.id}`}
-      className="group flex gap-6"
+      href={`/learn/${moduleId}/${lesson._id}`}
+      className="group flex items-start gap-4 rounded-card border border-border-card bg-surface p-4 transition-colors hover:bg-surface-card"
     >
-      <div className="relative aspect-[4/3] w-[55%] shrink-0 overflow-hidden rounded-card">
-        <Image
-          src={lesson.imageUrl}
-          alt=""
-          fill
-          className="object-cover"
-          sizes="(max-width: 860px) 55vw, 470px"
-        />
-      </div>
+      <ProgressRing percent={percent} size={64} />
       <div className="flex flex-1 flex-col">
-        <ProgressRing percent={percent} size={64} />
-        <h3 className="mt-3 text-base font-bold text-ink-secondary transition-colors group-hover:text-primary">
+        <h3 className="text-base font-bold text-ink-secondary transition-colors group-hover:text-primary">
           {lesson.title}
         </h3>
-        <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
-          {lesson.description}
-        </p>
+        {lesson.description && (
+          <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
+            {lesson.description}
+          </p>
+        )}
       </div>
     </Link>
   );
