@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { LearnHeaderDropdown } from "@/components/learn/LearnHeaderDropdown";
 import { WelcomeCard } from "@/components/learn/WelcomeCard";
 import { LearnSection } from "@/components/learn/LearnSection";
@@ -9,13 +8,8 @@ import { useModules, useToggleFavouriteModule } from "@/hooks/useLearn";
 export default function LearnPage() {
   const modulesQuery = useModules();
   const toggleFavourite = useToggleFavouriteModule();
-  const [search, setSearch] = useState("");
 
   const modules = modulesQuery.data ?? [];
-  const query = search.trim().toLowerCase();
-  const library = query
-    ? modules.filter((mod) => mod.title.toLowerCase().includes(query))
-    : modules;
   const inProgress = modules.filter((mod) => mod.status === "in_progress");
   const completed = modules.filter((mod) => mod.status === "completed");
   const favourite = modules.filter((mod) => mod.isFavourite);
@@ -34,7 +28,7 @@ export default function LearnPage() {
         <div className="order-2 min-w-0 flex-1 space-y-5 lg:order-1">
           <LearnSection
             title="Lesson Library"
-            modules={library}
+            modules={modules}
             onToggleFavourite={handleToggleFavourite}
           />
           <LearnSection
@@ -55,7 +49,7 @@ export default function LearnPage() {
         </div>
 
         <div className="order-1 lg:order-2 lg:w-[340px] lg:shrink-0">
-          <WelcomeCard search={search} onSearchChange={setSearch} />
+          <WelcomeCard />
         </div>
       </div>
     </div>

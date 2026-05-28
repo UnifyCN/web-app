@@ -20,7 +20,8 @@ interface ModuleCardProps {
  * screen-reader semantics.
  */
 export function ModuleCard({ mod, onToggleFavourite }: ModuleCardProps) {
-  const accentColor = mod.colorTheme?.hex ?? "#9F9D9D";
+  const accentColor =
+    mod.colorTheme?.hex ?? "var(--color-ink-placeholder)";
 
   return (
     <div className="relative w-44 shrink-0 sm:w-48">

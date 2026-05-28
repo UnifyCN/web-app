@@ -62,7 +62,7 @@ export default function LessonDetailPage({
   // Module loaded but lesson isn't in its lesson list — bad URL or stale
   // data. Don't render a misleading breadcrumb pointing at a module the
   // lesson doesn't belong to.
-  if (mod && currentIndex === -1) {
+  if (!mod || currentIndex === -1) {
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
         <p className="text-sm text-ink-muted">
