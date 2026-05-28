@@ -14,32 +14,37 @@ interface ModuleCardProps {
  * Image card for the Learn section rows. Modules carry `colorTheme.hex`
  * and a Material-icon name string (no Sanity image asset); the colour
  * block + gradient overlay + title is the visual identity for now.
+ *
+ * The favourite button is a sibling of the Link, not a child — interactive
+ * content nested inside an anchor is invalid HTML and breaks keyboard /
+ * screen-reader semantics.
  */
 export function ModuleCard({ mod, onToggleFavourite }: ModuleCardProps) {
   const accentColor = mod.colorTheme?.hex ?? "#9F9D9D";
 
   return (
-    <Link
-      href={`/learn/${mod._id}`}
-      className="relative block w-44 shrink-0 overflow-hidden rounded-card sm:w-48"
-    >
-      <div
-        className="relative aspect-[4/3] w-full"
-        style={{ backgroundColor: accentColor }}
+    <div className="relative w-44 shrink-0 sm:w-48">
+      <Link
+        href={`/learn/${mod._id}`}
+        className="relative block overflow-hidden rounded-card"
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/15 to-transparent" />
-      </div>
-
+        <div
+          className="relative aspect-[4/3] w-full"
+          style={{ backgroundColor: accentColor }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/15 to-transparent" />
+        </div>
+        <span className="absolute inset-x-3 bottom-2 text-sm font-semibold leading-tight text-white">
+          {mod.title}
+        </span>
+      </Link>
       <button
         type="button"
         aria-label={
           mod.isFavourite ? "Remove from favourites" : "Add to favourites"
         }
         aria-pressed={mod.isFavourite}
-        onClick={(event) => {
-          event.preventDefault();
-          onToggleFavourite(mod._id, !mod.isFavourite);
-        }}
+        onClick={() => onToggleFavourite(mod._id, !mod.isFavourite)}
         className="absolute right-2 top-2 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-ink/30 text-white backdrop-blur-sm transition-colors hover:bg-ink/50"
       >
         <Heart
@@ -47,10 +52,6 @@ export function ModuleCard({ mod, onToggleFavourite }: ModuleCardProps) {
           aria-hidden
         />
       </button>
-
-      <span className="absolute inset-x-3 bottom-2 text-sm font-semibold leading-tight text-white">
-        {mod.title}
-      </span>
-    </Link>
+    </div>
   );
 }

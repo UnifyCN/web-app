@@ -39,40 +39,46 @@ export function LearningProgressWidget() {
         onScroll={handleScroll}
         className="scrollbar-none flex snap-x snap-mandatory overflow-x-auto"
       >
-        {items.map((item) => (
-          <div
-            key={item.moduleId}
-            className="w-full shrink-0 snap-start snap-always"
-          >
+        {items.map((item) => {
+          const percent = Math.max(0, Math.min(100, item.progressPercent));
+          return (
             <div
-              className="relative aspect-[16/7] w-full"
-              style={{ backgroundColor: item.colorHex ?? "#9F9D9D" }}
-            />
+              key={item.moduleId}
+              className="w-full shrink-0 snap-start snap-always"
+            >
+              <div
+                className="relative aspect-[16/7] w-full"
+                style={{
+                  backgroundColor:
+                    item.colorHex ?? "var(--color-ink-placeholder)",
+                }}
+              />
 
-            <div className="p-4">
-              <h3 className="text-sm font-semibold text-ink-secondary">
-                Learning Progress
-              </h3>
-              <p className="mt-0.5 text-xs text-ink-placeholder">
-                {item.moduleName}
-              </p>
-              <div className="mt-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-ink-muted">Completion</span>
-                  <span className="font-semibold text-ink-secondary">
-                    {item.progressPercent}%
-                  </span>
-                </div>
-                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-input">
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${item.progressPercent}%` }}
-                  />
+              <div className="p-4">
+                <h3 className="text-sm font-semibold text-ink-secondary">
+                  Learning Progress
+                </h3>
+                <p className="mt-0.5 text-xs text-ink-placeholder">
+                  {item.moduleName}
+                </p>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-ink-muted">Completion</span>
+                    <span className="font-semibold text-ink-secondary">
+                      {percent}%
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-surface-input">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {items.length > 1 && (

@@ -17,12 +17,12 @@ export const mockLearningProgress: LearningProgressSummary[] = [
     moduleId: "mock-mod-banking",
     moduleName: "Banking & Credit in Canada",
     progressPercent: 25,
-    colorHex: "#FFB570",
+    colorHex: "#f68b26",
   },
   {
     moduleId: "mock-mod-housing",
     moduleName: "Finding Your First Home",
     progressPercent: 75,
-    colorHex: "#83cb83",
+    colorHex: "#f68b26",
   },
 ];

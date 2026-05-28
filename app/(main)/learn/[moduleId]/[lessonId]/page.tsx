@@ -53,15 +53,36 @@ export default function LessonDetailPage({
     );
   }
 
+  // Flat ordered lesson list across all submodules (GROQ already orders
+  // submodules + nested lessons by `order`). Drives prev/next nav below
+  // and the cross-module guard below.
+  const allLessons = (mod?.submodules ?? []).flatMap((s) => s.lessons ?? []);
+  const currentIndex = allLessons.findIndex((l) => l._id === lessonId);
+
+  // Module loaded but lesson isn't in its lesson list — bad URL or stale
+  // data. Don't render a misleading breadcrumb pointing at a module the
+  // lesson doesn't belong to.
+  if (mod && currentIndex === -1) {
+    return (
+      <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
+        <p className="text-sm text-ink-muted">
+          This lesson isn&rsquo;t part of this module.
+        </p>
+        <Link
+          href={`/learn/${moduleId}`}
+          className="mt-3 inline-block text-sm font-semibold text-primary"
+        >
+          Back to module
+        </Link>
+      </div>
+    );
+  }
+
   const pages = (lesson.pages ?? []).slice().sort((a, b) => a.order - b.order);
   const endingPages = (lesson.ending_pages ?? [])
     .slice()
     .sort((a, b) => a.order - b.order);
 
-  // Flat ordered lesson list across all submodules (GROQ already orders
-  // submodules + nested lessons by `order`). Drives prev/next nav below.
-  const allLessons = (mod?.submodules ?? []).flatMap((s) => s.lessons ?? []);
-  const currentIndex = allLessons.findIndex((l) => l._id === lessonId);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLesson =
     currentIndex >= 0 && currentIndex < allLessons.length - 1

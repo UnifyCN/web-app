@@ -57,3 +57,16 @@ No block table exists on web. When building block functionality, reference mobil
 
 **Remove dead signed-out fallback mock returns**
 Across services/feed.ts, services/community.ts, services/checklist.ts, services/companion.ts, and services/profile.ts, each query function has an `if (!await getAuthUserId()) return mock…` branch as a defensive fallback. The (main) route group is gated by the authenticated layout (proxy.ts redirects unauthenticated traffic to /login), so these paths are unreachable in production. Strip them in a separate PR after Phase 6 (Companion) merges, keeping only the `isSupabaseConfigured()` branch for the local-without-env case.
+
+---
+
+## Learn
+
+**Learn UI polish (separate PR after Phase 7 merges):**
+- Bring animated dot/squiggle background to the Learn page (already exists in globals.css for Companion)
+- Hero carousel at top showing in-progress courses with Continue button and progress indicator (matches mobile pattern)
+- Fix filtering/search on the Learn page — currently displays but is not wired up
+- Investigate why web may show fewer modules than mobile — check GROQ query vs mobile query
+
+**Submodule landing page pattern:**
+- Mobile has a section landing page between submodule and lesson (shows section name, description, progress card with Continue). Web goes directly from submodule to lesson content. Discuss with team whether to add this route level (/learn/[moduleId]/[submoduleId] → /learn/[moduleId]/[submoduleId]/[lessonId]). Architectural change — needs team sign-off.
