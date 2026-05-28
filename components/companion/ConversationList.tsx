@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { MoreHorizontal, Search, SquarePen, Trash2 } from "lucide-react";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import type { Conversation } from "@/types";
@@ -13,6 +14,65 @@ interface ConversationListProps {
   onNew: () => void;
   onDelete: (conversationIdentifier: string) => Promise<void>;
   isDeleting: boolean;
+}
+
+/**
+ * Portaled row menu. Rendered into document.body so the sidebar's
+ * overflow-y-auto scroll container can't clip it. Position is recomputed
+ * on scroll/resize so it stays anchored to its button when the list scrolls.
+ */
+function RowMenu({
+  anchorRef,
+  portalRef,
+  onDelete,
+}: {
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
+  portalRef: React.RefObject<HTMLDivElement | null>;
+  onDelete: () => void;
+}) {
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+
+  useLayoutEffect(() => {
+    function update() {
+      const rect = anchorRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setPos({
+        top: rect.bottom + 4,
+        // distance from the right edge of the viewport
+        right: window.innerWidth - rect.right,
+      });
+    }
+    update();
+    // Capture phase so nested scroll containers (the sidebar's
+    // overflow-y-auto) also trigger the listener.
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [anchorRef]);
+
+  if (!pos) return null;
+  return createPortal(
+    <div
+      ref={portalRef}
+      role="menu"
+      style={{ position: "fixed", top: pos.top, right: pos.right }}
+      className="z-50 w-32 overflow-hidden rounded-lg border border-border-card bg-surface py-1 shadow-lg"
+    >
+      <button
+        type="button"
+        role="menuitem"
+        onClick={onDelete}
+        className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-sm text-destructive hover:bg-surface-gray"
+      >
+        <Trash2 className="h-4 w-4" aria-hidden />
+        Delete
+      </button>
+    </div>,
+    document.body,
+  );
 }
 
 /** Companion left panel — new-chat button, search, and the conversation list. */
@@ -30,19 +90,24 @@ export function ConversationList({
     id: string;
     displayTitle: string;
   } | null>(null);
-  const openMenuRef = useRef<HTMLDivElement>(null);
+  // One pair of refs across the list — both attached only to the currently-
+  // open row's anchor/portal. The dismissal handler checks both.
+  const openAnchorRef = useRef<HTMLButtonElement>(null);
+  const openPortalRef = useRef<HTMLDivElement>(null);
 
-  // Close the popover on outside click or ESC. Single listener at document
-  // level keyed on which menu is open.
+  // Close the popover on outside click or ESC. Click is "outside" only if
+  // it's in neither the anchor button nor the portaled menu.
   useEffect(() => {
     if (!openMenuFor) return;
     const onMouseDown = (event: MouseEvent) => {
+      const target = event.target as Node;
       if (
-        openMenuRef.current &&
-        !openMenuRef.current.contains(event.target as Node)
+        openAnchorRef.current?.contains(target) ||
+        openPortalRef.current?.contains(target)
       ) {
-        setOpenMenuFor(null);
+        return;
       }
+      setOpenMenuFor(null);
     };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpenMenuFor(null);
@@ -110,10 +175,7 @@ export function ConversationList({
               const active = conversation.id === activeId;
               const menuOpen = openMenuFor === conversation.id;
               return (
-                <div
-                  key={conversation.id}
-                  className="group relative"
-                >
+                <div key={conversation.id} className="group relative">
                   <button
                     type="button"
                     onClick={() => onSelect(conversation.id)}
@@ -134,51 +196,38 @@ export function ConversationList({
                       {formatRelativeTime(conversation.updatedAt)}
                     </span>
                   </button>
-                  <div
-                    ref={menuOpen ? openMenuRef : undefined}
-                    className="absolute right-1 top-1.5"
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenMenuFor(menuOpen ? null : conversation.id)
-                      }
-                      aria-label="Conversation options"
-                      aria-haspopup="menu"
-                      aria-expanded={menuOpen}
-                      className={cn(
-                        "flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-ink-muted transition-opacity",
-                        "hover:bg-surface focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                        menuOpen
-                          ? "opacity-100"
-                          : "opacity-0 group-hover:opacity-100",
-                      )}
-                    >
-                      <MoreHorizontal className="h-4 w-4" aria-hidden />
-                    </button>
-                    {menuOpen && (
-                      <div
-                        role="menu"
-                        className="absolute right-0 top-full z-10 mt-1 w-32 overflow-hidden rounded-lg border border-border-card bg-surface py-1 shadow-lg"
-                      >
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            setOpenMenuFor(null);
-                            setDeleteTarget({
-                              id: conversation.id,
-                              displayTitle,
-                            });
-                          }}
-                          className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-sm text-destructive hover:bg-surface-gray"
-                        >
-                          <Trash2 className="h-4 w-4" aria-hidden />
-                          Delete
-                        </button>
-                      </div>
+                  <button
+                    ref={menuOpen ? openAnchorRef : undefined}
+                    type="button"
+                    onClick={() =>
+                      setOpenMenuFor(menuOpen ? null : conversation.id)
+                    }
+                    aria-label="Conversation options"
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpen}
+                    className={cn(
+                      "absolute right-1 top-1.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-ink-muted transition-opacity",
+                      "hover:bg-surface focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                      menuOpen
+                        ? "opacity-100"
+                        : "opacity-0 group-hover:opacity-100",
                     )}
-                  </div>
+                  >
+                    <MoreHorizontal className="h-4 w-4" aria-hidden />
+                  </button>
+                  {menuOpen && (
+                    <RowMenu
+                      anchorRef={openAnchorRef}
+                      portalRef={openPortalRef}
+                      onDelete={() => {
+                        setOpenMenuFor(null);
+                        setDeleteTarget({
+                          id: conversation.id,
+                          displayTitle,
+                        });
+                      }}
+                    />
+                  )}
                 </div>
               );
             })

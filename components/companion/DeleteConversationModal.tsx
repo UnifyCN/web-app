@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 
 interface DeleteConversationModalProps {
@@ -16,6 +16,11 @@ interface DeleteConversationModalProps {
  * open state and closes it once the mutation settles — keeps the buttons
  * disabled (isPending) until the delete resolves rather than flashing a
  * closed-modal-then-row-removal.
+ *
+ * Focus is moved onto Cancel when the modal opens (safer default than
+ * auto-focusing the destructive action) and Tab is trapped between Cancel
+ * and Delete so keyboard users can't escape to the sidebar behind the
+ * backdrop.
  */
 export function DeleteConversationModal({
   open,
@@ -24,11 +29,30 @@ export function DeleteConversationModal({
   onConfirm,
   onCancel,
 }: DeleteConversationModalProps) {
-  // ESC to cancel + lock body scroll while open.
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const deleteRef = useRef<HTMLButtonElement>(null);
+
+  // Move focus to Cancel on open.
+  useEffect(() => {
+    if (open) cancelRef.current?.focus();
+  }, [open]);
+
+  // ESC to cancel, Tab trap between Cancel/Delete, body scroll lock.
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !isPending) onCancel();
+      if (event.key === "Escape" && !isPending) {
+        onCancel();
+        return;
+      }
+      if (event.key === "Tab") {
+        const from = event.shiftKey ? cancelRef : deleteRef;
+        const to = event.shiftKey ? deleteRef : cancelRef;
+        if (document.activeElement === from.current) {
+          event.preventDefault();
+          to.current?.focus();
+        }
+      }
     };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -72,6 +96,7 @@ export function DeleteConversationModal({
         </div>
         <div className="flex items-center justify-end gap-2 border-t border-border-card bg-surface-card px-5 py-3">
           <Button
+            ref={cancelRef}
             type="button"
             variant="secondary"
             size="sm"
@@ -81,6 +106,7 @@ export function DeleteConversationModal({
             Cancel
           </Button>
           <Button
+            ref={deleteRef}
             type="button"
             variant="destructive"
             size="sm"

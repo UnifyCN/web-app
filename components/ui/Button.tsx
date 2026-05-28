@@ -10,6 +10,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  /** Forwarded to the underlying <button>. React 19 prop-style ref. */
+  ref?: React.Ref<HTMLButtonElement>;
 }
 
 const VARIANTS: Record<ButtonVariant, string> = {
@@ -38,10 +40,12 @@ export function Button({
   disabled,
   className,
   children,
+  ref,
   ...props
 }: ButtonProps) {
   return (
     <button
+      ref={ref}
       disabled={disabled || loading}
       className={cn(
         "inline-flex items-center justify-center rounded-lg font-semibold",

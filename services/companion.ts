@@ -208,12 +208,22 @@ export async function deleteConversation(
 
   const supabase = createClient();
   // RLS scopes the delete to the user's own rows and the messages.cascade
-  // on delete handles cleanup automatically.
-  const { error } = await supabase
+  // on delete handles cleanup automatically. Chain .select() so the call
+  // returns the affected rows — a zero-length result means RLS hid the row
+  // or it was already deleted (e.g. from another device); surface that as a
+  // rejection so the optimistic remove rolls back instead of silently
+  // succeeding.
+  const { data, error } = await supabase
     .from("conversations")
     .delete()
-    .eq("conversation_identifier", conversationIdentifier);
+    .eq("conversation_identifier", conversationIdentifier)
+    .select("conversation_identifier");
   if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error(
+      `deleteConversation: conversation ${conversationIdentifier} not found`,
+    );
+  }
 }
 
 /* ---- Usage ------------------------------------------------------------ */

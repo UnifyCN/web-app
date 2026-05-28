@@ -168,9 +168,6 @@ export function useDeleteConversation() {
         (prev) =>
           (prev ?? []).filter((c) => c.id !== conversationIdentifier),
       );
-      queryClient.removeQueries({
-        queryKey: messagesKey(conversationIdentifier),
-      });
       return { previous };
     },
     onError: (_err, _id, context) => {
@@ -178,7 +175,12 @@ export function useDeleteConversation() {
         queryClient.setQueryData(CONVERSATIONS_KEY, context.previous);
       }
     },
-    onSuccess: () => {
+    onSuccess: (_data, conversationIdentifier) => {
+      // Drop the message-thread cache only after the server confirms — on
+      // error we keep it so a rolled-back row still has its thread intact.
+      queryClient.removeQueries({
+        queryKey: messagesKey(conversationIdentifier),
+      });
       queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
     },
   });
