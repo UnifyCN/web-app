@@ -188,6 +188,13 @@ export default function CommunityPage() {
                 isPending={startMatching.isPending || cancelMatching.isPending}
               />
             )}
+
+            {(startMatching.error || cancelMatching.error) && (
+              <p role="alert" className="text-sm text-destructive">
+                Couldn&apos;t update your matching status. Please try again.
+              </p>
+            )}
+
             <div className="space-y-4 rounded-card border border-border-card bg-surface p-5">
               {CIRCLE_FEATURES.map((feature) => {
                 const Icon = feature.icon;

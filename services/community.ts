@@ -405,6 +405,21 @@ export async function startCircleMatching(): Promise<void> {
   if (!userId) throw new Error("startCircleMatching: no auth session");
 
   const supabase = createClient();
+
+  // Already in an active circle → don't re-enqueue. The UI hides the start
+  // button for in_circle users, but the service is directly callable.
+  const { data: activeMembership, error: memberErr } = await supabase
+    .from("community_circle_members")
+    .select("id, community_circles!inner(status)")
+    .eq("user_id", userId)
+    .is("left_at", null)
+    .eq("community_circles.status", "active")
+    .limit(1);
+  if (memberErr) throw memberErr;
+  if (activeMembership && activeMembership.length > 0) {
+    throw new Error("startCircleMatching: already in an active circle");
+  }
+
   const { data: onboarding, error: obError } = await supabase
     .from("user_onboarding_profiles")
     .select("persona, stage, goals, learning_interests")
