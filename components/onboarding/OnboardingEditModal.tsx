@@ -38,6 +38,14 @@ export function OnboardingEditModal({
 }: OnboardingEditModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  // Keep a stable reference to onClose so the focus effect below depends only on
+  // `open`. Callers pass a fresh inline onClose each render; listing it in the
+  // deps would re-run the effect — and its cleanup would steal focus — mid-session.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   // Move focus into the dialog on open, trap Tab/Shift+Tab inside it, close on
   // Escape, lock body scroll, and restore focus to the trigger on close.
   useEffect(() => {
@@ -48,7 +56,7 @@ export function OnboardingEditModal({
 
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab") return;
@@ -81,7 +89,7 @@ export function OnboardingEditModal({
       document.body.style.overflow = "";
       previouslyFocused?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
