@@ -35,7 +35,7 @@ export function AddCustomTask({ onAdd }: AddCustomTaskProps) {
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!title.trim()) return;
-    // TODO: replace with real data — persist the custom task to the backend.
+    // Persisted by useAddCustomTask → custom_checklist_tasks (Supabase).
     onAdd({ title: title.trim(), description: description.trim(), priority });
     setTitle("");
     setDescription("");

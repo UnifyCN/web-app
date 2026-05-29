@@ -2,17 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ChecklistTask } from "@/types";
 
 interface TaskRowProps {
   task: ChecklistTask;
   onToggle: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 /** A single checklist task — checkbox, title, description, "Learn how" link. */
-export function TaskRow({ task, onToggle }: TaskRowProps) {
+export function TaskRow({ task, onToggle, onDelete }: TaskRowProps) {
   const [pop, setPop] = useState(false);
 
   function handleToggle() {
@@ -72,6 +73,17 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
           </Link>
         )}
       </div>
+
+      {task.isCustom && (
+        <button
+          type="button"
+          onClick={() => onDelete(task.id)}
+          aria-label={`Delete task: ${task.title}`}
+          className="mt-0.5 flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" aria-hidden />
+        </button>
+      )}
     </div>
   );
 }

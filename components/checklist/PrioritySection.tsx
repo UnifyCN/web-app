@@ -50,6 +50,7 @@ interface PrioritySectionProps {
   priority: Priority;
   tasks: ChecklistTask[];
   onToggle: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 /** Collapsible checklist section for one priority bucket. */
@@ -57,6 +58,7 @@ export function PrioritySection({
   priority,
   tasks,
   onToggle,
+  onDelete,
 }: PrioritySectionProps) {
   const [open, setOpen] = useState(true);
 
@@ -100,7 +102,12 @@ export function PrioritySection({
       {open && (
         <div className="divide-y divide-border-card border-t border-border-card">
           {tasks.map((task) => (
-            <TaskRow key={task.id} task={task} onToggle={onToggle} />
+            <TaskRow
+              key={task.id}
+              task={task}
+              onToggle={onToggle}
+              onDelete={onDelete}
+            />
           ))}
         </div>
       )}

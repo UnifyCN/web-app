@@ -17,6 +17,15 @@ const CLASS_TO_PRIORITY: Record<string, Priority> = {
   optional_later: "Optional / later",
 };
 
+// Sanity `link_tab` slug → web route. Mirrors the mobile app's tab routing.
+const TAB_TO_PATH: Record<string, string> = {
+  home: "/home",
+  community: "/community",
+  companion: "/companion",
+  checklist: "/checklist",
+  learn: "/learn",
+};
+
 const STAGE_TO_SLUG: Record<Stage, string> = {
   0: "not_arrived",
   1: "arrived_0_3_months",
@@ -43,7 +52,9 @@ const CHECKLIST_GROQ = `*[
   longer_description,
   class,
   class_order,
-  link_tab
+  link_tab,
+  "module": module->{_id},
+  "submodule": submodule->{_id, "moduleId": module._ref}
 }`;
 
 interface SanityChecklistItem {
@@ -54,6 +65,28 @@ interface SanityChecklistItem {
   class: string;
   class_order: number;
   link_tab: string | null;
+  module: { _id: string } | null;
+  submodule: { _id: string; moduleId: string | null } | null;
+}
+
+/**
+ * Resolve a checklist item's "Learn how" destination to a web route. Cascade
+ * mirrors the mobile app: an explicit tab link wins, then the most specific
+ * Learn target (submodule → its full deep link, then module), falling back to
+ * the Learn index. Every Sanity checklist doc carries at least one target, so
+ * the final fallback is effectively a safety net.
+ */
+function resolveLearnHowHref(item: SanityChecklistItem): string | undefined {
+  if (item.link_tab && TAB_TO_PATH[item.link_tab]) {
+    return TAB_TO_PATH[item.link_tab];
+  }
+  if (item.submodule?._id && item.submodule.moduleId) {
+    return `/learn/${item.submodule.moduleId}/${item.submodule._id}`;
+  }
+  if (item.module?._id) {
+    return `/learn/${item.module._id}`;
+  }
+  return "/learn";
 }
 
 async function getChecklistByPersonaAndStage(
@@ -143,6 +176,7 @@ export async function getTasks(): Promise<ChecklistTask[]> {
       description: item.longer_description || item.description || "",
       completed: row?.completed ?? false,
       completedAt: row?.completed_at ?? null,
+      learnHowHref: resolveLearnHowHref(item),
       isCustom: false,
     };
   });
@@ -268,5 +302,24 @@ export async function addCustomTask(input: CustomTaskInput): Promise<void> {
     title: input.title,
     description: input.description || null,
   });
+  if (error) throw error;
+}
+
+export async function deleteCustomTask(id: string): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("deleteCustomTask: no auth session");
+
+  // user_id match is redundant with the custom_tasks_delete_own RLS policy but
+  // mirrors toggleTask's custom-row targeting (defense in depth).
+  const { error } = await supabase
+    .from("custom_checklist_tasks")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
   if (error) throw error;
 }

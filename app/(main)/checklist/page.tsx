@@ -1,14 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { OverallProgressBar } from "@/components/checklist/OverallProgressBar";
 import { PrioritySection } from "@/components/checklist/PrioritySection";
 import { AddCustomTask } from "@/components/checklist/AddCustomTask";
+import { DeleteTaskModal } from "@/components/checklist/DeleteTaskModal";
 import {
   useAddCustomTask,
+  useDeleteCustomTask,
   useTasks,
   useToggleTask,
 } from "@/hooks/useChecklist";
-import type { Priority } from "@/types";
+import type { ChecklistTask, Priority } from "@/types";
 
 const PRIORITY_ORDER: Priority[] = [
   "Do now",
@@ -21,6 +24,8 @@ export default function ChecklistPage() {
   const { data: tasks = [], isLoading, error } = useTasks();
   const toggle = useToggleTask();
   const add = useAddCustomTask();
+  const del = useDeleteCustomTask();
+  const [deleteTarget, setDeleteTarget] = useState<ChecklistTask | null>(null);
 
   const completedCount = tasks.filter((task) => task.completed).length;
 
@@ -40,6 +45,22 @@ export default function ChecklistPage() {
     priority: Priority;
   }) {
     add.mutate(input);
+  }
+
+  function requestDelete(id: string) {
+    const task = tasks.find((t) => t.id === id);
+    if (task) setDeleteTarget(task);
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return;
+    try {
+      await del.mutateAsync(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch {
+      // Leave the modal open (isPending flips back to false) so the user can
+      // retry or cancel.
+    }
   }
 
   return (
@@ -72,12 +93,23 @@ export default function ChecklistPage() {
               priority={priority}
               tasks={tasks.filter((task) => task.priority === priority)}
               onToggle={handleToggle}
+              onDelete={requestDelete}
             />
           ))}
 
           <AddCustomTask onAdd={handleAdd} />
         </div>
       )}
+
+      <DeleteTaskModal
+        open={deleteTarget !== null}
+        taskTitle={deleteTarget?.title ?? ""}
+        isPending={del.isPending}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          if (!del.isPending) setDeleteTarget(null);
+        }}
+      />
     </div>
   );
 }

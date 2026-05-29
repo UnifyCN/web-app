@@ -1,6 +1,8 @@
 import type { ChecklistTask } from "@/types";
 
-// TODO: replace with real data — mock newcomer settling-in checklist.
+// Local-dev / env-not-configured fallback for the checklist. services/checklist.ts
+// returns these when Supabase isn't configured or the user has no onboarding row;
+// otherwise tasks come from Sanity (content) + Supabase (per-user progress).
 export const tasks: ChecklistTask[] = [
   // Do now
   {
