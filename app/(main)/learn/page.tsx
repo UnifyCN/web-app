@@ -54,7 +54,11 @@ export default function LearnPage() {
       }
       return { ...m, status };
     });
-  }, [modulesQuery.data, progressesQuery.data]);
+    // `progressesQuery.dataUpdatedAt` is intentional: it pins this memo to
+    // every refetch tick of the lesson-progress cache even when React Query
+    // preserves the same `data` reference across updates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modulesQuery.data, progressesQuery.data, progressesQuery.dataUpdatedAt]);
 
   const modules = modulesQuery.data ?? [];
 

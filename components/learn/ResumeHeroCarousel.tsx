@@ -48,7 +48,7 @@ export function ResumeHeroCarousel({ entries }: ResumeHeroCarouselProps) {
     );
     slideRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
-  }, [entries.length]);
+  }, [entries]);
 
   function scrollTo(index: number) {
     const slide = slideRefs.current[index];
