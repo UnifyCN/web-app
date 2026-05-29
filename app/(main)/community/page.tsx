@@ -11,10 +11,13 @@ import { NewsArticleItem } from "@/components/community/NewsArticleItem";
 import { CirclesEntryCard } from "@/components/community/CirclesEntryCard";
 import { RequestGroupModal } from "@/components/community/RequestGroupModal";
 import {
+  useCancelCircleMatching,
+  useCurrentCircle,
   useEvents,
   useGroups,
   useJoinedGroups,
   useNews,
+  useStartCircleMatching,
 } from "@/hooks/useCommunity";
 
 const TAB_GROUPS = "Join Groups";
@@ -50,6 +53,9 @@ export default function CommunityPage() {
   const joinedGroupsQuery = useJoinedGroups();
   const eventsQuery = useEvents();
   const newsQuery = useNews();
+  const circleQuery = useCurrentCircle();
+  const startMatching = useStartCircleMatching();
+  const cancelMatching = useCancelCircleMatching();
 
   const groups = groupsQuery.data ?? [];
   const joinedGroups = joinedGroupsQuery.data ?? [];
@@ -163,7 +169,25 @@ export default function CommunityPage() {
 
         {activeTab === TAB_CIRCLES && (
           <div className="max-w-2xl space-y-4">
-            <CirclesEntryCard status="default" />
+            {circleQuery.isLoading ? (
+              <p className="py-12 text-center text-sm text-ink-muted">
+                Loading…
+              </p>
+            ) : circleQuery.error ? (
+              <p
+                role="alert"
+                className="py-12 text-center text-sm text-destructive"
+              >
+                Couldn&apos;t load your circle.
+              </p>
+            ) : (
+              <CirclesEntryCard
+                status={circleQuery.data?.status ?? "default"}
+                onStart={() => startMatching.mutate()}
+                onCancel={() => cancelMatching.mutate()}
+                isPending={startMatching.isPending || cancelMatching.isPending}
+              />
+            )}
             <div className="space-y-4 rounded-card border border-border-card bg-surface p-5">
               {CIRCLE_FEATURES.map((feature) => {
                 const Icon = feature.icon;
