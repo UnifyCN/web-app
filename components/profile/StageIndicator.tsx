@@ -1,13 +1,6 @@
 import { cn } from "@/lib/utils";
+import { STAGE_LABEL } from "@/lib/onboarding/constants";
 import type { Stage } from "@/types";
-
-const STAGE_LABEL: Record<Stage, string> = {
-  0: "Not arrived yet",
-  1: "0–3 months in Canada",
-  2: "3–12 months in Canada",
-  3: "1–3 years in Canada",
-  4: "3+ years in Canada",
-};
 
 /** A 5-segment stepped bar showing the user's time-in-Canada stage. */
 export function StageIndicator({ stage }: { stage: Stage }) {

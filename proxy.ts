@@ -1,13 +1,53 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const ONBOARDED_COOKIE = "unify_onboarded";
+
+/** Options for the onboarding-status hint cookie (1-year, httpOnly). */
+function onboardedCookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  };
+}
+
+/**
+ * Build a redirect that preserves the Supabase auth cookies refreshed onto
+ * `response` by getUser(). A bare NextResponse.redirect() is a fresh response
+ * and would drop those cookies, intermittently signing the user out.
+ */
+function redirectTo(
+  request: NextRequest,
+  response: NextResponse,
+  pathname: string,
+): NextResponse {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  const redirect = NextResponse.redirect(url);
+  for (const cookie of response.cookies.getAll()) {
+    redirect.cookies.set(cookie);
+  }
+  return redirect;
+}
+
 /**
  * Request proxy (the Next.js 16 successor to `middleware.ts`).
  *
- * Refreshes the Supabase session on every request and redirects
- * unauthenticated traffic to /login. While the Supabase env vars are unset
- * (frontend-only / no backend yet) this passes through, so the mock app stays
- * browsable without a project configured.
+ * Refreshes the Supabase session on every request, redirects unauthenticated
+ * traffic to /login, and gates authenticated-but-un-onboarded users into
+ * /onboarding. While the Supabase env vars are unset (frontend-only / no
+ * backend yet) this passes through, so the mock app stays browsable without a
+ * project configured.
+ *
+ * Onboarding gate: an httpOnly `unify_onboarded=<user.id>` cookie caches the
+ * "has an onboarding row" result, so the steady state costs only a cookie
+ * read — the `user_onboarding_profiles` table is queried just on a cookie miss
+ * (first navigation after onboarding, a new device, cleared cookies, or a
+ * different user on a shared browser). It is a UX gate, not a security boundary
+ * — RLS owns data access — so trusting a client-readable hint is acceptable.
  */
 export async function proxy(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -40,18 +80,60 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isAuthRoute = pathname === "/login" || pathname.startsWith("/auth");
 
-  if (!user && !isAuthRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
+  // Signed out: clear the onboarding hint and gate everything except the auth
+  // routes to /login.
+  if (!user) {
+    if (pathname === "/login" || pathname.startsWith("/auth")) {
+      return response;
+    }
+    const redirect = redirectTo(request, response, "/login");
+    redirect.cookies.delete(ONBOARDED_COOKIE);
+    return redirect;
   }
 
-  if (user && pathname === "/login") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/home";
-    return NextResponse.redirect(url);
+  // Signed in on /login → into the app (the /home request then runs the gate).
+  if (pathname === "/login") {
+    return redirectTo(request, response, "/home");
+  }
+
+  // OAuth callback and friends stay open; never gate them.
+  if (pathname.startsWith("/auth")) {
+    return response;
+  }
+
+  // ---- Onboarding gate -----------------------------------------------------
+  const isOnboardingRoute = pathname === "/onboarding";
+
+  let onboarded = request.cookies.get(ONBOARDED_COOKIE)?.value === user.id;
+  if (!onboarded) {
+    const { data, error } = await supabase
+      .from("user_onboarding_profiles")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (error) {
+      // Fail open: don't trap an onboarded user behind a transient error or
+      // risk a redirect loop. Self-corrects on the next navigation.
+      console.error("proxy: onboarding gate query failed", error);
+      return response;
+    }
+    onboarded = Boolean(data);
+    if (onboarded) {
+      response.cookies.set(ONBOARDED_COOKIE, user.id, onboardedCookieOptions());
+    }
+  }
+
+  // Onboarded users have no business on the wizard.
+  if (isOnboardingRoute && onboarded) {
+    const redirect = redirectTo(request, response, "/home");
+    redirect.cookies.set(ONBOARDED_COOKIE, user.id, onboardedCookieOptions());
+    return redirect;
+  }
+
+  // Un-onboarded users are sent to the wizard from any app route.
+  if (!isOnboardingRoute && !onboarded) {
+    return redirectTo(request, response, "/onboarding");
   }
 
   return response;

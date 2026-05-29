@@ -26,3 +26,18 @@ export function createClient() {
   );
   return browserClient;
 }
+
+/**
+ * The signed-in user's id, or null. Shared by the data services (community,
+ * feed, companion, learn, onboarding).
+ *
+ * getSession reads from the local cache (no network); getUser would hit the
+ * auth server on every data call. The bearer token is the same either way, so
+ * the subsequent PostgREST request authority is identical.
+ */
+export async function getAuthUserId(): Promise<string | null> {
+  const {
+    data: { session },
+  } = await createClient().auth.getSession();
+  return session?.user?.id ?? null;
+}

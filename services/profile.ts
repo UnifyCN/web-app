@@ -2,6 +2,11 @@ import type { Persona, Stage, UserProfile } from "@/types";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { ensureUserRow } from "@/lib/supabase/ensureUserRow";
 import {
+  PLACEHOLDER_RE,
+  claimUsername,
+  generateUsernameBase,
+} from "@/lib/supabase/username";
+import {
   currentUser,
   getUserById as findUser,
   lessonHighlights,
@@ -70,9 +75,21 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     return null;
   }
 
+  // Self-heal legacy placeholder usernames (`user <uuid>`) → a friendly handle
+  // derived from the Google name, so every surface shows the same display name.
+  let username = row.username;
+  if (PLACEHOLDER_RE.test(username)) {
+    const healed = await claimUsername(
+      supabase,
+      user.id,
+      generateUsernameBase(user),
+    );
+    if (healed) username = healed;
+  }
+
   return {
     id: row.id,
-    username: row.username,
+    username,
     profilePictureUrl: row.profile_picture_url,
     isPremium: row.is_premium,
     permissions: row.permissions ? [row.permissions] : [],

@@ -1,5 +1,9 @@
 import type { ChatMessage, ChatSource, ChatbotUsage, Conversation } from "@/types";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  createClient,
+  getAuthUserId,
+  isSupabaseConfigured,
+} from "@/lib/supabase/client";
 import {
   mockConversations,
   mockMessagesByConversation,
@@ -12,14 +16,6 @@ import {
  * Falls back to mock when Supabase isn't configured or the user isn't signed in
  * (mirrors profile/checklist/community).
  */
-
-async function getAuthUserId(): Promise<string | null> {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.user?.id ?? null;
-}
 
 /* ---- Row shapes -------------------------------------------------------- */
 
