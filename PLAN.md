@@ -106,8 +106,11 @@ Goal: A running, empty Next.js 14 app.
 
 ## Phase 10 — Checklist
 
-- `components/checklist/`: OverallProgressBar, PrioritySection, TaskRow, AddCustomTask.
-- `app/(main)/checklist/page.tsx`; `lib/mock/tasks.ts`.
+- `components/checklist/`: OverallProgressBar, PrioritySection, TaskRow, AddCustomTask, DeleteTaskModal.
+- `app/(main)/checklist/page.tsx`; `lib/mock/tasks.ts` (now the env-not-configured fallback).
+- Wired: `services/checklist.ts` (Sanity `checklist` GROQ filtered by persona + stage, merged with `user_tasks` + `custom_checklist_tasks`) + `hooks/useChecklist.ts`. Follows the Community/Learn pattern.
+- Gap closures: optimistic toggle (`useToggleTask`), custom-task delete (`deleteCustomTask` / `useDeleteCustomTask` + trash control + confirm modal), "Learn how" deep links (`resolveLearnHowHref`: `link_tab` → submodule → module → `/learn`).
+- Known: persona-tag mismatch with Sanity content — see `BACKLOG.md` → Checklist.
 - Gate: `/impeccable polish` + `/impeccable audit`.
 
 ## Phase 11 — Learn

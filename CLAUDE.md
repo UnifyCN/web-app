@@ -27,9 +27,15 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
   `onSuccess` invalidation.
   The `public.users` row is bootstrapped app-side by `lib/supabase/ensureUserRow.ts`
   (in the OAuth callback and as a self-heal in `getCurrentUser`).
-- **Checklist still runs on mock data.** Learn is wired in Phase 7 (Sanity
-  content + Supabase progress, including the lesson detail page). See
-  `PLAN.md` for the phase-by-phase build record.
+- **Checklist and Learn are wired to Sanity content + Supabase progress.**
+  Checklist filters Sanity `checklist` docs by the user's persona + stage,
+  buckets them into the 4 priorities, and tracks per-user completion in
+  `user_tasks` (upsert-on-complete / update-on-uncomplete) plus user-created
+  `custom_checklist_tasks`; each task's "Learn how" link resolves from the
+  doc's `link_tab` / `submodule` / `module`. Learn (Phase 7) renders Sanity
+  modules/submodules/lessons with Supabase progress, including the lesson
+  detail page. Both follow the Community wiring pattern. See `PLAN.md` for the
+  phase-by-phase build record.
 
 ---
 
@@ -439,7 +445,7 @@ Style: underline tabs — `border-b-2 border-primary` on active, orange text
 
 1. **Service layer separation** — Supabase queries in `services/`, React Query hooks in `hooks/`, components call hooks only. Follow the Community pattern (`services/community.ts` + `hooks/useCommunity.ts`): `isSupabaseConfigured()` + `getAuthUserId()` guards, snake_case row mappers, mock fallback when env vars aren't set (local dev), React Query hooks with stable query keys and `onSuccess` invalidation.
 
-2. **Mock data** — realistic Canadian newcomer context everywhere. Lives in `lib/mock/` and serves as the local-dev / env-not-configured fallback for wired sections; pure mock for Checklist and Learn until those phases land.
+2. **Mock data** — realistic Canadian newcomer context everywhere. Lives in `lib/mock/` and serves as the local-dev / env-not-configured fallback for all wired sections (including Checklist and Learn).
 
 3. **Feed pagination** — keyset cursor pagination. Cursors = `created_at` timestamps (not offset).
 
@@ -514,7 +520,6 @@ NEXT_PUBLIC_SANITY_DATASET=production
 
 ## What NOT to build yet
 
-- No real data fetching for Checklist or Learn yet — wire when those phases land
 - No edge function calls
 - No image upload
 - No push notifications
