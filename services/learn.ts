@@ -6,7 +6,11 @@ import type {
   SanityLesson,
   SanityModule,
 } from "@/types";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  createClient,
+  getAuthUserId,
+  isSupabaseConfigured,
+} from "@/lib/supabase/client";
 import {
   isSanityConfigured,
   sanityClient,
@@ -28,16 +32,6 @@ import { mockLearningProgress } from "@/lib/mock/progress";
  * configured + auth checks and falls back to mock data when env vars
  * aren't set (matches the Community/Companion pattern).
  */
-
-/* ---- Helpers ---------------------------------------------------------- */
-
-async function getAuthUserId(): Promise<string | null> {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.user?.id ?? null;
-}
 
 interface LearnProgressRow {
   module_id: string;

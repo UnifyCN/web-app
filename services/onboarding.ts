@@ -1,5 +1,9 @@
 import type { Persona } from "@/types";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  createClient,
+  getAuthUserId,
+  isSupabaseConfigured,
+} from "@/lib/supabase/client";
 import { calculateUserStage } from "@/lib/onboarding/calculateUserStage";
 
 /**
@@ -8,14 +12,6 @@ import { calculateUserStage } from "@/lib/onboarding/calculateUserStage";
  * guards and a mock no-op so the wizard stays exercisable in the local /
  * env-not-configured build. The read path already lives in `getCurrentUser`.
  */
-
-async function getAuthUserId(): Promise<string | null> {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.user?.id ?? null;
-}
 
 export interface SaveOnboardingInput {
   persona: Persona;

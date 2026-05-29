@@ -1,5 +1,9 @@
 import type { CommunityCircle, CommunityEvent, EventType, Group, NewsItem } from "@/types";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  createClient,
+  getAuthUserId,
+  isSupabaseConfigured,
+} from "@/lib/supabase/client";
 import { groups as mockGroups, getGroupById as findMockGroup } from "@/lib/mock/groups";
 import { events as mockEvents, getEventById as findMockEvent } from "@/lib/mock/events";
 import { newsItems as mockNews } from "@/lib/mock/news";
@@ -19,14 +23,6 @@ function seededMemberAvatars(id: number): string[] {
   return [1, 2, 3, 4].map(
     (n) => `https://picsum.photos/seed/${AVATAR_SEED_PREFIX}-${id}-m${n}/64/64`,
   );
-}
-
-async function getAuthUserId(): Promise<string | null> {
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.user?.id ?? null;
 }
 
 interface GroupRow {

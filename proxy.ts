@@ -15,6 +15,25 @@ function onboardedCookieOptions() {
 }
 
 /**
+ * Build a redirect that preserves the Supabase auth cookies refreshed onto
+ * `response` by getUser(). A bare NextResponse.redirect() is a fresh response
+ * and would drop those cookies, intermittently signing the user out.
+ */
+function redirectTo(
+  request: NextRequest,
+  response: NextResponse,
+  pathname: string,
+): NextResponse {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  const redirect = NextResponse.redirect(url);
+  for (const cookie of response.cookies.getAll()) {
+    redirect.cookies.set(cookie);
+  }
+  return redirect;
+}
+
+/**
  * Request proxy (the Next.js 16 successor to `middleware.ts`).
  *
  * Refreshes the Supabase session on every request, redirects unauthenticated
@@ -68,18 +87,14 @@ export async function proxy(request: NextRequest) {
     if (pathname === "/login" || pathname.startsWith("/auth")) {
       return response;
     }
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    const redirect = NextResponse.redirect(url);
+    const redirect = redirectTo(request, response, "/login");
     redirect.cookies.delete(ONBOARDED_COOKIE);
     return redirect;
   }
 
   // Signed in on /login → into the app (the /home request then runs the gate).
   if (pathname === "/login") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/home";
-    return NextResponse.redirect(url);
+    return redirectTo(request, response, "/home");
   }
 
   // OAuth callback and friends stay open; never gate them.
@@ -111,18 +126,14 @@ export async function proxy(request: NextRequest) {
 
   // Onboarded users have no business on the wizard.
   if (isOnboardingRoute && onboarded) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/home";
-    const redirect = NextResponse.redirect(url);
+    const redirect = redirectTo(request, response, "/home");
     redirect.cookies.set(ONBOARDED_COOKIE, user.id, onboardedCookieOptions());
     return redirect;
   }
 
   // Un-onboarded users are sent to the wizard from any app route.
   if (!isOnboardingRoute && !onboarded) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/onboarding";
-    return NextResponse.redirect(url);
+    return redirectTo(request, response, "/onboarding");
   }
 
   return response;

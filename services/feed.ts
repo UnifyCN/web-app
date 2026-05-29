@@ -1,5 +1,9 @@
 import type { FeedResponse, FeedTab, Post, User } from "@/types";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  createClient,
+  getAuthUserId,
+  isSupabaseConfigured,
+} from "@/lib/supabase/client";
 import { posts as mockPosts, followedUsernames } from "@/lib/mock/posts";
 
 /**
@@ -145,17 +149,6 @@ function mockForTab(tab: FeedTab): Post[] {
     return mockPosts.filter((post) => post.groupId !== null);
   }
   return mockPosts;
-}
-
-async function getAuthUserId(): Promise<string | null> {
-  // getSession reads from the local cache (no network); getUser would hit the
-  // auth server on every feed/like/save call. The bearer token is the same
-  // either way, so the subsequent PostgREST request authority is identical.
-  const supabase = createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.user?.id ?? null;
 }
 
 export async function getForYouFeed(

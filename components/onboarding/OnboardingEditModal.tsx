@@ -1,10 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import type { UserOnboardingProfile } from "@/types";
 import { OnboardingFlow } from "./OnboardingFlow";
 import { EMPTY_DRAFT, draftFromProfile } from "./types";
+
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), ' +
+  'select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/** Visible, focusable descendants of `root`, in DOM order. */
+function getFocusable(root: HTMLElement | null): HTMLElement[] {
+  if (!root) return [];
+  return Array.from(
+    root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+  ).filter((el) => el.offsetParent !== null);
+}
 
 interface OnboardingEditModalProps {
   open: boolean;
@@ -24,17 +36,50 @@ export function OnboardingEditModal({
   onClose,
   profile,
 }: OnboardingEditModalProps) {
-  // Escape to close + lock body scroll while open.
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Move focus into the dialog on open, trap Tab/Shift+Tab inside it, close on
+  // Escape, lock body scroll, and restore focus to the trigger on close.
   useEffect(() => {
     if (!open) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const dialog = dialogRef.current;
+    dialog?.focus();
+
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const items = getFocusable(dialog);
+      if (items.length === 0) {
+        event.preventDefault();
+        dialog?.focus();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey) {
+        if (active === first || active === dialog || !dialog?.contains(active)) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !dialog?.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      }
     };
+
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
+      previouslyFocused?.focus();
     };
   }, [open, onClose]);
 
@@ -47,7 +92,9 @@ export function OnboardingEditModal({
       role="presentation"
     >
       <div
-        className="flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-card bg-surface shadow-lg"
+        ref={dialogRef}
+        tabIndex={-1}
+        className="flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-card bg-surface shadow-lg focus:outline-none"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
