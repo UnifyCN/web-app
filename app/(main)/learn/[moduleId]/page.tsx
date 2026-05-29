@@ -77,7 +77,7 @@ export default function ModuleDetailPage({
 
       <div
         className="relative mt-4 overflow-hidden rounded-card p-6 text-white shadow-sm"
-        style={{ backgroundColor: mod.colorTheme?.hex ?? "#9F9D9D" }}
+        style={{ backgroundColor: mod.colorTheme?.hex ?? "var(--color-ink-placeholder)" }}
       >
         <Blob
           color="#ffffff"

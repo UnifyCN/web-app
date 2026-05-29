@@ -146,7 +146,7 @@ export default function LessonDetailPage({
         </button>
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-input">
           <div
-            className="h-full rounded-full transition-[width] duration-300"
+            className="h-full rounded-full"
             style={{
               width: `${submoduleProgressPercent}%`,
               backgroundColor: accentColor,

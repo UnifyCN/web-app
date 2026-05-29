@@ -44,6 +44,7 @@ export function LearnSidePanel({
           <Search className="h-4 w-4 text-ink-placeholder" aria-hidden />
           <input
             type="search"
+            aria-label="Search modules"
             placeholder="Search modules"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
