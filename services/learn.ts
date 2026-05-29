@@ -5,7 +5,6 @@ import type {
   ModuleStatus,
   SanityLesson,
   SanityModule,
-  SanitySubmodule,
 } from "@/types";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
@@ -73,23 +72,12 @@ function computeModulePercent(
   return Math.round((done / lessonIds.length) * 100);
 }
 
-/** MODULES_LIST_QUERY adds `lessonIds` to each submodule — service-local
- * shape so the public SanitySubmodule type stays slim. Use Omit so the
- * extension fully replaces the (lessons-less) submodule field rather than
- * intersecting (which TS resolves inconsistently for optional arrays). */
-interface ListSubmodule extends Omit<SanitySubmodule, "lessons"> {
-  lessonIds?: string[];
-}
-interface ListModule extends Omit<SanityModule, "submodules"> {
-  submodules?: ListSubmodule[];
-}
-
 /* ---- Modules ---------------------------------------------------------- */
 
 export async function getModules(): Promise<LearnModuleView[]> {
   if (!isSanityConfigured()) return mockModules;
 
-  const sanityModules = await sanityClient.fetch<ListModule[]>(
+  const sanityModules = await sanityClient.fetch<SanityModule[]>(
     MODULES_LIST_QUERY,
   );
 
@@ -145,8 +133,8 @@ export async function getModules(): Promise<LearnModuleView[]> {
   return sanityModules.map((mod) => {
     const status: ModuleStatus =
       progressByModuleId[mod._id]?.status ?? "not_started";
-    const lessonIds = (mod.submodules ?? []).flatMap(
-      (s) => s.lessonIds ?? [],
+    const lessonIds = (mod.submodules ?? []).flatMap((s) =>
+      (s.lessons ?? []).map((l) => l._id),
     );
     return {
       ...mod,
