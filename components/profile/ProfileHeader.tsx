@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { StatsRow } from "./StatsRow";
 import { PersonaBadge } from "./PersonaBadge";
 import { StageIndicator } from "./StageIndicator";
+import { OnboardingEditModal } from "@/components/onboarding/OnboardingEditModal";
 import type { UserProfile } from "@/types";
 
 /* lucide-react no longer ships brand glyphs — inline minimal ones. */
@@ -47,6 +48,7 @@ export function ProfileHeader({
   isOwnProfile,
 }: ProfileHeaderProps) {
   const [following, setFollowing] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   return (
     <div className="rounded-card border border-border-card bg-surface p-5">
@@ -86,9 +88,13 @@ export function ProfileHeader({
         </>
       ) : (
         isOwnProfile && (
-          <p className="mt-3 text-xs text-ink-muted">
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="mt-3 cursor-pointer text-left text-xs font-medium text-primary hover:underline"
+          >
             Complete your profile to add your persona, location, and stage.
-          </p>
+          </button>
         )
       )}
 
@@ -101,7 +107,11 @@ export function ProfileHeader({
       <div className="mt-4 flex gap-2">
         {isOwnProfile ? (
           <>
-            <Button variant="secondary" size="sm">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setEditing(true)}
+            >
               Edit profile
             </Button>
             <Button variant="secondary" size="sm">
@@ -118,6 +128,14 @@ export function ProfileHeader({
           </Button>
         )}
       </div>
+
+      {isOwnProfile && (
+        <OnboardingEditModal
+          open={editing}
+          onClose={() => setEditing(false)}
+          profile={profile.onboarding}
+        />
+      )}
     </div>
   );
 }

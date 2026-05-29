@@ -1,11 +1,12 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { generateUsernameBase, usernameCandidates } from "@/lib/supabase/username";
 
 /**
  * Idempotently create the public.users row for an authenticated user. Single
  * source of truth for the bootstrap shape, shared by the OAuth callback and the
- * client-side self-heal in getCurrentUser. Mirrors db/triggers.sql — the
- * placeholder username uses a space (not `_`) to satisfy the schema's
- * ^[a-zA-Z0-9 ]{1,20}$ check.
+ * client-side self-heal in getCurrentUser. Seeds a friendly `username` derived
+ * from the Google name (see lib/supabase/username), de-duplicated against the
+ * UNIQUE constraint by trying suffixed candidates.
  *
  * Uses the passed client (a singleton on the browser, per-request on the
  * server), which carries the user's session — so the insert runs as the
@@ -24,14 +25,21 @@ export async function ensureUserRow(supabase: SupabaseClient, user: User) {
     return new Error("no session");
   }
 
-  const { error } = await supabase.from("users").upsert(
-    {
-      id: user.id,
-      email: user.email,
-      username: `user ${user.id.replace(/-/g, "").slice(0, 12)}`,
-    },
-    { onConflict: "id", ignoreDuplicates: true },
-  );
-  if (error) console.error("ensureUserRow failed", error);
-  return error;
+  // Try the friendly handle, then suffixed variants on a username collision.
+  // ON CONFLICT (id) DO NOTHING means a row the user already has (e.g. renamed)
+  // is left untouched; only a genuine new insert can hit the username UNIQUE.
+  const candidates = usernameCandidates(generateUsernameBase(user), user.id);
+  for (const username of candidates) {
+    const { error } = await supabase.from("users").upsert(
+      { id: user.id, email: user.email, username },
+      { onConflict: "id", ignoreDuplicates: true },
+    );
+    if (!error) return null;
+    if (error.code !== "23505") {
+      console.error("ensureUserRow failed", error);
+      return error;
+    }
+    // username taken by another user → try the next candidate
+  }
+  return null;
 }

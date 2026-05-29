@@ -8,7 +8,6 @@ import {
   type ResumeEntry,
 } from "@/components/learn/ResumeHeroCarousel";
 import { useAllLessonProgresses, useModules } from "@/hooks/useLearn";
-import { useAuthUser } from "@/hooks/useAuthUser";
 import { useCurrentUser } from "@/hooks/useProfile";
 import type { LearnModuleView, ModuleStatus } from "@/types";
 
@@ -24,12 +23,10 @@ export default function LearnPage() {
   const modulesQuery = useModules();
   const progressesQuery = useAllLessonProgresses();
   const userQuery = useCurrentUser();
-  const authUserQuery = useAuthUser();
 
   const [searchQuery, setSearchQuery] = useState("");
 
   const user = userQuery.data;
-  const authUser = authUserQuery.data;
 
   // The server `status` on `learn_progress` is never written by lesson
   // completion, so we derive it client-side from the same lesson-progress
@@ -107,13 +104,8 @@ export default function LearnPage() {
     matchesSearch(m, searchQuery),
   );
 
-  const fullName =
-    typeof authUser?.user_metadata?.full_name === "string"
-      ? authUser.user_metadata.full_name.trim()
-      : "";
-  const emailLocal = authUser?.email?.split("@")[0]?.trim() ?? "";
-  const usernameTrimmed = user?.username?.trim() ?? "";
-  const greeting = fullName || emailLocal || usernameTrimmed || "there";
+  // Username is the single display identity across the app (mobile convention).
+  const greeting = user?.username?.trim() || "there";
 
   const modulesCompleted = decoratedModules.filter(
     (m) => m.status === "completed",
