@@ -50,8 +50,9 @@ export function sanityImageUrl(
 
 /* ---- GROQ queries (verbatim from mobile UnifyCN/mobile-app) ----------- */
 
-/** All modules with their submodules + per-submodule lesson IDs (used to
- * compute real progress percent client-side without a full lesson fetch). */
+/** All modules with their submodules + per-submodule lesson stubs (id +
+ * title + order). Used to compute progress percent client-side and to
+ * resolve the first-incomplete lesson's submodule for resume cards. */
 export const MODULES_LIST_QUERY = `*[_type == "module"] | order(title) {
   _id,
   _type,
@@ -65,7 +66,12 @@ export const MODULES_LIST_QUERY = `*[_type == "module"] | order(title) {
     title,
     description,
     order,
-    "lessonIds": *[_type == "lesson" && references(^._id)]._id
+    "lessons": *[_type == "lesson" && references(^._id)] | order(order) {
+      _id,
+      _type,
+      title,
+      order
+    }
   }
 }`;
 

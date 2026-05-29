@@ -2,8 +2,14 @@
 
 import { use } from "react";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Blob } from "@/components/learn/Blob";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
-import { LessonRow } from "@/components/learn/LessonRow";
+import { ModuleIcon } from "@/components/learn/ModuleIcon";
+import {
+  SubmoduleTimelineRow,
+  type SubmoduleState,
+} from "@/components/learn/SubmoduleTimelineRow";
 import { useAllLessonProgresses, useModule } from "@/hooks/useLearn";
 
 export default function ModuleDetailPage({
@@ -43,14 +49,25 @@ export default function ModuleDetailPage({
 
   const progresses = progressesQuery.data ?? {};
   const submodules = mod.submodules ?? [];
-  const allLessons = submodules.flatMap((s) => s.lessons ?? []);
-  const total = allLessons.length;
-  const done = allLessons.filter(
-    (l) => progresses[l._id]?.isCompleted,
-  ).length;
-  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+  const accentColor = mod.colorTheme?.hex ?? "var(--color-ink-placeholder)";
 
-  const accentColor = mod.colorTheme?.hex ?? "#9F9D9D";
+  // Per-submodule state from lesson completion. The first non-completed row
+  // gets the colored CTA treatment ("primary action"); everything else
+  // renders as a neutral card with its own dot state.
+  const rows = submodules.map((sub) => {
+    const lessons = sub.lessons ?? [];
+    const completedCount = lessons.filter(
+      (l) => progresses[l._id]?.isCompleted,
+    ).length;
+    let state: SubmoduleState = "not_started";
+    if (lessons.length > 0 && completedCount === lessons.length) {
+      state = "completed";
+    } else if (completedCount > 0) {
+      state = "in_progress";
+    }
+    return { sub, lessons, completedCount, state };
+  });
+  const activeCTAIndex = rows.findIndex((r) => r.state !== "completed");
 
   return (
     <div className="mx-auto max-w-[860px] px-6 py-6">
@@ -58,61 +75,66 @@ export default function ModuleDetailPage({
         items={[{ label: "Learn", href: "/learn" }, { label: mod.title }]}
       />
 
-      <div className="mt-4 gap-6 sm:flex sm:items-center">
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-ink-secondary">{mod.title}</h1>
-          {mod.description && (
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-              {mod.description}
-            </p>
-          )}
-          <p className="mt-3 text-xs font-medium text-ink-tertiary">
-            Progress: {done}/{total} lessons completed
-          </p>
-          <div className="mt-1.5 h-2 w-full max-w-xs overflow-hidden rounded-full bg-surface-input">
-            <div
-              className="h-full rounded-full bg-primary"
-              style={{ width: `${percent}%` }}
+      <div
+        className="relative mt-4 overflow-hidden rounded-card p-6 text-white shadow-sm"
+        style={{ backgroundColor: mod.colorTheme?.hex ?? "#9F9D9D" }}
+      >
+        <Blob
+          color="#ffffff"
+          opacity={0.22}
+          className="absolute -right-16 -top-24 h-80 w-80"
+        />
+        <div className="relative flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/learn"
+              className="inline-flex items-center gap-1 text-sm text-white/90 transition-colors hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              Back to Learn
+            </Link>
+            <ModuleIcon
+              icon={mod.icon}
+              className="h-7 w-7 text-white"
+              strokeWidth={1.75}
             />
           </div>
-        </div>
-        <div
-          className="relative mt-4 flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-card sm:mt-0 sm:w-64 sm:shrink-0"
-          style={{ backgroundColor: accentColor }}
-        >
-          <span className="px-4 text-center text-xs uppercase tracking-wide text-white/80">
-            {mod.title}
-          </span>
+          <div>
+            <h1 className="text-2xl font-extrabold leading-tight">
+              {mod.title}
+            </h1>
+            {mod.description && (
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/90">
+                {mod.description}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="mt-8 space-y-8">
-        {submodules.map((sub) => {
-          const lessons = sub.lessons ?? [];
-          return (
-            <section key={sub._id}>
-              <h2 className="text-lg font-bold text-ink-secondary">
-                {sub.title}
-              </h2>
-              {sub.description && (
-                <p className="mt-1 text-sm leading-relaxed text-ink-muted">
-                  {sub.description}
-                </p>
-              )}
-              <div className="mt-3 space-y-3">
-                {lessons.map((lesson) => (
-                  <LessonRow
-                    key={lesson._id}
-                    moduleId={mod._id}
-                    lesson={lesson}
-                    progress={progresses[lesson._id]}
-                  />
-                ))}
-              </div>
-            </section>
-          );
-        })}
-      </div>
+      {submodules.length > 0 ? (
+        <ol className="mt-8 flex flex-col">
+          {rows.map(({ sub, lessons, completedCount, state }, i) => (
+            <SubmoduleTimelineRow
+              key={sub._id}
+              moduleId={mod._id}
+              submoduleId={sub._id}
+              title={sub.title}
+              lessonCount={lessons.length}
+              completedCount={completedCount}
+              state={state}
+              isActiveCTA={i === activeCTAIndex}
+              colorHex={accentColor}
+              isFirst={i === 0}
+              isLast={i === rows.length - 1}
+            />
+          ))}
+        </ol>
+      ) : (
+        <p className="mt-8 text-sm text-ink-muted">
+          This module has no sections yet.
+        </p>
+      )}
     </div>
   );
 }

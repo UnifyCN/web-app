@@ -4,19 +4,25 @@ import type { LessonProgress, SanityLesson } from "@/types";
 
 interface LessonRowProps {
   moduleId: string;
+  submoduleId: string;
   lesson: SanityLesson;
   progress?: LessonProgress;
 }
 
-/** A lesson row on the module detail page — progress ring + title + copy. */
-export function LessonRow({ moduleId, lesson, progress }: LessonRowProps) {
+/** A lesson row on the submodule landing page — progress ring + title + copy. */
+export function LessonRow({
+  moduleId,
+  submoduleId,
+  lesson,
+  progress,
+}: LessonRowProps) {
   const percent = progress?.isCompleted
     ? 100
     : (progress?.progressPercent ?? 0);
 
   return (
     <Link
-      href={`/learn/${moduleId}/${lesson._id}`}
+      href={`/learn/${moduleId}/${submoduleId}/${lesson._id}`}
       className="group flex items-start gap-4 rounded-card border border-border-card bg-surface p-4 transition-colors hover:bg-surface-card"
     >
       <ProgressRing percent={percent} size={64} />
