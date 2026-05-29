@@ -60,6 +60,9 @@ From Phase 9 pre-launch checklist. Before launch: run REVOKE ALL ON ALL TABLES I
 **Full security audit**
 Run the vibe-security skill against the entire codebase before launch (Phase 9). Focus areas: RLS policies, exposed keys, auth bypass vectors, service role key usage.
 
+**`is_circle_member` SECURITY DEFINER (accepted)**
+`public.is_circle_member` is intentionally `SECURITY DEFINER` and executable by `authenticated` (required to break the RLS recursion between `community_circles` and `community_circle_members`); it only returns whether the caller is a member of the passed circle id — no data leak. Flagged by the `authenticated_security_definer_function_executable` advisor; accepted, not a fix.
+
 ---
 
 ## Schema
