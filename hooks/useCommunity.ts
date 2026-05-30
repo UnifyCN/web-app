@@ -56,10 +56,28 @@ export function useNews() {
   return useQuery({ queryKey: ["news"], queryFn: community.getNews });
 }
 
+const CIRCLE_KEY = ["circle"] as const;
+
 export function useCurrentCircle() {
   return useQuery({
-    queryKey: ["circle"],
+    queryKey: CIRCLE_KEY,
     queryFn: community.getCurrentCircle,
+  });
+}
+
+export function useStartCircleMatching() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: community.startCircleMatching,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CIRCLE_KEY }),
+  });
+}
+
+export function useCancelCircleMatching() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: community.cancelCircleMatching,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: CIRCLE_KEY }),
   });
 }
 
