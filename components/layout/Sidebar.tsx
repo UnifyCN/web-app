@@ -3,17 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Home,
-  Users,
-  MessageCircle,
-  CheckSquare,
-  BookOpen,
-  User,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { User, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
+import { LearnIcon } from "@/components/icons/LearnIcon";
+import { ChecklistIcon } from "@/components/icons/ChecklistIcon";
+import { CompanionIcon } from "@/components/icons/CompanionIcon";
+import { CommunityIcon } from "@/components/icons/CommunityIcon";
+import { SocialIcon } from "@/components/icons/SocialIcon";
 import { UnifyLogo } from "@/components/UnifyLogo";
 import { signOut as signOutService } from "@/services/auth";
 import { cn } from "@/lib/utils";
@@ -24,12 +19,15 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
+// Order + icons mirror the mobile app's bottom-tab nav (Learn → Checklist →
+// Companion → Community → Social). Mobile has no Home tab; its Social tab is the
+// post feed, which the web app serves at /home.
 const TOP_NAV: NavItem[] = [
-  { label: "Home", href: "/home", icon: Home },
-  { label: "Community", href: "/community", icon: Users },
-  { label: "Companion", href: "/companion", icon: MessageCircle },
-  { label: "Checklist", href: "/checklist", icon: CheckSquare },
-  { label: "Learn", href: "/learn", icon: BookOpen },
+  { label: "Learn", href: "/learn", icon: LearnIcon },
+  { label: "Checklist", href: "/checklist", icon: ChecklistIcon },
+  { label: "Companion", href: "/companion", icon: CompanionIcon },
+  { label: "Community", href: "/community", icon: CommunityIcon },
+  { label: "Social", href: "/home", icon: SocialIcon },
 ];
 
 const PROFILE_ITEM: NavItem = { label: "Profile", href: "/profile", icon: User };
