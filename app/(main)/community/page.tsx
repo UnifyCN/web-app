@@ -24,7 +24,9 @@ const TAB_GROUPS = "Join Groups";
 const TAB_EVENTS = "Community Events";
 const TAB_NEWS = "News & Tips";
 const TAB_CIRCLES = "Unify Circles";
-const TABS = [TAB_GROUPS, TAB_EVENTS, TAB_NEWS, TAB_CIRCLES];
+// Circles is hidden for now — re-enable by adding TAB_CIRCLES back to this array.
+// The TAB_CIRCLES constant, CIRCLE_FEATURES, hooks, and render block below are left intact.
+const TABS = [TAB_GROUPS, TAB_EVENTS, TAB_NEWS];
 
 const CIRCLE_FEATURES = [
   {
