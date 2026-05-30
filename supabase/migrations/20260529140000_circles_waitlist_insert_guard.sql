@@ -36,10 +36,14 @@ create policy "waitlist_insert_own" on public.community_match_waitlist
   with check (
     user_id = auth.uid()
     and persona = (
-      select p.persona from public.user_onboarding_profiles p where p.id = auth.uid()
+      select p.persona
+      from public.user_onboarding_profiles p
+      where p.id = auth.uid()
     )
     and time_in_canada = (
-      select p.stage from public.user_onboarding_profiles p where p.id = auth.uid()
+      select p.stage
+      from public.user_onboarding_profiles p
+      where p.id = auth.uid()
     )
     and pool_key = persona || '__' || public.circle_time_slug(time_in_canada)
   );
