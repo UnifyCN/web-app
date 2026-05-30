@@ -2,7 +2,7 @@
 // Uses currentColor so the sidebar's active/inactive text colors flow through.
 export function SocialIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden>
+    <svg className={className} viewBox="0 0 20 20" fill="none" aria-hidden="true">
       <path
         fillRule="evenodd"
         clipRule="evenodd"
