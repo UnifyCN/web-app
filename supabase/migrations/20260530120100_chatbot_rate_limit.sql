@@ -61,10 +61,11 @@ begin
 end;
 $$;
 
--- Only the edge function (service-role key) may call this. No authenticated
--- grant: a direct client must never be able to burn another user's quota.
+-- Only the edge function (service-role key) may call this. CREATE FUNCTION
+-- grants EXECUTE to PUBLIC by default, so revoke PUBLIC (and anon/authenticated
+-- explicitly) — a direct client must never be able to burn another user's quota.
 revoke execute on function public.check_and_increment_chatbot_usage(uuid, int)
-  from authenticated;
+  from public, anon, authenticated;
 grant execute on function public.check_and_increment_chatbot_usage(uuid, int)
   to service_role;
 
@@ -72,7 +73,15 @@ grant execute on function public.check_and_increment_chatbot_usage(uuid, int)
 -- when generation fails after the daily count was already incremented (so a
 -- transient provider/DB error doesn't burn one of the user's 3 daily messages).
 -- Same service-role-aware guard; floors at 0; service_role only.
-create or replace function public.decrement_chatbot_usage(p_user_id uuid)
+--
+-- Drop the older single-arg overload first: it changed signature to take the
+-- charged date, and the old (uuid) version still carried default PUBLIC execute.
+drop function if exists public.decrement_chatbot_usage(uuid);
+
+create or replace function public.decrement_chatbot_usage(
+  p_user_id uuid,
+  p_charged_date date
+)
 returns void
 language plpgsql
 security definer
@@ -84,10 +93,15 @@ begin
     raise exception 'not authorized to modify usage for another user';
   end if;
 
+  -- Only refund if the row is still on the UTC day the message was charged —
+  -- guards the midnight-UTC boundary so we never decrement a fresh day's count.
   update public.chatbot_usage
     set message_count = greatest(message_count - 1, 0)
-    where user_id = p_user_id;
+    where user_id = p_user_id
+      and (last_message_at at time zone 'utc')::date = p_charged_date;
 end;
 $$;
 
-grant execute on function public.decrement_chatbot_usage(uuid) to service_role;
+revoke execute on function public.decrement_chatbot_usage(uuid, date)
+  from public, anon, authenticated;
+grant execute on function public.decrement_chatbot_usage(uuid, date) to service_role;

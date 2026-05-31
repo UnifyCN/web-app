@@ -276,12 +276,29 @@ async function resolveAuthenticatedUserId(
  */
 async function refundChatbotUsage(
   supabase: ReturnType<typeof createClient>,
-  userId: string
+  userId: string,
+  chargedDate: string
 ): Promise<void> {
   try {
-    await supabase.rpc('decrement_chatbot_usage', { p_user_id: userId });
-  } catch (_refundError) {
-    console.warn('[rag-query] quota refund failed (non-fatal)');
+    // supabase.rpc resolves to { data, error } — it does NOT throw on RPC
+    // failure, so surface a non-null error in the logs instead of swallowing it.
+    const { error } = await supabase.rpc('decrement_chatbot_usage', {
+      p_user_id: userId,
+      p_charged_date: chargedDate,
+    });
+    if (error) {
+      console.warn(
+        '[rag-query] quota refund failed (non-fatal):',
+        error.message
+      );
+    }
+  } catch (refundError) {
+    // Guard against an unexpected throw (e.g. network) — a failed refund must
+    // never mask the original error that triggered it.
+    console.warn(
+      '[rag-query] quota refund threw (non-fatal):',
+      refundError instanceof Error ? refundError.message : refundError
+    );
   }
 }
 
@@ -518,6 +535,7 @@ Deno.serve(async (req: Request) => {
   let quotaConsumed = false;
   let supabaseForRefund: ReturnType<typeof createClient> | null = null;
   let refundUserId: string | null = null;
+  let refundChargedDate: string | null = null;
 
   try {
     const {
@@ -581,9 +599,11 @@ Deno.serve(async (req: Request) => {
       }
 
       // Quota is now consumed; remember enough to refund it if generation fails.
+      // Capture the UTC date charged so the refund only decrements that same day.
       quotaConsumed = true;
       supabaseForRefund = supabase;
       refundUserId = effectiveUserId;
+      refundChargedDate = new Date().toISOString().slice(0, 10);
     }
 
     if (
@@ -829,8 +849,17 @@ Deno.serve(async (req: Request) => {
     if (!llmResult.ok) {
       if (llmResult.retryable) {
         // Transient failure after the quota was charged — refund the message.
-        if (quotaConsumed && supabaseForRefund && refundUserId) {
-          await refundChatbotUsage(supabaseForRefund, refundUserId);
+        if (
+          quotaConsumed &&
+          supabaseForRefund &&
+          refundUserId &&
+          refundChargedDate
+        ) {
+          await refundChatbotUsage(
+            supabaseForRefund,
+            refundUserId,
+            refundChargedDate
+          );
         }
         return jsonResponse(
           {
@@ -893,8 +922,17 @@ Deno.serve(async (req: Request) => {
   } catch (error: unknown) {
     // Any failure after the quota was charged means the user got no answer —
     // refund the message so a provider/DB error doesn't burn their daily cap.
-    if (quotaConsumed && supabaseForRefund && refundUserId) {
-      await refundChatbotUsage(supabaseForRefund, refundUserId);
+    if (
+      quotaConsumed &&
+      supabaseForRefund &&
+      refundUserId &&
+      refundChargedDate
+    ) {
+      await refundChatbotUsage(
+        supabaseForRefund,
+        refundUserId,
+        refundChargedDate
+      );
     }
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred';
