@@ -15,9 +15,9 @@ import {
 } from "@/hooks/useCompanion";
 import type { ChatMessage } from "@/types";
 
-// Cosmetic free-tier cap shown next to the input. Real enforcement is deferred
-// until the AI backend lands; see BACKLOG.md.
-const FREE_TIER_DAILY_LIMIT = 6;
+// Free-tier daily cap shown next to the input. Enforced server-side by the
+// rag-query edge function's check_and_increment_chatbot_usage RPC (same limit).
+const FREE_TIER_DAILY_LIMIT = 3;
 
 export default function CompanionPage() {
   const queryClient = useQueryClient();

@@ -10,9 +10,9 @@ import {
 } from "@/lib/mock/conversations";
 
 /**
- * Companion (AI chat) data access — conversations, messages, daily usage.
- * Real path queries Supabase (`conversations`, `messages`, `chatbot_usage`).
- * AI generation isn't wired yet — the canned reply lives in the hook layer.
+ * Companion (AI chat) data access — conversations, messages, daily usage, and
+ * AI reply generation. Real path queries Supabase (`conversations`, `messages`,
+ * `chatbot_usage`) and invokes the `rag-query` edge function for replies.
  * Falls back to mock when Supabase isn't configured or the user isn't signed in
  * (mirrors profile/checklist/community).
  */
@@ -191,6 +191,103 @@ export async function saveMessage(input: SaveMessageInput): Promise<ChatMessage>
   if (error) throw error;
 
   return rowToMessage(data as MessageRow, input.conversationIdentifier);
+}
+
+/* ---- AI reply generation (rag-query edge function) -------------------- */
+
+/** Thrown when the daily free-tier message limit is hit (rag-query 429). */
+export class ChatLimitError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ChatLimitError";
+  }
+}
+
+/** Shape returned by the rag-query edge function (subset we consume). */
+interface RagQueryResponse {
+  answer: string;
+  sources?: { document_id: number; document_title: string; url: string }[];
+  queryType?: string;
+  disclaimer?: string;
+  suggestedNextSteps?: string[];
+  lastVerified?: string;
+}
+
+// Local-dev / env-not-configured fallback (mirrors the other services). The
+// real reply comes from the rag-query edge function.
+const MOCK_REPLY =
+  "Thanks for asking! Here's a general overview to point you in the right " +
+  "direction. Details can vary by province and change over time, so for " +
+  "anything official — applications, deadlines, or eligibility — confirm with " +
+  "the relevant government website or a settlement counsellor.";
+
+export interface GenerateReplyInput {
+  conversationIdentifier: string;
+  prompt: string;
+  /** Prior turns (oldest→newest), already trimmed to the last ~10 by the caller. */
+  history: { role: "user" | "assistant"; message: string }[];
+}
+
+export interface GeneratedReply {
+  answer: string;
+  sources: ChatSource[] | null;
+}
+
+/**
+ * Calls the `rag-query` edge function and returns the assistant answer +
+ * normalized citations. The browser Supabase client attaches the user's JWT
+ * automatically. A 429 surfaces as {@link ChatLimitError}; the IRCC disclaimer
+ * the function returns is appended to the answer (the web UI has no separate
+ * disclaimer slot like mobile).
+ */
+export async function generateReply(
+  input: GenerateReplyInput,
+): Promise<GeneratedReply> {
+  if (!isSupabaseConfigured()) {
+    return { answer: MOCK_REPLY, sources: null };
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase.functions.invoke<RagQueryResponse>(
+    "rag-query",
+    {
+      body: {
+        prompt: input.prompt,
+        conversationIdentifier: input.conversationIdentifier,
+        messages: input.history,
+      },
+    },
+  );
+
+  if (error) {
+    // supabase-js FunctionsHttpError carries the Response on `.context`.
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === "function") {
+      let body: { error?: string } = {};
+      try {
+        body = await ctx.json();
+      } catch {
+        // non-JSON error body — fall through to the generic message
+      }
+      if (ctx.status === 429) {
+        throw new ChatLimitError(
+          body.error ?? "Daily message limit reached. Try again tomorrow.",
+        );
+      }
+      throw new Error(body.error ?? `rag-query failed (${ctx.status})`);
+    }
+    throw error;
+  }
+
+  if (!data || typeof data.answer !== "string") {
+    throw new Error("rag-query returned no answer");
+  }
+
+  const answer = data.disclaimer
+    ? `${data.answer}\n\n${data.disclaimer}`
+    : data.answer;
+
+  return { answer, sources: normalizeSources(data.sources) };
 }
 
 export async function deleteConversation(
