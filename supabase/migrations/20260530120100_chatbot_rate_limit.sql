@@ -21,6 +21,14 @@ declare
   v_count int;
   v_today date := (now() at time zone 'utc')::date;
 begin
+  -- Defense in depth: this is SECURITY DEFINER, so restrict who it can act for.
+  -- The edge function calls it with the service-role key (auth.uid() is NULL),
+  -- which is exempt; any other caller may only touch their own usage row.
+  if coalesce(auth.role(), '') <> 'service_role'
+     and auth.uid() is distinct from p_user_id then
+    raise exception 'not authorized to modify usage for another user';
+  end if;
+
   select is_premium into v_is_premium from public.users where id = p_user_id;
 
   -- Upsert the usage row; reset the count on a new UTC day.
@@ -53,7 +61,33 @@ begin
 end;
 $$;
 
--- The edge function calls this with the service-role key; grant authenticated
--- too in case it's ever invoked directly under RLS.
+-- Only the edge function (service-role key) may call this. No authenticated
+-- grant: a direct client must never be able to burn another user's quota.
+revoke execute on function public.check_and_increment_chatbot_usage(uuid, int)
+  from authenticated;
 grant execute on function public.check_and_increment_chatbot_usage(uuid, int)
-  to service_role, authenticated;
+  to service_role;
+
+-- Compensating decrement: the edge function calls this to refund one message
+-- when generation fails after the daily count was already incremented (so a
+-- transient provider/DB error doesn't burn one of the user's 3 daily messages).
+-- Same service-role-aware guard; floors at 0; service_role only.
+create or replace function public.decrement_chatbot_usage(p_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if coalesce(auth.role(), '') <> 'service_role'
+     and auth.uid() is distinct from p_user_id then
+    raise exception 'not authorized to modify usage for another user';
+  end if;
+
+  update public.chatbot_usage
+    set message_count = greatest(message_count - 1, 0)
+    where user_id = p_user_id;
+end;
+$$;
+
+grant execute on function public.decrement_chatbot_usage(uuid) to service_role;

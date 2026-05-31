@@ -61,11 +61,11 @@ export async function fetchWithRetry(
     } catch (error) {
       lastError = error;
 
-      // If the caller's signal triggered the abort, rethrow immediately — don't retry.
-      if (
-        init?.signal?.aborted ||
-        (error instanceof DOMException && error.name === 'AbortError')
-      ) {
+      // Only the caller's own signal aborting should skip retries. A timeout
+      // abort comes from our internal `controller` (not `init.signal`), so it
+      // surfaces as an AbortError too — but that's a normal failure we DO want
+      // to retry, hence we no longer short-circuit on AbortError generally.
+      if (init?.signal?.aborted) {
         throw error;
       }
 

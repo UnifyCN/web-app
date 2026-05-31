@@ -44,10 +44,29 @@ create index if not exists knowledge_chunks_document_id_idx
 -- perfect recall and is instant; an ivfflat(lists=100) index would probe ~1/100 of the
 -- vectors and degrade recall. Add a tuned ANN index once the KB grows large.
 
--- RLS on (web convention). No policies: the rag-query edge function reads these with the
--- service-role key, which bypasses RLS. No anon/authenticated access is granted.
+-- RLS on (web convention). Only the rag-query edge function touches these, via the
+-- service-role key, which bypasses RLS. No client role gets direct access.
 alter table public.knowledge_documents enable row level security;
-alter table public.knowledge_chunks enable row level security;
+alter table public.knowledge_chunks    enable row level security;
+
+-- The blanket ALTER DEFAULT PRIVILEGES in 20260518100800_grants.sql granted
+-- authenticated DML on every future public table, so these tables inherited it.
+-- Revoke it, and add an explicit deny policy documenting that no client role
+-- may read/write directly. service_role bypasses RLS and is granted select
+-- below so the edge function still reads the KB. Idempotent (drop-if-exists)
+-- so the migration can be safely re-applied.
+revoke all on public.knowledge_documents from anon, authenticated;
+revoke all on public.knowledge_chunks    from anon, authenticated;
+
+drop policy if exists knowledge_documents_no_client_access on public.knowledge_documents;
+create policy knowledge_documents_no_client_access on public.knowledge_documents
+  as restrictive for all to anon, authenticated using (false) with check (false);
+
+drop policy if exists knowledge_chunks_no_client_access on public.knowledge_chunks;
+create policy knowledge_chunks_no_client_access on public.knowledge_chunks
+  as restrictive for all to anon, authenticated using (false) with check (false);
+
+grant select on public.knowledge_documents, public.knowledge_chunks to service_role;
 
 -- Vector search: recency-weighted similarity (85% cosine + 15% recency), returns
 -- source_url in the document jsonb (matches the mobile rag-query contract).

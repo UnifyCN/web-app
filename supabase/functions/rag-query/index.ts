@@ -269,6 +269,22 @@ async function resolveAuthenticatedUserId(
   return user.id;
 }
 
+/**
+ * Best-effort compensating decrement: refund one message when generation fails
+ * after the daily quota was already incremented. Never throws — a failed refund
+ * must not mask the original error that triggered it.
+ */
+async function refundChatbotUsage(
+  supabase: ReturnType<typeof createClient>,
+  userId: string
+): Promise<void> {
+  try {
+    await supabase.rpc('decrement_chatbot_usage', { p_user_id: userId });
+  } catch (_refundError) {
+    console.warn('[rag-query] quota refund failed (non-fatal)');
+  }
+}
+
 // ============================================================================
 // CLASSIFIER (heuristic — no LLM call)
 // ============================================================================
@@ -497,6 +513,12 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Refund context — populated once the daily quota is actually consumed, so a
+  // post-increment failure (embeddings / LLM) can hand the message back.
+  let quotaConsumed = false;
+  let supabaseForRefund: ReturnType<typeof createClient> | null = null;
+  let refundUserId: string | null = null;
+
   try {
     const {
       prompt,
@@ -557,6 +579,11 @@ Deno.serve(async (req: Request) => {
           429
         );
       }
+
+      // Quota is now consumed; remember enough to refund it if generation fails.
+      quotaConsumed = true;
+      supabaseForRefund = supabase;
+      refundUserId = effectiveUserId;
     }
 
     if (
@@ -662,7 +689,12 @@ Deno.serve(async (req: Request) => {
           }
         );
 
-        console.log(`Chunks received for "${prompt}":`, chunks?.length || 0);
+        // Log only non-PII metadata — the raw prompt can contain immigration
+        // details and other sensitive info that must not land in edge logs.
+        console.log('match_chunks results', {
+          chunks: chunks?.length ?? 0,
+          conversation: conversationIdentifier ?? null,
+        });
 
         if (searchError) {
           console.error('match_chunks RPC error:', searchError);
@@ -796,6 +828,10 @@ Deno.serve(async (req: Request) => {
 
     if (!llmResult.ok) {
       if (llmResult.retryable) {
+        // Transient failure after the quota was charged — refund the message.
+        if (quotaConsumed && supabaseForRefund && refundUserId) {
+          await refundChatbotUsage(supabaseForRefund, refundUserId);
+        }
         return jsonResponse(
           {
             error:
@@ -855,6 +891,11 @@ Deno.serve(async (req: Request) => {
       estimatedCostUsd,
     });
   } catch (error: unknown) {
+    // Any failure after the quota was charged means the user got no answer —
+    // refund the message so a provider/DB error doesn't burn their daily cap.
+    if (quotaConsumed && supabaseForRefund && refundUserId) {
+      await refundChatbotUsage(supabaseForRefund, refundUserId);
+    }
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred';
     return jsonResponse({ error: message }, 500);
