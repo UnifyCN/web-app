@@ -591,7 +591,27 @@ Deno.serve(async (req: Request) => {
         { p_user_id: effectiveUserId, p_daily_limit: DAILY_MESSAGE_LIMIT }
       );
 
-      if (quotaError || !quota || quota.allowed === false) {
+      // A DB/RPC failure is a server problem, not the user hitting their cap —
+      // surface it as a retryable 503, not a misleading 429. (A null `quota`
+      // with no error is an abnormal result, not a confirmed limit, so treat it
+      // the same way — fail closed without lying about the reason.)
+      if (quotaError || !quota) {
+        console.error(
+          'check_and_increment_chatbot_usage failed:',
+          quotaError?.message ?? 'no data returned'
+        );
+        return jsonResponse(
+          {
+            error:
+              'AI Companion is busy right now. Please try again in a minute.',
+            code: 'ai_companion_busy',
+          },
+          503
+        );
+      }
+
+      // Only an explicit deny from the RPC is a real daily-limit 429.
+      if (quota.allowed === false) {
         return jsonResponse(
           { error: 'Daily message limit reached. Try again tomorrow.' },
           429
