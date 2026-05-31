@@ -1,17 +1,24 @@
 -- Server-side daily rate limit for the Companion AI.
 --
 -- The rag-query edge function calls this RPC once per message (fail-closed):
--- it atomically increments the caller's daily message_count and returns false
--- when the cap is exceeded, so the function can return 429. Premium users are
--- never limited. Adapted from the mobile app's check_and_increment_chatbot_usage
--- to the web chatbot_usage schema (user_id, message_count, last_message_at) —
--- no token/cost columns here (analytics disabled on web).
+-- it atomically increments the caller's daily message_count and returns a jsonb
+-- { allowed: bool, charged_date: date } — allowed=false when the cap is exceeded
+-- (so the function can return 429). charged_date is the UTC day the message was
+-- counted against; the edge passes it back to decrement_chatbot_usage on refund
+-- so the charge and refund agree on the day with no second clock read. Premium
+-- users are never limited. Adapted from the mobile app's
+-- check_and_increment_chatbot_usage to the web chatbot_usage schema (user_id,
+-- message_count, last_message_at) — no token/cost columns (analytics off on web).
+
+-- CREATE OR REPLACE cannot change a function's return type (was boolean), so drop
+-- first. The drop also clears grants; the revoke/grant lines below re-establish them.
+drop function if exists public.check_and_increment_chatbot_usage(uuid, int);
 
 create or replace function public.check_and_increment_chatbot_usage(
   p_user_id uuid,
   p_daily_limit int default 3
 )
-returns boolean
+returns jsonb
 language plpgsql
 security definer
 set search_path = public
@@ -45,7 +52,7 @@ begin
 
   -- Premium users are never rate-limited.
   if coalesce(v_is_premium, false) then
-    return true;
+    return jsonb_build_object('allowed', true, 'charged_date', v_today);
   end if;
 
   -- Over the cap → roll back this increment and deny (caps the stored count at
@@ -54,10 +61,10 @@ begin
     update public.chatbot_usage
       set message_count = message_count - 1
       where user_id = p_user_id;
-    return false;
+    return jsonb_build_object('allowed', false, 'charged_date', v_today);
   end if;
 
-  return true;
+  return jsonb_build_object('allowed', true, 'charged_date', v_today);
 end;
 $$;
 

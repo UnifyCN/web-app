@@ -584,14 +584,14 @@ Deno.serve(async (req: Request) => {
     const effectiveUserId = isEvalMode ? 'eval-mode' : authenticatedUserId!;
 
     // Atomic rate limit: check + increment in one RPC (fail-closed). Returns
-    // false if over the daily cap or on any DB error.
+    // jsonb { allowed, charged_date }; deny on DB error or over the daily cap.
     if (!isEvalMode) {
-      const { data: allowed, error: quotaError } = await supabase.rpc(
+      const { data: quota, error: quotaError } = await supabase.rpc(
         'check_and_increment_chatbot_usage',
         { p_user_id: effectiveUserId, p_daily_limit: DAILY_MESSAGE_LIMIT }
       );
 
-      if (quotaError || allowed === false) {
+      if (quotaError || !quota || quota.allowed === false) {
         return jsonResponse(
           { error: 'Daily message limit reached. Try again tomorrow.' },
           429
@@ -599,11 +599,12 @@ Deno.serve(async (req: Request) => {
       }
 
       // Quota is now consumed; remember enough to refund it if generation fails.
-      // Capture the UTC date charged so the refund only decrements that same day.
+      // Use the UTC date the RPC actually charged (not a second edge-clock read)
+      // so the charge and refund agree on the day — no midnight-UTC race.
       quotaConsumed = true;
       supabaseForRefund = supabase;
       refundUserId = effectiveUserId;
-      refundChargedDate = new Date().toISOString().slice(0, 10);
+      refundChargedDate = quota.charged_date;
     }
 
     if (
