@@ -1,0 +1,43 @@
+name: Edge Functions
+
+# The Supabase Edge Functions are Deno, not part of the Next.js toolchain, so
+# tsconfig.json and eslint.config.mjs exclude supabase/functions/**. This gate
+# type-checks them with Deno instead. `deno check` on the entrypoint pulls in
+# the _shared/*.ts files via its import graph and resolves the jsr:/npm: imports.
+# No Docker required (the Supabase CLI has no `functions lint` subcommand).
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/edge-functions.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/edge-functions.yml'
+
+# Least privilege — this job only needs to read the repo to type-check.
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref (e.g. rapid pushes to a PR branch).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
+        with:
+          deno-version: v2.x
+      - name: Type-check edge functions
+        # --node-modules-dir=auto installs npm deps pulled in transitively by
+        # the Supabase edge-runtime types (functions-js' edge-runtime.d.ts type-
+        # references npm:openai), which `deno check` must resolve to type-check.
+        run: deno check --node-modules-dir=auto supabase/functions/rag-query/index.ts

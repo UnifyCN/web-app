@@ -11,15 +11,6 @@ export function messagesKey(conversationIdentifier: string) {
   return ["conversation-messages", conversationIdentifier] as const;
 }
 
-// Stand-in for the real RAG response. Replaced when the AI backend lands.
-const CANNED_REPLY =
-  "Thanks for asking! Here's a general overview to point you in the right " +
-  "direction. Details can vary by province and change over time, so for " +
-  "anything official — applications, deadlines, or eligibility — confirm with " +
-  "the relevant government website or a settlement counsellor.";
-
-const ASSISTANT_REPLY_DELAY_MS = 900;
-
 export function useConversations() {
   return useQuery({
     queryKey: CONVERSATIONS_KEY,
@@ -77,11 +68,11 @@ interface SendMessageContext {
 }
 
 /**
- * Persists the user message, waits ~900ms, then persists a canned assistant
- * reply. Optimistically appends the user bubble to the messages cache so it
- * renders before the network round-trip resolves. Real LLM/RAG generation is
- * deferred — when wired, replace the setTimeout + CANNED_REPLY with the
- * streaming call and pass the returned sources to saveMessage.
+ * Persists the user message, asks the rag-query edge function for a reply, then
+ * persists the assistant message with any citations. Optimistically appends the
+ * user bubble to the messages cache so it renders before the round-trip resolves.
+ * Conversation history (prior persisted turns) is read from the cache and passed
+ * to the function so multi-turn context is preserved.
  */
 export function useSendMessage() {
   const queryClient = useQueryClient();
@@ -92,19 +83,35 @@ export function useSendMessage() {
     SendMessageContext
   >({
     mutationFn: async ({ conversationIdentifier, text }) => {
+      // Prior turns = persisted messages already in the cache. Optimistic
+      // bubbles carry negative ids (see onMutate) so we drop them, then keep
+      // the last 10 turns to bound the prompt size.
+      const cached =
+        queryClient.getQueryData<ChatMessage[]>(
+          messagesKey(conversationIdentifier),
+        ) ?? [];
+      const history = cached
+        .filter((m) => m.id >= 0)
+        .slice(-10)
+        .map((m) => ({ role: m.role, message: m.content }));
+
       await companion.saveMessage({
         conversationIdentifier,
         role: "user",
         content: text,
       });
-      await new Promise<void>((resolve) =>
-        setTimeout(resolve, ASSISTANT_REPLY_DELAY_MS),
-      );
+
+      const { answer, sources } = await companion.generateReply({
+        conversationIdentifier,
+        prompt: text,
+        history,
+      });
+
       await companion.saveMessage({
         conversationIdentifier,
         role: "assistant",
-        content: CANNED_REPLY,
-        sources: null,
+        content: answer,
+        sources,
       });
       return { conversationIdentifier };
     },
@@ -139,6 +146,9 @@ export function useSendMessage() {
         queryKey: messagesKey(conversationIdentifier),
       });
       queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
+      // The edge function incremented chatbot_usage server-side — refetch so
+      // the free-tier "remaining" counter reflects the new count.
+      queryClient.invalidateQueries({ queryKey: CHATBOT_USAGE_KEY });
     },
   });
 }
