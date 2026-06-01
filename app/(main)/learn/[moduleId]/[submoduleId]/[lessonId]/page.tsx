@@ -94,28 +94,9 @@ export default function LessonDetailPage({
     .slice()
     .sort((a, b) => a.order - b.order);
 
-  function findSubmoduleIdForLesson(lid: string): string {
-    for (const s of submodules) {
-      if ((s.lessons ?? []).some((l) => l._id === lid)) return s._id;
-    }
-    return submoduleId;
-  }
-
-  const submoduleLessons = parentSubmodule.lessons ?? [];
-  const lessonIndexInSubmodule = submoduleLessons.findIndex(
-    (l) => l._id === lessonId,
-  );
-  // Next lesson WITHIN this submodule. On the submodule's last lesson there's
-  // no next, so "Next" returns to the section page (see nextHref) rather than
-  // jumping into the next submodule.
-  const nextLesson =
-    lessonIndexInSubmodule >= 0 &&
-    lessonIndexInSubmodule < submoduleLessons.length - 1
-      ? submoduleLessons[lessonIndexInSubmodule + 1]
-      : null;
-
-  // Pressing "Next" is the completion trigger (no manual checkbox). Fired
-  // before navigating; the upsert + invalidation finish in the background.
+  // Finishing a lesson marks it complete (no manual checkbox); the upsert +
+  // invalidation run in the background. Per product spec, finishing always
+  // returns to the section page — there's no auto-advance to the next lesson.
   function markComplete() {
     setLessonProgress.mutate({
       lessonId,
@@ -124,10 +105,6 @@ export default function LessonDetailPage({
       moduleId,
     });
   }
-
-  const nextHref = nextLesson
-    ? `/learn/${moduleId}/${findSubmoduleIdForLesson(nextLesson._id)}/${nextLesson._id}`
-    : `/learn/${moduleId}/${submoduleId}`;
 
   return (
     <div className="mx-auto max-w-[760px] px-6 py-6">
@@ -165,7 +142,6 @@ export default function LessonDetailPage({
                 }
               : null
           }
-          nextHref={nextHref}
           onLessonComplete={markComplete}
           sectionHref={`/learn/${moduleId}/${submoduleId}`}
         />

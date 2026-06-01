@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Check } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Check } from "lucide-react";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import { useUpsertLessonQuizProgress } from "@/hooks/useLearn";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,8 @@ interface LessonQuizProps {
   colorHex: string;
   /** Set when the lesson's Quick Check was already completed (from progress). */
   initialResult: { score: number; total: number } | null;
+  /** The submodule page — finishing always returns here (never the next lesson). */
+  sectionHref: string;
 }
 
 /**
@@ -30,6 +33,7 @@ export function LessonQuiz({
   questions,
   colorHex,
   initialResult,
+  sectionHref,
 }: LessonQuizProps) {
   const upsert = useUpsertLessonQuizProgress();
   const total = questions.length;
@@ -72,13 +76,23 @@ export function LessonQuiz({
         <p className="mt-2 text-sm text-ink-muted">
           You scored {result.score}/{result.total} ({pct}%).
         </p>
-        <button
-          type="button"
-          onClick={handleRetake}
-          className="mt-3 text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
-        >
-          Retake quick check
-        </button>
+        <div className="mt-5 flex items-center gap-4">
+          <Link
+            href={sectionHref}
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-md px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: colorHex }}
+          >
+            Back to section
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+          <button
+            type="button"
+            onClick={handleRetake}
+            className="text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
+          >
+            Retake quick check
+          </button>
+        </div>
       </div>
     );
   }

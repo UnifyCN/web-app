@@ -23,6 +23,10 @@ export function MultipleChoiceQuestion({
   onChange,
 }: MultipleChoiceQuestionProps) {
   const multi = question.question_type === "multiple_choice_multiple";
+  const isTrueFalse = question.question_type === "true_false";
+  // Square indicator for multi-select and True/False (matches mobile); single
+  // choice stays round. (Selection logic still uses `multi`.)
+  const squareIndicator = multi || isTrueFalse;
   const options = question.options ?? [];
   const selected = new Set(answer);
 
@@ -74,7 +78,7 @@ export function MultipleChoiceQuestion({
               <span
                 className={cn(
                   "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border-2 transition-colors",
-                  multi ? "rounded-md" : "rounded-full",
+                  squareIndicator ? "rounded-md" : "rounded-full",
                   showCorrect
                     ? "border-priority-optional bg-priority-optional text-white"
                     : showWrong
@@ -89,7 +93,12 @@ export function MultipleChoiceQuestion({
                   <Check className="h-3 w-3" strokeWidth={3} />
                 )}
               </span>
-              <span className="flex-1 [&_p]:text-ink-secondary">
+              <span
+                className={cn(
+                  "flex-1 [&_p]:text-ink-secondary",
+                  isTrueFalse && "[&_p]:font-semibold",
+                )}
+              >
                 <PortableTextRenderer value={opt.text} />
               </span>
             </button>

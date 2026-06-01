@@ -18,11 +18,9 @@ interface LessonPagerProps {
   quizTitle: string;
   quizQuestions: SanityQuizQuestion[];
   quizInitialResult: { score: number; total: number } | null;
-  /** Where "Next lesson" on the last page goes (next lesson, or the section). */
-  nextHref: string;
-  /** Fired when leaving the last page (marks the lesson complete). */
+  /** Fired when the lesson content is finished (marks the lesson complete). */
   onLessonComplete: () => void;
-  /** The section page — "Back" exits here from page 1. */
+  /** The submodule page — "Back" exits here, and finishing always returns here. */
   sectionHref: string;
 }
 
@@ -42,7 +40,6 @@ export function LessonPager({
   quizTitle,
   quizQuestions,
   quizInitialResult,
-  nextHref,
   onLessonComplete,
   sectionHref,
 }: LessonPagerProps) {
@@ -62,6 +59,15 @@ export function LessonPager({
   function handleBack() {
     if (index > 0) setPageIndex(index - 1);
     else router.push(sectionHref);
+  }
+
+  function handleNext() {
+    const next = index + 1;
+    // Reaching the Quick Check page means all content is read — mark the lesson
+    // complete here, since the quiz page hides the pager's nav (and its complete
+    // trigger).
+    if (hasQuiz && next === pages.length) onLessonComplete();
+    setPageIndex(next);
   }
 
   return (
@@ -117,42 +123,45 @@ export function LessonPager({
             questions={quizQuestions}
             colorHex={colorHex}
             initialResult={quizInitialResult}
+            sectionHref={sectionHref}
           />
         </div>
       )}
 
-      {/* Bottom nav */}
-      <nav className="mt-10 flex items-center gap-3 border-t border-border-card pt-6">
-        <button
-          type="button"
-          onClick={handleBack}
-          className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md bg-surface-gray text-sm font-semibold text-ink-tertiary transition-colors hover:bg-surface-input"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back
-        </button>
-        {isLastScreen ? (
-          <Link
-            href={nextHref}
-            onClick={onLessonComplete}
-            className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: colorHex }}
-          >
-            Next lesson
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
-        ) : (
+      {/* Bottom nav — hidden on the Quick Check page (the quiz has its own nav). */}
+      {!isQuizPage && (
+        <nav className="mt-10 flex items-center gap-3 border-t border-border-card pt-6">
           <button
             type="button"
-            onClick={() => setPageIndex(index + 1)}
-            className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: colorHex }}
+            onClick={handleBack}
+            className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md bg-surface-gray text-sm font-semibold text-ink-tertiary transition-colors hover:bg-surface-input"
           >
-            Next
-            <ArrowRight className="h-4 w-4" aria-hidden />
+            <ArrowLeft className="h-4 w-4" aria-hidden />
+            Back
           </button>
-        )}
-      </nav>
+          {isLastScreen ? (
+            <Link
+              href={sectionHref}
+              onClick={onLessonComplete}
+              className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: colorHex }}
+            >
+              Back to section
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={handleNext}
+              className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: colorHex }}
+            >
+              Next
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </button>
+          )}
+        </nav>
+      )}
     </div>
   );
 }

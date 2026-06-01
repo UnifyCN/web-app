@@ -116,7 +116,7 @@ const components: PortableTextComponents = {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-semibold text-primary underline underline-offset-2 hover:text-primary-dark"
+          className="font-semibold text-blue-600 underline underline-offset-2 hover:text-blue-800"
         >
           {children}
         </a>
