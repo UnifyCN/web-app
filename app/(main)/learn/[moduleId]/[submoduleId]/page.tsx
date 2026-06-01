@@ -8,10 +8,8 @@ import { SectionTimelineCard } from "@/components/learn/SectionTimelineCard";
 import {
   useAllLessonProgresses,
   useModule,
-  usePractices,
   usePracticeProgress,
 } from "@/hooks/useLearn";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 export default function SubmoduleLandingPage({
   params,
@@ -21,7 +19,6 @@ export default function SubmoduleLandingPage({
   const { moduleId, submoduleId } = use(params);
   const moduleQuery = useModule(moduleId);
   const progressesQuery = useAllLessonProgresses();
-  const practicesQuery = usePractices(submoduleId);
   const practiceProgressQuery = usePracticeProgress(submoduleId);
 
   const mod = moduleQuery.data;
@@ -65,15 +62,6 @@ export default function SubmoduleLandingPage({
   const firstIncomplete = lessons.find((l) => !progresses[l._id]?.isCompleted);
   const targetLesson = firstIncomplete ?? lessons[0];
   const learnCompleted = lessons.length > 0 && !firstIncomplete;
-  // "Started" once any lesson has progress. In local-dev / env-not-configured
-  // mode there's no progress store, so unlock Practice to keep it testable.
-  const learnStarted =
-    !isSupabaseConfigured() ||
-    lessons.some(
-      (l) =>
-        progresses[l._id]?.isCompleted ||
-        (progresses[l._id]?.progressPercent ?? 0) > 0,
-    );
   const learnLabel = learnCompleted
     ? "Review"
     : completedCount > 0
@@ -81,22 +69,17 @@ export default function SubmoduleLandingPage({
       : "Start";
 
   // --- Practice state ------------------------------------------------------
-  const practices = practicesQuery.data ?? [];
-  const hasQuiz = practices.some((p) => (p.questions?.length ?? 0) > 0);
+  // Practice is always accessible — no Learn-started gate.
   const practiceProgress = practiceProgressQuery.data;
   const practiceCompleted = !!practiceProgress?.isCompleted;
   const practiceStarted =
     !!practiceProgress && (practiceProgress.currentQuestionIndex ?? 0) > 0;
-  const practiceLocked = !learnStarted || !hasQuiz;
-  const practiceActive = learnCompleted && !practiceLocked && !practiceCompleted;
+  const practiceActive = learnCompleted && !practiceCompleted;
   const practiceLabel = practiceCompleted
     ? "Review"
     : practiceStarted
       ? "Resume"
       : "Start";
-  const practiceLockedHint = !hasQuiz
-    ? "No practice yet"
-    : "Complete a lesson to unlock";
 
   return (
     <div className="mx-auto max-w-[760px] px-6 py-6">
@@ -156,18 +139,14 @@ export default function SubmoduleLandingPage({
           subtitle="Test your understanding"
           colorHex={colorHex}
           isActive={practiceActive}
-          locked={practiceLocked}
-          lockedHint={practiceLockedHint}
           dot={
             practiceCompleted
               ? "completed"
-              : practiceLocked
-                ? "locked"
-                : practiceActive
-                  ? "active"
-                  : "todo"
+              : practiceActive
+                ? "active"
+                : "todo"
           }
-          buttonLabel={practiceLocked ? undefined : practiceLabel}
+          buttonLabel={practiceLabel}
           href={`/learn/${moduleId}/${submoduleId}/practice`}
           isFirst={false}
           isLast
