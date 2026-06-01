@@ -262,25 +262,19 @@ export async function getLesson(
 /* ---- Practices (quiz content) ---------------------------------------- */
 
 /**
- * Section-level practices for a submodule, ordered by `order_number`. Includes
+ * Every practice referencing a submodule, ordered by `order_number`. Includes
  * BOTH shapes: `quiz` practices (questions in `questions[]`, e.g. "Leasing Quick
- * Check", "Foundation of Budgeting Practice") and `activity` practices
- * (questions in `pages[].instructions[]`, e.g. "Quick Check: Red Flags").
- * `flattenPractices` handles both.
+ * Check", "Foundation of Budgeting Practice") and `activity` practices (questions
+ * in `pages[].instructions[]`, e.g. "Quick Check: Red Flags"). `flattenPractices`
+ * handles both.
  *
- * Excluded: lesson-level reflections/activities, which the content team authors
- * with a "Lesson X.Y …" title (e.g. "Lesson 1.1: Self Reflection"). These belong
- * to the lesson flow, not the section Practice page. There's no schema field
- * distinguishing them — they reference the submodule like any practice — so the
- * title prefix is the only available signal.
- *
- * As of this dataset, 19 submodules have at least one non-"Lesson" practice and
- * will show a Practice card (see the commit message for the full list).
+ * No title-based filtering — this mirrors the mobile app, which surfaces every
+ * practice for a submodule on the section Practice flow, including lesson-level
+ * reflections/activities the content team titles "Lesson X.Y …" (e.g. "Lesson 1.1:
+ * Self Reflection"). Practices reference a submodule, not a lesson, and neither the
+ * web nor the mobile lesson reading flow renders them inline — they're reached only
+ * from the section Practice card.
  */
-function isLessonLevelPractice(title: string): boolean {
-  return /^lesson\b/i.test(title.trim());
-}
-
 export async function getPractices(
   submoduleId: string,
 ): Promise<SanityPractice[]> {
@@ -291,7 +285,7 @@ export async function getPractices(
     { submoduleId },
   );
   return (practices ?? [])
-    .filter((p) => !isLessonLevelPractice(p.title))
+    .slice()
     .sort((a, b) => a.order_number - b.order_number);
 }
 
