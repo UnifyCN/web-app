@@ -43,7 +43,7 @@ function DropdownBlock({
   content?: SanityBlock[];
 }) {
   return (
-    <details className="rounded-card border border-border-card bg-surface">
+    <details className="rounded-card border border-border-card bg-surface-gray">
       <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-ink-secondary">
         {label ?? "Details"}
       </summary>
@@ -97,7 +97,9 @@ const components: PortableTextComponents = {
   },
   marks: {
     strong: ({ children }) => (
-      <strong className="font-semibold text-ink-secondary">{children}</strong>
+      // No colour — inherit from the surrounding context so bold links stay blue
+      // (a hard colour here would override the link mark on bold-link text).
+      <strong className="font-semibold">{children}</strong>
     ),
     em: ({ children }) => <em className="italic">{children}</em>,
     code: ({ children }) => (

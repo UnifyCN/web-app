@@ -17,7 +17,6 @@ interface LessonPagerProps {
   colorHex: string;
   quizTitle: string;
   quizQuestions: SanityQuizQuestion[];
-  quizInitialResult: { score: number; total: number } | null;
   /** Fired when the lesson content is finished (marks the lesson complete). */
   onLessonComplete: () => void;
   /** The submodule page — "Back" exits here, and finishing always returns here. */
@@ -39,7 +38,6 @@ export function LessonPager({
   colorHex,
   quizTitle,
   quizQuestions,
-  quizInitialResult,
   onLessonComplete,
   sectionHref,
 }: LessonPagerProps) {
@@ -122,7 +120,6 @@ export function LessonPager({
             title={quizTitle}
             questions={quizQuestions}
             colorHex={colorHex}
-            initialResult={quizInitialResult}
             sectionHref={sectionHref}
           />
         </div>

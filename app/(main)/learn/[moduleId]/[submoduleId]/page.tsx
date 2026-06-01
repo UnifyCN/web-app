@@ -94,7 +94,7 @@ export default function SubmoduleLandingPage({
       : "Test your understanding";
 
   return (
-    <div className="mx-auto max-w-[760px] px-6 py-6">
+    <div className="mx-auto max-w-[760px] px-6 py-8">
       <Breadcrumb
         items={[
           { label: "Learn", href: "/learn" },
@@ -103,7 +103,7 @@ export default function SubmoduleLandingPage({
         ]}
       />
 
-      <div className="mt-3">
+      <div className="mt-5">
         <Link
           href={`/learn/${moduleId}`}
           className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
@@ -114,21 +114,21 @@ export default function SubmoduleLandingPage({
       </div>
 
       {/* Badge on its own line, above the title (Fix 1). */}
-      <div className="mt-4">
+      <div className="mt-6">
         <span className="inline-block rounded-full bg-surface-gray px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink-tertiary">
           Section {sectionNumber}
         </span>
       </div>
 
-      <h1 className="mt-3 text-2xl font-bold text-ink-secondary">
+      <h1 className="mt-4 text-2xl font-bold text-ink-secondary">
         {submodule.title}
       </h1>
-      <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+      <p className="mt-3 text-sm leading-relaxed text-ink-muted">
         {submodule.description ?? "Learn key concepts and practice your skills."}
       </p>
 
       {/* Activities timeline: Learn → Practice (Fix 2). */}
-      <ol className="mt-6 flex flex-col">
+      <ol className="mt-10 flex flex-col">
         <SectionTimelineCard
           icon={BookOpen}
           title="Learn"

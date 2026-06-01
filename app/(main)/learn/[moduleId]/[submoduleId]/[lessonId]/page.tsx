@@ -7,7 +7,6 @@ import { LessonPager } from "@/components/learn/LessonPager";
 import {
   useLesson,
   useLessonQuiz,
-  useLessonQuizProgress,
   useModule,
   useSetLessonProgress,
 } from "@/hooks/useLearn";
@@ -22,7 +21,6 @@ export default function LessonDetailPage({
   const lessonQuery = useLesson(lessonId);
   const setLessonProgress = useSetLessonProgress();
   const lessonQuizQuery = useLessonQuiz(lessonId);
-  const lessonQuizProgressQuery = useLessonQuizProgress(lessonId);
 
   const mod = moduleQuery.data;
   const lesson = lessonQuery.data;
@@ -34,7 +32,6 @@ export default function LessonDetailPage({
     (q) => q.questions ?? [],
   );
   const lessonQuizTitle = lessonQuizQuery.data?.[0]?.title ?? "Quick Check";
-  const lessonQuizProgress = lessonQuizProgressQuery.data;
 
   if (lessonQuery.isLoading || moduleQuery.isLoading) {
     return (
@@ -132,16 +129,6 @@ export default function LessonDetailPage({
           colorHex={accentColor}
           quizTitle={lessonQuizTitle}
           quizQuestions={lessonQuizQuestions}
-          quizInitialResult={
-            lessonQuizProgress?.isCompleted
-              ? {
-                  score: lessonQuizProgress.score ?? 0,
-                  total:
-                    lessonQuizProgress.totalQuestions ??
-                    lessonQuizQuestions.length,
-                }
-              : null
-          }
           onLessonComplete={markComplete}
           sectionHref={`/learn/${moduleId}/${submoduleId}`}
         />

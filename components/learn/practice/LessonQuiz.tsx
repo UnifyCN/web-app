@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import { useUpsertLessonQuizProgress } from "@/hooks/useLearn";
 import { cn } from "@/lib/utils";
@@ -15,87 +14,34 @@ interface LessonQuizProps {
   title: string;
   questions: SanityQuizQuestion[];
   colorHex: string;
-  /** Set when the lesson's Quick Check was already completed (from progress). */
-  initialResult: { score: number; total: number } | null;
-  /** The submodule page — finishing always returns here (never the next lesson). */
+  /** The submodule page — finishing navigates here (never the next lesson). */
   sectionHref: string;
 }
 
 /**
  * Inline "Quick Check" rendered mid-lesson. Reuses the shared QuizQuestion
  * renderers + grade.ts. Holds local quiz state (no mid-quiz resume); on finishing
- * it persists completion via useUpsertLessonQuizProgress and shows a checkmark.
- * Back resets the target question for a fresh attempt (matches mobile).
+ * it persists completion via useUpsertLessonQuizProgress and navigates back to the
+ * section (no results screen). Back resets the target question for a fresh attempt.
  */
 export function LessonQuiz({
   lessonId,
   title,
   questions,
   colorHex,
-  initialResult,
   sectionHref,
 }: LessonQuizProps) {
+  const router = useRouter();
   const upsert = useUpsertLessonQuizProgress();
   const total = questions.length;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [submitted, setSubmitted] = useState<Record<string, boolean>>({});
-  const [result, setResult] = useState<{ score: number; total: number } | null>(
-    initialResult,
-  );
 
   const heading = title || "Quick Check";
 
-  function handleRetake() {
-    setAnswers({});
-    setSubmitted({});
-    setCurrentIndex(0);
-    setResult(null);
-  }
-
   if (total === 0) return null;
-
-  // ---- Completed state (just finished, or resumed-from-progress) ----------
-  if (result) {
-    const pct =
-      result.total > 0 ? Math.round((result.score / result.total) * 100) : 0;
-    return (
-      <div>
-        <div className="flex items-center gap-2">
-          <span
-            className="flex h-6 w-6 items-center justify-center rounded-full"
-            style={{ backgroundColor: colorHex }}
-          >
-            <Check className="h-4 w-4 text-white" strokeWidth={3} aria-hidden />
-          </span>
-          <h2 className="text-lg font-bold text-ink-secondary">
-            {heading} complete
-          </h2>
-        </div>
-        <p className="mt-2 text-sm text-ink-muted">
-          You scored {result.score}/{result.total} ({pct}%).
-        </p>
-        <div className="mt-5 flex items-center gap-4">
-          <Link
-            href={sectionHref}
-            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-md px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: colorHex }}
-          >
-            Back to section
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
-          <button
-            type="button"
-            onClick={handleRetake}
-            className="text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
-          >
-            Retake quick check
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const current = questions[currentIndex];
   const currentKey = current._key;
@@ -124,8 +70,9 @@ export function LessonQuiz({
       return;
     }
     const score = computeScore(questions, answers);
-    setResult({ score, total });
     upsert.mutate({ lessonId, isCompleted: true, score, totalQuestions: total });
+    // No results screen — finishing always returns to the section page.
+    router.push(sectionHref);
   }
 
   function handleBack() {
@@ -149,15 +96,6 @@ export function LessonQuiz({
   return (
     <div>
       <h2 className="text-lg font-bold text-ink-secondary">{heading}</h2>
-      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-input">
-        <div
-          className="h-full rounded-full transition-all duration-300 ease-out"
-          style={{
-            width: `${((currentIndex + 1) / total) * 100}%`,
-            backgroundColor: colorHex,
-          }}
-        />
-      </div>
 
       <div className="mt-5 [&_p]:text-base [&_p]:text-ink-secondary">
         <PortableTextRenderer value={current.question_text} />
