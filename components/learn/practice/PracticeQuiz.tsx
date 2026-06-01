@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
@@ -60,6 +60,13 @@ export function PracticeQuiz({
   const [answers, setAnswers] = useState<Record<string, string[]>>(
     initialProgress?.answers ?? {},
   );
+  // Always-fresh mirror of `answers` so the persist paths (esp. "Save & leave"
+  // for free-text the user just typed) write the latest state regardless of
+  // closure timing.
+  const answersRef = useRef(answers);
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
   const [submitted, setSubmitted] = useState<Record<string, boolean>>(() => {
     // Resumed questions before the saved index are already answered + locked.
     const init: Record<string, boolean> = {};
@@ -142,7 +149,7 @@ export function PracticeQuiz({
   }
 
   function handleSaveAndLeave() {
-    persist(currentIndex, answers, false, isSubmitted);
+    persist(currentIndex, answersRef.current, false, isSubmitted);
     router.push(sectionHref);
   }
 

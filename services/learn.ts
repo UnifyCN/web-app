@@ -256,12 +256,22 @@ export async function getLesson(
 /* ---- Practices (quiz content) ---------------------------------------- */
 
 /**
- * The `activity`-type practices for a submodule, ordered by `order_number`.
+ * Section-level `activity` practices for a submodule, ordered by `order_number`.
  * Activity practices embed their questions in `pages[].instructions[]` (e.g.
- * "Quick Check" activities) and are flattened by `flattenPractices`. Quiz-type
- * practices are lesson-level and intentionally excluded from the section
- * Practice page.
+ * "Quick Check" activities) and are flattened by `flattenPractices`.
+ *
+ * Excluded from the section Practice page:
+ * - quiz-type practices (lesson-level quizzes), and
+ * - lesson-level reflections/activities, which the content team authors with a
+ *   "Lesson X.Y …" title (e.g. "Lesson 1.1: Self Reflection"). These belong to
+ *   the lesson flow, not the section Practice page. There's no schema field
+ *   distinguishing them — they reference the submodule like any activity — so
+ *   the title prefix is the only available signal.
  */
+function isLessonLevelPractice(title: string): boolean {
+  return /^lesson\b/i.test(title.trim());
+}
+
 export async function getPractices(
   submoduleId: string,
 ): Promise<SanityPractice[]> {
@@ -272,7 +282,9 @@ export async function getPractices(
     { submoduleId },
   );
   return (practices ?? [])
-    .filter((p) => p.practice_type === "activity")
+    .filter(
+      (p) => p.practice_type === "activity" && !isLessonLevelPractice(p.title),
+    )
     .sort((a, b) => a.order_number - b.order_number);
 }
 

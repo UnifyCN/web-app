@@ -80,10 +80,6 @@ export default function LessonDetailPage({
     .sort((a, b) => a.order - b.order);
 
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
-  const nextLesson =
-    currentIndex >= 0 && currentIndex < allLessons.length - 1
-      ? allLessons[currentIndex + 1]
-      : null;
 
   function findSubmoduleIdForLesson(lid: string): string {
     for (const s of submodules) {
@@ -96,6 +92,14 @@ export default function LessonDetailPage({
   const lessonIndexInSubmodule = submoduleLessons.findIndex(
     (l) => l._id === lessonId,
   );
+  // Next lesson WITHIN this submodule. On the submodule's last lesson there's
+  // no next, so "Next" returns to the section page (see nextHref) rather than
+  // jumping into the next submodule.
+  const nextLesson =
+    lessonIndexInSubmodule >= 0 &&
+    lessonIndexInSubmodule < submoduleLessons.length - 1
+      ? submoduleLessons[lessonIndexInSubmodule + 1]
+      : null;
   const submoduleProgressPercent =
     submoduleLessons.length > 0
       ? Math.round(

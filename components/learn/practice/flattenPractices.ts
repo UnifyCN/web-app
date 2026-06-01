@@ -37,6 +37,9 @@ export function flattenPractices(
   practices: SanityPractice[],
 ): FlatQuestion[] {
   const flat: FlatQuestion[] = [];
+  // Global running index so every emitted question gets a unique order_number
+  // across all pages and practices (not reset per page).
+  let order = 0;
 
   for (const practice of practices) {
     const pages = (practice.pages ?? [])
@@ -46,7 +49,6 @@ export function flattenPractices(
     for (const page of pages) {
       const heading = page.title || practice.title;
       let context: SanityBlock[] = [];
-      let order = 0;
 
       for (const ins of page.instructions ?? []) {
         if (ins._type === "block") {

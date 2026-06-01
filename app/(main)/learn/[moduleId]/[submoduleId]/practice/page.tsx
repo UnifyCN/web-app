@@ -62,6 +62,23 @@ export default function PracticePage({
     );
   }
 
+  // No renderable questions — don't mount the quiz with an empty list.
+  if (flat.length === 0) {
+    return (
+      <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
+        <p className="text-sm text-ink-muted">
+          This section has no practice yet.
+        </p>
+        <Link
+          href={`/learn/${moduleId}/${submoduleId}`}
+          className="mt-3 inline-block text-sm font-semibold text-primary"
+        >
+          Back to section
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <PracticeQuiz
       moduleId={moduleId}
