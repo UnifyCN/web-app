@@ -49,11 +49,15 @@ export function LessonPager({
   const router = useRouter();
   const [pageIndex, setPageIndex] = useState(0);
 
-  const total = pages.length;
-  const index = Math.min(pageIndex, Math.max(0, total - 1));
-  const currentPage = pages[index];
-  const isLastPage = index >= total - 1;
-  const percent = total > 0 ? ((index + 1) / total) * 100 : 100;
+  // The Quick Check is its own trailing screen after the content pages.
+  const hasQuiz = quizQuestions.length > 0;
+  const totalScreens = pages.length + (hasQuiz ? 1 : 0);
+  const index = Math.min(pageIndex, Math.max(0, totalScreens - 1));
+  const isQuizPage = hasQuiz && index === pages.length;
+  const isLastContentPage = pages.length > 0 && index === pages.length - 1;
+  const isLastScreen = index >= totalScreens - 1;
+  const currentPage = isQuizPage ? undefined : pages[index];
+  const percent = totalScreens > 0 ? ((index + 1) / totalScreens) * 100 : 100;
 
   function handleBack() {
     if (index > 0) setPageIndex(index - 1);
@@ -88,8 +92,8 @@ export function LessonPager({
         </section>
       )}
 
-      {/* Last page: ending pages + the Quick Check */}
-      {isLastPage && endingPages.length > 0 && (
+      {/* Ending pages live on the last content page. */}
+      {isLastContentPage && endingPages.length > 0 && (
         <div className="mt-8 border-t border-border-card pt-6">
           {endingPages.map((page) => (
             <section key={page._key} className="mt-4 first:mt-0">
@@ -104,8 +108,9 @@ export function LessonPager({
         </div>
       )}
 
-      {isLastPage && quizQuestions.length > 0 && (
-        <div className="mt-8 border-t border-border-card pt-6">
+      {/* The Quick Check is its own dedicated page — quiz only, no content. */}
+      {isQuizPage && (
+        <div className="mt-7">
           <LessonQuiz
             lessonId={lessonId}
             title={quizTitle}
@@ -126,7 +131,7 @@ export function LessonPager({
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Back
         </button>
-        {isLastPage ? (
+        {isLastScreen ? (
           <Link
             href={nextHref}
             onClick={onLessonComplete}
