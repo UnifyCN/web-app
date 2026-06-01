@@ -256,8 +256,11 @@ export async function getLesson(
 /* ---- Practices (quiz content) ---------------------------------------- */
 
 /**
- * The quiz-type practices for a submodule, ordered by `order_number`. Activity
- * practices are filtered out — the web only renders the quiz flow today.
+ * The `activity`-type practices for a submodule, ordered by `order_number`.
+ * Activity practices embed their questions in `pages[].instructions[]` (e.g.
+ * "Quick Check" activities) and are flattened by `flattenPractices`. Quiz-type
+ * practices are lesson-level and intentionally excluded from the section
+ * Practice page.
  */
 export async function getPractices(
   submoduleId: string,
@@ -269,7 +272,7 @@ export async function getPractices(
     { submoduleId },
   );
   return (practices ?? [])
-    .filter((p) => p.practice_type === "quiz")
+    .filter((p) => p.practice_type === "activity")
     .sort((a, b) => a.order_number - b.order_number);
 }
 

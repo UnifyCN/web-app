@@ -1,0 +1,76 @@
+import type {
+  QuizQuestionType,
+  SanityActivityInstruction,
+  SanityBlock,
+  SanityPractice,
+  SanityQuizQuestion,
+} from "@/types";
+import type { FlatQuestion } from "./PracticeQuiz";
+
+/**
+ * Flatten activity practices into the quiz flow. Activity practices keep their
+ * content in `pages[].instructions[]` (a mix of `block` portable text, free-text
+ * input boxes, and choice / matching questions). We walk each page, treat
+ * leading `block`s as the prompt context for the next question, and emit a
+ * `SanityQuizQuestion` per question instruction — so the existing renderers
+ * (MultipleChoiceQuestion / MatchingQuestion / FreeTextQuestion) and
+ * `gradeQuestion` handle them unchanged.
+ */
+
+/** Activity instruction `_type` → the quiz `question_type` a renderer handles. */
+const INSTRUCTION_TYPE_MAP: Record<string, QuizQuestionType> = {
+  multiple_choice_single: "multiple_choice_single",
+  multiple_choice_multiple: "multiple_choice_multiple",
+  two_options_question: "true_false",
+  matching_question: "matching",
+  large_input_box: "long_answer",
+  mid_input_box: "short_answer",
+  small_input_box: "short_answer",
+};
+
+/** A `block` instruction already is a Portable Text block; normalize children. */
+function instructionToBlock(ins: SanityActivityInstruction): SanityBlock {
+  return { ...(ins as unknown as SanityBlock), children: ins.children ?? [] };
+}
+
+export function flattenPractices(
+  practices: SanityPractice[],
+): FlatQuestion[] {
+  const flat: FlatQuestion[] = [];
+
+  for (const practice of practices) {
+    const pages = (practice.pages ?? [])
+      .slice()
+      .sort((a, b) => a.order - b.order);
+
+    for (const page of pages) {
+      const heading = page.title || practice.title;
+      let context: SanityBlock[] = [];
+      let order = 0;
+
+      for (const ins of page.instructions ?? []) {
+        if (ins._type === "block") {
+          context.push(instructionToBlock(ins));
+          continue;
+        }
+
+        const questionType = INSTRUCTION_TYPE_MAP[ins._type];
+        if (!questionType) continue; // checklist_checkbox / unknown → skip
+
+        const question: SanityQuizQuestion = {
+          _key: ins._key,
+          question_type: questionType,
+          question_text: [...context, ...(ins.question_text ?? [])],
+          options: ins.options,
+          matching_pairs: ins.matching_pairs,
+          order_number: order++,
+          answer_box: page.answer_box ?? null,
+        };
+        flat.push({ question, practiceTitle: heading });
+        context = [];
+      }
+    }
+  }
+
+  return flat;
+}

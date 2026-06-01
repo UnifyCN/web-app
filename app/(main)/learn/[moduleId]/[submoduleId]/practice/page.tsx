@@ -7,10 +7,8 @@ import {
   usePractices,
   usePracticeProgress,
 } from "@/hooks/useLearn";
-import {
-  PracticeQuiz,
-  type FlatQuestion,
-} from "@/components/learn/practice/PracticeQuiz";
+import { PracticeQuiz } from "@/components/learn/practice/PracticeQuiz";
+import { flattenPractices } from "@/components/learn/practice/flattenPractices";
 
 export default function PracticePage({
   params,
@@ -29,17 +27,12 @@ export default function PracticePage({
     submodules.findIndex((s) => s._id === submoduleId) + 1 || 1;
   const colorHex = mod?.colorTheme?.hex ?? "var(--color-primary)";
 
-  // Flatten the section's quiz practices into one ordered question list,
-  // remembering each question's parent practice title for the heading.
-  const flat: FlatQuestion[] = useMemo(() => {
-    const practices = practicesQuery.data ?? [];
-    return practices.flatMap((p) =>
-      (p.questions ?? []).map((question) => ({
-        question,
-        practiceTitle: p.title,
-      })),
-    );
-  }, [practicesQuery.data]);
+  // Flatten the section's activity practices into one ordered question list,
+  // remembering each question's heading (page/practice title).
+  const flat = useMemo(
+    () => flattenPractices(practicesQuery.data ?? []),
+    [practicesQuery.data],
+  );
 
   if (
     moduleQuery.isLoading ||

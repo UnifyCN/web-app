@@ -8,6 +8,7 @@ import { SectionTimelineCard } from "@/components/learn/SectionTimelineCard";
 import {
   useAllLessonProgresses,
   useModule,
+  usePractices,
   usePracticeProgress,
 } from "@/hooks/useLearn";
 
@@ -19,6 +20,7 @@ export default function SubmoduleLandingPage({
   const { moduleId, submoduleId } = use(params);
   const moduleQuery = useModule(moduleId);
   const progressesQuery = useAllLessonProgresses();
+  const practicesQuery = usePractices(submoduleId);
   const practiceProgressQuery = usePracticeProgress(submoduleId);
 
   const mod = moduleQuery.data;
@@ -69,7 +71,10 @@ export default function SubmoduleLandingPage({
       : "Start";
 
   // --- Practice state ------------------------------------------------------
-  // Practice is always accessible — no Learn-started gate.
+  // Practice is always accessible — no Learn-started gate. The card is hidden
+  // entirely when the submodule has no practice content (quiz or activity).
+  const practices = practicesQuery.data ?? [];
+  const hasPractice = practices.length > 0;
   const practiceProgress = practiceProgressQuery.data;
   const practiceCompleted = !!practiceProgress?.isCompleted;
   const practiceStarted =
@@ -131,26 +136,28 @@ export default function SubmoduleLandingPage({
               : undefined
           }
           isFirst
-          isLast={false}
+          isLast={!hasPractice}
         />
-        <SectionTimelineCard
-          icon={Target}
-          title="Practice"
-          subtitle="Test your understanding"
-          colorHex={colorHex}
-          isActive={practiceActive}
-          dot={
-            practiceCompleted
-              ? "completed"
-              : practiceActive
-                ? "active"
-                : "todo"
-          }
-          buttonLabel={practiceLabel}
-          href={`/learn/${moduleId}/${submoduleId}/practice`}
-          isFirst={false}
-          isLast
-        />
+        {hasPractice && (
+          <SectionTimelineCard
+            icon={Target}
+            title="Practice"
+            subtitle="Test your understanding"
+            colorHex={colorHex}
+            isActive={practiceActive}
+            dot={
+              practiceCompleted
+                ? "completed"
+                : practiceActive
+                  ? "active"
+                  : "todo"
+            }
+            buttonLabel={practiceLabel}
+            href={`/learn/${moduleId}/${submoduleId}/practice`}
+            isFirst={false}
+            isLast
+          />
+        )}
       </ol>
     </div>
   );

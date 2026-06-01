@@ -2,16 +2,10 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Bookmark, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bookmark } from "lucide-react";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
-import { cn } from "@/lib/utils";
-import {
-  useAllLessonProgresses,
-  useLesson,
-  useModule,
-  useSetLessonProgress,
-} from "@/hooks/useLearn";
+import { useLesson, useModule, useSetLessonProgress } from "@/hooks/useLearn";
 
 export default function LessonDetailPage({
   params,
@@ -21,13 +15,10 @@ export default function LessonDetailPage({
   const { moduleId, submoduleId, lessonId } = use(params);
   const moduleQuery = useModule(moduleId);
   const lessonQuery = useLesson(lessonId);
-  const progressesQuery = useAllLessonProgresses();
   const setLessonProgress = useSetLessonProgress();
 
   const mod = moduleQuery.data;
   const lesson = lessonQuery.data;
-  const progress = progressesQuery.data?.[lessonId];
-  const isCompleted = !!progress?.isCompleted;
   const accentColor = mod?.colorTheme?.hex ?? "var(--color-primary)";
 
   if (lessonQuery.isLoading || moduleQuery.isLoading) {
@@ -112,15 +103,20 @@ export default function LessonDetailPage({
         )
       : 0;
 
-  function handleToggleComplete() {
-    const next = !isCompleted;
+  // Pressing "Next" is the completion trigger (no manual checkbox). Fired
+  // before navigating; the upsert + invalidation finish in the background.
+  function markComplete() {
     setLessonProgress.mutate({
       lessonId,
-      progressPercent: next ? 100 : 0,
-      isCompleted: next,
+      progressPercent: 100,
+      isCompleted: true,
       moduleId,
     });
   }
+
+  const nextHref = nextLesson
+    ? `/learn/${moduleId}/${findSubmoduleIdForLesson(nextLesson._id)}/${nextLesson._id}`
+    : `/learn/${moduleId}/${submoduleId}`;
 
   return (
     <div className="mx-auto max-w-[760px] px-6 py-6">
@@ -198,51 +194,7 @@ export default function LessonDetailPage({
         </div>
       )}
 
-      <div className="mt-10 border-t border-border-card pt-6">
-        <button
-          type="button"
-          onClick={handleToggleComplete}
-          aria-pressed={isCompleted}
-          disabled={setLessonProgress.isPending}
-          className={cn(
-            "group flex items-center gap-3",
-            setLessonProgress.isPending ? "cursor-wait" : "cursor-pointer",
-          )}
-        >
-          <span
-            className={cn(
-              "flex h-6 w-6 items-center justify-center rounded-md transition-colors",
-              isCompleted
-                ? "bg-primary text-white"
-                : "border-2 border-primary",
-            )}
-          >
-            {setLessonProgress.isPending ? (
-              <Loader2
-                className={cn(
-                  "h-3.5 w-3.5 animate-spin",
-                  isCompleted ? "text-white" : "text-ink-muted",
-                )}
-                aria-hidden
-              />
-            ) : isCompleted ? (
-              <Check className="h-4 w-4" aria-hidden />
-            ) : null}
-          </span>
-          <span
-            className={cn(
-              "text-sm font-semibold transition-colors",
-              isCompleted
-                ? "text-primary"
-                : "text-ink-secondary group-hover:text-primary",
-            )}
-          >
-            {isCompleted ? "Completed" : "Mark as complete"}
-          </span>
-        </button>
-      </div>
-
-      <nav className="mt-8 flex items-center justify-between gap-3">
+      <nav className="mt-10 flex items-center justify-between gap-3 border-t border-border-card pt-6">
         <div>
           {prevLesson && (
             <Link
@@ -255,15 +207,16 @@ export default function LessonDetailPage({
           )}
         </div>
         <div>
-          {nextLesson && (
-            <Link
-              href={`/learn/${moduleId}/${findSubmoduleIdForLesson(nextLesson._id)}/${nextLesson._id}`}
-              className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
-            >
-              Next lesson
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Link>
-          )}
+          {/* Pressing Next marks this lesson complete, then navigates — to the
+              next lesson, or back to the section page on the last lesson. */}
+          <Link
+            href={nextHref}
+            onClick={markComplete}
+            className="inline-flex items-center gap-1 text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
+          >
+            Next lesson
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
         </div>
       </nav>
     </div>

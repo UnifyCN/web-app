@@ -134,5 +134,16 @@ export const PRACTICES_BY_SUBMODULE_QUERY = `*[_type == "practice" && submodule.
     correct_answer { value, explanation, points },
     order_number,
     answer_box { content, showAfterSubmit }
+  },
+  pages[] | order(order asc) {
+    _key,
+    title,
+    order,
+    answer_box { content, showAfterSubmit },
+    instructions[] {
+      ...,
+      options[] { _key, text, value, is_correct, explanation },
+      matching_pairs[] { _key, left_item, right_item, explanation }
+    }
   }
 }`;

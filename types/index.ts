@@ -323,6 +323,37 @@ export interface SanityQuizQuestion {
   answer_box?: SanityAnswerBox | null;
 }
 
+/**
+ * One item inside an activity page's `instructions[]`. Heterogeneous — the
+ * `_type` is the discriminator: `block` (portable text), `*_input_box`
+ * (free-text), `multiple_choice_single` / `multiple_choice_multiple` /
+ * `two_options_question` (choice), `matching_question`, `checklist_checkbox`.
+ * Permissive shape; `flattenPractices` reads only what each type needs.
+ */
+export interface SanityActivityInstruction {
+  _key: string;
+  _type: string;
+  /** Present on `block` instructions (the object IS a SanityBlock). */
+  children?: SanitySpan[];
+  style?: string;
+  markDefs?: SanityBlock["markDefs"];
+  /** Present on choice / matching instructions. */
+  question_text?: SanityBlock[];
+  options?: SanityQuizOption[];
+  matching_pairs?: SanityMatchingPair[];
+  /** Present on `*_input_box` instructions. */
+  label?: string;
+  placeholder?: string;
+}
+
+export interface SanityActivityPage {
+  _key: string;
+  title?: string;
+  order: number;
+  answer_box?: SanityAnswerBox | null;
+  instructions?: SanityActivityInstruction[];
+}
+
 export interface SanityPractice {
   _id: string;
   _type: "practice";
@@ -331,7 +362,10 @@ export interface SanityPractice {
   practice_type: "quiz" | "activity";
   order_number: number;
   submodule?: { _id: string; title: string };
+  /** Present on quiz-type practices. */
   questions?: SanityQuizQuestion[];
+  /** Present on activity-type practices. */
+  pages?: SanityActivityPage[];
 }
 
 /* Supabase per-user state. */
