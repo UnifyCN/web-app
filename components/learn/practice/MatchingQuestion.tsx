@@ -48,7 +48,7 @@ export function MatchingQuestion({
               className={cn(
                 "rounded-card border p-4",
                 correct
-                  ? "border-[#10B981] bg-[#10B981]/10"
+                  ? "border-priority-optional bg-priority-optional-bg"
                   : wrong
                     ? "border-destructive bg-destructive/10"
                     : "border-border-card bg-surface",
@@ -68,7 +68,7 @@ export function MatchingQuestion({
                       disabled={submitted}
                       aria-pressed={isChosen}
                       className={cn(
-                        "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
+                        "rounded-full border px-3 py-1.5 text-xs font-semibold",
                         isChosen
                           ? "border-ink bg-ink text-white"
                           : "border-border-card bg-surface text-ink-secondary",

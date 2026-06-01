@@ -68,6 +68,11 @@ export function PracticeQuiz({
         init[fq.question._key] = true;
       }
     });
+    // If the user left right after Submit, the saved current question is locked
+    // too — restore its feedback on resume.
+    if (initialProgress?.currentSubmitted && questions[initialIndex]) {
+      init[questions[initialIndex].question._key] = true;
+    }
     return init;
   });
   const [showResults, setShowResults] = useState(
@@ -85,11 +90,17 @@ export function PracticeQuiz({
     [questions, answers],
   );
 
-  function persist(index: number, ans: Record<string, string[]>, completed: boolean) {
+  function persist(
+    index: number,
+    ans: Record<string, string[]>,
+    completed: boolean,
+    currentSubmitted: boolean,
+  ) {
     upsert.mutate({
       submoduleId,
       moduleId,
       currentQuestionIndex: index,
+      currentSubmitted,
       answers: ans,
       isCompleted: completed,
       score: completed ? computeScore(questions.map((q) => q.question), ans) : null,
@@ -106,17 +117,22 @@ export function PracticeQuiz({
     if (!currentKey) return;
     const nextSubmitted = { ...submitted, [currentKey]: true };
     setSubmitted(nextSubmitted);
-    persist(currentIndex, answers, false);
+    persist(currentIndex, answers, false, true);
   }
 
   function handleNext() {
     if (currentIndex < total - 1) {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
-      persist(nextIndex, answers, false);
+      persist(
+        nextIndex,
+        answers,
+        false,
+        !!submitted[questions[nextIndex].question._key],
+      );
     } else {
       // Done.
-      persist(currentIndex, answers, true);
+      persist(currentIndex, answers, true, true);
       setShowResults(true);
     }
   }
@@ -126,7 +142,7 @@ export function PracticeQuiz({
   }
 
   function handleSaveAndLeave() {
-    persist(currentIndex, answers, false);
+    persist(currentIndex, answers, false, isSubmitted);
     router.push(sectionHref);
   }
 

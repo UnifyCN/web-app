@@ -12,15 +12,15 @@ interface TakeABreakModalProps {
  * Confirm shown when the user taps the quiz's X button. Mirrors the mobile
  * "Take a break from this quiz?" sheet: a dark "Save progress & leave" primary
  * and a light "Continue Activity" secondary. Focus moves to Continue on open
- * and Tab is trapped between the two buttons.
+ * and Tab is trapped within the dialog.
  */
 export function TakeABreakModal({
   open,
   onSaveAndLeave,
   onContinue,
 }: TakeABreakModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
   const continueRef = useRef<HTMLButtonElement>(null);
-  const leaveRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (open) continueRef.current?.focus();
@@ -33,13 +33,25 @@ export function TakeABreakModal({
         onContinue();
         return;
       }
-      if (event.key === "Tab") {
-        const from = event.shiftKey ? continueRef : leaveRef;
-        const to = event.shiftKey ? leaveRef : continueRef;
-        if (document.activeElement === from.current) {
+      if (event.key !== "Tab") return;
+      const root = dialogRef.current;
+      if (!root) return;
+      const focusables = root.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      // Wrap at the edges, and pull focus back in if it has escaped the dialog.
+      if (event.shiftKey) {
+        if (active === first || !root.contains(active)) {
           event.preventDefault();
-          to.current?.focus();
+          last.focus();
         }
+      } else if (active === last || !root.contains(active)) {
+        event.preventDefault();
+        first.focus();
       }
     };
     document.addEventListener("keydown", onKey);
@@ -59,6 +71,7 @@ export function TakeABreakModal({
       role="presentation"
     >
       <div
+        ref={dialogRef}
         className="w-full max-w-sm rounded-card bg-surface p-6 shadow-lg"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
@@ -77,7 +90,6 @@ export function TakeABreakModal({
         </p>
         <div className="mt-6 flex flex-col gap-3">
           <button
-            ref={leaveRef}
             type="button"
             onClick={onSaveAndLeave}
             className="w-full rounded-md bg-ink-tertiary py-3 text-sm font-semibold text-white transition-colors hover:bg-ink-secondary"

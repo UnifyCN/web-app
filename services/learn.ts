@@ -63,6 +63,7 @@ function rowToLessonProgress(row: LessonProgressRow): LessonProgress {
 interface PracticeProgressRow {
   sanity_submodule_id: string;
   current_question_index: number;
+  current_submitted: boolean;
   answers: Record<string, string[]> | null;
   is_completed: boolean;
   score: number | null;
@@ -74,6 +75,7 @@ function rowToPracticeProgress(row: PracticeProgressRow): PracticeProgress {
   return {
     submoduleId: row.sanity_submodule_id,
     currentQuestionIndex: row.current_question_index,
+    currentSubmitted: row.current_submitted ?? false,
     answers: row.answers ?? {},
     isCompleted: row.is_completed,
     score: row.score,
@@ -314,7 +316,7 @@ export async function getPracticeProgress(
   const { data, error } = await supabase
     .from("user_practice_progress")
     .select(
-      "sanity_submodule_id, current_question_index, answers, is_completed, score, total_questions, updated_at",
+      "sanity_submodule_id, current_question_index, current_submitted, answers, is_completed, score, total_questions, updated_at",
     )
     .eq("user_id", userId)
     .eq("sanity_submodule_id", submoduleId)
@@ -328,6 +330,7 @@ export interface UpsertPracticeProgressInput {
   submoduleId: string;
   moduleId?: string;
   currentQuestionIndex: number;
+  currentSubmitted: boolean;
   answers: Record<string, string[]>;
   isCompleted: boolean;
   score?: number | null;
@@ -339,7 +342,8 @@ export async function upsertPracticeProgress(
 ): Promise<void> {
   if (!isSupabaseConfigured()) return;
   const userId = await getAuthUserId();
-  if (!userId) throw new Error("upsertPracticeProgress: no auth session");
+  // Signed-out sessions: progress writes are a no-op (graceful degradation).
+  if (!userId) return;
 
   const supabase = createClient();
   const { error } = await supabase.from("user_practice_progress").upsert(
@@ -348,6 +352,7 @@ export async function upsertPracticeProgress(
       sanity_submodule_id: input.submoduleId,
       sanity_module_id: input.moduleId ?? null,
       current_question_index: input.currentQuestionIndex,
+      current_submitted: input.currentSubmitted,
       answers: input.answers,
       is_completed: input.isCompleted,
       score: input.score ?? null,

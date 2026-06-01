@@ -62,7 +62,7 @@ export function MultipleChoiceQuestion({
               className={cn(
                 "flex items-start gap-3 rounded-card border p-4 text-left transition-colors",
                 showCorrect
-                  ? "border-[#10B981] bg-[#10B981]/10"
+                  ? "border-priority-optional bg-priority-optional-bg"
                   : showWrong
                     ? "border-destructive bg-destructive/10"
                     : isSelected
@@ -76,7 +76,7 @@ export function MultipleChoiceQuestion({
                   "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center border-2 transition-colors",
                   multi ? "rounded-md" : "rounded-full",
                   showCorrect
-                    ? "border-[#10B981] bg-[#10B981] text-white"
+                    ? "border-priority-optional bg-priority-optional text-white"
                     : showWrong
                       ? "border-destructive bg-destructive text-white"
                       : isSelected

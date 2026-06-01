@@ -347,6 +347,9 @@ export interface LessonProgress {
 export interface PracticeProgress {
   submoduleId: string;
   currentQuestionIndex: number;
+  /** Whether the question at `currentQuestionIndex` was already submitted —
+   * so a resume restores its post-submit feedback + locked state. */
+  currentSubmitted: boolean;
   /** Resume state: question `_key` → the user's selection(s). */
   answers: Record<string, string[]>;
   isCompleted: boolean;

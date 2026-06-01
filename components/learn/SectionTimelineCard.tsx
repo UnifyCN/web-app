@@ -50,8 +50,6 @@ export function SectionTimelineCard({
       : "var(--color-border-card)";
   const railDashed = dot !== "completed";
 
-  const interactive = !locked && !!href;
-
   const cardInner = (
     <>
       <div className="flex items-start justify-between gap-3">
@@ -143,7 +141,7 @@ export function SectionTimelineCard({
       </div>
 
       {/* Card */}
-      {interactive ? (
+      {!locked && href ? (
         <Link
           href={href}
           className={cn(
