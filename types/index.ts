@@ -275,12 +275,83 @@ export interface SanityModule {
   submodules?: SanitySubmodule[];
 }
 
+/* Practice / quiz content — mirrors the mobile `practice` Sanity document
+ * (`mobile-app/.../types/sanity.ts`). A `practice` references a submodule and,
+ * when `practice_type === "quiz"`, carries an array of questions. */
+
+export type QuizQuestionType =
+  | "multiple_choice_single"
+  | "multiple_choice_multiple"
+  | "true_false"
+  | "matching"
+  | "fill_blank"
+  | "short_answer"
+  | "long_answer";
+
+export interface SanityQuizOption {
+  _key: string;
+  text: SanityBlock[];
+  value: string;
+  is_correct: boolean;
+  explanation?: SanityBlock[] | null;
+}
+
+export interface SanityMatchingPair {
+  _key: string;
+  left_item: string;
+  right_item: string;
+  explanation?: SanityBlock[] | null;
+}
+
+/** Feedback shown after a question is submitted (when `showAfterSubmit`). */
+export interface SanityAnswerBox {
+  content?: SanityBlock[];
+  showAfterSubmit?: boolean;
+}
+
+export interface SanityQuizQuestion {
+  _key: string;
+  question_type: QuizQuestionType;
+  question_text: SanityBlock[];
+  /** Present for choice / true-false questions. */
+  options?: SanityQuizOption[];
+  /** Present for matching questions (right_items repeat — they're categories). */
+  matching_pairs?: SanityMatchingPair[];
+  /** Present for free-text questions (fill_blank / short_answer / long_answer). */
+  correct_answer?: { value: string[]; explanation?: SanityBlock[]; points?: number };
+  order_number: number;
+  answer_box?: SanityAnswerBox | null;
+}
+
+export interface SanityPractice {
+  _id: string;
+  _type: "practice";
+  title: string;
+  description?: string | null;
+  practice_type: "quiz" | "activity";
+  order_number: number;
+  submodule?: { _id: string; title: string };
+  questions?: SanityQuizQuestion[];
+}
+
 /* Supabase per-user state. */
 
 export interface LessonProgress {
   sanityLessonId: string;
   progressPercent: number;
   isCompleted: boolean;
+  updatedAt: string;
+}
+
+/** Per-section quiz progress (one row per user+submodule). */
+export interface PracticeProgress {
+  submoduleId: string;
+  currentQuestionIndex: number;
+  /** Resume state: question `_key` → the user's selection(s). */
+  answers: Record<string, string[]>;
+  isCompleted: boolean;
+  score: number | null;
+  totalQuestions: number | null;
   updatedAt: string;
 }
 
