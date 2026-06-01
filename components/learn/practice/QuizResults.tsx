@@ -8,6 +8,7 @@ interface QuizResultsProps {
   total: number;
   colorHex: string;
   sectionHref: string;
+  onRetake: () => void;
 }
 
 export function QuizResults({
@@ -15,6 +16,7 @@ export function QuizResults({
   total,
   colorHex,
   sectionHref,
+  onRetake,
 }: QuizResultsProps) {
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
   const message =
@@ -42,13 +44,22 @@ export function QuizResults({
       </p>
       <p className="mt-1 text-sm text-ink-muted">{percent}% correct</p>
 
-      <Link
-        href={sectionHref}
-        className="mt-8 inline-flex h-11 items-center justify-center rounded-md px-6 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-        style={{ backgroundColor: colorHex }}
-      >
-        Back to section
-      </Link>
+      <div className="mt-8 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onRetake}
+          className="inline-flex h-11 items-center justify-center rounded-md bg-surface-gray px-6 text-sm font-semibold text-ink-secondary transition-colors hover:bg-surface-input"
+        >
+          Retake
+        </button>
+        <Link
+          href={sectionHref}
+          className="inline-flex h-11 items-center justify-center rounded-md px-6 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          style={{ backgroundColor: colorHex }}
+        >
+          Back to section
+        </Link>
+      </div>
     </div>
   );
 }

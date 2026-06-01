@@ -2,9 +2,11 @@ import type {
   LearningProgressSummary,
   LearnModuleView,
   LessonProgress,
+  LessonQuizProgress,
   ModuleStatus,
   PracticeProgress,
   SanityLesson,
+  SanityLessonQuiz,
   SanityModule,
   SanityPractice,
 } from "@/types";
@@ -20,13 +22,17 @@ import {
   MODULE_DETAIL_QUERY,
   LESSON_DETAIL_QUERY,
   PRACTICES_BY_SUBMODULE_QUERY,
+  LESSON_QUIZ_QUERY,
 } from "@/lib/sanity";
 import {
   getMockLessonById,
   getMockModuleById,
   mockModules,
 } from "@/lib/mock/modules";
-import { getMockPracticesBySubmodule } from "@/lib/mock/practices";
+import {
+  getMockLessonQuiz,
+  getMockPracticesBySubmodule,
+} from "@/lib/mock/practices";
 import { mockLearningProgress } from "@/lib/mock/progress";
 
 /**
@@ -289,6 +295,23 @@ export async function getPractices(
     .sort((a, b) => a.order_number - b.order_number);
 }
 
+/* ---- Lesson Quick Checks (lesson-level quizzes) ----------------------- */
+
+/** The lesson's "Quick Check" quizzes (`_type == "quiz"`, ordered). */
+export async function getLessonQuiz(
+  lessonId: string,
+): Promise<SanityLessonQuiz[]> {
+  if (!isSanityConfigured()) return getMockLessonQuiz(lessonId);
+
+  const quizzes = await sanityClient.fetch<SanityLessonQuiz[]>(
+    LESSON_QUIZ_QUERY,
+    { lessonId },
+  );
+  return (quizzes ?? [])
+    .slice()
+    .sort((a, b) => a.order_number - b.order_number);
+}
+
 /* ---- Lesson progresses ----------------------------------------------- */
 
 /**
@@ -377,6 +400,77 @@ export async function upsertPracticeProgress(
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id,sanity_submodule_id" },
+  );
+  if (error) throw error;
+}
+
+/* ---- Lesson Quick Check progress -------------------------------------- */
+
+interface LessonQuizProgressRow {
+  sanity_lesson_id: string;
+  is_completed: boolean;
+  score: number | null;
+  total_questions: number | null;
+  updated_at: string;
+}
+
+function rowToLessonQuizProgress(row: LessonQuizProgressRow): LessonQuizProgress {
+  return {
+    lessonId: row.sanity_lesson_id,
+    isCompleted: row.is_completed,
+    score: row.score,
+    totalQuestions: row.total_questions,
+    updatedAt: row.updated_at,
+  };
+}
+
+/** The user's Quick Check completion for one lesson, or null. */
+export async function getLessonQuizProgress(
+  lessonId: string,
+): Promise<LessonQuizProgress | null> {
+  if (!isSupabaseConfigured()) return null;
+  const userId = await getAuthUserId();
+  if (!userId) return null;
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_lesson_quiz_progress")
+    .select("sanity_lesson_id, is_completed, score, total_questions, updated_at")
+    .eq("user_id", userId)
+    .eq("sanity_lesson_id", lessonId)
+    .maybeSingle();
+  if (error) throw error;
+
+  return data ? rowToLessonQuizProgress(data as LessonQuizProgressRow) : null;
+}
+
+export interface UpsertLessonQuizProgressInput {
+  lessonId: string;
+  isCompleted: boolean;
+  score?: number | null;
+  totalQuestions?: number | null;
+}
+
+export async function upsertLessonQuizProgress(
+  input: UpsertLessonQuizProgressInput,
+): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  const userId = await getAuthUserId();
+  // Signed-out sessions: progress writes are a no-op (graceful degradation).
+  if (!userId) return;
+
+  const supabase = createClient();
+  const { error } = await supabase.from("user_lesson_quiz_progress").upsert(
+    {
+      user_id: userId,
+      sanity_lesson_id: input.lessonId,
+      is_completed: input.isCompleted,
+      score: input.score ?? null,
+      total_questions: input.totalQuestions ?? null,
+      completed_at: input.isCompleted ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,sanity_lesson_id" },
   );
   if (error) throw error;
 }

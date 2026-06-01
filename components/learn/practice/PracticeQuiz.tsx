@@ -8,9 +8,7 @@ import { useUpsertPracticeProgress } from "@/hooks/useLearn";
 import { cn } from "@/lib/utils";
 import type { PracticeProgress, SanityQuizQuestion } from "@/types";
 import { QuizProgressBar } from "./QuizProgressBar";
-import { MultipleChoiceQuestion } from "./MultipleChoiceQuestion";
-import { MatchingQuestion } from "./MatchingQuestion";
-import { FreeTextQuestion } from "./FreeTextQuestion";
+import { QuizQuestion } from "./QuizQuestion";
 import { TakeABreakModal } from "./TakeABreakModal";
 import { QuizResults } from "./QuizResults";
 import { computeScore, isAnswered } from "./grade";
@@ -30,12 +28,6 @@ interface PracticeQuizProps {
   questions: FlatQuestion[];
   initialProgress: PracticeProgress | null;
 }
-
-const CHOICE_TYPES = new Set([
-  "multiple_choice_single",
-  "multiple_choice_multiple",
-  "true_false",
-]);
 
 export function PracticeQuiz({
   moduleId,
@@ -145,7 +137,29 @@ export function PracticeQuiz({
   }
 
   function handleBack() {
-    if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
+    if (currentIndex === 0) return;
+    const prevIndex = currentIndex - 1;
+    const prevKey = questions[prevIndex].question._key;
+    // Going back is a fresh attempt: clear the target question's answer +
+    // submitted state (matches the mobile app — no restored answer/feedback).
+    const nextAnswers = { ...answers };
+    delete nextAnswers[prevKey];
+    setAnswers(nextAnswers);
+    setSubmitted((prev) => {
+      const next = { ...prev };
+      delete next[prevKey];
+      return next;
+    });
+    setCurrentIndex(prevIndex);
+    persist(prevIndex, nextAnswers, false, false);
+  }
+
+  function handleRetake() {
+    setAnswers({});
+    setSubmitted({});
+    setCurrentIndex(0);
+    setShowResults(false);
+    persist(0, {}, false, false);
   }
 
   function handleSaveAndLeave() {
@@ -177,6 +191,7 @@ export function PracticeQuiz({
         total={total}
         colorHex={colorHex}
         sectionHref={sectionHref}
+        onRetake={handleRetake}
       />
     );
   }
@@ -188,8 +203,6 @@ export function PracticeQuiz({
       ? "Next"
       : "Done";
   const primaryDisabled = !isSubmitted && !answeredEnough;
-
-  const qType = current.question.question_type;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -210,28 +223,12 @@ export function PracticeQuiz({
         </div>
 
         <div className="mt-6">
-          {CHOICE_TYPES.has(qType) ? (
-            <MultipleChoiceQuestion
-              question={current.question}
-              answer={currentAnswer}
-              submitted={isSubmitted}
-              onChange={handleAnswerChange}
-            />
-          ) : qType === "matching" ? (
-            <MatchingQuestion
-              question={current.question}
-              answer={currentAnswer}
-              submitted={isSubmitted}
-              onChange={handleAnswerChange}
-            />
-          ) : (
-            <FreeTextQuestion
-              question={current.question}
-              answer={currentAnswer}
-              submitted={isSubmitted}
-              onChange={handleAnswerChange}
-            />
-          )}
+          <QuizQuestion
+            question={current.question}
+            answer={currentAnswer}
+            submitted={isSubmitted}
+            onChange={handleAnswerChange}
+          />
         </div>
       </div>
 

@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as learn from "@/services/learn";
-import type { UpsertPracticeProgressInput } from "@/services/learn";
+import type {
+  UpsertLessonQuizProgressInput,
+  UpsertPracticeProgressInput,
+} from "@/services/learn";
 import type { LearnModuleView, ModuleStatus } from "@/types";
 
 /** React Query hooks for Learn (Sanity content + Supabase progress). */
@@ -10,6 +13,8 @@ const LESSON_PROGRESSES_KEY = ["lesson-progresses"] as const;
 const LEARNING_PROGRESS_KEY = ["learning-progress"] as const;
 const PRACTICES_KEY = ["practices"] as const;
 const PRACTICE_PROGRESS_KEY = ["practice-progress"] as const;
+const LESSON_QUIZ_KEY = ["lesson-quiz"] as const;
+const LESSON_QUIZ_PROGRESS_KEY = ["lesson-quiz-progress"] as const;
 
 export function useModules() {
   return useQuery({ queryKey: MODULES_KEY, queryFn: learn.getModules });
@@ -78,6 +83,37 @@ export function useUpsertPracticeProgress() {
       });
       // Section/module progress surfaces may reflect quiz completion.
       queryClient.invalidateQueries({ queryKey: MODULES_KEY });
+    },
+  });
+}
+
+/** A lesson's "Quick Check" quizzes (Sanity content). */
+export function useLessonQuiz(lessonId: string) {
+  return useQuery({
+    queryKey: [...LESSON_QUIZ_KEY, lessonId],
+    queryFn: () => learn.getLessonQuiz(lessonId),
+    enabled: !!lessonId,
+  });
+}
+
+/** The user's Quick Check completion for a lesson (Supabase). */
+export function useLessonQuizProgress(lessonId: string) {
+  return useQuery({
+    queryKey: [...LESSON_QUIZ_PROGRESS_KEY, lessonId],
+    queryFn: () => learn.getLessonQuizProgress(lessonId),
+    enabled: !!lessonId,
+  });
+}
+
+export function useUpsertLessonQuizProgress() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UpsertLessonQuizProgressInput) =>
+      learn.upsertLessonQuizProgress(input),
+    onSuccess: (_data, { lessonId }) => {
+      queryClient.invalidateQueries({
+        queryKey: [...LESSON_QUIZ_PROGRESS_KEY, lessonId],
+      });
     },
   });
 }

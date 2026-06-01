@@ -368,6 +368,20 @@ export interface SanityPractice {
   pages?: SanityActivityPage[];
 }
 
+/**
+ * Lesson-level "Quick Check" quiz — a `_type == "quiz"` document that references
+ * a lesson. Its `questions[]` share the practice `SanityQuizQuestion` shape, so
+ * the same renderers apply.
+ */
+export interface SanityLessonQuiz {
+  _id: string;
+  _type: "quiz";
+  title: string;
+  description?: string | null;
+  order_number: number;
+  questions?: SanityQuizQuestion[];
+}
+
 /* Supabase per-user state. */
 
 export interface LessonProgress {
@@ -386,6 +400,15 @@ export interface PracticeProgress {
   currentSubmitted: boolean;
   /** Resume state: question `_key` → the user's selection(s). */
   answers: Record<string, string[]>;
+  isCompleted: boolean;
+  score: number | null;
+  totalQuestions: number | null;
+  updatedAt: string;
+}
+
+/** Per-lesson Quick Check completion (one row per user+lesson). */
+export interface LessonQuizProgress {
+  lessonId: string;
   isCompleted: boolean;
   score: number | null;
   totalQuestions: number | null;

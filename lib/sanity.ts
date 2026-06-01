@@ -147,3 +147,23 @@ export const PRACTICES_BY_SUBMODULE_QUERY = `*[_type == "practice" && submodule.
     }
   }
 }`;
+
+/** Lesson-level "Quick Check" quizzes for a lesson, ordered. Questions share
+ * the practice question shape, so the same renderers apply. */
+export const LESSON_QUIZ_QUERY = `*[_type == "quiz" && lesson._ref == $lessonId] | order(order_number asc) {
+  _id,
+  _type,
+  title,
+  description,
+  order_number,
+  questions[] | order(order_number asc) {
+    _key,
+    question_type,
+    question_text,
+    options[] { _key, text, value, is_correct, explanation },
+    matching_pairs[] { _key, left_item, right_item, explanation },
+    correct_answer { value, explanation, points },
+    order_number,
+    answer_box { content, showAfterSubmit }
+  }
+}`;

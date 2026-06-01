@@ -1,6 +1,7 @@
 import type {
   SanityActivityInstruction,
   SanityBlock,
+  SanityLessonQuiz,
   SanityPractice,
 } from "@/types";
 
@@ -133,4 +134,42 @@ export function getMockPracticesBySubmodule(
   submoduleId: string,
 ): SanityPractice[] {
   return mockPracticesBySubmodule[submoduleId] ?? [];
+}
+
+/** Mock lesson-level "Quick Check" quizzes, keyed to a mock lesson id, so the
+ * inline lesson quiz renders in local dev without a backend. */
+export const mockLessonQuizzes: Record<string, SanityLessonQuiz[]> = {
+  "mock-lesson-sin": [
+    {
+      _id: "mock-quiz-sin",
+      _type: "quiz",
+      title: "Quick Check",
+      description: null,
+      order_number: 1,
+      questions: [
+        {
+          _key: "lq-1",
+          question_type: "true_false",
+          question_text: block(
+            "True or False: you need a job offer to apply for a SIN.",
+          ),
+          order_number: 1,
+          options: [
+            { _key: "t", value: "true", is_correct: false, text: block("True") },
+            { _key: "f", value: "false", is_correct: true, text: block("False") },
+          ],
+          answer_box: {
+            content: block(
+              "False — you can apply for a SIN without a job offer.",
+            ),
+            showAfterSubmit: true,
+          },
+        },
+      ],
+    },
+  ],
+};
+
+export function getMockLessonQuiz(lessonId: string): SanityLessonQuiz[] {
+  return mockLessonQuizzes[lessonId] ?? [];
 }

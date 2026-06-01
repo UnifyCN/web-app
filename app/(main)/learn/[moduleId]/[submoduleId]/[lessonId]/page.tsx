@@ -5,7 +5,14 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Bookmark } from "lucide-react";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
-import { useLesson, useModule, useSetLessonProgress } from "@/hooks/useLearn";
+import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
+import {
+  useLesson,
+  useLessonQuiz,
+  useLessonQuizProgress,
+  useModule,
+  useSetLessonProgress,
+} from "@/hooks/useLearn";
 
 export default function LessonDetailPage({
   params,
@@ -16,10 +23,20 @@ export default function LessonDetailPage({
   const moduleQuery = useModule(moduleId);
   const lessonQuery = useLesson(lessonId);
   const setLessonProgress = useSetLessonProgress();
+  const lessonQuizQuery = useLessonQuiz(lessonId);
+  const lessonQuizProgressQuery = useLessonQuizProgress(lessonId);
 
   const mod = moduleQuery.data;
   const lesson = lessonQuery.data;
   const accentColor = mod?.colorTheme?.hex ?? "var(--color-primary)";
+
+  // Lesson-level "Quick Check": flatten the lesson's quiz docs into one inline
+  // quiz. Questions share the practice shape, so the same renderers apply.
+  const lessonQuizQuestions = (lessonQuizQuery.data ?? []).flatMap(
+    (q) => q.questions ?? [],
+  );
+  const lessonQuizTitle = lessonQuizQuery.data?.[0]?.title ?? "Quick Check";
+  const lessonQuizProgress = lessonQuizProgressQuery.data;
 
   if (lessonQuery.isLoading || moduleQuery.isLoading) {
     return (
@@ -195,6 +212,27 @@ export default function LessonDetailPage({
               <PortableTextRenderer value={page.content} />
             </section>
           ))}
+        </div>
+      )}
+
+      {lessonQuizQuestions.length > 0 && (
+        <div className="mt-8 border-t border-border-card pt-6">
+          <LessonQuiz
+            lessonId={lessonId}
+            title={lessonQuizTitle}
+            questions={lessonQuizQuestions}
+            colorHex={accentColor}
+            initialResult={
+              lessonQuizProgress?.isCompleted
+                ? {
+                    score: lessonQuizProgress.score ?? 0,
+                    total:
+                      lessonQuizProgress.totalQuestions ??
+                      lessonQuizQuestions.length,
+                  }
+                : null
+            }
+          />
         </div>
       )}
 

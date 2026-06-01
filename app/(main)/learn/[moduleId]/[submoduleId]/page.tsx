@@ -85,6 +85,13 @@ export default function SubmoduleLandingPage({
     : practiceStarted
       ? "Resume"
       : "Start";
+  // Once completed, surface the score on the card (e.g. "8/10 · 80%").
+  const practiceScore = practiceProgress?.score;
+  const practiceTotal = practiceProgress?.totalQuestions;
+  const practiceSubtitle =
+    practiceCompleted && practiceScore != null && practiceTotal
+      ? `${practiceScore}/${practiceTotal} · ${Math.round((practiceScore / practiceTotal) * 100)}%`
+      : "Test your understanding";
 
   return (
     <div className="mx-auto max-w-[760px] px-6 py-6">
@@ -142,7 +149,7 @@ export default function SubmoduleLandingPage({
           <SectionTimelineCard
             icon={Target}
             title="Practice"
-            subtitle="Test your understanding"
+            subtitle={practiceSubtitle}
             colorHex={colorHex}
             isActive={practiceActive}
             dot={
