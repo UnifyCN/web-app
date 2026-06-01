@@ -8,13 +8,17 @@ import type {
 import type { FlatQuestion } from "./PracticeQuiz";
 
 /**
- * Flatten activity practices into the quiz flow. Activity practices keep their
- * content in `pages[].instructions[]` (a mix of `block` portable text, free-text
- * input boxes, and choice / matching questions). We walk each page, treat
- * leading `block`s as the prompt context for the next question, and emit a
- * `SanityQuizQuestion` per question instruction — so the existing renderers
- * (MultipleChoiceQuestion / MatchingQuestion / FreeTextQuestion) and
- * `gradeQuestion` handle them unchanged.
+ * Flatten a section's practices into the quiz flow, handling both shapes:
+ * - `quiz` practices keep their questions in `questions[]` (already
+ *   `SanityQuizQuestion`s) — used directly.
+ * - `activity` practices keep their content in `pages[].instructions[]` (a mix
+ *   of `block` portable text, free-text input boxes, and choice / matching
+ *   questions). We walk each page, treat leading `block`s as the prompt context
+ *   for the next question, and emit a `SanityQuizQuestion` per question
+ *   instruction.
+ *
+ * Either way the existing renderers (MultipleChoiceQuestion / MatchingQuestion /
+ * FreeTextQuestion) and `gradeQuestion` handle the output unchanged.
  */
 
 /** Activity instruction `_type` → the quiz `question_type` a renderer handles. */
@@ -42,6 +46,19 @@ export function flattenPractices(
   let order = 0;
 
   for (const practice of practices) {
+    // Quiz practices keep their questions in `questions[]` (already
+    // SanityQuizQuestions, ordered by the GROQ). Activity practices embed them
+    // in `pages[].instructions[]` (handled below).
+    if (practice.practice_type === "quiz") {
+      for (const question of practice.questions ?? []) {
+        flat.push({
+          question: { ...question, order_number: order++ },
+          practiceTitle: practice.title,
+        });
+      }
+      continue;
+    }
+
     const pages = (practice.pages ?? [])
       .slice()
       .sort((a, b) => a.order - b.order);
