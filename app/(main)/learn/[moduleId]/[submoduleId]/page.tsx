@@ -128,7 +128,7 @@ export default function SubmoduleLandingPage({
       </p>
 
       {/* Activities timeline: Learn → Practice (Fix 2). */}
-      <ol className="mt-10 flex flex-col">
+      <ol className="mt-6 flex flex-col">
         <SectionTimelineCard
           icon={BookOpen}
           title="Learn"

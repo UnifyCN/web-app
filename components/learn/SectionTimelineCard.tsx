@@ -44,6 +44,9 @@ export function SectionTimelineCard({
   isLast,
 }: SectionTimelineCardProps) {
   const dotFilled = dot === "completed";
+  // Coloured (module-colour) treatment applies to both the current action AND
+  // already-completed cards — only `todo`/`locked` cards stay plain white.
+  const colored = isActive || dot === "completed";
   const railColor =
     dot === "completed" || dot === "active"
       ? colorHex
@@ -57,7 +60,7 @@ export function SectionTimelineCard({
           <h3
             className={cn(
               "text-base font-bold",
-              isActive ? "text-white" : "text-ink-secondary",
+              colored ? "text-white" : "text-ink-secondary",
             )}
           >
             {title}
@@ -65,7 +68,7 @@ export function SectionTimelineCard({
           <p
             className={cn(
               "mt-0.5 text-xs",
-              isActive ? "text-white/85" : "text-ink-muted",
+              colored ? "text-white/85" : "text-ink-muted",
             )}
           >
             {locked && lockedHint ? lockedHint : subtitle}
@@ -77,7 +80,7 @@ export function SectionTimelineCard({
           <Icon
             className={cn(
               "h-5 w-5 shrink-0",
-              isActive ? "text-white" : "text-ink-placeholder",
+              colored ? "text-white" : "text-ink-placeholder",
             )}
             strokeWidth={1.75}
             aria-hidden
@@ -89,11 +92,11 @@ export function SectionTimelineCard({
         <span
           className={cn(
             "mt-3 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-md text-sm font-semibold transition-colors",
-            isActive
+            colored
               ? "bg-white hover:bg-surface-gray"
               : "bg-surface-gray text-ink-secondary hover:bg-surface-input",
           )}
-          style={isActive ? { color: colorHex } : undefined}
+          style={colored ? { color: colorHex } : undefined}
         >
           {buttonLabel}
           <ArrowRight className="h-4 w-4" aria-hidden />
@@ -146,11 +149,11 @@ export function SectionTimelineCard({
           href={href}
           className={cn(
             "my-1.5 flex flex-1 flex-col rounded-card border p-4 transition-colors",
-            isActive
+            colored
               ? "border-transparent shadow-sm"
               : "border-border-card bg-surface hover:bg-surface-card",
           )}
-          style={isActive ? { backgroundColor: colorHex } : undefined}
+          style={colored ? { backgroundColor: colorHex } : undefined}
         >
           {cardInner}
         </Link>
@@ -160,8 +163,11 @@ export function SectionTimelineCard({
             "my-1.5 flex flex-1 flex-col rounded-card border p-4",
             locked
               ? "border-border-card bg-surface-card opacity-70"
-              : "border-border-card bg-surface",
+              : colored
+                ? "border-transparent shadow-sm"
+                : "border-border-card bg-surface",
           )}
+          style={!locked && colored ? { backgroundColor: colorHex } : undefined}
           aria-disabled={locked || undefined}
         >
           {cardInner}
