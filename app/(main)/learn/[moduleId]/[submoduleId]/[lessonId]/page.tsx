@@ -2,10 +2,8 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Bookmark } from "lucide-react";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
-import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
-import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
+import { LessonPager } from "@/components/learn/LessonPager";
 import {
   useLesson,
   useLessonQuiz,
@@ -96,8 +94,6 @@ export default function LessonDetailPage({
     .slice()
     .sort((a, b) => a.order - b.order);
 
-  const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
-
   function findSubmoduleIdForLesson(lid: string): string {
     for (const s of submodules) {
       if ((s.lessons ?? []).some((l) => l._id === lid)) return s._id;
@@ -117,12 +113,6 @@ export default function LessonDetailPage({
     lessonIndexInSubmodule < submoduleLessons.length - 1
       ? submoduleLessons[lessonIndexInSubmodule + 1]
       : null;
-  const submoduleProgressPercent =
-    submoduleLessons.length > 0
-      ? Math.round(
-          ((lessonIndexInSubmodule + 1) / submoduleLessons.length) * 100,
-        )
-      : 0;
 
   // Pressing "Next" is the completion trigger (no manual checkbox). Fired
   // before navigating; the upsert + invalidation finish in the background.
@@ -153,114 +143,33 @@ export default function LessonDetailPage({
         ]}
       />
 
-      <div className="mt-3 flex items-center gap-3">
-        <button
-          type="button"
-          aria-label="Bookmark lesson"
-          className="cursor-pointer text-ink-muted transition-colors hover:text-primary"
-        >
-          <Bookmark className="h-5 w-5" aria-hidden />
-        </button>
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-input">
-          <div
-            className="h-full rounded-full"
-            style={{
-              width: `${submoduleProgressPercent}%`,
-              backgroundColor: accentColor,
-            }}
-          />
-        </div>
+      {/* Keyed by lessonId so the pager's page index resets per lesson. */}
+      <div className="mt-4">
+        <LessonPager
+          key={lessonId}
+          lessonId={lessonId}
+          title={lesson.title}
+          description={lesson.description}
+          pages={pages}
+          endingPages={endingPages}
+          colorHex={accentColor}
+          quizTitle={lessonQuizTitle}
+          quizQuestions={lessonQuizQuestions}
+          quizInitialResult={
+            lessonQuizProgress?.isCompleted
+              ? {
+                  score: lessonQuizProgress.score ?? 0,
+                  total:
+                    lessonQuizProgress.totalQuestions ??
+                    lessonQuizQuestions.length,
+                }
+              : null
+          }
+          nextHref={nextHref}
+          onLessonComplete={markComplete}
+          sectionHref={`/learn/${moduleId}/${submoduleId}`}
+        />
       </div>
-
-      <Link
-        href={`/learn/${moduleId}/${submoduleId}`}
-        className="mt-4 inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        Back to {parentSubmodule.title}
-      </Link>
-
-      <h1 className="mt-4 text-2xl font-bold text-ink-secondary">
-        {lesson.title}
-      </h1>
-      {lesson.description && (
-        <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-          {lesson.description}
-        </p>
-      )}
-
-      {pages.map((page) => (
-        <section key={page._key} className="mt-7">
-          {page.title && (
-            <h2 className="mb-3 text-lg font-bold text-ink-secondary">
-              {page.title}
-            </h2>
-          )}
-          <PortableTextRenderer value={page.content} />
-        </section>
-      ))}
-
-      {endingPages.length > 0 && (
-        <div className="mt-8 border-t border-border-card pt-6">
-          {endingPages.map((page) => (
-            <section key={page._key} className="mt-4 first:mt-0">
-              {page.title && (
-                <h2 className="mb-3 text-lg font-bold text-ink-secondary">
-                  {page.title}
-                </h2>
-              )}
-              <PortableTextRenderer value={page.content} />
-            </section>
-          ))}
-        </div>
-      )}
-
-      {lessonQuizQuestions.length > 0 && (
-        <div className="mt-8 border-t border-border-card pt-6">
-          <LessonQuiz
-            lessonId={lessonId}
-            title={lessonQuizTitle}
-            questions={lessonQuizQuestions}
-            colorHex={accentColor}
-            initialResult={
-              lessonQuizProgress?.isCompleted
-                ? {
-                    score: lessonQuizProgress.score ?? 0,
-                    total:
-                      lessonQuizProgress.totalQuestions ??
-                      lessonQuizQuestions.length,
-                  }
-                : null
-            }
-          />
-        </div>
-      )}
-
-      <nav className="mt-10 flex items-center justify-between gap-3 border-t border-border-card pt-6">
-        <div>
-          {prevLesson && (
-            <Link
-              href={`/learn/${moduleId}/${findSubmoduleIdForLesson(prevLesson._id)}/${prevLesson._id}`}
-              className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden />
-              Previous lesson
-            </Link>
-          )}
-        </div>
-        <div>
-          {/* Pressing Next marks this lesson complete, then navigates — to the
-              next lesson, or back to the section page on the last lesson. */}
-          <Link
-            href={nextHref}
-            onClick={markComplete}
-            className="inline-flex items-center gap-1 text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
-          >
-            Next lesson
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
-        </div>
-      </nav>
     </div>
   );
 }
