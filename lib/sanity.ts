@@ -114,3 +114,56 @@ export const LESSON_DETAIL_QUERY = `*[_type == "lesson" && _id == $lessonId][0] 
   activity_pages,
   ending_pages
 }`;
+
+/** All practices for a submodule (quiz + activity), ordered. The caller
+ * filters to quiz-type. Mirrors the mobile practices query. */
+export const PRACTICES_BY_SUBMODULE_QUERY = `*[_type == "practice" && submodule._ref == $submoduleId] | order(order_number asc) {
+  _id,
+  _type,
+  title,
+  description,
+  practice_type,
+  order_number,
+  "submodule": submodule-> { _id, title },
+  questions[] | order(order_number asc) {
+    _key,
+    question_type,
+    question_text,
+    options[] { _key, text, value, is_correct, explanation },
+    matching_pairs[] { _key, left_item, right_item, explanation },
+    correct_answer { value, explanation, points },
+    order_number,
+    answer_box { content, showAfterSubmit }
+  },
+  pages[] | order(order asc) {
+    _key,
+    title,
+    order,
+    answer_box { content, showAfterSubmit },
+    instructions[] {
+      ...,
+      options[] { _key, text, value, is_correct, explanation },
+      matching_pairs[] { _key, left_item, right_item, explanation }
+    }
+  }
+}`;
+
+/** Lesson-level "Quick Check" quizzes for a lesson, ordered. Questions share
+ * the practice question shape, so the same renderers apply. */
+export const LESSON_QUIZ_QUERY = `*[_type == "quiz" && lesson._ref == $lessonId] | order(order_number asc) {
+  _id,
+  _type,
+  title,
+  description,
+  order_number,
+  questions[] | order(order_number asc) {
+    _key,
+    question_type,
+    question_text,
+    options[] { _key, text, value, is_correct, explanation },
+    matching_pairs[] { _key, left_item, right_item, explanation },
+    correct_answer { value, explanation, points },
+    order_number,
+    answer_box { content, showAfterSubmit }
+  }
+}`;

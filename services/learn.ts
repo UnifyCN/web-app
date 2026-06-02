@@ -2,9 +2,13 @@ import type {
   LearningProgressSummary,
   LearnModuleView,
   LessonProgress,
+  LessonQuizProgress,
   ModuleStatus,
+  PracticeProgress,
   SanityLesson,
+  SanityLessonQuiz,
   SanityModule,
+  SanityPractice,
 } from "@/types";
 import {
   createClient,
@@ -17,12 +21,18 @@ import {
   MODULES_LIST_QUERY,
   MODULE_DETAIL_QUERY,
   LESSON_DETAIL_QUERY,
+  PRACTICES_BY_SUBMODULE_QUERY,
+  LESSON_QUIZ_QUERY,
 } from "@/lib/sanity";
 import {
   getMockLessonById,
   getMockModuleById,
   mockModules,
 } from "@/lib/mock/modules";
+import {
+  getMockLessonQuiz,
+  getMockPracticesBySubmodule,
+} from "@/lib/mock/practices";
 import { mockLearningProgress } from "@/lib/mock/progress";
 
 /**
@@ -52,6 +62,30 @@ function rowToLessonProgress(row: LessonProgressRow): LessonProgress {
     sanityLessonId: row.sanity_lesson_id,
     progressPercent: row.progress_percent,
     isCompleted: row.is_completed,
+    updatedAt: row.updated_at,
+  };
+}
+
+interface PracticeProgressRow {
+  sanity_submodule_id: string;
+  current_question_index: number;
+  current_submitted: boolean;
+  answers: Record<string, string[]> | null;
+  is_completed: boolean;
+  score: number | null;
+  total_questions: number | null;
+  updated_at: string;
+}
+
+function rowToPracticeProgress(row: PracticeProgressRow): PracticeProgress {
+  return {
+    submoduleId: row.sanity_submodule_id,
+    currentQuestionIndex: row.current_question_index,
+    currentSubmitted: row.current_submitted ?? false,
+    answers: row.answers ?? {},
+    isCompleted: row.is_completed,
+    score: row.score,
+    totalQuestions: row.total_questions,
     updatedAt: row.updated_at,
   };
 }
@@ -225,6 +259,53 @@ export async function getLesson(
   return lesson ?? undefined;
 }
 
+/* ---- Practices (quiz content) ---------------------------------------- */
+
+/**
+ * Every practice referencing a submodule, ordered by `order_number`. Includes
+ * BOTH shapes: `quiz` practices (questions in `questions[]`, e.g. "Leasing Quick
+ * Check", "Foundation of Budgeting Practice") and `activity` practices (questions
+ * in `pages[].instructions[]`, e.g. "Quick Check: Red Flags"). `flattenPractices`
+ * handles both.
+ *
+ * No title-based filtering — this mirrors the mobile app, which surfaces every
+ * practice for a submodule on the section Practice flow, including lesson-level
+ * reflections/activities the content team titles "Lesson X.Y …" (e.g. "Lesson 1.1:
+ * Self Reflection"). Practices reference a submodule, not a lesson, and neither the
+ * web nor the mobile lesson reading flow renders them inline — they're reached only
+ * from the section Practice card.
+ */
+export async function getPractices(
+  submoduleId: string,
+): Promise<SanityPractice[]> {
+  if (!isSanityConfigured()) return getMockPracticesBySubmodule(submoduleId);
+
+  const practices = await sanityClient.fetch<SanityPractice[]>(
+    PRACTICES_BY_SUBMODULE_QUERY,
+    { submoduleId },
+  );
+  return (practices ?? [])
+    .slice()
+    .sort((a, b) => a.order_number - b.order_number);
+}
+
+/* ---- Lesson Quick Checks (lesson-level quizzes) ----------------------- */
+
+/** The lesson's "Quick Check" quizzes (`_type == "quiz"`, ordered). */
+export async function getLessonQuiz(
+  lessonId: string,
+): Promise<SanityLessonQuiz[]> {
+  if (!isSanityConfigured()) return getMockLessonQuiz(lessonId);
+
+  const quizzes = await sanityClient.fetch<SanityLessonQuiz[]>(
+    LESSON_QUIZ_QUERY,
+    { lessonId },
+  );
+  return (quizzes ?? [])
+    .slice()
+    .sort((a, b) => a.order_number - b.order_number);
+}
+
 /* ---- Lesson progresses ----------------------------------------------- */
 
 /**
@@ -252,6 +333,140 @@ export async function getAllLessonProgresses(): Promise<
       rowToLessonProgress(row),
     ]),
   );
+}
+
+/* ---- Practice progress ------------------------------------------------ */
+
+/** The user's quiz progress for one section, or null if none/unauthenticated. */
+export async function getPracticeProgress(
+  submoduleId: string,
+): Promise<PracticeProgress | null> {
+  if (!isSupabaseConfigured()) return null;
+  const userId = await getAuthUserId();
+  if (!userId) return null;
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_practice_progress")
+    .select(
+      "sanity_submodule_id, current_question_index, current_submitted, answers, is_completed, score, total_questions, updated_at",
+    )
+    .eq("user_id", userId)
+    .eq("sanity_submodule_id", submoduleId)
+    .maybeSingle();
+  if (error) throw error;
+
+  return data ? rowToPracticeProgress(data as PracticeProgressRow) : null;
+}
+
+export interface UpsertPracticeProgressInput {
+  submoduleId: string;
+  moduleId?: string;
+  currentQuestionIndex: number;
+  currentSubmitted: boolean;
+  answers: Record<string, string[]>;
+  isCompleted: boolean;
+  score?: number | null;
+  totalQuestions?: number | null;
+}
+
+export async function upsertPracticeProgress(
+  input: UpsertPracticeProgressInput,
+): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  const userId = await getAuthUserId();
+  // Signed-out sessions: progress writes are a no-op (graceful degradation).
+  if (!userId) return;
+
+  const supabase = createClient();
+  const { error } = await supabase.from("user_practice_progress").upsert(
+    {
+      user_id: userId,
+      sanity_submodule_id: input.submoduleId,
+      sanity_module_id: input.moduleId ?? null,
+      current_question_index: input.currentQuestionIndex,
+      current_submitted: input.currentSubmitted,
+      answers: input.answers,
+      is_completed: input.isCompleted,
+      score: input.score ?? null,
+      total_questions: input.totalQuestions ?? null,
+      completed_at: input.isCompleted ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,sanity_submodule_id" },
+  );
+  if (error) throw error;
+}
+
+/* ---- Lesson Quick Check progress -------------------------------------- */
+
+interface LessonQuizProgressRow {
+  sanity_lesson_id: string;
+  is_completed: boolean;
+  score: number | null;
+  total_questions: number | null;
+  updated_at: string;
+}
+
+function rowToLessonQuizProgress(row: LessonQuizProgressRow): LessonQuizProgress {
+  return {
+    lessonId: row.sanity_lesson_id,
+    isCompleted: row.is_completed,
+    score: row.score,
+    totalQuestions: row.total_questions,
+    updatedAt: row.updated_at,
+  };
+}
+
+/** The user's Quick Check completion for one lesson, or null. */
+export async function getLessonQuizProgress(
+  lessonId: string,
+): Promise<LessonQuizProgress | null> {
+  if (!isSupabaseConfigured()) return null;
+  const userId = await getAuthUserId();
+  if (!userId) return null;
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_lesson_quiz_progress")
+    .select("sanity_lesson_id, is_completed, score, total_questions, updated_at")
+    .eq("user_id", userId)
+    .eq("sanity_lesson_id", lessonId)
+    .maybeSingle();
+  if (error) throw error;
+
+  return data ? rowToLessonQuizProgress(data as LessonQuizProgressRow) : null;
+}
+
+export interface UpsertLessonQuizProgressInput {
+  lessonId: string;
+  isCompleted: boolean;
+  score?: number | null;
+  totalQuestions?: number | null;
+}
+
+export async function upsertLessonQuizProgress(
+  input: UpsertLessonQuizProgressInput,
+): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  const userId = await getAuthUserId();
+  // Signed-out sessions: progress writes are a no-op (graceful degradation).
+  if (!userId) return;
+
+  const supabase = createClient();
+  const { error } = await supabase.from("user_lesson_quiz_progress").upsert(
+    {
+      user_id: userId,
+      sanity_lesson_id: input.lessonId,
+      is_completed: input.isCompleted,
+      score: input.score ?? null,
+      total_questions: input.totalQuestions ?? null,
+      completed_at: input.isCompleted ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,sanity_lesson_id" },
+  );
+  if (error) throw error;
 }
 
 /* ---- Home right-panel summary ----------------------------------------- */

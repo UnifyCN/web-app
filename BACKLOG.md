@@ -4,6 +4,24 @@ Items deferred from feature phases. Each entry has the phase it came from and en
 
 ---
 
+## Upcoming phases
+
+Planned next, in rough order. Scope each into its own PR.
+
+**Phase 18 — Community: events + news**
+Hard-code the events list from the mobile app (no events table yet on web), and wire news/articles to a Supabase table (`news_details` or equivalent) instead of mock data.
+
+**Phase 19 — Community: daily tips edge function**
+Port the daily-tips edge function from mobile (mobile's `get-daily-tip`) so the web surfaces a rotating daily tip.
+
+**Phase 20 — Companion: wire RAG to the UI**
+Remove the blue squiggly lights from the Companion background and wire the deployed `rag-query` edge function to the chat UI (conversations, streamed answers, source citations). **Blocked on a working `OPENAI_API_KEY` (embeddings) from Savar** — the edge function + knowledge base are already deployed and the daily rate-limit RPC is in place.
+
+**Phase 21 — Profile: display name vs username**
+Instagram-style editing: a separate editable display name distinct from the immutable `@username` handle.
+
+---
+
 ## Feed
 
 **Block filtering in home feed**
@@ -95,3 +113,22 @@ Across services/feed.ts, services/community.ts, services/checklist.ts, services/
 
 **Submodule landing page pattern:**
 - Mobile has a section landing page between submodule and lesson (shows section name, description, progress card with Continue). Web goes directly from submodule to lesson content. Discuss with team whether to add this route level (/learn/[moduleId]/[submoduleId] → /learn/[moduleId]/[submoduleId]/[lessonId]). Architectural change — needs team sign-off.
+
+**AI feedback on free-text practice answers**
+From Phase 16 (Practice). Free-text practice/activity answers (`long_answer` / `short_answer`) are currently un-graded — the user types and moves on. Add AI-generated feedback on these responses (likely a new edge function, reusing the Companion AI plumbing). Depends on the Companion AI key being unblocked (Phase 20).
+
+**Tasks card on the section page**
+From Phase 16. The submodule section page shows a Learn → Practice activity timeline. Add a Tasks card (checklist-style) so section-relevant tasks surface alongside Learn and Practice.
+
+**"Documentation → Identification" Quick Check missing from Sanity**
+From Phase 16. The Documentation module's "Identification" True/False Quick Check shown in a mobile screenshot does not exist in any Sanity project/dataset — it's a content gap, not a code bug. Content team to author the missing quiz doc.
+
+---
+
+## Navigation
+
+**Tab reordering**
+Reorder the sidebar nav to `Learn → Checklist → Companion → Community → Social` (pending product sign-off; PR #14 set the current mobile-mirrored order).
+
+**Remove the Unify Circles tab**
+PR #14 only *hides* the Circles tab. Once the product decision is final, remove it (and its route/components) outright rather than leaving it hidden.

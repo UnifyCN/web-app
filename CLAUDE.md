@@ -36,6 +36,33 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
   modules/submodules/lessons with Supabase progress, including the lesson
   detail page. Both follow the Community wiring pattern. See `PLAN.md` for the
   phase-by-phase build record.
+- **Community Circles (PR #13)** — the Circles tab is wired to its status +
+  waitlist join/leave on the mobile-mirrored schema (`community_match_waitlist`,
+  `community_circles`, `community_circle_members`, `community_messages`). The
+  EntryCard moves through default → waiting → in_circle. (Matching engine,
+  realtime, and circle chat remain deferred — see `BACKLOG.md`.)
+- **Navigation (PR #14)** — the sidebar mirrors the mobile nav order + icons, and
+  the Circles tab is hidden to match the mobile launch navigation.
+- **Companion AI (PR #15)** — the `rag-query` **Supabase Edge Function** (Deno) is
+  deployed. The RAG knowledge base is seeded (32 docs / 350 chunks,
+  `text-embedding-3-small`, 1536-dim) with RLS + grants on the KB tables. A daily
+  rate-limit RPC caps usage at 3 messages/day (`check_and_increment_chatbot_usage`)
+  and refunds the quota on failure (`decrement_chatbot_usage`).
+  **`OPENROUTER_API_KEY` is set ✅; `OPENAI_API_KEY` is currently broken ❌**
+  (wrong/expired — waiting on Savar), so end-to-end RAG retrieval can't run yet.
+- **Learn + Practice (PR #16, in progress — `feat/learn-practice`)** — section page
+  redesign (Learn + Practice timeline cards in the module's colour); lesson
+  pagination (`components/learn/LessonPager.tsx`); custom Sanity content-block
+  renderers in `components/learn/PortableTextRenderer.tsx` (`example_box`,
+  `tip_box`, `note_box`, `dropdown`, `image`, `checklist_checkbox`); a section
+  Practice quiz route backed by `components/learn/practice/flattenPractices.ts`;
+  lesson Quick Checks (`components/learn/practice/LessonQuiz.tsx`); the
+  `user_practice_progress` + `user_lesson_quiz_progress` tables (migrations
+  applied). Lessons with a Quick Check complete when the user presses Done on the
+  quiz, and lessons without one complete when the user presses "Back to section"
+  on the last content page; the Practice card shows the last score with a Retake
+  button, completed timeline cards keep the module colour, and Back resets the
+  current question for a fresh attempt.
 
 ---
 
@@ -45,6 +72,9 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
   layer.** The login page (`app/(auth)/login/page.tsx`) and sidebar
   (`components/layout/Sidebar.tsx`) call `createClient()` directly. Flagged by
   CodeRabbit on PR #1 — do as a separate PR after PR #1 merges.
+- **Wire `rag-query` to the Companion UI** — blocked on a working `OPENAI_API_KEY`
+  (embeddings) from Savar; the edge function + knowledge base are already deployed.
+  Tracked as Phase 20 in `BACKLOG.md`.
 
 ---
 

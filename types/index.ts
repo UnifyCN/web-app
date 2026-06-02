@@ -275,12 +275,143 @@ export interface SanityModule {
   submodules?: SanitySubmodule[];
 }
 
+/* Practice / quiz content — mirrors the mobile `practice` Sanity document
+ * (`mobile-app/.../types/sanity.ts`). A `practice` references a submodule and,
+ * when `practice_type === "quiz"`, carries an array of questions. */
+
+export type QuizQuestionType =
+  | "multiple_choice_single"
+  | "multiple_choice_multiple"
+  | "true_false"
+  | "matching"
+  | "fill_blank"
+  | "short_answer"
+  | "long_answer";
+
+export interface SanityQuizOption {
+  _key: string;
+  text: SanityBlock[];
+  value: string;
+  is_correct: boolean;
+  explanation?: SanityBlock[] | null;
+}
+
+export interface SanityMatchingPair {
+  _key: string;
+  left_item: string;
+  right_item: string;
+  explanation?: SanityBlock[] | null;
+}
+
+/** Feedback shown after a question is submitted (when `showAfterSubmit`). */
+export interface SanityAnswerBox {
+  content?: SanityBlock[];
+  showAfterSubmit?: boolean;
+}
+
+export interface SanityQuizQuestion {
+  _key: string;
+  question_type: QuizQuestionType;
+  question_text: SanityBlock[];
+  /** Present for choice / true-false questions. */
+  options?: SanityQuizOption[];
+  /** Present for matching questions (right_items repeat — they're categories). */
+  matching_pairs?: SanityMatchingPair[];
+  /** Present for free-text questions (fill_blank / short_answer / long_answer). */
+  correct_answer?: { value: string[]; explanation?: SanityBlock[]; points?: number };
+  order_number: number;
+  answer_box?: SanityAnswerBox | null;
+}
+
+/**
+ * One item inside an activity page's `instructions[]`. Heterogeneous — the
+ * `_type` is the discriminator: `block` (portable text), `*_input_box`
+ * (free-text), `multiple_choice_single` / `multiple_choice_multiple` /
+ * `two_options_question` (choice), `matching_question`, `checklist_checkbox`.
+ * Permissive shape; `flattenPractices` reads only what each type needs.
+ */
+export interface SanityActivityInstruction {
+  _key: string;
+  _type: string;
+  /** Present on `block` instructions (the object IS a SanityBlock). */
+  children?: SanitySpan[];
+  style?: string;
+  markDefs?: SanityBlock["markDefs"];
+  /** Present on choice / matching instructions. */
+  question_text?: SanityBlock[];
+  options?: SanityQuizOption[];
+  matching_pairs?: SanityMatchingPair[];
+  /** Present on `*_input_box` instructions. */
+  label?: string;
+  placeholder?: string;
+}
+
+export interface SanityActivityPage {
+  _key: string;
+  title?: string;
+  order: number;
+  answer_box?: SanityAnswerBox | null;
+  instructions?: SanityActivityInstruction[];
+}
+
+export interface SanityPractice {
+  _id: string;
+  _type: "practice";
+  title: string;
+  description?: string | null;
+  practice_type: "quiz" | "activity";
+  order_number: number;
+  submodule?: { _id: string; title: string };
+  /** Present on quiz-type practices. */
+  questions?: SanityQuizQuestion[];
+  /** Present on activity-type practices. */
+  pages?: SanityActivityPage[];
+}
+
+/**
+ * Lesson-level "Quick Check" quiz — a `_type == "quiz"` document that references
+ * a lesson. Its `questions[]` share the practice `SanityQuizQuestion` shape, so
+ * the same renderers apply.
+ */
+export interface SanityLessonQuiz {
+  _id: string;
+  _type: "quiz";
+  title: string;
+  description?: string | null;
+  order_number: number;
+  questions?: SanityQuizQuestion[];
+}
+
 /* Supabase per-user state. */
 
 export interface LessonProgress {
   sanityLessonId: string;
   progressPercent: number;
   isCompleted: boolean;
+  updatedAt: string;
+}
+
+/** Per-section quiz progress (one row per user+submodule). */
+export interface PracticeProgress {
+  submoduleId: string;
+  currentQuestionIndex: number;
+  /** Whether the question at `currentQuestionIndex` was already submitted —
+   * so a resume restores its post-submit feedback + locked state. */
+  currentSubmitted: boolean;
+  /** Resume state: question `_key` → the user's selection(s). */
+  answers: Record<string, string[]>;
+  isCompleted: boolean;
+  score: number | null;
+  totalQuestions: number | null;
+  updatedAt: string;
+}
+
+/** Per-lesson Quick Check completion (one row per user+lesson). */
+export interface LessonQuizProgress {
+  lessonId: string;
+  isCompleted: boolean;
+  score: number | null;
+  totalQuestions: number | null;
   updatedAt: string;
 }
 
