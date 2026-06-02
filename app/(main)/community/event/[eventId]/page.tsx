@@ -60,6 +60,13 @@ export default async function EventDetailPage({
     timeZone: TZ,
   });
 
+  // Descriptions carry \n breaks (restored from the source); render each
+  // non-empty chunk as its own paragraph.
+  const paragraphs = event.description
+    .split("\n")
+    .map((para) => para.trim())
+    .filter(Boolean);
+
   return (
     <div className="mx-auto max-w-[680px] px-6 py-6">
       <Link
@@ -135,9 +142,11 @@ export default async function EventDetailPage({
       <h2 className="mt-7 text-base font-semibold text-ink-secondary">
         About Event
       </h2>
-      <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-        {event.description}
-      </p>
+      <div className="mt-2 space-y-2 text-sm leading-relaxed text-ink-muted">
+        {paragraphs.map((para, i) => (
+          <p key={i}>{para}</p>
+        ))}
+      </div>
     </div>
   );
 }

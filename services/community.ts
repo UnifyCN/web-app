@@ -171,12 +171,14 @@ export async function leaveGroup(groupId: number): Promise<void> {
 
 // Events are hard-coded (no events-management surface on web) — the canonical
 // list lives in lib/mock/events.ts and is returned in every environment;
-// Supabase is not consulted. Ordered newest-first to mirror the old query.
+// Supabase is not consulted. Past events are filtered out (only upcoming show),
+// then ordered newest-first to mirror the old query.
 
 export async function getEvents(): Promise<CommunityEvent[]> {
-  return [...communityEvents].sort((a, b) =>
-    b.eventDatetime.localeCompare(a.eventDatetime),
-  );
+  const now = new Date();
+  return [...communityEvents]
+    .filter((event) => new Date(event.eventDatetime) > now)
+    .sort((a, b) => b.eventDatetime.localeCompare(a.eventDatetime));
 }
 
 export async function getEventById(

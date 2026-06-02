@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { GroupCover } from "@/components/community/GroupCover";
 import { useJoinGroup, useLeaveGroup } from "@/hooks/useCommunity";
 import type { Group } from "@/types";
 
@@ -36,15 +36,11 @@ export function GroupCard({ group }: { group: Group }) {
     <div className="flex flex-col overflow-hidden rounded-card border border-border-card bg-surface">
       <Link href={`/community/${group.id}`} className="block">
         <div className="relative aspect-[16/9] w-full">
-          {group.coverPhotoUrl && (
-            <Image
-              src={group.coverPhotoUrl}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 320px"
-            />
-          )}
+          <GroupCover
+            coverPhotoUrl={group.coverPhotoUrl}
+            sizes="(max-width: 768px) 100vw, 320px"
+            iconClassName="h-10 w-10 text-ink-placeholder"
+          />
         </div>
       </Link>
       <div className="flex flex-1 flex-col p-4">

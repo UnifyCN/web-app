@@ -13,7 +13,6 @@ export const events: CommunityEvent[] = [
     id: 35,
     title: "Holiday Market",
     eventDatetime: "2025-12-23T22:00:00Z",
-    eventEndDatetime: "2025-12-17T02:00:00Z",
     location: "Burnaby Neighbourhood House",
     eventType: "in-person",
     coverPhotoUrl:
@@ -22,13 +21,12 @@ export const events: CommunityEvent[] = [
       "https://burnabynh.ca/wp-content/uploads/2025/12/Holiday-Market.pdf",
     hostedBy: null,
     description:
-      "Hosted by Burnaby Neighbourhood HouseCome and explore a vibrant marketplace featuring unique products from newcomer women entrepreneurs. Enjoy festive vibes, shop for gifts, connect with your community, and support and empower newcomer women!Free Entry - All are Welcome!",
+      "Hosted by Burnaby Neighbourhood House\nCome and explore a vibrant marketplace featuring unique products from newcomer women entrepreneurs. Enjoy festive vibes, shop for gifts, connect with your community, and support and empower newcomer women!\nFree Entry - All are Welcome!",
   },
   {
     id: 36,
     title: "Unify's Resume, Interview, and Cover Letter Workshop",
     eventDatetime: "2026-01-11T22:30:00Z",
-    eventEndDatetime: "2025-12-17T00:30:00Z",
     location: "Surrey Libraries - Fleetwood Branch",
     eventType: "in-person",
     coverPhotoUrl:
@@ -37,7 +35,7 @@ export const events: CommunityEvent[] = [
       "https://www.eventbrite.com/e/unifys-free-resume-interview-and-cover-letter-workshop-tickets-1977673717326?aff=oddtdtcreator",
     hostedBy: null,
     description:
-      "Get guidance on résumés, cover letters, and interview tips to help you stand out in the Canadian job market.Are you finding it hard to get noticed by employers as a newcomer in Canada?Join our Resume, Cover Letter & Interview Workshop, hosted by Unify, and learn the essential tools to succeed in the Canadian job market.Our Unify Gather team will walk you through how to create a strong, well-structured résumé tailored to Canadian job postings — including formatting, professional summaries, key skills, accomplishment statements, and how to tailor your application to specific roles. You’ll review examples, learn effective action verbs, and discover what makes an application stand out.We’ll also cover how to write a clear, compelling cover letter, focusing on structure, tone, and how to highlight your value in a way employers understand.Finally, we’ll dive into interview preparation, including practical tips for common questions, the STAR method, and strategies to present yourself confidently.With personalized feedback and hands-on support, you’ll leave with a stronger résumé, a polished cover letter, and interview strategies to help you confidently approach Canadian employers.",
+      "Get guidance on résumés, cover letters, and interview tips to help you stand out in the Canadian job market.\nAre you finding it hard to get noticed by employers as a newcomer in Canada?\nJoin our Resume, Cover Letter & Interview Workshop, hosted by Unify, and learn the essential tools to succeed in the Canadian job market.\nOur Unify Gather team will walk you through how to create a strong, well-structured résumé tailored to Canadian job postings — including formatting, professional summaries, key skills, accomplishment statements, and how to tailor your application to specific roles. You’ll review examples, learn effective action verbs, and discover what makes an application stand out.\nWe’ll also cover how to write a clear, compelling cover letter, focusing on structure, tone, and how to highlight your value in a way employers understand.\nFinally, we’ll dive into interview preparation, including practical tips for common questions, the STAR method, and strategies to present yourself confidently.\nWith personalized feedback and hands-on support, you’ll leave with a stronger résumé, a polished cover letter, and interview strategies to help you confidently approach Canadian employers.",
   },
   {
     id: 39,
@@ -52,13 +50,12 @@ export const events: CommunityEvent[] = [
       "https://www.eventbrite.ca/e/navigating-the-healthcare-system-in-bc-with-unify-tickets-1978767875984?aff=ebdsoporgprofile",
     hostedBy: "Unify",
     description:
-      "Join us for an informative session hosted by Unify to help newcomers to Canada better understand and navigate the healthcare system in British Columbia. This workshop will cover essential healthcare topics, including:Understanding BC’s Healthcare System: Learn about the Medical Services Plan (MSP), how it works, and why it’s important to register as soon as you arrive.How to Apply for MSP as a Newcomer: Step-by-step guidance on the application process, required documents, and timelines to ensure you get coverage without delays.Accessing Healthcare Services: Learn how to find family doctors, walk-in clinics, and specialists, and understand your rights to healthcare services.Health Insurance & Prescription Coverage: Get tips on prescription medications, the Pharmacare program, and how to ensure you are covered for medical expenses.Navigating the System: Discover how to book appointments, prepare for medical visits, and what to do in case of emergencies.This hands-on workshop will provide practical advice and resources to help newcomers confidently navigate the BC healthcare system. You'll leave with clear, actionable steps to ensure your health and well-being in your new home.Don’t miss out on this essential opportunity to get your questions answered and start your journey to accessing healthcare in BC with ease!",
+      "Join us for an informative session hosted by Unify to help newcomers to Canada better understand and navigate the healthcare system in British Columbia. This workshop will cover essential healthcare topics, including:\nUnderstanding BC’s Healthcare System: Learn about the Medical Services Plan (MSP), how it works, and why it’s important to register as soon as you arrive.\nHow to Apply for MSP as a Newcomer: Step-by-step guidance on the application process, required documents, and timelines to ensure you get coverage without delays.\nAccessing Healthcare Services: Learn how to find family doctors, walk-in clinics, and specialists, and understand your rights to healthcare services.\nHealth Insurance & Prescription Coverage: Get tips on prescription medications, the Pharmacare program, and how to ensure you are covered for medical expenses.\nNavigating the System: Discover how to book appointments, prepare for medical visits, and what to do in case of emergencies.\nThis hands-on workshop will provide practical advice and resources to help newcomers confidently navigate the BC healthcare system. You'll leave with clear, actionable steps to ensure your health and well-being in your new home.\nDon’t miss out on this essential opportunity to get your questions answered and start your journey to accessing healthcare in BC with ease!",
   },
   {
     id: 41,
     title: "English Connect Cafe",
     eventDatetime: "2026-02-04T22:00:00Z",
-    eventEndDatetime: "2025-02-04T23:00:00Z",
     location: "MOSAIC - Boundary",
     eventType: "in-person",
     coverPhotoUrl:
@@ -95,7 +92,7 @@ export const events: CommunityEvent[] = [
       "https://www.eventbrite.ca/e/new-roots-with-unify-x-square-one-tickets-1980938833376?aff=oddtdtcreator#location",
     hostedBy: null,
     description:
-      "Learn how to thrive in Canada with hands-on workshops, real conversations, and meaningful connections made just for international studentsJoin Unify for an interactive afternoon designed to help international students navigate life in Canada. The event features engaging panels with accomplished industry professionals, real student stories, and hands-on workshops covering topics like working in Canada, mental well-being, staying connected with family, and managing money confidently.Attendees will gain practical tips, expert insights, and resources they can use right away. There will also be time to ask questions, network with professionals, connect with peers, and build a strong sense of community. Whether you’re new to Canada or settling in, you’ll leave feeling informed, supported, and more confident moving forward.",
+      "Learn how to thrive in Canada with hands-on workshops, real conversations, and meaningful connections made just for international students\nJoin Unify for an interactive afternoon designed to help international students navigate life in Canada. The event features engaging panels with accomplished industry professionals, real student stories, and hands-on workshops covering topics like working in Canada, mental well-being, staying connected with family, and managing money confidently.\nAttendees will gain practical tips, expert insights, and resources they can use right away. There will also be time to ask questions, network with professionals, connect with peers, and build a strong sense of community. Whether you’re new to Canada or settling in, you’ll leave feeling informed, supported, and more confident moving forward.",
   },
   {
     id: 44,
@@ -167,7 +164,7 @@ export const events: CommunityEvent[] = [
       "https://www.eventbrite.ca/e/newcomers-connect-forum-skills-wellbeing-career-conversations-tickets-1983481615907?aff=ebdssbdestsearch#location",
     hostedBy: "YWCA Career Paths for Skilled Immigrants",
     description:
-      "This event offers clients a unique opportunity to explore employment supports, gain insight into job opportunities, and build connections.This event brings together community, opportunity, and practical support for your career journey.The forum is designed to support newcomers from all backgrounds, giving attendees the chance to explore a variety of employment resources and gain insights into starting or advancing a career in Canada.The day features guest speakers, interactive breakout sessions, and networking opportunities—offering multiple ways to learn, connect, and take the next step toward meaningful employment.Keynote: Adina Gray – AI, Work & Opportunity: What Immigrant Professionals Need to KnowLearn how generative AI is reshaping Canadian workplaces and how to use these tools to strengthen your communication, productivity, and professional impact. With 15+ years in business education and as Founder of PurpleOwl AI, Adina equips professionals with practical, responsible AI skills that enhance, not replace human potential.",
+      "This event offers clients a unique opportunity to explore employment supports, gain insight into job opportunities, and build connections.\nThis event brings together community, opportunity, and practical support for your career journey.\nThe forum is designed to support newcomers from all backgrounds, giving attendees the chance to explore a variety of employment resources and gain insights into starting or advancing a career in Canada.\nThe day features guest speakers, interactive breakout sessions, and networking opportunities—offering multiple ways to learn, connect, and take the next step toward meaningful employment.\nKeynote: Adina Gray – AI, Work & Opportunity: What Immigrant Professionals Need to Know\nLearn how generative AI is reshaping Canadian workplaces and how to use these tools to strengthen your communication, productivity, and professional impact. With 15+ years in business education and as Founder of PurpleOwl AI, Adina equips professionals with practical, responsible AI skills that enhance, not replace human potential.",
   },
   {
     id: 49,
@@ -182,7 +179,7 @@ export const events: CommunityEvent[] = [
       "https://www.eventbrite.ca/e/canadian-job-expo-june-27-2026-nikkei-cultural-center-burnaby-tickets-1966379274343?aff=ebdssbdestsearch",
     hostedBy: "Vancouver Young Volunteer Association",
     description:
-      "Get in front of hiring managers! Network and apply with Employer Vendors. Recruiter Panel, Finance & Workplace wellness workshop available!Welcome to the Job Fair presented by Canadian Cultural Festival sponsored by BCIT!Looking for your next opportunity? This Job Fair connects you directly with hiring managers from top organizations. Network with employer vendors, apply on the spot, and start building the professional relationships you need to grow your career.Explore exciting career pathways and gain valuable insights from our Training Exhibitors, including resources on diplomas, certifications, and newcomer support services. Learn about financial assistance, HR recruiting tips, and professional networking strategies that can help you land your next job.",
+      "Get in front of hiring managers! Network and apply with Employer Vendors. Recruiter Panel, Finance & Workplace wellness workshop available!\nWelcome to the Job Fair presented by Canadian Cultural Festival sponsored by BCIT!\nLooking for your next opportunity? This Job Fair connects you directly with hiring managers from top organizations. Network with employer vendors, apply on the spot, and start building the professional relationships you need to grow your career.\nExplore exciting career pathways and gain valuable insights from our Training Exhibitors, including resources on diplomas, certifications, and newcomer support services. Learn about financial assistance, HR recruiting tips, and professional networking strategies that can help you land your next job.",
   },
   {
     id: 50,
@@ -196,7 +193,7 @@ export const events: CommunityEvent[] = [
       "https://issbc.org/event/friday-conversation-circle-online-3/2026-03-20/",
     hostedBy: "ISSofBC",
     description:
-      "Are you a Newcomer who would like to:- Explore new topics together?- Share your ideas and experience?- Learn something new?- Have Fun!!We are here to support you!Join our Fridays Conversation Circle via MS TEAMS! Connect, communicate, and grow your confidence in English through fun and friendly conversations. It’s a great way to meet others, share stories, and feel part of the community.Eligibility Criteria❑ Permanent Residents and Protected Persons living in the Lower Mainland, BC.❑ International Student, Refugee Claimants, and Temporary Foreign Workers ONLY living in Maple Ridge or Pitt Meadows.❑ Naturalized Canadian citizens ONLY living in Maple Ridge or Pitt Meadows.Note: Registration is strictly required due to limited space. For Inquiries: Send an email to [yumiko.king@issbc.org] or call [778-372-6568]",
+      "Are you a Newcomer who would like to:\n- Explore new topics together?\n- Share your ideas and experience?\n- Learn something new?\n- Have Fun!!\nWe are here to support you!\nJoin our Fridays Conversation Circle via MS TEAMS! Connect, communicate, and grow your confidence in English through fun and friendly conversations. It’s a great way to meet others, share stories, and feel part of the community.\nEligibility Criteria\n❑ Permanent Residents and Protected Persons living in the Lower Mainland, BC.\n❑ International Student, Refugee Claimants, and Temporary Foreign Workers ONLY living in Maple Ridge or Pitt Meadows.\n❑ Naturalized Canadian citizens ONLY living in Maple Ridge or Pitt Meadows.\nNote: Registration is strictly required due to limited space. For Inquiries: Send an email to [yumiko.king@issbc.org] or call [778-372-6568]",
   },
   {
     id: 51,
@@ -211,7 +208,7 @@ export const events: CommunityEvent[] = [
       "https://issbc.org/event/solid-start-360-employment-program-info-session-online-14/2026-03-30/",
     hostedBy: "ISSofBC",
     description:
-      "Ready to Work in British ColumbiaAre you a newcomer looking to start your career in BC? Our free employment program offers personalized support to help you succeed in the local labour market. Benefit from one-on-one job search coaching, group workshops (in-person, online, or self-paced), resume and interview guidance, and access to job postings and employer referrals. Connect with employers through job fairs and mentoring events, and gain experience through career-relevant volunteering.Join an Info Session to learn more about how we can support your job search journey.Who Can Attend: - Permanent Resident- Protected Persons (as defined by IRPA)- Individuals selected for PR (with IRCC letter)- Living in British Columbia in Vancouver, New Westminster, Coquitlam, Port Coquitlam, Port Moody, Maple Ridge, and Pitt Meadows",
+      "Ready to Work in British Columbia\nAre you a newcomer looking to start your career in BC? Our free employment program offers personalized support to help you succeed in the local labour market. Benefit from one-on-one job search coaching, group workshops (in-person, online, or self-paced), resume and interview guidance, and access to job postings and employer referrals. Connect with employers through job fairs and mentoring events, and gain experience through career-relevant volunteering.\nJoin an Info Session to learn more about how we can support your job search journey.\nWho Can Attend:\n- Permanent Resident\n- Protected Persons (as defined by IRPA)\n- Individuals selected for PR (with IRCC letter)\n- Living in British Columbia in Vancouver, New Westminster, Coquitlam, Port Coquitlam, Port Moody, Maple Ridge, and Pitt Meadows",
   },
   {
     id: 52,
@@ -226,7 +223,7 @@ export const events: CommunityEvent[] = [
       "https://issbc.org/event/career-paths-for-skilled-immigrants-information-session-3/2026-03-31/",
     hostedBy: "ISSofBC",
     description:
-      "As a skilled immigrant, this is your opportunity to learn how Career Paths can assist you with returning to your pre-arrival profession.In this session you will learn more information on our services, such as:- Credential evaluations and obtaining BC licenses- Regulatory body and association memberships- Skills and course funding- Career planning and job search support- Work placement opportunities- Connections to BC employers- Access to BC Mentors",
+      "As a skilled immigrant, this is your opportunity to learn how Career Paths can assist you with returning to your pre-arrival profession.\nIn this session you will learn more information on our services, such as:\n- Credential evaluations and obtaining BC licenses\n- Regulatory body and association memberships\n- Skills and course funding\n- Career planning and job search support\n- Work placement opportunities\n- Connections to BC employers\n- Access to BC Mentors",
   },
   {
     id: 53,
@@ -240,7 +237,7 @@ export const events: CommunityEvent[] = [
     externalLink: "https://mosaicbc.org/event/honoring-international-womens-day/",
     hostedBy: "MOSAIC BC",
     description:
-      "Organized by the Violence Prevention Program (VPP) team, this event marks International Women’s Day by creating a supportive and empowering space for connection, learning, and community care. This event is centered on supporting those seeking legal knowledge while also creating space to gather, reflect, and share experiences with others in a supportive environment.Event Overview:- Welcome & Introductions- Private lawyer clinic (appointment based)- Art and Wellness Activities (Origami, coloring)- Community sharing & connection- Snacks/refreshments providedParticipants will have the opportunity to book a private 20‑minute appointment with a family lawyer from PGS Law, offering a chance to ask legal questions and receive general information. Alongside the legal clinic, the day will include a sharing circle, individual art stations, community resource sharing, and a guided origami activity to thoughtfully close the event.",
+      "Organized by the Violence Prevention Program (VPP) team, this event marks International Women’s Day by creating a supportive and empowering space for connection, learning, and community care. This event is centered on supporting those seeking legal knowledge while also creating space to gather, reflect, and share experiences with others in a supportive environment.\nEvent Overview:\n- Welcome & Introductions\n- Private lawyer clinic (appointment based)\n- Art and Wellness Activities (Origami, coloring)\n- Community sharing & connection\n- Snacks/refreshments provided\nParticipants will have the opportunity to book a private 20‑minute appointment with a family lawyer from PGS Law, offering a chance to ask legal questions and receive general information. Alongside the legal clinic, the day will include a sharing circle, individual art stations, community resource sharing, and a guided origami activity to thoughtfully close the event.",
   },
   {
     id: 54,
@@ -254,7 +251,7 @@ export const events: CommunityEvent[] = [
       "https://successbc.ca/event/new-immigrants-orientation-employment-english-multilingual-translated-captions-available/",
     hostedBy: "SUCCESS – Immigration Settlement and Integration Program",
     description:
-      "Contents:- Types of Employment in B.C.- Know Your Rights as a Job Applicant- Foreign Credential Recognition and Certification- Managing Expectations, Overcoming Challenges, and Accessing Support",
+      "Contents:\n- Types of Employment in B.C.\n- Know Your Rights as a Job Applicant\n- Foreign Credential Recognition and Certification\n- Managing Expectations, Overcoming Challenges, and Accessing Support",
   },
 ];
 
