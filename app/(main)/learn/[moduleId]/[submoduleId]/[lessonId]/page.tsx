@@ -33,7 +33,11 @@ export default function LessonDetailPage({
   );
   const lessonQuizTitle = lessonQuizQuery.data?.[0]?.title ?? "Quick Check";
 
-  if (lessonQuery.isLoading || moduleQuery.isLoading) {
+  if (
+    lessonQuery.isLoading ||
+    moduleQuery.isLoading ||
+    lessonQuizQuery.isLoading
+  ) {
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
         <p className="text-sm text-ink-muted">Loading…</p>

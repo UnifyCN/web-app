@@ -34,3 +34,16 @@ create policy "user_lesson_quiz_progress_update_own" on public.user_lesson_quiz_
 -- cascade` rebuild restores access. No anon grant: rows are per-user private.
 grant all on public.user_lesson_quiz_progress to service_role;
 grant select, insert, update on public.user_lesson_quiz_progress to authenticated;
+
+-- Keep updated_at current on every UPDATE, not just the app's upsert path.
+create or replace function public.set_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger user_lesson_quiz_progress_set_updated_at
+  before update on public.user_lesson_quiz_progress
+  for each row execute function public.set_updated_at();

@@ -14,6 +14,8 @@ interface LessonQuizProps {
   title: string;
   questions: SanityQuizQuestion[];
   colorHex: string;
+  /** Marks the lesson complete — fired when the quiz is finished (Done). */
+  onLessonComplete: () => void;
   /** The submodule page — finishing navigates here (never the next lesson). */
   sectionHref: string;
 }
@@ -29,6 +31,7 @@ export function LessonQuiz({
   title,
   questions,
   colorHex,
+  onLessonComplete,
   sectionHref,
 }: LessonQuizProps) {
   const router = useRouter();
@@ -71,6 +74,8 @@ export function LessonQuiz({
     }
     const score = computeScore(questions, answers);
     upsert.mutate({ lessonId, isCompleted: true, score, totalQuestions: total });
+    // Finishing the quiz is what completes the lesson (not merely reaching it).
+    onLessonComplete();
     // No results screen — finishing always returns to the section page.
     router.push(sectionHref);
   }

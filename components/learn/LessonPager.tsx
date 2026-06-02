@@ -60,12 +60,10 @@ export function LessonPager({
   }
 
   function handleNext() {
-    const next = index + 1;
-    // Reaching the Quick Check page means all content is read — mark the lesson
-    // complete here, since the quiz page hides the pager's nav (and its complete
-    // trigger).
-    if (hasQuiz && next === pages.length) onLessonComplete();
-    setPageIndex(next);
+    // The lesson is marked complete when the quiz is finished (LessonQuiz's Done)
+    // or, for quiz-less lessons, via the last-screen "Back to section" link — not
+    // on merely reaching the quiz page.
+    setPageIndex(index + 1);
   }
 
   return (
@@ -74,7 +72,7 @@ export function LessonPager({
       <h1 className="text-2xl font-bold text-ink-secondary">{title}</h1>
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-input">
         <div
-          className="h-full rounded-full transition-all duration-300 ease-out"
+          className="h-full rounded-full"
           style={{ width: `${percent}%`, backgroundColor: colorHex }}
         />
       </div>
@@ -120,6 +118,7 @@ export function LessonPager({
             title={quizTitle}
             questions={quizQuestions}
             colorHex={colorHex}
+            onLessonComplete={onLessonComplete}
             sectionHref={sectionHref}
           />
         </div>
