@@ -56,7 +56,7 @@ gated on a working OpenAI embeddings key — see Status.)
 ### Checklist
 
 Personalized onboarding tasks based on the user's **persona** (international student,
-refugee, protected person, skilled worker, immigrant, PR) and **time in Canada**
+skilled worker, refugee, other) and **time in Canada**
 (0–3 months through 3+ years). Tasks are defined in Sanity CMS, bucketed into four
 priorities (Do now → Do soon → Explore & connect → Optional / later), with per-user
 completion and user-created custom tasks tracked in Supabase.
@@ -99,7 +99,7 @@ embeddings. See `BACKLOG.md` for upcoming phases.
 
 ## Architecture
 
-```
+```text
 ┌──────────────────────────────────────────────────────┐
 │                 Next.js 16 (App Router)               │
 │          browser components + server routes           │
@@ -166,7 +166,7 @@ limit + refund), `match_chunks` (RAG vector search), `get_post_metadata_batch`,
 
 ## Project Structure
 
-```
+```text
 web-app/
 ├── app/                          # Next.js App Router
 │   ├── (auth)/

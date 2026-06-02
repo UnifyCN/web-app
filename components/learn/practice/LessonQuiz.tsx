@@ -67,13 +67,24 @@ export function LessonQuiz({
     setSubmitted((prev) => ({ ...prev, [currentKey]: true }));
   }
 
-  function handleNext() {
+  async function handleNext() {
     if (currentIndex < total - 1) {
       setCurrentIndex((i) => i + 1);
       return;
     }
     const score = computeScore(questions, answers);
-    upsert.mutate({ lessonId, isCompleted: true, score, totalQuestions: total });
+    try {
+      await upsert.mutateAsync({
+        lessonId,
+        isCompleted: true,
+        score,
+        totalQuestions: total,
+      });
+    } catch {
+      // Persisting the result failed — stay on the quiz so the user can retry
+      // rather than navigating away on a failed write.
+      return;
+    }
     // Finishing the quiz is what completes the lesson (not merely reaching it).
     onLessonComplete();
     // No results screen — finishing always returns to the section page.

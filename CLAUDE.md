@@ -58,9 +58,11 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
   Practice quiz route backed by `components/learn/practice/flattenPractices.ts`;
   lesson Quick Checks (`components/learn/practice/LessonQuiz.tsx`); the
   `user_practice_progress` + `user_lesson_quiz_progress` tables (migrations
-  applied). Lessons auto-complete on Next, the Practice card shows the last score
-  with a Retake button, completed timeline cards keep the module colour, and Back
-  resets the current question for a fresh attempt.
+  applied). Lessons with a Quick Check complete when the user presses Done on the
+  quiz, and lessons without one complete when the user presses "Back to section"
+  on the last content page; the Practice card shows the last score with a Retake
+  button, completed timeline cards keep the module colour, and Back resets the
+  current question for a fresh attempt.
 
 ---
 
