@@ -44,15 +44,20 @@ export default async function EventDetailPage({
     );
   }
 
+  // Events are BC-based; render in Pacific so the time is correct on the
+  // server-rendered page (the stored datetime is the exact UTC instant).
+  const TZ = "America/Vancouver";
   const date = new Date(event.eventDatetime);
   const dateLabel = date.toLocaleDateString("en-CA", {
     weekday: "long",
     month: "long",
     day: "numeric",
+    timeZone: TZ,
   });
   const time = date.toLocaleTimeString("en-CA", {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: TZ,
   });
 
   return (

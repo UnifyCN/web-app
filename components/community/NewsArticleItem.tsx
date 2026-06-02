@@ -3,10 +3,19 @@ import { Badge } from "@/components/ui/Badge";
 import { formatRelativeTime } from "@/lib/utils";
 import type { NewsItem } from "@/types";
 
-/** A single article row for the Community → News tab. */
+/**
+ * A single article row for the Community → News tab. There's no in-app news
+ * detail page, so when the item has a source URL the whole row links out.
+ */
 export function NewsArticleItem({ item }: { item: NewsItem }) {
-  return (
-    <article className="flex gap-4 py-4">
+  const href =
+    item.link &&
+    (item.link.startsWith("https://") || item.link.startsWith("http://"))
+      ? item.link
+      : null;
+
+  const body = (
+    <>
       {item.imageLink && (
         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg sm:h-24 sm:w-24">
           <Image
@@ -20,19 +29,36 @@ export function NewsArticleItem({ item }: { item: NewsItem }) {
       )}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <Badge variant="neutral">{item.category}</Badge>
+          {item.category && <Badge variant="neutral">{item.category}</Badge>}
           <span className="text-xs text-ink-placeholder">
             {formatRelativeTime(item.date)}
           </span>
         </div>
-        <h3 className="mt-1.5 text-sm font-semibold text-ink-secondary">
+        <h3 className="mt-1.5 text-sm font-semibold text-ink-secondary transition-colors group-hover:text-primary">
           {item.title}
         </h3>
         <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-ink-muted">
           {item.description}
         </p>
-        <p className="mt-1.5 text-xs text-ink-placeholder">By {item.author}</p>
+        {item.author && (
+          <p className="mt-1.5 text-xs text-ink-placeholder">By {item.author}</p>
+        )}
       </div>
-    </article>
+    </>
   );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group flex gap-4 py-4"
+      >
+        {body}
+      </a>
+    );
+  }
+
+  return <article className="flex gap-4 py-4">{body}</article>;
 }

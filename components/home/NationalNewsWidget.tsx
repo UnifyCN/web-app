@@ -30,7 +30,7 @@ export function NationalNewsWidget() {
                 {item.title}
               </p>
               <div className="mt-1 flex items-center gap-2">
-                <Badge variant="neutral">{item.category}</Badge>
+                {item.category && <Badge variant="neutral">{item.category}</Badge>}
                 <span className="text-xs text-ink-placeholder">
                   {formatRelativeTime(item.date)}
                 </span>

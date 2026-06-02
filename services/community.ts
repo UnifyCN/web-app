@@ -2,7 +2,6 @@ import type {
   CircleStatus,
   CommunityCircle,
   CommunityEvent,
-  EventType,
   Group,
   NewsItem,
   Persona,
@@ -14,7 +13,10 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
 import { groups as mockGroups, getGroupById as findMockGroup } from "@/lib/mock/groups";
-import { events as mockEvents, getEventById as findMockEvent } from "@/lib/mock/events";
+import {
+  events as communityEvents,
+  getEventById as findCommunityEvent,
+} from "@/lib/mock/events";
 import { newsItems as mockNews } from "@/lib/mock/news";
 import { currentCircle } from "@/lib/mock/circles";
 
@@ -167,70 +169,20 @@ export async function leaveGroup(groupId: number): Promise<void> {
 
 /* ---- Events ----------------------------------------------------------- */
 
-interface EventRow {
-  id: number;
-  title: string;
-  description: string | null;
-  event_datetime: string;
-  event_end_datetime: string | null;
-  location: string;
-  hosted_by: string | null;
-  event_type: EventType;
-  cover_photo_url: string | null;
-  external_link: string | null;
-}
-
-function rowToEvent(row: EventRow): CommunityEvent {
-  return {
-    id: row.id,
-    title: row.title,
-    description: row.description ?? "",
-    eventDatetime: row.event_datetime,
-    eventEndDatetime: row.event_end_datetime ?? undefined,
-    location: row.location,
-    eventType: row.event_type,
-    coverPhotoUrl: row.cover_photo_url,
-    externalLink: row.external_link,
-    hostedBy: row.hosted_by,
-  };
-}
+// Events are hard-coded (no events-management surface on web) — the canonical
+// list lives in lib/mock/events.ts and is returned in every environment;
+// Supabase is not consulted. Ordered newest-first to mirror the old query.
 
 export async function getEvents(): Promise<CommunityEvent[]> {
-  if (!isSupabaseConfigured()) return mockEvents;
-
-  const userId = await getAuthUserId();
-  if (!userId) return mockEvents;
-
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("events")
-    .select(
-      "id, title, description, event_datetime, event_end_datetime, location, hosted_by, event_type, cover_photo_url, external_link",
-    )
-    .order("event_datetime", { ascending: false });
-  if (error) throw error;
-
-  return (data as EventRow[]).map(rowToEvent);
+  return [...communityEvents].sort((a, b) =>
+    b.eventDatetime.localeCompare(a.eventDatetime),
+  );
 }
 
 export async function getEventById(
   id: number,
 ): Promise<CommunityEvent | undefined> {
-  if (!isSupabaseConfigured()) return findMockEvent(id);
-
-  const userId = await getAuthUserId();
-  if (!userId) return findMockEvent(id);
-
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("events")
-    .select(
-      "id, title, description, event_datetime, event_end_datetime, location, hosted_by, event_type, cover_photo_url, external_link",
-    )
-    .eq("id", id)
-    .maybeSingle();
-  if (error) throw error;
-  return data ? rowToEvent(data as EventRow) : undefined;
+  return findCommunityEvent(id);
 }
 
 /* ---- News ------------------------------------------------------------- */
@@ -243,6 +195,7 @@ interface NewsRow {
   category: string | null;
   date: string;
   image_link: string | null;
+  link: string | null;
 }
 
 function rowToNews(row: NewsRow): NewsItem {
@@ -254,6 +207,7 @@ function rowToNews(row: NewsRow): NewsItem {
     date: row.date,
     category: row.category,
     imageLink: row.image_link,
+    link: row.link,
   };
 }
 
@@ -266,7 +220,7 @@ export async function getNews(): Promise<NewsItem[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("news_details")
-    .select("id, title, description, author, category, date, image_link")
+    .select("id, title, description, author, category, date, image_link, link")
     .order("date", { ascending: false });
   if (error) throw error;
 
