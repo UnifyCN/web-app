@@ -128,6 +128,8 @@ export interface NewsItem {
   date: string;
   category: string | null;
   imageLink: string | null;
+  /** External article URL — news has no in-app detail page, so items link out. */
+  link: string | null;
 }
 
 export type CircleStatus = "default" | "waiting" | "in_circle";

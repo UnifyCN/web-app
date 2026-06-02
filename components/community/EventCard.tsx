@@ -12,12 +12,19 @@ const EVENT_TYPE_LABEL: Record<EventType, string> = {
 
 /** Community event card — links through to the event detail page. */
 export function EventCard({ event }: { event: CommunityEvent }) {
+  // Events are BC-based; render in Pacific so the time is correct and stable
+  // across server/client (the stored datetime is the exact UTC instant).
+  const TZ = "America/Vancouver";
   const date = new Date(event.eventDatetime);
-  const day = date.toLocaleDateString("en-CA", { day: "numeric" });
-  const month = date.toLocaleDateString("en-CA", { month: "short" });
+  const day = date.toLocaleDateString("en-CA", { day: "numeric", timeZone: TZ });
+  const month = date.toLocaleDateString("en-CA", {
+    month: "short",
+    timeZone: TZ,
+  });
   const time = date.toLocaleTimeString("en-CA", {
     hour: "numeric",
     minute: "2-digit",
+    timeZone: TZ,
   });
 
   return (

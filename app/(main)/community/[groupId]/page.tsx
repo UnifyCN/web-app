@@ -1,10 +1,10 @@
 "use client";
 
 import { use, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { GroupCover } from "@/components/community/GroupCover";
 import { GroupMemberAvatarStack } from "@/components/community/GroupMemberAvatarStack";
 import { PostCard } from "@/components/home/PostCard";
 import { useGroup, useJoinGroup, useLeaveGroup } from "@/hooks/useCommunity";
@@ -78,15 +78,11 @@ export default function GroupDetailPage({
       {/* Group header */}
       <div className="overflow-hidden rounded-card border border-border-card bg-surface">
         <div className="relative aspect-[3/1] w-full">
-          {group.coverPhotoUrl && (
-            <Image
-              src={group.coverPhotoUrl}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="680px"
-            />
-          )}
+          <GroupCover
+            coverPhotoUrl={group.coverPhotoUrl}
+            sizes="680px"
+            iconClassName="h-12 w-12 text-ink-placeholder"
+          />
         </div>
         <div className="p-5">
           <h1 className="text-lg font-semibold text-ink-secondary">

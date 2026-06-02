@@ -1,66 +1,58 @@
 import type { NewsItem } from "@/types";
 
-// TODO: replace with real data — mock national newcomer news.
-// The Home widget shows the first 3; the Community News tab shows all.
+/**
+ * National newcomer news — the real `news_details` rows (Phase 18). Mirrors the
+ * Supabase seed so the local-dev / env-not-configured fallback matches
+ * production. The Home widget shows the first 3; the Community News tab shows
+ * all. `category` is null until the content team tags rows; items link out to
+ * the source article (no in-app news detail page).
+ */
 export const newsItems: NewsItem[] = [
   {
     id: 1,
-    title: "Express Entry draw invites 3,000 skilled-worker candidates",
+    title: "Navigating Winter Roads in Canada",
     description:
-      "The latest federal draw lowered the CRS cut-off score — the third invitation round this month.",
-    author: "IRCC Newsroom",
-    date: "2026-05-15T13:00:00Z",
-    category: "Immigration",
-    imageLink: "https://picsum.photos/seed/news-immigration/240/240",
+      "New to snow? ICBC article to help you avoid issues on the icy, winter roads. Learn essential winter driving tips and safety precautions.",
+    author: "ICBC",
+    date: "2024-12-15T10:00:00Z",
+    category: null,
+    imageLink:
+      "https://media.canadianunderwriter.ca/uploads/2017/10/iStock-636598208.jpg",
+    link: "https://www.icbc.com/driver-licensing/winter-driving",
   },
   {
     id: 2,
-    title: "2026 rent-increase guideline capped at 2.5%",
+    title: "Financial Planning Tips for Newcomers",
     description:
-      "Provinces confirm the maximum allowable annual rent increase for existing tenancies.",
-    author: "Housing Desk",
-    date: "2026-05-13T10:30:00Z",
-    category: "Housing",
-    imageLink: "https://picsum.photos/seed/news-housing/240/240",
+      "Essential tips for managing your finances in Canada. Learn about banking, credit, taxes, and budgeting strategies.",
+    author: "Financial Advisor",
+    date: "2024-12-10T14:30:00Z",
+    category: null,
+    imageLink:
+      "https://www.bankrate.com/2023/06/27140300/What-is-financial-planning-SEO-NEW-ARTICLE-.jpeg?auto=webp&optimize=high&crop=16:9",
+    link: "https://www.canada.ca/en/financial-consumer-agency.html",
   },
   {
     id: 3,
-    title: "Free settlement workshops expand to 12 new cities",
+    title: "Understanding Canadian Healthcare System",
     description:
-      "Newcomer service agencies add evening sessions on banking, taxes, and job search.",
-    author: "Settlement Network",
-    date: "2026-05-10T16:45:00Z",
-    category: "Settlement",
-    imageLink: "https://picsum.photos/seed/news-settlement/240/240",
+      "A comprehensive guide to navigating the Canadian healthcare system and understanding your coverage options.",
+    author: "Health Canada",
+    date: "2024-12-05T09:15:00Z",
+    category: null,
+    imageLink:
+      "https://www.heritage.org/sites/default/files/styles/facebook_optimized/public/images/2020-02/GettyImages-1178057952.jpg?itok=6OFC17zR4",
+    link: "https://www.canada.ca/en/health-canada/services/health-care-system.html",
   },
   {
     id: 4,
-    title: "Provincial Nominee Program streams reopen for healthcare workers",
+    title: "Complete Guide to Settling in Canada",
     description:
-      "Several provinces resume nominations targeting nurses, care aides, and allied health roles.",
-    author: "IRCC Newsroom",
-    date: "2026-05-08T11:15:00Z",
-    category: "Immigration",
-    imageLink: "https://picsum.photos/seed/news-pnp/240/240",
-  },
-  {
-    id: 5,
-    title: "New tax-filing guide published for first-time residents",
-    description:
-      "The CRA releases a plain-language walkthrough for newcomers filing a Canadian return for the first time.",
-    author: "CRA Communications",
-    date: "2026-05-05T09:00:00Z",
-    category: "Finance",
-    imageLink: "https://picsum.photos/seed/news-tax/240/240",
-  },
-  {
-    id: 6,
-    title: "Language-class waitlists shorten as funding expands",
-    description:
-      "Federal funding adds thousands of LINC and CLB assessment seats across the country.",
-    author: "Settlement Network",
-    date: "2026-05-02T14:20:00Z",
-    category: "Education",
-    imageLink: "https://picsum.photos/seed/news-language/240/240",
+      "A comprehensive resource covering all aspects of life in Canada for newcomers, from housing to employment to social integration.",
+    author: "Immigration Services Canada",
+    date: "2024-11-28T16:45:00Z",
+    category: null,
+    imageLink: "https://www.cicnews.com/wp-content/uploads/2023/06/WES-ECA-1024x683.jpg",
+    link: "https://www.canada.ca/en/immigration-refugees-citizenship/services/new-immigrants.html",
   },
 ];

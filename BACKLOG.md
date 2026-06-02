@@ -8,8 +8,21 @@ Items deferred from feature phases. Each entry has the phase it came from and en
 
 Planned next, in rough order. Scope each into its own PR.
 
-**Phase 18 — Community: events + news**
-Hard-code the events list from the mobile app (no events table yet on web), and wire news/articles to a Supabase table (`news_details` or equivalent) instead of mock data.
+**Phase 18 — Community: events + news (shipped on `feat/community-phase18`)**
+Events are now hard-coded from the mobile `events` table (17 BC settlement-agency
+events in `lib/mock/events.ts`); `getEvents`/`getEventById` return that list
+directly and no longer query Supabase (the web `events` table stays unused).
+News stays wired to `news_details`, plus a new `link` column (source URL — news
+has no in-app detail page, so items link out) and a seed migration
+(`20260601130000_seed_community_news.sql`) carrying the 4 real articles.
+Event/news cover-image hosts are allowlisted in `next.config.ts`.
+**Follow-up — apply the news seed to the remote DB.** The seed migration was
+*not* applied: the Supabase MCP is read-only here and `supabase db push` is unsafe
+because the remote migration-history table is empty (it would try to re-create the
+already-existing tables — a pre-existing tracking drift, schema was applied
+out-of-band). Apply the migration via the dashboard SQL editor or with DB write
+access. Until then production shows no news (events are unaffected — hard-coded).
+As news grows, new publishers' image hosts must be added to `next.config.ts`.
 
 **Phase 19 — Community: daily tips edge function**
 Port the daily-tips edge function from mobile (mobile's `get-daily-tip`) so the web surfaces a rotating daily tip.
