@@ -26,6 +26,21 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "www.bankrate.com" },
       { protocol: "https", hostname: "www.heritage.org" },
       { protocol: "https", hostname: "www.cicnews.com" },
+      // Community group cover photos (seeded from the mobile DB; rendered by
+      // GroupCover via next/image). img.freepik.com is already listed above.
+      { protocol: "https", hostname: "d2nzy1qhita6w.cloudfront.net" },
+      { protocol: "https", hostname: "wpvip.edutopia.org" },
+      { protocol: "https", hostname: "www.fresnocountyca.gov" },
+      { protocol: "https", hostname: "www.princeton.edu" },
+      { protocol: "https", hostname: "dmandelbaum.com" },
+      { protocol: "https", hostname: "immigration.ca" },
+      { protocol: "https", hostname: "www.internations.org" },
+      { protocol: "https", hostname: "www.spergel.ca" },
+      { protocol: "https", hostname: "nyonyalicious.com.au" },
+      { protocol: "https", hostname: "public-files.hoa-express.com" },
+      { protocol: "https", hostname: "canadianfoodfocus.org" },
+      { protocol: "https", hostname: "www.wondermind.com" },
+      { protocol: "https", hostname: "encrypted-tbn0.gstatic.com" },
     ],
   },
 };
