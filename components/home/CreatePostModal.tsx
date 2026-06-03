@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, Check } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, Check, ImagePlus } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { useCreatePost } from "@/hooks/useFeed";
+import { uploadPostImages } from "@/lib/supabase/uploadImage";
 import { cn } from "@/lib/utils";
 import { groups } from "@/lib/mock/groups";
 
@@ -11,19 +13,33 @@ type Destination = "For You" | "Group";
 
 const TITLE_MAX = 100;
 const BODY_MAX = 2000;
+const IMAGE_MAX = 4;
+
+interface SelectedImage {
+  file: File;
+  /** Object URL for the local preview thumbnail. */
+  url: string;
+}
 
 interface CreatePostModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-/** Create-post composer. Frontend stub — no post is actually created. */
+/** Create-post composer — wired to `useCreatePost` (uploads any selected
+ *  images to the post-images bucket first, then inserts the post). */
 export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
   const [destination, setDestination] = useState<Destination>("For You");
   const [groupId, setGroupId] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [images, setImages] = useState<SelectedImage[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [posted, setPosted] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const createPost = useCreatePost();
 
   // Escape to close + lock body scroll while open.
   useEffect(() => {
@@ -39,13 +55,19 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
     };
   }, [open, onClose]);
 
-  // Reset whenever the modal closes.
+  // Reset whenever the modal closes (and revoke any preview object URLs).
   useEffect(() => {
     if (!open) {
       setDestination("For You");
       setGroupId(null);
       setTitle("");
       setBody("");
+      setImages((prev) => {
+        prev.forEach((img) => URL.revokeObjectURL(img.url));
+        return [];
+      });
+      setSubmitting(false);
+      setError(null);
       setPosted(false);
     }
   }, [open]);
@@ -57,11 +79,43 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
     body.trim().length > 0 &&
     (destination === "For You" || groupId !== null);
 
-  function handlePost() {
-    if (!canPost) return;
-    // TODO: replace with real data — create the post via the backend.
-    setPosted(true);
-    window.setTimeout(onClose, 1300);
+  function handleAddFiles(list: FileList | null) {
+    if (!list || list.length === 0) return;
+    const remaining = IMAGE_MAX - images.length;
+    if (remaining <= 0) return;
+    const next = Array.from(list)
+      .slice(0, remaining)
+      .map((file) => ({ file, url: URL.createObjectURL(file) }));
+    setImages((prev) => [...prev, ...next]);
+  }
+
+  function handleRemoveImage(index: number) {
+    setImages((prev) => {
+      const target = prev[index];
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter((_, i) => i !== index);
+    });
+  }
+
+  async function handlePost() {
+    if (!canPost || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const postImageUrls = await uploadPostImages(images.map((i) => i.file));
+      await createPost.mutateAsync({
+        title,
+        content: body,
+        groupId: destination === "For You" ? null : groupId,
+        postImageUrls,
+      });
+      setPosted(true);
+      window.setTimeout(onClose, 1300);
+    } catch (err) {
+      console.error("create post failed", err);
+      setError("Couldn't post. Please try again.");
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -104,7 +158,8 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
               <Button
                 variant="primary"
                 size="sm"
-                disabled={!canPost}
+                disabled={!canPost || submitting}
+                loading={submitting}
                 onClick={handlePost}
               >
                 Post
@@ -201,6 +256,63 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                   {body.length}/{BODY_MAX}
                 </p>
               </div>
+
+              {/* Image previews */}
+              {images.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {images.map((img, index) => (
+                    <div
+                      key={img.url}
+                      className="relative h-20 w-20 overflow-hidden rounded-lg border border-border-card"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element -- local object-URL preview, not a remote asset */}
+                      <img
+                        src={img.url}
+                        alt={`Selected image ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        aria-label={`Remove image ${index + 1}`}
+                        className="absolute right-1 top-1 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-ink/60 text-white transition-colors hover:bg-ink/80"
+                      >
+                        <X className="h-3 w-3" aria-hidden />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add photos */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(event) => {
+                  handleAddFiles(event.target.files);
+                  event.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={images.length >= IMAGE_MAX}
+                className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full border border-border-card px-3 py-1.5 text-sm font-medium text-ink-muted transition-colors hover:bg-surface-gray disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ImagePlus className="h-4 w-4" aria-hidden />
+                {images.length > 0
+                  ? `Add photos (${images.length}/${IMAGE_MAX})`
+                  : "Add photos"}
+              </button>
+
+              {error && (
+                <p className="mt-3 text-sm text-destructive" role="alert">
+                  {error}
+                </p>
+              )}
             </div>
           </>
         )}

@@ -393,6 +393,74 @@ export async function unsavePost(postId: number): Promise<void> {
   if (error) throw error;
 }
 
+/* ---- create post ------------------------------------------------------ */
+
+export interface CreatePostInput {
+  title: string;
+  content: string;
+  /** null = "For You" (no group); otherwise the destination group id. */
+  groupId: number | null;
+  /** Public URLs from the post-images bucket (see lib/supabase/uploadImage). */
+  postImageUrls?: string[];
+}
+
+/**
+ * Create a post. Inserts into `posts` (own-row RLS: `user_id = auth.uid()`) and
+ * returns the created Post via the same joined select the feed uses, so the
+ * author/group come back hydrated. In the mock build it returns a synthesized
+ * Post so the composer flow stays exercisable without Supabase.
+ */
+export async function createPost(input: CreatePostInput): Promise<Post> {
+  const title = input.title.trim();
+  const content = input.content.trim();
+  const postImageUrls = input.postImageUrls ?? [];
+
+  if (!isSupabaseConfigured()) {
+    return {
+      id: Date.now(),
+      title,
+      content,
+      likeCount: 0,
+      commentCount: 0,
+      saveCount: 0,
+      userId: "mock-user",
+      groupId: input.groupId,
+      isPinned: false,
+      postImageUrls,
+      createdAt: new Date().toISOString(),
+      author: {
+        id: "mock-user",
+        username: "You",
+        profilePictureUrl: null,
+        isPremium: false,
+        permissions: [],
+      },
+      groupName: undefined,
+      likedByMe: false,
+      savedByMe: false,
+    };
+  }
+
+  const supabase = createClient();
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("createPost: no auth session");
+
+  const { data, error } = await supabase
+    .from("posts")
+    .insert({
+      title,
+      content,
+      group_id: input.groupId,
+      user_id: userId,
+      post_image_urls: postImageUrls,
+    })
+    .select(POSTS_SELECT)
+    .single();
+  if (error) throw error;
+
+  return rowToPost(data as unknown as JoinedPostRow);
+}
+
 /* ---- legacy single-arg wrappers (kept for FeedTab caller, if any) ----- */
 
 export async function getFeedPosts(
