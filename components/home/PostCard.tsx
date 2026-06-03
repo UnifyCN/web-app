@@ -98,16 +98,13 @@ export function PostCard({ post }: { post: Post }) {
           {post.postImageUrls.map((url, index) => (
             <div
               key={url}
-              className={cn(
-                "relative overflow-hidden rounded-lg border border-border-card bg-surface-gray",
-                multiImage ? "aspect-square" : "aspect-[3/2]",
-              )}
+              className="relative aspect-[4/3] overflow-hidden rounded-lg border border-border-card"
             >
               <Image
                 src={url}
                 alt={`${post.title} — image ${index + 1}`}
                 fill
-                className="object-contain"
+                className="object-cover"
                 sizes="(max-width: 680px) 100vw, 340px"
               />
             </div>
