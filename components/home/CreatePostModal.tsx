@@ -110,7 +110,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
         postImageUrls,
       });
       setPosted(true);
-      window.setTimeout(onClose, 1300);
+      window.setTimeout(onClose, 800);
     } catch (err) {
       console.error("create post failed", err);
       setError("Couldn't post. Please try again.");
