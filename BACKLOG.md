@@ -16,14 +16,16 @@ old Phase 19/20/21 entries (now folded in as P10/P11/P5).
 **Verified findings that shaped this list:**
 - **Onboarding is fully wired** (`services/onboarding.ts` → real `saveOnboarding`
   upsert into `user_onboarding_profiles`). *Not* a gap.
-- **Compose post is a stub** — `components/home/CreatePostModal.tsx` has a
-  `// TODO: replace with real data` + `setTimeout`; no `createPost` in `services/feed.ts`.
+- **Compose post + image upload — ✅ shipped (P1, this PR).** `createPost` +
+  `useCreatePost` (`services/feed.ts` / `hooks/useFeed.ts`); `CreatePostModal` is wired
+  with a real groups picker and an image picker backed by `lib/supabase/uploadImage.ts`.
 - **Comments + post detail do not exist** on web at all (no route/component/service;
   the `PostComment` type is defined but unreferenced).
 - **Follow/unfollow are TODO no-ops** (`services/profile.ts`), so the wired "Following"
   feed can never populate from the web.
 - **Other-user profiles + highlights are mock-only** (`getUserById` → `findUser` mock).
-- **Notifications, search, account settings, block/report, image upload**: absent entirely.
+- **Notifications, search, account settings, block/report**: absent entirely.
+  (Image upload — ✅ shipped with P1.)
 
 **Constraints to carry into every phase:**
 - The web app has its **own** Supabase project (`pbiszrycmcxmzxrnkkwr`), separate from
@@ -41,7 +43,7 @@ old Phase 19/20/21 entries (now folded in as P10/P11/P5).
 
 | # | Phase | Why now | Depends on |
 |---|-------|---------|-----------|
-| **P1** | Compose post + image-upload utility | Core: users can't contribute today | — |
+| **P1 ✅** | Compose post + image-upload utility — shipped (PR #18) | Core: users can't contribute today | — |
 | **P2** | Post detail page + comments | Core engagement loop | P1 |
 | **P3** | Follow/unfollow + other-user profiles + followers/following lists | Unblocks the Following feed; social graph | — |
 | **P4** | Block & report (users + posts) | Launch/app-store safety requirement | P2, P3 |
@@ -161,6 +163,7 @@ infinite scroll on the home feed; the int4/int8 + own-DB cross-join caveat; grow
 `next.config.ts` image-host allowlist.
 
 ### Validating any phase end-to-end
+
 1. `cd web-app && nvm use 22 && npm run dev` (Node 22 required).
 2. With Supabase env set: sign in via Google, exercise the new mutation, reload to confirm
    persistence, check the row in Supabase (MCP `execute_sql` is read-only but fine for verify).

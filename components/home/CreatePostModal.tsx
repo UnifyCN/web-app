@@ -244,7 +244,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                       onChange={(event) => setGroupSearch(event.target.value)}
                       placeholder="Search groups"
                       aria-label="Search groups"
-                      className="w-full bg-transparent text-sm text-ink-secondary placeholder:text-ink-placeholder focus-visible:outline-none"
+                      className="w-full bg-transparent text-sm text-ink-secondary placeholder:text-ink-placeholder focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                     />
                   </div>
 
@@ -354,7 +354,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                   maxLength={TITLE_MAX}
                   placeholder="Title"
                   aria-label="Post title"
-                  className="w-full bg-transparent text-lg font-semibold text-ink-secondary placeholder:text-ink-placeholder focus-visible:outline-none"
+                  className="w-full bg-transparent text-lg font-semibold text-ink-secondary placeholder:text-ink-placeholder focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 />
                 <p className="mt-1 text-right text-xs text-ink-placeholder">
                   {title.length}/{TITLE_MAX}
@@ -369,7 +369,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                   maxLength={BODY_MAX}
                   placeholder="What's on your mind?"
                   aria-label="Post body"
-                  className="min-h-[160px] w-full resize-none bg-transparent text-sm leading-relaxed text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none"
+                  className="min-h-[160px] w-full resize-none bg-transparent text-sm leading-relaxed text-ink-muted placeholder:text-ink-placeholder focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 />
                 <p className="text-right text-xs text-ink-placeholder">
                   {body.length}/{BODY_MAX}
