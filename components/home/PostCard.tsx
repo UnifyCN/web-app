@@ -99,7 +99,7 @@ export function PostCard({ post }: { post: Post }) {
             <div
               key={url}
               className={cn(
-                "relative overflow-hidden rounded-lg border border-border-card",
+                "relative overflow-hidden rounded-lg border border-border-card bg-surface-gray",
                 multiImage ? "aspect-square" : "aspect-[3/2]",
               )}
             >
@@ -107,7 +107,7 @@ export function PostCard({ post }: { post: Post }) {
                 src={url}
                 alt={`${post.title} — image ${index + 1}`}
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="(max-width: 680px) 100vw, 340px"
               />
             </div>
