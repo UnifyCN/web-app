@@ -4,9 +4,173 @@ Items deferred from feature phases. Each entry has the phase it came from and en
 
 ---
 
-## Upcoming phases
+## Prioritized roadmap — mobile→web feature parity
 
-Planned next, in rough order. Scope each into its own PR.
+Output of a thorough mobile-vs-web sweep (every mobile screen cross-checked against
+the web `app/`/`components/`/`services/`/`hooks/`, ambiguous cases verified by reading
+the service files). Ordered by **launch readiness**: finish the social loop, then the
+safety + account items a public/app-store launch requires, then discovery, then the
+already-deferred big features. Scope each phase into its own PR. This supersedes the
+old Phase 19/20/21 entries (now folded in as P10/P11/P5).
+
+**Verified findings that shaped this list:**
+- **Onboarding is fully wired** (`services/onboarding.ts` → real `saveOnboarding`
+  upsert into `user_onboarding_profiles`). *Not* a gap.
+- **Compose post is a stub** — `components/home/CreatePostModal.tsx` has a
+  `// TODO: replace with real data` + `setTimeout`; no `createPost` in `services/feed.ts`.
+- **Comments + post detail do not exist** on web at all (no route/component/service;
+  the `PostComment` type is defined but unreferenced).
+- **Follow/unfollow are TODO no-ops** (`services/profile.ts`), so the wired "Following"
+  feed can never populate from the web.
+- **Other-user profiles + highlights are mock-only** (`getUserById` → `findUser` mock).
+- **Notifications, search, account settings, block/report, image upload**: absent entirely.
+
+**Constraints to carry into every phase:**
+- The web app has its **own** Supabase project (`pbiszrycmcxmzxrnkkwr`), separate from
+  mobile. "Wire to real data" = web tables; notification/comment rows only exist if the
+  **web** writes them.
+- Follow the established wiring pattern (`services/*` + `hooks/*`, `isSupabaseConfigured()`
+  + `getAuthUserId()` guards, snake_case mappers, mock fallback, React Query keys +
+  `onSuccess` invalidation).
+- Image upload was on CLAUDE.md's "don't build yet" list — promoted to a phase here
+  (gates post images + avatars). **Web push stays out of scope.**
+- Each new table (`post_comments`, `community_notifications`, any block table) needs a
+  **web** migration with own-row RLS + grants — verify it exists before wiring.
+
+### Priority summary
+
+| # | Phase | Why now | Depends on |
+|---|-------|---------|-----------|
+| **P1** | Compose post + image-upload utility | Core: users can't contribute today | — |
+| **P2** | Post detail page + comments | Core engagement loop | P1 |
+| **P3** | Follow/unfollow + other-user profiles + followers/following lists | Unblocks the Following feed; social graph | — |
+| **P4** | Block & report (users + posts) | Launch/app-store safety requirement | P2, P3 |
+| **P5** | Profile editing + avatar upload (display name vs @handle) | Identity; reuses P1 upload | P1 |
+| **P6** | Account settings (prefs, delete account, legal docs) | Launch/policy table-stakes | P5 |
+| **P7** | Notifications (list + unread badge + write-on-action) | Retention | P2, P3 |
+| **P8** | Search (posts / users / groups + recent) | Discovery | P3 |
+| **P9** | Wire remaining mock-only post surfaces (saved / user / group posts) | Removes mock seams | P1–P3 |
+| **P10** | Community daily tips edge fn *(was Phase 19)* | Content freshness | — |
+| **P11** | Companion RAG wiring *(was Phase 20)* — **BLOCKED: OpenAI key** | AI value prop | external key |
+| **P12** | Circle chat + realtime + matching engine *(DEFERRED, large)* | Full Circles feature | schema exists |
+| **P13** | Refer-a-friend / referrals *(DEFERRED, growth)* | Growth loop | P3 |
+
+### Phase detail
+
+**P1 — Create/compose posts + image-upload utility**
+Mobile: `services/posts/createPost.ts`, `components/posts/CreatePostForm.tsx`,
+`services/s3/uploadPostImage.ts`. Web gap: `CreatePostModal.tsx` is UI-only (TODO +
+`setTimeout`); no `createPost`. Scope: add `createPost()` to `services/feed.ts`
+(insert into `posts`; group destination — UI already has the picker) + `useCreatePost`
+in `hooks/useFeed.ts` with feed invalidation; wire `CreatePostModal` to call the hook
+(confirm it imports + calls the mutation, per CLAUDE.md "Always wire mutations to the
+component"); shared **image-upload utility** (Supabase Storage bucket + `lib/supabase/
+uploadImage.ts`, or port the `profile-picture-upload` edge fn) reused by P5; image
+picker for `post_image_urls`.
+
+**P2 — Post detail page + comments**
+Mobile: `app/post-details.tsx`, `app/(tabs)/Gather/PostCommentItem.tsx`,
+`services/posts/{createComment,deleteComment,likeComment}.ts`. Web gap: no detail route,
+no comment UI/service; `PostComment` type unused. Scope: verify/add a **web**
+`post_comments` table migration (own-row RLS + grants); new route
+`app/(main)/post/[postId]/page.tsx` rendering the full post + threaded comments
+(`parent_comment_id`) with comment compose, delete-own, like-comment, delete-own-post;
+service fns `getPost`/`getComments`/`createComment`/`deleteComment`/`likeComment`/
+`deletePost` + hooks; make the `commentCount` badge link into the detail page.
+
+**P3 — Follow/unfollow + other-user profiles + followers/following lists**
+Mobile: `services/users/followUser.ts`, `getFollowStatus.ts`, `app/followers-following.tsx`,
+`components/profile/FollowButton.tsx`. Web gap: `followUser`/`unfollowUser` are no-ops;
+`getUserById`/highlights mock-only. Scope: implement follow/unfollow (insert/delete
+`user_followers`) + follow-status read and wire the existing Follow button on
+`profile/[userId]`; wire `getUserById` to real `users` + `user_onboarding_profiles` (+
+counts); followers/following list route + components; real highlights (`lesson_highlights`)
+replacing the `getLessonHighlights` mock, or explicitly keep mock and flag.
+
+**P4 — Block & report (users + posts)**
+Mobile: `services/users/{blockUser,unblockUser,reportUser,getBlockedUserIds}.ts`,
+`services/posts/reportPost.ts`, `app/ReportScreen.tsx`. Web gap: none of it exists.
+Scope: **block table** migration (web) + RLS + `blockUser`/`unblockUser`/`getBlockedUserIds`;
+filter blocked authors out of `getForYouFeed`/`getFollowingFeed`/`getGroupsFeed` (see
+"Block filtering in home feed" below); report flow (post + user) via an edge fn
+(`report-post`/`report-user`) or a `reports` table insert; entry points on PostCard,
+post detail, and profile.
+
+**P5 — Profile editing + avatar upload** *(includes old Phase 21)*
+Mobile: `app/edit-name.tsx`, `components/profile/ProfilePictureUpload.tsx`,
+`services/s3/uploadProfilePicture.ts`. Web gap: no edit UI; profile read-only; no avatar
+upload. Scope: editable **display name** distinct from the immutable `@username` handle;
+re-run/edit onboarding fields (persona, city/province, arrival date → stage) — reuse the
+existing `OnboardingEditModal` (`saveOnboarding` is idempotent, `onConflict: id`); avatar
+upload reusing the P1 utility → `users.profile_picture_url`.
+
+**P6 — Account settings**
+Mobile: `app/account-settings.tsx`, `app/legal-document.tsx`, `app/reset-password.tsx`.
+Web gap: only sign-out (in sidebar). Scope: `/settings` route — language/prefs (where
+applicable to web), legal docs (privacy / community guidelines), **delete account** (with
+confirm), consolidated sign-out. Skip mobile-only toggles (haptics, ATT ads). Push prefs
+out of scope.
+
+**P7 — Notifications**
+Mobile: `app/notifications.tsx`, `services/notifications/*`,
+`hooks/useCommunityNotifications.ts` (realtime + 60s poll fallback). Web gap: absent.
+Scope: verify/add web `community_notifications` table + RLS; **write side first** — P2
+(comment/like-comment) and P3 (follow) must insert notification rows (service-side or DB
+triggers), else the web's own DB stays empty (this is why P7 follows P2/P3); read side —
+notifications route, unread-count badge in the sidebar, mark-read / mark-all-read,
+tap-to-navigate. Realtime optional (poll first, matching mobile's fallback).
+
+**P8 — Search**
+Mobile: `app/search.tsx`, `services/users/{searchUsers,recentSearches,recentGroups}.ts`,
+`services/groups/searchGroups.ts`. Web gap: only client-side filters inside Learn +
+Community group list; no global search. Scope: `/search` route searching posts + users +
+groups (ilike or RPC), recent-search history, see-more lists; sidebar/header search entry.
+
+**P9 — Wire remaining mock-only post surfaces**
+Web gap: `getSavedPosts`/`getUserPosts`/`getGroupPosts` in `services/feed.ts` are
+mock-only. Scope: real queries (`post_saves` join; `posts` by `user_id`; `posts` by
+`group_id`) with metadata enrichment, feeding the Profile Saved/Posts tabs + group-detail
+feed. Small — can be absorbed into P1/P2/P3 rather than run standalone.
+
+**P10 — Community daily tips** *(was Phase 19)*
+Port mobile's `get-daily-tip` so the web surfaces a rotating daily tip (mobile also has
+tip detail + a past-tips archive). Content/edge-fn work; no hard dependency.
+
+**P11 — Companion RAG wiring** *(was Phase 20)* — **BLOCKED**
+The `rag-query` edge fn + knowledge base are deployed; the daily rate-limit RPC is in
+place. Replace the canned reply in `useSendMessage` with the streamed RAG answer +
+sources and remove the squiggly background. **Blocked on a working `OPENAI_API_KEY`
+(embeddings) from Savar.**
+
+**P12 — Circle chat + realtime + matching engine** *(DEFERRED, large)*
+Web wired only the EntryCard status + waitlist join/leave. Remaining: the matching RPC
+that pairs 4 users, the 14-day expiry cron, realtime subscriptions, the
+`/community/circle/[id]` chat route, and `community_circle_members`/`community_messages`
+read/write. Confirm the `pool_key`/stage vocabulary reconciliation (see Schema below)
+first. Full context in "Circles — matching engine, realtime, and chat" below.
+
+**P13 — Refer-a-friend / referrals** *(DEFERRED, growth)*
+Mobile has `refer-a-friend.tsx` + `welcome-from-inviter.tsx` (invite code, share sheet,
+referral counter, inviter welcome moment). No web equivalent. Lowest priority.
+
+**Cross-cutting items** (tech-debt / content — ride along with the relevant phase; full
+detail in the sections below): apply the news seed migration to prod (see Phase 18
+record); refactor direct Supabase calls out of the login page + sidebar; remove dead
+signed-out fallback mock returns; the `refugee`/`other` empty-checklist persona gap;
+infinite scroll on the home feed; the int4/int8 + own-DB cross-join caveat; growing the
+`next.config.ts` image-host allowlist.
+
+### Validating any phase end-to-end
+1. `cd web-app && nvm use 22 && npm run dev` (Node 22 required).
+2. With Supabase env set: sign in via Google, exercise the new mutation, reload to confirm
+   persistence, check the row in Supabase (MCP `execute_sql` is read-only but fine for verify).
+3. Confirm the **mock fallback** still works with env vars unset (the local-dev case).
+4. `npm run build` must pass; run the section's `/impeccable audit` per CLAUDE.md gates.
+5. For any new table: confirm the **web** migration applied with own-row RLS + grants.
+
+---
+
+## Shipped / in-flight
 
 **Phase 18 — Community: events + news (shipped on `feat/community-phase18`)**
 Events are now hard-coded from the mobile `events` table (17 BC settlement-agency
@@ -23,15 +187,6 @@ already-existing tables — a pre-existing tracking drift, schema was applied
 out-of-band). Apply the migration via the dashboard SQL editor or with DB write
 access. Until then production shows no news (events are unaffected — hard-coded).
 As news grows, new publishers' image hosts must be added to `next.config.ts`.
-
-**Phase 19 — Community: daily tips edge function**
-Port the daily-tips edge function from mobile (mobile's `get-daily-tip`) so the web surfaces a rotating daily tip.
-
-**Phase 20 — Companion: wire RAG to the UI**
-Remove the blue squiggly lights from the Companion background and wire the deployed `rag-query` edge function to the chat UI (conversations, streamed answers, source citations). **Blocked on a working `OPENAI_API_KEY` (embeddings) from Savar** — the edge function + knowledge base are already deployed and the daily rate-limit RPC is in place.
-
-**Phase 21 — Profile: display name vs username**
-Instagram-style editing: a separate editable display name distinct from the immutable `@username` handle.
 
 ---
 
