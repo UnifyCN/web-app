@@ -231,7 +231,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
               )}
 
               {destination === "Group" && !selectedGroup && (
-                <div className="mt-3">
+                <div className="mt-3 max-h-64 overflow-y-auto">
                   {/* Search */}
                   <div className="flex items-center gap-2 rounded-full bg-surface-gray px-3.5 py-2">
                     <Search
