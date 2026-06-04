@@ -98,7 +98,7 @@ export function PostCard({ post }: { post: Post }) {
           {post.postImageUrls.map((url, index) => (
             <div
               key={url}
-              className="relative aspect-[4/3] overflow-hidden rounded-lg border border-border-card"
+              className="relative aspect-[4/3] overflow-hidden rounded-lg border border-border"
             >
               <Image
                 src={url}
