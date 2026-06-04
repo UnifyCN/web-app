@@ -231,8 +231,8 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
               )}
 
               {destination === "Group" && !selectedGroup && (
-                <div className="mt-3 max-h-36 overflow-y-auto">
-                  {/* Search */}
+                <div className="mt-3">
+                  {/* Search — pinned above the scrollable list */}
                   <div className="flex items-center gap-2 rounded-full bg-surface-gray px-3.5 py-2">
                     <Search
                       className="h-4 w-4 shrink-0 text-ink-placeholder"
@@ -251,58 +251,23 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                   {groupsLoading ? (
                     <p className="mt-4 text-sm text-ink-muted">Loading groups…</p>
                   ) : (
-                    <>
-                      {/* Your Groups */}
-                      <h3 className="mt-4 text-sm font-bold text-ink-secondary">
-                        Your Groups
-                      </h3>
-                      {joinedGroups.length > 0 ? (
-                        <div className="mt-1 space-y-1">
-                          {joinedGroups.map((group) => (
-                            <button
-                              key={group.id}
-                              type="button"
-                              onClick={() => setGroupId(group.id)}
-                              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-surface-gray"
-                            >
-                              <Avatar
-                                username={group.groupName}
-                                profilePictureUrl={group.coverPhotoUrl}
-                                size={40}
-                              />
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold text-ink-secondary">
-                                  {group.groupName}
-                                </p>
-                                {group.groupDescription && (
-                                  <p className="line-clamp-2 text-xs text-ink-muted">
-                                    {group.groupDescription}
-                                  </p>
-                                )}
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="mt-1 text-sm text-ink-muted">
-                          You haven&apos;t joined any groups yet.
-                        </p>
-                      )}
-
-                      {/* Discover More Groups */}
-                      {discoverGroups.length > 0 && (
-                        <>
-                          <h3 className="mt-5 text-sm font-bold text-ink-secondary">
-                            Discover More Groups
-                          </h3>
-                          <p className="text-xs text-ink-muted">
-                            Join a group to post there
-                          </p>
+                    <div className="relative mt-1">
+                      {/* Scrolls internally; the bottom fade hints there are more
+                          groups below the visible rows. pb-6 keeps the last row
+                          clear of the fade. */}
+                      <div className="max-h-72 overflow-y-auto pb-6">
+                        {/* Your Groups */}
+                        <h3 className="text-sm font-bold text-ink-secondary">
+                          Your Groups
+                        </h3>
+                        {joinedGroups.length > 0 ? (
                           <div className="mt-1 space-y-1">
-                            {discoverGroups.map((group) => (
-                              <div
+                            {joinedGroups.map((group) => (
+                              <button
                                 key={group.id}
-                                className="flex items-center gap-3 rounded-lg px-2 py-2"
+                                type="button"
+                                onClick={() => setGroupId(group.id)}
+                                className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-surface-gray"
                               >
                                 <Avatar
                                   username={group.groupName}
@@ -319,28 +284,70 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                                     </p>
                                   )}
                                 </div>
-                                <Button
-                                  variant="primary"
-                                  size="sm"
-                                  className="shrink-0"
-                                  loading={joiningId === group.id}
-                                  disabled={joiningId !== null}
-                                  onClick={() => {
-                                    setJoiningId(group.id);
-                                    joinGroup.mutate(group.id, {
-                                      onSuccess: () => setGroupId(group.id),
-                                      onSettled: () => setJoiningId(null),
-                                    });
-                                  }}
-                                >
-                                  Join & Post
-                                </Button>
-                              </div>
+                              </button>
                             ))}
                           </div>
-                        </>
-                      )}
-                    </>
+                        ) : (
+                          <p className="mt-1 text-sm text-ink-muted">
+                            You haven&apos;t joined any groups yet.
+                          </p>
+                        )}
+
+                        {/* Discover More Groups */}
+                        {discoverGroups.length > 0 && (
+                          <>
+                            <h3 className="mt-4 text-sm font-bold text-ink-secondary">
+                              Discover More Groups
+                            </h3>
+                            <p className="text-xs text-ink-muted">
+                              Join a group to post there
+                            </p>
+                            <div className="mt-1 space-y-1">
+                              {discoverGroups.map((group) => (
+                                <div
+                                  key={group.id}
+                                  className="flex items-center gap-3 rounded-lg px-2 py-2"
+                                >
+                                  <Avatar
+                                    username={group.groupName}
+                                    profilePictureUrl={group.coverPhotoUrl}
+                                    size={40}
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-semibold text-ink-secondary">
+                                      {group.groupName}
+                                    </p>
+                                    {group.groupDescription && (
+                                      <p className="line-clamp-2 text-xs text-ink-muted">
+                                        {group.groupDescription}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    className="shrink-0"
+                                    loading={joiningId === group.id}
+                                    disabled={joiningId !== null}
+                                    onClick={() => {
+                                      setJoiningId(group.id);
+                                      joinGroup.mutate(group.id, {
+                                        onSuccess: () => setGroupId(group.id),
+                                        onSettled: () => setJoiningId(null),
+                                      });
+                                    }}
+                                  >
+                                    Join & Post
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      {/* Bottom fade — affordance that more groups scroll below. */}
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-surface to-transparent" />
+                    </div>
                   )}
                 </div>
               )}
