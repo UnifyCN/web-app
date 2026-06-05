@@ -101,7 +101,7 @@ export function ChatPanel({
             <p className="mb-3 mt-8 self-start text-xs font-medium text-ink-placeholder">
               Try one of these
             </p>
-            <StarterPromptChips onSelect={onSend} />
+            <StarterPromptChips onSelect={handleSubmit} />
           </div>
         </div>
       )}

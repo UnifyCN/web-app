@@ -81,7 +81,10 @@ function normalizeSources(raw: unknown): ChatSource[] | null {
           : typeof record.document_title === "string"
             ? record.document_title
             : null;
-      const url = typeof record.url === "string" ? record.url : null;
+      const url =
+        typeof record.url === "string" && /^https?:\/\//i.test(record.url)
+          ? record.url
+          : null;
       if (!title || !url) return null;
       return { title, url } satisfies ChatSource;
     })

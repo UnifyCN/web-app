@@ -726,6 +726,17 @@ Deno.serve(async (req: Request) => {
         }
 
         const embeddingData = await embeddingResponse.json();
+        if (
+          !embeddingData ||
+          typeof embeddingData !== 'object' ||
+          !Array.isArray(embeddingData.data) ||
+          embeddingData.data.length === 0 ||
+          !Array.isArray(embeddingData.data[0]?.embedding)
+        ) {
+          throw new Error(
+            'OpenRouter embedding response malformed: expected data[0].embedding to be an array'
+          );
+        }
         const queryEmbedding = embeddingData.data[0].embedding;
 
         let { data: chunks, error: searchError } = await supabase.rpc(
