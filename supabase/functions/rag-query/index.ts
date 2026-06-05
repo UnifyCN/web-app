@@ -765,7 +765,27 @@ Deno.serve(async (req: Request) => {
 
           chunks.forEach((chunk: any) => {
             const doc = chunk.knowledge_documents || {};
-            contextText += `[Document: ${doc.title || 'Unknown'}]\n${chunk.chunk_text}\n\n`;
+
+            // Resolve the citable URL once per chunk: prefer the doc's source_url,
+            // else an S3 URL when storage is configured. A doc with neither is left
+            // unattributed — no generic IRCC fallback that would misattribute the
+            // content (e.g. SIN content -> IRCC).
+            const sourceUrl = doc.source_url;
+            const storagePath = doc.storage_path || '';
+            const hasSourceConfig =
+              !!s3BucketName &&
+              s3BucketName !== 'your-bucket-name' &&
+              !!s3Region &&
+              !!storagePath;
+            const s3Url = hasSourceConfig
+              ? `https://${s3BucketName}.s3.${s3Region}.amazonaws.com/${storagePath}`
+              : '';
+            const resolvedUrl = sourceUrl || s3Url;
+
+            // Include the source URL in the context block so the model can see and
+            // cite the specific source (only when we actually have one).
+            const sourceLine = resolvedUrl ? `[Source: ${resolvedUrl}]\n` : '';
+            contextText += `[Document: ${doc.title || 'Unknown'}]\n${sourceLine}${chunk.chunk_text}\n\n`;
 
             const docUpdatedAt = doc.updated_at;
             if (
@@ -775,30 +795,12 @@ Deno.serve(async (req: Request) => {
               mostRecentUpdate = docUpdatedAt;
             }
 
-            if (!sourcesMap.has(chunk.document_id)) {
-              const sourceUrl = doc.source_url;
-              const storagePath = doc.storage_path || '';
-              const hasSourceConfig =
-                !!s3BucketName &&
-                s3BucketName !== 'your-bucket-name' &&
-                !!s3Region &&
-                !!storagePath;
-              const s3Url = hasSourceConfig
-                ? `https://${s3BucketName}.s3.${s3Region}.amazonaws.com/${storagePath}`
-                : '';
-
-              // Only surface a source we can actually attribute. A doc with no
-              // source_url (and no S3 fallback) is omitted rather than mislabeled
-              // with a generic IRCC link that misattributes the content
-              // (e.g. SIN content -> IRCC).
-              const resolvedUrl = sourceUrl || s3Url;
-              if (resolvedUrl) {
-                sourcesMap.set(chunk.document_id, {
-                  document_id: chunk.document_id,
-                  document_title: doc.title || 'Unknown',
-                  url: resolvedUrl,
-                });
-              }
+            if (resolvedUrl && !sourcesMap.has(chunk.document_id)) {
+              sourcesMap.set(chunk.document_id, {
+                document_id: chunk.document_id,
+                document_title: doc.title || 'Unknown',
+                url: resolvedUrl,
+              });
             }
           });
 
