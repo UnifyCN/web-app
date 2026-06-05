@@ -102,3 +102,12 @@ export function useSavePost() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: FEED_KEY }),
   });
 }
+
+export function useCreatePost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: feed.CreatePostInput) => feed.createPost(input),
+    // Refetch every tab so the new post shows up wherever it belongs.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: FEED_KEY }),
+  });
+}
