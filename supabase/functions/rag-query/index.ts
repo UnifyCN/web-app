@@ -48,8 +48,13 @@ type QueryType =
   | 'fact_check'
   | 'form_help';
 
+// Embeddings run through OpenRouter (same key as the chat completion). OpenRouter
+// requires the provider-prefixed id; `openai/text-embedding-3-small` proxies to
+// OpenAI's text-embedding-3-small (1536-dim), so the query vectors stay
+// compatible with the vectors already stored in knowledge_chunks. Same model,
+// just namespaced for OpenRouter.
 const EMBEDDING_MODEL =
-  Deno.env.get('OPENAI_EMBEDDING_MODEL') || 'text-embedding-3-small';
+  Deno.env.get('OPENROUTER_EMBEDDING_MODEL') || 'openai/text-embedding-3-small';
 
 const INVALID_ASSISTANT_LED_PATTERNS: RegExp[] = [
   /^would you like\b/i,
@@ -551,9 +556,11 @@ Deno.serve(async (req: Request) => {
     }
 
     const preprompt = Deno.env.get('GEMINI_PREPROMPT') || '';
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
-    if (!Deno.env.get('OPENROUTER_API_KEY')) {
+    // Both embeddings and the chat completion go through OpenRouter, so a single
+    // provider key powers the whole function.
+    const openrouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
+    if (!openrouterApiKey) {
       throw new Error('Missing OPENROUTER_API_KEY');
     }
 
@@ -684,12 +691,11 @@ Deno.serve(async (req: Request) => {
     let lastVerified: string | undefined;
 
     if (needsRAG) {
-      if (!openaiApiKey) {
-        // No embedding key → skip retrieval, answer from general knowledge.
-        console.warn(
-          'OPENAI_API_KEY missing — answering without KB retrieval.'
-        );
-      } else {
+      // KB retrieval is best-effort: any failure here (embedding API down,
+      // vector-search error) degrades to answering WITHOUT KB context rather
+      // than throwing a 500. hasGoodKBHits stays false, so the no-KB prompt +
+      // disclaimer take over below.
+      try {
         const profileBundleForRetrieval = await profilePromise;
         const retrievalQuery = buildRetrievalQuery(
           prompt,
@@ -697,12 +703,12 @@ Deno.serve(async (req: Request) => {
         );
 
         const embeddingResponse = await fetchWithRetry(
-          'https://api.openai.com/v1/embeddings',
+          'https://openrouter.ai/api/v1/embeddings',
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${openaiApiKey}`,
+              Authorization: `Bearer ${openrouterApiKey}`,
             },
             body: JSON.stringify({
               model: EMBEDDING_MODEL,
@@ -713,8 +719,9 @@ Deno.serve(async (req: Request) => {
         );
 
         if (!embeddingResponse.ok) {
+          const errorBody = await embeddingResponse.text().catch(() => '');
           throw new Error(
-            `OpenAI embedding API error: ${embeddingResponse.statusText}`
+            `OpenRouter embedding API error ${embeddingResponse.status}: ${errorBody.slice(0, 300)}`
           );
         }
 
@@ -795,6 +802,17 @@ Deno.serve(async (req: Request) => {
           sources = Array.from(sourcesMap.values());
           disclaimer = STANDARD_DISCLAIMER;
         }
+      } catch (retrievalError) {
+        // Degrade gracefully — no KB context, but still answer the user.
+        console.warn(
+          '[rag-query] KB retrieval failed; answering without KB context:',
+          retrievalError instanceof Error
+            ? retrievalError.message
+            : retrievalError
+        );
+        hasGoodKBHits = false;
+        contextText = '';
+        sources = [];
       }
       disclaimer = hasGoodKBHits
         ? disclaimer
@@ -941,6 +959,7 @@ Deno.serve(async (req: Request) => {
       estimatedCostUsd,
     });
   } catch (error: unknown) {
+    console.error('rag-query error:', error);
     // Any failure after the quota was charged means the user got no answer —
     // refund the message so a provider/DB error doesn't burn their daily cap.
     if (
