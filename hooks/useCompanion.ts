@@ -101,17 +101,19 @@ export function useSendMessage() {
         content: text,
       });
 
-      const { answer, sources } = await companion.generateReply({
-        conversationIdentifier,
-        prompt: text,
-        history,
-      });
+      const { answer, sources, suggestedNextSteps } =
+        await companion.generateReply({
+          conversationIdentifier,
+          prompt: text,
+          history,
+        });
 
       await companion.saveMessage({
         conversationIdentifier,
         role: "assistant",
         content: answer,
         sources,
+        suggestedNextSteps,
       });
       return { conversationIdentifier };
     },

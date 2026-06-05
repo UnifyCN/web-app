@@ -167,6 +167,8 @@ export interface ChatMessage {
   content: string;
   /** Citations from the RAG backend; null when the assistant didn't cite. */
   sources: ChatSource[] | null;
+  /** Model-suggested follow-up questions (assistant messages); absent otherwise. */
+  suggestedNextSteps?: string[] | null;
   createdAt: string;
 }
 

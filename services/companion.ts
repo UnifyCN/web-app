@@ -30,6 +30,7 @@ interface MessageRow {
   role: "user" | "assistant";
   content: string;
   sources: unknown;
+  suggested_next_steps: unknown;
   created_at: string;
 }
 
@@ -53,8 +54,19 @@ function rowToMessage(row: MessageRow, conversationId: string): ChatMessage {
     role: row.role,
     content: row.content,
     sources: normalizeSources(row.sources),
+    suggestedNextSteps: normalizeSuggestions(row.suggested_next_steps),
     createdAt: row.created_at,
   };
+}
+
+/** Coerce raw suggestions into a clean string[] (non-empty, trimmed) or null. */
+function normalizeSuggestions(raw: unknown): string[] | null {
+  if (!Array.isArray(raw)) return null;
+  const cleaned = raw
+    .filter((entry): entry is string => typeof entry === "string")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+  return cleaned.length > 0 ? cleaned : null;
 }
 
 function normalizeSources(raw: unknown): ChatSource[] | null {
@@ -69,7 +81,10 @@ function normalizeSources(raw: unknown): ChatSource[] | null {
           : typeof record.document_title === "string"
             ? record.document_title
             : null;
-      const url = typeof record.url === "string" ? record.url : null;
+      const url =
+        typeof record.url === "string" && /^https?:\/\//i.test(record.url)
+          ? record.url
+          : null;
       if (!title || !url) return null;
       return { title, url } satisfies ChatSource;
     })
@@ -137,7 +152,7 @@ export async function getMessages(
   const { data, error } = await supabase
     .from("messages")
     .select(
-      "id, role, content, sources, created_at, conversations!inner(conversation_identifier)",
+      "id, role, content, sources, suggested_next_steps, created_at, conversations!inner(conversation_identifier)",
     )
     .eq("conversations.conversation_identifier", conversationIdentifier)
     .order("created_at", { ascending: true });
@@ -153,6 +168,7 @@ export interface SaveMessageInput {
   role: "user" | "assistant";
   content: string;
   sources?: ChatSource[] | null;
+  suggestedNextSteps?: string[] | null;
 }
 
 export async function saveMessage(input: SaveMessageInput): Promise<ChatMessage> {
@@ -185,8 +201,9 @@ export async function saveMessage(input: SaveMessageInput): Promise<ChatMessage>
       role: input.role,
       content: input.content,
       sources: input.sources ?? null,
+      suggested_next_steps: input.suggestedNextSteps ?? null,
     })
-    .select("id, role, content, sources, created_at")
+    .select("id, role, content, sources, suggested_next_steps, created_at")
     .single();
   if (error) throw error;
 
@@ -231,6 +248,7 @@ export interface GenerateReplyInput {
 export interface GeneratedReply {
   answer: string;
   sources: ChatSource[] | null;
+  suggestedNextSteps: string[] | null;
 }
 
 /**
@@ -244,7 +262,7 @@ export async function generateReply(
   input: GenerateReplyInput,
 ): Promise<GeneratedReply> {
   if (!isSupabaseConfigured()) {
-    return { answer: MOCK_REPLY, sources: null };
+    return { answer: MOCK_REPLY, sources: null, suggestedNextSteps: null };
   }
 
   const supabase = createClient();
@@ -287,7 +305,11 @@ export async function generateReply(
     ? `${data.answer}\n\n${data.disclaimer}`
     : data.answer;
 
-  return { answer, sources: normalizeSources(data.sources) };
+  return {
+    answer,
+    sources: normalizeSources(data.sources),
+    suggestedNextSteps: normalizeSuggestions(data.suggestedNextSteps),
+  };
 }
 
 export async function deleteConversation(

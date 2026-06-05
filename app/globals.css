@@ -123,16 +123,6 @@ body {
   animation: like-pop 200ms ease-out;
 }
 
-/* Companion — flowing dashed background lines. */
-@keyframes companion-dash {
-  to {
-    stroke-dashoffset: -30;
-  }
-}
-.animate-companion-dash {
-  animation: companion-dash 1.8s linear infinite;
-}
-
 /* Companion — chat message entrance (emil-design-eng, ≤200ms ease-out). */
 @keyframes message-in {
   from {

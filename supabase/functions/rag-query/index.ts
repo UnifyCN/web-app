@@ -39,7 +39,7 @@ const STANDARD_DISCLAIMER =
 const NO_KB_HITS_DISCLAIMER =
   "This may not be covered in Unify's internal resources; please double-check with IRCC or a licensed immigration professional.";
 
-const DAILY_MESSAGE_LIMIT = 3;
+const DAILY_MESSAGE_LIMIT = 6;
 
 type QueryType =
   | 'immigration'
@@ -48,8 +48,13 @@ type QueryType =
   | 'fact_check'
   | 'form_help';
 
+// Embeddings run through OpenRouter (same key as the chat completion). OpenRouter
+// requires the provider-prefixed id; `openai/text-embedding-3-small` proxies to
+// OpenAI's text-embedding-3-small (1536-dim), so the query vectors stay
+// compatible with the vectors already stored in knowledge_chunks. Same model,
+// just namespaced for OpenRouter.
 const EMBEDDING_MODEL =
-  Deno.env.get('OPENAI_EMBEDDING_MODEL') || 'text-embedding-3-small';
+  Deno.env.get('OPENROUTER_EMBEDDING_MODEL') || 'openai/text-embedding-3-small';
 
 const INVALID_ASSISTANT_LED_PATTERNS: RegExp[] = [
   /^would you like\b/i,
@@ -373,7 +378,7 @@ CRITICAL GUARDRAILS:
 2. **STABLE PUBLIC FACTS**: Common public knowledge IS answerable directly — citizenship test format (20 multiple-choice questions, pass mark 15/20), CRS components and how points are calculated, Express Entry vs PNP basics, study/work permit work-hour rules, what a SIN is, what a TFSA is, etc. Do NOT dodge these by pointing to IRCC for the answer.
 3. **NEVER QUOTE FEES OR PROCESSING TIMES FROM MEMORY**: Specific dollar amounts and processing-time numbers change frequently. ONLY cite a fee or processing time if it appears in the KB context above. Otherwise say "check current fees and processing times on canada.ca/ircc" without naming a number.
 4. **MANDATORY LAWYER/RCIC REFERRAL** for these topics: refugee/asylum claims, deportation/removal/inadmissibility, application denials, misrepresentation, criminality, sponsorship-application denials, overstay disclosure questions, judicial review. ALWAYS include the phrase "consult a licensed immigration lawyer or RCIC (Regulated Canadian Immigration Consultant)" in responses on these topics. Do NOT recommend specific lawyers or firms by name.
-5. **OFFICIAL SOURCES**: For changing/recent rules, point to IRCC (ircc.canada.ca). For provincial topics, point to the province-specific authority listed above.
+5. **OFFICIAL SOURCES**: For changing/recent rules, point to IRCC (ircc.canada.ca). For provincial topics, point to the province-specific authority listed above. When the retrieved context names a specific agency, service, or URL (for example, Service Canada or ESDC for SIN questions), cite that specific source in your answer instead of the generic IRCC page.
 6. **CITE SOURCES**: Only include sources when directly using knowledge base information.${SUGGESTIONS_INSTRUCTION}`;
 }
 
@@ -551,9 +556,11 @@ Deno.serve(async (req: Request) => {
     }
 
     const preprompt = Deno.env.get('GEMINI_PREPROMPT') || '';
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
-    if (!Deno.env.get('OPENROUTER_API_KEY')) {
+    // Both embeddings and the chat completion go through OpenRouter, so a single
+    // provider key powers the whole function.
+    const openrouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
+    if (!openrouterApiKey) {
       throw new Error('Missing OPENROUTER_API_KEY');
     }
 
@@ -684,12 +691,11 @@ Deno.serve(async (req: Request) => {
     let lastVerified: string | undefined;
 
     if (needsRAG) {
-      if (!openaiApiKey) {
-        // No embedding key → skip retrieval, answer from general knowledge.
-        console.warn(
-          'OPENAI_API_KEY missing — answering without KB retrieval.'
-        );
-      } else {
+      // KB retrieval is best-effort: any failure here (embedding API down,
+      // vector-search error) degrades to answering WITHOUT KB context rather
+      // than throwing a 500. hasGoodKBHits stays false, so the no-KB prompt +
+      // disclaimer take over below.
+      try {
         const profileBundleForRetrieval = await profilePromise;
         const retrievalQuery = buildRetrievalQuery(
           prompt,
@@ -697,12 +703,12 @@ Deno.serve(async (req: Request) => {
         );
 
         const embeddingResponse = await fetchWithRetry(
-          'https://api.openai.com/v1/embeddings',
+          'https://openrouter.ai/api/v1/embeddings',
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${openaiApiKey}`,
+              Authorization: `Bearer ${openrouterApiKey}`,
             },
             body: JSON.stringify({
               model: EMBEDDING_MODEL,
@@ -713,12 +719,24 @@ Deno.serve(async (req: Request) => {
         );
 
         if (!embeddingResponse.ok) {
+          const errorBody = await embeddingResponse.text().catch(() => '');
           throw new Error(
-            `OpenAI embedding API error: ${embeddingResponse.statusText}`
+            `OpenRouter embedding API error ${embeddingResponse.status}: ${errorBody.slice(0, 300)}`
           );
         }
 
         const embeddingData = await embeddingResponse.json();
+        if (
+          !embeddingData ||
+          typeof embeddingData !== 'object' ||
+          !Array.isArray(embeddingData.data) ||
+          embeddingData.data.length === 0 ||
+          !Array.isArray(embeddingData.data[0]?.embedding)
+        ) {
+          throw new Error(
+            'OpenRouter embedding response malformed: expected data[0].embedding to be an array'
+          );
+        }
         const queryEmbedding = embeddingData.data[0].embedding;
 
         let { data: chunks, error: searchError } = await supabase.rpc(
@@ -758,7 +776,27 @@ Deno.serve(async (req: Request) => {
 
           chunks.forEach((chunk: any) => {
             const doc = chunk.knowledge_documents || {};
-            contextText += `[Document: ${doc.title || 'Unknown'}]\n${chunk.chunk_text}\n\n`;
+
+            // Resolve the citable URL once per chunk: prefer the doc's source_url,
+            // else an S3 URL when storage is configured. A doc with neither is left
+            // unattributed — no generic IRCC fallback that would misattribute the
+            // content (e.g. SIN content -> IRCC).
+            const sourceUrl = doc.source_url;
+            const storagePath = doc.storage_path || '';
+            const hasSourceConfig =
+              !!s3BucketName &&
+              s3BucketName !== 'your-bucket-name' &&
+              !!s3Region &&
+              !!storagePath;
+            const s3Url = hasSourceConfig
+              ? `https://${s3BucketName}.s3.${s3Region}.amazonaws.com/${storagePath}`
+              : '';
+            const resolvedUrl = sourceUrl || s3Url;
+
+            // Include the source URL in the context block so the model can see and
+            // cite the specific source (only when we actually have one).
+            const sourceLine = resolvedUrl ? `[Source: ${resolvedUrl}]\n` : '';
+            contextText += `[Document: ${doc.title || 'Unknown'}]\n${sourceLine}${chunk.chunk_text}\n\n`;
 
             const docUpdatedAt = doc.updated_at;
             if (
@@ -768,25 +806,11 @@ Deno.serve(async (req: Request) => {
               mostRecentUpdate = docUpdatedAt;
             }
 
-            if (!sourcesMap.has(chunk.document_id)) {
-              const sourceUrl = doc.source_url;
-              const storagePath = doc.storage_path || '';
-              const hasSourceConfig =
-                !!s3BucketName &&
-                s3BucketName !== 'your-bucket-name' &&
-                !!s3Region &&
-                !!storagePath;
-              const s3Url = hasSourceConfig
-                ? `https://${s3BucketName}.s3.${s3Region}.amazonaws.com/${storagePath}`
-                : '';
-
+            if (resolvedUrl && !sourcesMap.has(chunk.document_id)) {
               sourcesMap.set(chunk.document_id, {
                 document_id: chunk.document_id,
                 document_title: doc.title || 'Unknown',
-                url:
-                  sourceUrl ||
-                  s3Url ||
-                  'https://www.canada.ca/en/immigration-refugees-citizenship.html',
+                url: resolvedUrl,
               });
             }
           });
@@ -795,6 +819,17 @@ Deno.serve(async (req: Request) => {
           sources = Array.from(sourcesMap.values());
           disclaimer = STANDARD_DISCLAIMER;
         }
+      } catch (retrievalError) {
+        // Degrade gracefully — no KB context, but still answer the user.
+        console.warn(
+          '[rag-query] KB retrieval failed; answering without KB context:',
+          retrievalError instanceof Error
+            ? retrievalError.message
+            : retrievalError
+        );
+        hasGoodKBHits = false;
+        contextText = '';
+        sources = [];
       }
       disclaimer = hasGoodKBHits
         ? disclaimer
@@ -941,6 +976,7 @@ Deno.serve(async (req: Request) => {
       estimatedCostUsd,
     });
   } catch (error: unknown) {
+    console.error('rag-query error:', error);
     // Any failure after the quota was charged means the user got no answer —
     // refund the message so a provider/DB error doesn't burn their daily cap.
     if (
