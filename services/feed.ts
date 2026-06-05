@@ -1,10 +1,12 @@
-import type { FeedResponse, FeedTab, Post, User } from "@/types";
+import type { FeedResponse, FeedTab, Post, PostComment, User } from "@/types";
 import {
   createClient,
   getAuthUserId,
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
 import { posts as mockPosts, followedUsernames } from "@/lib/mock/posts";
+import { currentUser } from "@/lib/mock/users";
+import { mockCommentsForPost } from "@/lib/mock/comments";
 
 /**
  * Feed / posts data access. Real path queries Supabase posts with joined
@@ -459,6 +461,258 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
   if (error) throw error;
 
   return rowToPost(data as unknown as JoinedPostRow);
+}
+
+/* ---- post detail + comments ------------------------------------------- */
+
+/**
+ * Fetch a single post with the same joined select + per-user enrichment the
+ * feed uses. Returns null when the id doesn't resolve. Mock fallback finds the
+ * post in the local feed so the detail page stays browsable pre-config.
+ */
+export async function getPost(postId: number): Promise<Post | null> {
+  if (!isSupabaseConfigured()) {
+    return mockPosts.find((post) => post.id === postId) ?? null;
+  }
+
+  const userId = await getAuthUserId();
+  if (!userId) return mockPosts.find((post) => post.id === postId) ?? null;
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POSTS_SELECT)
+    .eq("id", postId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  const [enriched] = await enrichPostsWithMetadata([
+    rowToPost(data as unknown as JoinedPostRow),
+  ]);
+  return enriched;
+}
+
+const COMMENTS_SELECT = `
+  id, content, parent_comment_id, created_at, user_id, post_id,
+  users!user_id ( id, username, profile_picture_url )
+`;
+
+interface JoinedCommentRow {
+  id: number;
+  content: string;
+  parent_comment_id: number | null;
+  created_at: string;
+  user_id: string;
+  post_id: number;
+  users: {
+    id: string;
+    username: string;
+    profile_picture_url: string | null;
+  } | null;
+}
+
+function commentRowToPostComment(row: JoinedCommentRow): PostComment {
+  const author: User = row.users
+    ? {
+        id: row.users.id,
+        username: row.users.username,
+        profilePictureUrl: row.users.profile_picture_url,
+        isPremium: false,
+        permissions: [],
+      }
+    : {
+        id: row.user_id,
+        username: "Unknown",
+        profilePictureUrl: null,
+        isPremium: false,
+        permissions: [],
+      };
+
+  return {
+    id: row.id,
+    userId: row.user_id,
+    postId: row.post_id,
+    content: row.content,
+    parentCommentId: row.parent_comment_id,
+    likeCount: 0, // filled in by enrichCommentsWithLikes
+    createdAt: row.created_at,
+    author,
+    likedByMe: false, // filled in by enrichCommentsWithLikes
+  };
+}
+
+/**
+ * Attach likeCount + likedByMe to each comment from comment_likes. Resilient:
+ * if the comment_likes table isn't present yet (migration not applied), the
+ * comments still render with zero likes rather than failing the whole page.
+ */
+async function enrichCommentsWithLikes(
+  comments: PostComment[],
+  userId: string,
+): Promise<PostComment[]> {
+  if (comments.length === 0) return comments;
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("comment_likes")
+      .select("comment_id, user_id")
+      .in(
+        "comment_id",
+        comments.map((c) => c.id),
+      );
+    if (error) throw error;
+
+    const counts = new Map<number, number>();
+    const mine = new Set<number>();
+    for (const row of (data as { comment_id: number; user_id: string }[]) ??
+      []) {
+      counts.set(row.comment_id, (counts.get(row.comment_id) ?? 0) + 1);
+      if (row.user_id === userId) mine.add(row.comment_id);
+    }
+
+    return comments.map((c) => ({
+      ...c,
+      likeCount: counts.get(c.id) ?? 0,
+      likedByMe: mine.has(c.id),
+    }));
+  } catch (error) {
+    console.error("enrichCommentsWithLikes failed", error);
+    return comments;
+  }
+}
+
+/**
+ * All comments for a post (top-level + replies), oldest first. The detail page
+ * groups them into threads client-side. Mock fallback serves the local thread.
+ */
+export async function getComments(postId: number): Promise<PostComment[]> {
+  if (!isSupabaseConfigured()) return mockCommentsForPost(postId);
+
+  const userId = await getAuthUserId();
+  if (!userId) return mockCommentsForPost(postId);
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("post_comments")
+    .select(COMMENTS_SELECT)
+    .eq("post_id", postId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+
+  const comments = (data as unknown as JoinedCommentRow[]).map(
+    commentRowToPostComment,
+  );
+  return enrichCommentsWithLikes(comments, userId);
+}
+
+export interface CreateCommentInput {
+  postId: number;
+  content: string;
+  /** null = top-level comment; otherwise the thread-root comment id. */
+  parentCommentId?: number | null;
+}
+
+/**
+ * Create a comment. Inserts into post_comments (own-row RLS) and returns the
+ * created PostComment via the joined select so the author comes back hydrated;
+ * the update_post_comment_count trigger bumps posts.comment_count. Mock
+ * synthesizes a comment authored by the current mock user.
+ */
+export async function createComment(
+  input: CreateCommentInput,
+): Promise<PostComment> {
+  const content = input.content.trim();
+  const parentCommentId = input.parentCommentId ?? null;
+
+  if (!isSupabaseConfigured()) {
+    return {
+      id: Date.now(),
+      userId: currentUser.id,
+      postId: input.postId,
+      content,
+      parentCommentId,
+      likeCount: 0,
+      createdAt: new Date().toISOString(),
+      author: currentUser,
+      likedByMe: false,
+    };
+  }
+
+  const supabase = createClient();
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("createComment: no auth session");
+
+  const { data, error } = await supabase
+    .from("post_comments")
+    .insert({
+      post_id: input.postId,
+      user_id: userId,
+      content,
+      parent_comment_id: parentCommentId,
+    })
+    .select(COMMENTS_SELECT)
+    .single();
+  if (error) throw error;
+
+  return commentRowToPostComment(data as unknown as JoinedCommentRow);
+}
+
+/** Delete a comment the caller owns (RLS comments_delete_own enforces it). */
+export async function deleteComment(commentId: number): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const supabase = createClient();
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("deleteComment: no auth session");
+
+  const { error } = await supabase
+    .from("post_comments")
+    .delete()
+    .eq("id", commentId);
+  if (error) throw error;
+}
+
+export async function likeComment(commentId: number): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const supabase = createClient();
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("likeComment: no auth session");
+
+  // (user_id, comment_id) PK — a duplicate insert means already liked; treat
+  // as idempotent success (same as likePost).
+  const { error } = await supabase
+    .from("comment_likes")
+    .insert({ user_id: userId, comment_id: commentId });
+  if (error && (error as { code?: string }).code !== "23505") throw error;
+}
+
+export async function unlikeComment(commentId: number): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const supabase = createClient();
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("unlikeComment: no auth session");
+
+  const { error } = await supabase
+    .from("comment_likes")
+    .delete()
+    .eq("comment_id", commentId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+/** Delete a post the caller owns (RLS own-row). Comments/likes/saves cascade. */
+export async function deletePost(postId: number): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const supabase = createClient();
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("deletePost: no auth session");
+
+  const { error } = await supabase.from("posts").delete().eq("id", postId);
+  if (error) throw error;
 }
 
 /* ---- legacy single-arg wrappers (kept for FeedTab caller, if any) ----- */

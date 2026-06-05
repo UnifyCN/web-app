@@ -83,13 +83,18 @@ export interface FeedResponse {
 }
 
 export interface PostComment {
-  id: string;
+  id: number;
   userId: string;
-  postId: string;
+  postId: number;
   content: string;
-  parentCommentId: string | null;
+  /** Null for a top-level comment; the thread-root comment id for a reply. */
+  parentCommentId: number | null;
   likeCount: number;
   createdAt: string;
+  /** Joined author row (mirrors Post.author). */
+  author: User;
+  /** Enriched from comment_likes for the current user. */
+  likedByMe?: boolean;
 }
 
 /* ----- Community --------------------------------------------------- */

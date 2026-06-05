@@ -111,3 +111,78 @@ export function useCreatePost() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: FEED_KEY }),
   });
 }
+
+/* ---- Post detail + comments ------------------------------------------ */
+
+const COMMENTS_KEY = ["comments"] as const;
+
+export function usePost(postId: number) {
+  return useQuery({
+    queryKey: [...FEED_KEY, "post", postId],
+    queryFn: () => feed.getPost(postId),
+  });
+}
+
+export function useComments(postId: number) {
+  return useQuery({
+    queryKey: [...COMMENTS_KEY, postId],
+    queryFn: () => feed.getComments(postId),
+  });
+}
+
+export function useCreateComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: feed.CreateCommentInput) => feed.createComment(input),
+    onSuccess: (_data, { postId }) => {
+      queryClient.invalidateQueries({ queryKey: [...COMMENTS_KEY, postId] });
+      // posts.comment_count changes via the DB trigger — refresh the feed
+      // badge + the detail post.
+      queryClient.invalidateQueries({ queryKey: FEED_KEY });
+    },
+  });
+}
+
+interface DeleteCommentInput {
+  commentId: number;
+  /** Post the comment belongs to — for cache invalidation. */
+  postId: number;
+}
+
+export function useDeleteComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ commentId }: DeleteCommentInput) =>
+      feed.deleteComment(commentId),
+    onSuccess: (_data, { postId }) => {
+      queryClient.invalidateQueries({ queryKey: [...COMMENTS_KEY, postId] });
+      queryClient.invalidateQueries({ queryKey: FEED_KEY });
+    },
+  });
+}
+
+interface LikeCommentInput {
+  commentId: number;
+  /** Post the comment belongs to — for cache invalidation. */
+  postId: number;
+  /** Current like state — the mutation flips it. */
+  liked: boolean;
+}
+
+export function useLikeComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ commentId, liked }: LikeCommentInput) =>
+      liked ? feed.unlikeComment(commentId) : feed.likeComment(commentId),
+    onSuccess: (_data, { postId }) =>
+      queryClient.invalidateQueries({ queryKey: [...COMMENTS_KEY, postId] }),
+  });
+}
+
+export function useDeletePost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (postId: number) => feed.deletePost(postId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: FEED_KEY }),
+  });
+}

@@ -1,0 +1,156 @@
+"use client";
+
+import { useState } from "react";
+import { Heart, Reply as ReplyIcon, Trash2 } from "lucide-react";
+import { Avatar } from "@/components/ui/Avatar";
+import { useDeleteComment, useLikeComment } from "@/hooks/useFeed";
+import { cn, formatRelativeTime } from "@/lib/utils";
+import type { PostComment } from "@/types";
+
+interface PostCommentItemProps {
+  comment: PostComment;
+  postId: number;
+  currentUserId?: string;
+  /** Replies to this comment (top-level items only). */
+  replies?: PostComment[];
+  /** Reply affordance — only passed to top-level comments (2-level threading). */
+  onReply?: (comment: PostComment) => void;
+  isReply?: boolean;
+}
+
+/** A single comment with its like / reply / delete actions and nested replies. */
+export function PostCommentItem({
+  comment,
+  postId,
+  currentUserId,
+  replies = [],
+  onReply,
+  isReply = false,
+}: PostCommentItemProps) {
+  const [liked, setLiked] = useState(comment.likedByMe ?? false);
+  const [popping, setPopping] = useState(false);
+  const [showReplies, setShowReplies] = useState(true);
+  const likeMutation = useLikeComment();
+  const deleteMutation = useDeleteComment();
+
+  const likeCount =
+    comment.likeCount + (liked ? 1 : 0) - (comment.likedByMe ? 1 : 0);
+  const isOwn = currentUserId != null && comment.userId === currentUserId;
+
+  function toggleLike() {
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    if (!wasLiked) {
+      setPopping(true);
+      window.setTimeout(() => setPopping(false), 220);
+    }
+    likeMutation.mutate(
+      { commentId: comment.id, postId, liked: wasLiked },
+      { onError: () => setLiked(wasLiked) },
+    );
+  }
+
+  function handleDelete() {
+    if (deleteMutation.isPending) return;
+    if (!window.confirm("Delete this comment?")) return;
+    deleteMutation.mutate({ commentId: comment.id, postId });
+  }
+
+  return (
+    <div className={cn("flex gap-3", deleteMutation.isPending && "opacity-50")}>
+      <Avatar
+        username={comment.author.username}
+        profilePictureUrl={comment.author.profilePictureUrl}
+        size={isReply ? 30 : 36}
+      />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-sm font-semibold text-ink-secondary">
+            {comment.author.username}
+          </span>
+          <span className="shrink-0 text-xs text-ink-placeholder">
+            {formatRelativeTime(comment.createdAt)}
+          </span>
+        </div>
+        <p className="mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-muted">
+          {comment.content}
+        </p>
+
+        <div className="mt-1.5 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={toggleLike}
+            aria-pressed={liked}
+            aria-label={liked ? "Unlike comment" : "Like comment"}
+            className="flex cursor-pointer items-center gap-1 text-xs text-ink-muted transition-colors hover:text-ink"
+          >
+            <Heart
+              className={cn(
+                "h-4 w-4",
+                popping && "animate-like-pop",
+                liked && "fill-destructive text-destructive",
+              )}
+              aria-hidden
+            />
+            {likeCount > 0 && (
+              <span className={cn(liked && "text-destructive")}>
+                {likeCount}
+              </span>
+            )}
+          </button>
+
+          {!isReply && onReply && (
+            <button
+              type="button"
+              onClick={() => onReply(comment)}
+              className="flex cursor-pointer items-center gap-1 text-xs font-medium text-ink-muted transition-colors hover:text-ink"
+            >
+              <ReplyIcon className="h-3.5 w-3.5" aria-hidden />
+              Reply
+            </button>
+          )}
+
+          {isOwn && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              aria-label="Delete comment"
+              className="flex cursor-pointer items-center gap-1 text-xs text-ink-muted transition-colors hover:text-destructive"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          )}
+        </div>
+
+        {!isReply && replies.length > 0 && (
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => setShowReplies((value) => !value)}
+              className="cursor-pointer text-xs font-medium text-primary hover:underline"
+            >
+              {showReplies
+                ? "Hide replies"
+                : `View ${replies.length} ${
+                    replies.length === 1 ? "reply" : "replies"
+                  }`}
+            </button>
+            {showReplies && (
+              <div className="mt-2 space-y-3 border-l border-border-card pl-3">
+                {replies.map((reply) => (
+                  <PostCommentItem
+                    key={reply.id}
+                    comment={reply}
+                    postId={postId}
+                    currentUserId={currentUserId}
+                    isReply
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
