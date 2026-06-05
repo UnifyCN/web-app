@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Heart, MessageCircle, Bookmark, Pin } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
@@ -9,8 +10,17 @@ import { useLikePost, useSavePost } from "@/hooks/useFeed";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import type { Post } from "@/types";
 
-/** A single feed post — header, body, optional images, and an action row. */
-export function PostCard({ post }: { post: Post }) {
+/** A single feed post — header, body, optional images, and an action row.
+ *  `linkToDetail` (default true) makes the title/body and the comment badge
+ *  navigate to /post/[id]; the detail page itself passes false to avoid
+ *  self-navigation. */
+export function PostCard({
+  post,
+  linkToDetail = true,
+}: {
+  post: Post;
+  linkToDetail?: boolean;
+}) {
   const [liked, setLiked] = useState(post.likedByMe ?? false);
   const [saved, setSaved] = useState(post.savedByMe ?? false);
   const [popping, setPopping] = useState(false);
@@ -46,6 +56,20 @@ export function PostCard({ post }: { post: Post }) {
 
   const hasImages = post.postImageUrls.length > 0;
   const multiImage = post.postImageUrls.length > 1;
+  const detailHref = `/post/${post.id}`;
+
+  const body = (
+    <>
+      {post.title && (
+        <h3 className="text-base font-semibold text-ink-secondary group-hover:text-primary">
+          {post.title}
+        </h3>
+      )}
+      <p className="mt-1 text-sm leading-relaxed text-ink-muted">
+        {post.content}
+      </p>
+    </>
+  );
 
   return (
     <article className="px-5 py-4">
@@ -76,16 +100,13 @@ export function PostCard({ post }: { post: Post }) {
       </div>
 
       {/* Body */}
-      <div className="mt-3">
-        {post.title && (
-          <h3 className="text-base font-semibold text-ink-secondary">
-            {post.title}
-          </h3>
-        )}
-        <p className="mt-1 text-sm leading-relaxed text-ink-muted">
-          {post.content}
-        </p>
-      </div>
+      {linkToDetail ? (
+        <Link href={detailHref} className="group mt-3 block">
+          {body}
+        </Link>
+      ) : (
+        <div className="mt-3">{body}</div>
+      )}
 
       {/* Images */}
       {hasImages && (
@@ -132,10 +153,21 @@ export function PostCard({ post }: { post: Post }) {
           <span className={cn(liked && "text-destructive")}>{likeCount}</span>
         </button>
 
-        <span className="flex items-center gap-1.5 text-sm text-ink-muted">
-          <MessageCircle className="h-5 w-5" aria-hidden />
-          {post.commentCount}
-        </span>
+        {linkToDetail ? (
+          <Link
+            href={detailHref}
+            aria-label="View comments"
+            className="flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
+          >
+            <MessageCircle className="h-5 w-5" aria-hidden />
+            {post.commentCount}
+          </Link>
+        ) : (
+          <span className="flex items-center gap-1.5 text-sm text-ink-muted">
+            <MessageCircle className="h-5 w-5" aria-hidden />
+            {post.commentCount}
+          </span>
+        )}
 
         <button
           type="button"
