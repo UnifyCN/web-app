@@ -37,6 +37,10 @@ Deno.serve(async req => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  if (req.method !== 'POST') {
+    return jsonResponse({ error: 'Method not allowed' }, 405);
+  }
+
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return jsonResponse({ error: 'Missing Supabase env vars' }, 500);
   }
@@ -59,7 +63,12 @@ Deno.serve(async req => {
       return jsonResponse({ error: 'Invalid user' }, 401);
     }
 
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return jsonResponse({ error: 'Invalid JSON body' }, 400);
+    }
     const { questionText, userAnswer, expectedAnswer, practiceTitle } = body;
 
     if (

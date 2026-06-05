@@ -140,14 +140,18 @@ export function PracticeQuiz({
     const userAnswer = (currentAnswer[0] ?? "").trim();
     if (FREE_TEXT_TYPES.has(q.question_type) && userAnswer.length > 0) {
       const accepted = q.correct_answer?.value ?? [];
+      const expectedAnswer = accepted.length > 0 ? accepted.join(", ") : "";
       setFeedback({ status: "loading" });
       setFeedbackOpen(true);
       feedbackMutation.mutate(
         {
           questionText: portableTextToPlain(q.question_text),
           userAnswer,
+          // Omit oversized references — the edge function caps at 2000 chars.
           expectedAnswer:
-            accepted.length > 0 ? accepted.join(", ") : undefined,
+            expectedAnswer.length > 0 && expectedAnswer.length <= 2000
+              ? expectedAnswer
+              : undefined,
           practiceTitle: current.practiceTitle,
         },
         {

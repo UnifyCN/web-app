@@ -460,7 +460,7 @@ export async function requestPracticeFeedback(
       } catch {
         // non-JSON error body — fall through to the generic message
       }
-      throw new Error(errBody.error ?? `practice-feedback failed (${ctx.status})`);
+      throw new Error(errBody?.error ?? `practice-feedback failed (${ctx.status})`);
     }
     throw error;
   }

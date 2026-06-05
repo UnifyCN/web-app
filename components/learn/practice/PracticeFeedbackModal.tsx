@@ -60,10 +60,11 @@ export function PracticeFeedbackModal({
       }
     };
     document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      document.body.style.overflow = prevOverflow;
     };
   }, [open, onClose]);
 
@@ -75,7 +76,7 @@ export function PracticeFeedbackModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
-      onClick={onClose}
+      onClick={isLoading ? undefined : onClose}
       role="presentation"
     >
       <div
@@ -104,8 +105,9 @@ export function PracticeFeedbackModal({
             ref={closeRef}
             type="button"
             onClick={onClose}
+            disabled={isLoading}
             aria-label="Close feedback"
-            className="-mr-1 rounded-full p-1 text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink-secondary"
+            className="-mr-1 rounded-full p-1 text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink-secondary disabled:pointer-events-none disabled:opacity-40"
           >
             <X className="h-5 w-5" />
           </button>
