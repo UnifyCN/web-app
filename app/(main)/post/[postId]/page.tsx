@@ -7,6 +7,7 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import { PostCard } from "@/components/home/PostCard";
 import { CommentComposer } from "@/components/home/CommentComposer";
 import { PostCommentItem } from "@/components/home/PostCommentItem";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import {
   useComments,
   useCreateComment,
@@ -23,7 +24,8 @@ export default function PostDetailPage({
 }) {
   const { postId } = use(params);
   const parsedId = Number(postId);
-  const id = Number.isFinite(parsedId) && parsedId > 0 ? parsedId : 0;
+  // Integer ids only — reject fractional (/post/3.5) and non-numeric ids.
+  const id = Number.isInteger(parsedId) && parsedId > 0 ? parsedId : 0;
 
   const router = useRouter();
   const postQuery = usePost(id);
@@ -33,6 +35,8 @@ export default function PostDetailPage({
   const deletePost = useDeletePost();
 
   const [replyTarget, setReplyTarget] = useState<PostComment | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const post = postQuery.data;
 
@@ -63,11 +67,15 @@ export default function PostDetailPage({
     setReplyTarget(null);
   }
 
-  function handleDeletePost() {
+  function confirmDeletePost() {
     if (!post || deletePost.isPending) return;
-    if (!window.confirm("Delete this post? This can't be undone.")) return;
+    setDeleteError(null);
     deletePost.mutate(post.id, {
       onSuccess: () => router.push("/home"),
+      onError: () => {
+        setDeleteError("Couldn't delete this post. Please try again.");
+        setConfirmDeleteOpen(false);
+      },
     });
   }
 
@@ -75,6 +83,23 @@ export default function PostDetailPage({
     return (
       <div className="mx-auto max-w-[680px] px-6 py-16 text-center">
         <p className="text-sm text-ink-muted">Loading…</p>
+      </div>
+    );
+  }
+
+  if (postQuery.isError) {
+    return (
+      <div className="mx-auto max-w-[680px] px-6 py-16 text-center">
+        <p className="text-sm text-ink-muted">
+          Something went wrong loading this post.
+        </p>
+        <button
+          type="button"
+          onClick={() => postQuery.refetch()}
+          className="mt-3 inline-block cursor-pointer text-sm font-semibold text-primary"
+        >
+          Try again
+        </button>
       </div>
     );
   }
@@ -109,7 +134,10 @@ export default function PostDetailPage({
         {isOwnPost && (
           <button
             type="button"
-            onClick={handleDeletePost}
+            onClick={() => {
+              setDeleteError(null);
+              setConfirmDeleteOpen(true);
+            }}
             disabled={deletePost.isPending}
             className="inline-flex cursor-pointer items-center gap-1 text-sm text-ink-muted transition-colors hover:text-destructive disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -118,6 +146,12 @@ export default function PostDetailPage({
           </button>
         )}
       </div>
+
+      {deleteError && (
+        <p className="mb-4 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {deleteError}
+        </p>
+      )}
 
       {/* Post */}
       <div className="overflow-hidden rounded-card border border-border-card bg-surface">
@@ -149,6 +183,19 @@ export default function PostDetailPage({
         <p className="py-8 text-center text-sm text-ink-muted">
           Loading comments…
         </p>
+      ) : commentsQuery.isError ? (
+        <div className="rounded-card border border-border-card bg-surface px-5 py-10 text-center">
+          <p className="text-sm text-ink-muted">
+            Couldn&rsquo;t load comments.
+          </p>
+          <button
+            type="button"
+            onClick={() => commentsQuery.refetch()}
+            className="mt-2 cursor-pointer text-sm font-semibold text-primary"
+          >
+            Try again
+          </button>
+        </div>
       ) : topLevel.length > 0 ? (
         <div className="space-y-5">
           {topLevel.map((comment) => (
@@ -167,6 +214,16 @@ export default function PostDetailPage({
           Be the first to comment.
         </p>
       )}
+
+      <ConfirmModal
+        open={confirmDeleteOpen}
+        title="Delete this post?"
+        description="This will permanently remove your post. This can't be undone."
+        confirmLabel="Delete"
+        isPending={deletePost.isPending}
+        onConfirm={confirmDeletePost}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
     </div>
   );
 }
