@@ -100,9 +100,10 @@ export function PostCommentItem({
             <button
               type="button"
               onClick={toggleLike}
+              disabled={likeMutation.isPending}
               aria-pressed={liked}
               aria-label={liked ? "Unlike comment" : "Like comment"}
-              className="flex cursor-pointer items-center gap-1 text-xs text-ink-muted transition-colors hover:text-ink"
+              className="flex cursor-pointer items-center gap-1 text-xs text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed"
             >
               <Heart
                 className={cn(
