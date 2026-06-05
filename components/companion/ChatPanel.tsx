@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StarterPromptChips } from "./StarterPromptChips";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
@@ -18,7 +18,7 @@ interface ChatPanelProps {
 function TypingIndicator() {
   return (
     <div className="mt-4 flex justify-start">
-      <div className="flex items-center gap-1 rounded-2xl bg-surface-chatbot px-4 py-3">
+      <div className="flex items-center gap-1 rounded-2xl border border-border-card bg-surface px-4 py-3">
         {[0, 1, 2].map((index) => (
           <span
             key={index}
@@ -40,10 +40,22 @@ export function ChatPanel({
   onSend,
 }: ChatPanelProps) {
   const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [draft, setDraft] = useState("");
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, isTyping]);
+
+  function handleSubmit(text: string) {
+    onSend(text);
+    setDraft("");
+  }
+
+  // A follow-up chip auto-sends immediately.
+  function pickSuggestion(text: string) {
+    handleSubmit(text);
+  }
 
   return (
     <div className="flex h-full min-w-0 flex-1 flex-col bg-surface">
@@ -58,7 +70,7 @@ export function ChatPanel({
 
       {conversation ? (
         <div className="scrollbar-thin flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-4xl px-6 py-6">
+          <div className="mx-auto w-full max-w-3xl px-6 py-6">
             {messages.map((message, index) => {
               const prev = messages[index - 1];
               const next = messages[index + 1];
@@ -68,6 +80,8 @@ export function ChatPanel({
                   message={message}
                   groupedWithPrev={prev?.role === message.role}
                   groupedWithNext={next?.role === message.role}
+                  isLast={index === messages.length - 1}
+                  onSuggestionClick={pickSuggestion}
                 />
               );
             })}
@@ -95,7 +109,12 @@ export function ChatPanel({
       {/* Input area */}
       <div className="border-t border-border-card px-6 py-3">
         <div className="mx-auto w-full max-w-2xl space-y-1.5">
-          <ChatInput onSend={onSend} />
+          <ChatInput
+            value={draft}
+            onValueChange={setDraft}
+            onSend={handleSubmit}
+            inputRef={inputRef}
+          />
           <FreeTierIndicator remaining={freeTierRemaining} />
           <p className="text-center text-xs text-ink-placeholder">
             Companion can make mistakes. Verify important info.

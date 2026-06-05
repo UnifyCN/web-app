@@ -1,33 +1,37 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowUp } from "lucide-react";
+import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
+  value: string;
+  onValueChange: (value: string) => void;
   onSend: (text: string) => void;
   placeholder?: string;
+  inputRef?: React.Ref<HTMLTextAreaElement>;
 }
 
-/** Companion message input — Enter sends, Shift+Enter inserts a newline. */
+/** Companion message input — controlled; Enter sends, Shift+Enter inserts a newline. */
 export function ChatInput({
+  value,
+  onValueChange,
   onSend,
   placeholder = "Ask anything…",
+  inputRef,
 }: ChatInputProps) {
-  const [value, setValue] = useState("");
   const canSend = value.trim().length > 0;
 
   function send() {
     if (!canSend) return;
     onSend(value.trim());
-    setValue("");
   }
 
   return (
-    <div className="flex items-end gap-2 rounded-2xl border border-border-card bg-surface p-2">
+    <div className="flex items-end gap-2 rounded-3xl bg-surface-gray p-2">
       <textarea
+        ref={inputRef}
         value={value}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => onValueChange(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
@@ -51,7 +55,7 @@ export function ChatInput({
             : "cursor-not-allowed bg-surface-input text-ink-placeholder",
         )}
       >
-        <ArrowUp className="h-4 w-4" aria-hidden />
+        <Send className="h-4 w-4" aria-hidden />
       </button>
     </div>
   );
