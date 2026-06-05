@@ -39,7 +39,7 @@ const STANDARD_DISCLAIMER =
 const NO_KB_HITS_DISCLAIMER =
   "This may not be covered in Unify's internal resources; please double-check with IRCC or a licensed immigration professional.";
 
-const DAILY_MESSAGE_LIMIT = 3;
+const DAILY_MESSAGE_LIMIT = 6;
 
 type QueryType =
   | 'immigration'
