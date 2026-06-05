@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { AnimatedDottedBackground } from "./AnimatedDottedBackground";
 import { StarterPromptChips } from "./StarterPromptChips";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
@@ -77,9 +76,8 @@ export function ChatPanel({
           </div>
         </div>
       ) : (
-        <div className="relative flex-1 overflow-y-auto">
-          <AnimatedDottedBackground />
-          <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center px-6 py-16 text-center">
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-6 py-16 text-center">
             <h1 className="text-2xl font-bold text-ink-secondary">
               Ask me anything.
             </h1>
