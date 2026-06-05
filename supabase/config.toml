@@ -8,3 +8,9 @@ project_id = "pbiszrycmcxmzxrnkkwr"
 # so the browser CORS preflight (OPTIONS, no Authorization header) isn't rejected
 # before reaching the function's own OPTIONS handler.
 verify_jwt = false
+
+[functions.practice-feedback]
+# Same rationale as rag-query: the function validates the user's JWT itself
+# (supabase.auth.getUser) and 401s if missing/invalid. Gateway JWT off so the
+# browser CORS preflight reaches the function's own OPTIONS handler.
+verify_jwt = false

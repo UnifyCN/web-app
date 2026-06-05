@@ -398,6 +398,80 @@ export async function upsertPracticeProgress(
   if (error) throw error;
 }
 
+/* ---- Practice AI feedback (practice-feedback edge function) ----------- */
+
+/** UI state for a question's AI coach feedback (held in component state). */
+export interface PracticeFeedbackState {
+  status: "loading" | "done" | "error";
+  text?: string;
+}
+
+export interface PracticeFeedbackInput {
+  /** Plain-text question prompt (flatten Portable Text with portableTextToPlain). */
+  questionText: string;
+  /** The learner's free-text answer. */
+  userAnswer: string;
+  /** Accepted/model answer for short_answer & fill_blank; omit for reflections. */
+  expectedAnswer?: string;
+  /** Parent practice doc title — shown to the model for context. */
+  practiceTitle?: string;
+}
+
+// Local-dev / env-not-configured fallback (mirrors companion's MOCK_REPLY). The
+// real feedback comes from the practice-feedback edge function.
+const MOCK_FEEDBACK =
+  "Nice work taking the time to write this out. You've captured the main idea " +
+  "well — to make it even stronger, try adding a specific example or detail " +
+  "that ties it back to your own situation in Canada. Keep it up!";
+
+/**
+ * Calls the `practice-feedback` edge function for coach-style feedback on a
+ * free-text practice answer. The browser Supabase client attaches the user's
+ * JWT automatically. Falls back to a canned reply when Supabase isn't
+ * configured (local dev) so the UI can be exercised without the backend.
+ */
+export async function requestPracticeFeedback(
+  input: PracticeFeedbackInput,
+): Promise<{ feedback: string }> {
+  if (!isSupabaseConfigured()) {
+    return { feedback: MOCK_FEEDBACK };
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase.functions.invoke<{ feedback: string }>(
+    "practice-feedback",
+    {
+      body: {
+        questionText: input.questionText,
+        userAnswer: input.userAnswer,
+        expectedAnswer: input.expectedAnswer,
+        practiceTitle: input.practiceTitle,
+      },
+    },
+  );
+
+  if (error) {
+    // supabase-js FunctionsHttpError carries the Response on `.context`.
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === "function") {
+      let errBody: { error?: string } = {};
+      try {
+        errBody = await ctx.json();
+      } catch {
+        // non-JSON error body — fall through to the generic message
+      }
+      throw new Error(errBody.error ?? `practice-feedback failed (${ctx.status})`);
+    }
+    throw error;
+  }
+
+  if (!data || typeof data.feedback !== "string") {
+    throw new Error("practice-feedback returned no feedback");
+  }
+
+  return { feedback: data.feedback };
+}
+
 /* ---- Lesson Quick Check progress -------------------------------------- */
 
 interface LessonQuizProgressRow {

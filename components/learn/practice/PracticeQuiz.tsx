@@ -4,14 +4,26 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
-import { useUpsertPracticeProgress } from "@/hooks/useLearn";
-import { cn } from "@/lib/utils";
+import {
+  usePracticeFeedback,
+  useUpsertPracticeProgress,
+} from "@/hooks/useLearn";
+import type { PracticeFeedbackState } from "@/services/learn";
+import { cn, portableTextToPlain } from "@/lib/utils";
 import type { PracticeProgress, SanityQuizQuestion } from "@/types";
 import { QuizProgressBar } from "./QuizProgressBar";
 import { QuizQuestion } from "./QuizQuestion";
 import { TakeABreakModal } from "./TakeABreakModal";
+import { PracticeFeedbackModal } from "./PracticeFeedbackModal";
 import { QuizResults } from "./QuizResults";
 import { computeScore, isAnswered } from "./grade";
+
+/** Free-text question types that get AI coach feedback on submit. */
+const FREE_TEXT_TYPES = new Set([
+  "short_answer",
+  "fill_blank",
+  "long_answer",
+]);
 
 export interface FlatQuestion {
   question: SanityQuizQuestion;
@@ -40,6 +52,7 @@ export function PracticeQuiz({
 }: PracticeQuizProps) {
   const router = useRouter();
   const upsert = useUpsertPracticeProgress();
+  const feedbackMutation = usePracticeFeedback();
   const total = questions.length;
   const sectionHref = `/learn/${moduleId}/${submoduleId}`;
 
@@ -78,6 +91,10 @@ export function PracticeQuiz({
     initialProgress?.isCompleted ?? false,
   );
   const [breakOpen, setBreakOpen] = useState(false);
+  // AI coach feedback for the current free-text answer (ephemeral — not
+  // persisted; regenerated on each submit / re-attempt).
+  const [feedback, setFeedback] = useState<PracticeFeedbackState | null>(null);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const current = questions[currentIndex];
   const currentKey = current?.question._key;
@@ -117,6 +134,29 @@ export function PracticeQuiz({
     const nextSubmitted = { ...submitted, [currentKey]: true };
     setSubmitted(nextSubmitted);
     persist(currentIndex, answers, false, true);
+
+    // Free-text answers get AI coach feedback in a popup (mirrors mobile).
+    const q = current.question;
+    const userAnswer = (currentAnswer[0] ?? "").trim();
+    if (FREE_TEXT_TYPES.has(q.question_type) && userAnswer.length > 0) {
+      const accepted = q.correct_answer?.value ?? [];
+      setFeedback({ status: "loading" });
+      setFeedbackOpen(true);
+      feedbackMutation.mutate(
+        {
+          questionText: portableTextToPlain(q.question_text),
+          userAnswer,
+          expectedAnswer:
+            accepted.length > 0 ? accepted.join(", ") : undefined,
+          practiceTitle: current.practiceTitle,
+        },
+        {
+          onSuccess: ({ feedback: text }) =>
+            setFeedback({ status: "done", text }),
+          onError: () => setFeedback({ status: "error" }),
+        },
+      );
+    }
   }
 
   function handleNext() {
@@ -159,6 +199,8 @@ export function PracticeQuiz({
     setSubmitted({});
     setCurrentIndex(0);
     setShowResults(false);
+    setFeedback(null);
+    setFeedbackOpen(false);
     persist(0, {}, false, false);
   }
 
@@ -266,6 +308,13 @@ export function PracticeQuiz({
         open={breakOpen}
         onSaveAndLeave={handleSaveAndLeave}
         onContinue={() => setBreakOpen(false)}
+      />
+
+      <PracticeFeedbackModal
+        open={feedbackOpen}
+        state={feedback}
+        colorHex={colorHex}
+        onClose={() => setFeedbackOpen(false)}
       />
     </div>
   );
