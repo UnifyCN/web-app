@@ -49,10 +49,12 @@ export function PostCommentItem({
     comment.likeCount + (liked ? 1 : 0) - (comment.likedByMe ? 1 : 0);
   const isOwn = currentUserId != null && comment.userId === currentUserId;
 
-  function toggleLike() {
+  function toggleLike(event: React.MouseEvent<HTMLButtonElement>) {
     const wasLiked = liked;
     setLiked(!wasLiked);
-    if (!wasLiked) {
+    // event.detail is 0 for keyboard-activated clicks (Enter/Space); only run
+    // the pop animation for real pointer clicks.
+    if (!wasLiked && event.detail > 0) {
       setPopping(true);
       if (popTimeout.current) clearTimeout(popTimeout.current);
       popTimeout.current = setTimeout(() => setPopping(false), 220);

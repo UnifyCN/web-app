@@ -61,10 +61,11 @@ export function ConfirmModal({
       }
     };
     document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      document.body.style.overflow = prevOverflow;
     };
   }, [open, isPending, onCancel]);
 
@@ -79,7 +80,7 @@ export function ConfirmModal({
       role="presentation"
     >
       <div
-        className="w-full max-w-sm overflow-hidden rounded-card bg-surface shadow-lg"
+        className="w-full max-w-sm overflow-hidden rounded-card bg-surface shadow-sm"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -93,7 +94,7 @@ export function ConfirmModal({
             <p className="mt-2 text-sm text-ink-muted">{description}</p>
           )}
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-border-card bg-surface-card px-5 py-3">
+        <div className="flex items-center justify-end gap-2 border-t border-border bg-surface-card px-5 py-3">
           <Button
             ref={cancelRef}
             type="button"

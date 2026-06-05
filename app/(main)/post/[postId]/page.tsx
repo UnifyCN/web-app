@@ -154,7 +154,7 @@ export default function PostDetailPage({
       )}
 
       {/* Post */}
-      <div className="overflow-hidden rounded-card border border-border-card bg-surface">
+      <div className="overflow-hidden rounded-card border border-border bg-surface">
         <PostCard post={post} linkToDetail={false} />
       </div>
 
@@ -184,7 +184,7 @@ export default function PostDetailPage({
           Loading comments…
         </p>
       ) : commentsQuery.isError ? (
-        <div className="rounded-card border border-border-card bg-surface px-5 py-10 text-center">
+        <div className="rounded-card border border-border bg-surface px-5 py-10 text-center">
           <p className="text-sm text-ink-muted">
             Couldn&rsquo;t load comments.
           </p>
@@ -210,7 +210,7 @@ export default function PostDetailPage({
           ))}
         </div>
       ) : (
-        <p className="rounded-card border border-border-card bg-surface px-5 py-10 text-center text-sm text-ink-placeholder">
+        <p className="rounded-card border border-border bg-surface px-5 py-10 text-center text-sm text-ink-placeholder">
           Be the first to comment.
         </p>
       )}
