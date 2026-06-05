@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { User, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import { LearnIcon } from "@/components/icons/LearnIcon";
 import { ChecklistIcon } from "@/components/icons/ChecklistIcon";
 import { CompanionIcon } from "@/components/icons/CompanionIcon";
@@ -32,14 +31,18 @@ const TOP_NAV: NavItem[] = [
 
 const PROFILE_ITEM: NavItem = { label: "Profile", href: "/profile", icon: User };
 
+// Fixed-width icon rail with a label under each icon. 88px sits between the old
+// 64px (icon-only) and 220px (icon+label row) widths — wide enough for the
+// longest label ("Companion" / "Community") without eating into content space.
+const SIDEBAR_WIDTH = 88;
+
 /**
- * Left sidebar — present on every (main) page, every breakpoint.
- * Defaults to the 64px icon-only rail; the toggle expands it to 220px.
+ * Left sidebar — present on every (main) page, every breakpoint. Fixed width,
+ * no collapse: each item is an icon stacked above its label.
  */
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(true);
 
   const signOut = async () => {
     const { error } = await signOutService();
@@ -53,10 +56,9 @@ export function Sidebar() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
 
-  /** Shared item shape — a left-aligned square when collapsed, a row when not. */
-  const itemShape = collapsed
-    ? "h-10 w-10 justify-center"
-    : "gap-3 px-3 py-2";
+  // Shared vertical tile: centred icon above a small label.
+  const tileClass =
+    "flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-[11px] leading-tight transition-colors duration-150";
 
   const renderNavLink = (item: NavItem) => {
     const active = isActive(item.href);
@@ -66,87 +68,53 @@ export function Sidebar() {
       <Link
         key={item.href}
         href={item.href}
-        title={collapsed ? item.label : undefined}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "flex items-center rounded-lg text-sm transition-colors duration-150",
-          itemShape,
+          tileClass,
           active
             ? "bg-primary-bg font-semibold text-primary"
             : "font-medium text-ink-muted hover:bg-surface-gray hover:text-ink",
         )}
       >
         <Icon className="h-5 w-5 shrink-0" />
-        {!collapsed && <span className="truncate">{item.label}</span>}
+        <span className="w-full truncate text-center">{item.label}</span>
       </Link>
     );
   };
 
   return (
     <aside
-      style={{ width: collapsed ? 64 : 220 }}
+      style={{ width: SIDEBAR_WIDTH }}
       className={cn(
         "sticky top-0 flex h-screen shrink-0 flex-col",
         "border-r border-border-card bg-surface",
-        "transition-all duration-200 ease-in-out",
       )}
     >
-      {/* Logo */}
-      <div className={cn("flex h-16 items-center", collapsed ? "px-3" : "px-4")}>
+      {/* Logo — the mark only; the wordmark lockup doesn't fit a narrow rail. */}
+      <div className="flex h-16 items-center justify-center">
         <Link href="/home" aria-label="Unify home" className="flex items-center">
-          {collapsed ? (
-            <UnifyLogo variant="mark" size={32} priority />
-          ) : (
-            <UnifyLogo variant="lockup" size={36} priority />
-          )}
+          <UnifyLogo variant="mark" size={32} priority />
         </Link>
       </div>
 
       {/* Primary navigation — vertically centred icon group */}
-      <nav className="flex flex-1 flex-col justify-center gap-1.5 px-3">
+      <nav className="flex flex-1 flex-col justify-center gap-1.5 px-2">
         {TOP_NAV.map(renderNavLink)}
       </nav>
 
       {/* Profile + sign out, separated by a border */}
-      <div className="flex flex-col gap-1.5 border-t border-border-card px-3 py-3">
+      <div className="flex flex-col gap-1.5 border-t border-border-card px-2 py-3">
         {renderNavLink(PROFILE_ITEM)}
         <button
           type="button"
           onClick={signOut}
-          title={collapsed ? "Sign out" : undefined}
           className={cn(
-            "flex items-center rounded-lg text-sm font-medium",
-            "cursor-pointer text-ink-muted transition-colors duration-150 hover:bg-surface-gray hover:text-ink",
-            itemShape,
+            tileClass,
+            "cursor-pointer font-medium text-ink-muted hover:bg-surface-gray hover:text-ink",
           )}
         >
           <LogOut className="h-5 w-5 shrink-0" />
-          {!collapsed && <span className="truncate">Sign out</span>}
-        </button>
-      </div>
-
-      {/* Collapse / expand toggle */}
-      <div className="border-t border-border-card px-3 py-3">
-        <button
-          type="button"
-          onClick={() => setCollapsed((value) => !value)}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={cn(
-            "flex items-center rounded-lg text-sm font-medium",
-            "cursor-pointer text-ink-muted transition-colors duration-150",
-            "hover:bg-surface-gray hover:text-ink",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-            collapsed ? "h-10 w-10 justify-center" : "w-full gap-3 px-3 py-2",
-          )}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-5 w-5 shrink-0" />
-          ) : (
-            <>
-              <ChevronLeft className="h-5 w-5 shrink-0" />
-              <span>Collapse</span>
-            </>
-          )}
+          <span className="w-full truncate text-center">Sign out</span>
         </button>
       </div>
     </aside>
