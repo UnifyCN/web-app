@@ -31,10 +31,12 @@ const TOP_NAV: NavItem[] = [
 
 const PROFILE_ITEM: NavItem = { label: "Profile", href: "/profile", icon: User };
 
-// Fixed-width icon rail with a label under each icon. 88px sits between the old
-// 64px (icon-only) and 220px (icon+label row) widths — wide enough for the
-// longest label ("Companion" / "Community") without eating into content space.
-const SIDEBAR_WIDTH = 88;
+// Fixed-width icon rail with a label under each icon. Width is set so the full
+// "unify" wordmark lockup fits comfortably at the top (lockup ratio ≈ 2.24, so a
+// size-38 lockup is ~85px wide; its built-in padding leaves ~13px of visible
+// breathing room each side) while staying as narrow as possible — the longest
+// label ("Companion" / "Community") still fits the tile at text-xs.
+const SIDEBAR_WIDTH = 100;
 
 /**
  * Left sidebar — present on every (main) page, every breakpoint. Fixed width,
@@ -58,7 +60,7 @@ export function Sidebar() {
 
   // Shared vertical tile: centred icon above a small label.
   const tileClass =
-    "flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-[11px] leading-tight transition-colors duration-150";
+    "flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-xs leading-tight transition-colors duration-150";
 
   const renderNavLink = (item: NavItem) => {
     const active = isActive(item.href);
@@ -90,10 +92,10 @@ export function Sidebar() {
         "border-r border-border-card bg-surface",
       )}
     >
-      {/* Logo — the mark only; the wordmark lockup doesn't fit a narrow rail. */}
+      {/* Logo — full "unify" wordmark lockup, centred in the rail. */}
       <div className="flex h-16 items-center justify-center">
         <Link href="/home" aria-label="Unify home" className="flex items-center">
-          <UnifyLogo variant="mark" size={32} priority />
+          <UnifyLogo variant="lockup" size={38} priority />
         </Link>
       </div>
 

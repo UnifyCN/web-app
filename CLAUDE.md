@@ -46,7 +46,7 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
 - **Companion AI (PR #15)** — the `rag-query` **Supabase Edge Function** (Deno) is
   deployed. The RAG knowledge base is seeded (32 docs / 350 chunks,
   `text-embedding-3-small`, 1536-dim) with RLS + grants on the KB tables. A daily
-  rate-limit RPC caps usage at 3 messages/day (`check_and_increment_chatbot_usage`)
+  rate-limit RPC caps usage at 6 messages/day (`check_and_increment_chatbot_usage`)
   and refunds the quota on failure (`decrement_chatbot_usage`).
   **`OPENROUTER_API_KEY` is set ✅; `OPENAI_API_KEY` is currently broken ❌**
   (wrong/expired — waiting on Savar), so end-to-end RAG retrieval can't run yet.
@@ -238,7 +238,7 @@ Use the Inter font (loaded via `next/font/google`). Font sizes should feel sligh
 ### Spacing & Radius
 
 Cards: `rounded-lg` (10–12px), `border border-border-card`, subtle shadow.
-Sidebar: 220px expanded, 64px collapsed (icon-only). Smooth CSS transition.
+Sidebar: fixed-width 100px icon+label rail (icon above its label), no collapse.
 Page max-width: content areas max out around 680px for feed columns.
 
 ---
@@ -314,9 +314,8 @@ design-system/
 ### Sidebar (consistent across all breakpoints — no switching)
 
 - **Always a left sidebar** — no bottom tab bar, no top nav, on any screen size
-- Expanded (default): 220px wide, icons + labels
-- Collapsed: 64px wide, icons only (toggle chevron in sidebar)
-- Collapse/expand: `transition-all duration-200 ease-in-out`
+- Fixed-width **100px** rail — no collapse, no toggle. Each item is an icon with its label beneath it (`text-xs`), vertically centred
+- Unify wordmark lockup at the top; the nav group is vertically centred; Profile + Sign out sit at the bottom behind a border
 - Active item: `bg-primary-bg text-primary font-semibold`
 - Inactive item: `text-ink-muted`, hover `bg-surface-gray text-ink`
 
@@ -388,7 +387,7 @@ All other pages: **2-column** — sidebar (fixed) | full content area
   - Grouped bubble radius: connecting messages reduce border-radius on adjacent sides
   - Input bar fixed at bottom with send button
   - Starter prompt chips when no conversation active (4 suggestions)
-  - Free tier indicator: "3 messages/day remaining"
+  - Free tier indicator: "6 messages/day remaining"
 
 **Emil skill applies here:** subtle scale + opacity animation on message send (≤200ms, ease-out). Nothing else animated.
 
