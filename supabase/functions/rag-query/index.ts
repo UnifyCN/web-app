@@ -378,7 +378,7 @@ CRITICAL GUARDRAILS:
 2. **STABLE PUBLIC FACTS**: Common public knowledge IS answerable directly — citizenship test format (20 multiple-choice questions, pass mark 15/20), CRS components and how points are calculated, Express Entry vs PNP basics, study/work permit work-hour rules, what a SIN is, what a TFSA is, etc. Do NOT dodge these by pointing to IRCC for the answer.
 3. **NEVER QUOTE FEES OR PROCESSING TIMES FROM MEMORY**: Specific dollar amounts and processing-time numbers change frequently. ONLY cite a fee or processing time if it appears in the KB context above. Otherwise say "check current fees and processing times on canada.ca/ircc" without naming a number.
 4. **MANDATORY LAWYER/RCIC REFERRAL** for these topics: refugee/asylum claims, deportation/removal/inadmissibility, application denials, misrepresentation, criminality, sponsorship-application denials, overstay disclosure questions, judicial review. ALWAYS include the phrase "consult a licensed immigration lawyer or RCIC (Regulated Canadian Immigration Consultant)" in responses on these topics. Do NOT recommend specific lawyers or firms by name.
-5. **OFFICIAL SOURCES**: For changing/recent rules, point to IRCC (ircc.canada.ca). For provincial topics, point to the province-specific authority listed above.
+5. **OFFICIAL SOURCES**: For changing/recent rules, point to IRCC (ircc.canada.ca). For provincial topics, point to the province-specific authority listed above. When the retrieved context names a specific agency, service, or URL (for example, Service Canada or ESDC for SIN questions), cite that specific source in your answer instead of the generic IRCC page.
 6. **CITE SOURCES**: Only include sources when directly using knowledge base information.${SUGGESTIONS_INSTRUCTION}`;
 }
 
@@ -787,14 +787,18 @@ Deno.serve(async (req: Request) => {
                 ? `https://${s3BucketName}.s3.${s3Region}.amazonaws.com/${storagePath}`
                 : '';
 
-              sourcesMap.set(chunk.document_id, {
-                document_id: chunk.document_id,
-                document_title: doc.title || 'Unknown',
-                url:
-                  sourceUrl ||
-                  s3Url ||
-                  'https://www.canada.ca/en/immigration-refugees-citizenship.html',
-              });
+              // Only surface a source we can actually attribute. A doc with no
+              // source_url (and no S3 fallback) is omitted rather than mislabeled
+              // with a generic IRCC link that misattributes the content
+              // (e.g. SIN content -> IRCC).
+              const resolvedUrl = sourceUrl || s3Url;
+              if (resolvedUrl) {
+                sourcesMap.set(chunk.document_id, {
+                  document_id: chunk.document_id,
+                  document_title: doc.title || 'Unknown',
+                  url: resolvedUrl,
+                });
+              }
             }
           });
 
