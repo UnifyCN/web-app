@@ -26,13 +26,21 @@ export type Stage = 0 | 1 | 2 | 3 | 4;
 
 export interface UserOnboardingProfile {
   id: string;
+  /** First name (display name across the app stays `username`). */
+  firstName: string | null;
   persona: Persona;
+  /** How the user heard about Unify (referral slug); null if unanswered. */
+  referralSource: string | null;
   arrivalDate: string | null;
   city: string;
   province: string;
   stage: Stage;
   goals: string[];
   learningInterests: string[];
+  /** Hobby slugs (see lib/onboarding/constants). */
+  hobbies: string[];
+  /** Opt-in to learning-reminder nudges. */
+  learningReminders: boolean;
 }
 
 /* ----- Users ------------------------------------------------------- */

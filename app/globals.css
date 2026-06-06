@@ -77,6 +77,19 @@ body {
   color: var(--color-ink-secondary);
 }
 
+/* Chrome/Safari autofill: repaint the field so the rectangular blue/yellow
+ * autofill background stops poking past rounded inputs. The inset shadow fills
+ * the box with our surface colour and inherits the input's radius. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--color-ink-secondary);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset;
+  box-shadow: 0 0 0 1000px var(--color-surface) inset;
+  caret-color: var(--color-ink-secondary);
+}
+
 /* ------------------------------------------------------------------ *
  * Component utilities.
  * ------------------------------------------------------------------ */

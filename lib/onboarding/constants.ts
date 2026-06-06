@@ -92,6 +92,46 @@ export const INTEREST_LABEL = Object.fromEntries(
   INTEREST_OPTIONS.map((o) => [o.value, o.label]),
 ) as Record<LearningInterest, string>;
 
+/* ----- Referral source (how did you hear about Unify) ------------- */
+
+export const REFERRAL_OPTIONS = [
+  { value: "facebook_instagram", label: "Facebook / Instagram" },
+  { value: "google_search", label: "Google Search" },
+  { value: "app_store", label: "App Store" },
+  { value: "friends_family", label: "Friends / family" },
+  { value: "news_article", label: "News / article / blog" },
+  { value: "tiktok", label: "TikTok" },
+  { value: "other", label: "Other" },
+] as const;
+
+export type ReferralSource = (typeof REFERRAL_OPTIONS)[number]["value"];
+
+export const REFERRAL_LABEL = Object.fromEntries(
+  REFERRAL_OPTIONS.map((o) => [o.value, o.label]),
+) as Record<ReferralSource, string>;
+
+/* ----- Hobbies ---------------------------------------------------- */
+
+export const HOBBY_OPTIONS = [
+  { value: "career_growth", label: "Career growth" },
+  { value: "explore_canada", label: "Explore Canada" },
+  { value: "wellness_growth", label: "Wellness & growth" },
+  { value: "tech_digital", label: "Tech & digital" },
+  { value: "music_arts", label: "Music & arts" },
+  { value: "fitness_sports", label: "Fitness & sports" },
+  { value: "personal_finance", label: "Personal finance" },
+  { value: "family_parenting", label: "Family & parenting" },
+  { value: "education_learning", label: "Education & learning" },
+  { value: "food_cooking", label: "Food & cooking" },
+  { value: "movies", label: "Movies" },
+] as const;
+
+export type Hobby = (typeof HOBBY_OPTIONS)[number]["value"];
+
+export const HOBBY_LABEL = Object.fromEntries(
+  HOBBY_OPTIONS.map((o) => [o.value, o.label]),
+) as Record<Hobby, string>;
+
 /* ----- Location --------------------------------------------------- */
 
 /** All 13 provinces & territories. `code` is stored; `name` is shown. */

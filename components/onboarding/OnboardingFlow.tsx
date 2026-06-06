@@ -5,13 +5,17 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useSaveOnboarding } from "@/hooks/useOnboarding";
 import { StepProgress } from "./StepProgress";
-import { WelcomeStep } from "./steps/WelcomeStep";
+import { NameStep } from "./steps/NameStep";
 import { PersonaStep } from "./steps/PersonaStep";
+import { ReferralStep } from "./steps/ReferralStep";
 import { ArrivalDateStep } from "./steps/ArrivalDateStep";
 import { LocationStep } from "./steps/LocationStep";
 import { GoalsStep } from "./steps/GoalsStep";
 import { InterestsStep } from "./steps/InterestsStep";
-import { ReviewStep } from "./steps/ReviewStep";
+import { HobbiesStep } from "./steps/HobbiesStep";
+import { RemindersStep } from "./steps/RemindersStep";
+import { OutcomeStep } from "./steps/OutcomeStep";
+import { ConfirmationStep } from "./steps/ConfirmationStep";
 import {
   EMPTY_DRAFT,
   draftToInput,
@@ -28,18 +32,24 @@ interface StepDef {
 
 const ALWAYS = () => true;
 
+// Mirrors the 11-step mobile flow. Both onboard and edit run the full set
+// (mobile's edit variant keeps step 1); only Persona blocks advancing.
 const ALL_STEPS: StepDef[] = [
-  { key: "welcome", Component: WelcomeStep, canAdvance: ALWAYS },
+  { key: "name", Component: NameStep, canAdvance: ALWAYS },
   {
     key: "persona",
     Component: PersonaStep,
     canAdvance: (d) => d.persona !== null,
   },
+  { key: "referral", Component: ReferralStep, canAdvance: ALWAYS },
   { key: "arrival", Component: ArrivalDateStep, canAdvance: ALWAYS },
   { key: "location", Component: LocationStep, canAdvance: ALWAYS },
   { key: "goals", Component: GoalsStep, canAdvance: ALWAYS },
   { key: "interests", Component: InterestsStep, canAdvance: ALWAYS },
-  { key: "review", Component: ReviewStep, canAdvance: ALWAYS },
+  { key: "hobbies", Component: HobbiesStep, canAdvance: ALWAYS },
+  { key: "reminders", Component: RemindersStep, canAdvance: ALWAYS },
+  { key: "outcome", Component: OutcomeStep, canAdvance: ALWAYS },
+  { key: "confirmation", Component: ConfirmationStep, canAdvance: ALWAYS },
 ];
 
 interface OnboardingFlowProps {
@@ -62,8 +72,7 @@ export function OnboardingFlow({
   onComplete,
   onCancel,
 }: OnboardingFlowProps) {
-  const steps =
-    mode === "edit" ? ALL_STEPS.filter((s) => s.key !== "welcome") : ALL_STEPS;
+  const steps = ALL_STEPS;
 
   const [index, setIndex] = useState(0);
   const [draft, setDraft] = useState<OnboardingDraft>(
@@ -102,11 +111,11 @@ export function OnboardingFlow({
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <StepProgress current={index} total={steps.length} />
 
-      <div className="mt-6 -mx-1 flex-1 overflow-y-auto px-1">
-        <Current draft={draft} update={update} />
+      <div className="mt-4 -mx-2 -mb-2 min-h-0 flex-1 overflow-y-auto p-2">
+        <Current draft={draft} update={update} mode={mode} />
       </div>
 
       {error && (

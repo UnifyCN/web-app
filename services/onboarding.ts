@@ -5,6 +5,19 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
 import { calculateUserStage } from "@/lib/onboarding/calculateUserStage";
+import {
+  GOAL_OPTIONS,
+  HOBBY_OPTIONS,
+  INTEREST_OPTIONS,
+  REFERRAL_OPTIONS,
+} from "@/lib/onboarding/constants";
+
+// Allowed enum slugs — invalid values are rejected before the upsert so they
+// never reach the DB (the columns are also CHECK/array-constrained in SQL).
+const GOAL_VALUES = new Set<string>(GOAL_OPTIONS.map((o) => o.value));
+const INTEREST_VALUES = new Set<string>(INTEREST_OPTIONS.map((o) => o.value));
+const REFERRAL_VALUES = new Set<string>(REFERRAL_OPTIONS.map((o) => o.value));
+const HOBBY_VALUES = new Set<string>(HOBBY_OPTIONS.map((o) => o.value));
 
 /**
  * Onboarding data access — a single upsert into `user_onboarding_profiles`.
@@ -14,7 +27,11 @@ import { calculateUserStage } from "@/lib/onboarding/calculateUserStage";
  */
 
 export interface SaveOnboardingInput {
+  /** First name; trimmed to null when empty. */
+  firstName: string;
   persona: Persona;
+  /** Referral slug (how they heard about Unify), or null if unanswered. */
+  referralSource: string | null;
   /** `YYYY-MM-01`, or null for "haven't arrived yet". */
   arrivalDate: string | null;
   city: string;
@@ -23,6 +40,10 @@ export interface SaveOnboardingInput {
   goals: string[];
   /** Enum slugs (see lib/onboarding/constants). */
   learningInterests: string[];
+  /** Hobby slugs (see lib/onboarding/constants). */
+  hobbies: string[];
+  /** Opt-in to learning-reminder nudges. */
+  learningReminders: boolean;
 }
 
 /**
@@ -39,16 +60,31 @@ export async function saveOnboarding(input: SaveOnboardingInput): Promise<void> 
   const supabase = createClient();
   const stage = calculateUserStage(input.arrivalDate);
 
+  // Reject any values outside the allowed enum lists.
+  const goals = input.goals.filter((g) => GOAL_VALUES.has(g));
+  const learningInterests = input.learningInterests.filter((i) =>
+    INTEREST_VALUES.has(i),
+  );
+  const hobbies = input.hobbies.filter((h) => HOBBY_VALUES.has(h));
+  const referralSource =
+    input.referralSource && REFERRAL_VALUES.has(input.referralSource)
+      ? input.referralSource
+      : null;
+
   const { error } = await supabase.from("user_onboarding_profiles").upsert(
     {
       id: userId, // = auth.uid(), satisfies the own-row RLS policy + PK
+      first_name: input.firstName.trim() || null,
       persona: input.persona,
+      referral_source: referralSource,
       arrival_date: input.arrivalDate,
       city: input.city.trim() || null,
       province: input.province.trim() || null,
       stage,
-      goals: input.goals,
-      learning_interests: input.learningInterests,
+      goals,
+      learning_interests: learningInterests,
+      hobbies,
+      learning_reminders: input.learningReminders,
     },
     { onConflict: "id" },
   );

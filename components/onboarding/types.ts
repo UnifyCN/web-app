@@ -7,7 +7,9 @@ import type { SaveOnboardingInput } from "@/services/onboarding";
  * `province` holds the 2-letter code (e.g. "ON").
  */
 export interface OnboardingDraft {
+  firstName: string;
   persona: Persona | null;
+  referralSource: string | null;
   arrivalMonth: number | null; // 1–12
   arrivalYear: number | null;
   notArrived: boolean;
@@ -15,15 +17,21 @@ export interface OnboardingDraft {
   province: string;
   goals: string[];
   learningInterests: string[];
+  hobbies: string[];
+  learningReminders: boolean;
 }
 
 export interface OnboardingStepProps {
   draft: OnboardingDraft;
   update: (patch: Partial<OnboardingDraft>) => void;
+  /** First-run vs edit-from-profile — lets steps vary their copy. */
+  mode: "onboard" | "edit";
 }
 
 export const EMPTY_DRAFT: OnboardingDraft = {
+  firstName: "",
   persona: null,
+  referralSource: null,
   arrivalMonth: null,
   arrivalYear: null,
   notArrived: false,
@@ -31,6 +39,8 @@ export const EMPTY_DRAFT: OnboardingDraft = {
   province: "",
   goals: [],
   learningInterests: [],
+  hobbies: [],
+  learningReminders: false,
 };
 
 function pad2(n: number): string {
@@ -50,12 +60,16 @@ export function toArrivalDate(draft: OnboardingDraft): string | null {
 export function draftToInput(draft: OnboardingDraft): SaveOnboardingInput {
   if (!draft.persona) throw new Error("draftToInput: persona is required");
   return {
+    firstName: draft.firstName,
     persona: draft.persona,
+    referralSource: draft.referralSource,
     arrivalDate: toArrivalDate(draft),
     city: draft.city,
     province: draft.province,
     goals: draft.goals,
     learningInterests: draft.learningInterests,
+    hobbies: draft.hobbies,
+    learningReminders: draft.learningReminders,
   };
 }
 
@@ -71,7 +85,9 @@ export function draftFromProfile(o: UserOnboardingProfile): OnboardingDraft {
     }
   }
   return {
+    firstName: o.firstName ?? "",
     persona: o.persona,
+    referralSource: o.referralSource ?? null,
     arrivalMonth,
     arrivalYear,
     notArrived: o.arrivalDate === null,
@@ -79,5 +95,7 @@ export function draftFromProfile(o: UserOnboardingProfile): OnboardingDraft {
     province: o.province ?? "",
     goals: o.goals ?? [],
     learningInterests: o.learningInterests ?? [],
+    hobbies: o.hobbies ?? [],
+    learningReminders: o.learningReminders ?? false,
   };
 }
