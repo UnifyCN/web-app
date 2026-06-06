@@ -102,6 +102,13 @@ function computeModulePercent(
 
 /* ---- Modules ---------------------------------------------------------- */
 
+/**
+ * In-memory favourites for the env-not-configured (local-dev / mock) path, so
+ * the star toggle persists across refetches within a session. Real persistence
+ * uses the `learn_favourites` table whenever Supabase is configured.
+ */
+const mockFavouriteModuleIds = new Set<string>();
+
 export async function getModules(): Promise<LearnModuleView[]> {
   if (!isSanityConfigured()) return mockModules;
 
@@ -156,6 +163,9 @@ export async function getModules(): Promise<LearnModuleView[]> {
         ),
       );
     }
+  } else {
+    // Env-not-configured: reflect the in-memory mock favourites.
+    favouriteIds = mockFavouriteModuleIds;
   }
 
   return sanityModules.map((mod) => {
@@ -235,6 +245,9 @@ export async function getModule(
       ).length;
       progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
     }
+  } else {
+    // Env-not-configured: reflect the in-memory mock favourites.
+    isFavourite = mockFavouriteModuleIds.has(moduleId);
   }
 
   return {
@@ -671,7 +684,12 @@ export async function toggleFavouriteModule(
   moduleId: string,
   isFavourite: boolean,
 ): Promise<void> {
-  if (!isSupabaseConfigured()) return;
+  if (!isSupabaseConfigured()) {
+    // Env-not-configured: persist to the in-memory mock store instead.
+    if (isFavourite) mockFavouriteModuleIds.add(moduleId);
+    else mockFavouriteModuleIds.delete(moduleId);
+    return;
+  }
   const userId = await getAuthUserId();
   if (!userId) throw new Error("toggleFavouriteModule: no auth session");
 

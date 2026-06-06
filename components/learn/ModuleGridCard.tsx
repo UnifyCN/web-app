@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Blob, type BlobVariant } from "./Blob";
+import { FavouriteButton } from "./FavouriteButton";
 import { ModuleIcon } from "./ModuleIcon";
 import type { LearnModuleView } from "@/types";
 
@@ -45,11 +46,18 @@ export function ModuleGridCard({ mod }: ModuleGridCardProps) {
           ) : (
             <span />
           )}
-          <ModuleIcon
-            icon={mod.icon}
-            className="h-6 w-6 text-white"
-            strokeWidth={1.75}
-          />
+          <div className="flex items-center gap-1">
+            <FavouriteButton
+              moduleId={mod._id}
+              isFavourite={mod.isFavourite}
+              className="text-white"
+            />
+            <ModuleIcon
+              icon={mod.icon}
+              className="h-6 w-6 text-white"
+              strokeWidth={1.75}
+            />
+          </div>
         </div>
         <div>
           <h3 className="line-clamp-2 text-base font-bold leading-tight">

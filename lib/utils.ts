@@ -28,6 +28,18 @@ export function portableTextToPlain(blocks: SanityBlock[] | undefined): string {
 }
 
 /**
+ * Validate an external link for safe use as an `href`. Returns the URL only
+ * when it's an absolute http(s) link, otherwise null (so callers can render a
+ * non-clickable fallback). Guards against javascript:/data: and relative junk.
+ */
+export function externalHref(link: string | null | undefined): string | null {
+  if (!link) return null;
+  return link.startsWith("https://") || link.startsWith("http://")
+    ? link
+    : null;
+}
+
+/**
  * Short relative timestamp — "Just now", "5m", "3h", "2d", then a calendar
  * date with the year once past a week ("May 8, 2026").
  */

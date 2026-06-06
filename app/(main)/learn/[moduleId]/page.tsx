@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Blob } from "@/components/learn/Blob";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
+import { FavouriteButton } from "@/components/learn/FavouriteButton";
 import { ModuleIcon } from "@/components/learn/ModuleIcon";
 import {
   SubmoduleTimelineRow,
@@ -93,11 +94,19 @@ export default function ModuleDetailPage({
               <ArrowLeft className="h-4 w-4" aria-hidden />
               Back to Learn
             </Link>
-            <ModuleIcon
-              icon={mod.icon}
-              className="h-7 w-7 text-white"
-              strokeWidth={1.75}
-            />
+            <div className="flex items-center gap-2">
+              <FavouriteButton
+                moduleId={mod._id}
+                isFavourite={mod.isFavourite}
+                className="text-white"
+                size={22}
+              />
+              <ModuleIcon
+                icon={mod.icon}
+                className="h-7 w-7 text-white"
+                strokeWidth={1.75}
+              />
+            </div>
           </div>
           <div>
             <h1 className="text-2xl font-extrabold leading-tight">

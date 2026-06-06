@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Blob } from "./Blob";
 import { CarouselDots } from "./CarouselDots";
+import { FavouriteButton } from "./FavouriteButton";
 import { ModuleIcon } from "./ModuleIcon";
 
 export interface ResumeEntry {
@@ -17,6 +18,7 @@ export interface ResumeEntry {
   colorHex: string;
   sectionNumber: number;
   totalSections: number;
+  isFavourite: boolean;
 }
 
 interface ResumeHeroCarouselProps {
@@ -101,12 +103,20 @@ function ResumeCard({ entry }: { entry: ResumeEntry }) {
       />
       <div className="relative flex flex-col gap-4">
         <div className="flex items-start justify-between gap-3">
-          <ModuleIcon
-            icon={entry.moduleIcon}
-            className="h-9 w-9"
-            style={{ color: entry.colorHex }}
-            strokeWidth={1.75}
-          />
+          <div className="flex items-center gap-2">
+            <ModuleIcon
+              icon={entry.moduleIcon}
+              className="h-9 w-9"
+              style={{ color: entry.colorHex }}
+              strokeWidth={1.75}
+            />
+            <FavouriteButton
+              moduleId={entry.moduleId}
+              isFavourite={entry.isFavourite}
+              style={{ color: entry.colorHex }}
+              size={20}
+            />
+          </div>
           <Link
             href={`/learn/${entry.moduleId}/${entry.submoduleId}/${entry.lessonId}`}
             className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-md px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90"
