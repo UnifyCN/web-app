@@ -36,6 +36,7 @@ export function PracticeFeedbackModal({
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        if (state?.status === "loading") return;
         onClose();
         return;
       }
@@ -66,7 +67,7 @@ export function PracticeFeedbackModal({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
     };
-  }, [open, onClose]);
+  }, [open, onClose, state?.status]);
 
   if (!open) return null;
 

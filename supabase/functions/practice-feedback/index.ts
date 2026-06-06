@@ -165,7 +165,7 @@ Student's answer: "${userAnswer.trim()}"`;
 
     return jsonResponse({ feedback });
   } catch (error) {
-    if (error.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       return jsonResponse({ error: 'Request timed out' }, 504);
     }
     console.error('practice-feedback error:', error);
