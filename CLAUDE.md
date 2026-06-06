@@ -43,14 +43,20 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
   realtime, and circle chat remain deferred — see `BACKLOG.md`.)
 - **Navigation (PR #14)** — the sidebar mirrors the mobile nav order + icons, and
   the Circles tab is hidden to match the mobile launch navigation.
-- **Companion AI (PR #15)** — the `rag-query` **Supabase Edge Function** (Deno) is
-  deployed. The RAG knowledge base is seeded (32 docs / 350 chunks,
-  `text-embedding-3-small`, 1536-dim) with RLS + grants on the KB tables. A daily
-  rate-limit RPC caps usage at 6 messages/day (`check_and_increment_chatbot_usage`)
-  and refunds the quota on failure (`decrement_chatbot_usage`).
-  **`OPENROUTER_API_KEY` is set ✅; `OPENAI_API_KEY` is currently broken ❌**
-  (wrong/expired — waiting on Savar), so end-to-end RAG retrieval can't run yet.
-- **Learn + Practice (PR #16, in progress — `feat/learn-practice`)** — section page
+- **Companion AI (PR #15 + PR #20) — fully wired to the UI.** The `rag-query`
+  **Supabase Edge Function** (Deno) is deployed and `useSendMessage` now streams the
+  real RAG answer + sources (the canned reply is gone). The KB is seeded (32 docs /
+  350 chunks, 1536-dim) with RLS + grants. **Both embeddings and the chat completion
+  go through OpenRouter** — the query vector uses `openai/text-embedding-3-small`
+  *proxied via OpenRouter* (`OPENROUTER_EMBEDDING_MODEL`), and answers run the shared
+  Gemini-2.5-Flash → DeepSeek-v4-Flash fallback chain (`_shared/openrouter.ts`). This
+  means the old broken `OPENAI_API_KEY` is **no longer a blocker** — only
+  `OPENROUTER_API_KEY` is required. A daily rate-limit RPC caps usage at **6
+  messages/day** (`check_and_increment_chatbot_usage`) and refunds the quota on
+  failure (`decrement_chatbot_usage`). PR #20 also dropped the blue squiggly
+  background, redesigned the conversation sidebar, and surfaces AI "suggested next
+  steps" in the message bubble (`messages.suggested_next_steps`).
+- **Learn + Practice (PR #16)** — section page
   redesign (Learn + Practice timeline cards in the module's colour); lesson
   pagination (`components/learn/LessonPager.tsx`); custom Sanity content-block
   renderers in `components/learn/PortableTextRenderer.tsx` (`example_box`,
@@ -63,6 +69,24 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
   on the last content page; the Practice card shows the last score with a Retake
   button, completed timeline cards keep the module colour, and Back resets the
   current question for a fresh attempt.
+- **Practice AI feedback (PR #21)** — free-text practice answers
+  (`long_answer` / `short_answer`) are graded by the `practice-feedback` **edge
+  function** (Deno, DeepSeek-v4-Flash via the shared OpenRouter chain), surfaced in
+  `components/learn/practice/PracticeFeedbackModal.tsx`. No OpenAI dependency.
+- **Post detail + comments (PR #19) — P2 done.** `app/(main)/post/[postId]/page.tsx`
+  renders the full post plus **threaded comments with replies** (`parent_comment_id`,
+  reply-to pill). Comment services live in `services/feed.ts`
+  (`getComments` / `createComment` / `deleteComment` / `likeComment` /
+  `unlikeComment`) with hooks in `hooks/useFeed.ts`; the comment-count badge links
+  into the detail page. The `post_comments` table has own-row RLS + a count-sync
+  trigger.
+- **Onboarding — 11-step mobile-parity wizard (PR #22).** `components/onboarding/`
+  now mirrors the mobile flow: name (first name) → persona → referral source →
+  arrival date → location → goals → learning interests → hobbies → learning
+  reminders → outcome preview → confirmation. New columns
+  (`first_name`, `referral_source`, `hobbies[]`, `learning_reminders`) landed via
+  `20260605120000_onboarding_extra_fields.sql`. `OnboardingEditModal` reuses the same
+  flow in "edit" mode from the profile header.
 
 ---
 
@@ -72,9 +96,14 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
   layer.** The login page (`app/(auth)/login/page.tsx`) and sidebar
   (`components/layout/Sidebar.tsx`) call `createClient()` directly. Flagged by
   CodeRabbit on PR #1 — do as a separate PR after PR #1 merges.
-- **Wire `rag-query` to the Companion UI** — blocked on a working `OPENAI_API_KEY`
-  (embeddings) from Savar; the edge function + knowledge base are already deployed.
-  Tracked as Phase 20 in `BACKLOG.md`.
+- **Internationalization / multi-language is not started on web** (mobile shipped it
+  in `multi-lang-support`). No `next-intl`/`i18next`, no `messages/` or `locales/`,
+  no language switcher. Fully feasible without the DB sandbox — tracked in
+  `BACKLOG.md` under "Feasible mobile-parity gaps".
+
+*(Done: "Wire `rag-query` to the Companion UI" — shipped in PR #20; see Build Status.
+Both embeddings and answering now run through OpenRouter, so the OpenAI-key blocker
+is resolved.)*
 
 ---
 

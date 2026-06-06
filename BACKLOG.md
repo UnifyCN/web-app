@@ -19,8 +19,10 @@ old Phase 19/20/21 entries (now folded in as P10/P11/P5).
 - **Compose post + image upload — ✅ shipped (P1, this PR).** `createPost` +
   `useCreatePost` (`services/feed.ts` / `hooks/useFeed.ts`); `CreatePostModal` is wired
   with a real groups picker and an image picker backed by `lib/supabase/uploadImage.ts`.
-- **Comments + post detail do not exist** on web at all (no route/component/service;
-  the `PostComment` type is defined but unreferenced).
+- **Post detail + comments — ✅ shipped (P2, PR #19).** `app/(main)/post/[postId]/page.tsx`
+  renders the full post with **threaded comments + replies** (`parent_comment_id`,
+  reply-to pill); comment services in `services/feed.ts` + hooks in `hooks/useFeed.ts`;
+  the `post_comments` table has own-row RLS + a count-sync trigger.
 - **Follow/unfollow are TODO no-ops** (`services/profile.ts`), so the wired "Following"
   feed can never populate from the web.
 - **Other-user profiles + highlights are mock-only** (`getUserById` → `findUser` mock).
@@ -44,7 +46,7 @@ old Phase 19/20/21 entries (now folded in as P10/P11/P5).
 | # | Phase | Why now | Depends on |
 |---|-------|---------|-----------|
 | **P1 ✅** | Compose post + image-upload utility — shipped (PR #18) | Core: users can't contribute today | — |
-| **P2** | Post detail page + comments | Core engagement loop | P1 |
+| **P2 ✅** | Post detail page + comments (threaded + replies) — shipped (PR #19) | Core engagement loop | P1 |
 | **P3** | Follow/unfollow + other-user profiles + followers/following lists | Unblocks the Following feed; social graph | — |
 | **P4** | Block & report (users + posts) | Launch/app-store safety requirement | P2, P3 |
 | **P5** | Profile editing + avatar upload (display name vs @handle) | Identity; reuses P1 upload | P1 |
@@ -53,7 +55,7 @@ old Phase 19/20/21 entries (now folded in as P10/P11/P5).
 | **P8** | Search (posts / users / groups + recent) | Discovery | P3 |
 | **P9** | Wire remaining mock-only post surfaces (saved / user / group posts) | Removes mock seams | P1–P3 |
 | **P10** | Community daily tips edge fn *(was Phase 19)* | Content freshness | — |
-| **P11** | Companion RAG wiring *(was Phase 20)* — **BLOCKED: OpenAI key** | AI value prop | external key |
+| **P11 ✅** | Companion RAG wiring *(was Phase 20)* — shipped (PR #20, via OpenRouter) | AI value prop | — |
 | **P12** | Circle chat + realtime + matching engine *(DEFERRED, large)* | Full Circles feature | schema exists |
 | **P13** | Refer-a-friend / referrals *(DEFERRED, growth)* | Growth loop | P3 |
 
@@ -70,15 +72,14 @@ component"); shared **image-upload utility** (Supabase Storage bucket + `lib/sup
 uploadImage.ts`, or port the `profile-picture-upload` edge fn) reused by P5; image
 picker for `post_image_urls`.
 
-**P2 — Post detail page + comments**
-Mobile: `app/post-details.tsx`, `app/(tabs)/Gather/PostCommentItem.tsx`,
-`services/posts/{createComment,deleteComment,likeComment}.ts`. Web gap: no detail route,
-no comment UI/service; `PostComment` type unused. Scope: verify/add a **web**
-`post_comments` table migration (own-row RLS + grants); new route
-`app/(main)/post/[postId]/page.tsx` rendering the full post + threaded comments
-(`parent_comment_id`) with comment compose, delete-own, like-comment, delete-own-post;
-service fns `getPost`/`getComments`/`createComment`/`deleteComment`/`likeComment`/
-`deletePost` + hooks; make the `commentCount` badge link into the detail page.
+**P2 — Post detail page + comments — ✅ SHIPPED (PR #19)**
+Delivered: route `app/(main)/post/[postId]/page.tsx` renders the full post + **threaded
+comments with replies** (`parent_comment_id`, reply-to pill); service fns
+`getComments`/`createComment`/`deleteComment`/`likeComment`/`unlikeComment` in
+`services/feed.ts` + hooks in `hooks/useFeed.ts`; the `commentCount` badge links into
+the detail page; `post_comments` table has own-row RLS + a count-sync trigger.
+*Remaining parity nice-to-haves (small, single-DB):* @mention prefixes inside replies
+(mobile `feat/comment-reply-chains`) and delete-own-post entry point from the detail page.
 
 **P3 — Follow/unfollow + other-user profiles + followers/following lists**
 Mobile: `services/users/followUser.ts`, `getFollowStatus.ts`, `app/followers-following.tsx`,
@@ -138,11 +139,17 @@ feed. Small — can be absorbed into P1/P2/P3 rather than run standalone.
 Port mobile's `get-daily-tip` so the web surfaces a rotating daily tip (mobile also has
 tip detail + a past-tips archive). Content/edge-fn work; no hard dependency.
 
-**P11 — Companion RAG wiring** *(was Phase 20)* — **BLOCKED**
-The `rag-query` edge fn + knowledge base are deployed; the daily rate-limit RPC is in
-place. Replace the canned reply in `useSendMessage` with the streamed RAG answer +
-sources and remove the squiggly background. **Blocked on a working `OPENAI_API_KEY`
-(embeddings) from Savar.**
+**P11 — Companion RAG wiring** *(was Phase 20)* — ✅ SHIPPED (PR #20)
+`useSendMessage` now streams the real RAG answer + sources from the `rag-query` edge fn
+(the canned reply is gone) and the squiggly background was removed. **The OpenAI-key
+blocker is resolved:** both the query embedding (`openai/text-embedding-3-small`
+*proxied via OpenRouter*) and the chat completion (Gemini-2.5-Flash → DeepSeek-v4-Flash
+fallback) run through `OPENROUTER_API_KEY`, so no working `OPENAI_API_KEY` is needed.
+PR #20 also raised the free limit to 6/day, redesigned the conversation sidebar, and
+surfaces AI "suggested next steps" in the bubble (`messages.suggested_next_steps`).
+*Deferred parity:* dynamic/personalized starter chips that refresh on tap (mobile
+`feat/companion-dynamic-chips`) — web chips are still a static array. See "Feasible
+mobile-parity gaps" below.
 
 **P12 — Circle chat + realtime + matching engine** *(DEFERRED, large)*
 Web wired only the EntryCard status + waitlist join/leave. Remaining: the matching RPC
@@ -173,7 +180,72 @@ infinite scroll on the home feed; the int4/int8 + own-DB cross-join caveat; grow
 
 ---
 
+## Feasible mobile-parity gaps (no shared social graph / DB sandbox needed)
+
+Surfaced from a mobile-repo sweep (`UnifyCN/mobile-app`, merged PRs #1–#276, 2026-06-06)
+cross-referenced against web `main` (through PR #22). These are features that exist on
+**mobile but are missing/incomplete on web** *and* are buildable on the web app's own
+Supabase project alone — they don't depend on the cross-DB social graph (follow/notify),
+so they're unblocked today. Ordered roughly by value. Scope each into its own PR.
+
+| # | Gap | Mobile origin | Feasibility note |
+|---|-----|---------------|------------------|
+| **G1** | **Internationalization / multi-language** — no `next-intl`/`i18next`, no `locales/`, no language switcher exists on web at all | `multi-lang-support` (#261) | Largest item; pure UI/content + a locale store. No social graph. Pick a lib, extract strings, add a switcher (persist to profile/localStorage). |
+| **G2** | **Learn: text-selection highlights** — select text in a lesson → persist a highlight | `feat/learn-text-selection-highlights` (#222) | Single-user. `lesson_highlights` + `merge_highlights` RPC already in the schema ref; verify the **web** table/RLS exists, then wire selection UI + service. *(Previously mis-filed under social-P3 — it needs no social graph.)* |
+| **G3** | **Learn: save/favourite lessons UI** — star/save a module or lesson | `learn-saves` (#225) | **Backend already done:** `learn_favourites` service in `services/learn.ts` + `useToggleFavouriteModule` hook + `Module.isFavourite`. Just **no UI calls them** — add a star toggle on the module card/detail and a "Saved" filter. |
+| **G4** | **Post image full-screen viewer / lightbox** — tap a post image to enlarge | `image-viewer` (#231) | Pure frontend. Compose + `post_image_urls` already ship (P1); add a modal lightbox in `PostCard`/post detail. |
+| **G5** | **Rich-text rendering in posts** — posts currently render plain text only | `image-uploading` (#208), `rich-text` (#241) | Content rendering; reuse the lesson `PortableTextRenderer`/markdown approach. No social graph. |
+| **G6** | **Checklist: drag-and-drop reordering** | `feat/checklist-drag-reorder` (#249) | Single-user ordering; needs a `@dnd-kit` (or similar) integration + a per-user order column/persist. |
+| **G7** | **Checklist: confetti on completion** | `feature/checklist-confetti-animation` (#251) | Pure frontend polish (checkbox-pop animation already exists; add confetti on section/all-complete). |
+| **G8** | **Companion: dynamic personalized starter chips** — chips that refresh on tap, generated from the profile | `feat/companion-dynamic-chips` (#257) | Web chips are a **static array** (`StarterPromptChips.tsx`). Single-user personalization; can reuse the OpenRouter plumbing already deployed. |
+| **G9** | **First-name personalization** — onboarding now collects `first_name`, but the Learn greeting still uses `@username` | `feat/personalized-name-greeting` (#270) | Tiny: thread `first_name` into the Learn (and optionally Home) greeting. |
+| **G10** | **Apple Sign-In** — login button is a visual stub (`onClick`-less) | `feature/apple-sign-in` (#210) | Web auth; second-priority per CLAUDE.md. Wire `signInWithOAuth({ provider: 'apple' })` + callback, mirroring Google. |
+
+**Adjacent items that DO need the social graph (kept in the P-roadmap, not here):**
+follow/unfollow + other-user profiles (P3), notifications write-side (P7), user search
+(P8), block/report (P4), referrals/auto-follow (P13), show-mutuals.
+
+**Partial-credit corrections from the same sweep:**
+- **Profile badges — already BUILT on web** (persona badge + 5-segment stage indicator +
+  city/province), so mobile's `feat/profile-badges` (#176) is not a gap.
+- **Account settings (P6)** stays a gap, but its *single-user* slices — **delete account**
+  (`deleteAccount` #179) and **legal/privacy/community-guidelines pages**
+  (`feature/legal-and-guidelines` #140) — need no social graph and can land independently
+  of the rest of P6.
+- **Profile editing (P5):** `OnboardingEditModal` (re-run onboarding from the profile
+  header) shipped with PR #22; what remains is a distinct editable **display name** vs the
+  immutable `@handle`, and **avatar upload** (reuse the P1 `uploadImage` utility) — both
+  single-user/feasible.
+
+---
+
 ## Shipped / in-flight
+
+**PR #22 — Onboarding: 11-step mobile-parity wizard (`feat/onboarding-update`)**
+`components/onboarding/` now mirrors the mobile flow end-to-end: name (first name) →
+persona → referral source → arrival date → location → goals → learning interests →
+hobbies → learning reminders → outcome preview → confirmation. Added columns
+`first_name` / `referral_source` / `hobbies[]` / `learning_reminders` via
+`20260605120000_onboarding_extra_fields.sql`; `OnboardingEditModal` reuses the flow in
+"edit" mode from the profile header. *(Note: greeting still uses `@username`, not the
+new `first_name` — see G9.)*
+
+**PR #21 — Learn: practice AI feedback (`feat/practice-feedback`)**
+Free-text practice answers (`long_answer` / `short_answer`) are graded by the new
+`practice-feedback` edge function (DeepSeek-v4-Flash via the shared OpenRouter chain),
+shown in `components/learn/practice/PracticeFeedbackModal.tsx`. No OpenAI dependency.
+*(Closes the old Learn backlog item "AI feedback on free-text practice answers".)*
+
+**PR #20 — Companion fixes: OpenRouter RAG + 6/day + sidebar (`feat/companion-fix`)**
+`useSendMessage` now streams the real RAG answer + sources (canned reply removed);
+embeddings + answering both run through OpenRouter (so the broken `OPENAI_API_KEY` is
+no longer a blocker); free limit raised 3→6/day; blue squiggly background dropped;
+conversation sidebar redesigned; AI "suggested next steps" surfaced in the bubble. (= P11.)
+
+**PR #19 — Post detail page + threaded comments (`feat/post-detail`)**
+New route `app/(main)/post/[postId]/page.tsx` + comment services/hooks in
+`services/feed.ts` / `hooks/useFeed.ts`; `post_comments` table with own-row RLS +
+count-sync trigger. (= P2.)
 
 **Phase 18 — Community: events + news (shipped on `feat/community-phase18`)**
 Events are now hard-coded from the mobile `events` table (17 BC settlement-agency
@@ -276,17 +348,21 @@ Across services/feed.ts, services/community.ts, services/checklist.ts, services/
 
 ## Learn
 
-**Learn UI polish (separate PR after Phase 7 merges):**
-- Bring animated dot/squiggle background to the Learn page (already exists in globals.css for Companion)
-- Hero carousel at top showing in-progress courses with Continue button and progress indicator (matches mobile pattern)
-- Fix filtering/search on the Learn page — currently displays but is not wired up
-- Investigate why web may show fewer modules than mobile — check GROQ query vs mobile query
+**Learn UI polish:**
+- ✅ **Hero carousel** of in-progress modules with Continue (`ResumeHeroCarousel.tsx`) — shipped.
+- ✅ **Filter/search** on the Learn page is now wired (filters the module list live) — shipped.
+- ~~Animated dot/squiggle background on Learn~~ — **dropped.** PR #20 removed the squiggly
+  background from Companion entirely, so there's no shared asset to port; skip unless product
+  re-requests it.
+- Still open: investigate why web may show fewer modules than mobile — check GROQ query vs mobile query.
 
 **Submodule landing page pattern:**
 - Mobile has a section landing page between submodule and lesson (shows section name, description, progress card with Continue). Web goes directly from submodule to lesson content. Discuss with team whether to add this route level (/learn/[moduleId]/[submoduleId] → /learn/[moduleId]/[submoduleId]/[lessonId]). Architectural change — needs team sign-off.
 
-**AI feedback on free-text practice answers**
-From Phase 16 (Practice). Free-text practice/activity answers (`long_answer` / `short_answer`) are currently un-graded — the user types and moves on. Add AI-generated feedback on these responses (likely a new edge function, reusing the Companion AI plumbing). Depends on the Companion AI key being unblocked (Phase 20).
+**AI feedback on free-text practice answers — ✅ SHIPPED (PR #21)**
+Free-text practice/activity answers (`long_answer` / `short_answer`) are graded by the
+`practice-feedback` edge function (DeepSeek-v4-Flash via the shared OpenRouter chain) and
+shown in `PracticeFeedbackModal.tsx`. Did **not** need an OpenAI key — runs on OpenRouter.
 
 **Tasks card on the section page**
 From Phase 16. The submodule section page shows a Learn → Practice activity timeline. Add a Tasks card (checklist-style) so section-relevant tasks surface alongside Learn and Practice.
