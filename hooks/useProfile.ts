@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as profile from "@/services/profile";
 
 /** React Query hooks for Profile data. */
@@ -30,4 +30,39 @@ export function useFollowUser() {
 
 export function useUnfollowUser() {
   return useMutation({ mutationFn: profile.unfollowUser });
+}
+
+/** Edit bio + pronouns; refreshes the cached current user on success. */
+export function useUpdateUserDetails() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: profile.UpdateUserDetailsInput) =>
+      profile.updateUserDetails(input),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["current-user"] }),
+  });
+}
+
+/** Refresh both the current user and the feed so author avatars update. */
+function invalidateAvatarQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ["current-user"] });
+  queryClient.invalidateQueries({ queryKey: ["feed"] });
+}
+
+/** Upload a new avatar and persist its URL on the current user. */
+export function useUpdateAvatar() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => profile.updateAvatar(file),
+    onSuccess: () => invalidateAvatarQueries(queryClient),
+  });
+}
+
+/** Remove the current user's avatar. */
+export function useRemoveAvatar() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => profile.removeAvatar(),
+    onSuccess: () => invalidateAvatarQueries(queryClient),
+  });
 }

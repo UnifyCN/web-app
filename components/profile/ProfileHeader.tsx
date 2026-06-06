@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { MapPin } from "lucide-react";
+import { useRef, useState } from "react";
+import { Camera, Loader2, MapPin, Pencil } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { StatsRow } from "./StatsRow";
 import { PersonaBadge } from "./PersonaBadge";
 import { StageIndicator } from "./StageIndicator";
 import { OnboardingEditModal } from "@/components/onboarding/OnboardingEditModal";
+import {
+  useRemoveAvatar,
+  useUpdateAvatar,
+  useUpdateUserDetails,
+} from "@/hooks/useProfile";
 import type { UserProfile } from "@/types";
 
 /* lucide-react no longer ships brand glyphs — inline minimal ones. */
@@ -50,17 +55,78 @@ export function ProfileHeader({
   const [following, setFollowing] = useState(false);
   const [editing, setEditing] = useState(false);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const updateAvatar = useUpdateAvatar();
+  const removeAvatar = useRemoveAvatar();
+  const avatarBusy = updateAvatar.isPending || removeAvatar.isPending;
+
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [bioDraft, setBioDraft] = useState("");
+  const [pronounsDraft, setPronounsDraft] = useState("");
+  const updateDetails = useUpdateUserDetails();
+
+  const openDetailsEditor = () => {
+    setBioDraft(profile.bio ?? "");
+    setPronounsDraft(profile.pronouns ?? "");
+    setEditingDetails(true);
+  };
+
+  const handleSaveDetails = () => {
+    updateDetails.mutate(
+      { bio: bioDraft, pronouns: pronounsDraft },
+      { onSuccess: () => setEditingDetails(false) },
+    );
+  };
+
+  const handleAvatarFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    // Reset so re-picking the same file still fires onChange.
+    event.target.value = "";
+    if (file) updateAvatar.mutate(file);
+  };
+
   return (
     <div className="rounded-card border border-border-card bg-surface p-5">
       <div className="flex items-start gap-4">
-        <Avatar
-          username={profile.username}
-          profilePictureUrl={profile.profilePictureUrl}
-          size={80}
-        />
+        <div className="relative shrink-0">
+          <Avatar
+            username={profile.username}
+            profilePictureUrl={profile.profilePictureUrl}
+            size={80}
+          />
+          {isOwnProfile && (
+            <>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={avatarBusy}
+                aria-label="Change profile photo"
+                className="absolute -right-1 -bottom-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-surface bg-primary text-white shadow-sm transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {avatarBusy ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                ) : (
+                  <Camera className="h-3.5 w-3.5" aria-hidden />
+                )}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarFile}
+              />
+            </>
+          )}
+        </div>
         <div className="min-w-0 flex-1">
           <h2 className="text-lg font-bold text-ink-secondary">
             {profile.username}
+            {profile.pronouns && (
+              <span className="ml-2 text-sm font-normal text-ink-placeholder">
+                {profile.pronouns}
+              </span>
+            )}
           </h2>
           <div className="mt-2">
             <StatsRow
@@ -98,6 +164,70 @@ export function ProfileHeader({
         )
       )}
 
+      {editingDetails ? (
+        <div className="mt-3 space-y-2">
+          <textarea
+            value={bioDraft}
+            onChange={(event) => setBioDraft(event.target.value)}
+            rows={3}
+            maxLength={300}
+            placeholder="Add a short bio"
+            className="w-full resize-none rounded-lg border border-border-card bg-surface px-3 py-2 text-sm text-ink-muted outline-none focus:border-primary"
+          />
+          <input
+            value={pronounsDraft}
+            onChange={(event) => setPronounsDraft(event.target.value)}
+            maxLength={30}
+            placeholder="Pronouns (e.g. she/her)"
+            className="w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-sm text-ink-muted outline-none focus:border-primary"
+          />
+          <div className="flex gap-2">
+            <Button
+              variant="primary"
+              size="sm"
+              loading={updateDetails.isPending}
+              onClick={handleSaveDetails}
+            >
+              Save
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={updateDetails.isPending}
+              onClick={() => setEditingDetails(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ) : profile.bio ? (
+        <div className="mt-3 flex items-start gap-2">
+          <p className="flex-1 text-sm whitespace-pre-line text-ink-muted">
+            {profile.bio}
+          </p>
+          {isOwnProfile && (
+            <button
+              type="button"
+              onClick={openDetailsEditor}
+              aria-label="Edit bio and pronouns"
+              className="shrink-0 cursor-pointer p-1 text-ink-placeholder transition-colors hover:text-primary"
+            >
+              <Pencil className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          )}
+        </div>
+      ) : (
+        isOwnProfile && (
+          <button
+            type="button"
+            onClick={openDetailsEditor}
+            className="mt-3 cursor-pointer text-left text-xs font-medium text-primary hover:underline"
+          >
+            Add a bio and pronouns
+          </button>
+        )
+      )}
+
       <div className="mt-3 flex gap-3 text-ink-placeholder">
         <InstagramIcon className="h-4 w-4" />
         <XIcon className="h-4 w-4" />
@@ -117,6 +247,16 @@ export function ProfileHeader({
             <Button variant="secondary" size="sm">
               Share profile
             </Button>
+            {profile.profilePictureUrl && (
+              <Button
+                variant="ghost"
+                size="sm"
+                loading={removeAvatar.isPending}
+                onClick={() => removeAvatar.mutate()}
+              >
+                Remove photo
+              </Button>
+            )}
           </>
         ) : (
           <Button

@@ -48,7 +48,7 @@ export function useFeedPosts(tab: FeedTab = "For You") {
   };
 }
 
-/* ---- Unwired mock-only hooks ----------------------------------------- */
+/* ---- Profile feeds (wired) + group posts (mock-only) ----------------- */
 
 export function useGroupPosts(groupId: number) {
   return useQuery({
@@ -57,10 +57,11 @@ export function useGroupPosts(groupId: number) {
   });
 }
 
-export function useUserPosts(userId: string) {
+export function useUserPosts(userId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: [...FEED_KEY, "user", userId],
     queryFn: () => feed.getUserPosts(userId),
+    enabled: options?.enabled ?? true,
   });
 }
 

@@ -16,6 +16,7 @@ import {
  */
 
 export const POST_IMAGES_BUCKET = "post-images";
+export const AVATARS_BUCKET = "avatars";
 
 function extensionFor(file: File): string {
   const fromName = file.name.includes(".")

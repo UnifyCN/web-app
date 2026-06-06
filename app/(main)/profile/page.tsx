@@ -1,23 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileTabs, PROFILE_TABS } from "@/components/profile/ProfileTabs";
 import { HighlightCard } from "@/components/profile/HighlightCard";
 import { PostCard } from "@/components/home/PostCard";
-import { useCurrentUser } from "@/hooks/useProfile";
-import { lessonHighlights } from "@/lib/mock/users";
-import { posts } from "@/lib/mock/posts";
+import { useCurrentUser, useLessonHighlights } from "@/hooks/useProfile";
+import { useSavedPosts, useUserPosts } from "@/hooks/useFeed";
 import type { Post } from "@/types";
 
-function PostFeed({ items, emptyText }: { items: Post[]; emptyText: string }) {
-  if (items.length === 0) {
-    return (
-      <p className="rounded-card border border-border-card bg-surface px-5 py-12 text-center text-sm text-ink-placeholder">
-        {emptyText}
-      </p>
-    );
-  }
+function TabMessage({ children }: { children: ReactNode }) {
+  return (
+    <p className="rounded-card border border-border-card bg-surface px-5 py-12 text-center text-sm text-ink-placeholder">
+      {children}
+    </p>
+  );
+}
+
+function PostFeed({
+  items,
+  isLoading,
+  emptyText,
+}: {
+  items: Post[];
+  isLoading: boolean;
+  emptyText: string;
+}) {
+  if (isLoading) return <TabMessage>Loading…</TabMessage>;
+  if (items.length === 0) return <TabMessage>{emptyText}</TabMessage>;
   return (
     <div className="divide-y divide-border-card overflow-hidden rounded-card border border-border-card bg-surface">
       {items.map((post) => (
@@ -31,6 +41,14 @@ export default function ProfilePage() {
   const [tab, setTab] = useState(PROFILE_TABS[0]);
   const { data: profile, isLoading } = useCurrentUser();
 
+  const { data: myPosts, isLoading: postsLoading } = useUserPosts(
+    profile?.id ?? "",
+    { enabled: Boolean(profile?.id) },
+  );
+  const { data: savedPosts, isLoading: savedLoading } = useSavedPosts();
+  const { data: highlights, isLoading: highlightsLoading } =
+    useLessonHighlights();
+
   if (isLoading || !profile) {
     return (
       <div className="mx-auto max-w-[680px] px-6 py-16 text-center text-sm text-ink-placeholder">
@@ -39,8 +57,9 @@ export default function ProfilePage() {
     );
   }
 
-  const myPosts = posts.filter((post) => post.author.id === profile.id);
-  const savedPosts = posts.filter((post) => post.savedByMe);
+  const posts = myPosts ?? [];
+  const saved = savedPosts ?? [];
+  const highlightItems = highlights ?? [];
 
   return (
     <div className="mx-auto max-w-[680px] px-6 py-6">
@@ -48,11 +67,7 @@ export default function ProfilePage() {
         Profile
       </h1>
 
-      <ProfileHeader
-        profile={profile}
-        postCount={myPosts.length}
-        isOwnProfile
-      />
+      <ProfileHeader profile={profile} postCount={posts.length} isOwnProfile />
 
       <div className="mt-5">
         <ProfileTabs activeTab={tab} onChange={setTab} />
@@ -60,22 +75,30 @@ export default function ProfilePage() {
 
       <div className="mt-4">
         {tab === "Posts" && (
-          <PostFeed items={myPosts} emptyText="You haven't posted yet." />
+          <PostFeed
+            items={posts}
+            isLoading={postsLoading}
+            emptyText="You haven't posted yet."
+          />
         )}
         {tab === "Saved" && (
-          <PostFeed items={savedPosts} emptyText="No saved posts yet." />
+          <PostFeed
+            items={saved}
+            isLoading={savedLoading}
+            emptyText="No saved posts yet."
+          />
         )}
         {tab === "Highlights" &&
-          (lessonHighlights.length > 0 ? (
+          (highlightsLoading ? (
+            <TabMessage>Loading…</TabMessage>
+          ) : highlightItems.length > 0 ? (
             <div className="space-y-3">
-              {lessonHighlights.map((highlight) => (
+              {highlightItems.map((highlight) => (
                 <HighlightCard key={highlight.id} highlight={highlight} />
               ))}
             </div>
           ) : (
-            <p className="rounded-card border border-border-card bg-surface px-5 py-12 text-center text-sm text-ink-placeholder">
-              No highlights yet.
-            </p>
+            <TabMessage>No highlights yet.</TabMessage>
           ))}
       </div>
     </div>

@@ -326,12 +326,57 @@ export async function getGroupPosts(groupId: number): Promise<Post[]> {
   return mockPosts.filter((post) => post.groupId === groupId);
 }
 
+/* ---- profile feeds (Supabase-wired, mock fallback) -------------------- */
+
+/**
+ * All posts authored by `userId`, newest first, enriched with per-user
+ * metadata. `posts` is public-read RLS so this works for any user; falls back
+ * to the local feed pre-config.
+ */
 export async function getUserPosts(userId: string): Promise<Post[]> {
-  return mockPosts.filter((post) => post.author.id === userId);
+  if (!isSupabaseConfigured()) {
+    return mockPosts.filter((post) => post.author.id === userId);
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POSTS_SELECT)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  const posts = (data as unknown as JoinedPostRow[]).map(rowToPost);
+  return enrichPostsWithMetadata(posts);
 }
 
+/**
+ * Posts the signed-in user has saved, most-recently-saved first. Reads the
+ * own-row `post_saves` table with the joined post embedded, so only the
+ * caller's saves come back (RLS). Falls back to the local feed pre-config.
+ */
 export async function getSavedPosts(): Promise<Post[]> {
-  return mockPosts.filter((post) => post.savedByMe);
+  if (!isSupabaseConfigured()) {
+    return mockPosts.filter((post) => post.savedByMe);
+  }
+
+  const userId = await getAuthUserId();
+  if (!userId) return mockPosts.filter((post) => post.savedByMe);
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("post_saves")
+    .select(`created_at, posts!post_id ( ${POSTS_SELECT} )`)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  const rows = (data ?? []) as unknown as { posts: JoinedPostRow | null }[];
+  const posts = rows
+    .map((row) => row.posts)
+    .filter((post): post is JoinedPostRow => post !== null)
+    .map(rowToPost);
+  return enrichPostsWithMetadata(posts);
 }
 
 /* ---- like / save mutations -------------------------------------------- */
