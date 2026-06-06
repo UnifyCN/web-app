@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { SanityBlock } from "@/types";
 
 /**
  * Merge class names with conflict resolution.
@@ -7,6 +8,23 @@ import { twMerge } from "tailwind-merge";
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * Flatten Portable Text blocks to a single plain string — concatenates each
+ * block's span text and joins blocks with newlines. Used when a plain-text
+ * representation is needed (e.g. an LLM prompt) rather than rendered markup.
+ */
+export function portableTextToPlain(blocks: SanityBlock[] | undefined): string {
+  if (!Array.isArray(blocks)) return "";
+  return blocks
+    .map((block) =>
+      (block.children ?? [])
+        .map((span) => span.text ?? "")
+        .join(""),
+    )
+    .join("\n")
+    .trim();
 }
 
 /**

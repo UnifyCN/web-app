@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as learn from "@/services/learn";
 import type {
+  PracticeFeedbackInput,
   UpsertLessonQuizProgressInput,
   UpsertPracticeProgressInput,
 } from "@/services/learn";
@@ -84,6 +85,18 @@ export function useUpsertPracticeProgress() {
       // Section/module progress surfaces may reflect quiz completion.
       queryClient.invalidateQueries({ queryKey: MODULES_KEY });
     },
+  });
+}
+
+/**
+ * AI coach feedback for a free-text practice answer (practice-feedback edge
+ * function). Feedback is ephemeral — held in component state, not persisted —
+ * so there's no cache to invalidate.
+ */
+export function usePracticeFeedback() {
+  return useMutation({
+    mutationFn: (input: PracticeFeedbackInput) =>
+      learn.requestPracticeFeedback(input),
   });
 }
 
