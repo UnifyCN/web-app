@@ -8,11 +8,11 @@ import { callOpenRouter } from '../_shared/openrouter.ts';
 // ============================================================================
 
 const STAGE_DESCRIPTIONS: Record<string, string> = {
-  '0': 'pre-arrival or just arrived (0-1 months)',
-  '1': 'settling in (1-3 months)',
-  '2': 'building foundations (3-6 months)',
-  '3': 'establishing roots (6-12 months)',
-  '4': 'well-established (12+ months)',
+  '0': 'not arrived in Canada yet',
+  '1': 'recently arrived (0-3 months)',
+  '2': 'settling in (3-12 months)',
+  '3': 'established (1-3 years)',
+  '4': 'well-established (3+ years)',
 };
 
 const PERSONA_DESCRIPTIONS: Record<string, string> = {

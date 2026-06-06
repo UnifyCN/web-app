@@ -34,9 +34,16 @@ export function portableTextToPlain(blocks: SanityBlock[] | undefined): string {
  */
 export function externalHref(link: string | null | undefined): string | null {
   if (!link) return null;
-  return link.startsWith("https://") || link.startsWith("http://")
-    ? link
-    : null;
+  try {
+    // Parse (not startsWith) so mixed-case protocols and whitespace-padded
+    // URLs validate, and javascript:/data:/relative inputs are rejected.
+    const url = new URL(link.trim());
+    return url.protocol === "http:" || url.protocol === "https:"
+      ? url.href
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

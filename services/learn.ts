@@ -110,7 +110,12 @@ function computeModulePercent(
 const mockFavouriteModuleIds = new Set<string>();
 
 export async function getModules(): Promise<LearnModuleView[]> {
-  if (!isSanityConfigured()) return mockModules;
+  if (!isSanityConfigured()) {
+    return mockModules.map((m) => ({
+      ...m,
+      isFavourite: mockFavouriteModuleIds.has(m._id),
+    }));
+  }
 
   const sanityModules = await sanityClient.fetch<SanityModule[]>(
     MODULES_LIST_QUERY,
@@ -186,7 +191,12 @@ export async function getModules(): Promise<LearnModuleView[]> {
 export async function getModule(
   moduleId: string,
 ): Promise<LearnModuleView | undefined> {
-  if (!isSanityConfigured()) return getMockModuleById(moduleId);
+  if (!isSanityConfigured()) {
+    const mock = getMockModuleById(moduleId);
+    return mock
+      ? { ...mock, isFavourite: mockFavouriteModuleIds.has(moduleId) }
+      : mock;
+  }
 
   const sanityModule = await sanityClient.fetch<SanityModule | null>(
     MODULE_DETAIL_QUERY,

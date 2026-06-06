@@ -3,6 +3,7 @@
 import { Lightbulb } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { useDailyTip } from "@/hooks/useDailyTip";
+import { externalHref } from "@/lib/utils";
 
 /**
  * Personalized daily tip, shown at the top of the Community → "News & Tips"
@@ -41,17 +42,24 @@ export function DailyTipCard() {
       </p>
       {tip.sources && tip.sources.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-          {tip.sources.map((s) => (
-            <a
-              key={s.url}
-              href={s.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-medium text-primary underline-offset-2 hover:underline"
-            >
-              {s.documentTitle}
-            </a>
-          ))}
+          {tip.sources.map((s) => {
+            const href = externalHref(s.url);
+            return href ? (
+              <a
+                key={s.url}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+              >
+                {s.documentTitle}
+              </a>
+            ) : (
+              <span key={s.url} className="text-xs font-medium text-ink-muted">
+                {s.documentTitle}
+              </span>
+            );
+          })}
         </div>
       )}
     </section>

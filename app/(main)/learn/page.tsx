@@ -105,8 +105,9 @@ export default function LearnPage() {
   const filteredNotStarted = notStartedModules.filter(matchesFilters);
 
   // Prefer the onboarding first name; fall back to @username, then a neutral greeting.
-  const greeting =
-    user?.onboarding?.firstName?.trim() || user?.username?.trim() || "there";
+  const firstName = user?.onboarding?.firstName?.trim();
+  const username = user?.username?.trim();
+  const greeting = firstName || (username ? `@${username}` : "there");
 
   const modulesCompleted = decoratedModules.filter(
     (m) => m.status === "completed",

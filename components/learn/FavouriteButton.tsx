@@ -44,7 +44,7 @@ export function FavouriteButton({
       aria-pressed={isFavourite}
       aria-label={isFavourite ? "Remove from saved" : "Save module"}
       className={cn(
-        "inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full p-1 transition-transform hover:scale-110 active:scale-95 disabled:cursor-default",
+        "inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full p-1 disabled:cursor-default",
         className,
       )}
       style={style}
