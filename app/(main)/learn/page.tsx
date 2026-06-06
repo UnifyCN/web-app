@@ -25,6 +25,7 @@ export default function LearnPage() {
   const userQuery = useCurrentUser();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [savedOnly, setSavedOnly] = useState(false);
 
   const user = userQuery.data;
 
@@ -87,6 +88,7 @@ export default function LearnPage() {
             colorHex: m.colorTheme?.hex ?? "#9F9D9D",
             sectionNumber: i + 1,
             totalSections: subs.length,
+            isFavourite: m.isFavourite,
           });
           break;
         }
@@ -97,15 +99,15 @@ export default function LearnPage() {
 
   const progresses = progressesQuery.data ?? {};
 
-  const filteredInProgress = inProgressModules.filter((m) =>
-    matchesSearch(m, searchQuery),
-  );
-  const filteredNotStarted = notStartedModules.filter((m) =>
-    matchesSearch(m, searchQuery),
-  );
+  const matchesFilters = (m: LearnModuleView) =>
+    matchesSearch(m, searchQuery) && (!savedOnly || m.isFavourite);
+  const filteredInProgress = inProgressModules.filter(matchesFilters);
+  const filteredNotStarted = notStartedModules.filter(matchesFilters);
 
-  // Username is the single display identity across the app (mobile convention).
-  const greeting = user?.username?.trim() || "there";
+  // Prefer the onboarding first name; fall back to @username, then a neutral greeting.
+  const firstName = user?.onboarding?.firstName?.trim();
+  const username = user?.username?.trim();
+  const greeting = firstName || (username ? `@${username}` : "there");
 
   const modulesCompleted = decoratedModules.filter(
     (m) => m.status === "completed",
@@ -155,7 +157,9 @@ export default function LearnPage() {
             filteredInProgress.length === 0 &&
             filteredNotStarted.length === 0 && (
               <p className="text-sm text-ink-muted">
-                No modules match your search.
+                {savedOnly
+                  ? "No saved modules yet — tap the star on a module to save it."
+                  : "No modules match your search."}
               </p>
             )}
         </div>
@@ -167,6 +171,8 @@ export default function LearnPage() {
             lessonsCompleted={lessonsCompleted}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            savedOnly={savedOnly}
+            onSavedOnlyChange={setSavedOnly}
           />
         </div>
       </div>

@@ -8,6 +8,7 @@ import { GroupCard } from "@/components/community/GroupCard";
 import { MyGroupsStrip } from "@/components/community/MyGroupsStrip";
 import { EventCard } from "@/components/community/EventCard";
 import { NewsArticleItem } from "@/components/community/NewsArticleItem";
+import { DailyTipCard } from "@/components/community/DailyTipCard";
 import { CirclesEntryCard } from "@/components/community/CirclesEntryCard";
 import { RequestGroupModal } from "@/components/community/RequestGroupModal";
 import {
@@ -150,23 +151,31 @@ export default function CommunityPage() {
         )}
 
         {activeTab === TAB_NEWS && (
-          newsQuery.isLoading ? (
-            <p className="py-12 text-center text-sm text-ink-muted">Loading…</p>
-          ) : newsQuery.error ? (
-            <p role="alert" className="py-12 text-center text-sm text-destructive">
-              Couldn&apos;t load news.
-            </p>
-          ) : newsItems.length > 0 ? (
-            <div className="divide-y divide-border-card rounded-card border border-border-card bg-surface px-4">
-              {newsItems.map((item) => (
-                <NewsArticleItem key={item.id} item={item} />
-              ))}
-            </div>
-          ) : (
-            <p className="py-12 text-center text-sm text-ink-placeholder">
-              No news yet.
-            </p>
-          )
+          <div className="space-y-4">
+            <DailyTipCard />
+            {newsQuery.isLoading ? (
+              <p className="py-12 text-center text-sm text-ink-muted">
+                Loading…
+              </p>
+            ) : newsQuery.error ? (
+              <p
+                role="alert"
+                className="py-12 text-center text-sm text-destructive"
+              >
+                Couldn&apos;t load news.
+              </p>
+            ) : newsItems.length > 0 ? (
+              <div className="divide-y divide-border-card rounded-card border border-border-card bg-surface px-4">
+                {newsItems.map((item) => (
+                  <NewsArticleItem key={item.id} item={item} />
+                ))}
+              </div>
+            ) : (
+              <p className="py-12 text-center text-sm text-ink-placeholder">
+                No news yet.
+              </p>
+            )}
+          </div>
         )}
 
         {activeTab === TAB_CIRCLES && (

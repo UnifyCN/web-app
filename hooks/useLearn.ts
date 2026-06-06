@@ -137,8 +137,10 @@ interface ToggleFavouriteInput {
 }
 
 /**
- * Optimistic toggle on the modules list cache: flips the matching module's
- * `isFavourite` immediately. Restores on error, invalidates on success.
+ * Optimistic toggle on the modules list cache AND the single-module detail
+ * cache (`["modules", id]`, used by the module detail page): flips the matching
+ * module's `isFavourite` immediately. Restores both on error. Invalidating
+ * `MODULES_KEY` also refreshes the detail query via React Query's prefix match.
  */
 export function useToggleFavouriteModule() {
   const queryClient = useQueryClient();
@@ -146,24 +148,42 @@ export function useToggleFavouriteModule() {
     void,
     Error,
     ToggleFavouriteInput,
-    { previous: LearnModuleView[] | undefined }
+    {
+      previousList: LearnModuleView[] | undefined;
+      previousDetail: LearnModuleView | undefined;
+      moduleKey: readonly unknown[];
+    }
   >({
     mutationFn: ({ moduleId, isFavourite }) =>
       learn.toggleFavouriteModule(moduleId, isFavourite),
     onMutate: async ({ moduleId, isFavourite }) => {
+      const moduleKey = [...MODULES_KEY, moduleId];
+      // Cancelling MODULES_KEY prefix-matches the detail query too.
       await queryClient.cancelQueries({ queryKey: MODULES_KEY });
-      const previous =
+      const previousList =
         queryClient.getQueryData<LearnModuleView[]>(MODULES_KEY);
+      const previousDetail =
+        queryClient.getQueryData<LearnModuleView>(moduleKey);
       queryClient.setQueryData<LearnModuleView[]>(MODULES_KEY, (prev) =>
         (prev ?? []).map((m) =>
           m._id === moduleId ? { ...m, isFavourite } : m,
         ),
       );
-      return { previous };
+      if (previousDetail) {
+        queryClient.setQueryData<LearnModuleView>(moduleKey, {
+          ...previousDetail,
+          isFavourite,
+        });
+      }
+      return { previousList, previousDetail, moduleKey };
     },
     onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(MODULES_KEY, context.previous);
+      if (!context) return;
+      if (context.previousList) {
+        queryClient.setQueryData(MODULES_KEY, context.previousList);
+      }
+      if (context.previousDetail) {
+        queryClient.setQueryData(context.moduleKey, context.previousDetail);
       }
     },
     onSuccess: () => {

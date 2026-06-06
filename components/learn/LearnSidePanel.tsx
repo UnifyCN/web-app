@@ -1,6 +1,7 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LearnSidePanelProps {
   greeting: string;
@@ -8,6 +9,8 @@ interface LearnSidePanelProps {
   lessonsCompleted: number;
   searchQuery: string;
   onSearchChange: (value: string) => void;
+  savedOnly: boolean;
+  onSavedOnlyChange: (value: boolean) => void;
 }
 
 export function LearnSidePanel({
@@ -16,6 +19,8 @@ export function LearnSidePanel({
   lessonsCompleted,
   searchQuery,
   onSearchChange,
+  savedOnly,
+  onSavedOnlyChange,
 }: LearnSidePanelProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -51,6 +56,23 @@ export function LearnSidePanel({
             className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-placeholder"
           />
         </label>
+        <button
+          type="button"
+          onClick={() => onSavedOnlyChange(!savedOnly)}
+          aria-pressed={savedOnly}
+          className={cn(
+            "mt-3 flex w-full cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+            savedOnly
+              ? "border-primary bg-primary-bg text-primary"
+              : "border-border-card text-ink-muted hover:bg-surface-gray",
+          )}
+        >
+          <Star
+            className={cn("h-4 w-4", savedOnly && "fill-current")}
+            aria-hidden
+          />
+          {savedOnly ? "Showing saved" : "Saved only"}
+        </button>
       </section>
     </div>
   );

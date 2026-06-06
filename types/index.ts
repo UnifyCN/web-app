@@ -145,6 +145,26 @@ export interface NewsItem {
   link: string | null;
 }
 
+/** A reference behind a daily tip (when KB-grounded). */
+export interface DailyTipSource {
+  documentTitle: string;
+  url: string;
+}
+
+/**
+ * Per-user, per-day personalized settlement tip from the `get-daily-tip` edge
+ * function (surfaced on the Community → "News & Tips" tab).
+ */
+export interface DailyTip {
+  id: string | number;
+  category: string;
+  title: string;
+  description: string;
+  tipText: string;
+  date: string;
+  sources: DailyTipSource[] | null;
+}
+
 export type CircleStatus = "default" | "waiting" | "in_circle";
 
 export interface CommunityCircle {

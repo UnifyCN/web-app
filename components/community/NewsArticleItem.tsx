@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
-import { formatRelativeTime } from "@/lib/utils";
+import { externalHref, formatRelativeTime } from "@/lib/utils";
 import type { NewsItem } from "@/types";
 
 /**
@@ -8,11 +8,7 @@ import type { NewsItem } from "@/types";
  * detail page, so when the item has a source URL the whole row links out.
  */
 export function NewsArticleItem({ item }: { item: NewsItem }) {
-  const href =
-    item.link &&
-    (item.link.startsWith("https://") || item.link.startsWith("http://"))
-      ? item.link
-      : null;
+  const href = externalHref(item.link);
 
   const body = (
     <>
