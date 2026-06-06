@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StepHeading } from "../StepHeading";
 import type { OnboardingStepProps } from "../types";
@@ -19,8 +19,11 @@ const MONTHS = [
 ];
 
 const SELECT_CLASS =
-  "h-11 w-full rounded-lg border border-border-card bg-surface px-3 text-sm text-ink-muted " +
+  "h-11 w-full appearance-none rounded-lg border border-border-card bg-surface px-3 pr-10 text-sm text-ink-muted " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50";
+
+const CHEVRON_CLASS =
+  "pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder";
 
 export function ArrivalDateStep({ draft, update }: OnboardingStepProps) {
   const thisYear = new Date().getFullYear();
@@ -35,43 +38,49 @@ export function ArrivalDateStep({ draft, update }: OnboardingStepProps) {
       />
 
       <div className="mt-5 grid grid-cols-2 gap-3">
-        <select
-          aria-label="Arrival month"
-          className={SELECT_CLASS}
-          value={draft.arrivalMonth ?? ""}
-          disabled={draft.notArrived}
-          onChange={(e) =>
-            update({
-              arrivalMonth: e.target.value ? Number(e.target.value) : null,
-            })
-          }
-        >
-          <option value="">Month</option>
-          {MONTHS.map((m, i) => (
-            <option key={m} value={i + 1}>
-              {m}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            aria-label="Arrival month"
+            className={SELECT_CLASS}
+            value={draft.arrivalMonth ?? ""}
+            disabled={draft.notArrived}
+            onChange={(e) =>
+              update({
+                arrivalMonth: e.target.value ? Number(e.target.value) : null,
+              })
+            }
+          >
+            <option value="">Month</option>
+            {MONTHS.map((m, i) => (
+              <option key={m} value={i + 1}>
+                {m}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className={CHEVRON_CLASS} aria-hidden />
+        </div>
 
-        <select
-          aria-label="Arrival year"
-          className={SELECT_CLASS}
-          value={draft.arrivalYear ?? ""}
-          disabled={draft.notArrived}
-          onChange={(e) =>
-            update({
-              arrivalYear: e.target.value ? Number(e.target.value) : null,
-            })
-          }
-        >
-          <option value="">Year</option>
-          {years.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            aria-label="Arrival year"
+            className={SELECT_CLASS}
+            value={draft.arrivalYear ?? ""}
+            disabled={draft.notArrived}
+            onChange={(e) =>
+              update({
+                arrivalYear: e.target.value ? Number(e.target.value) : null,
+              })
+            }
+          >
+            <option value="">Year</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className={CHEVRON_CLASS} aria-hidden />
+        </div>
       </div>
 
       <button

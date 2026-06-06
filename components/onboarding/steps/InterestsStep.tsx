@@ -10,7 +10,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { INTEREST_OPTIONS } from "@/lib/onboarding/constants";
-import { SelectableCard } from "../SelectableCard";
+import { CARD_COLORS, SelectableCard } from "../SelectableCard";
 import { StepHeading } from "../StepHeading";
 import type { OnboardingStepProps } from "../types";
 
@@ -41,13 +41,14 @@ export function InterestsStep({ draft, update }: OnboardingStepProps) {
         subtitle="Choose the topics you want to learn about."
       />
       <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-        {INTEREST_OPTIONS.map((opt) => (
+        {INTEREST_OPTIONS.map((opt, i) => (
           <SelectableCard
             key={opt.value}
             selected={draft.learningInterests.includes(opt.value)}
             onToggle={() => toggle(opt.value)}
             label={opt.label}
             icon={INTEREST_ICON[opt.value]}
+            color={CARD_COLORS[i % CARD_COLORS.length]}
           />
         ))}
       </div>

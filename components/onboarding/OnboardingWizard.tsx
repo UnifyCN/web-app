@@ -23,7 +23,7 @@ export function OnboardingWizard() {
         <div className="mb-5 flex justify-center">
           <UnifyLogo variant="lockup" size={40} priority />
         </div>
-        <div className="flex max-h-[85vh] flex-col rounded-card border border-border-card bg-surface p-6 shadow-lg sm:p-8">
+        <div className="flex max-h-[85vh] flex-col overflow-hidden rounded-card border border-border-card bg-surface p-6 shadow-lg sm:p-8">
           <OnboardingFlow mode="onboard" onComplete={onComplete} />
         </div>
       </div>
