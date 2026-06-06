@@ -114,7 +114,7 @@ export function OnboardingFlow({
     <div className="flex min-h-0 flex-1 flex-col">
       <StepProgress current={index} total={steps.length} />
 
-      <div className="mt-6 -mx-2 min-h-0 flex-1 overflow-y-auto px-2">
+      <div className="mt-4 -mx-2 -mb-2 min-h-0 flex-1 overflow-y-auto p-2">
         <Current draft={draft} update={update} mode={mode} />
       </div>
 
