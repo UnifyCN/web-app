@@ -117,8 +117,20 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
     if (!canPost || submitting) return;
     setSubmitting(true);
     setError(null);
+
+    // Upload first so image validation errors (size / type) surface their
+    // specific message, separate from a generic post-create failure.
+    let postImageUrls: string[];
     try {
-      const postImageUrls = await uploadPostImages(images.map((i) => i.file));
+      postImageUrls = await uploadPostImages(images.map((i) => i.file));
+    } catch (err) {
+      console.error("image upload failed", err);
+      setError(err instanceof Error ? err.message : "Couldn't upload images.");
+      setSubmitting(false);
+      return;
+    }
+
+    try {
       await createPost.mutateAsync({
         title,
         content: body,

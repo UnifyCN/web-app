@@ -46,6 +46,11 @@ interface ProfileHeaderProps {
   isOwnProfile: boolean;
 }
 
+/** Readable text for a failed mutation, falling back when there's no message. */
+function errorText(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 /** Profile header card — avatar, stats, persona, stage, and action buttons. */
 export function ProfileHeader({
   profile,
@@ -66,10 +71,17 @@ export function ProfileHeader({
   const updateDetails = useUpdateUserDetails();
 
   const openDetailsEditor = () => {
+    updateDetails.reset(); // clear any prior error so it doesn't reappear
     setBioDraft(profile.bio ?? "");
     setPronounsDraft(profile.pronouns ?? "");
     setEditingDetails(true);
   };
+
+  const avatarError = updateAvatar.isError
+    ? errorText(updateAvatar.error, "Couldn't update your photo.")
+    : removeAvatar.isError
+      ? errorText(removeAvatar.error, "Couldn't remove your photo.")
+      : null;
 
   const handleSaveDetails = () => {
     updateDetails.mutate(
@@ -138,6 +150,12 @@ export function ProfileHeader({
         </div>
       </div>
 
+      {avatarError && (
+        <p className="mt-2 text-xs text-destructive" role="alert">
+          {avatarError}
+        </p>
+      )}
+
       {profile.onboarding ? (
         <>
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -199,6 +217,11 @@ export function ProfileHeader({
               Cancel
             </Button>
           </div>
+          {updateDetails.isError && (
+            <p className="text-xs text-destructive" role="alert">
+              {errorText(updateDetails.error, "Couldn't save your changes.")}
+            </p>
+          )}
         </div>
       ) : profile.bio ? (
         <div className="mt-3 flex items-start gap-2">
