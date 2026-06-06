@@ -31,7 +31,7 @@ export function OutcomeStep() {
         {OUTCOMES.map(({ Icon, title, body }) => (
           <div
             key={title}
-            className="flex items-start gap-3 rounded-card border border-border-card bg-surface-card p-4"
+            className="flex items-start gap-3 rounded-card border border-border-card bg-surface-card p-4 shadow-sm"
           >
             <span
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-bg text-primary"
