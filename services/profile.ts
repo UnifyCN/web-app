@@ -39,7 +39,7 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     supabase
       .from("user_onboarding_profiles")
       .select(
-        "id, persona, arrival_date, city, province, stage, goals, learning_interests",
+        "id, first_name, persona, referral_source, arrival_date, city, province, stage, goals, learning_interests, hobbies, learning_reminders",
       )
       .eq("id", user.id)
       .maybeSingle(),
@@ -98,13 +98,17 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     onboarding: onb
       ? {
           id: onb.id,
+          firstName: onb.first_name ?? null,
           persona: onb.persona as Persona,
+          referralSource: onb.referral_source ?? null,
           arrivalDate: onb.arrival_date,
           city: onb.city,
           province: onb.province,
           stage: onb.stage as Stage,
           goals: onb.goals ?? [],
           learningInterests: onb.learning_interests ?? [],
+          hobbies: onb.hobbies ?? [],
+          learningReminders: onb.learning_reminders ?? false,
         }
       : null,
   };

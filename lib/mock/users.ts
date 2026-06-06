@@ -12,13 +12,17 @@ export const currentUser: UserProfile = {
   followingCount: 98,
   onboarding: {
     id: "ob-me",
+    firstName: "Maya",
     persona: "skilled_worker",
+    referralSource: "friends_family",
     arrivalDate: "2025-09-01",
     city: "Burnaby",
     province: "BC",
     stage: 2,
     goals: ["Find work in my field", "Build a local network"],
     learningInterests: ["Banking", "Housing", "Employment"],
+    hobbies: ["career_growth", "explore_canada", "personal_finance"],
+    learningReminders: true,
   },
 };
 
@@ -32,13 +36,17 @@ export const priya: UserProfile = {
   followingCount: 180,
   onboarding: {
     id: "ob-u1",
+    firstName: "Priya",
     persona: "international_student",
+    referralSource: "facebook_instagram",
     arrivalDate: "2025-01-15",
     city: "Toronto",
     province: "ON",
     stage: 2,
     goals: ["Graduate and find a job"],
     learningInterests: ["Documentation", "Employment"],
+    hobbies: ["education_learning", "food_cooking"],
+    learningReminders: true,
   },
 };
 
@@ -52,13 +60,17 @@ export const ahmed: UserProfile = {
   followingCount: 140,
   onboarding: {
     id: "ob-u2",
+    firstName: "Ahmed",
     persona: "skilled_worker",
+    referralSource: "google_search",
     arrivalDate: "2024-06-01",
     city: "Calgary",
     province: "AB",
     stage: 3,
     goals: ["Settle my family"],
     learningInterests: ["Housing", "Healthcare"],
+    hobbies: ["family_parenting", "fitness_sports"],
+    learningReminders: false,
   },
 };
 
@@ -72,13 +84,17 @@ export const mei: UserProfile = {
   followingCount: 130,
   onboarding: {
     id: "ob-u3",
+    firstName: "Mei",
     persona: "skilled_worker",
+    referralSource: "app_store",
     arrivalDate: "2026-02-10",
     city: "Vancouver",
     province: "BC",
     stage: 1,
     goals: ["Get provincial health coverage"],
     learningInterests: ["Healthcare", "Banking"],
+    hobbies: ["tech_digital", "wellness_growth"],
+    learningReminders: true,
   },
 };
 
@@ -92,13 +108,17 @@ export const carlos: UserProfile = {
   followingCount: 90,
   onboarding: {
     id: "ob-u4",
+    firstName: "Carlos",
     persona: "refugee",
+    referralSource: "news_article",
     arrivalDate: "2022-11-01",
     city: "Edmonton",
     province: "AB",
     stage: 4,
     goals: ["Apply for citizenship"],
     learningInterests: ["Daily Life", "Employment"],
+    hobbies: ["music_arts", "movies"],
+    learningReminders: false,
   },
 };
 
@@ -112,13 +132,17 @@ export const olena: UserProfile = {
   followingCount: 210,
   onboarding: {
     id: "ob-u5",
+    firstName: "Olena",
     persona: "skilled_worker",
+    referralSource: "tiktok",
     arrivalDate: "2025-04-20",
     city: "Ottawa",
     province: "ON",
     stage: 2,
     goals: ["Get my credentials recognised"],
     learningInterests: ["Employment", "Documentation"],
+    hobbies: ["career_growth", "education_learning"],
+    learningReminders: true,
   },
 };
 
