@@ -22,10 +22,10 @@ revoke execute on function public.unpin_post(bigint)                   from publ
 revoke execute on function public.get_post_metadata_batch(bigint[])    from public, anon;
 revoke execute on function public.merge_highlights(text, text, text[]) from public, anon;
 
-grant execute on function public.pin_post(bigint)                      to authenticated;
-grant execute on function public.unpin_post(bigint)                    to authenticated;
-grant execute on function public.get_post_metadata_batch(bigint[])     to authenticated;
-grant execute on function public.merge_highlights(text, text, text[])  to authenticated;
+grant execute on function public.pin_post(bigint)                      to authenticated, service_role;
+grant execute on function public.unpin_post(bigint)                    to authenticated, service_role;
+grant execute on function public.get_post_metadata_batch(bigint[])     to authenticated, service_role;
+grant execute on function public.merge_highlights(text, text, text[])  to authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
 -- 2. Trigger functions — they fire in trigger context regardless of EXECUTE
