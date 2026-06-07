@@ -109,6 +109,8 @@ export default function LearnPage() {
   const username = user?.username?.trim();
   const greeting = firstName || (username ? `@${username}` : "there");
 
+  const savedCount = decoratedModules.filter((m) => m.isFavourite).length;
+
   const modulesCompleted = decoratedModules.filter(
     (m) => m.status === "completed",
   ).length;
@@ -183,6 +185,7 @@ export default function LearnPage() {
             onSearchChange={setSearchQuery}
             savedOnly={savedOnly}
             onSavedOnlyChange={setSavedOnly}
+            savedCount={savedCount}
           />
         </div>
       </div>

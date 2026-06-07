@@ -5,7 +5,11 @@ import { StarterPromptChips } from "./StarterPromptChips";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
 import { FreeTierIndicator } from "./FreeTierIndicator";
-import type { ChatMessage, Conversation } from "@/types";
+import type {
+  ChatMessage,
+  Conversation,
+  UserOnboardingProfile,
+} from "@/types";
 
 interface ChatPanelProps {
   conversation: Conversation | null;
@@ -13,6 +17,7 @@ interface ChatPanelProps {
   isTyping: boolean;
   freeTierRemaining: number;
   onSend: (text: string) => void;
+  onboarding: UserOnboardingProfile | null;
 }
 
 function TypingIndicator() {
@@ -38,10 +43,12 @@ export function ChatPanel({
   isTyping,
   freeTierRemaining,
   onSend,
+  onboarding,
 }: ChatPanelProps) {
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState("");
+  const firstName = onboarding?.firstName?.trim();
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -93,7 +100,7 @@ export function ChatPanel({
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-6 py-16 text-center">
             <h1 className="text-2xl font-bold text-ink-secondary">
-              Ask me anything.
+              {firstName ? `Ask me anything, ${firstName}.` : "Ask me anything."}
             </h1>
             <p className="mt-1 text-sm text-ink-muted">
               Fact-checked answers about anything in Canada.
@@ -101,7 +108,10 @@ export function ChatPanel({
             <p className="mb-3 mt-8 self-start text-xs font-medium text-ink-placeholder">
               Try one of these
             </p>
-            <StarterPromptChips onSelect={handleSubmit} />
+            <StarterPromptChips
+              onSelect={handleSubmit}
+              onboarding={onboarding}
+            />
           </div>
         </div>
       )}

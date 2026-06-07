@@ -13,6 +13,7 @@ import {
   useDeleteConversation,
   useSendMessage,
 } from "@/hooks/useCompanion";
+import { useCurrentUser } from "@/hooks/useProfile";
 import type { ChatMessage } from "@/types";
 
 // Free-tier daily cap shown next to the input. Enforced server-side by the
@@ -26,6 +27,7 @@ export default function CompanionPage() {
   const conversationsQuery = useConversations();
   const messagesQuery = useConversationMessages(activeId);
   const usageQuery = useChatbotUsage();
+  const currentUser = useCurrentUser().data;
   const createConversation = useCreateConversation();
   const sendMessage = useSendMessage();
   const deleteConversation = useDeleteConversation();
@@ -88,6 +90,7 @@ export default function CompanionPage() {
         isTyping={sendMessage.isPending}
         freeTierRemaining={freeTierRemaining}
         onSend={handleSend}
+        onboarding={currentUser?.onboarding ?? null}
       />
     </div>
   );
