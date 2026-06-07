@@ -13,21 +13,38 @@ export interface ConfettiOrigin {
   y: number;
 }
 
-const BRAND_COLORS = ["#f68b26", "#ff9d40", "#ffdfc1", "#ff820b"];
+/** Brand-token CSS variables — resolved to concrete colours at call time so the
+ *  burst tracks the design system instead of hardcoding hex values. */
+const BRAND_COLOR_VARS = [
+  "--color-primary",
+  "--color-primary-light",
+  "--color-primary-subtle",
+  "--color-primary-dark",
+];
+
+function resolveBrandColors(): string[] {
+  const root = getComputedStyle(document.documentElement);
+  return BRAND_COLOR_VARS.map((name) => root.getPropertyValue(name).trim()).filter(
+    (color) => color.length > 0,
+  );
+}
 
 export function fireTaskConfetti(origin?: ConfettiOrigin): void {
-  void import("canvas-confetti").then(({ default: confetti }) => {
-    confetti({
-      particleCount: 45,
-      spread: 60,
-      startVelocity: 28,
-      gravity: 0.9,
-      decay: 0.9,
-      ticks: 120,
-      scalar: 0.85,
-      colors: BRAND_COLORS,
-      origin: origin ?? { x: 0.5, y: 0.5 },
-      disableForReducedMotion: true,
-    });
-  });
+  const colors = resolveBrandColors();
+  void import("canvas-confetti")
+    .then(({ default: confetti }) => {
+      confetti({
+        particleCount: 45,
+        spread: 60,
+        startVelocity: 28,
+        gravity: 0.9,
+        decay: 0.9,
+        ticks: 120,
+        scalar: 0.85,
+        colors: colors.length > 0 ? colors : undefined,
+        origin: origin ?? { x: 0.5, y: 0.5 },
+        disableForReducedMotion: true,
+      });
+    })
+    .catch(() => {});
 }

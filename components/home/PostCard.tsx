@@ -120,7 +120,7 @@ export function PostCard({
         >
           {post.postImageUrls.map((url, index) => (
             <button
-              key={url}
+              key={`${url}-${index}`}
               type="button"
               onClick={() => setLightboxIndex(index)}
               aria-label={`View image ${index + 1} full screen`}

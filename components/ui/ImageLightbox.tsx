@@ -70,7 +70,10 @@ export function ImageLightbox({
     >
       <button
         type="button"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
         aria-label="Close image viewer"
         className="absolute right-4 top-4 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ink/40 text-white transition-colors hover:bg-ink/60"
       >
