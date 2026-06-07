@@ -10,6 +10,8 @@ export const currentUser: UserProfile = {
   permissions: [],
   followerCount: 142,
   followingCount: 98,
+  bio: "Mechanical engineer from Lagos, settling in Metro Vancouver. Sharing what I learn about getting licensed and finding work in my field.",
+  pronouns: "she/her",
   onboarding: {
     id: "ob-me",
     firstName: "Maya",
@@ -34,6 +36,8 @@ export const priya: UserProfile = {
   permissions: [],
   followerCount: 320,
   followingCount: 180,
+  bio: "International student at U of T. Posting tips on study permits, part-time work, and budgeting in Toronto.",
+  pronouns: "she/her",
   onboarding: {
     id: "ob-u1",
     firstName: "Priya",
@@ -58,6 +62,8 @@ export const ahmed: UserProfile = {
   permissions: [],
   followerCount: 210,
   followingCount: 140,
+  bio: "Moved to Calgary with my family in 2024. Happy to help other newcomers navigate housing and healthcare.",
+  pronouns: "he/him",
   onboarding: {
     id: "ob-u2",
     firstName: "Ahmed",
@@ -82,6 +88,8 @@ export const mei: UserProfile = {
   permissions: [],
   followerCount: 175,
   followingCount: 130,
+  bio: "New to Vancouver as of early 2026. Figuring out MSP, banking, and the tech job market one step at a time.",
+  pronouns: "she/her",
   onboarding: {
     id: "ob-u3",
     firstName: "Mei",
@@ -106,6 +114,8 @@ export const carlos: UserProfile = {
   permissions: [],
   followerCount: 260,
   followingCount: 90,
+  bio: "Came to Edmonton as a refugee in 2022, now preparing for citizenship. Here to support others on the same path.",
+  pronouns: "he/him",
   onboarding: {
     id: "ob-u4",
     firstName: "Carlos",
@@ -130,6 +140,8 @@ export const olena: UserProfile = {
   permissions: [],
   followerCount: 198,
   followingCount: 210,
+  bio: "Nurse from Kyiv working on getting my credentials recognised in Ontario. Sharing the licensing journey as I go.",
+  pronouns: "she/her",
   onboarding: {
     id: "ob-u5",
     firstName: "Olena",

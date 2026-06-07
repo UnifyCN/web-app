@@ -59,6 +59,10 @@ export interface UserProfile extends User {
   onboarding: UserOnboardingProfile | null;
   followingCount: number;
   followerCount: number;
+  /** users.biography — free-text bio shown on the profile header. */
+  bio: string | null;
+  /** users.pronouns — e.g. "she/her". */
+  pronouns: string | null;
 }
 
 /* ----- Posts & feed ------------------------------------------------ */

@@ -1,6 +1,16 @@
 import type { Persona, Stage, UserProfile } from "@/types";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  createClient,
+  getAuthUserId,
+  isSupabaseConfigured,
+} from "@/lib/supabase/client";
+import {
+  MODULES_LIST_QUERY,
+  isSanityConfigured,
+  sanityClient,
+} from "@/lib/sanity";
 import { ensureUserRow } from "@/lib/supabase/ensureUserRow";
+import { AVATARS_BUCKET, uploadImage } from "@/lib/supabase/uploadImage";
 import {
   PLACEHOLDER_RE,
   claimUsername,
@@ -32,7 +42,8 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     return null;
   }
 
-  const usersSelect = "id, username, profile_picture_url, is_premium, permissions";
+  const usersSelect =
+    "id, username, profile_picture_url, is_premium, permissions, biography, pronouns";
 
   const [usersRes, { data: onb }, followerRes, followingRes] = await Promise.all([
     supabase.from("users").select(usersSelect).eq("id", user.id).maybeSingle(),
@@ -93,6 +104,8 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     profilePictureUrl: row.profile_picture_url,
     isPremium: row.is_premium,
     permissions: row.permissions ? [row.permissions] : [],
+    bio: row.biography ?? null,
+    pronouns: row.pronouns ?? null,
     followerCount: followerRes.count ?? 0,
     followingCount: followingRes.count ?? 0,
     onboarding: onb
@@ -120,8 +133,157 @@ export async function getUserById(
   return findUser(id);
 }
 
+export interface UpdateUserDetailsInput {
+  bio?: string;
+  pronouns?: string;
+}
+
+/**
+ * Update the signed-in user's free-text profile fields (bio + pronouns) on the
+ * own-row `users` table. Empty strings clear the column. No-op in the mock /
+ * env-not-configured build so the editor stays exercisable locally.
+ */
+export async function updateUserDetails(
+  input: UpdateUserDetailsInput,
+): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const supabase = createClient();
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("updateUserDetails: no auth session");
+
+  const patch: { biography?: string | null; pronouns?: string | null } = {};
+  if (input.bio !== undefined) patch.biography = input.bio.trim() || null;
+  if (input.pronouns !== undefined) {
+    patch.pronouns = input.pronouns.trim() || null;
+  }
+  if (Object.keys(patch).length === 0) return;
+
+  const { error } = await supabase.from("users").update(patch).eq("id", userId);
+  if (error) throw error;
+}
+
+/** Extract the storage object path ("<uid>/<file>") from an avatar public URL. */
+function avatarPathFromUrl(url: string | null): string | null {
+  if (!url) return null;
+  const marker = `/${AVATARS_BUCKET}/`;
+  const idx = url.indexOf(marker);
+  return idx === -1 ? null : url.slice(idx + marker.length);
+}
+
+/**
+ * Upload a new avatar to the public `avatars` bucket and store its URL on the
+ * signed-in user's row. Returns the public URL (null in the mock build).
+ */
+export async function updateAvatar(file: File): Promise<string | null> {
+  if (!isSupabaseConfigured()) return null;
+
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("updateAvatar: no auth session");
+
+  const url = await uploadImage(file, AVATARS_BUCKET, userId);
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("users")
+    .update({ profile_picture_url: url })
+    .eq("id", userId);
+  if (error) throw error;
+
+  return url;
+}
+
+/**
+ * Clear the signed-in user's avatar: best-effort delete of the stored object,
+ * then null out `profile_picture_url`. No-op in the mock build.
+ */
+export async function removeAvatar(): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const supabase = createClient();
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("removeAvatar: no auth session");
+
+  const { data: row } = await supabase
+    .from("users")
+    .select("profile_picture_url")
+    .eq("id", userId)
+    .maybeSingle();
+  const path = avatarPathFromUrl(row?.profile_picture_url ?? null);
+  if (path) await supabase.storage.from(AVATARS_BUCKET).remove([path]);
+
+  const { error } = await supabase
+    .from("users")
+    .update({ profile_picture_url: null })
+    .eq("id", userId);
+  if (error) throw error;
+}
+
+/** Slice of the Sanity module tree we need to title a highlight. */
+interface HighlightModuleRow {
+  _id: string;
+  title: string;
+  submodules:
+    | { _id: string; title: string; lessons: { _id: string; title: string }[] | null }[]
+    | null;
+}
+
+/**
+ * The signed-in user's lesson highlights, newest first. Reads the own-row
+ * `lesson_highlights` table (selected_text + Sanity lesson id) and resolves
+ * each lesson_id to its lesson + module title from the Sanity module tree.
+ * Falls back to mock highlights when Supabase/Sanity aren't configured.
+ */
 export async function getLessonHighlights(): Promise<LessonHighlight[]> {
-  return lessonHighlights;
+  if (!isSupabaseConfigured()) return lessonHighlights;
+
+  const userId = await getAuthUserId();
+  if (!userId) return lessonHighlights;
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("lesson_highlights")
+    .select("id, lesson_id, selected_text")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  const rows = (data ?? []) as {
+    id: string;
+    lesson_id: string;
+    selected_text: string;
+  }[];
+  if (rows.length === 0) return [];
+
+  // Build lesson_id -> { lessonTitle, moduleTitle } from the Sanity module tree.
+  const titleByLessonId = new Map<
+    string,
+    { lessonTitle: string; moduleTitle: string }
+  >();
+  if (isSanityConfigured()) {
+    const modules =
+      await sanityClient.fetch<HighlightModuleRow[]>(MODULES_LIST_QUERY);
+    for (const mod of modules ?? []) {
+      for (const sub of mod.submodules ?? []) {
+        for (const lesson of sub.lessons ?? []) {
+          titleByLessonId.set(lesson._id, {
+            lessonTitle: lesson.title,
+            moduleTitle: mod.title,
+          });
+        }
+      }
+    }
+  }
+
+  return rows.map((row) => {
+    const resolved = titleByLessonId.get(row.lesson_id);
+    return {
+      id: row.id,
+      text: row.selected_text,
+      lessonTitle: resolved?.lessonTitle ?? "Unknown lesson",
+      moduleTitle: resolved?.moduleTitle ?? "Unknown module",
+    };
+  });
 }
 
 export async function followUser(userId: string): Promise<void> {

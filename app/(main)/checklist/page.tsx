@@ -20,6 +20,53 @@ const PRIORITY_ORDER: Priority[] = [
   "Optional / later",
 ];
 
+/** Loading placeholder mirroring the checklist content (progress bar + 4
+ *  collapsible sections with task rows + add button). */
+function ChecklistSkeleton() {
+  const sectionRows = [3, 3, 2, 2];
+  return (
+    <div className="mt-5 animate-pulse space-y-4" aria-hidden>
+      {/* Overall progress bar */}
+      <div className="rounded-card border border-border-card bg-surface p-4">
+        <div className="flex items-center justify-between">
+          <div className="h-3.5 w-28 rounded bg-surface-gray" />
+          <div className="h-3.5 w-24 rounded bg-surface-gray" />
+        </div>
+        <div className="mt-2 h-2 w-full rounded-full bg-surface-gray" />
+      </div>
+
+      {/* Priority sections */}
+      {sectionRows.map((rows, s) => (
+        <div
+          key={s}
+          className="overflow-hidden rounded-card border border-border-card bg-surface"
+        >
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="h-8 w-8 shrink-0 rounded-lg bg-surface-gray" />
+            <div className="h-4 w-28 rounded bg-surface-gray" />
+            <div className="ml-auto h-5 w-10 rounded-full bg-surface-gray" />
+            <div className="h-4 w-4 rounded bg-surface-gray" />
+          </div>
+          <div className="divide-y divide-border-card border-t border-border-card">
+            {Array.from({ length: rows }).map((_, r) => (
+              <div key={r} className="flex gap-3 px-4 py-3">
+                <div className="mt-0.5 h-5 w-5 shrink-0 rounded-md bg-surface-gray" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3.5 w-3/4 rounded bg-surface-gray" />
+                  <div className="h-3 w-full rounded bg-surface-gray" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* Add custom task */}
+      <div className="h-11 w-full rounded-card border border-dashed border-border-card" />
+    </div>
+  );
+}
+
 export default function ChecklistPage() {
   const { data: tasks = [], isLoading, error } = useTasks();
   const toggle = useToggleTask();
@@ -70,9 +117,7 @@ export default function ChecklistPage() {
         Your step-by-step guide to settling into Canada.
       </p>
 
-      {isLoading && (
-        <p className="mt-5 text-sm text-ink-muted">Loading your checklist…</p>
-      )}
+      {isLoading && <ChecklistSkeleton />}
 
       {error && (
         <p role="alert" className="mt-5 text-sm text-destructive">

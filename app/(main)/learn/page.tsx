@@ -151,7 +151,17 @@ export default function LearnPage() {
           )}
 
           {modulesQuery.isLoading && modules.length === 0 && (
-            <p className="text-sm text-ink-muted">Loading modules…</p>
+            <section className="animate-pulse" aria-hidden>
+              <div className="h-6 w-44 rounded bg-surface-gray" />
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="aspect-[5/4] rounded-card bg-surface-gray shadow-sm"
+                  />
+                ))}
+              </div>
+            </section>
           )}
           {!modulesQuery.isLoading &&
             filteredInProgress.length === 0 &&

@@ -47,6 +47,51 @@ const CIRCLE_FEATURES = [
   },
 ];
 
+/** Loading placeholder for the Events grid (mirrors EventCard). */
+function EventsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="animate-pulse overflow-hidden rounded-card border border-border-card bg-surface"
+          aria-hidden
+        >
+          <div className="aspect-[16/9] w-full bg-surface-gray" />
+          <div className="p-4">
+            <div className="h-4 w-2/3 rounded bg-surface-gray" />
+            <div className="mt-1.5 h-5 w-20 rounded-full bg-surface-gray" />
+            <div className="mt-2.5 space-y-1.5">
+              <div className="h-3 w-5/6 rounded bg-surface-gray" />
+              <div className="h-3 w-1/2 rounded bg-surface-gray" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Loading placeholder for the "My Groups" horizontal strip. */
+function MyGroupsStripSkeleton() {
+  return (
+    <div className="animate-pulse" aria-hidden>
+      <div className="mb-2 h-4 w-24 rounded bg-surface-gray" />
+      <div className="flex gap-3 overflow-x-auto pb-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="flex w-32 shrink-0 flex-col items-center gap-2 rounded-card border border-border-card bg-surface p-3"
+          >
+            <div className="h-14 w-14 rounded-full bg-surface-gray" />
+            <div className="h-3 w-20 rounded bg-surface-gray" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function CommunityPage() {
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const [search, setSearch] = useState("");
@@ -95,10 +140,36 @@ export default function CommunityPage() {
               />
             </div>
 
-            {search.trim() === "" && <MyGroupsStrip groups={joinedGroups} />}
+            {search.trim() === "" &&
+              (joinedGroupsQuery.isLoading ? (
+                <MyGroupsStripSkeleton />
+              ) : (
+                <MyGroupsStrip groups={joinedGroups} />
+              ))}
 
             {groupsQuery.isLoading ? (
-              <p className="py-12 text-center text-sm text-ink-muted">Loading…</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="animate-pulse overflow-hidden rounded-card border border-border-card bg-surface"
+                    aria-hidden
+                  >
+                    <div className="aspect-[16/9] w-full bg-surface-gray" />
+                    <div className="p-4">
+                      <div className="h-4 w-2/3 rounded bg-surface-gray" />
+                      <div className="mt-2 space-y-1.5">
+                        <div className="h-3 w-full rounded bg-surface-gray" />
+                        <div className="h-3 w-5/6 rounded bg-surface-gray" />
+                      </div>
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="h-3 w-20 rounded bg-surface-gray" />
+                        <div className="h-8 w-14 rounded-lg bg-surface-gray" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : groupsQuery.error ? (
               <p
                 role="alert"
@@ -132,7 +203,7 @@ export default function CommunityPage() {
 
         {activeTab === TAB_EVENTS && (
           eventsQuery.isLoading ? (
-            <p className="py-12 text-center text-sm text-ink-muted">Loading…</p>
+            <EventsSkeleton />
           ) : eventsQuery.error ? (
             <p role="alert" className="py-12 text-center text-sm text-destructive">
               Couldn&apos;t load events.
@@ -154,9 +225,26 @@ export default function CommunityPage() {
           <div className="space-y-4">
             <DailyTipCard />
             {newsQuery.isLoading ? (
-              <p className="py-12 text-center text-sm text-ink-muted">
-                Loading…
-              </p>
+              <div className="divide-y divide-border-card rounded-card border border-border-card bg-surface px-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex animate-pulse gap-4 py-4"
+                    aria-hidden
+                  >
+                    <div className="h-20 w-20 shrink-0 rounded-lg bg-surface-gray sm:h-24 sm:w-24" />
+                    <div className="min-w-0 flex-1">
+                      <div className="h-4 w-16 rounded-full bg-surface-gray" />
+                      <div className="mt-2 h-3.5 w-3/4 rounded bg-surface-gray" />
+                      <div className="mt-2 space-y-1.5">
+                        <div className="h-3 w-full rounded bg-surface-gray" />
+                        <div className="h-3 w-5/6 rounded bg-surface-gray" />
+                      </div>
+                      <div className="mt-2 h-2.5 w-24 rounded bg-surface-gray" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : newsQuery.error ? (
               <p
                 role="alert"
