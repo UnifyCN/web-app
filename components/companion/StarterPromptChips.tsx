@@ -177,13 +177,25 @@ export function StarterPromptChips({
   onSelect: (question: string) => void;
   onboarding?: UserOnboardingProfile | null;
 }) {
+  const candidates = buildCandidates(onboarding);
   const picked: Candidate[] = [];
   const seen = new Set<string>();
-  for (const candidate of [...buildCandidates(onboarding), ...DEFAULT_STARTERS]) {
+  for (const candidate of candidates) {
     if (picked.length >= 4) break;
     if (seen.has(candidate.topic)) continue;
     seen.add(candidate.topic);
     picked.push(candidate);
+  }
+  // Pad from the generic defaults only when a personalized (non-null) profile
+  // produced fewer than four chips. When onboarding is null, buildCandidates
+  // already returned DEFAULT_STARTERS, so there's nothing to add.
+  if (onboarding && picked.length < 4) {
+    for (const candidate of DEFAULT_STARTERS) {
+      if (picked.length >= 4) break;
+      if (seen.has(candidate.topic)) continue;
+      seen.add(candidate.topic);
+      picked.push(candidate);
+    }
   }
 
   return (
