@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FeedTabs, FEED_TABS } from "@/components/home/FeedTabs";
 import { PostCard } from "@/components/home/PostCard";
+import { PostCardSkeleton } from "@/components/home/PostCardSkeleton";
 import { ComposeButton } from "@/components/home/ComposeButton";
 import { RightPanel } from "@/components/home/RightPanel";
 import { JoinGroupsCard } from "@/components/home/JoinGroupsCard";
@@ -61,8 +62,11 @@ export default function HomePage() {
             )}
 
             {active.isLoading ? (
-              <div className="px-5 py-14 text-center">
-                <p className="text-sm text-ink-muted">Loading…</p>
+              <div className="divide-y divide-border-card">
+                <PostCardSkeleton withImage />
+                <PostCardSkeleton />
+                <PostCardSkeleton withImage />
+                <PostCardSkeleton />
               </div>
             ) : active.error ? (
               <div className="px-5 py-14 text-center">
