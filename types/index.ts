@@ -300,12 +300,17 @@ export interface SanitySubmodule {
   title: string;
   description?: string | null;
   order: number;
+  /** Number of `practice` docs referencing this submodule (MODULE_DETAIL_QUERY).
+   * Drives the "Quick Check" row in the module table of contents. */
+  practice_count?: number;
   lessons?: SanityLesson[];
 }
 
 export interface SanityModule {
   _id: string;
   _type: "module";
+  /** Sanity system field — document creation time (for "Newest" sort). */
+  _createdAt?: string;
   title: string;
   description?: string | null;
   colorTheme?: { hex: string } | null;
@@ -313,6 +318,11 @@ export interface SanityModule {
    * image asset. No web-side glyph mapping yet — UI leans on
    * `colorTheme.hex` for visual identity. */
   icon?: string | null;
+  /** Persona slugs this module is relevant to (for recommendation scoring).
+   * Coalesced to [] in GROQ; matches the mobile `personalize` data. */
+  personas?: Persona[];
+  /** Learning-interest slugs this module covers (recommendation scoring). */
+  interests?: string[];
   submodules?: SanitySubmodule[];
 }
 

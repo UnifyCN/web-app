@@ -74,7 +74,7 @@ export function PostCard({
   );
 
   return (
-    <article className="px-5 py-4">
+    <article className="px-5 py-4 transition-colors duration-200 hover:bg-surface-card">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Avatar

@@ -30,7 +30,7 @@ export function EventCard({ event }: { event: CommunityEvent }) {
   return (
     <Link
       href={`/community/event/${event.id}`}
-      className="flex flex-col overflow-hidden rounded-card border border-border-card bg-surface transition-shadow duration-150 hover:shadow-md"
+      className="flex flex-col overflow-hidden rounded-card border border-border-card bg-surface transition-shadow duration-200 hover:shadow-md"
     >
       <div className="relative aspect-[16/9] w-full">
         {event.coverPhotoUrl && (

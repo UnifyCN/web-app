@@ -243,7 +243,9 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("lesson_highlights")
-    .select("id, lesson_id, selected_text")
+    .select(
+      "id, lesson_id, selected_text, module_id, submodule_id, submodule_title",
+    )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -252,13 +254,23 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
     id: string;
     lesson_id: string;
     selected_text: string;
+    module_id: string | null;
+    submodule_id: string | null;
+    submodule_title: string | null;
   }[];
   if (rows.length === 0) return [];
 
-  // Build lesson_id -> { lessonTitle, moduleTitle } from the Sanity module tree.
-  const titleByLessonId = new Map<
+  // Build lesson_id -> { titles + ids } from the Sanity module tree. We derive
+  // module/submodule ids here (rather than trusting the stored nav columns) so
+  // even older highlights deep-link correctly.
+  const infoByLessonId = new Map<
     string,
-    { lessonTitle: string; moduleTitle: string }
+    {
+      lessonTitle: string;
+      moduleTitle: string;
+      moduleId: string;
+      submoduleId: string;
+    }
   >();
   if (isSanityConfigured()) {
     const modules =
@@ -266,9 +278,11 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
     for (const mod of modules ?? []) {
       for (const sub of mod.submodules ?? []) {
         for (const lesson of sub.lessons ?? []) {
-          titleByLessonId.set(lesson._id, {
+          infoByLessonId.set(lesson._id, {
             lessonTitle: lesson.title,
             moduleTitle: mod.title,
+            moduleId: mod._id,
+            submoduleId: sub._id,
           });
         }
       }
@@ -276,12 +290,20 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
   }
 
   return rows.map((row) => {
-    const resolved = titleByLessonId.get(row.lesson_id);
+    const resolved = infoByLessonId.get(row.lesson_id);
     return {
       id: row.id,
       text: row.selected_text,
       lessonTitle: resolved?.lessonTitle ?? "Unknown lesson",
-      moduleTitle: resolved?.moduleTitle ?? "Unknown module",
+      // Fall back to the stored submodule title (the section name) before the
+      // generic placeholder when the Sanity lookup misses.
+      moduleTitle:
+        resolved?.moduleTitle ?? row.submodule_title ?? "Unknown module",
+      lessonId: row.lesson_id,
+      // Prefer the Sanity-derived ids; fall back to the stored nav columns so
+      // the highlight still deep-links when the Sanity lookup misses.
+      moduleId: resolved?.moduleId ?? row.module_id ?? undefined,
+      submoduleId: resolved?.submoduleId ?? row.submodule_id ?? undefined,
     };
   });
 }

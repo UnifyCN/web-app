@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Blob, type BlobVariant } from "./Blob";
 import { FavouriteButton } from "./FavouriteButton";
 import { ModuleIcon } from "./ModuleIcon";
+import { ProgressRing } from "./ProgressRing";
+import { moduleProgressMessage } from "@/lib/learn/microcopy";
 import type { LearnModuleView } from "@/types";
 
 interface ModuleGridCardProps {
@@ -17,15 +19,16 @@ const BLOB_FIT: Record<(typeof BLOB_CYCLE)[number], string> = {
 };
 
 export function ModuleGridCard({ mod }: ModuleGridCardProps) {
-  const colorHex = mod.colorTheme?.hex ?? "#9F9D9D";
+  const colorHex = mod.colorTheme?.hex ?? "var(--color-ink-placeholder)";
   const sectionCount = mod.submodules?.length ?? 0;
   const inProgress = mod.status === "in_progress";
+  const percent = mod.progressPercent ?? 0;
   const variant = BLOB_CYCLE[mod._id.charCodeAt(0) % BLOB_CYCLE.length];
 
   return (
     <Link
       href={`/learn/${mod._id}`}
-      className="group relative block aspect-[5/4] overflow-hidden rounded-card text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5"
+      className="group relative block aspect-[5/4] overflow-hidden rounded-card text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-md"
       style={{ backgroundColor: colorHex }}
     >
       <Blob
@@ -59,13 +62,37 @@ export function ModuleGridCard({ mod }: ModuleGridCardProps) {
             />
           </div>
         </div>
-        <div>
-          <h3 className="line-clamp-2 text-base font-bold leading-tight">
-            {mod.title}
-          </h3>
-          <p className="mt-1 text-xs text-white/85">
-            {sectionCount} {sectionCount === 1 ? "section" : "sections"}
-          </p>
+        <div className="flex items-end justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="line-clamp-2 text-base font-bold leading-tight">
+              {mod.title}
+            </h3>
+            <p className="mt-1 text-xs text-white/85">
+              {sectionCount} {sectionCount === 1 ? "section" : "sections"}
+            </p>
+            {percent < 100 && (
+              <p className="mt-0.5 text-[11px] font-medium text-white/90">
+                {moduleProgressMessage(percent)}
+              </p>
+            )}
+          </div>
+          {percent >= 100 ? (
+            <span
+              className="shrink-0 whitespace-nowrap rounded-full bg-white px-2 py-1 text-[11px] font-bold"
+              style={{ color: colorHex }}
+            >
+              ✓ Complete 🎉
+            </span>
+          ) : (
+            <ProgressRing
+              percent={percent}
+              size={40}
+              stroke={3}
+              showLabel={false}
+              trackColor="rgba(255,255,255,0.35)"
+              progressColor="#ffffff"
+            />
+          )}
         </div>
       </div>
     </Link>

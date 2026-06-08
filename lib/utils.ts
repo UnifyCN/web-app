@@ -10,6 +10,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Escape a string for safe use inside a `RegExp`. */
+export function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /**
  * Flatten Portable Text blocks to a single plain string — concatenates each
  * block's span text and joins blocks with newlines. Used when a plain-text
