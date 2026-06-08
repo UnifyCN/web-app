@@ -56,10 +56,13 @@ export function sanityImageUrl(
 export const MODULES_LIST_QUERY = `*[_type == "module"] | order(title) {
   _id,
   _type,
+  _createdAt,
   title,
   description,
   colorTheme { hex },
   icon,
+  "personas": coalesce(personas, []),
+  "interests": coalesce(interests, []),
   "submodules": *[_type == "submodule" && references(^._id)] | order(order) {
     _id,
     _type,
@@ -79,16 +82,20 @@ export const MODULES_LIST_QUERY = `*[_type == "module"] | order(title) {
 export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $moduleId][0] {
   _id,
   _type,
+  _createdAt,
   title,
   description,
   colorTheme { hex },
   icon,
+  "personas": coalesce(personas, []),
+  "interests": coalesce(interests, []),
   "submodules": *[_type == "submodule" && references(^._id)] | order(order) {
     _id,
     _type,
     title,
     description,
     order,
+    "practice_count": count(*[_type == "practice" && submodule._ref == ^._id]),
     "lessons": *[_type == "lesson" && references(^._id)] | order(order) {
       _id,
       _type,
@@ -96,7 +103,9 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $moduleId][0] 
       slug,
       description,
       order,
-      "lesson_page_count": count(pages)
+      "lesson_page_count": count(pages),
+      pages,
+      ending_pages
     }
   }
 }`;

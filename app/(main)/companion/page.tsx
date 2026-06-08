@@ -75,7 +75,7 @@ export default function CompanionPage() {
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen animate-fade-in">
       <ConversationList
         conversations={conversations}
         activeId={activeId}

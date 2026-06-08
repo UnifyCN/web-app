@@ -25,9 +25,9 @@ interface SectionTimelineCardProps {
 }
 
 /**
- * One row of the section "activities" timeline (Learn / Practice). Mirrors the
- * rail markup of SubmoduleTimelineRow: a vertical connector + dot on the left,
- * a card on the right. The active card gets the module-colour CTA treatment.
+ * One row of the section "activities" timeline (Learn / Practice): a vertical
+ * connector + dot on the left, a card on the right. The active card gets the
+ * module-colour CTA treatment.
  */
 export function SectionTimelineCard({
   icon: Icon,

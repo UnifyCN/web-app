@@ -73,6 +73,14 @@ export function usePracticeProgress(submoduleId: string) {
   });
 }
 
+/** All of the user's section quiz progress, keyed by submodule id (Supabase). */
+export function useAllPracticeProgresses() {
+  return useQuery({
+    queryKey: [...PRACTICE_PROGRESS_KEY, "all"],
+    queryFn: learn.getAllPracticeProgresses,
+  });
+}
+
 export function useUpsertPracticeProgress() {
   const queryClient = useQueryClient();
   return useMutation({

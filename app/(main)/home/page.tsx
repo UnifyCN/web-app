@@ -42,7 +42,7 @@ export default function HomePage() {
   const empty = FEED_EMPTY[activeTab];
 
   return (
-    <div className="mx-auto max-w-[1080px] px-6 py-6">
+    <div className="mx-auto max-w-[1080px] animate-fade-in px-6 py-6">
       <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
         Home
       </h1>
@@ -75,7 +75,7 @@ export default function HomePage() {
                 </p>
               </div>
             ) : posts.length > 0 ? (
-              <div className="divide-y divide-border-card">
+              <div className="animate-fade-in divide-y divide-border-card">
                 {posts.map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}

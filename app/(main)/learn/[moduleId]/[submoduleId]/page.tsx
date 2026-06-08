@@ -2,9 +2,11 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Target } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Target } from "lucide-react";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
-import { SectionTimelineCard } from "@/components/learn/SectionTimelineCard";
+import { LessonListRow } from "@/components/learn/LessonListRow";
+import { PracticeQuestionList } from "@/components/learn/practice/PracticeQuestionList";
+import { lessonReadMinutes } from "@/lib/learn/readTime";
 import {
   useAllLessonProgresses,
   useModule,
@@ -57,35 +59,26 @@ export default function SubmoduleLandingPage({
   const progresses = progressesQuery.data ?? {};
   const colorHex = mod.colorTheme?.hex ?? "var(--color-primary)";
 
-  // --- Learn state ---------------------------------------------------------
   const completedCount = lessons.filter(
     (l) => progresses[l._id]?.isCompleted,
   ).length;
   const firstIncomplete = lessons.find((l) => !progresses[l._id]?.isCompleted);
   const targetLesson = firstIncomplete ?? lessons[0];
   const learnCompleted = lessons.length > 0 && !firstIncomplete;
-  const learnLabel = learnCompleted
-    ? "Review"
-    : completedCount > 0
-      ? "Continue"
-      : "Start";
 
   // --- Practice state ------------------------------------------------------
-  // Practice is always accessible — no Learn-started gate. The card is hidden
-  // entirely when the submodule has no practice content (quiz or activity).
+  // The card is hidden entirely when the submodule has no practice content.
   const practices = practicesQuery.data ?? [];
   const hasPractice = practices.length > 0;
   const practiceProgress = practiceProgressQuery.data;
   const practiceCompleted = !!practiceProgress?.isCompleted;
   const practiceStarted =
     !!practiceProgress && (practiceProgress.currentQuestionIndex ?? 0) > 0;
-  const practiceActive = learnCompleted && !practiceCompleted;
   const practiceLabel = practiceCompleted
     ? "Review"
     : practiceStarted
       ? "Resume"
       : "Start";
-  // Once completed, surface the score on the card (e.g. "8/10 · 80%").
   const practiceScore = practiceProgress?.score;
   const practiceTotal = practiceProgress?.totalQuestions;
   const practiceSubtitle =
@@ -113,7 +106,6 @@ export default function SubmoduleLandingPage({
         </Link>
       </div>
 
-      {/* Badge on its own line, above the title (Fix 1). */}
       <div className="mt-6">
         <span className="inline-block rounded-full bg-surface-gray px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink-tertiary">
           Section {sectionNumber}
@@ -127,45 +119,103 @@ export default function SubmoduleLandingPage({
         {submodule.description ?? "Learn key concepts and practice your skills."}
       </p>
 
-      {/* Activities timeline: Learn → Practice (Fix 2). */}
-      <ol className="mt-6 flex flex-col">
-        <SectionTimelineCard
-          icon={BookOpen}
-          title="Learn"
-          subtitle="Key concepts & terms"
-          colorHex={colorHex}
-          isActive={!learnCompleted}
-          dot={learnCompleted ? "completed" : "active"}
-          buttonLabel={targetLesson ? learnLabel : undefined}
-          href={
-            targetLesson
-              ? `/learn/${moduleId}/${submoduleId}/${targetLesson._id}`
-              : undefined
-          }
-          isFirst
-          isLast={!hasPractice}
-        />
-        {hasPractice && (
-          <SectionTimelineCard
-            icon={Target}
-            title="Practice"
-            subtitle={practiceSubtitle}
-            colorHex={colorHex}
-            isActive={practiceActive}
-            dot={
-              practiceCompleted
-                ? "completed"
-                : practiceActive
-                  ? "active"
-                  : "todo"
-            }
-            buttonLabel={practiceLabel}
+      {/* Lesson list */}
+      {lessons.length > 0 && (
+        <section className="mt-8">
+          {/* Primary CTA reflecting section progress */}
+          {learnCompleted ? (
+            <div className="flex items-center gap-3 rounded-card border border-border-card bg-surface-card p-4">
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white"
+                style={{ backgroundColor: colorHex }}
+              >
+                <Check className="h-5 w-5" strokeWidth={3} aria-hidden />
+              </span>
+              <p className="text-sm font-semibold text-ink-secondary">
+                {practiceCompleted || !hasPractice
+                  ? "Nice work! You've finished this section"
+                  : "Section complete! Ready for the practice?"}
+              </p>
+            </div>
+          ) : (
+            <Link
+              href={`/learn/${moduleId}/${submoduleId}/${targetLesson._id}`}
+              className="flex items-center justify-between gap-3 rounded-card p-4 text-white shadow-sm transition-all duration-200 hover:opacity-95 active:scale-[0.99]"
+              style={{ backgroundColor: colorHex }}
+            >
+              <div className="min-w-0">
+                <p className="text-xs text-white/85">
+                  {completedCount === 0
+                    ? "Get started"
+                    : "Pick up where you left off"}
+                </p>
+                <p className="text-base font-bold">
+                  {completedCount === 0
+                    ? "Start with Lesson 1"
+                    : "Continue where you left off"}
+                </p>
+              </div>
+              <ArrowRight className="h-5 w-5 shrink-0" aria-hidden />
+            </Link>
+          )}
+
+          <div className="mt-5 flex items-baseline justify-between">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-ink-tertiary">
+              Lessons
+            </h2>
+            <span className="text-xs text-ink-placeholder">
+              {completedCount}/{lessons.length} complete
+            </span>
+          </div>
+          <div className="mt-2 rounded-card border border-border-card bg-surface p-1.5">
+            {lessons.map((lesson) => (
+              <LessonListRow
+                key={lesson._id}
+                href={`/learn/${moduleId}/${submoduleId}/${lesson._id}`}
+                title={lesson.title}
+                isCompleted={!!progresses[lesson._id]?.isCompleted}
+                readMinutes={lessonReadMinutes(lesson)}
+                colorHex={colorHex}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Practice */}
+      {hasPractice && (
+        <section className="mt-6">
+          <Link
             href={`/learn/${moduleId}/${submoduleId}/practice`}
-            isFirst={false}
-            isLast
+            className="flex items-center gap-3 rounded-card border border-border-card bg-surface p-4 transition-colors hover:bg-surface-card"
+          >
+            <span
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white"
+              style={{ backgroundColor: colorHex }}
+            >
+              <Target className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-bold text-ink-secondary">Practice</h3>
+              <p className="mt-0.5 text-xs text-ink-muted">
+                {practiceSubtitle}
+              </p>
+            </div>
+            <span
+              className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold"
+              style={{ color: colorHex }}
+            >
+              {practiceLabel}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </span>
+          </Link>
+
+          <PracticeQuestionList
+            practices={practices}
+            practiceProgress={practiceProgress}
           />
-        )}
-      </ol>
+        </section>
+      )}
     </div>
   );
 }

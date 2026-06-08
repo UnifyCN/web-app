@@ -59,24 +59,19 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
     };
   }, [open, onClose]);
 
-  // Reset whenever the modal closes (and revoke any preview object URLs).
+  // The modal is conditionally mounted by its parent (ComposeButton), so it
+  // unmounts on close and all state resets on the next open — no reset effect
+  // needed. Revoke any remaining preview object URLs on unmount.
+  const imagesRef = useRef<SelectedImage[]>([]);
   useEffect(() => {
-    if (!open) {
-      setDestination("For You");
-      setGroupId(null);
-      setGroupSearch("");
-      setJoiningId(null);
-      setTitle("");
-      setBody("");
-      setImages((prev) => {
-        prev.forEach((img) => URL.revokeObjectURL(img.url));
-        return [];
-      });
-      setSubmitting(false);
-      setError(null);
-      setPosted(false);
-    }
-  }, [open]);
+    imagesRef.current = images;
+  }, [images]);
+  useEffect(
+    () => () => {
+      imagesRef.current.forEach((img) => URL.revokeObjectURL(img.url));
+    },
+    [],
+  );
 
   if (!open) return null;
 

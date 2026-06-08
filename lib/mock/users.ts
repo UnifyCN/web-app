@@ -170,6 +170,10 @@ export interface LessonHighlight {
   text: string;
   lessonTitle: string;
   moduleTitle: string;
+  /** Sanity ids for deep-linking back to the lesson (absent on mock rows). */
+  lessonId?: string;
+  moduleId?: string;
+  submoduleId?: string;
 }
 
 // TODO: replace with real data — mock saved lesson highlights.

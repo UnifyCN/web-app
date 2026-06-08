@@ -382,6 +382,35 @@ export async function getPracticeProgress(
   return data ? rowToPracticeProgress(data as PracticeProgressRow) : null;
 }
 
+/**
+ * All of the user's section quiz progress, keyed by sanity_submodule_id. One
+ * query for every row (the set is small) — used by the module table of contents
+ * to show per-section Quick Check scores without an N-query fan-out.
+ */
+export async function getAllPracticeProgresses(): Promise<
+  Record<string, PracticeProgress>
+> {
+  if (!isSupabaseConfigured()) return {};
+  const userId = await getAuthUserId();
+  if (!userId) return {};
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_practice_progress")
+    .select(
+      "sanity_submodule_id, current_question_index, current_submitted, answers, is_completed, score, total_questions, updated_at",
+    )
+    .eq("user_id", userId);
+  if (error) throw error;
+
+  return Object.fromEntries(
+    ((data ?? []) as PracticeProgressRow[]).map((row) => [
+      row.sanity_submodule_id,
+      rowToPracticeProgress(row),
+    ]),
+  );
+}
+
 export interface UpsertPracticeProgressInput {
   submoduleId: string;
   moduleId?: string;

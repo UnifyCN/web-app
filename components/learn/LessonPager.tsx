@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
+import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import { SelectableLessonContent } from "@/components/learn/SelectableLessonContent";
+import { ExplainTermModal } from "@/components/learn/ExplainTermModal";
 import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
+import { escapeRegExp, portableTextToPlain } from "@/lib/utils";
 import type { SanityLessonPage, SanityQuizQuestion } from "@/types";
 
 interface LessonPagerProps {
@@ -21,6 +23,17 @@ interface LessonPagerProps {
   onLessonComplete: () => void;
   /** The submodule page — "Back" exits here, and finishing always returns here. */
   sectionHref: string;
+  /** Highlight nav context (stored on each saved highlight for deep-linking). */
+  moduleId: string;
+  submoduleId: string;
+  submoduleTitle: string;
+  /** Search term to temporarily highlight in the reader (from `?highlight=`). */
+  highlightQuery?: string;
+  /** Module name + this lesson's position, for encouraging banners + "next up". */
+  moduleTitle?: string;
+  isFirstLesson?: boolean;
+  isLastLesson?: boolean;
+  nextLesson?: { title: string; href: string };
 }
 
 /**
@@ -40,9 +53,24 @@ export function LessonPager({
   quizQuestions,
   onLessonComplete,
   sectionHref,
+  moduleId,
+  submoduleId,
+  submoduleTitle,
+  highlightQuery,
+  moduleTitle,
+  isFirstLesson,
+  isLastLesson,
+  nextLesson,
 }: LessonPagerProps) {
   const router = useRouter();
-  const [pageIndex, setPageIndex] = useState(0);
+  // When arriving from search, open on the first page that contains the term.
+  const [pageIndex, setPageIndex] = useState(() => {
+    if (!highlightQuery) return 0;
+    const re = new RegExp(`\\b${escapeRegExp(highlightQuery)}\\b`, "i");
+    const idx = pages.findIndex((p) => re.test(portableTextToPlain(p.content)));
+    return idx >= 0 ? idx : 0;
+  });
+  const [askTerm, setAskTerm] = useState<string | null>(null);
 
   // The Quick Check is its own trailing screen after the content pages.
   const hasQuiz = quizQuestions.length > 0;
@@ -66,6 +94,33 @@ export function LessonPager({
     setPageIndex(index + 1);
   }
 
+  // Left/right arrows page through the lesson. Ignored while typing (quiz
+  // free-text) or on the Quick Check screen (which has its own controls).
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (isQuizPage) return;
+      const el = document.activeElement as HTMLElement | null;
+      if (
+        el &&
+        (el.tagName === "INPUT" ||
+          el.tagName === "TEXTAREA" ||
+          el.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        if (index > 0) setPageIndex(index - 1);
+        else router.push(sectionHref);
+      } else if (e.key === "ArrowRight" && !isLastScreen) {
+        e.preventDefault();
+        setPageIndex(index + 1);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [index, isQuizPage, isLastScreen, sectionHref, router]);
+
   return (
     <div>
       {/* Persistent header: lesson title + page progress */}
@@ -76,6 +131,19 @@ export function LessonPager({
           style={{ width: `${percent}%`, backgroundColor: colorHex }}
         />
       </div>
+
+      {/* Encouraging banner for the first / last lesson of the module. */}
+      {moduleTitle && (isFirstLesson || isLastLesson) && (
+        <div
+          className="mt-4 flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium"
+          style={{ backgroundColor: "var(--color-primary-bg)", color: colorHex }}
+        >
+          <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          {isFirstLesson
+            ? `Welcome to ${moduleTitle}! Let's get started`
+            : `Final lesson! You're almost done with ${moduleTitle}`}
+        </div>
+      )}
 
       {/* Current page */}
       {currentPage && (
@@ -90,7 +158,17 @@ export function LessonPager({
               {currentPage.title}
             </h2>
           )}
-          <PortableTextRenderer value={currentPage.content} />
+          <SelectableLessonContent
+            blocks={currentPage.content}
+            lessonId={lessonId}
+            pageKey={currentPage._key}
+            pageNum={currentPage.order}
+            moduleId={moduleId}
+            submoduleId={submoduleId}
+            submoduleTitle={submoduleTitle}
+            onAskAI={setAskTerm}
+            highlightQuery={highlightQuery}
+          />
         </section>
       )}
 
@@ -104,7 +182,17 @@ export function LessonPager({
                   {page.title}
                 </h2>
               )}
-              <PortableTextRenderer value={page.content} />
+              <SelectableLessonContent
+                blocks={page.content}
+                lessonId={lessonId}
+                pageKey={page._key}
+                pageNum={page.order}
+                moduleId={moduleId}
+                submoduleId={submoduleId}
+                submoduleTitle={submoduleTitle}
+                onAskAI={setAskTerm}
+                highlightQuery={highlightQuery}
+              />
             </section>
           ))}
         </div>
@@ -158,6 +246,25 @@ export function LessonPager({
           )}
         </nav>
       )}
+
+      {/* "Next up" suggestion after finishing — completes this lesson, then goes
+          straight to the next one. */}
+      {!isQuizPage && isLastScreen && nextLesson && (
+        <Link
+          href={nextLesson.href}
+          onClick={onLessonComplete}
+          className="mt-3 flex items-center justify-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-primary"
+        >
+          Next up: <span className="font-semibold">{nextLesson.title}</span>
+          <ArrowRight className="h-4 w-4" aria-hidden />
+        </Link>
+      )}
+
+      <ExplainTermModal
+        term={askTerm}
+        lessonContext={title}
+        onClose={() => setAskTerm(null)}
+      />
     </div>
   );
 }

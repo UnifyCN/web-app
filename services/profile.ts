@@ -255,10 +255,17 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
   }[];
   if (rows.length === 0) return [];
 
-  // Build lesson_id -> { lessonTitle, moduleTitle } from the Sanity module tree.
-  const titleByLessonId = new Map<
+  // Build lesson_id -> { titles + ids } from the Sanity module tree. We derive
+  // module/submodule ids here (rather than trusting the stored nav columns) so
+  // even older highlights deep-link correctly.
+  const infoByLessonId = new Map<
     string,
-    { lessonTitle: string; moduleTitle: string }
+    {
+      lessonTitle: string;
+      moduleTitle: string;
+      moduleId: string;
+      submoduleId: string;
+    }
   >();
   if (isSanityConfigured()) {
     const modules =
@@ -266,9 +273,11 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
     for (const mod of modules ?? []) {
       for (const sub of mod.submodules ?? []) {
         for (const lesson of sub.lessons ?? []) {
-          titleByLessonId.set(lesson._id, {
+          infoByLessonId.set(lesson._id, {
             lessonTitle: lesson.title,
             moduleTitle: mod.title,
+            moduleId: mod._id,
+            submoduleId: sub._id,
           });
         }
       }
@@ -276,12 +285,15 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
   }
 
   return rows.map((row) => {
-    const resolved = titleByLessonId.get(row.lesson_id);
+    const resolved = infoByLessonId.get(row.lesson_id);
     return {
       id: row.id,
       text: row.selected_text,
       lessonTitle: resolved?.lessonTitle ?? "Unknown lesson",
       moduleTitle: resolved?.moduleTitle ?? "Unknown module",
+      lessonId: row.lesson_id,
+      moduleId: resolved?.moduleId,
+      submoduleId: resolved?.submoduleId,
     };
   });
 }
