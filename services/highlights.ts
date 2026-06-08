@@ -255,7 +255,8 @@ export async function explainTerm(
       try {
         errBody = await ctx.json();
       } catch {
-        // non-JSON error body — fall through to the generic message
+        // The error body wasn't JSON — preserve the original error context.
+        errBody = { error: error instanceof Error ? error.message : undefined };
       }
       throw new Error(errBody?.error ?? `explain-term failed (${ctx.status})`);
     }
