@@ -98,7 +98,7 @@ export function LessonPager({
   // free-text) or on the Quick Check screen (which has its own controls).
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (isQuizPage) return;
+      if (isQuizPage || askTerm) return;
       const el = document.activeElement as HTMLElement | null;
       if (
         el &&
@@ -119,7 +119,7 @@ export function LessonPager({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [index, isQuizPage, isLastScreen, sectionHref, router]);
+  }, [index, isQuizPage, isLastScreen, sectionHref, router, askTerm]);
 
   return (
     <div>

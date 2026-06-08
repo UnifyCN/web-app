@@ -121,13 +121,15 @@ export default function LessonDetailPage({
   // invalidation run in the background. Per product spec, finishing always
   // returns to the section page — there's no auto-advance to the next lesson.
   function markComplete() {
-    setLessonProgress.mutate({
-      lessonId,
-      progressPercent: 100,
-      isCompleted: true,
-      moduleId,
-    });
-    toast.success("Lesson complete!");
+    setLessonProgress.mutate(
+      {
+        lessonId,
+        progressPercent: 100,
+        isCompleted: true,
+        moduleId,
+      },
+      { onSuccess: () => toast.success("Lesson complete!") },
+    );
   }
 
   return (

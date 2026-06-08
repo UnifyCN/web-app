@@ -178,7 +178,7 @@ export default function CommunityPage() {
                 Couldn&apos;t load groups.
               </p>
             ) : filteredGroups.length > 0 ? (
-              <div className="grid animate-fade-in grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredGroups.map((group) => (
                   <GroupCard key={group.id} group={group} />
                 ))}
@@ -209,7 +209,7 @@ export default function CommunityPage() {
               Couldn&apos;t load events.
             </p>
           ) : events.length > 0 ? (
-            <div className="grid animate-fade-in grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {events.map((event) => (
                 <EventCard key={event.id} event={event} />
               ))}
@@ -253,7 +253,7 @@ export default function CommunityPage() {
                 Couldn&apos;t load news.
               </p>
             ) : newsItems.length > 0 ? (
-              <div className="animate-fade-in divide-y divide-border-card rounded-card border border-border-card bg-surface px-4">
+              <div className="divide-y divide-border-card rounded-card border border-border-card bg-surface px-4">
                 {newsItems.map((item) => (
                   <NewsArticleItem key={item.id} item={item} />
                 ))}

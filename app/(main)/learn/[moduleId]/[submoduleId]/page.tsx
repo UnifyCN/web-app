@@ -73,7 +73,10 @@ export default function SubmoduleLandingPage({
   const practiceProgress = practiceProgressQuery.data;
   const practiceCompleted = !!practiceProgress?.isCompleted;
   const practiceStarted =
-    !!practiceProgress && (practiceProgress.currentQuestionIndex ?? 0) > 0;
+    !!practiceProgress &&
+    ((practiceProgress.currentQuestionIndex ?? 0) > 0 ||
+      Object.keys(practiceProgress.answers ?? {}).length > 0 ||
+      practiceProgress.currentSubmitted);
   const practiceLabel = practiceCompleted
     ? "Review"
     : practiceStarted

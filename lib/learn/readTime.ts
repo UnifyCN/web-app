@@ -8,19 +8,33 @@ import type { SanityBlock, SanityLessonPage } from "@/types";
 
 const WORDS_PER_MINUTE = 200;
 
-/** Count words across an array of standard portable-text blocks. */
+function countWords(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/**
+ * Count words across portable-text blocks, including the custom lesson block
+ * types: standard blocks (`children` spans), callout boxes + `dropdown`
+ * (`content` of nested blocks, recursed), and `checklist_checkbox` / `dropdown`
+ * labels. (`image` blocks contribute nothing.)
+ */
 export function wordCountOfBlocks(blocks: SanityBlock[] | undefined): number {
   if (!blocks) return 0;
   let count = 0;
   for (const block of blocks) {
-    // Only standard text blocks carry `children` spans with text; custom
-    // types (callout boxes, images, checklists) contribute nothing here.
-    const children = block?.children;
-    if (!Array.isArray(children)) continue;
-    for (const span of children) {
-      const text = typeof span?.text === "string" ? span.text : "";
-      count += text.trim().split(/\s+/).filter(Boolean).length;
+    const b = block as unknown as {
+      children?: { text?: string }[];
+      content?: SanityBlock[];
+      label?: string;
+    };
+    if (Array.isArray(b.children)) {
+      for (const span of b.children) {
+        if (typeof span?.text === "string") count += countWords(span.text);
+      }
+      continue;
     }
+    if (Array.isArray(b.content)) count += wordCountOfBlocks(b.content);
+    if (typeof b.label === "string") count += countWords(b.label);
   }
   return count;
 }

@@ -50,6 +50,16 @@ export function SubmoduleTimelineRow({
   const [open, setOpen] = useState(isActiveCTA);
   const reduce = useReducedMotion();
 
+  // When this row becomes the active section (e.g. progress shifts), open it —
+  // but never auto-collapse a row the user opened themselves. Done during render
+  // (React's "adjust state on prop change" pattern) since the project lints
+  // against setState-in-effect.
+  const [prevActive, setPrevActive] = useState(isActiveCTA);
+  if (prevActive !== isActiveCTA) {
+    setPrevActive(isActiveCTA);
+    if (isActiveCTA) setOpen(true);
+  }
+
   const dotFilled = state === "completed";
   const dotRingColor =
     state === "completed" || state === "in_progress"

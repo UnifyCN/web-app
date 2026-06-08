@@ -189,12 +189,14 @@ export default function LearnPage() {
   // Whole-word matcher (built once); reused across items — safe since the regex
   // has no `g` flag, so `.test()` keeps no lastIndex state.
   const wordRe = isSearching ? buildWordMatcher(query) : null;
+  // Search within the same set the sidebar filters apply to.
+  const searchPool = decoratedModules.filter(passesFilters);
   const moduleHits = wordRe
-    ? decoratedModules.filter((m) => matchesSearch(m, wordRe))
+    ? searchPool.filter((m) => matchesSearch(m, wordRe))
     : [];
   const lessonHits: LessonHit[] = [];
   if (wordRe) {
-    for (const m of decoratedModules) {
+    for (const m of searchPool) {
       const colorHex = m.colorTheme?.hex ?? "#9F9D9D";
       for (const sub of m.submodules ?? []) {
         for (const lesson of sub.lessons ?? []) {

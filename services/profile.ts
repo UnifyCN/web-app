@@ -243,7 +243,7 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("lesson_highlights")
-    .select("id, lesson_id, selected_text")
+    .select("id, lesson_id, selected_text, module_id, submodule_id")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -252,6 +252,8 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
     id: string;
     lesson_id: string;
     selected_text: string;
+    module_id: string | null;
+    submodule_id: string | null;
   }[];
   if (rows.length === 0) return [];
 
@@ -292,8 +294,10 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
       lessonTitle: resolved?.lessonTitle ?? "Unknown lesson",
       moduleTitle: resolved?.moduleTitle ?? "Unknown module",
       lessonId: row.lesson_id,
-      moduleId: resolved?.moduleId,
-      submoduleId: resolved?.submoduleId,
+      // Prefer the Sanity-derived ids; fall back to the stored nav columns so
+      // the highlight still deep-links when the Sanity lookup misses.
+      moduleId: resolved?.moduleId ?? row.module_id ?? undefined,
+      submoduleId: resolved?.submoduleId ?? row.submodule_id ?? undefined,
     };
   });
 }

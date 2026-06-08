@@ -49,7 +49,7 @@ export function Button({
       disabled={disabled || loading}
       className={cn(
         "inline-flex items-center justify-center rounded-lg font-semibold",
-        "cursor-pointer transition-all duration-200 active:scale-95",
+        "cursor-pointer transition-all duration-200 active:scale-95 focus-visible:scale-100",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed disabled:active:scale-100",
         VARIANTS[variant],

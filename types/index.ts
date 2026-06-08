@@ -320,7 +320,7 @@ export interface SanityModule {
   icon?: string | null;
   /** Persona slugs this module is relevant to (for recommendation scoring).
    * Coalesced to [] in GROQ; matches the mobile `personalize` data. */
-  personas?: string[];
+  personas?: Persona[];
   /** Learning-interest slugs this module covers (recommendation scoring). */
   interests?: string[];
   submodules?: SanitySubmodule[];

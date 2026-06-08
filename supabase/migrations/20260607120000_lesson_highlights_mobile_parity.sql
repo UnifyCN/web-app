@@ -24,7 +24,9 @@ alter table public.lesson_highlights
   add column if not exists submodule_title  text,
   add column if not exists page_num         integer;
 
-update public.lesson_highlights set block_key = '' where block_key is null;
+update public.lesson_highlights
+  set block_key = ''
+  where block_key is null;
 
 alter table public.lesson_highlights
   alter column block_key set not null;
@@ -39,14 +41,18 @@ alter table public.lesson_highlights
 do $$
 begin
   if not exists (
-    select 1 from pg_constraint where conname = 'chk_non_negative_indices'
+    select 1 from pg_constraint
+    where conname = 'chk_non_negative_indices'
+      and conrelid = 'public.lesson_highlights'::regclass
   ) then
     alter table public.lesson_highlights
       add constraint chk_non_negative_indices
       check (start_word_index >= 0 and end_word_index >= 0);
   end if;
   if not exists (
-    select 1 from pg_constraint where conname = 'chk_valid_range'
+    select 1 from pg_constraint
+    where conname = 'chk_valid_range'
+      and conrelid = 'public.lesson_highlights'::regclass
   ) then
     alter table public.lesson_highlights
       add constraint chk_valid_range
@@ -71,6 +77,8 @@ create index if not exists idx_lesson_highlights_lesson_page
 -- ---------------------------------------------------------------------------
 -- 4. RLS — add the missing own-row UPDATE policy (mobile has it; web didn't).
 -- ---------------------------------------------------------------------------
+alter table public.lesson_highlights enable row level security;
+
 drop policy if exists "lesson_highlights_update_own" on public.lesson_highlights;
 create policy "lesson_highlights_update_own" on public.lesson_highlights
   for update to authenticated

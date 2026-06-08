@@ -20,10 +20,11 @@ export interface RecommendProfile {
 /** Only the bits of a module needed to score it. */
 type ScorableModule = Pick<SanityModule, "personas" | "interests">;
 
-export const PERSONA_LABELS: Record<string, string> = {
+export const PERSONA_LABELS: Record<Persona, string> = {
   international_student: "international students",
   skilled_worker: "skilled workers & immigrants",
   refugee: "refugees & protected persons",
+  other: "newcomers",
 };
 
 export const INTEREST_LABELS: Record<string, string> = {
