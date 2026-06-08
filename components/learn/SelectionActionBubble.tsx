@@ -50,7 +50,7 @@ export function SelectionActionBubble({
     top = Math.min(Math.max(top, margin), vh - height - margin);
 
     setPos({ left, top });
-  }, [x, y]);
+  }, [x, y, canRemove]);
 
   return (
     <div
