@@ -130,6 +130,10 @@ export async function saveHighlight(
     navContext,
   } = input;
 
+  // No words to anchor to — bail rather than persist an empty highlight with a
+  // collapsed [0,0] range.
+  if (allWordsInBlock.length === 0) return null;
+
   // Ignore optimistic (non-persisted) entries when checking overlaps.
   const realHighlights = existingHighlights.filter(
     (h) => !h.id.startsWith("optimistic-"),

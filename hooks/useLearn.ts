@@ -86,10 +86,10 @@ export function useUpsertPracticeProgress() {
   return useMutation({
     mutationFn: (input: UpsertPracticeProgressInput) =>
       learn.upsertPracticeProgress(input),
-    onSuccess: (_data, { submoduleId }) => {
-      queryClient.invalidateQueries({
-        queryKey: [...PRACTICE_PROGRESS_KEY, submoduleId],
-      });
+    onSuccess: () => {
+      // Prefix invalidation refreshes both the per-section query and the
+      // `[...,"all"]` query used by the module table of contents.
+      queryClient.invalidateQueries({ queryKey: PRACTICE_PROGRESS_KEY });
       // Section/module progress surfaces may reflect quiz completion.
       queryClient.invalidateQueries({ queryKey: MODULES_KEY });
     },

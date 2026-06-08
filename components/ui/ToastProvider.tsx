@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -38,9 +39,11 @@ const AUTO_DISMISS_MS = 2500;
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(0);
+  const timers = useRef(new Map<number, number>());
   const reduce = useReducedMotion();
 
   const remove = useCallback((id: number) => {
+    timers.current.delete(id);
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
@@ -48,10 +51,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     (message: string, variant: ToastVariant = "success") => {
       const id = nextId.current++;
       setToasts((prev) => [...prev, { id, message, variant }]);
-      window.setTimeout(() => remove(id), AUTO_DISMISS_MS);
+      const handle = window.setTimeout(() => remove(id), AUTO_DISMISS_MS);
+      timers.current.set(id, handle);
     },
     [remove],
   );
+
+  // Clear any pending auto-dismiss timers if the provider unmounts.
+  useEffect(() => {
+    const pending = timers.current;
+    return () => {
+      pending.forEach((handle) => window.clearTimeout(handle));
+      pending.clear();
+    };
+  }, []);
 
   const success = useCallback(
     (message: string) => show(message, "success"),

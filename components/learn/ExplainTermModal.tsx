@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { HelpCircle, Loader2, X } from "lucide-react";
 import { explainTerm } from "@/services/highlights";
@@ -22,6 +23,8 @@ export function ExplainTermModal({
   lessonContext,
   onClose,
 }: ExplainTermModalProps) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+
   const query = useQuery({
     queryKey: ["explain-term", term, lessonContext],
     queryFn: () => explainTerm(term as string, lessonContext),
@@ -30,6 +33,24 @@ export function ExplainTermModal({
     staleTime: Infinity,
     gcTime: 10 * 60 * 1000,
   });
+
+  // Close on Escape while the dialog is open.
+  useEffect(() => {
+    if (!term) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [term, onClose]);
+
+  // Move focus to the close button on open; restore it to the trigger on close.
+  useEffect(() => {
+    if (!term) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
+    return () => previouslyFocused?.focus?.();
+  }, [term]);
 
   if (!term) return null;
 
@@ -57,6 +78,7 @@ export function ExplainTermModal({
             </h2>
           </div>
           <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
             className="rounded-md p-1 text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink"

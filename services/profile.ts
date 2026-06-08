@@ -243,7 +243,9 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("lesson_highlights")
-    .select("id, lesson_id, selected_text, module_id, submodule_id")
+    .select(
+      "id, lesson_id, selected_text, module_id, submodule_id, submodule_title",
+    )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -254,6 +256,7 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
     selected_text: string;
     module_id: string | null;
     submodule_id: string | null;
+    submodule_title: string | null;
   }[];
   if (rows.length === 0) return [];
 
@@ -292,7 +295,10 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
       id: row.id,
       text: row.selected_text,
       lessonTitle: resolved?.lessonTitle ?? "Unknown lesson",
-      moduleTitle: resolved?.moduleTitle ?? "Unknown module",
+      // Fall back to the stored submodule title (the section name) before the
+      // generic placeholder when the Sanity lookup misses.
+      moduleTitle:
+        resolved?.moduleTitle ?? row.submodule_title ?? "Unknown module",
       lessonId: row.lesson_id,
       // Prefer the Sanity-derived ids; fall back to the stored nav columns so
       // the highlight still deep-links when the Sanity lookup misses.

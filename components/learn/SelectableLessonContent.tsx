@@ -119,16 +119,6 @@ export function SelectableLessonContent({
   const save = useSaveHighlight(lessonId, pageKey);
   const del = useDeleteHighlight(lessonId, pageKey);
 
-  // Whole-word matcher for the temporary search highlight (no `g` flag, so
-  // reusing `.test()` across words is safe).
-  const searchRe = useMemo(
-    () =>
-      highlightQuery
-        ? new RegExp(`\\b${escapeRegExp(highlightQuery)}\\b`, "i")
-        : null,
-    [highlightQuery],
-  );
-
   // blockKey -> ordered word list (for reconstructing merged text).
   const blockWords = useMemo(() => {
     const map: Record<string, string[]> = {};
@@ -142,6 +132,35 @@ export function SelectableLessonContent({
     }
     return map;
   }, [blocks]);
+
+  // blockKey -> word indices covered by a search-term match. The query is split
+  // into words and consecutive runs that match the full phrase are marked, so
+  // multi-word queries (e.g. "social insurance") highlight, not just single words.
+  const searchMatches = useMemo<Record<string, Set<number>>>(() => {
+    const map: Record<string, Set<number>> = {};
+    const q = highlightQuery?.trim();
+    if (!q) return map;
+    // Per-query-word whole-word matchers (tolerate punctuation on a token).
+    const res = q
+      .split(/\s+/)
+      .map((w) => new RegExp(`\\b${escapeRegExp(w)}\\b`, "i"));
+    const n = res.length;
+    for (const [blockKey, words] of Object.entries(blockWords)) {
+      const set = new Set<number>();
+      for (let i = 0; i + n <= words.length; i++) {
+        let ok = true;
+        for (let j = 0; j < n; j++) {
+          if (!res[j].test(words[i + j])) {
+            ok = false;
+            break;
+          }
+        }
+        if (ok) for (let j = 0; j < n; j++) set.add(i + j);
+      }
+      if (set.size > 0) map[blockKey] = set;
+    }
+    return map;
+  }, [blockWords, highlightQuery]);
 
   // blockKey -> saved highlight ranges.
   const ranges = useMemo(() => {
@@ -168,7 +187,10 @@ export function SelectableLessonContent({
       return;
     }
     const range = sel.getRangeAt(0);
-    if (!container.contains(range.commonAncestorContainer)) return;
+    if (!container.contains(range.commonAncestorContainer)) {
+      setSelection(null);
+      return;
+    }
 
     const wordEls = Array.from(
       container.querySelectorAll<HTMLElement>(
@@ -189,11 +211,10 @@ export function SelectableLessonContent({
       );
     const start = Number(inBlock[0].dataset.wordIndex);
     const end = Number(inBlock[inBlock.length - 1].dataset.wordIndex);
-    const text = inBlock
-      .map((el) => el.textContent ?? "")
-      .join(" ")
-      .replace(/\s+/g, " ")
-      .trim();
+    // Reconstruct from the block's word list (same source as start/end and the
+    // saved range) so the stored selected_text always matches the stored range.
+    const blockWordList = blockWords[blockKey] ?? [];
+    const text = blockWordList.slice(start, end + 1).join(" ");
     const rect = range.getBoundingClientRect();
     const canRemove = (ranges[blockKey] ?? []).some(
       (r) => r.start <= end && r.end >= start,
@@ -220,22 +241,27 @@ export function SelectableLessonContent({
     function onScroll() {
       setSelection(null);
     }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setSelection(null);
+    }
     document.addEventListener("mousedown", onDocMouseDown);
     window.addEventListener("scroll", onScroll, true);
+    document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("mousedown", onDocMouseDown);
       window.removeEventListener("scroll", onScroll, true);
+      document.removeEventListener("keydown", onKeyDown);
     };
   }, [selection]);
 
   // Scroll the first search-term match into view when arriving from search.
   useEffect(() => {
-    if (!searchRe) return;
+    if (!highlightQuery) return;
     firstMatchRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "center",
     });
-  }, [searchRe, pageKey]);
+  }, [highlightQuery, pageKey]);
 
   function onHighlight() {
     if (!selection) return;
@@ -311,6 +337,10 @@ export function SelectableLessonContent({
     const blockRanges = ranges[blockKey] ?? [];
     const isHL = (idx: number) =>
       blockRanges.some((r) => r.start <= idx && idx <= r.end);
+    const blockSearchSet = searchMatches[blockKey];
+    // Search highlight never overrides a saved highlight.
+    const isSearchHL = (idx: number) =>
+      !isHL(idx) && (blockSearchSet?.has(idx) ?? false);
     const toks = blockTokens(block);
 
     // The link href covering token i. Spaces between two words of the same
@@ -337,19 +367,25 @@ export function SelectableLessonContent({
       if (t.kind === "space") {
         const prev = toks[i - 1];
         const next = toks[i + 1];
-        const between =
+        const savedBetween =
           prev?.kind === "word" &&
           next?.kind === "word" &&
           isHL(prev.idx) &&
           isHL(next.idx);
+        const searchBetween =
+          prev?.kind === "word" &&
+          next?.kind === "word" &&
+          isSearchHL(prev.idx) &&
+          isSearchHL(next.idx);
+        const spaceBg = savedBetween
+          ? "var(--color-highlight-amber)"
+          : searchBetween
+            ? "var(--color-search-highlight)"
+            : undefined;
         return (
           <span
             key={i}
-            style={
-              between
-                ? { backgroundColor: "var(--color-highlight-amber)" }
-                : undefined
-            }
+            style={spaceBg ? { backgroundColor: spaceBg } : undefined}
           >
             {t.text}
           </span>
@@ -365,7 +401,7 @@ export function SelectableLessonContent({
       );
       // Saved highlights (amber) win over the temporary search highlight (#FDE68A).
       const savedHL = isHL(t.idx);
-      const searchHL = !savedHL && !!searchRe && searchRe.test(t.text);
+      const searchHL = isSearchHL(t.idx);
       const isFirstSearchHit = searchHL && !firstSearchMatchAssigned;
       if (isFirstSearchHit) firstSearchMatchAssigned = true;
       const bg = savedHL

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { LessonPager } from "@/components/learn/LessonPager";
 import { useToast } from "@/components/ui/ToastProvider";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   useLesson,
   useLessonQuiz,
@@ -128,7 +129,13 @@ export default function LessonDetailPage({
         isCompleted: true,
         moduleId,
       },
-      { onSuccess: () => toast.success("Lesson complete!") },
+      {
+        onSuccess: () => {
+          // Only confirm when a write actually happened (the mock/no-Supabase
+          // path resolves "successfully" without persisting anything).
+          if (isSupabaseConfigured()) toast.success("Lesson complete!");
+        },
+      },
     );
   }
 

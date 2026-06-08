@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Check, ChevronDown, Circle, X } from "lucide-react";
 import { cn, portableTextToPlain } from "@/lib/utils";
 import { Collapse } from "@/components/ui/Collapse";
@@ -37,7 +37,7 @@ export function PracticeQuestionList({
   practiceProgress,
 }: PracticeQuestionListProps) {
   const [open, setOpen] = useState(false);
-  const flat = flattenPractices(practices);
+  const flat = useMemo(() => flattenPractices(practices), [practices]);
   if (flat.length === 0) return null;
 
   const answers = practiceProgress?.answers ?? {};

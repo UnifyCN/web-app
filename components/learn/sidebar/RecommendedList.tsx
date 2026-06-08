@@ -28,7 +28,7 @@ export function RecommendedList({ items }: { items: RecommendedItem[] }) {
           >
             <span
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white"
-              style={{ backgroundColor: module.colorTheme?.hex ?? "#9F9D9D" }}
+              style={{ backgroundColor: module.colorTheme?.hex ?? "var(--color-ink-placeholder)" }}
             >
               <ModuleIcon
                 icon={module.icon}

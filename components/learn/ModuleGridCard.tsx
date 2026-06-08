@@ -19,7 +19,7 @@ const BLOB_FIT: Record<(typeof BLOB_CYCLE)[number], string> = {
 };
 
 export function ModuleGridCard({ mod }: ModuleGridCardProps) {
-  const colorHex = mod.colorTheme?.hex ?? "#9F9D9D";
+  const colorHex = mod.colorTheme?.hex ?? "var(--color-ink-placeholder)";
   const sectionCount = mod.submodules?.length ?? 0;
   const inProgress = mod.status === "in_progress";
   const percent = mod.progressPercent ?? 0;

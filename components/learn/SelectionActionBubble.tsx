@@ -63,7 +63,8 @@ export function SelectionActionBubble({
         top: pos ? pos.top : y,
         visibility: pos ? "visible" : "hidden",
       }}
-      role="menu"
+      role="toolbar"
+      aria-label="Text selection actions"
     >
       <button
         type="button"

@@ -139,21 +139,22 @@ export default function LearnPage() {
   const query = searchQuery.trim();
   const isSearching = query.length > 0;
 
-  const passesFilters = (m: LearnModuleView) =>
-    (!savedOnly || m.isFavourite) && (!stageOnly || matchesStage(m, stage));
-
-  const inProgressModules = sortModules(
-    decoratedModules.filter((m) => m.status === "in_progress" && passesFilters(m)),
-    sortMode,
-    profile,
-  );
-  const exploreModules = sortModules(
-    decoratedModules.filter(
-      (m) => m.status !== "in_progress" && passesFilters(m),
-    ),
-    sortMode,
-    profile,
-  );
+  const { inProgressModules, exploreModules } = useMemo(() => {
+    const passes = (m: LearnModuleView) =>
+      (!savedOnly || m.isFavourite) && (!stageOnly || matchesStage(m, stage));
+    return {
+      inProgressModules: sortModules(
+        decoratedModules.filter((m) => m.status === "in_progress" && passes(m)),
+        sortMode,
+        profile,
+      ),
+      exploreModules: sortModules(
+        decoratedModules.filter((m) => m.status !== "in_progress" && passes(m)),
+        sortMode,
+        profile,
+      ),
+    };
+  }, [decoratedModules, savedOnly, stageOnly, stage, sortMode, profile]);
 
   // --- Resume hero (first incomplete lesson of each in-progress module) ----
   const resumeEntries = useMemo<ResumeEntry[]>(() => {
@@ -173,7 +174,7 @@ export default function LearnPage() {
             moduleTitle: m.title,
             submoduleTitle: subs[i].title,
             moduleIcon: m.icon,
-            colorHex: m.colorTheme?.hex ?? "#9F9D9D",
+            colorHex: m.colorTheme?.hex ?? "var(--color-ink-placeholder)",
             sectionNumber: i + 1,
             totalSections: subs.length,
             isFavourite: m.isFavourite,
@@ -186,22 +187,25 @@ export default function LearnPage() {
   }, [decoratedModules, progresses]);
 
   // --- Search: flatten the module tree into module + lesson hits -----------
-  // Whole-word matcher (built once); reused across items — safe since the regex
-  // has no `g` flag, so `.test()` keeps no lastIndex state.
-  const wordRe = isSearching ? buildWordMatcher(query) : null;
-  // Search within the same set the sidebar filters apply to.
-  const searchPool = decoratedModules.filter(passesFilters);
-  const moduleHits = wordRe
-    ? searchPool.filter((m) => matchesSearch(m, wordRe))
-    : [];
-  const lessonHits: LessonHit[] = [];
-  if (wordRe) {
-    for (const m of searchPool) {
-      const colorHex = m.colorTheme?.hex ?? "#9F9D9D";
+  // Memoized so the triple-loop flatten only runs when the query/filters change,
+  // not on every render. The whole-word matcher has no `g` flag, so reusing
+  // `.test()` across items keeps no lastIndex state.
+  const { moduleHits, lessonHits } = useMemo(() => {
+    const wordRe = isSearching ? buildWordMatcher(query) : null;
+    if (!wordRe) return { moduleHits: [] as LearnModuleView[], lessonHits: [] as LessonHit[] };
+    // Search within the same set the sidebar filters apply to.
+    const pool = decoratedModules.filter(
+      (m) =>
+        (!savedOnly || m.isFavourite) && (!stageOnly || matchesStage(m, stage)),
+    );
+    const mHits = pool.filter((m) => matchesSearch(m, wordRe));
+    const lHits: LessonHit[] = [];
+    for (const m of pool) {
+      const colorHex = m.colorTheme?.hex ?? "var(--color-ink-placeholder)";
       for (const sub of m.submodules ?? []) {
         for (const lesson of sub.lessons ?? []) {
           if (wordRe.test(lesson.title)) {
-            lessonHits.push({
+            lHits.push({
               lessonId: lesson._id,
               lessonTitle: lesson.title,
               submoduleId: sub._id,
@@ -214,7 +218,8 @@ export default function LearnPage() {
         }
       }
     }
-  }
+    return { moduleHits: mHits, lessonHits: lHits };
+  }, [decoratedModules, savedOnly, stageOnly, stage, query, isSearching]);
 
   // --- Sidebar derived values ----------------------------------------------
   const firstName = user?.onboarding?.firstName?.trim();
@@ -324,7 +329,7 @@ export default function LearnPage() {
               moduleId={startHere._id}
               moduleTitle={startHere.title}
               reason={whyTag(startHere, profile) || undefined}
-              colorHex={startHere.colorTheme?.hex ?? "#9F9D9D"}
+              colorHex={startHere.colorTheme?.hex ?? "var(--color-ink-placeholder)"}
             />
           )}
 
