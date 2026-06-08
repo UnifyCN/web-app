@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { Check, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fireTaskConfetti } from "@/lib/confetti";
 import type { ChecklistTask } from "@/types";
 
 interface TaskRowProps {
@@ -15,11 +16,19 @@ interface TaskRowProps {
 /** A single checklist task — checkbox, title, description, "Learn how" link. */
 export function TaskRow({ task, onToggle, onDelete }: TaskRowProps) {
   const [pop, setPop] = useState(false);
+  const checkboxRef = useRef<HTMLButtonElement>(null);
 
   function handleToggle() {
     if (!task.completed) {
       setPop(true);
       window.setTimeout(() => setPop(false), 220);
+      const rect = checkboxRef.current?.getBoundingClientRect();
+      if (rect) {
+        fireTaskConfetti({
+          x: (rect.left + rect.width / 2) / window.innerWidth,
+          y: (rect.top + rect.height / 2) / window.innerHeight,
+        });
+      }
     }
     onToggle(task.id);
   }
@@ -27,6 +36,7 @@ export function TaskRow({ task, onToggle, onDelete }: TaskRowProps) {
   return (
     <div className="flex gap-3 px-4 py-3">
       <button
+        ref={checkboxRef}
         type="button"
         role="checkbox"
         aria-checked={task.completed}

@@ -11,6 +11,7 @@ interface LearnSidePanelProps {
   onSearchChange: (value: string) => void;
   savedOnly: boolean;
   onSavedOnlyChange: (value: boolean) => void;
+  savedCount: number;
 }
 
 export function LearnSidePanel({
@@ -21,6 +22,7 @@ export function LearnSidePanel({
   onSearchChange,
   savedOnly,
   onSavedOnlyChange,
+  savedCount,
 }: LearnSidePanelProps) {
   return (
     <div className="flex flex-col gap-4">
@@ -72,6 +74,11 @@ export function LearnSidePanel({
             aria-hidden
           />
           {savedOnly ? "Showing saved" : "Saved only"}
+          {savedCount > 0 && (
+            <span className={cn(!savedOnly && "text-ink-placeholder")}>
+              · {savedCount}
+            </span>
+          )}
         </button>
       </section>
     </div>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Heart, MessageCircle, Bookmark, Pin } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { useLikePost, useSavePost } from "@/hooks/useFeed";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import type { Post } from "@/types";
@@ -24,6 +25,7 @@ export function PostCard({
   const [liked, setLiked] = useState(post.likedByMe ?? false);
   const [saved, setSaved] = useState(post.savedByMe ?? false);
   const [popping, setPopping] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const likeMutation = useLikePost();
   const saveMutation = useSavePost();
 
@@ -117,9 +119,12 @@ export function PostCard({
           )}
         >
           {post.postImageUrls.map((url, index) => (
-            <div
-              key={url}
-              className="relative aspect-[4/3] overflow-hidden rounded-lg border border-border"
+            <button
+              key={`${url}-${index}`}
+              type="button"
+              onClick={() => setLightboxIndex(index)}
+              aria-label={`View image ${index + 1} full screen`}
+              className="relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-lg border border-border"
             >
               <Image
                 src={url}
@@ -128,9 +133,20 @@ export function PostCard({
                 className="object-cover"
                 sizes="(max-width: 680px) 100vw, 340px"
               />
-            </div>
+            </button>
           ))}
         </div>
+      )}
+
+      {hasImages && (
+        <ImageLightbox
+          open={lightboxIndex !== null}
+          images={post.postImageUrls}
+          index={lightboxIndex ?? 0}
+          onIndexChange={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          alt={post.title}
+        />
       )}
 
       {/* Actions */}

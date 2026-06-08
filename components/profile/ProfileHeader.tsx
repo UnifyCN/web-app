@@ -97,6 +97,9 @@ export function ProfileHeader({
     if (file) updateAvatar.mutate(file);
   };
 
+  // Prefer the onboarding first name as the display name, with @username beneath.
+  const firstName = profile.onboarding?.firstName?.trim();
+
   return (
     <div className="rounded-card border border-border-card bg-surface p-5">
       <div className="flex items-start gap-4">
@@ -132,14 +135,30 @@ export function ProfileHeader({
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-bold text-ink-secondary">
-            {profile.username}
-            {profile.pronouns && (
-              <span className="ml-2 text-sm font-normal text-ink-placeholder">
-                {profile.pronouns}
-              </span>
-            )}
-          </h2>
+          {firstName ? (
+            <>
+              <h2 className="text-lg font-bold text-ink-secondary">
+                {firstName}
+              </h2>
+              <p className="text-sm text-ink-muted">
+                @{profile.username}
+                {profile.pronouns && (
+                  <span className="ml-2 text-ink-placeholder">
+                    {profile.pronouns}
+                  </span>
+                )}
+              </p>
+            </>
+          ) : (
+            <h2 className="text-lg font-bold text-ink-secondary">
+              {profile.username}
+              {profile.pronouns && (
+                <span className="ml-2 text-sm font-normal text-ink-placeholder">
+                  {profile.pronouns}
+                </span>
+              )}
+            </h2>
+          )}
           <div className="mt-2">
             <StatsRow
               posts={postCount}
