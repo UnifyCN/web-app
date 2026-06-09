@@ -73,15 +73,23 @@ export function usePracticeProgress(submoduleId: string) {
   });
 }
 
+/** All of the user's section quiz progress, keyed by submodule id (Supabase). */
+export function useAllPracticeProgresses() {
+  return useQuery({
+    queryKey: [...PRACTICE_PROGRESS_KEY, "all"],
+    queryFn: learn.getAllPracticeProgresses,
+  });
+}
+
 export function useUpsertPracticeProgress() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: UpsertPracticeProgressInput) =>
       learn.upsertPracticeProgress(input),
-    onSuccess: (_data, { submoduleId }) => {
-      queryClient.invalidateQueries({
-        queryKey: [...PRACTICE_PROGRESS_KEY, submoduleId],
-      });
+    onSuccess: () => {
+      // Prefix invalidation refreshes both the per-section query and the
+      // `[...,"all"]` query used by the module table of contents.
+      queryClient.invalidateQueries({ queryKey: PRACTICE_PROGRESS_KEY });
       // Section/module progress surfaces may reflect quiz completion.
       queryClient.invalidateQueries({ queryKey: MODULES_KEY });
     },

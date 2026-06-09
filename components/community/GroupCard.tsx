@@ -33,7 +33,7 @@ export function GroupCard({ group }: { group: Group }) {
   }
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-card border border-border-card bg-surface">
+    <div className="flex flex-col overflow-hidden rounded-card border border-border-card bg-surface transition-shadow duration-200 hover:shadow-md">
       <Link href={`/community/${group.id}`} className="block">
         <div className="relative aspect-[16/9] w-full">
           <GroupCover

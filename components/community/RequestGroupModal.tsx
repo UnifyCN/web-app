@@ -54,8 +54,11 @@ export function RequestGroupModal({ open, onClose }: RequestGroupModalProps) {
     };
   }, [open, onClose]);
 
-  // Reset form whenever the modal is closed.
-  useEffect(() => {
+  // Reset the form when the modal closes — during render (the React-sanctioned
+  // "adjust state on prop change" pattern) rather than in an effect.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (!open) {
       setSubmitted(false);
       setGroupName("");
@@ -64,7 +67,7 @@ export function RequestGroupModal({ open, onClose }: RequestGroupModalProps) {
       setEmail("");
       setNotes("");
     }
-  }, [open]);
+  }
 
   if (!open) return null;
 

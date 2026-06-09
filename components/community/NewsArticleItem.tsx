@@ -49,7 +49,7 @@ export function NewsArticleItem({ item }: { item: NewsItem }) {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="group flex gap-4 py-4"
+        className="group -mx-3 flex gap-4 rounded-lg px-3 py-4 transition-colors duration-200 hover:bg-surface-card"
       >
         {body}
       </a>

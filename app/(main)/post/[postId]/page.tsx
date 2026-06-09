@@ -137,7 +137,7 @@ export default function PostDetailPage({
   const commentCount = commentsQuery.data?.length ?? 0;
 
   return (
-    <div className="mx-auto max-w-[680px] px-6 py-6">
+    <div className="mx-auto max-w-[680px] animate-fade-in px-6 py-6">
       <div className="mb-4 flex items-center justify-between">
         <Link
           href="/home"

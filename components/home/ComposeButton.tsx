@@ -21,7 +21,7 @@ export function ComposeButton() {
       >
         <SquarePen className="h-5 w-5" aria-hidden />
       </button>
-      <CreatePostModal open={open} onClose={() => setOpen(false)} />
+      {open && <CreatePostModal open onClose={() => setOpen(false)} />}
     </>
   );
 }

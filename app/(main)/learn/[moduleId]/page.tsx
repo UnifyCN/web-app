@@ -11,7 +11,11 @@ import {
   SubmoduleTimelineRow,
   type SubmoduleState,
 } from "@/components/learn/SubmoduleTimelineRow";
-import { useAllLessonProgresses, useModule } from "@/hooks/useLearn";
+import {
+  useAllLessonProgresses,
+  useAllPracticeProgresses,
+  useModule,
+} from "@/hooks/useLearn";
 
 export default function ModuleDetailPage({
   params,
@@ -21,6 +25,7 @@ export default function ModuleDetailPage({
   const { moduleId } = use(params);
   const moduleQuery = useModule(moduleId);
   const progressesQuery = useAllLessonProgresses();
+  const practiceProgressesQuery = useAllPracticeProgresses();
 
   const mod = moduleQuery.data;
 
@@ -49,12 +54,13 @@ export default function ModuleDetailPage({
   }
 
   const progresses = progressesQuery.data ?? {};
+  const practiceProgresses = practiceProgressesQuery.data ?? {};
   const submodules = mod.submodules ?? [];
   const accentColor = mod.colorTheme?.hex ?? "var(--color-ink-placeholder)";
 
   // Per-submodule state from lesson completion. The first non-completed row
-  // gets the colored CTA treatment ("primary action"); everything else
-  // renders as a neutral card with its own dot state.
+  // gets the colored CTA treatment ("primary action") and opens by default;
+  // everything else renders as a neutral card with its own dot state.
   const rows = submodules.map((sub) => {
     const lessons = sub.lessons ?? [];
     const completedCount = lessons.filter(
@@ -136,6 +142,10 @@ export default function ModuleDetailPage({
               colorHex={accentColor}
               isFirst={i === 0}
               isLast={i === rows.length - 1}
+              lessons={lessons}
+              progresses={progresses}
+              hasPractice={(sub.practice_count ?? 0) > 0}
+              practiceProgress={practiceProgresses[sub._id]}
             />
           ))}
         </ol>

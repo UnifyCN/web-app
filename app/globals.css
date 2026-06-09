@@ -37,6 +37,11 @@
   --color-destructive: #ff3b30;
   --color-mention-blue: #007aff;
 
+  /* Lesson highlight (functional, mirrors mobile's #FEF3C7 highlight colour) */
+  --color-highlight-amber: #fef3c7;
+  /* Search-term highlight in the reader — distinct from saved highlights. */
+  --color-search-highlight: #fde68a;
+
   /* Checklist priority system */
   --color-priority-do-now: #e03b3b;
   --color-priority-do-now-bg: #fbcfcf;
@@ -168,6 +173,8 @@ input:-webkit-autofill:active {
   animation: typing-dot 1.2s ease-in-out infinite;
 }
 
+/* (Toast mount/unmount is handled by framer-motion in ToastProvider.) */
+
 /* Checklist — checkbox tick pop (emil-design-eng, ≤150ms). */
 @keyframes checkbox-pop {
   0% {
@@ -204,8 +211,8 @@ input:-webkit-autofill:active {
   transform: scaleX(1);
 }
 
-/* Profile / list entrance — subtle fade-up. Gated on no-preference so it's
- * simply absent for reduced-motion users. */
+/* Skeleton → content / list entrance — subtle fade-up. Gated on no-preference
+ * so reduced-motion users see content appear instantly. */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes fade-in {
     from {

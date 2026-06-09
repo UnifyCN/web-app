@@ -115,7 +115,7 @@ export default function CommunityPage() {
   );
 
   return (
-    <div className="mx-auto max-w-[1080px] px-6 py-6">
+    <div className="mx-auto max-w-[1080px] animate-fade-in px-6 py-6">
       <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
         Community
       </h1>
