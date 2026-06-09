@@ -171,7 +171,7 @@ export function ProfileHeader({
             </>
           ) : (
             <>
-              <h2 className="text-lg font-bold text-ink-secondary">
+              <h2 className="truncate text-lg font-bold text-ink-secondary">
                 {profile.username}
                 {profile.pronouns && (
                   <span className="ml-2 text-sm font-normal text-ink-placeholder">

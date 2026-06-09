@@ -21,10 +21,10 @@ interface FollowButtonProps {
  * header and the followers / following list rows.
  */
 export function FollowButton({ userId, className }: FollowButtonProps) {
-  const { data: isFollowing = false } = useFollowStatus(userId);
+  const { data: isFollowing = false, isLoading } = useFollowStatus(userId);
   const followUser = useFollowUser();
   const unfollowUser = useUnfollowUser();
-  const pending = followUser.isPending || unfollowUser.isPending;
+  const pending = followUser.isPending || unfollowUser.isPending || isLoading;
 
   const handleToggle = () => {
     if (isFollowing) unfollowUser.mutate(userId);

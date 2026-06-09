@@ -7,6 +7,7 @@ import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileTabs, PROFILE_TABS } from "@/components/profile/ProfileTabs";
 import { HighlightCard } from "@/components/profile/HighlightCard";
 import { CommentCard } from "@/components/profile/CommentCard";
+import { SkeletonCommentList } from "@/components/profile/SkeletonCommentList";
 import { PostCard } from "@/components/home/PostCard";
 import { PostCardSkeleton } from "@/components/home/PostCardSkeleton";
 import { useCurrentUser, useLessonHighlights } from "@/hooks/useProfile";
@@ -138,27 +139,6 @@ function SkeletonHighlightList({ count = 3 }: { count?: number }) {
           <div className="mt-2 space-y-2">
             <div className="h-3 w-full rounded bg-surface-gray" />
             <div className="h-3 w-5/6 rounded bg-surface-gray" />
-          </div>
-          <div className="mt-3 h-2.5 w-1/2 rounded bg-surface-gray" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** Skeleton list of comment cards (matches CommentCard shape). */
-function SkeletonCommentList({ count = 3 }: { count?: number }) {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="animate-pulse rounded-card border border-border-card bg-surface px-5 py-4"
-          aria-hidden
-        >
-          <div className="space-y-2">
-            <div className="h-3 w-full rounded bg-surface-gray" />
-            <div className="h-3 w-4/5 rounded bg-surface-gray" />
           </div>
           <div className="mt-3 h-2.5 w-1/2 rounded bg-surface-gray" />
         </div>

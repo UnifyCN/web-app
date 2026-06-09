@@ -700,11 +700,21 @@ export async function getUserComments(userId: string): Promise<UserComment[]> {
   if (error) throw error;
 
   const rows = (data as unknown as UserCommentRow[]) ?? [];
-  return rows.map((row) => ({
-    ...commentRowToPostComment(row),
-    postTitle: row.posts?.title ?? "a post",
-    postAuthorUsername: row.posts?.author?.username ?? "someone",
-  }));
+  return rows.flatMap((row) => {
+    // The post (+ its author) should always join; if either is null the data is
+    // unexpected — surface it in dev and drop the row rather than masking it.
+    if (!row.posts || !row.posts.author) {
+      console.error("getUserComments: comment missing post/author join", row.id);
+      return [];
+    }
+    return [
+      {
+        ...commentRowToPostComment(row),
+        postTitle: row.posts.title,
+        postAuthorUsername: row.posts.author.username,
+      },
+    ];
+  });
 }
 
 export interface CreateCommentInput {

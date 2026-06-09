@@ -9,6 +9,7 @@ import {
   OTHER_PROFILE_TABS,
 } from "@/components/profile/ProfileTabs";
 import { CommentCard } from "@/components/profile/CommentCard";
+import { SkeletonCommentList } from "@/components/profile/SkeletonCommentList";
 import { PostCard } from "@/components/home/PostCard";
 import { PostCardSkeleton } from "@/components/home/PostCardSkeleton";
 import {
@@ -153,7 +154,7 @@ export default function UserProfilePage() {
 
         {tab === "Comments" &&
           (commentsLoading ? (
-            <SkeletonPostList />
+            <SkeletonCommentList />
           ) : commentItems.length > 0 ? (
             <div className="space-y-3">
               {commentItems.map((comment) => (
