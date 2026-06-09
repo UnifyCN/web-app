@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
@@ -56,6 +56,21 @@ export default function PostDetailPage({
       }
     }
     return { topLevel: top, repliesByParent: replies };
+  }, [commentsQuery.data]);
+
+  // Deep-link: once comments are in the DOM, scroll the #comment-<id> target
+  // (e.g. from a profile Comments card) into view. Runs once via a ref so later
+  // data changes don't re-scroll.
+  const scrolledRef = useRef(false);
+  useEffect(() => {
+    if (scrolledRef.current) return;
+    if (!commentsQuery.data || commentsQuery.data.length === 0) return;
+    const hash = window.location.hash;
+    if (!hash.startsWith("#comment-")) return;
+    const el = document.getElementById(hash.slice(1));
+    if (!el) return;
+    scrolledRef.current = true;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [commentsQuery.data]);
 
   async function handleSubmit(content: string) {
