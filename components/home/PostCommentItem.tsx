@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Heart, Reply as ReplyIcon, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
@@ -76,18 +77,31 @@ export function PostCommentItem({
   return (
     <>
       <div
-        className={cn("flex gap-3", deleteMutation.isPending && "opacity-50")}
+        id={`comment-${comment.id}`}
+        className={cn(
+          "flex scroll-mt-24 gap-3 rounded-lg transition-colors target:bg-primary-bg",
+          deleteMutation.isPending && "opacity-50",
+        )}
       >
-        <Avatar
-          username={comment.author.username}
-          profilePictureUrl={comment.author.profilePictureUrl}
-          size={isReply ? 30 : 36}
-        />
+        <Link
+          href={`/profile/${comment.author.id}`}
+          aria-label={`View ${comment.author.username}'s profile`}
+          className="shrink-0 self-start rounded-full transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <Avatar
+            username={comment.author.username}
+            profilePictureUrl={comment.author.profilePictureUrl}
+            size={isReply ? 30 : 36}
+          />
+        </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold text-ink-secondary">
+            <Link
+              href={`/profile/${comment.author.id}`}
+              className="truncate text-sm font-semibold text-ink-secondary transition-colors hover:text-primary hover:underline"
+            >
               {comment.author.username}
-            </span>
+            </Link>
             <span className="shrink-0 text-xs text-ink-placeholder">
               {formatRelativeTime(comment.createdAt)}
             </span>

@@ -59,6 +59,7 @@ export function PostCard({
   const hasImages = post.postImageUrls.length > 0;
   const multiImage = post.postImageUrls.length > 1;
   const detailHref = `/post/${post.id}`;
+  const profileHref = `/profile/${post.author.id}`;
 
   const body = (
     <>
@@ -77,16 +78,25 @@ export function PostCard({
     <article className="px-5 py-4 transition-colors duration-200 hover:bg-surface-card">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Avatar
-          username={post.author.username}
-          profilePictureUrl={post.author.profilePictureUrl}
-          size={40}
-        />
+        <Link
+          href={profileHref}
+          aria-label={`View ${post.author.username}'s profile`}
+          className="shrink-0 rounded-full transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <Avatar
+            username={post.author.username}
+            profilePictureUrl={post.author.profilePictureUrl}
+            size={40}
+          />
+        </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold text-ink-secondary">
+            <Link
+              href={profileHref}
+              className="truncate text-sm font-semibold text-ink-secondary transition-colors hover:text-primary hover:underline"
+            >
               {post.author.username}
-            </span>
+            </Link>
             <span className="shrink-0 text-xs text-ink-placeholder">
               {formatRelativeTime(post.createdAt)}
             </span>

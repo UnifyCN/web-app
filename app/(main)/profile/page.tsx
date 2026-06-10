@@ -1,13 +1,17 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
+import { Pencil } from "lucide-react";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileTabs, PROFILE_TABS } from "@/components/profile/ProfileTabs";
 import { HighlightCard } from "@/components/profile/HighlightCard";
+import { CommentCard } from "@/components/profile/CommentCard";
+import { SkeletonCommentList } from "@/components/profile/SkeletonCommentList";
 import { PostCard } from "@/components/home/PostCard";
 import { PostCardSkeleton } from "@/components/home/PostCardSkeleton";
 import { useCurrentUser, useLessonHighlights } from "@/hooks/useProfile";
-import { useSavedPosts, useUserPosts } from "@/hooks/useFeed";
+import { useSavedPosts, useUserComments, useUserPosts } from "@/hooks/useFeed";
 import type { Post } from "@/types";
 
 function TabMessage({ children }: { children: ReactNode }) {
@@ -33,13 +37,24 @@ function PostFeed({
   items,
   isLoading,
   emptyText,
+  emptyAction,
 }: {
   items: Post[];
   isLoading: boolean;
   emptyText: string;
+  emptyAction?: ReactNode;
 }) {
   if (isLoading) return <SkeletonPostList />;
-  if (items.length === 0) return <TabMessage>{emptyText}</TabMessage>;
+  if (items.length === 0) {
+    return emptyAction ? (
+      <div className="rounded-card border border-border-card bg-surface px-5 py-12 text-center">
+        <p className="text-sm text-ink-placeholder">{emptyText}</p>
+        <div className="mt-4 flex justify-center">{emptyAction}</div>
+      </div>
+    ) : (
+      <TabMessage>{emptyText}</TabMessage>
+    );
+  }
   return (
     <div className="divide-y divide-border-card overflow-hidden rounded-card border border-border-card bg-surface">
       {items.map((post) => (
@@ -141,6 +156,10 @@ export default function ProfilePage() {
     { enabled: Boolean(profile?.id) },
   );
   const { data: savedPosts, isLoading: savedLoading } = useSavedPosts();
+  const { data: comments, isLoading: commentsLoading } = useUserComments(
+    profile?.id ?? "",
+    { enabled: Boolean(profile?.id) },
+  );
   const { data: highlights, isLoading: highlightsLoading } =
     useLessonHighlights();
 
@@ -171,6 +190,7 @@ export default function ProfilePage() {
 
   const posts = myPosts ?? [];
   const saved = savedPosts ?? [];
+  const commentItems = comments ?? [];
   const highlightItems = highlights ?? [];
 
   return (
@@ -190,9 +210,32 @@ export default function ProfilePage() {
           <PostFeed
             items={posts}
             isLoading={postsLoading}
-            emptyText="You haven't posted yet."
+            emptyText="Share your first post with the community."
+            emptyAction={
+              <Link
+                href="/home"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
+              >
+                <Pencil className="h-4 w-4" aria-hidden />
+                Share a post
+              </Link>
+            }
           />
         )}
+        {tab === "Comments" &&
+          (commentsLoading ? (
+            <SkeletonCommentList />
+          ) : commentItems.length > 0 ? (
+            <div className="space-y-3">
+              {commentItems.map((comment) => (
+                <CommentCard key={comment.id} comment={comment} />
+              ))}
+            </div>
+          ) : (
+            <TabMessage>
+              You haven&rsquo;t commented yet — join the conversation.
+            </TabMessage>
+          ))}
         {tab === "Saved" && (
           <PostFeed
             items={saved}

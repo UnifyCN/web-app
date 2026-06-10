@@ -1,4 +1,4 @@
-import type { Persona, Stage, UserProfile } from "@/types";
+import type { FollowListUser, Persona, Stage, UserProfile } from "@/types";
 import {
   createClient,
   getAuthUserId,
@@ -20,13 +20,18 @@ import {
   currentUser,
   getUserById as findUser,
   lessonHighlights,
+  otherUsers,
   type LessonHighlight,
 } from "@/lib/mock/users";
 
 /**
  * Profile data access (users, follows, highlights).
- * TODO: replace with real data — follows and highlights are still mock; only
- * the signed-in user's profile is wired to Supabase.
+ *
+ * Own + other-user profiles and the follow graph (user_followers) read the real
+ * Supabase tables; the mock users + highlights remain the env-not-configured
+ * fallback for local dev. NOTE: user_onboarding_profiles is own-row RLS, so a
+ * fetched *other* user's `onboarding` comes back null (persona / city / stage
+ * won't render) until a public-profile read path exists.
  */
 
 export async function getCurrentUser(): Promise<UserProfile | null> {
@@ -43,7 +48,7 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
   }
 
   const usersSelect =
-    "id, username, profile_picture_url, is_premium, permissions, biography, pronouns";
+    "id, username, profile_picture_url, is_premium, permissions, biography, pronouns, created_at";
 
   const [usersRes, { data: onb }, followerRes, followingRes] = await Promise.all([
     supabase.from("users").select(usersSelect).eq("id", user.id).maybeSingle(),
@@ -106,6 +111,7 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     permissions: row.permissions ? [row.permissions] : [],
     bio: row.biography ?? null,
     pronouns: row.pronouns ?? null,
+    createdAt: row.created_at ?? null,
     followerCount: followerRes.count ?? 0,
     followingCount: followingRes.count ?? 0,
     onboarding: onb
@@ -130,7 +136,73 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
 export async function getUserById(
   id: string,
 ): Promise<UserProfile | undefined> {
-  return findUser(id);
+  // Local-dev / env-not-configured: serve the mock user so the app stays
+  // browsable without Supabase.
+  if (!isSupabaseConfigured()) return findUser(id);
+
+  const supabase = createClient();
+
+  const usersSelect =
+    "id, username, profile_picture_url, is_premium, permissions, biography, pronouns, created_at";
+
+  const [usersRes, { data: onb }, followerRes, followingRes] =
+    await Promise.all([
+      supabase.from("users").select(usersSelect).eq("id", id).maybeSingle(),
+      // user_onboarding_profiles is own-row RLS, so this returns null for any
+      // user other than the caller — onboarding fields degrade to absent.
+      supabase
+        .from("user_onboarding_profiles")
+        .select(
+          "id, first_name, persona, referral_source, arrival_date, city, province, stage, goals, learning_interests, hobbies, learning_reminders",
+        )
+        .eq("id", id)
+        .maybeSingle(),
+      supabase
+        .from("user_followers")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", id),
+      supabase
+        .from("user_followers")
+        .select("*", { count: "exact", head: true })
+        .eq("follower_id", id),
+    ]);
+
+  const row = usersRes.data;
+  if (!row) {
+    if (usersRes.error) {
+      console.error("getUserById: users query failed", usersRes.error);
+    }
+    return undefined;
+  }
+
+  return {
+    id: row.id,
+    username: row.username,
+    profilePictureUrl: row.profile_picture_url,
+    isPremium: row.is_premium,
+    permissions: row.permissions ? [row.permissions] : [],
+    bio: row.biography ?? null,
+    pronouns: row.pronouns ?? null,
+    createdAt: row.created_at ?? null,
+    followerCount: followerRes.count ?? 0,
+    followingCount: followingRes.count ?? 0,
+    onboarding: onb
+      ? {
+          id: onb.id,
+          firstName: onb.first_name ?? null,
+          persona: onb.persona as Persona,
+          referralSource: onb.referral_source ?? null,
+          arrivalDate: onb.arrival_date,
+          city: onb.city,
+          province: onb.province,
+          stage: onb.stage as Stage,
+          goals: onb.goals ?? [],
+          learningInterests: onb.learning_interests ?? [],
+          hobbies: onb.hobbies ?? [],
+          learningReminders: onb.learning_reminders ?? false,
+        }
+      : null,
+  };
 }
 
 export interface UpdateUserDetailsInput {
@@ -308,12 +380,147 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
   });
 }
 
+/* ---- follow graph ----------------------------------------------------- */
+
+/** Whether the signed-in user follows `userId`. False in the mock / signed-out
+ *  build (the follow graph isn't available without an auth session). */
+export async function getFollowStatus(userId: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+
+  const me = await getAuthUserId();
+  if (!me) return false;
+
+  const supabase = createClient();
+  const { count, error } = await supabase
+    .from("user_followers")
+    .select("*", { count: "exact", head: true })
+    .eq("follower_id", me)
+    .eq("following_id", userId);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+/** Whether `userId` follows the signed-in user back (drives the "Follows you"
+ *  badge). False in the mock / signed-out build. */
+export async function getFollowsYou(userId: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+
+  const me = await getAuthUserId();
+  if (!me) return false;
+
+  const supabase = createClient();
+  const { count, error } = await supabase
+    .from("user_followers")
+    .select("*", { count: "exact", head: true })
+    .eq("follower_id", userId)
+    .eq("following_id", me);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
 export async function followUser(userId: string): Promise<void> {
-  // TODO: replace with real data — insert into `user_followers`.
-  void userId;
+  if (!isSupabaseConfigured()) return;
+
+  const me = await getAuthUserId();
+  if (!me) throw new Error("followUser: no auth session");
+
+  const supabase = createClient();
+  // (follower_id, following_id) is the composite PK — a duplicate insert just
+  // means we already follow them, so treat 23505 as idempotent success.
+  const { error } = await supabase
+    .from("user_followers")
+    .insert({ follower_id: me, following_id: userId });
+  if (error && (error as { code?: string }).code !== "23505") throw error;
 }
 
 export async function unfollowUser(userId: string): Promise<void> {
-  // TODO: replace with real data — delete from `user_followers`.
-  void userId;
+  if (!isSupabaseConfigured()) return;
+
+  const me = await getAuthUserId();
+  if (!me) throw new Error("unfollowUser: no auth session");
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("user_followers")
+    .delete()
+    .eq("follower_id", me)
+    .eq("following_id", userId);
+  if (error) throw error;
+}
+
+/** One user_followers row with the joined user embedded under `follower` or
+ *  `following` (whichever side the query selected). */
+interface FollowJoinRow {
+  follower?: FollowJoinUser | FollowJoinUser[] | null;
+  following?: FollowJoinUser | FollowJoinUser[] | null;
+}
+interface FollowJoinUser {
+  id: string;
+  username: string;
+  profile_picture_url: string | null;
+}
+
+/** Pull the embedded user off each follow row and map it to FollowListUser.
+ *  PostgREST returns the to-one embed as an object, but we accept an array too
+ *  to stay resilient to relationship-inference quirks. */
+function mapFollowRows(
+  data: unknown,
+  key: "follower" | "following",
+): FollowListUser[] {
+  const rows = (data ?? []) as FollowJoinRow[];
+  return rows
+    .map((row) => {
+      const embedded = row[key];
+      return Array.isArray(embedded) ? (embedded[0] ?? null) : embedded ?? null;
+    })
+    .filter((user): user is FollowJoinUser => user !== null)
+    .map((user) => ({
+      id: user.id,
+      username: user.username,
+      profilePictureUrl: user.profile_picture_url,
+    }));
+}
+
+/** Mock follow list — every other mock user except the profile being viewed. */
+function mockFollowList(userId: string): FollowListUser[] {
+  return otherUsers
+    .filter((user) => user.id !== userId)
+    .map((user) => ({
+      id: user.id,
+      username: user.username,
+      profilePictureUrl: user.profilePictureUrl,
+    }));
+}
+
+/** Users who follow `userId`, newest first. The graph is public-read RLS so it
+ *  works for any profile; falls back to mock users pre-config. */
+export async function getFollowers(userId: string): Promise<FollowListUser[]> {
+  if (!isSupabaseConfigured()) return mockFollowList(userId);
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_followers")
+    .select(
+      "created_at, follower:users!follower_id (id, username, profile_picture_url)",
+    )
+    .eq("following_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return mapFollowRows(data, "follower");
+}
+
+/** Users `userId` follows, newest first. Mock fallback pre-config. */
+export async function getFollowing(userId: string): Promise<FollowListUser[]> {
+  if (!isSupabaseConfigured()) return mockFollowList(userId);
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_followers")
+    .select(
+      "created_at, following:users!following_id (id, username, profile_picture_url)",
+    )
+    .eq("follower_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return mapFollowRows(data, "following");
 }

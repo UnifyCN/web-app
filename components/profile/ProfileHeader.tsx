@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Camera, Loader2, MapPin, Pencil } from "lucide-react";
+import { Calendar, Camera, Loader2, MapPin, Pencil } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { StatsRow } from "./StatsRow";
+import { FollowButton } from "./FollowButton";
 import { PersonaBadge } from "./PersonaBadge";
 import { StageIndicator } from "./StageIndicator";
 import { OnboardingEditModal } from "@/components/onboarding/OnboardingEditModal";
@@ -44,6 +45,8 @@ interface ProfileHeaderProps {
   profile: UserProfile;
   postCount: number;
   isOwnProfile: boolean;
+  /** True when the viewed user follows the signed-in user back. */
+  followsYou?: boolean;
 }
 
 /** Readable text for a failed mutation, falling back when there's no message. */
@@ -56,8 +59,8 @@ export function ProfileHeader({
   profile,
   postCount,
   isOwnProfile,
+  followsYou = false,
 }: ProfileHeaderProps) {
-  const [following, setFollowing] = useState(false);
   const [editing, setEditing] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -100,6 +103,20 @@ export function ProfileHeader({
   // Prefer the onboarding first name as the display name, with @username beneath.
   const firstName = profile.onboarding?.firstName?.trim();
 
+  const memberSince = profile.createdAt
+    ? new Date(profile.createdAt).toLocaleDateString("en-CA", {
+        month: "long",
+        year: "numeric",
+      })
+    : null;
+
+  const followsYouBadge =
+    followsYou && !isOwnProfile ? (
+      <span className="shrink-0 rounded-full bg-surface-gray px-2 py-0.5 text-[11px] font-medium text-ink-muted">
+        Follows you
+      </span>
+    ) : null;
+
   return (
     <div className="rounded-card border border-border-card bg-surface p-5">
       <div className="flex items-start gap-4">
@@ -137,7 +154,7 @@ export function ProfileHeader({
         <div className="min-w-0 flex-1">
           {firstName ? (
             <>
-              <h2 className="text-lg font-bold text-ink-secondary">
+              <h2 className="truncate text-lg font-bold text-ink-secondary">
                 {firstName}
               </h2>
               <p className="text-sm text-ink-muted">
@@ -148,26 +165,42 @@ export function ProfileHeader({
                   </span>
                 )}
               </p>
+              {followsYouBadge && (
+                <div className="mt-1.5">{followsYouBadge}</div>
+              )}
             </>
           ) : (
-            <h2 className="text-lg font-bold text-ink-secondary">
-              {profile.username}
-              {profile.pronouns && (
-                <span className="ml-2 text-sm font-normal text-ink-placeholder">
-                  {profile.pronouns}
-                </span>
+            <>
+              <h2 className="truncate text-lg font-bold text-ink-secondary">
+                {profile.username}
+                {profile.pronouns && (
+                  <span className="ml-2 text-sm font-normal text-ink-placeholder">
+                    {profile.pronouns}
+                  </span>
+                )}
+              </h2>
+              {followsYouBadge && (
+                <div className="mt-1.5">{followsYouBadge}</div>
               )}
-            </h2>
+            </>
           )}
           <div className="mt-2">
             <StatsRow
               posts={postCount}
               followers={profile.followerCount}
               following={profile.followingCount}
+              userId={profile.id}
             />
           </div>
         </div>
       </div>
+
+      {memberSince && (
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-ink-placeholder">
+          <Calendar className="h-3.5 w-3.5" aria-hidden />
+          Member since {memberSince}
+        </p>
+      )}
 
       {avatarError && (
         <p className="mt-2 text-xs text-destructive" role="alert">
@@ -301,13 +334,7 @@ export function ProfileHeader({
             )}
           </>
         ) : (
-          <Button
-            variant={following ? "secondary" : "primary"}
-            size="sm"
-            onClick={() => setFollowing((value) => !value)}
-          >
-            {following ? "Following" : "Follow"}
-          </Button>
+          <FollowButton userId={profile.id} />
         )}
       </div>
 

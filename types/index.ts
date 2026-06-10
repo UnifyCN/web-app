@@ -63,6 +63,15 @@ export interface UserProfile extends User {
   bio: string | null;
   /** users.pronouns — e.g. "she/her". */
   pronouns: string | null;
+  /** users.created_at — drives the "Member since" line. */
+  createdAt: string | null;
+}
+
+/** Minimal user shape for follower / following list rows. */
+export interface FollowListUser {
+  id: string;
+  username: string;
+  profilePictureUrl: string | null;
 }
 
 /* ----- Posts & feed ------------------------------------------------ */
@@ -107,6 +116,13 @@ export interface PostComment {
   author: User;
   /** Enriched from comment_likes for the current user. */
   likedByMe?: boolean;
+}
+
+/** A user's comment plus the title + author of the post it's on — for the
+ *  profile Comments tab. */
+export interface UserComment extends PostComment {
+  postTitle: string;
+  postAuthorUsername: string;
 }
 
 /* ----- Community --------------------------------------------------- */

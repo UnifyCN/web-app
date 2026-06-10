@@ -1,4 +1,11 @@
-import type { FeedResponse, FeedTab, Post, PostComment, User } from "@/types";
+import type {
+  FeedResponse,
+  FeedTab,
+  Post,
+  PostComment,
+  User,
+  UserComment,
+} from "@/types";
 import {
   createClient,
   getAuthUserId,
@@ -649,6 +656,71 @@ export async function getComments(postId: number): Promise<PostComment[]> {
     commentRowToPostComment,
   );
   return enrichCommentsWithLikes(comments, userId);
+}
+
+const USER_COMMENTS_SELECT = `
+  id, content, parent_comment_id, created_at, user_id, post_id,
+  users!user_id ( id, username, profile_picture_url ),
+  posts!post_id ( id, title, author:users!user_id ( username ) )
+`;
+
+interface UserCommentRow extends JoinedCommentRow {
+  posts: {
+    id: number;
+    title: string;
+    author: { username: string } | null;
+  } | null;
+}
+
+/**
+ * All comments authored by `userId`, newest first, each carrying the title +
+ * author of the post it's on (for the profile Comments tab). post_comments +
+ * posts are public-read RLS so this works for any user. Mock fallback scans the
+ * local threads across mock posts.
+ */
+export async function getUserComments(userId: string): Promise<UserComment[]> {
+  if (!isSupabaseConfigured()) {
+    return mockPosts
+      .flatMap((post) =>
+        mockCommentsForPost(post.id)
+          .filter((comment) => comment.author.id === userId)
+          .map((comment) => ({
+            ...comment,
+            postTitle: post.title,
+            postAuthorUsername: post.author.username,
+          })),
+      )
+      // Match the Supabase path's newest-first ordering (flatMap groups by post).
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("post_comments")
+    .select(USER_COMMENTS_SELECT)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  const rows = (data as unknown as UserCommentRow[]) ?? [];
+  return rows.flatMap((row) => {
+    // The post (+ its author) should always join; if either is null the data is
+    // unexpected — surface it in dev and drop the row rather than masking it.
+    if (!row.posts || !row.posts.author) {
+      console.error("getUserComments: comment missing post/author join", row.id);
+      return [];
+    }
+    return [
+      {
+        ...commentRowToPostComment(row),
+        postTitle: row.posts.title,
+        postAuthorUsername: row.posts.author.username,
+      },
+    ];
+  });
 }
 
 export interface CreateCommentInput {

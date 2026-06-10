@@ -72,6 +72,17 @@ export function useSavedPosts() {
   });
 }
 
+export function useUserComments(
+  userId: string,
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: [...FEED_KEY, "user-comments", userId],
+    queryFn: () => feed.getUserComments(userId),
+    enabled: options?.enabled ?? Boolean(userId),
+  });
+}
+
 /* ---- Mutations -------------------------------------------------------- */
 
 interface LikeInput {
