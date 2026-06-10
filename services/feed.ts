@@ -680,15 +680,21 @@ interface UserCommentRow extends JoinedCommentRow {
  */
 export async function getUserComments(userId: string): Promise<UserComment[]> {
   if (!isSupabaseConfigured()) {
-    return mockPosts.flatMap((post) =>
-      mockCommentsForPost(post.id)
-        .filter((comment) => comment.author.id === userId)
-        .map((comment) => ({
-          ...comment,
-          postTitle: post.title,
-          postAuthorUsername: post.author.username,
-        })),
-    );
+    return mockPosts
+      .flatMap((post) =>
+        mockCommentsForPost(post.id)
+          .filter((comment) => comment.author.id === userId)
+          .map((comment) => ({
+            ...comment,
+            postTitle: post.title,
+            postAuthorUsername: post.author.username,
+          })),
+      )
+      // Match the Supabase path's newest-first ordering (flatMap groups by post).
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
   }
 
   const supabase = createClient();

@@ -9,7 +9,7 @@ export function CommentCard({ comment }: { comment: UserComment }) {
   return (
     <Link
       href={`/post/${comment.postId}#comment-${comment.id}`}
-      className="block rounded-card border border-border-card bg-surface px-5 py-4 transition-colors hover:bg-surface-card"
+      className="block rounded-card border border-border-card bg-surface px-5 py-4 shadow-sm transition-colors hover:bg-surface-card"
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="line-clamp-1 text-sm font-semibold text-ink-secondary">

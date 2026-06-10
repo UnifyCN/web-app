@@ -5,7 +5,7 @@ export function SkeletonCommentList({ count = 3 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="animate-pulse rounded-card border border-border-card bg-surface px-5 py-4"
+          className="animate-pulse rounded-card border border-border-card bg-surface px-5 py-4 shadow-sm"
           aria-hidden
         >
           <div className="space-y-2">
