@@ -155,7 +155,7 @@ function useFollowMutation(
       // Partial-key invalidation reconciles whichever profile is on screen,
       // regardless of its exact id.
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-      queryClient.invalidateQueries({ queryKey: ["current-user"] });
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
       queryClient.invalidateQueries({ queryKey: ["follow-status"] });
       queryClient.invalidateQueries({ queryKey: ["feed", "following"] });
     },
@@ -177,7 +177,7 @@ export function useUpdateUserDetails() {
     mutationFn: (input: profile.UpdateUserDetailsInput) =>
       profile.updateUserDetails(input),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["current-user"] }),
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
   });
 }
 
@@ -193,7 +193,7 @@ export function useUpdateUsername() {
 
 /** Refresh both the current user and the feed so author avatars update. */
 function invalidateAvatarQueries(queryClient: ReturnType<typeof useQueryClient>) {
-  queryClient.invalidateQueries({ queryKey: ["current-user"] });
+  queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
   queryClient.invalidateQueries({ queryKey: ["feed"] });
 }
 

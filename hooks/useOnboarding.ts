@@ -10,7 +10,7 @@ export function useSaveOnboarding() {
     onSuccess: () => {
       // Re-read the profile (persona/stage/location/goals/interests) and let
       // the checklist re-filter by the new persona + stage.
-      queryClient.invalidateQueries({ queryKey: ["current-user"] });
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     },
   });
