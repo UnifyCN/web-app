@@ -4,9 +4,13 @@ import type { UserProfile } from "@/types";
 
 /** React Query hooks for Profile data. */
 
+/** Canonical query key for the signed-in user; shared by every reader/mutator
+ *  so invalidations always hit the same cache entry. */
+export const CURRENT_USER_KEY = ["current-user"] as const;
+
 export function useCurrentUser() {
   return useQuery({
-    queryKey: ["current-user"],
+    queryKey: CURRENT_USER_KEY,
     queryFn: profile.getCurrentUser,
   });
 }
@@ -183,7 +187,7 @@ export function useUpdateUsername() {
   return useMutation({
     mutationFn: (username: string) => profile.updateUsername(username),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["current-user"] }),
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
   });
 }
 

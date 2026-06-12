@@ -335,7 +335,7 @@ function EditProfileSection({ profile }: { profile: UserProfile }) {
           initial={profile.username}
         />
         <BioPronounsField
-          key={`bio-${profile.bio ?? ""}-${profile.pronouns ?? ""}`}
+          key={JSON.stringify([profile.bio ?? "", profile.pronouns ?? ""])}
           initialBio={profile.bio ?? ""}
           initialPronouns={profile.pronouns ?? ""}
         />
@@ -568,7 +568,7 @@ function SettingsSkeleton() {
 }
 
 export default function SettingsPage() {
-  const { data: profile, isLoading } = useCurrentUser();
+  const { data: profile, isLoading, isError } = useCurrentUser();
 
   if (isLoading) {
     return (
@@ -577,6 +577,19 @@ export default function SettingsPage() {
           Settings
         </h1>
         <SettingsSkeleton />
+      </div>
+    );
+  }
+
+  // Transport / query failure — distinct from a genuine no-session below, so we
+  // don't mislead the user into thinking they're signed out.
+  if (isError) {
+    return (
+      <div
+        className="mx-auto max-w-[680px] px-6 py-16 text-center text-sm text-destructive"
+        role="alert"
+      >
+        We couldn&rsquo;t load your settings. Check your connection and try again.
       </div>
     );
   }

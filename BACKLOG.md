@@ -117,12 +117,11 @@ idempotent, `onConflict: id`).
 **P6 — Account settings — ✅ SHIPPED (settings PR)**
 Delivered: `/settings` route (`app/(main)/settings/page.tsx`) with Edit profile
 (avatar + display name + username + bio + pronouns), Preferences (learning-reminders
-toggle + Redo onboarding via `OnboardingEditModal`), Legal (privacy / terms / community
-guidelines — placeholder `#` hrefs for now), and Account (consolidated **sign out** moved
-here, subtle sign-out kept in the sidebar). Mobile-only toggles (haptics, ATT ads) skipped;
-push prefs out of scope. *Deferred:* **delete account** is a disabled "Coming soon" button —
-no `delete_user` RPC exists on the web DB yet; wiring it needs the DB sandbox. Legal docs
-still need real content/URLs.
+toggle + Redo onboarding via `OnboardingEditModal`), Legal (real Notion URLs for Privacy
+Policy / Terms of Service / Community Guidelines), and Account (consolidated **sign out**
+moved here, subtle sign-out kept in the sidebar). Mobile-only toggles (haptics, ATT ads)
+skipped; push prefs out of scope. *Deferred:* **delete account** is a disabled "Coming soon"
+button — no `delete_user` RPC exists on the web DB yet; wiring it needs the DB sandbox.
 
 **P7 — Notifications**
 Mobile: `app/notifications.tsx`, `services/notifications/*`,
@@ -220,9 +219,10 @@ show-mutuals.
 - **Profile badges — already BUILT on web** (persona badge + 5-segment stage indicator +
   city/province), so mobile's `feat/profile-badges` (#176) is not a gap.
 - **Account settings (P6) — ✅ shipped (settings PR).** The `/settings` route landed with
-  legal links (`feature/legal-and-guidelines` #140 — placeholder hrefs pending real
-  content) and consolidated sign-out. **Delete account** (`deleteAccount` #179) remains a
-  disabled "Coming soon" stub — no `delete_user` RPC on the web DB yet (needs the DB sandbox).
+  legal links (`feature/legal-and-guidelines` #140 — real Notion URLs for Privacy Policy /
+  Terms of Service / Community Guidelines) and consolidated sign-out. **Delete account**
+  (`deleteAccount` #179) remains a disabled "Coming soon" stub — no `delete_user` RPC on the
+  web DB yet (needs the DB sandbox).
 - **Profile editing (P5) — ✅ shipped.** `OnboardingEditModal` (PR #22) + avatar upload &
   bio/pronouns (PR #24) + the editable **display name** vs immutable `@handle` and a
   username editor (settings PR). Nothing outstanding.

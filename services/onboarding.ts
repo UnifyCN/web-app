@@ -94,9 +94,8 @@ export async function saveOnboarding(input: SaveOnboardingInput): Promise<void> 
 /**
  * Partial update of the onboarding first name (the profile's display name).
  * Uses `.update()` rather than upsert so NOT-NULL columns like `persona` are
- * never touched. NOTE: with no onboarding row this updates 0 rows silently, so
- * callers must gate on an existing row (`profile.onboarding != null`). No-op in
- * the mock build.
+ * never touched. With no onboarding row the update matches 0 rows; we request
+ * an exact count and throw so that never fails silently. No-op in the mock build.
  */
 export async function updateDisplayName(firstName: string): Promise<void> {
   if (!isSupabaseConfigured()) return;
@@ -105,17 +104,20 @@ export async function updateDisplayName(firstName: string): Promise<void> {
   if (!userId) throw new Error("updateDisplayName: no auth session");
 
   const supabase = createClient();
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("user_onboarding_profiles")
-    .update({ first_name: firstName.trim() || null })
+    .update({ first_name: firstName.trim() || null }, { count: "exact" })
     .eq("id", userId);
   if (error) throw error;
+  if (count === 0) {
+    throw new Error("No onboarding profile found — complete your profile first");
+  }
 }
 
 /**
  * Partial update of the learning-reminders opt-in. `.update()` (not upsert);
- * 0 rows silently when no onboarding row exists — gate on `profile.onboarding`.
- * No-op in the mock build.
+ * with no onboarding row it matches 0 rows, so we request an exact count and
+ * throw rather than fail silently. No-op in the mock build.
  */
 export async function updateLearningReminders(enabled: boolean): Promise<void> {
   if (!isSupabaseConfigured()) return;
@@ -124,9 +126,12 @@ export async function updateLearningReminders(enabled: boolean): Promise<void> {
   if (!userId) throw new Error("updateLearningReminders: no auth session");
 
   const supabase = createClient();
-  const { error } = await supabase
+  const { error, count } = await supabase
     .from("user_onboarding_profiles")
-    .update({ learning_reminders: enabled })
+    .update({ learning_reminders: enabled }, { count: "exact" })
     .eq("id", userId);
   if (error) throw error;
+  if (count === 0) {
+    throw new Error("No onboarding profile found — complete your profile first");
+  }
 }

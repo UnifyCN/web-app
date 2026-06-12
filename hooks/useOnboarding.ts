@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as onboarding from "@/services/onboarding";
+import { CURRENT_USER_KEY } from "@/hooks/useProfile";
 
 /** React Query mutation for saving the onboarding profile. */
 export function useSaveOnboarding() {
@@ -21,7 +22,7 @@ export function useUpdateDisplayName() {
   return useMutation({
     mutationFn: onboarding.updateDisplayName,
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["current-user"] }),
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
   });
 }
 
@@ -31,6 +32,6 @@ export function useUpdateLearningReminders() {
   return useMutation({
     mutationFn: onboarding.updateLearningReminders,
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["current-user"] }),
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
   });
 }
