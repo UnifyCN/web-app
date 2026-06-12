@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import type { UserOnboardingProfile } from "@/types";
 import { OnboardingFlow } from "./OnboardingFlow";
@@ -91,9 +92,14 @@ export function OnboardingEditModal({
     };
   }, [open]);
 
-  if (!open) return null;
+  // `open` only flips true via client interaction (post-hydration), so the
+  // portal is never reached during SSR; the typeof guard is belt-and-braces.
+  // Portaling to <body> lets the `fixed inset-0` overlay cover the true viewport
+  // instead of being clipped to the page's transformed `animate-fade-in` wrapper
+  // (a non-`none` transform becomes the containing block for fixed positioning).
+  if (!open || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
       onClick={onClose}
@@ -131,6 +137,7 @@ export function OnboardingEditModal({
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

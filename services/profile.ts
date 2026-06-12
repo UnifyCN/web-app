@@ -13,6 +13,7 @@ import { ensureUserRow } from "@/lib/supabase/ensureUserRow";
 import { AVATARS_BUCKET, uploadImage } from "@/lib/supabase/uploadImage";
 import {
   PLACEHOLDER_RE,
+  USERNAME_RE,
   claimUsername,
   generateUsernameBase,
 } from "@/lib/supabase/username";
@@ -39,9 +40,13 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
   if (!isSupabaseConfigured()) return currentUser;
 
   const supabase = createClient();
+  // getSession reads the cached session (no network round-trip); the bearer
+  // token is identical to getUser(), so PostgREST authority is the same — but we
+  // skip a serial hit to /auth/v1/user on every current-user fetch.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) {
     console.warn("getCurrentUser: no auth session");
     return null;
@@ -233,6 +238,36 @@ export async function updateUserDetails(
 
   const { error } = await supabase.from("users").update(patch).eq("id", userId);
   if (error) throw error;
+}
+
+/**
+ * Update the signed-in user's @handle on the own-row `users` table. Validates
+ * the charset client-side (mirrors the SQL CHECK), trims, and maps the unique-
+ * violation Postgres code (23505) to a friendly message so the caller can show
+ * it inline. No-op in the mock / env-not-configured build.
+ */
+export async function updateUsername(username: string): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const next = username.trim();
+  if (!USERNAME_RE.test(next)) {
+    throw new Error("Usernames can use letters, numbers, and spaces (max 20).");
+  }
+
+  const supabase = createClient();
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("updateUsername: no auth session");
+
+  const { error } = await supabase
+    .from("users")
+    .update({ username: next })
+    .eq("id", userId);
+  if (error) {
+    if ((error as { code?: string }).code === "23505") {
+      throw new Error("That username is taken.");
+    }
+    throw error;
+  }
 }
 
 /** Extract the storage object path ("<uid>/<file>") from an avatar public URL. */

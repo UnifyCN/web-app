@@ -177,6 +177,16 @@ export function useUpdateUserDetails() {
   });
 }
 
+/** Edit the @username handle; refreshes the cached current user on success. */
+export function useUpdateUsername() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (username: string) => profile.updateUsername(username),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["current-user"] }),
+  });
+}
+
 /** Refresh both the current user and the feed so author avatars update. */
 function invalidateAvatarQueries(queryClient: ReturnType<typeof useQueryClient>) {
   queryClient.invalidateQueries({ queryKey: ["current-user"] });

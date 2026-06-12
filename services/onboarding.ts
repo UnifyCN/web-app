@@ -90,3 +90,43 @@ export async function saveOnboarding(input: SaveOnboardingInput): Promise<void> 
   );
   if (error) throw error;
 }
+
+/**
+ * Partial update of the onboarding first name (the profile's display name).
+ * Uses `.update()` rather than upsert so NOT-NULL columns like `persona` are
+ * never touched. NOTE: with no onboarding row this updates 0 rows silently, so
+ * callers must gate on an existing row (`profile.onboarding != null`). No-op in
+ * the mock build.
+ */
+export async function updateDisplayName(firstName: string): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("updateDisplayName: no auth session");
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("user_onboarding_profiles")
+    .update({ first_name: firstName.trim() || null })
+    .eq("id", userId);
+  if (error) throw error;
+}
+
+/**
+ * Partial update of the learning-reminders opt-in. `.update()` (not upsert);
+ * 0 rows silently when no onboarding row exists — gate on `profile.onboarding`.
+ * No-op in the mock build.
+ */
+export async function updateLearningReminders(enabled: boolean): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("updateLearningReminders: no auth session");
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("user_onboarding_profiles")
+    .update({ learning_reminders: enabled })
+    .eq("id", userId);
+  if (error) throw error;
+}
