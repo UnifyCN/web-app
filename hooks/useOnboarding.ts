@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as onboarding from "@/services/onboarding";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
+import { TASKS_KEY } from "@/hooks/useChecklist";
 
 /** React Query mutation for saving the onboarding profile. */
 export function useSaveOnboarding() {
@@ -11,7 +12,7 @@ export function useSaveOnboarding() {
       // Re-read the profile (persona/stage/location/goals/interests) and let
       // the checklist re-filter by the new persona + stage.
       queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
     },
   });
 }

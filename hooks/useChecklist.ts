@@ -4,7 +4,7 @@ import type { ChecklistTask } from "@/types";
 
 /** React Query hooks for Checklist data. */
 
-const TASKS_KEY = ["tasks"] as const;
+export const TASKS_KEY = ["tasks"] as const;
 
 export function useTasks() {
   return useQuery({ queryKey: TASKS_KEY, queryFn: checklist.getTasks });
