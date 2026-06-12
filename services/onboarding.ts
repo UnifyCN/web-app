@@ -90,3 +90,48 @@ export async function saveOnboarding(input: SaveOnboardingInput): Promise<void> 
   );
   if (error) throw error;
 }
+
+/**
+ * Partial update of the onboarding first name (the profile's display name).
+ * Uses `.update()` rather than upsert so NOT-NULL columns like `persona` are
+ * never touched. With no onboarding row the update matches 0 rows; we request
+ * an exact count and throw so that never fails silently. No-op in the mock build.
+ */
+export async function updateDisplayName(firstName: string): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("updateDisplayName: no auth session");
+
+  const supabase = createClient();
+  const { error, count } = await supabase
+    .from("user_onboarding_profiles")
+    .update({ first_name: firstName.trim() || null }, { count: "exact" })
+    .eq("id", userId);
+  if (error) throw error;
+  if (count === 0) {
+    throw new Error("No onboarding profile found — complete your profile first");
+  }
+}
+
+/**
+ * Partial update of the learning-reminders opt-in. `.update()` (not upsert);
+ * with no onboarding row it matches 0 rows, so we request an exact count and
+ * throw rather than fail silently. No-op in the mock build.
+ */
+export async function updateLearningReminders(enabled: boolean): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("updateLearningReminders: no auth session");
+
+  const supabase = createClient();
+  const { error, count } = await supabase
+    .from("user_onboarding_profiles")
+    .update({ learning_reminders: enabled }, { count: "exact" })
+    .eq("id", userId);
+  if (error) throw error;
+  if (count === 0) {
+    throw new Error("No onboarding profile found — complete your profile first");
+  }
+}

@@ -23,10 +23,15 @@ old Phase 19/20/21 entries (now folded in as P10/P11/P5).
   renders the full post with **threaded comments + replies** (`parent_comment_id`,
   reply-to pill); comment services in `services/feed.ts` + hooks in `hooks/useFeed.ts`;
   the `post_comments` table has own-row RLS + a count-sync trigger.
-- **Follow/unfollow are TODO no-ops** (`services/profile.ts`), so the wired "Following"
-  feed can never populate from the web.
-- **Other-user profiles + highlights are mock-only** (`getUserById` → `findUser` mock).
-- **Notifications, search, account settings, block/report**: absent entirely.
+- **Follow/unfollow — ✅ shipped (P3, PR #29).** `followUser`/`unfollowUser` write
+  `user_followers`; the "Following" feed now populates.
+- **Other-user profiles — ✅ shipped (P3, PR #29).** `getUserById` reads the real
+  `users` row + follow counts (highlights also real via `lesson_highlights`). *Caveat:*
+  persona/city/stage stay hidden by own-row RLS on `user_onboarding_profiles` (new item
+  under "Profile / Social" below).
+- **Account settings — ✅ shipped (P6, this PR).** `/settings` (edit profile, learning
+  reminders, redo onboarding, legal links, sign out, disabled delete).
+- **Notifications, search, block/report**: still absent.
   (Image upload — ✅ shipped with P1.)
 
 **Constraints to carry into every phase:**
@@ -47,10 +52,10 @@ old Phase 19/20/21 entries (now folded in as P10/P11/P5).
 |---|-------|---------|-----------|
 | **P1 ✅** | Compose post + image-upload utility — shipped (PR #18) | Core: users can't contribute today | — |
 | **P2 ✅** | Post detail page + comments (threaded + replies) — shipped (PR #19) | Core engagement loop | P1 |
-| **P3** | Follow/unfollow + other-user profiles + followers/following lists | Unblocks the Following feed; social graph | — |
+| **P3 ✅** | Follow/unfollow + other-user profiles + followers/following lists — shipped (PR #29) | Unblocks the Following feed; social graph | — |
 | **P4** | Block & report (users + posts) | Launch/app-store safety requirement | P2, P3 |
-| **P5** | Profile editing + avatar upload (display name vs @handle) | Identity; reuses P1 upload | P1 |
-| **P6** | Account settings (prefs, delete account, legal docs) | Launch/policy table-stakes | P5 |
+| **P5 ✅** | Profile editing + avatar upload (display name vs @handle) — shipped (avatar/bio/pronouns PR #24; display name in the settings PR) | Identity; reuses P1 upload | P1 |
+| **P6 ✅** | Account settings (prefs, legal docs, sign out) — shipped (settings PR); delete account still stubbed (no RPC) | Launch/policy table-stakes | P5 |
 | **P7** | Notifications (list + unread badge + write-on-action) | Retention | P2, P3 |
 | **P8** | Search (posts / users / groups + recent) | Discovery | P3 |
 | **P9** | Wire remaining mock-only post surfaces (saved / user / group posts) | Removes mock seams | P1–P3 |
@@ -81,14 +86,15 @@ the detail page; `post_comments` table has own-row RLS + a count-sync trigger.
 *Remaining parity nice-to-haves (small, single-DB):* @mention prefixes inside replies
 (mobile `feat/comment-reply-chains`) and delete-own-post entry point from the detail page.
 
-**P3 — Follow/unfollow + other-user profiles + followers/following lists**
-Mobile: `services/users/followUser.ts`, `getFollowStatus.ts`, `app/followers-following.tsx`,
-`components/profile/FollowButton.tsx`. Web gap: `followUser`/`unfollowUser` are no-ops;
-`getUserById`/highlights mock-only. Scope: implement follow/unfollow (insert/delete
-`user_followers`) + follow-status read and wire the existing Follow button on
-`profile/[userId]`; wire `getUserById` to real `users` + `user_onboarding_profiles` (+
-counts); followers/following list route + components; real highlights (`lesson_highlights`)
-replacing the `getLessonHighlights` mock, or explicitly keep mock and flag.
+**P3 — Follow/unfollow + other-user profiles + followers/following lists — ✅ SHIPPED (PR #29)**
+Delivered: `followUser`/`unfollowUser` (insert/delete `user_followers`, optimistic via
+`useFollowMutation`) + `getFollowStatus`/`getFollowsYou` wired to the Follow button on
+`profile/[userId]`; `getUserById` reads real `users` + counts; followers/following list
+route + components; real highlights via `lesson_highlights`; comment author → profile
+links, comment deep-link anchors (`#comment-<id>` + `:target`), a profile **Comments** tab
+(`getUserComments` + Reddit-style `CommentCard`), a "Follows you" badge, and "Member since"
+(`users.created_at`). *Remaining:* other-user persona/city/stage hidden by own-row RLS
+(see "Profile / Social" below — needs the DB sandbox).
 
 **P4 — Block & report (users + posts)**
 Mobile: `services/users/{blockUser,unblockUser,reportUser,getBlockedUserIds}.ts`,
@@ -99,20 +105,23 @@ filter blocked authors out of `getForYouFeed`/`getFollowingFeed`/`getGroupsFeed`
 (`report-post`/`report-user`) or a `reports` table insert; entry points on PostCard,
 post detail, and profile.
 
-**P5 — Profile editing + avatar upload** *(includes old Phase 21)*
-Mobile: `app/edit-name.tsx`, `components/profile/ProfilePictureUpload.tsx`,
-`services/s3/uploadProfilePicture.ts`. Web gap: no edit UI; profile read-only; no avatar
-upload. Scope: editable **display name** distinct from the immutable `@username` handle;
-re-run/edit onboarding fields (persona, city/province, arrival date → stage) — reuse the
-existing `OnboardingEditModal` (`saveOnboarding` is idempotent, `onConflict: id`); avatar
-upload reusing the P1 utility → `users.profile_picture_url`.
+**P5 — Profile editing + avatar upload — ✅ SHIPPED** *(includes old Phase 21)*
+Delivered: avatar upload/remove (`updateAvatar`/`removeAvatar` → `avatars` bucket +
+`users.profile_picture_url`) and bio/pronouns editing landed in PR #24; the editable
+**display name** (distinct from the immutable `@username` handle) + a username editor land
+in the settings PR (`updateDisplayName` → `user_onboarding_profiles.first_name`,
+`updateUsername` → `users.username` with charset validation + unique-violation handling).
+Re-run/edit of the onboarding fields reuses `OnboardingEditModal` (`saveOnboarding`
+idempotent, `onConflict: id`).
 
-**P6 — Account settings**
-Mobile: `app/account-settings.tsx`, `app/legal-document.tsx`, `app/reset-password.tsx`.
-Web gap: only sign-out (in sidebar). Scope: `/settings` route — language/prefs (where
-applicable to web), legal docs (privacy / community guidelines), **delete account** (with
-confirm), consolidated sign-out. Skip mobile-only toggles (haptics, ATT ads). Push prefs
-out of scope.
+**P6 — Account settings — ✅ SHIPPED (settings PR)**
+Delivered: `/settings` route (`app/(main)/settings/page.tsx`) with Edit profile
+(avatar + display name + username + bio + pronouns), Preferences (learning-reminders
+toggle + Redo onboarding via `OnboardingEditModal`), Legal (real Notion URLs for Privacy
+Policy / Terms of Service / Community Guidelines), and Account (consolidated **sign out**
+moved here, subtle sign-out kept in the sidebar). Mobile-only toggles (haptics, ATT ads)
+skipped; push prefs out of scope. *Deferred:* **delete account** is a disabled "Coming soon"
+button — no `delete_user` RPC exists on the web DB yet; wiring it needs the DB sandbox.
 
 **P7 — Notifications**
 Mobile: `app/notifications.tsx`, `services/notifications/*`,
@@ -191,7 +200,7 @@ so they're unblocked today. Ordered roughly by value. Scope each into its own PR
 | # | Gap | Mobile origin | Feasibility note |
 |---|-----|---------------|------------------|
 | **G1** | **Internationalization / multi-language** — no `next-intl`/`i18next`, no `locales/`, no language switcher exists on web at all | `multi-lang-support` (#261) | Largest item; pure UI/content + a locale store. No social graph. Pick a lib, extract strings, add a switcher (persist to profile/localStorage). |
-| **G2** | **Learn: text-selection highlights** — select text in a lesson → persist a highlight | `feat/learn-text-selection-highlights` (#222) | Single-user. `lesson_highlights` + `merge_highlights` RPC already in the schema ref; verify the **web** table/RLS exists, then wire selection UI + service. *(Previously mis-filed under social-P3 — it needs no social graph.)* |
+| **G2 ✅** | **Learn: text-selection highlights + Ask AI — shipped (PR #28)** | `feat/learn-text-selection-highlights` (#222) | Word-level selectable lesson content with Highlight/Remove + Ask AI (`explain-term` edge fn); persisted to `lesson_highlights` via `20260607120000_lesson_highlights_mobile_parity.sql` (`services/highlights.ts`). |
 | **G3** | **Learn: save/favourite lessons UI** — star/save a module or lesson | `learn-saves` (#225) | **Backend already done:** `learn_favourites` service in `services/learn.ts` + `useToggleFavouriteModule` hook + `Module.isFavourite`. Just **no UI calls them** — add a star toggle on the module card/detail and a "Saved" filter. |
 | **G4** | **Post image full-screen viewer / lightbox** — tap a post image to enlarge | `image-viewer` (#231) | Pure frontend. Compose + `post_image_urls` already ship (P1); add a modal lightbox in `PostCard`/post detail. |
 | **G5** | **Rich-text rendering in posts** — posts currently render plain text only | `image-uploading` (#208), `rich-text` (#241) | Content rendering; reuse the lesson `PortableTextRenderer`/markdown approach. No social graph. |
@@ -202,24 +211,44 @@ so they're unblocked today. Ordered roughly by value. Scope each into its own PR
 | **G10** | **Apple Sign-In** — login button is a visual stub (`onClick`-less) | `feature/apple-sign-in` (#210) | Web auth; second-priority per CLAUDE.md. Wire `signInWithOAuth({ provider: 'apple' })` + callback, mirroring Google. |
 
 **Adjacent items that DO need the social graph (kept in the P-roadmap, not here):**
-follow/unfollow + other-user profiles (P3), notifications write-side (P7), user search
-(P8), block/report (P4), referrals/auto-follow (P13), show-mutuals.
+~~follow/unfollow + other-user profiles (P3 — ✅ shipped PR #29)~~, notifications
+write-side (P7), user search (P8), block/report (P4), referrals/auto-follow (P13),
+show-mutuals.
 
 **Partial-credit corrections from the same sweep:**
 - **Profile badges — already BUILT on web** (persona badge + 5-segment stage indicator +
   city/province), so mobile's `feat/profile-badges` (#176) is not a gap.
-- **Account settings (P6)** stays a gap, but its *single-user* slices — **delete account**
-  (`deleteAccount` #179) and **legal/privacy/community-guidelines pages**
-  (`feature/legal-and-guidelines` #140) — need no social graph and can land independently
-  of the rest of P6.
-- **Profile editing (P5):** `OnboardingEditModal` (re-run onboarding from the profile
-  header) shipped with PR #22; what remains is a distinct editable **display name** vs the
-  immutable `@handle`, and **avatar upload** (reuse the P1 `uploadImage` utility) — both
-  single-user/feasible.
+- **Account settings (P6) — ✅ shipped (settings PR).** The `/settings` route landed with
+  legal links (`feature/legal-and-guidelines` #140 — real Notion URLs for Privacy Policy /
+  Terms of Service / Community Guidelines) and consolidated sign-out. **Delete account**
+  (`deleteAccount` #179) remains a disabled "Coming soon" stub — no `delete_user` RPC on the
+  web DB yet (needs the DB sandbox).
+- **Profile editing (P5) — ✅ shipped.** `OnboardingEditModal` (PR #22) + avatar upload &
+  bio/pronouns (PR #24) + the editable **display name** vs immutable `@handle` and a
+  username editor (settings PR). Nothing outstanding.
 
 ---
 
 ## Shipped / in-flight
+
+**PR #29 — Social graph (`feat/social-graph`)**
+Follow loop end-to-end: `followUser`/`unfollowUser` (insert/delete `user_followers`,
+optimistic via `useFollowMutation`); real other-user profiles (`getUserById` → real
+`users` + follow counts); followers/following list route + components; comment author →
+profile links; comment deep-link anchors (`#comment-<id>` scroll + `:target` highlight);
+profile **Comments** tab (`getUserComments` + Reddit-style `CommentCard`); "Follows you"
+badge; "Member since" (`users.created_at`). (= P3.) *Known gap:* other-user
+persona/city/stage hidden by own-row RLS on `user_onboarding_profiles` (see "Profile /
+Social" below).
+
+**PR #28 — Learn: complete section (`feat/learn-complete`)**
+Learn is feature-complete: text-selection **highlights** + **Ask AI** (`explain-term`
+edge fn, word-level selectable content); deep whole-word **search**; **Framer Motion**
+animations (submodule row expansion); **sticky filter sidebar** (stage filter,
+"Recommended for you", sort, weekly progress); lesson **keyboard paging** (←/→);
+**practice-question breakdown** on the submodule landing; refined microcopy. Highlights
+persist to `lesson_highlights` (`services/highlights.ts`) via
+`20260607120000_lesson_highlights_mobile_parity.sql`. (= G2 + Learn polish.)
 
 **PR #22 — Onboarding: 11-step mobile-parity wizard (`feat/onboarding-update`)**
 `components/onboarding/` now mirrors the mobile flow end-to-end: name (first name) →
@@ -295,6 +324,33 @@ Deferred from Phase 5. Group.memberAvatars is a UI-only convenience seeded from 
 
 ---
 
+## Profile / Social
+
+**Other-user persona / city / stage hidden by own-row RLS** *(needs the DB sandbox)*
+From P3 (PR #29). `user_onboarding_profiles` has own-row SELECT RLS
+(`onboarding_select_own`: `id = auth.uid()`), so `getUserById` (`services/profile.ts`)
+can only read the *caller's* onboarding row — for any other user it comes back null. The
+result: on another user's profile the **persona badge, city/province, and stage indicator
+don't render** (name/handle/bio/pronouns/follow counts/posts/comments all work). This is
+by design (privacy-preserving), not a bug, and is documented in the `services/profile.ts`
+header comment. To surface a sanitized public profile, add **one** of: (a) a
+`public_profiles` view exposing only `persona`/`city`/`province`/`stage` with a
+read-to-`authenticated` policy; (b) an additive SELECT policy on the table scoped to those
+columns; or (c) an edge function returning a vetted public-profile shape. All three need
+**DB write access** (the MCP is read-only and `db push` is unsafe against the drifted
+remote history — see Phase 18 note), so this is parked until the DB sandbox is available.
+
+**Delete account** *(needs the DB sandbox)*
+From P6 (settings PR). The Settings → Account "Delete account" button is already stubbed
+with "Coming soon" (disabled). Mobile calls `supabase.rpc('delete_user')`; the web DB has
+no such RPC. Wiring it needs a `delete_user` SECURITY DEFINER function that handles the
+**cascading deletes** across `users`, `user_onboarding_profiles`, `user_followers`,
+`posts`, `post_comments`, `lesson_highlights` (and the user's other rows — likes / saves /
+tasks / progress), plus the user's objects in the **storage buckets** (`avatars`,
+`post-images`). Then wire the button to the RPC behind a confirm dialog on the web side.
+
+---
+
 ## Checklist
 
 **Persona-tag mismatch between web onboarding and Sanity checklist content**
@@ -351,6 +407,9 @@ Across services/feed.ts, services/community.ts, services/checklist.ts, services/
 **Learn UI polish:**
 - ✅ **Hero carousel** of in-progress modules with Continue (`ResumeHeroCarousel.tsx`) — shipped.
 - ✅ **Filter/search** on the Learn page is now wired (filters the module list live) — shipped.
+- ✅ **Highlights + Ask AI, deep search, animations, sticky sidebar, keyboard paging,
+  submodule row expansion, practice-question breakdown** — shipped (PR #28). The Learn
+  section is feature-complete; see the PR #28 entry under "Shipped / in-flight".
 - ~~Animated dot/squiggle background on Learn~~ — **dropped.** PR #20 removed the squiggly
   background from Companion entirely, so there's no shared asset to port; skip unless product
   re-requests it.

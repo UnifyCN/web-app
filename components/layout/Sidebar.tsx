@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Settings } from "lucide-react";
 import { LearnIcon } from "@/components/icons/LearnIcon";
 import { ChecklistIcon } from "@/components/icons/ChecklistIcon";
 import { CompanionIcon } from "@/components/icons/CompanionIcon";
@@ -30,6 +30,11 @@ const TOP_NAV: NavItem[] = [
 ];
 
 const PROFILE_ITEM: NavItem = { label: "Profile", href: "/profile", icon: User };
+const SETTINGS_ITEM: NavItem = {
+  label: "Settings",
+  href: "/settings",
+  icon: Settings,
+};
 
 // Fixed-width icon rail with a label under each icon. Width is set so the full
 // "unify" wordmark lockup fits comfortably at the top (lockup ratio ≈ 2.24, so a
@@ -107,6 +112,7 @@ export function Sidebar() {
       {/* Profile + sign out, separated by a border */}
       <div className="flex flex-col gap-1.5 border-t border-border-card px-2 py-3">
         {renderNavLink(PROFILE_ITEM)}
+        {renderNavLink(SETTINGS_ITEM)}
         <button
           type="button"
           onClick={signOut}

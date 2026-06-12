@@ -15,6 +15,13 @@ import type {
 /** The uuid-derived placeholder ensureUserRow used to seed; detected for self-heal. */
 export const PLACEHOLDER_RE = /^user [0-9a-f]{12}$/;
 
+/**
+ * Charset + length constraint for `users.username` (mirrors the SQL CHECK
+ * `^[A-Za-z0-9 ]{1,20}$`). Shared by the username editor's live validation and
+ * the `updateUsername` service so the two never drift.
+ */
+export const USERNAME_RE = /^[A-Za-z0-9 ]{1,20}$/;
+
 const MAX_LEN = 20;
 const UNIQUE_VIOLATION = "23505";
 

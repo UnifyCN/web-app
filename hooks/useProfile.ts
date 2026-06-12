@@ -4,9 +4,13 @@ import type { UserProfile } from "@/types";
 
 /** React Query hooks for Profile data. */
 
+/** Canonical query key for the signed-in user; shared by every reader/mutator
+ *  so invalidations always hit the same cache entry. */
+export const CURRENT_USER_KEY = ["current-user"] as const;
+
 export function useCurrentUser() {
   return useQuery({
-    queryKey: ["current-user"],
+    queryKey: CURRENT_USER_KEY,
     queryFn: profile.getCurrentUser,
   });
 }
@@ -151,7 +155,7 @@ function useFollowMutation(
       // Partial-key invalidation reconciles whichever profile is on screen,
       // regardless of its exact id.
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-      queryClient.invalidateQueries({ queryKey: ["current-user"] });
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
       queryClient.invalidateQueries({ queryKey: ["follow-status"] });
       queryClient.invalidateQueries({ queryKey: ["feed", "following"] });
     },
@@ -173,13 +177,23 @@ export function useUpdateUserDetails() {
     mutationFn: (input: profile.UpdateUserDetailsInput) =>
       profile.updateUserDetails(input),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["current-user"] }),
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
+  });
+}
+
+/** Edit the @username handle; refreshes the cached current user on success. */
+export function useUpdateUsername() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (username: string) => profile.updateUsername(username),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
   });
 }
 
 /** Refresh both the current user and the feed so author avatars update. */
 function invalidateAvatarQueries(queryClient: ReturnType<typeof useQueryClient>) {
-  queryClient.invalidateQueries({ queryKey: ["current-user"] });
+  queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
   queryClient.invalidateQueries({ queryKey: ["feed"] });
 }
 
