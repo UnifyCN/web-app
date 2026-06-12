@@ -87,6 +87,24 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
   (`first_name`, `referral_source`, `hobbies[]`, `learning_reminders`) landed via
   `20260605120000_onboarding_extra_fields.sql`. `OnboardingEditModal` reuses the same
   flow in "edit" mode from the profile header.
+- **Learn — complete section (PR #28).** The Learn experience is feature-complete:
+  text-selection **highlights** + **Ask AI** (the `explain-term` edge function, word-level
+  selectable lesson content), deep whole-word **search** across module/submodule/lesson
+  titles, **Framer Motion** animations (submodule row expansion, expand/collapse), a
+  **sticky filter sidebar** (stage filter, "Recommended for you", sort, weekly progress),
+  **keyboard paging** (←/→ in the lesson reader), a **practice-question breakdown** on the
+  submodule landing, and refined microcopy throughout. Highlights persist to
+  `lesson_highlights` (`services/highlights.ts`) via
+  `20260607120000_lesson_highlights_mobile_parity.sql`.
+- **Social graph (PR #29).** The follow loop is wired end-to-end: **follow/unfollow**
+  (insert/delete `user_followers`, optimistic), real **other-user profiles**
+  (`getUserById` → real `users` + counts), **followers/following list** route +
+  components, **comment author → profile** links, comment **deep-link anchors**
+  (`#comment-<id>` scroll + `:target` highlight), a profile **Comments** tab
+  (`getUserComments` + a Reddit-style `CommentCard`), a **"Follows you"** badge, and
+  **"Member since"** (`users.created_at`). *Known gap:* an other user's persona / city /
+  stage stay hidden because `user_onboarding_profiles` is own-row RLS — needs the DB
+  sandbox to add a public-profile read path (see `BACKLOG.md`).
 
 ---
 
