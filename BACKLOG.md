@@ -389,6 +389,9 @@ The Content-Length guard in `app/api/storage/route.ts` (early 413 on the upload 
 **MAX_IMAGE_BYTES vs Vercel body cap (low/medium priority)**
 `MAX_IMAGE_BYTES` is 5MB but Vercel's serverless request-body cap is ~4.5MB, so on Vercel a 4.5–5MB image is rejected by the platform with a generic error before reaching `app/api/storage/route.ts`, and the "Maximum size is 5MB" message is misleading. Reconcile the two (lower `MAX_IMAGE_BYTES` to match the platform cap, or document the discrepancy) so the limit the UI promises matches actual platform behaviour.
 
+**Storage `get` is cross-user by design (accepted)**
+`app/api/storage/route.ts` `get` signs a read URL for **any** key for any authenticated user — the edge function has no per-user scoping, and (unlike `remove`) `get` is intentionally not owner-scoped because the feed/profiles/comments must resolve other users' avatars and post images. This means any authenticated user who knows a key can read any stored object. Mitigation today: filenames are unguessable random UUIDs (`users/<uid>/<uuid>.<ext>`), so keys can't be enumerated, and only keys already visible to the user (from posts/profiles they can see) are resolvable. Future option if non-social/private content is ever stored under the same namespace: add per-user read scoping (or a separate private path) so `get` enforces ownership for those keys.
+
 ---
 
 ## Schema

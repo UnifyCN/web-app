@@ -4,6 +4,7 @@ import {
   validateImageFile,
   MAX_IMAGE_BYTES,
 } from "@/lib/supabase/imageValidation";
+import { escapeRegExp } from "@/lib/utils";
 
 // Cap the whole handler so Vercel kills a truly-stuck request at 10s; the
 // per-hop timeout below uses the same budget.
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
     const file = form.get("file");
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "missing file" }, { status: 400 });
+      return NextResponse.json({ error: "Missing file" }, { status: 400 });
     }
     // Re-validate server-side: the client's validateImageFile is bypassable, so
     // don't trust the posted MIME type / size before signing or uploading.
@@ -153,14 +154,21 @@ export async function POST(req: NextRequest) {
   const op = body.op;
   const key = typeof body.key === "string" ? body.key.trim() : "";
   if (!key) {
-    return NextResponse.json({ error: "invalid key" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid key" }, { status: 400 });
+  }
+  if (op !== "get" && op !== "remove") {
+    return NextResponse.json({ error: "Invalid operation" }, { status: 400 });
   }
 
   if (op === "remove") {
-    // Owner-only delete: keys are `users/<uid>/…`; never let a user delete
-    // another user's object. (`get` is intentionally cross-user — the feed
-    // resolves other users' avatars and post images.)
-    if (!key.startsWith(`users/${user.id}/`)) {
+    // Owner-only delete: the key must be exactly `users/<own-uid>/<filename>`
+    // — a single filename segment, no `/` or `..` traversal — so a user can
+    // never delete another user's object. (`get` is intentionally cross-user:
+    // the feed resolves other users' avatars and post images.)
+    const ownKey = new RegExp(
+      `^users/${escapeRegExp(user.id)}/[A-Za-z0-9._-]+$`,
+    );
+    if (!ownKey.test(key)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const { data, error } = await supabase.functions.invoke<{
