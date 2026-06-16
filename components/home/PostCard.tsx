@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { StorageImage } from "@/components/ui/StorageImage";
 import Link from "next/link";
 import { Heart, MessageCircle, Bookmark, Pin } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { useLikePost, useSavePost } from "@/hooks/useFeed";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn, formatRelativeTime, stripHtml } from "@/lib/utils";
 import type { Post } from "@/types";
 
 /** A single feed post — header, body, optional images, and an action row.
@@ -61,15 +61,20 @@ export function PostCard({
   const detailHref = `/post/${post.id}`;
   const profileHref = `/profile/${post.author.id}`;
 
+  // Older mobile posts can carry raw HTML in the title/body; flatten to plain
+  // text so the feed reads cleanly (React still escapes the output).
+  const cleanTitle = stripHtml(post.title);
+  const cleanContent = stripHtml(post.content);
+
   const body = (
     <>
-      {post.title && (
+      {cleanTitle && (
         <h3 className="text-base font-semibold text-ink-secondary group-hover:text-primary">
-          {post.title}
+          {cleanTitle}
         </h3>
       )}
       <p className="mt-1 text-sm leading-relaxed text-ink-muted">
-        {post.content}
+        {cleanContent}
       </p>
     </>
   );
@@ -136,12 +141,10 @@ export function PostCard({
               aria-label={`View image ${index + 1} full screen`}
               className="relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-lg border border-border"
             >
-              <Image
+              <StorageImage
                 src={url}
-                alt={`${post.title} — image ${index + 1}`}
-                fill
-                className="object-cover"
-                sizes="(max-width: 680px) 100vw, 340px"
+                alt={`${cleanTitle} — image ${index + 1}`}
+                className="absolute inset-0 h-full w-full object-cover"
               />
             </button>
           ))}
@@ -155,7 +158,7 @@ export function PostCard({
           index={lightboxIndex ?? 0}
           onIndexChange={setLightboxIndex}
           onClose={() => setLightboxIndex(null)}
-          alt={post.title}
+          alt={cleanTitle}
         />
       )}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import Image from "next/image";
+import { StorageImage } from "@/components/ui/StorageImage";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 interface ImageLightboxProps {
@@ -87,16 +87,14 @@ export function ImageLightbox({
         aria-modal="true"
         aria-label={alt ?? "Image viewer"}
       >
-        <Image
+        <StorageImage
           src={images[safeIndex]}
           alt={
             alt
               ? `${alt} — image ${safeIndex + 1} of ${count}`
               : `Image ${safeIndex + 1} of ${count}`
           }
-          fill
-          className="object-contain"
-          sizes="90vw"
+          className="absolute inset-0 h-full w-full object-contain"
         />
 
         {multi && (

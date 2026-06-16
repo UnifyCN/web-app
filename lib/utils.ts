@@ -16,6 +16,37 @@ export function escapeRegExp(s: string): string {
 }
 
 /**
+ * Strip HTML tags from a string and decode the common entities, returning clean
+ * plain text. Some older mobile posts/comments stored raw HTML in their body
+ * (`<h4>Hi</h4><p>text</p>`); the web renders feed content as escaped text, so
+ * we flatten the markup here rather than render it. Block-level tags become line
+ * breaks so adjacent blocks don't run together ("Hi" + "text" -> "Hi\ntext").
+ * SSR-safe (no DOM) and a no-op on plain text — the fast-path returns the input
+ * untouched when there's no `<tag` or `&entity` to act on, so a normal post is
+ * unchanged (and harmless inputs like "5 < 10" survive: only letter-anchored
+ * tags match).
+ */
+export function stripHtml(value: string): string {
+  if (!value) return value;
+  if (!/<[a-z!/]/i.test(value) && !/&[a-z#]/i.test(value)) return value;
+  return value
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(?:p|div|h[1-6]|li|tr|ul|ol|blockquote)\s*>/gi, "\n")
+    .replace(/<\/?[a-z][a-z0-9]*\b[^>]*>/gi, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0*39;|&apos;/gi, "'")
+    .replace(/&amp;/gi, "&")
+    .replace(/[ \t]+/g, " ")
+    .replace(/[ \t]*\n[ \t]*/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
  * Flatten Portable Text blocks to a single plain string — concatenates each
  * block's span text and joins blocks with newlines. Used when a plain-text
  * representation is needed (e.g. an LLM prompt) rather than rendered markup.

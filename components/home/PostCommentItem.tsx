@@ -6,7 +6,7 @@ import { Heart, Reply as ReplyIcon, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useDeleteComment, useLikeComment } from "@/hooks/useFeed";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn, formatRelativeTime, stripHtml } from "@/lib/utils";
 import type { PostComment } from "@/types";
 
 interface PostCommentItemProps {
@@ -107,7 +107,7 @@ export function PostCommentItem({
             </span>
           </div>
           <p className="mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-muted">
-            {comment.content}
+            {stripHtml(comment.content)}
           </p>
 
           <div className="mt-1.5 flex items-center gap-4">
