@@ -10,7 +10,10 @@ import {
   sanityClient,
 } from "@/lib/sanity";
 import { ensureUserRow } from "@/lib/supabase/ensureUserRow";
-import { AVATARS_BUCKET, uploadImage } from "@/lib/supabase/uploadImage";
+import {
+  deleteImageFromStorage,
+  uploadImageToStorage,
+} from "@/lib/supabase/imageStorage";
 import {
   PLACEHOLDER_RE,
   USERNAME_RE,
@@ -277,17 +280,10 @@ export async function updateUsername(username: string): Promise<void> {
   }
 }
 
-/** Extract the storage object path ("<uid>/<file>") from an avatar public URL. */
-function avatarPathFromUrl(url: string | null): string | null {
-  if (!url) return null;
-  const marker = `/${AVATARS_BUCKET}/`;
-  const idx = url.indexOf(marker);
-  return idx === -1 ? null : url.slice(idx + marker.length);
-}
-
 /**
- * Upload a new avatar to the public `avatars` bucket and store its URL on the
- * signed-in user's row. Returns the public URL (null in the mock build).
+ * Upload a new avatar via the shared `profile-picture-upload` edge function and
+ * store the returned object key on the signed-in user's row (resolved to a
+ * signed URL at render time, matching mobile). Returns the key (null in mock).
  */
 export async function updateAvatar(file: File): Promise<string | null> {
   if (!isSupabaseConfigured()) return null;
@@ -295,16 +291,16 @@ export async function updateAvatar(file: File): Promise<string | null> {
   const userId = await getAuthUserId();
   if (!userId) throw new Error("updateAvatar: no auth session");
 
-  const url = await uploadImage(file, AVATARS_BUCKET, userId);
+  const key = await uploadImageToStorage(file);
 
   const supabase = createClient();
   const { error } = await supabase
     .from("users")
-    .update({ profile_picture_url: url })
+    .update({ profile_picture_url: key })
     .eq("id", userId);
   if (error) throw error;
 
-  return url;
+  return key;
 }
 
 /**
@@ -323,8 +319,16 @@ export async function removeAvatar(): Promise<void> {
     .select("profile_picture_url")
     .eq("id", userId)
     .maybeSingle();
-  const path = avatarPathFromUrl(row?.profile_picture_url ?? null);
-  if (path) await supabase.storage.from(AVATARS_BUCKET).remove([path]);
+  const key = row?.profile_picture_url ?? null;
+  if (key) {
+    // Best-effort: the nulled column is the source of truth even if the
+    // signed S3 delete fails.
+    try {
+      await deleteImageFromStorage(key);
+    } catch (error) {
+      console.error("removeAvatar: storage delete failed (continuing)", error);
+    }
+  }
 
   const { error } = await supabase
     .from("users")

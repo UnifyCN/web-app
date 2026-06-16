@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatRelativeTime } from "@/lib/utils";
+import { formatRelativeTime, stripHtml } from "@/lib/utils";
 import type { UserComment } from "@/types";
 
 /** A row in the profile Comments tab, Reddit comment-history style: the post
@@ -13,7 +13,7 @@ export function CommentCard({ comment }: { comment: UserComment }) {
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="line-clamp-1 text-sm font-semibold text-ink-secondary">
-          {comment.postTitle}
+          {stripHtml(comment.postTitle)}
         </h3>
         <span className="shrink-0 text-xs text-ink-placeholder">
           {formatRelativeTime(comment.createdAt)}
@@ -23,7 +23,7 @@ export function CommentCard({ comment }: { comment: UserComment }) {
         by @{comment.postAuthorUsername}
       </p>
       <p className="mt-2 line-clamp-3 border-l-2 border-primary pl-3 text-sm leading-relaxed text-ink">
-        {comment.content}
+        {stripHtml(comment.content)}
       </p>
     </Link>
   );

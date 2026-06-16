@@ -1,4 +1,7 @@
+"use client";
+
 import { cn } from "@/lib/utils";
+import { useResolvedImageUrl } from "@/hooks/useResolvedImageUrl";
 
 interface AvatarProps {
   profilePictureUrl?: string | null;
@@ -21,8 +24,10 @@ function getInitials(name: string): string {
 }
 
 /**
- * Circular user avatar. Falls back to initials on a warm tint when no
- * profile picture is available.
+ * Circular user avatar. `profilePictureUrl` is a stored object key
+ * (`users/<uid>/…`) or a full URL; it's resolved to a signed URL at render time
+ * (cached). Falls back to initials while loading, on error, or when there's no
+ * picture.
  */
 export function Avatar({
   profilePictureUrl,
@@ -31,14 +36,13 @@ export function Avatar({
   className,
 }: AvatarProps) {
   const dimensions = { width: size, height: size };
+  const { url } = useResolvedImageUrl(profilePictureUrl);
 
-  // The shared (mobile) DB stores avatars as bucket paths ("users/<uid>/…"),
-  // not URLs; only render an actual http(s) URL, else fall back to initials.
-  if (profilePictureUrl && /^https?:\/\//i.test(profilePictureUrl)) {
+  if (url) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- mock avatars; next/image not configured in the frontend-only build
+      // eslint-disable-next-line @next/next/no-img-element -- signed S3 URLs expire per-request; next/image doesn't fit
       <img
-        src={profilePictureUrl}
+        src={url}
         alt={username}
         style={dimensions}
         className={cn("shrink-0 rounded-full object-cover", className)}

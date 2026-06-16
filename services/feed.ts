@@ -55,11 +55,6 @@ interface JoinedPostRow {
   groups: { id: number; group_name: string } | null;
 }
 
-/** True for absolute http(s) URLs. The shared (mobile) DB stores image
- *  references as bucket paths ("users/<uid>/<file>.jpg"), and next/image throws
- *  on a bare relative src — so we keep only renderable absolute URLs. */
-const isHttpUrl = (s: string): boolean => /^https?:\/\//i.test(s);
-
 function rowToPost(row: JoinedPostRow): Post {
   const author: User = row.users
     ? {
@@ -87,7 +82,7 @@ function rowToPost(row: JoinedPostRow): Post {
     userId: row.user_id,
     groupId: row.group_id,
     isPinned: row.is_pinned ?? false,
-    postImageUrls: (row.post_image_urls ?? []).filter(isHttpUrl),
+    postImageUrls: row.post_image_urls ?? [],
     createdAt: row.created_at,
     author,
     groupName: row.groups?.group_name ?? undefined,

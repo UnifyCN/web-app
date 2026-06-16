@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { LearnSidePanel } from "@/components/learn/LearnSidePanel";
 import { LessonSearchResult } from "@/components/learn/LessonSearchResult";
@@ -78,7 +78,7 @@ interface LessonHit {
   colorHex: string;
 }
 
-export default function LearnPage() {
+function LearnPageContent() {
   const modulesQuery = useModules();
   const progressesQuery = useAllLessonProgresses();
   const userQuery = useCurrentUser();
@@ -410,5 +410,15 @@ export default function LearnPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams() forces a client-side-rendering bailout, which Next requires
+// be wrapped in a Suspense boundary or `next build` fails prerendering /learn.
+export default function LearnPage() {
+  return (
+    <Suspense>
+      <LearnPageContent />
+    </Suspense>
   );
 }

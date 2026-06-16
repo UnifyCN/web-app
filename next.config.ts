@@ -11,9 +11,6 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "cdn.sanity.io" },
-      // User-uploaded avatars + post images live in the public Supabase Storage
-      // buckets on the shared (mobile) project. See lib/supabase/uploadImage.ts.
-      { protocol: "https", hostname: "wrbauxutkysljmsqojts.supabase.co" },
       // Community event cover photos
       { protocol: "https", hostname: "events.ubc.ca" },
       { protocol: "https", hostname: "img.freepik.com" },
