@@ -143,7 +143,11 @@ export function PostCard({
             >
               <StorageImage
                 src={url}
-                alt={`${cleanTitle} — image ${index + 1}`}
+                alt={
+                  cleanTitle
+                    ? `${cleanTitle} — image ${index + 1}`
+                    : `Post image ${index + 1}`
+                }
                 className="absolute inset-0 h-full w-full object-cover"
               />
             </button>
@@ -158,7 +162,7 @@ export function PostCard({
           index={lightboxIndex ?? 0}
           onIndexChange={setLightboxIndex}
           onClose={() => setLightboxIndex(null)}
-          alt={cleanTitle}
+          alt={cleanTitle || undefined}
         />
       )}
 

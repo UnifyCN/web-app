@@ -48,6 +48,22 @@ interface CacheEntry {
 const urlCache = new Map<string, CacheEntry>();
 const inflight = new Map<string, Promise<string | null>>();
 
+const MAX_CACHE_ENTRIES = 500; // LRU cap so long-lived sessions don't grow unbounded
+
+/**
+ * Insert/refresh a cache entry with LRU eviction. `Map` iterates in insertion
+ * order, so deleting-then-setting moves a key to the newest position; when the
+ * cache is full we drop the oldest (least-recently-used) key first.
+ */
+function cacheSet(key: string, entry: CacheEntry): void {
+  urlCache.delete(key);
+  if (urlCache.size >= MAX_CACHE_ENTRIES) {
+    const oldest = urlCache.keys().next().value;
+    if (oldest !== undefined) urlCache.delete(oldest);
+  }
+  urlCache.set(key, entry);
+}
+
 /** Expiry (epoch ms) embedded in an S3 SigV4 signed URL, or null if unparseable. */
 function parseSignedUrlExpiry(url: string): number | null {
   try {
@@ -90,6 +106,7 @@ export async function resolveImageUrl(
 
   const cached = urlCache.get(key);
   if (cached && cached.expiresAt - Date.now() > REFRESH_BUFFER_MS) {
+    cacheSet(key, cached); // LRU touch — mark as recently used
     return cached.url;
   }
 
@@ -105,7 +122,7 @@ export async function resolveImageUrl(
       if (!res.ok) throw new Error(`sign failed (${res.status})`);
       const { url } = (await res.json()) as { url?: string };
       if (!url) throw new Error("no signed url returned");
-      urlCache.set(key, {
+      cacheSet(key, {
         url,
         expiresAt: parseSignedUrlExpiry(url) ?? Date.now() + DEFAULT_TTL_MS,
       });

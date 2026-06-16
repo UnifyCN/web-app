@@ -1,6 +1,22 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+const S3_TIMEOUT_MS = 30_000;
+
+/** fetch() with a hard timeout so a stuck S3 PUT/DELETE can't hang the route. */
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), S3_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /**
  * Same-origin proxy for the shared (mobile) project's storage edge functions
  * (`profile-picture-get` / `-upload` / `-remove`). Those functions were built for
@@ -17,6 +33,14 @@ import { createClient } from "@/lib/supabase/server";
  */
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const contentType = req.headers.get("content-type") ?? "";
 
   // ---- upload (multipart/form-data) ---------------------------------------
@@ -36,11 +60,19 @@ export async function POST(req: NextRequest) {
         { status: 502 },
       );
     }
-    const put = await fetch(data.uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": file.type },
-      body: await file.arrayBuffer(),
-    });
+    let put: Response;
+    try {
+      put = await fetchWithTimeout(data.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: await file.arrayBuffer(),
+      });
+    } catch {
+      return NextResponse.json(
+        { error: "storage upload timed out" },
+        { status: 504 },
+      );
+    }
     if (!put.ok) {
       return NextResponse.json(
         { error: `storage upload failed (${put.status})` },
@@ -70,7 +102,15 @@ export async function POST(req: NextRequest) {
         { status: 502 },
       );
     }
-    const del = await fetch(data.deleteUrl, { method: "DELETE" });
+    let del: Response;
+    try {
+      del = await fetchWithTimeout(data.deleteUrl, { method: "DELETE" });
+    } catch {
+      return NextResponse.json(
+        { error: "storage delete timed out" },
+        { status: 504 },
+      );
+    }
     if (!del.ok) {
       return NextResponse.json(
         { error: `storage delete failed (${del.status})` },
