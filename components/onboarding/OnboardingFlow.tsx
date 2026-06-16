@@ -104,7 +104,19 @@ export function OnboardingFlow({
     save.mutate(draftToInput(draft), {
       onSuccess: onComplete,
       onError: (e) => {
-        console.error("saveOnboarding failed", e);
+        // PostgREST errors stringify to `{}` in some consoles — log the fields.
+        const err = e as {
+          message?: string;
+          code?: string;
+          details?: string;
+          hint?: string;
+        };
+        console.error("saveOnboarding failed", {
+          message: err?.message,
+          code: err?.code,
+          details: err?.details,
+          hint: err?.hint,
+        });
         setError("Something went wrong saving your answers. Please try again.");
       },
     });

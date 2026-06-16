@@ -18,14 +18,14 @@ import type { OnboardingStepProps } from "../types";
 
 const HOBBY_ICON: Record<string, React.ReactNode> = {
   career_growth: <TrendingUp className="h-5 w-5" />,
-  explore_canada: <Map className="h-5 w-5" />,
-  wellness_growth: <Sparkles className="h-5 w-5" />,
-  tech_digital: <Cpu className="h-5 w-5" />,
-  music_arts: <Music className="h-5 w-5" />,
-  fitness_sports: <Dumbbell className="h-5 w-5" />,
+  exploring_canada: <Map className="h-5 w-5" />,
+  wellness: <Sparkles className="h-5 w-5" />,
+  technology: <Cpu className="h-5 w-5" />,
+  music: <Music className="h-5 w-5" />,
+  fitness: <Dumbbell className="h-5 w-5" />,
   personal_finance: <DollarSign className="h-5 w-5" />,
   family_parenting: <Users className="h-5 w-5" />,
-  education_learning: <GraduationCap className="h-5 w-5" />,
+  education: <GraduationCap className="h-5 w-5" />,
   food_cooking: <Utensils className="h-5 w-5" />,
   movies: <Film className="h-5 w-5" />,
 };

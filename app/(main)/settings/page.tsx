@@ -2,12 +2,15 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, ChevronRight, LogOut, Trash2 } from "lucide-react";
+import { Camera, ChevronRight, KeyRound, LogOut, Mail, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
 import { useToast } from "@/components/ui/ToastProvider";
 import { OnboardingEditModal } from "@/components/onboarding/OnboardingEditModal";
+import { ChangeEmailModal } from "@/components/account/ChangeEmailModal";
+import { ChangePasswordModal } from "@/components/account/ChangePasswordModal";
+import { useAuthUser } from "@/hooks/useAuthUser";
 import { signOut } from "@/services/auth";
 import {
   useCurrentUser,
@@ -485,7 +488,10 @@ function LegalSection() {
 
 function AccountSection() {
   const router = useRouter();
+  const { data: authUser } = useAuthUser();
   const [signingOut, setSigningOut] = useState(false);
+  const [showChangeEmail, setShowChangeEmail] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -522,6 +528,46 @@ function AccountSection() {
         <div className="flex items-center justify-between gap-4 border-t border-border-card pt-4">
           <div className="min-w-0">
             <p className="text-sm font-medium text-ink-secondary">
+              Change email
+            </p>
+            <p className="truncate text-xs text-ink-muted">
+              {authUser?.email
+                ? `Currently ${authUser.email}.`
+                : "Update the email address for your account."}
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<Mail className="h-4 w-4" aria-hidden />}
+            onClick={() => setShowChangeEmail(true)}
+          >
+            Change
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 border-t border-border-card pt-4">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-ink-secondary">
+              Change password
+            </p>
+            <p className="text-xs text-ink-muted">
+              Set a new password for signing in with email.
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<KeyRound className="h-4 w-4" aria-hidden />}
+            onClick={() => setShowChangePassword(true)}
+          >
+            Change
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 border-t border-border-card pt-4">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-ink-secondary">
               Delete account
             </p>
             <p className="text-xs text-ink-placeholder">
@@ -541,6 +587,16 @@ function AccountSection() {
           </span>
         </div>
       </div>
+
+      <ChangeEmailModal
+        open={showChangeEmail}
+        onClose={() => setShowChangeEmail(false)}
+        currentEmail={authUser?.email ?? undefined}
+      />
+      <ChangePasswordModal
+        open={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+      />
     </Section>
   );
 }

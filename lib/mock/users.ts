@@ -24,7 +24,7 @@ export const currentUser: UserProfile = {
     stage: 2,
     goals: ["Find work in my field", "Build a local network"],
     learningInterests: ["Banking", "Housing", "Employment"],
-    hobbies: ["career_growth", "explore_canada", "personal_finance"],
+    hobbies: ["career_growth", "exploring_canada", "personal_finance"],
     learningReminders: true,
   },
 };
@@ -51,7 +51,7 @@ export const priya: UserProfile = {
     stage: 2,
     goals: ["Graduate and find a job"],
     learningInterests: ["Documentation", "Employment"],
-    hobbies: ["education_learning", "food_cooking"],
+    hobbies: ["education", "food_cooking"],
     learningReminders: true,
   },
 };
@@ -78,7 +78,7 @@ export const ahmed: UserProfile = {
     stage: 3,
     goals: ["Settle my family"],
     learningInterests: ["Housing", "Healthcare"],
-    hobbies: ["family_parenting", "fitness_sports"],
+    hobbies: ["family_parenting", "fitness"],
     learningReminders: false,
   },
 };
@@ -105,7 +105,7 @@ export const mei: UserProfile = {
     stage: 1,
     goals: ["Get provincial health coverage"],
     learningInterests: ["Healthcare", "Banking"],
-    hobbies: ["tech_digital", "wellness_growth"],
+    hobbies: ["technology", "wellness"],
     learningReminders: true,
   },
 };
@@ -132,7 +132,7 @@ export const carlos: UserProfile = {
     stage: 4,
     goals: ["Apply for citizenship"],
     learningInterests: ["Daily Life", "Employment"],
-    hobbies: ["music_arts", "movies"],
+    hobbies: ["music", "movies"],
     learningReminders: false,
   },
 };
@@ -159,7 +159,7 @@ export const olena: UserProfile = {
     stage: 2,
     goals: ["Get my credentials recognised"],
     learningInterests: ["Employment", "Documentation"],
-    hobbies: ["career_growth", "education_learning"],
+    hobbies: ["career_growth", "education"],
     learningReminders: true,
   },
 };
