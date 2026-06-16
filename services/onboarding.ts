@@ -91,6 +91,10 @@ export async function saveOnboarding(input: SaveOnboardingInput): Promise<void> 
   if (error) throw error;
 
   // First name lives on `users` (not the onboarding row) in the shared schema.
+  // NOTE: two non-atomic writes (the onboarding upsert above, then this users
+  // update). If the upsert succeeds but this fails, `onboarding_completed` is
+  // true while `first_name` is left unchanged. Acceptable: the users row always
+  // exists, and retrying the full save corrects it.
   const { error: nameError } = await supabase
     .from("users")
     .update({ first_name: input.firstName.trim() || null })

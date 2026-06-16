@@ -13,6 +13,13 @@
 --
 -- Only data effect: the new `created_at` columns backfill EXISTING rows with
 -- now() — nothing is overwritten.
+--
+-- FUTURE MIGRATIONS on live (populated) mobile tables: do NOT `ADD COLUMN ... DEFAULT
+-- <value>` in one step on a large table. Use the 3-step lock-safe pattern to avoid an
+-- ACCESS EXCLUSIVE lock / table rewrite:
+--   (1) ADD COLUMN nullable (no default),
+--   (2) ALTER COLUMN ... SET DEFAULT (metadata only — applies to new rows),
+--   (3) backfill existing rows in batches (then add NOT NULL if needed).
 -- ============================================================================
 
 begin;

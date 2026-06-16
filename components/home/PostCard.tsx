@@ -31,8 +31,8 @@ export function PostCard({
 
   const likeCount =
     post.likeCount + (liked ? 1 : 0) - (post.likedByMe ? 1 : 0);
-  // No save count shown — the shared (mobile) get_post_metadata_batch doesn't
-  // return one, so the bookmark is a pure personal toggle.
+  // Bookmark is a pure personal toggle — no public save count is shown,
+  // matching mobile's UX
 
   function toggleLike() {
     const wasLiked = liked;
