@@ -74,28 +74,36 @@ export async function saveOnboarding(input: SaveOnboardingInput): Promise<void> 
   const { error } = await supabase.from("user_onboarding_profiles").upsert(
     {
       id: userId, // = auth.uid(), satisfies the own-row RLS policy + PK
-      first_name: input.firstName.trim() || null,
       persona: input.persona,
       referral_source: referralSource,
       arrival_date: input.arrivalDate,
       city: input.city.trim() || null,
       province: input.province.trim() || null,
-      stage,
+      stage: String(stage), // mobile `stage` is a stage_enum ('0'..'4')
       goals,
       learning_interests: learningInterests,
       hobbies,
-      learning_reminders: input.learningReminders,
+      wants_reminders: input.learningReminders,
+      onboarding_completed: true, // mobile gates "onboarded" on this flag
     },
     { onConflict: "id" },
   );
   if (error) throw error;
+
+  // First name lives on `users` (not the onboarding row) in the shared schema.
+  const { error: nameError } = await supabase
+    .from("users")
+    .update({ first_name: input.firstName.trim() || null })
+    .eq("id", userId);
+  if (nameError) throw nameError;
 }
 
 /**
- * Partial update of the onboarding first name (the profile's display name).
- * Uses `.update()` rather than upsert so NOT-NULL columns like `persona` are
- * never touched. With no onboarding row the update matches 0 rows; we request
- * an exact count and throw so that never fails silently. No-op in the mock build.
+ * Update the user's first name (their profile's display name). First name lives
+ * on the `users` row in the shared schema, so this is a one-column `users`
+ * update. The users row is bootstrapped at sign-in, so a 0-row update is
+ * unexpected — we request an exact count and throw rather than fail silently.
+ * No-op in the mock build.
  */
 export async function updateDisplayName(firstName: string): Promise<void> {
   if (!isSupabaseConfigured()) return;
@@ -105,12 +113,12 @@ export async function updateDisplayName(firstName: string): Promise<void> {
 
   const supabase = createClient();
   const { error, count } = await supabase
-    .from("user_onboarding_profiles")
+    .from("users")
     .update({ first_name: firstName.trim() || null }, { count: "exact" })
     .eq("id", userId);
   if (error) throw error;
   if (count === 0) {
-    throw new Error("No onboarding profile found — complete your profile first");
+    throw new Error("No user record found");
   }
 }
 
@@ -128,7 +136,7 @@ export async function updateLearningReminders(enabled: boolean): Promise<void> {
   const supabase = createClient();
   const { error, count } = await supabase
     .from("user_onboarding_profiles")
-    .update({ learning_reminders: enabled }, { count: "exact" })
+    .update({ wants_reminders: enabled }, { count: "exact" })
     .eq("id", userId);
   if (error) throw error;
   if (count === 0) {

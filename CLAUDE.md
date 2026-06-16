@@ -11,6 +11,15 @@ The mobile app repo (read-only reference) is at `github.com/UnifyCN/mobile-app`.
 The frontend is complete on mock data. **Supabase integration is underway** on the
 web-app project (ID `pbiszrycmcxmzxrnkkwr`):
 
+> **Supabase MCP access (two projects, both read-only).** Two Supabase MCP servers are
+> configured for this repo: `supabase` → the **web-app** backend (`pbiszrycmcxmzxrnkkwr`,
+> this app's own schema) and `supabase-mobile` → the legacy **unify-social** mobile
+> backend (`wrbauxutkysljmsqojts`). The mobile server is added **read-only for
+> schema-drift reference only** — read the mobile schema to mirror tables/columns/RLS,
+> but never write to it (it has live mobile users). Both run with `--read-only`. Tokens
+> live in `~/.claude.json` (not committed). After adding/changing MCP servers, restart
+> Claude Code so the `mcp__supabase-mobile__*` tools load.
+
 - **Auth — Google SSO is wired and working.** Login runs `signInWithOAuth`;
   `app/(auth)/auth/callback/route.ts` exchanges the code for a session; `proxy.ts`
   refreshes the session and redirects unauthenticated traffic to `/login`; sign-out
@@ -207,7 +216,7 @@ Never animate: sidebar nav clicks, page transitions, form submissions, any actio
 | Language        | TypeScript                                                  |
 | Styling         | Tailwind CSS v4 (brand tokens in `app/globals.css` `@theme`) |
 | Data fetching   | TanStack React Query v5                                     |
-| Backend (later) | Supabase (project ID: `pbiszrycmcxmzxrnkkwr`)               |
+| Backend (later) | Supabase — web `pbiszrycmcxmzxrnkkwr`; mobile (read-only ref) `wrbauxutkysljmsqojts` |
 | CMS (later)     | Sanity (reuse mobile app project — same project ID/dataset) |
 | Auth (later)    | Google SSO first, Apple SSO second                          |
 | Icons           | lucide-react                                                |

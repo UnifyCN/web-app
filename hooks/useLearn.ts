@@ -220,17 +220,31 @@ export function useSetModuleStatus() {
 
 interface SetLessonProgressInput {
   lessonId: string;
+  /** Parent section id — written to user_lesson_progress (NOT NULL on mobile). */
+  submoduleId: string;
+  /** Parent module id — written (NOT NULL) and used to invalidate the module detail. */
+  moduleId: string;
   progressPercent: number;
   isCompleted: boolean;
-  /** Optional — when provided, invalidates the parent module's detail. */
-  moduleId?: string;
 }
 
 export function useSetLessonProgress() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ lessonId, progressPercent, isCompleted }: SetLessonProgressInput) =>
-      learn.setLessonProgress(lessonId, progressPercent, isCompleted),
+    mutationFn: ({
+      lessonId,
+      submoduleId,
+      moduleId,
+      progressPercent,
+      isCompleted,
+    }: SetLessonProgressInput) =>
+      learn.setLessonProgress(
+        lessonId,
+        submoduleId,
+        moduleId,
+        progressPercent,
+        isCompleted,
+      ),
     onSuccess: (_data, { moduleId }) => {
       queryClient.invalidateQueries({ queryKey: LESSON_PROGRESSES_KEY });
       queryClient.invalidateQueries({ queryKey: MODULES_KEY });

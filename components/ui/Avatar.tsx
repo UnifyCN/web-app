@@ -32,7 +32,9 @@ export function Avatar({
 }: AvatarProps) {
   const dimensions = { width: size, height: size };
 
-  if (profilePictureUrl) {
+  // The shared (mobile) DB stores avatars as bucket paths ("users/<uid>/…"),
+  // not URLs; only render an actual http(s) URL, else fall back to initials.
+  if (profilePictureUrl && /^https?:\/\//i.test(profilePictureUrl)) {
     return (
       // eslint-disable-next-line @next/next/no-img-element -- mock avatars; next/image not configured in the frontend-only build
       <img
