@@ -60,7 +60,7 @@ interface LessonProgressRow {
 function rowToLessonProgress(row: LessonProgressRow): LessonProgress {
   return {
     sanityLessonId: row.sanity_lesson_id,
-    progressPercent: row.progress_percent,
+    progressPercent: Number(row.progress_percent),
     isCompleted: row.is_completed,
     updatedAt: row.updated_at,
   };
@@ -370,7 +370,7 @@ export async function getPracticeProgress(
 
   const supabase = createClient();
   const { data, error } = await supabase
-    .from("user_practice_progress")
+    .from("user_submodule_practice_progress")
     .select(
       "sanity_submodule_id, current_question_index, current_submitted, answers, is_completed, score, total_questions, updated_at",
     )
@@ -396,7 +396,7 @@ export async function getAllPracticeProgresses(): Promise<
 
   const supabase = createClient();
   const { data, error } = await supabase
-    .from("user_practice_progress")
+    .from("user_submodule_practice_progress")
     .select(
       "sanity_submodule_id, current_question_index, current_submitted, answers, is_completed, score, total_questions, updated_at",
     )
@@ -431,7 +431,7 @@ export async function upsertPracticeProgress(
   if (!userId) return;
 
   const supabase = createClient();
-  const { error } = await supabase.from("user_practice_progress").upsert(
+  const { error } = await supabase.from("user_submodule_practice_progress").upsert(
     {
       user_id: userId,
       sanity_submodule_id: input.submoduleId,
@@ -698,6 +698,8 @@ export async function setModuleStatus(
 
 export async function setLessonProgress(
   lessonId: string,
+  submoduleId: string,
+  moduleId: string,
   progressPercent: number,
   isCompleted: boolean,
 ): Promise<void> {
@@ -706,10 +708,14 @@ export async function setLessonProgress(
   if (!userId) throw new Error("setLessonProgress: no auth session");
 
   const supabase = createClient();
+  // sanity_submodule_id + sanity_module_id are NOT NULL on the shared (mobile)
+  // schema, so both must be supplied alongside the lesson id.
   const { error } = await supabase.from("user_lesson_progress").upsert(
     {
       user_id: userId,
       sanity_lesson_id: lessonId,
+      sanity_submodule_id: submoduleId,
+      sanity_module_id: moduleId,
       progress_percent: progressPercent,
       is_completed: isCompleted,
       updated_at: new Date().toISOString(),

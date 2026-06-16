@@ -38,7 +38,7 @@ const DEFAULT_LIMIT = 20;
 
 interface JoinedPostRow {
   id: number;
-  title: string;
+  title: string | null;
   content: string;
   like_count: number | null;
   comment_count: number | null;
@@ -54,6 +54,11 @@ interface JoinedPostRow {
   } | null;
   groups: { id: number; group_name: string } | null;
 }
+
+/** True for absolute http(s) URLs. The shared (mobile) DB stores image
+ *  references as bucket paths ("users/<uid>/<file>.jpg"), and next/image throws
+ *  on a bare relative src — so we keep only renderable absolute URLs. */
+const isHttpUrl = (s: string): boolean => /^https?:\/\//i.test(s);
 
 function rowToPost(row: JoinedPostRow): Post {
   const author: User = row.users
@@ -74,7 +79,7 @@ function rowToPost(row: JoinedPostRow): Post {
 
   return {
     id: row.id,
-    title: row.title,
+    title: row.title ?? "",
     content: row.content,
     likeCount: row.like_count ?? 0,
     commentCount: row.comment_count ?? 0,
@@ -82,7 +87,7 @@ function rowToPost(row: JoinedPostRow): Post {
     userId: row.user_id,
     groupId: row.group_id,
     isPinned: row.is_pinned ?? false,
-    postImageUrls: row.post_image_urls ?? [],
+    postImageUrls: (row.post_image_urls ?? []).filter(isHttpUrl),
     createdAt: row.created_at,
     author,
     groupName: row.groups?.group_name ?? undefined,
@@ -105,7 +110,7 @@ async function getPostMetadataBatch(
   if (postIds.length === 0) return new Map();
   const supabase = createClient();
   const { data, error } = await supabase.rpc("get_post_metadata_batch", {
-    p_post_ids: postIds,
+    post_ids: postIds,
   });
   if (error) throw error;
 
@@ -117,8 +122,8 @@ async function getPostMetadataBatch(
       like_count: Number(row.like_count ?? 0),
       comment_count: Number(row.comment_count ?? 0),
       save_count: Number(row.save_count ?? 0),
-      liked_by_me: Boolean(row.liked_by_me),
-      saved_by_me: Boolean(row.saved_by_me),
+      liked_by_me: Boolean(row.is_liked ?? row.liked_by_me),
+      saved_by_me: Boolean(row.is_saved ?? row.saved_by_me),
     });
   }
   return map;

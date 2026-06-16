@@ -125,9 +125,10 @@ export default function LessonDetailPage({
     setLessonProgress.mutate(
       {
         lessonId,
+        submoduleId,
+        moduleId,
         progressPercent: 100,
         isCompleted: true,
-        moduleId,
       },
       {
         onSuccess: () => {

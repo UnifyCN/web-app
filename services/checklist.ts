@@ -133,7 +133,7 @@ export async function getTasks(): Promise<ChecklistTask[]> {
   if (!onboarding) return mockTasks;
 
   const persona = onboarding.persona as Persona;
-  const stageSlug = STAGE_TO_SLUG[onboarding.stage as Stage];
+  const stageSlug = STAGE_TO_SLUG[Number(onboarding.stage) as Stage];
 
   const [items, userTasksRes, customRes] = await Promise.all([
     getChecklistByPersonaAndStage(persona, stageSlug),
@@ -182,7 +182,7 @@ export async function getTasks(): Promise<ChecklistTask[]> {
   });
 
   const customTasks: ChecklistTask[] = (customRes.data ?? []).map((row) => ({
-    id: row.id,
+    id: String(row.id),
     priority: row.priority as Priority,
     title: row.title,
     description: row.description ?? "",
@@ -215,7 +215,7 @@ export async function getCustomTasks(): Promise<ChecklistTask[]> {
   }
 
   return (data ?? []).map((row) => ({
-    id: row.id,
+    id: String(row.id),
     priority: row.priority as Priority,
     title: row.title,
     description: row.description ?? "",

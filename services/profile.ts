@@ -17,6 +17,7 @@ import {
   claimUsername,
   generateUsernameBase,
 } from "@/lib/supabase/username";
+import { calculateUserStage } from "@/lib/onboarding/calculateUserStage";
 import {
   currentUser,
   getUserById as findUser,
@@ -53,14 +54,14 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
   }
 
   const usersSelect =
-    "id, username, profile_picture_url, is_premium, permissions, biography, pronouns, created_at";
+    "id, username, first_name, profile_picture_url, is_premium, permissions, biography, pronouns, created_at";
 
   const [usersRes, { data: onb }, followerRes, followingRes] = await Promise.all([
     supabase.from("users").select(usersSelect).eq("id", user.id).maybeSingle(),
     supabase
       .from("user_onboarding_profiles")
       .select(
-        "id, first_name, persona, referral_source, arrival_date, city, province, stage, goals, learning_interests, hobbies, learning_reminders",
+        "id, persona, referral_source, arrival_date, city, province, stage, goals, learning_interests, hobbies, wants_reminders",
       )
       .eq("id", user.id)
       .maybeSingle(),
@@ -122,17 +123,17 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     onboarding: onb
       ? {
           id: onb.id,
-          firstName: onb.first_name ?? null,
+          firstName: row.first_name ?? null,
           persona: onb.persona as Persona,
           referralSource: onb.referral_source ?? null,
-          arrivalDate: onb.arrival_date,
+          arrivalDate: onb.arrival_date ? onb.arrival_date.slice(0, 10) : null,
           city: onb.city,
           province: onb.province,
-          stage: onb.stage as Stage,
+          stage: Number(onb.stage) as Stage,
           goals: onb.goals ?? [],
           learningInterests: onb.learning_interests ?? [],
           hobbies: onb.hobbies ?? [],
-          learningReminders: onb.learning_reminders ?? false,
+          learningReminders: onb.wants_reminders ?? false,
         }
       : null,
   };
@@ -148,29 +149,19 @@ export async function getUserById(
   const supabase = createClient();
 
   const usersSelect =
-    "id, username, profile_picture_url, is_premium, permissions, biography, pronouns, created_at";
+    "id, username, first_name, profile_picture_url, is_premium, permissions, biography, pronouns, created_at";
 
-  const [usersRes, { data: onb }, followerRes, followingRes] =
-    await Promise.all([
-      supabase.from("users").select(usersSelect).eq("id", id).maybeSingle(),
-      // user_onboarding_profiles is own-row RLS, so this returns null for any
-      // user other than the caller — onboarding fields degrade to absent.
-      supabase
-        .from("user_onboarding_profiles")
-        .select(
-          "id, first_name, persona, referral_source, arrival_date, city, province, stage, goals, learning_interests, hobbies, learning_reminders",
-        )
-        .eq("id", id)
-        .maybeSingle(),
-      supabase
-        .from("user_followers")
-        .select("*", { count: "exact", head: true })
-        .eq("following_id", id),
-      supabase
-        .from("user_followers")
-        .select("*", { count: "exact", head: true })
-        .eq("follower_id", id),
-    ]);
+  const [usersRes, followerRes, followingRes] = await Promise.all([
+    supabase.from("users").select(usersSelect).eq("id", id).maybeSingle(),
+    supabase
+      .from("user_followers")
+      .select("*", { count: "exact", head: true })
+      .eq("following_id", id),
+    supabase
+      .from("user_followers")
+      .select("*", { count: "exact", head: true })
+      .eq("follower_id", id),
+  ]);
 
   const row = usersRes.data;
   if (!row) {
@@ -178,6 +169,37 @@ export async function getUserById(
       console.error("getUserById: users query failed", usersRes.error);
     }
     return undefined;
+  }
+
+  // user_onboarding_profiles is own-row RLS, so a direct read of another user's
+  // row returns nothing. The mobile `public-onboarding-profile` edge function
+  // exposes the public-facing fields (persona + arrival_date); city / province /
+  // goals stay private and stage is derived from arrival_date. Best-effort: a
+  // failure just leaves the profile without persona / stage badges.
+  let onboarding: UserProfile["onboarding"] = null;
+  try {
+    const { data: fnData } = await supabase.functions.invoke<{
+      profile: { persona: Persona; arrival_date: string | null } | null;
+    }>("public-onboarding-profile", { body: { userId: id } });
+    const p = fnData?.profile;
+    if (p) {
+      onboarding = {
+        id,
+        firstName: row.first_name ?? null,
+        persona: p.persona,
+        referralSource: null,
+        arrivalDate: p.arrival_date ? p.arrival_date.slice(0, 10) : null,
+        city: "",
+        province: "",
+        stage: calculateUserStage(p.arrival_date ?? null),
+        goals: [],
+        learningInterests: [],
+        hobbies: [],
+        learningReminders: false,
+      };
+    }
+  } catch (error) {
+    console.error("getUserById: public-onboarding-profile failed", error);
   }
 
   return {
@@ -191,22 +213,7 @@ export async function getUserById(
     createdAt: row.created_at ?? null,
     followerCount: followerRes.count ?? 0,
     followingCount: followingRes.count ?? 0,
-    onboarding: onb
-      ? {
-          id: onb.id,
-          firstName: onb.first_name ?? null,
-          persona: onb.persona as Persona,
-          referralSource: onb.referral_source ?? null,
-          arrivalDate: onb.arrival_date,
-          city: onb.city,
-          province: onb.province,
-          stage: onb.stage as Stage,
-          goals: onb.goals ?? [],
-          learningInterests: onb.learning_interests ?? [],
-          hobbies: onb.hobbies ?? [],
-          learningReminders: onb.learning_reminders ?? false,
-        }
-      : null,
+    onboarding,
   };
 }
 

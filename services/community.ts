@@ -243,6 +243,17 @@ const STAGE_TO_TIME_SLUG: Record<Stage, string> = {
   4: "3_plus_years",
 };
 
+// Reverse of STAGE_TO_TIME_SLUG for reading mobile's text slug back into a web
+// Stage. Lossy (both sub-year stages collapse to less_than_1_year; the two
+// multi-year slugs both map to stage 3); unknown slugs fall back to 0.
+const TIME_SLUG_TO_STAGE: Record<string, Stage> = {
+  not_arrived: 0,
+  less_than_1_year: 1,
+  "1_to_2_years": 3,
+  "2_to_3_years": 3,
+  "3_plus_years": 4,
+};
+
 function buildPoolKey(persona: Persona, stage: Stage): string {
   return `${persona}__${STAGE_TO_TIME_SLUG[stage]}`;
 }
@@ -250,7 +261,7 @@ function buildPoolKey(persona: Persona, stage: Stage): string {
 interface WaitlistRow {
   id: string;
   persona: Persona;
-  time_in_canada: number;
+  time_in_canada: string;
   goal: string | null;
   topics: string[] | null;
 }
@@ -258,7 +269,7 @@ interface WaitlistRow {
 interface CircleRow {
   id: string;
   persona: Persona;
-  time_in_canada: number;
+  time_in_canada: string;
   goal: string | null;
   topics: string[] | null;
   status: string;
@@ -269,7 +280,7 @@ function rowToCircle(row: CircleRow, status: CircleStatus): CommunityCircle {
   return {
     id: row.id,
     persona: row.persona,
-    timeInCanada: row.time_in_canada as Stage,
+    timeInCanada: TIME_SLUG_TO_STAGE[row.time_in_canada] ?? 0,
     goal: row.goal ?? "",
     topics: row.topics ?? [],
     status,
@@ -320,7 +331,7 @@ export async function getCurrentCircle(): Promise<CommunityCircle> {
     return {
       id: w.id,
       persona: w.persona,
-      timeInCanada: w.time_in_canada as Stage,
+      timeInCanada: TIME_SLUG_TO_STAGE[w.time_in_canada] ?? 0,
       goal: w.goal ?? "",
       topics: w.topics ?? [],
       status: "waiting",
@@ -392,7 +403,7 @@ export async function startCircleMatching(): Promise<void> {
   const { error } = await supabase.from("community_match_waitlist").insert({
     user_id: userId,
     persona,
-    time_in_canada: stage,
+    time_in_canada: STAGE_TO_TIME_SLUG[stage],
     pool_key: buildPoolKey(persona, stage),
     goal: (onboarding.goals as string[] | null)?.[0] ?? null,
     topics: (onboarding.learning_interests as string[] | null) ?? [],
