@@ -1,10 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { validateImageFile } from "@/lib/supabase/imageStorage";
+import { validateImageFile } from "@/lib/supabase/imageValidation";
+
+// Cap the whole handler so Vercel kills a truly-stuck request at 10s; the
+// per-hop timeout below uses the same budget.
+export const maxDuration = 10;
 
 // Hard timeout for every outbound hop (S3 fetch + edge-function invoke) so a
-// stuck transfer can't hang the route. Kept under Vercel's default function
-// budget (~10-15s).
+// stuck transfer can't hang the route.
 const STORAGE_TIMEOUT_MS = 10_000;
 
 /** fetch() with a hard timeout. On timeout the AbortController fires and fetch()
@@ -22,9 +25,17 @@ async function fetchWithTimeout(
   }
 }
 
-/** Distinguish our timeout (aborted fetch) from a genuine transport failure. */
+/**
+ * True when an error is one of our timeouts rather than a real failure. Covers
+ * both an aborted fetch (S3 PUT/DELETE — `err.name`) and an aborted
+ * `functions.invoke`, which wraps the abort in a FunctionsFetchError whose
+ * `context` is the original AbortError (`err.context.name`). Checks `name`
+ * directly (no `instanceof Error`) so it holds across runtimes where a
+ * DOMException isn't an Error subclass.
+ */
 function isAbortError(err: unknown): boolean {
-  return err instanceof Error && err.name === "AbortError";
+  const e = err as { name?: string; context?: { name?: string } } | null;
+  return e?.name === "AbortError" || e?.context?.name === "AbortError";
 }
 
 /**
@@ -44,16 +55,17 @@ function isAbortError(err: unknown): boolean {
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
-  // getSession() is a local cookie read (no network); the edge functions still
-  // enforce JWT validation downstream, so this is a sufficient gate.
+  // getUser() validates the JWT against the auth server. getSession() only
+  // decodes the cookie (no signature check) and Supabase flags it as insecure
+  // for server code, so it's not used here as the gate.
   const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
-  if (sessionError) {
-    console.error("/api/storage: getSession failed", sessionError);
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError) {
+    console.error("/api/storage: getUser failed", authError);
   }
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -85,9 +97,11 @@ export async function POST(req: NextRequest) {
       timeout: STORAGE_TIMEOUT_MS,
     });
     if (error || !data?.uploadUrl || !data?.key) {
+      if (error) console.error("/api/storage upload: sign failed", error);
+      const timedOut = isAbortError(error);
       return NextResponse.json(
-        { error: error?.message ?? "failed to sign upload" },
-        { status: 502 },
+        { error: timedOut ? "Image upload timed out" : "Image upload failed" },
+        { status: timedOut ? 504 : 502 },
       );
     }
 
@@ -100,20 +114,17 @@ export async function POST(req: NextRequest) {
         body: fileBytes,
       });
     } catch (err) {
-      if (isAbortError(err)) {
-        return NextResponse.json(
-          { error: "storage upload timed out" },
-          { status: 504 },
-        );
-      }
+      console.error("/api/storage upload: S3 PUT failed", err);
+      const timedOut = isAbortError(err);
       return NextResponse.json(
-        { error: "storage upload failed" },
-        { status: 502 },
+        { error: timedOut ? "Image upload timed out" : "Image upload failed" },
+        { status: timedOut ? 504 : 502 },
       );
     }
     if (!put.ok) {
+      console.error("/api/storage upload: S3 PUT status", put.status);
       return NextResponse.json(
-        { error: `storage upload failed (${put.status})` },
+        { error: "Image upload failed" },
         { status: 502 },
       );
     }
@@ -135,29 +146,28 @@ export async function POST(req: NextRequest) {
       deleteUrl: string;
     }>("profile-picture-remove", { body: { key }, timeout: STORAGE_TIMEOUT_MS });
     if (error || !data?.deleteUrl) {
+      if (error) console.error("/api/storage remove: sign failed", error);
+      const timedOut = isAbortError(error);
       return NextResponse.json(
-        { error: error?.message ?? "failed to sign delete" },
-        { status: 502 },
+        { error: timedOut ? "Image delete timed out" : "Image delete failed" },
+        { status: timedOut ? 504 : 502 },
       );
     }
     let del: Response;
     try {
       del = await fetchWithTimeout(data.deleteUrl, { method: "DELETE" });
     } catch (err) {
-      if (isAbortError(err)) {
-        return NextResponse.json(
-          { error: "storage delete timed out" },
-          { status: 504 },
-        );
-      }
+      console.error("/api/storage remove: S3 DELETE failed", err);
+      const timedOut = isAbortError(err);
       return NextResponse.json(
-        { error: "storage delete failed" },
-        { status: 502 },
+        { error: timedOut ? "Image delete timed out" : "Image delete failed" },
+        { status: timedOut ? 504 : 502 },
       );
     }
     if (!del.ok) {
+      console.error("/api/storage remove: S3 DELETE status", del.status);
       return NextResponse.json(
-        { error: `storage delete failed (${del.status})` },
+        { error: "Image delete failed" },
         { status: 502 },
       );
     }
@@ -170,9 +180,11 @@ export async function POST(req: NextRequest) {
     { body: { key }, timeout: STORAGE_TIMEOUT_MS },
   );
   if (error || !data?.url) {
+    if (error) console.error("/api/storage get: sign failed", error);
+    const timedOut = isAbortError(error);
     return NextResponse.json(
-      { error: error?.message ?? "failed to sign get" },
-      { status: 502 },
+      { error: timedOut ? "Image request timed out" : "Image request failed" },
+      { status: timedOut ? 504 : 502 },
     );
   }
   return NextResponse.json({ url: data.url });

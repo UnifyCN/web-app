@@ -380,6 +380,9 @@ Run the vibe-security skill against the entire codebase before launch (Phase 9).
 **`is_circle_member` SECURITY DEFINER (accepted)**
 `public.is_circle_member` is intentionally `SECURITY DEFINER` and executable by `authenticated` (required to break the RLS recursion between `community_circles` and `community_circle_members`); it only returns whether the caller is a member of the passed circle id — no data leak. Flagged by the `authenticated_security_definer_function_executable` advisor; accepted, not a fix.
 
+**Storage upload MIME type enforcement (medium priority)**
+Add magic-byte verification (e.g. using the `file-type` npm package) to `app/api/storage/route.ts` to verify actual file content matches the declared `Content-Type`, not just the client-declared MIME type. Today the upload branch validates `file.type` (the client-declared MIME) and `file.size` via `validateImageFile` (`lib/supabase/imageValidation.ts`), but a non-image sent with `Content-Type: image/png` still passes. Sniff the leading bytes server-side before signing/uploading.
+
 ---
 
 ## Schema

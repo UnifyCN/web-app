@@ -1,4 +1,5 @@
 import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { validateImageFile } from "@/lib/supabase/imageValidation";
 
 /**
  * Signed-URL image storage — a 1:1 port of the mobile app's approach
@@ -16,25 +17,6 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
  * browser can't call them directly — every call below goes through the
  * same-origin `app/api/storage` route, which invokes them server-side.
  */
-
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
-export const ALLOWED_IMAGE_MIME_TYPES: readonly string[] = [
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/gif",
-];
-
-/** Reject oversized / non-image files before they hit storage. Throws a
- *  user-readable Error so callers can surface the message directly. */
-export function validateImageFile(file: File): void {
-  if (!ALLOWED_IMAGE_MIME_TYPES.includes(file.type)) {
-    throw new Error("Unsupported file type. Use PNG, JPEG, WebP, or GIF.");
-  }
-  if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error("Image is too large. Maximum size is 5MB.");
-  }
-}
 
 const isHttpUrl = (value: string): boolean => /^https?:\/\//i.test(value);
 
