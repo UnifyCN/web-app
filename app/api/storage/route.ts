@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { validateImageFile } from "@/lib/supabase/imageValidation";
+import {
+  validateImageFile,
+  MAX_IMAGE_BYTES,
+} from "@/lib/supabase/imageValidation";
 
 // Cap the whole handler so Vercel kills a truly-stuck request at 10s; the
 // per-hop timeout below uses the same budget.
@@ -73,6 +76,17 @@ export async function POST(req: NextRequest) {
 
   // ---- upload (multipart/form-data) ---------------------------------------
   if (contentType.includes("multipart/form-data")) {
+    // Reject obviously-oversized bodies up front (Content-Length) so we never
+    // buffer a huge payload; the exact per-file limit is still enforced by
+    // validateImageFile after parsing. Multipart framing adds a little overhead
+    // to Content-Length, so this is intentionally slightly conservative.
+    const declaredLength = Number(req.headers.get("content-length"));
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_IMAGE_BYTES) {
+      return NextResponse.json(
+        { error: "Image is too large. Maximum size is 5MB." },
+        { status: 413 },
+      );
+    }
     const form = await req.formData();
     const file = form.get("file");
     if (!(file instanceof File)) {
@@ -136,8 +150,9 @@ export async function POST(req: NextRequest) {
     op?: string;
     key?: string;
   };
-  const { op, key } = body;
-  if (!key || typeof key !== "string") {
+  const op = body.op;
+  const key = typeof body.key === "string" ? body.key.trim() : "";
+  if (!key) {
     return NextResponse.json({ error: "missing key" }, { status: 400 });
   }
 
