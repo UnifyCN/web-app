@@ -1,20 +1,30 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { validateImageFile } from "@/lib/supabase/imageStorage";
 
-const S3_TIMEOUT_MS = 30_000;
+// Hard timeout for every outbound hop (S3 fetch + edge-function invoke) so a
+// stuck transfer can't hang the route. Kept under Vercel's default function
+// budget (~10-15s).
+const STORAGE_TIMEOUT_MS = 10_000;
 
-/** fetch() with a hard timeout so a stuck S3 PUT/DELETE can't hang the route. */
+/** fetch() with a hard timeout. On timeout the AbortController fires and fetch()
+ *  rejects with an AbortError (see isAbortError). */
 async function fetchWithTimeout(
   url: string,
   init: RequestInit,
 ): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), S3_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), STORAGE_TIMEOUT_MS);
   try {
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Distinguish our timeout (aborted fetch) from a genuine transport failure. */
+function isAbortError(err: unknown): boolean {
+  return err instanceof Error && err.name === "AbortError";
 }
 
 /**
@@ -34,10 +44,16 @@ async function fetchWithTimeout(
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
 
+  // getSession() is a local cookie read (no network); the edge functions still
+  // enforce JWT validation downstream, so this is a sufficient gate.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+  if (sessionError) {
+    console.error("/api/storage: getSession failed", sessionError);
+  }
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -50,27 +66,49 @@ export async function POST(req: NextRequest) {
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "missing file" }, { status: 400 });
     }
+    // Re-validate server-side: the client's validateImageFile is bypassable, so
+    // don't trust the posted MIME type / size before signing or uploading.
+    try {
+      validateImageFile(file);
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Invalid file" },
+        { status: 400 },
+      );
+    }
+
     const { data, error } = await supabase.functions.invoke<{
       uploadUrl: string;
       key: string;
-    }>("profile-picture-upload", { body: { contentType: file.type } });
+    }>("profile-picture-upload", {
+      body: { contentType: file.type },
+      timeout: STORAGE_TIMEOUT_MS,
+    });
     if (error || !data?.uploadUrl || !data?.key) {
       return NextResponse.json(
         { error: error?.message ?? "failed to sign upload" },
         { status: 502 },
       );
     }
+
+    const fileBytes = await file.arrayBuffer();
     let put: Response;
     try {
       put = await fetchWithTimeout(data.uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
-        body: await file.arrayBuffer(),
+        body: fileBytes,
       });
-    } catch {
+    } catch (err) {
+      if (isAbortError(err)) {
+        return NextResponse.json(
+          { error: "storage upload timed out" },
+          { status: 504 },
+        );
+      }
       return NextResponse.json(
-        { error: "storage upload timed out" },
-        { status: 504 },
+        { error: "storage upload failed" },
+        { status: 502 },
       );
     }
     if (!put.ok) {
@@ -95,7 +133,7 @@ export async function POST(req: NextRequest) {
   if (op === "remove") {
     const { data, error } = await supabase.functions.invoke<{
       deleteUrl: string;
-    }>("profile-picture-remove", { body: { key } });
+    }>("profile-picture-remove", { body: { key }, timeout: STORAGE_TIMEOUT_MS });
     if (error || !data?.deleteUrl) {
       return NextResponse.json(
         { error: error?.message ?? "failed to sign delete" },
@@ -105,10 +143,16 @@ export async function POST(req: NextRequest) {
     let del: Response;
     try {
       del = await fetchWithTimeout(data.deleteUrl, { method: "DELETE" });
-    } catch {
+    } catch (err) {
+      if (isAbortError(err)) {
+        return NextResponse.json(
+          { error: "storage delete timed out" },
+          { status: 504 },
+        );
+      }
       return NextResponse.json(
-        { error: "storage delete timed out" },
-        { status: 504 },
+        { error: "storage delete failed" },
+        { status: 502 },
       );
     }
     if (!del.ok) {
@@ -123,7 +167,7 @@ export async function POST(req: NextRequest) {
   // default: get a signed read URL
   const { data, error } = await supabase.functions.invoke<{ url: string }>(
     "profile-picture-get",
-    { body: { key } },
+    { body: { key }, timeout: STORAGE_TIMEOUT_MS },
   );
   if (error || !data?.url) {
     return NextResponse.json(
