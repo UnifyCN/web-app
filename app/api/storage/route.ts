@@ -4,7 +4,6 @@ import {
   validateImageFile,
   MAX_IMAGE_BYTES,
 } from "@/lib/supabase/imageValidation";
-import { escapeRegExp } from "@/lib/utils";
 
 // Cap the whole handler so Vercel kills a truly-stuck request at 10s; the
 // per-hop timeout below uses the same budget.
@@ -13,6 +12,11 @@ export const maxDuration = 10;
 // Hard timeout for every outbound hop (S3 fetch + edge-function invoke) so a
 // stuck transfer can't hang the route.
 const STORAGE_TIMEOUT_MS = 10_000;
+
+// A storage object's filename segment. Matching the remainder after
+// `users/<uid>/` against this (which has no `/`) bounds the key to a single
+// segment, so it can't reach another user's path via extra segments.
+const STORAGE_FILENAME = /^[A-Za-z0-9._-]+$/;
 
 /** fetch() with a hard timeout. On timeout the AbortController fires and fetch()
  *  rejects with an AbortError (see isAbortError). */
@@ -161,14 +165,17 @@ export async function POST(req: NextRequest) {
   }
 
   if (op === "remove") {
-    // Owner-only delete: the key must be exactly `users/<own-uid>/<filename>`
-    // — a single filename segment, no `/` or `..` traversal — so a user can
-    // never delete another user's object. (`get` is intentionally cross-user:
-    // the feed resolves other users' avatars and post images.)
-    const ownKey = new RegExp(
-      `^users/${escapeRegExp(user.id)}/[A-Za-z0-9._-]+$`,
-    );
-    if (!ownKey.test(key)) {
+    // Owner-only delete: the key must be `users/<own-uid>/<filename>` with a
+    // single filename segment (no `/`), so a user can only delete their own
+    // objects — never another user's, and never via extra path segments. (A
+    // lone `..` filename is allowed by the charset but harmless: it stays within
+    // the user's own prefix. `get` is intentionally cross-user — the feed
+    // resolves other users' avatars and post images.)
+    const ownPrefix = `users/${user.id}/`;
+    if (
+      !key.startsWith(ownPrefix) ||
+      !STORAGE_FILENAME.test(key.slice(ownPrefix.length))
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const { data, error } = await supabase.functions.invoke<{
