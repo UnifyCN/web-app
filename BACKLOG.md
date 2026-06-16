@@ -383,6 +383,12 @@ Run the vibe-security skill against the entire codebase before launch (Phase 9).
 **Storage upload MIME type enforcement (medium priority)**
 Add magic-byte verification (e.g. using the `file-type` npm package) to `app/api/storage/route.ts` to verify actual file content matches the declared `Content-Type`, not just the client-declared MIME type. Today the upload branch validates `file.type` (the client-declared MIME) and `file.size` via `validateImageFile` (`lib/supabase/imageValidation.ts`), but a non-image sent with `Content-Type: image/png` still passes. Sniff the leading bytes server-side before signing/uploading.
 
+**Storage Content-Length bypass (medium priority)**
+The Content-Length guard in `app/api/storage/route.ts` (early 413 on the upload branch) can be bypassed with chunked transfer-encoding or an omitted `Content-Length` header — `Number(null)` is `0`, so the guard passes and `req.formData()` still buffers the whole body before `validateImageFile` checks size. Full protection requires bounding the body read itself (stream with a running byte cap), not trusting the declared header. Vercel's platform request-body cap backstops this in production, but local/other hosts have no such backstop.
+
+**MAX_IMAGE_BYTES vs Vercel body cap (low/medium priority)**
+`MAX_IMAGE_BYTES` is 5MB but Vercel's serverless request-body cap is ~4.5MB, so on Vercel a 4.5–5MB image is rejected by the platform with a generic error before reaching `app/api/storage/route.ts`, and the "Maximum size is 5MB" message is misleading. Reconcile the two (lower `MAX_IMAGE_BYTES` to match the platform cap, or document the discrepancy) so the limit the UI promises matches actual platform behaviour.
+
 ---
 
 ## Schema

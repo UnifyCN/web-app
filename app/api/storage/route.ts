@@ -153,10 +153,16 @@ export async function POST(req: NextRequest) {
   const op = body.op;
   const key = typeof body.key === "string" ? body.key.trim() : "";
   if (!key) {
-    return NextResponse.json({ error: "missing key" }, { status: 400 });
+    return NextResponse.json({ error: "invalid key" }, { status: 400 });
   }
 
   if (op === "remove") {
+    // Owner-only delete: keys are `users/<uid>/…`; never let a user delete
+    // another user's object. (`get` is intentionally cross-user — the feed
+    // resolves other users' avatars and post images.)
+    if (!key.startsWith(`users/${user.id}/`)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     const { data, error } = await supabase.functions.invoke<{
       deleteUrl: string;
     }>("profile-picture-remove", { body: { key }, timeout: STORAGE_TIMEOUT_MS });
