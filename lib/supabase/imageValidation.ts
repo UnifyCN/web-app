@@ -16,8 +16,21 @@ export const ALLOWED_IMAGE_MIME_TYPES: readonly string[] = [
   "image/gif",
 ];
 
-/** Reject oversized / non-image files before they hit storage. Throws a
- *  user-readable Error so callers can surface the message directly.
+/** Error thrown by validateImageFile. `reason` lets the server route map the
+ *  cause to the right HTTP status (size → 413 Payload Too Large, type → 400).
+ *  Extends Error, so browser callers that only read `.message` are unaffected. */
+export class ImageValidationError extends Error {
+  constructor(
+    message: string,
+    readonly reason: "type" | "size",
+  ) {
+    super(message);
+    this.name = "ImageValidationError";
+  }
+}
+
+/** Reject oversized / non-image files before they hit storage. Throws an
+ *  ImageValidationError whose `.message` callers can surface directly.
  *
  *  Note: this checks the *declared* MIME type (`file.type`), not the actual
  *  bytes. Shared with the browser, so it stays dependency-free; the server route
@@ -25,9 +38,15 @@ export const ALLOWED_IMAGE_MIME_TYPES: readonly string[] = [
  *  (magic-byte verification) to catch a spoofed Content-Type. */
 export function validateImageFile(file: File): void {
   if (!ALLOWED_IMAGE_MIME_TYPES.includes(file.type)) {
-    throw new Error("Unsupported file type. Use PNG, JPEG, WebP, or GIF.");
+    throw new ImageValidationError(
+      "Unsupported file type. Use PNG, JPEG, WebP, or GIF.",
+      "type",
+    );
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    throw new Error("Image is too large. Maximum size is 4MB.");
+    throw new ImageValidationError(
+      "Image is too large. Maximum size is 4MB.",
+      "size",
+    );
   }
 }

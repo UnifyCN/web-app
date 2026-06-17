@@ -3,6 +3,7 @@ import { fileTypeFromBuffer } from "file-type";
 import { createClient } from "@/lib/supabase/server";
 import {
   validateImageFile,
+  ImageValidationError,
   MAX_IMAGE_BYTES,
   ALLOWED_IMAGE_MIME_TYPES,
 } from "@/lib/supabase/imageValidation";
@@ -21,9 +22,11 @@ const STORAGE_TIMEOUT_MS = 10_000;
 
 // Allowance for multipart/form-data framing (boundaries + part headers) that
 // inflates Content-Length beyond the file's own bytes, so a valid image near
-// MAX_IMAGE_BYTES isn't rejected by the early guard. The exact per-file limit
-// is still enforced by validateImageFile after parsing.
-const MAX_MULTIPART_OVERHEAD_BYTES = 64 * 1024;
+// MAX_IMAGE_BYTES isn't rejected by the early guard. A single file part's framing
+// is only a few hundred bytes; 8KB is a comfortable margin while keeping the early
+// cap close to MAX_IMAGE_BYTES. The exact per-file limit is still enforced by
+// validateImageFile after parsing, which backstops this coarse pre-check.
+const MAX_MULTIPART_OVERHEAD_BYTES = 8 * 1024;
 
 // A storage object's filename segment. Matching the remainder after
 // `users/<uid>/` against this (which has no `/`) bounds the key to a single
@@ -124,9 +127,13 @@ export async function POST(req: NextRequest) {
     try {
       validateImageFile(file);
     } catch (err) {
+      // Mirror the early Content-Length guard: an oversize file is 413, while a
+      // bad MIME / other validation failure is 400.
+      const tooLarge =
+        err instanceof ImageValidationError && err.reason === "size";
       return NextResponse.json(
         { error: err instanceof Error ? err.message : "Invalid file" },
-        { status: 400 },
+        { status: tooLarge ? 413 : 400 },
       );
     }
 
