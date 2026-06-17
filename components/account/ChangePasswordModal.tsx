@@ -10,21 +10,26 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { useUpdatePassword } from "@/hooks/useAccount";
 import { MIN_PASSWORD_LENGTH } from "@/lib/authValidation";
 
-/** Set a new password from Settings → Account. */
+/** Set a new password from Settings → Account. Verifies the current password
+ *  first (re-auth), then updates to the new one. */
 export function ChangePasswordModal({
   open,
   onClose,
+  currentEmail,
 }: {
   open: boolean;
   onClose: () => void;
+  currentEmail?: string;
 }) {
   const toast = useToast();
   const mutation = useUpdatePassword();
+  const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const close = () => {
+    setCurrentPassword("");
     setPassword("");
     setConfirm("");
     setError(null);
@@ -32,29 +37,43 @@ export function ChangePasswordModal({
     onClose();
   };
 
-  const valid = password.length >= MIN_PASSWORD_LENGTH && password === confirm;
+  const valid =
+    currentPassword.length > 0 &&
+    password.length >= MIN_PASSWORD_LENGTH &&
+    password === confirm;
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    if (!currentEmail) {
+      setError("Add an email to your account before changing your password.");
+      return;
+    }
     if (!valid) {
       setError(
-        password.length < MIN_PASSWORD_LENGTH
-          ? `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`
-          : "Passwords don't match.",
+        currentPassword.length === 0
+          ? "Enter your current password."
+          : password.length < MIN_PASSWORD_LENGTH
+            ? `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`
+            : "Passwords don't match.",
       );
       return;
     }
     setError(null);
-    mutation.mutate(password, {
-      onSuccess: () => {
-        toast.success("Password updated");
-        close();
+    mutation.mutate(
+      { email: currentEmail, currentPassword, newPassword: password },
+      {
+        onSuccess: () => {
+          toast.success("Password updated");
+          close();
+        },
+        onError: (err) =>
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Couldn't update your password.",
+          ),
       },
-      onError: (err) =>
-        setError(
-          err instanceof Error ? err.message : "Couldn't update your password.",
-        ),
-    });
+    );
   };
 
   return (
@@ -63,9 +82,20 @@ export function ChangePasswordModal({
       onClose={close}
       busy={mutation.isPending}
       title="Change password"
-      description="Enter a new password for your account."
+      description="Confirm your current password, then set a new one."
     >
       <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+        <Input
+          leftIcon={<Lock className="h-5 w-5" />}
+          type="password"
+          autoComplete="current-password"
+          placeholder="Current Password"
+          value={currentPassword}
+          onChange={(e) => {
+            setCurrentPassword(e.target.value);
+            setError(null);
+          }}
+        />
         <Input
           leftIcon={<Lock className="h-5 w-5" />}
           type="password"

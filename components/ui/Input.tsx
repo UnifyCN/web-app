@@ -81,7 +81,7 @@ export function Input({
       />
       {isPassword && capsLock && (
         <span
-          className="pointer-events-none absolute right-11 flex text-[#C77B1F]"
+          className="pointer-events-none absolute right-11 flex text-warning"
           role="img"
           aria-label="Caps Lock is on"
           title="Caps Lock is on"

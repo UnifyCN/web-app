@@ -1,7 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import * as auth from "@/services/auth";
-import { AUTH_USER_KEY } from "@/hooks/useAuthUser";
-import { CURRENT_USER_KEY } from "@/hooks/useProfile";
 
 /**
  * Account mutations for the Settings → Account section. Each unwraps the
@@ -9,17 +7,34 @@ import { CURRENT_USER_KEY } from "@/hooks/useProfile";
  * `isError` / `onError`, matching the profile-mutation pattern.
  */
 
-/** Set a new password for the signed-in user (`updateUser`). */
+/**
+ * Change the signed-in user's password. Supabase has no "verify current
+ * password" primitive, so we re-authenticate with `signInWithPassword` first
+ * (a wrong current password fails here), then set the new password.
+ */
 export function useUpdatePassword() {
   return useMutation({
-    mutationFn: async (newPassword: string) => {
+    mutationFn: async ({
+      email,
+      currentPassword,
+      newPassword,
+    }: {
+      email: string;
+      currentPassword: string;
+      newPassword: string;
+    }) => {
+      const { error: verifyError } = await auth.signInWithEmail(
+        email,
+        currentPassword,
+      );
+      if (verifyError) throw new Error("Current password is incorrect");
       const { error } = await auth.updatePassword(newPassword);
       if (error) throw error;
     },
   });
 }
 
-/** Request an email change — Supabase emails a confirmation code (`updateUser`). */
+/** Request an email change — Supabase emails a confirmation link (`updateUser`). */
 export function useRequestEmailChange() {
   return useMutation({
     mutationFn: async (newEmail: string) => {
@@ -29,17 +44,9 @@ export function useRequestEmailChange() {
   });
 }
 
-/** Confirm the pending email change with the emailed code (`verifyOtp`). */
-export function useVerifyEmailChange() {
-  const queryClient = useQueryClient();
+/** Permanently delete the signed-in user's account (`DELETE /api/account`). */
+export function useDeleteAccount() {
   return useMutation({
-    mutationFn: async ({ email, token }: { email: string; token: string }) => {
-      const { error } = await auth.verifyEmailChangeOtp(email, token);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: AUTH_USER_KEY });
-      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
-    },
+    mutationFn: () => auth.deleteAccount(),
   });
 }

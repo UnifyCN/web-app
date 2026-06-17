@@ -67,8 +67,16 @@ function ResetPasswordScreen() {
       return;
     }
     // Send them to sign in with the new password (proxy bounces an authed user
-    // off /login, so clear the recovery session first).
-    await signOut();
+    // off /login, so clear the recovery session first). If sign-out fails, the
+    // recovery session would keep them authed — surface it instead of bouncing.
+    const { error: signOutError } = await signOut();
+    if (signOutError) {
+      setSubmitting(false);
+      setError(
+        "Password updated, but we couldn't sign you out. Refresh and sign in with your new password.",
+      );
+      return;
+    }
     router.replace("/login?reset=1");
   };
 

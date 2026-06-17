@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { User, LogOut, Settings } from "lucide-react";
 import { LearnIcon } from "@/components/icons/LearnIcon";
 import { ChecklistIcon } from "@/components/icons/ChecklistIcon";
@@ -50,6 +51,7 @@ const SIDEBAR_WIDTH = 100;
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const signOut = async () => {
     const { error } = await signOutService();
@@ -57,7 +59,11 @@ export function Sidebar() {
       console.error("Sign out failed", error);
       return; // stay put rather than pretend the session is cleared
     }
-    router.push("/login");
+    // Drop every cached query so the next session never flashes this user's
+    // data, then go to the pre-login welcome screen (replace so Back can't
+    // return to an authed page).
+    queryClient.clear();
+    router.replace("/welcome");
   };
 
   const isActive = (href: string) =>

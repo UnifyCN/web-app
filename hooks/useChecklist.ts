@@ -2,13 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as checklist from "@/services/checklist";
 import type { ChecklistTask, Priority } from "@/types";
 
-const PRIORITY_ORDER: Priority[] = [
-  "Do now",
-  "Do soon",
-  "Explore and connect",
-  "Optional / later",
-];
-
 /** Rebuild the full task list in priority order, replacing one bucket's order. */
 function rebuildWithBucket(
   list: ChecklistTask[],
@@ -16,7 +9,7 @@ function rebuildWithBucket(
   bucket: ChecklistTask[],
 ): ChecklistTask[] {
   const result: ChecklistTask[] = [];
-  for (const p of PRIORITY_ORDER) {
+  for (const p of checklist.PRIORITY_ORDER) {
     result.push(
       ...(p === priority ? bucket : list.filter((task) => task.priority === p)),
     );
@@ -29,7 +22,11 @@ function rebuildWithBucket(
 export const TASKS_KEY = ["tasks"] as const;
 
 export function useTasks() {
-  return useQuery({ queryKey: TASKS_KEY, queryFn: checklist.getTasks });
+  return useQuery({
+    queryKey: TASKS_KEY,
+    queryFn: checklist.getTasks,
+    staleTime: 60_000,
+  });
 }
 
 /**
@@ -103,6 +100,10 @@ export function useReorderTasks() {
         queryClient.setQueryData(TASKS_KEY, context.previous);
       }
     },
+    // Settle against the server after success AND error, matching the other
+    // checklist mutations. After a save the refetch returns the same order;
+    // after a rollback it reconciles the cache with the persisted order.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
   });
 }
 

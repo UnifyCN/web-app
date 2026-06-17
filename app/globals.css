@@ -36,6 +36,9 @@
   /* Semantic */
   --color-destructive: #ff3b30;
   --color-mention-blue: #007aff;
+  /* Caution text — caps-lock indicator, common-password + medium-strength hints.
+   * Dark enough for AA contrast on white (the priority oranges are too light). */
+  --color-warning: #c77b1f;
 
   /* Lesson highlight (functional, mirrors mobile's #FEF3C7 highlight colour) */
   --color-highlight-amber: #fef3c7;
@@ -57,6 +60,23 @@
   --color-logo-blue: #4a90d9;
   --color-logo-green: #5cb85c;
   --color-logo-red: #e05c5c;
+
+  /* Onboarding carousel illustration — decorative one-offs used ONLY inside
+   * SlideGraphics.tsx (the pre-login app-preview mockups). NOT brand UI colours;
+   * do not reuse these elsewhere. */
+  --color-onb-date-chip: #ece0d9;
+  --color-onb-rail: #e0dede;
+  --color-onb-card-border: #dbdbdb;
+  --color-onb-success-bg: #e2f6e2;
+  --color-onb-success-text: #4e7e4c;
+  --color-onb-chat-bubble: #5b7fc7;
+  --color-onb-ask-bg: #f4b9df;
+  --color-onb-ask-icon: #c2407a;
+  --color-onb-form-bg: #f6a94c;
+  --color-onb-learn-finance: #2fa43c;
+  --color-onb-learn-employment: #985dbb;
+  --color-onb-learn-housing: #e78d42;
+  --color-onb-learn-docs: #2c7acd;
 
   /* Radius — cards use 10–12px */
   --radius-card: 0.625rem;
@@ -191,6 +211,29 @@ input:-webkit-autofill:active {
   animation: checkbox-pop 150ms ease-out;
 }
 
+/* Delete-account hold-to-confirm — Emil Kowalski's clip-path technique
+ * (https://emilkowal.ski/ui/building-a-hold-to-delete-component). A bright-red
+ * overlay sits over a muted-red base, clipped away from the right; pressing the
+ * button (:active) transitions the clip to nothing over 3s, revealing it
+ * left→right. The !important on the clip-path transitions defeats the global
+ * prefers-reduced-motion override (`* { transition-duration: 0.01ms !important }`)
+ * so the reveal is visible for everyone; the actual delete is gated by a JS 3s
+ * setTimeout regardless of the visual. */
+.hold-delete-btn {
+  transition: transform 200ms ease-out;
+}
+.hold-delete-btn:active {
+  transform: scale(0.97);
+}
+.hold-delete-btn .hold-overlay {
+  clip-path: inset(0px 100% 0px 0px);
+  transition: clip-path 200ms ease-out !important;
+}
+.hold-delete-btn:active .hold-overlay {
+  clip-path: inset(0px 0px 0px 0px);
+  transition: clip-path 3s linear !important;
+}
+
 /* Checklist — animated strikethrough line on a completed task title. */
 .task-strike {
   position: relative;
@@ -226,7 +269,7 @@ input:-webkit-autofill:active {
     }
   }
   .animate-fade-in {
-    animation: fade-in 150ms ease both;
+    animation: fade-in 150ms ease-out both;
   }
 }
 

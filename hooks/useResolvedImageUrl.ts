@@ -1,5 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { resolveImageUrl } from "@/lib/supabase/imageStorage";
+import {
+  DEFAULT_TTL_MS,
+  REFRESH_BUFFER_MS,
+  resolveImageUrl,
+} from "@/lib/supabase/imageStorage";
 
 /**
  * Resolve a stored image reference (a `users/<uid>/…` key, or a pass-through
@@ -14,7 +18,11 @@ export function useResolvedImageUrl(ref?: string | null) {
     queryKey: ["resolved-image-url", source],
     enabled: !!source,
     queryFn: () => resolveImageUrl(source),
-    staleTime: 30 * 1000,
+    // Hold the resolved URL fresh for almost the whole signed-URL lifetime
+    // (TTL minus the re-sign buffer), so navigation doesn't re-resolve avatars /
+    // post images every 30s. The in-module urlCache still re-signs precisely
+    // REFRESH_BUFFER_MS before the real X-Amz-Expires.
+    staleTime: DEFAULT_TTL_MS - REFRESH_BUFFER_MS,
     retry: 1,
   });
 

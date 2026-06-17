@@ -13,6 +13,7 @@ export function useForYouFeed(enabled: boolean = true) {
     queryKey: [...FEED_KEY, "forYou"],
     queryFn: () => feed.getForYouFeed(),
     enabled,
+    staleTime: 60_000,
   });
 }
 
@@ -21,6 +22,7 @@ export function useFollowingFeed(enabled: boolean = true) {
     queryKey: [...FEED_KEY, "following"],
     queryFn: () => feed.getFollowingFeed(),
     enabled,
+    staleTime: 60_000,
   });
 }
 
@@ -29,6 +31,7 @@ export function useGroupsFeed(enabled: boolean = true) {
     queryKey: [...FEED_KEY, "groups"],
     queryFn: () => feed.getGroupsFeed(),
     enabled,
+    staleTime: 60_000,
   });
 }
 

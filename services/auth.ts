@@ -151,27 +151,50 @@ export async function updatePassword(
   return { error };
 }
 
-/** Request an email change — Supabase emails a confirmation code to the new
- *  address (and, if "Secure email change" is on, the old one too). */
+/**
+ * Request an email change — Supabase emails a confirmation link to the new
+ * address (and, if "Secure email change" is on, the old one too). The link
+ * returns to our /auth/callback, which finishes the change and lands the user
+ * back on /settings. The change is NOT applied until that link is clicked.
+ *
+ * `emailRedirectTo` is the bare callback URL with NO query string: Supabase
+ * validates redirect_to against the Redirect URLs allowlist, and a query string
+ * makes it miss the exact-match entry — Supabase then silently falls back to the
+ * Site URL (which on this shared project is the mobile `exp://…`, opening
+ * about:blank). The /settings routing comes from the email template's
+ * `type=email_change` link instead (see supabase/email-templates/change-email.html).
+ */
 export async function requestEmailChange(
   newEmail: string,
 ): Promise<{ error: AuthError | null }> {
   const supabase = createClient();
-  const { error } = await supabase.auth.updateUser({ email: newEmail });
+  const { error } = await supabase.auth.updateUser(
+    { email: newEmail },
+    { emailRedirectTo: `${window.location.origin}/auth/callback` },
+  );
   return { error };
 }
 
-export async function verifyEmailChangeOtp(
-  newEmail: string,
-  token: string,
-): Promise<{ error: AuthError | null }> {
-  const supabase = createClient();
-  const { error } = await supabase.auth.verifyOtp({
-    email: newEmail,
-    token,
-    type: "email_change",
-  });
-  return { error };
+/* ---- Delete account ---------------------------------------------------- */
+
+/**
+ * Permanently delete the signed-in user's account. Routes through the server
+ * (`DELETE /api/account`), which validates the session and deletes the auth user
+ * with the service-role key — the browser never sees that key. Throws on
+ * failure so React Query surfaces it.
+ */
+export async function deleteAccount(): Promise<void> {
+  const res = await fetch("/api/account", { method: "DELETE" });
+  if (!res.ok) {
+    let message = "Couldn't delete your account.";
+    try {
+      const body = (await res.json()) as { error?: string };
+      if (body?.error) message = body.error;
+    } catch {
+      /* non-JSON error body — keep the default message */
+    }
+    throw new Error(message);
+  }
 }
 
 /* ---- Legal consent ----------------------------------------------------- */

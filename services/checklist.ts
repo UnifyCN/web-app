@@ -34,7 +34,8 @@ const STAGE_TO_SLUG: Record<Stage, string> = {
   4: "years_3_plus",
 };
 
-const PRIORITY_ORDER: Priority[] = [
+/** Canonical priority bucket order — shared with the React Query layer. */
+export const PRIORITY_ORDER: Priority[] = [
   "Do now",
   "Do soon",
   "Explore and connect",
@@ -222,6 +223,10 @@ export async function getTasks(): Promise<ChecklistTask[]> {
     isCustom: true,
   }));
 
+  // Graceful degradation: unlike user_tasks/custom_tasks (which throw above), a
+  // missing or inaccessible `checklist_task_order` (e.g. RLS, table absent) is
+  // non-fatal — we skip the user's custom drag order and fall through to the
+  // default priority-bucket ordering in applySavedOrder. Tasks still load.
   const orderMap = new Map<Priority, string[]>();
   if (!orderRes.error) {
     (orderRes.data ?? []).forEach((row) => {

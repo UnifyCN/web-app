@@ -10,7 +10,10 @@ import { AuthButton } from "@/components/auth/AuthButton";
 import { OtpInput } from "@/components/auth/OtpInput";
 import { FormError } from "@/components/auth/FormError";
 import { resendSignupOtp, verifySignupOtp } from "@/services/auth";
-import { SIGNUP_CONSENT_KEY } from "@/lib/authValidation";
+import {
+  clearSignupConsentCookie,
+  readSignupConsentCookie,
+} from "@/lib/authValidation";
 
 /** "Verify your email" — enter the 6-digit signup code (image 10). */
 function VerifyEmailScreen() {
@@ -26,14 +29,6 @@ function VerifyEmailScreen() {
   const [resent, setResent] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const readConsentAt = (): string | undefined => {
-    try {
-      return sessionStorage.getItem(SIGNUP_CONSENT_KEY) ?? undefined;
-    } catch {
-      return undefined;
-    }
-  };
-
   const handleVerify = async () => {
     if (code.length !== 6 || verifying) return;
     setVerifying(true);
@@ -41,7 +36,7 @@ function VerifyEmailScreen() {
     const { error: verifyError } = await verifySignupOtp(
       email,
       code,
-      readConsentAt(),
+      readSignupConsentCookie(),
     );
     if (verifyError) {
       setVerifying(false);
@@ -52,11 +47,7 @@ function VerifyEmailScreen() {
       );
       return;
     }
-    try {
-      sessionStorage.removeItem(SIGNUP_CONSENT_KEY);
-    } catch {
-      /* ignore */
-    }
+    clearSignupConsentCookie();
     // Brief success beat before routing into the app.
     setSuccess(true);
     window.setTimeout(() => router.replace("/home"), reduce ? 400 : 800);

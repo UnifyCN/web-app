@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/Input";
 import {
   EMAIL_RE,
   MIN_PASSWORD_LENGTH,
-  SIGNUP_CONSENT_KEY,
+  setSignupConsentCookie,
 } from "@/lib/authValidation";
 import { isCommonPassword } from "@/lib/passwordStrength";
 import { suggestEmailCorrection } from "@/lib/emailTypos";
@@ -62,11 +62,9 @@ export default function SignUpPage() {
       setError(signUpError.message || "Couldn't create your account. Try again.");
       return;
     }
-    try {
-      sessionStorage.setItem(SIGNUP_CONSENT_KEY, new Date().toISOString());
-    } catch {
-      /* private mode — consent falls back to verify-time */
-    }
+    // Carry the consent timestamp to /verify-email, where it's stamped on the
+    // user row. If the cookie is lost, verifySignupOtp defaults to verify-time.
+    setSignupConsentCookie(new Date().toISOString());
     router.push(`/verify-email?email=${encodeURIComponent(normalized)}`);
   };
 
@@ -135,7 +133,7 @@ export default function SignUpPage() {
               : null}
           </FormError>
           {password.length > 0 && isCommonPassword(password) && (
-            <p className="mt-1 text-xs font-medium text-[#C77B1F]">
+            <p className="mt-1 text-xs font-medium text-warning">
               This password is too common.
             </p>
           )}
@@ -157,7 +155,7 @@ export default function SignUpPage() {
             {confirm.length > 0 && !match ? "Passwords don't match." : null}
           </FormError>
           {confirm.length > 0 && match && (
-            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-[#5E8651]">
+            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-priority-optional">
               <Check className="h-3 w-3" strokeWidth={3} aria-hidden /> Passwords
               match
             </p>
