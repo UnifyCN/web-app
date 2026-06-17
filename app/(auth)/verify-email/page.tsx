@@ -29,13 +29,16 @@ function VerifyEmailScreen() {
   const [resent, setResent] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleVerify = async () => {
-    if (code.length !== 6 || verifying) return;
+  const handleVerify = async (token?: string) => {
+    // Take the token directly from OtpInput.onComplete (the just-typed code) so
+    // auto-submit never fires with a one-render-stale `code` state.
+    const otp = token ?? code;
+    if (otp.length !== 6 || verifying) return;
     setVerifying(true);
     setError(null);
     const { error: verifyError } = await verifySignupOtp(
       email,
-      code,
+      otp,
       readSignupConsentCookie(),
     );
     if (verifyError) {
@@ -111,7 +114,7 @@ function VerifyEmailScreen() {
                 setCode(v);
                 setError(null);
               }}
-              onComplete={handleVerify}
+              onComplete={(token) => handleVerify(token)}
               autoFocus
               disabled={verifying}
               error={Boolean(error)}
@@ -138,7 +141,7 @@ function VerifyEmailScreen() {
 
           <div className="mt-8 flex justify-center">
             <AuthButton
-              onClick={handleVerify}
+              onClick={() => handleVerify()}
               loading={verifying}
               disabled={code.length !== 6}
               className="w-auto px-16"

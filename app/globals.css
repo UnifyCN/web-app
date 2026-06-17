@@ -39,6 +39,8 @@
   /* Caution text — caps-lock indicator, common-password + medium-strength hints.
    * Dark enough for AA contrast on white (the priority oranges are too light). */
   --color-warning: #c77b1f;
+  /* Positive / success — valid input, strong password. */
+  --color-success: #5e8651;
 
   /* Lesson highlight (functional, mirrors mobile's #FEF3C7 highlight colour) */
   --color-highlight-amber: #fef3c7;

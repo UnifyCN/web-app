@@ -18,11 +18,15 @@ export function useResolvedImageUrl(ref?: string | null) {
     queryKey: ["resolved-image-url", source],
     enabled: !!source,
     queryFn: () => resolveImageUrl(source),
-    // Hold the resolved URL fresh for almost the whole signed-URL lifetime
-    // (TTL minus the re-sign buffer), so navigation doesn't re-resolve avatars /
-    // post images every 30s. The in-module urlCache still re-signs precisely
-    // REFRESH_BUFFER_MS before the real X-Amz-Expires.
-    staleTime: DEFAULT_TTL_MS - REFRESH_BUFFER_MS,
+    // A resolved URL stays fresh for almost the whole signed-URL lifetime (TTL
+    // minus the re-sign buffer), so navigation doesn't re-resolve avatars / post
+    // images every 30s (the in-module urlCache re-signs precisely
+    // REFRESH_BUFFER_MS before the real X-Amz-Expires). But resolveImageUrl
+    // RESOLVES to null on a transient failure (it catches and returns null), so
+    // give null a staleTime of 0 — otherwise a blank would be cached for 3+ min;
+    // this way the next mount retries immediately.
+    staleTime: (query) =>
+      query.state.data ? DEFAULT_TTL_MS - REFRESH_BUFFER_MS : 0,
     retry: 1,
   });
 
