@@ -23,10 +23,11 @@ export function useResolvedImageUrl(ref?: string | null) {
     // images every 30s (the in-module urlCache re-signs precisely
     // REFRESH_BUFFER_MS before the real X-Amz-Expires). But resolveImageUrl
     // RESOLVES to null on a transient failure (it catches and returns null), so
-    // give null a staleTime of 0 — otherwise a blank would be cached for 3+ min;
-    // this way the next mount retries immediately.
+    // give null a short 15s staleTime — a blank would otherwise be cached for
+    // 3+ min, while 0 would re-request a persistently-broken image on every
+    // navigation. 15s retries transient blips without per-nav churn.
     staleTime: (query) =>
-      query.state.data ? DEFAULT_TTL_MS - REFRESH_BUFFER_MS : 0,
+      query.state.data ? DEFAULT_TTL_MS - REFRESH_BUFFER_MS : 15_000,
     retry: 1,
   });
 

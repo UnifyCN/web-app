@@ -39,8 +39,13 @@
   /* Caution text — caps-lock indicator, common-password + medium-strength hints.
    * Dark enough for AA contrast on white (the priority oranges are too light). */
   --color-warning: #c77b1f;
-  /* Positive / success — valid input, strong password. */
+  /* Positive / success — valid input, strong password. Intentional alias of
+   * --color-priority-optional (#5e8651); keep in sync, don't "dedupe". */
   --color-success: #5e8651;
+  /* AA-contrast (>=4.5:1 on white) text variants for small status labels — the
+   * destructive/success fills above are too light to use as label text. */
+  --color-destructive-label: #c0392b;
+  --color-success-label: #3d6b35;
 
   /* Lesson highlight (functional, mirrors mobile's #FEF3C7 highlight colour) */
   --color-highlight-amber: #fef3c7;

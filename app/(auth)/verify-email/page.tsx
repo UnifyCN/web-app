@@ -114,7 +114,7 @@ function VerifyEmailScreen() {
                 setCode(v);
                 setError(null);
               }}
-              onComplete={(token) => handleVerify(token)}
+              onComplete={handleVerify}
               autoFocus
               disabled={verifying}
               error={Boolean(error)}
