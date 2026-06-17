@@ -1,9 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { fileTypeFromBuffer } from "file-type";
 import { createClient } from "@/lib/supabase/server";
 import {
   validateImageFile,
   MAX_IMAGE_BYTES,
+  ALLOWED_IMAGE_MIME_TYPES,
 } from "@/lib/supabase/imageValidation";
+
+// Force the Node.js runtime: the upload branch sniffs file bytes with `file-type`
+// (a Node-targeted dependency), and this route must never run on the Edge runtime.
+export const runtime = "nodejs";
 
 // Cap the whole handler so Vercel kills a truly-stuck request at 10s; the
 // per-hop timeout below uses the same budget.
@@ -81,14 +87,23 @@ export async function POST(req: NextRequest) {
 
   // ---- upload (multipart/form-data) ---------------------------------------
   if (contentType.includes("multipart/form-data")) {
-    // Reject obviously-oversized bodies up front (Content-Length) so we never
-    // buffer a huge payload; the exact per-file limit is still enforced by
-    // validateImageFile after parsing. Multipart framing adds a little overhead
-    // to Content-Length, so this is intentionally slightly conservative.
+    // Require a sane Content-Length and reject oversized bodies up front so we
+    // never buffer a huge payload. A missing / chunked / non-numeric header
+    // yields Number(null) === 0, which would otherwise slip past the size check
+    // and then be fully buffered by req.formData() — so reject those outright
+    // (411 Length Required) rather than trusting an absent length. The exact
+    // per-file limit is still re-checked by validateImageFile after parsing.
+    // Multipart framing adds a little overhead, so the cap is slightly conservative.
     const declaredLength = Number(req.headers.get("content-length"));
-    if (Number.isFinite(declaredLength) && declaredLength > MAX_IMAGE_BYTES) {
+    if (!Number.isFinite(declaredLength) || declaredLength <= 0) {
       return NextResponse.json(
-        { error: "Image is too large. Maximum size is 5MB." },
+        { error: "A valid Content-Length header is required." },
+        { status: 411 },
+      );
+    }
+    if (declaredLength > MAX_IMAGE_BYTES) {
+      return NextResponse.json(
+        { error: "Image is too large. Maximum size is 4MB." },
         { status: 413 },
       );
     }
@@ -108,11 +123,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Magic-byte verification: validateImageFile only trusts the client-declared
+    // MIME (file.type), which is trivially spoofable. Read the bytes once, sniff
+    // the actual leading bytes, and reject anything whose real content isn't an
+    // allowed image or contradicts the declared type. The same buffer is reused
+    // for the S3 PUT below, so the body is never read twice. From here on we sign
+    // and upload with the *detected* MIME, never the client-declared one.
+    const fileBytes = await file.arrayBuffer();
+    const sniffed = await fileTypeFromBuffer(new Uint8Array(fileBytes));
+    if (!sniffed || !ALLOWED_IMAGE_MIME_TYPES.includes(sniffed.mime)) {
+      return NextResponse.json(
+        { error: "Unsupported file type. Use PNG, JPEG, WebP, or GIF." },
+        { status: 400 },
+      );
+    }
+    if (sniffed.mime !== file.type) {
+      return NextResponse.json(
+        { error: "File contents do not match the declared image type." },
+        { status: 400 },
+      );
+    }
+    const detectedMime = sniffed.mime;
+
     const { data, error } = await supabase.functions.invoke<{
       uploadUrl: string;
       key: string;
     }>("profile-picture-upload", {
-      body: { contentType: file.type },
+      body: { contentType: detectedMime },
       timeout: STORAGE_TIMEOUT_MS,
     });
     if (error || !data?.uploadUrl || !data?.key) {
@@ -124,12 +161,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const fileBytes = await file.arrayBuffer();
     let put: Response;
     try {
       put = await fetchWithTimeout(data.uploadUrl, {
         method: "PUT",
-        headers: { "Content-Type": file.type },
+        headers: { "Content-Type": detectedMime },
         body: fileBytes,
       });
     } catch (err) {
