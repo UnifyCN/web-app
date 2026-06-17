@@ -46,6 +46,10 @@
    * destructive/success fills above are too light to use as label text. */
   --color-destructive-label: #c0392b;
   --color-success-label: #3d6b35;
+  /* Vivid fill for the "strong" strength bar — brighter than --color-success
+   * while still >=3:1 on white (3.30:1), which is all a UI component (non-text)
+   * needs. A brighter green than this drops below 3:1, so don't lighten it. */
+  --color-success-bright: #43a047;
 
   /* Lesson highlight (functional, mirrors mobile's #FEF3C7 highlight colour) */
   --color-highlight-amber: #fef3c7;

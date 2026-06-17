@@ -9,7 +9,11 @@ const META: Record<
 > = {
   weak: { label: "Weak", text: "text-destructive-label", bar: "bg-destructive" },
   medium: { label: "Medium", text: "text-warning", bar: "bg-warning" },
-  strong: { label: "Strong", text: "text-success-label", bar: "bg-success" },
+  strong: {
+    label: "Strong",
+    text: "text-success-label",
+    bar: "bg-success-bright",
+  },
 };
 
 /** Three-segment password-strength meter shown under the signup password field. */

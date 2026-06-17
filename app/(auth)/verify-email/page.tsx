@@ -33,6 +33,12 @@ function VerifyEmailScreen() {
     // Take the token directly from OtpInput.onComplete (the just-typed code) so
     // auto-submit never fires with a one-render-stale `code` state.
     const otp = token ?? code;
+    if (!email) {
+      setError(
+        "Missing email context. Please return to sign up and request a new code.",
+      );
+      return;
+    }
     if (otp.length !== 6 || verifying) return;
     setVerifying(true);
     setError(null);
