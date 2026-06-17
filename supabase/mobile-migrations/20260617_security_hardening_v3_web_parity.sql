@@ -14,9 +14,13 @@
 -- web-app database. It uses the MOBILE function signatures, which differ from the
 -- web-app ones: pin_post/unpin_post take `integer` (web-app: `bigint`), and
 -- merge_highlights is the 11-arg block-level variant (web-app: 3-arg). Do NOT run
--- this against the web-app project — the signatures won't match there. It lives in
--- this repo only to keep the mobile hardening in version control; the mobile team
--- mirrors it into unify-front-end/supabase/migrations/.
+-- this against the web-app project — the signatures won't match there.
+--
+-- It lives in `supabase/mobile-migrations/` — deliberately NOT in
+-- `supabase/migrations/` — so it stays in version control but is OUTSIDE the
+-- web-app's executable migration chain (`supabase db push` against the web-app
+-- project never replays it, where the `integer`/11-arg signatures would fail).
+-- The mobile team mirrors it into unify-front-end/supabase/migrations/.
 --
 -- Scope note vs PR #25: only the items that were net-new on mobile are included.
 -- PR #25 section 2 (count-sync trigger fns) and section 4 (avatars/post_images
