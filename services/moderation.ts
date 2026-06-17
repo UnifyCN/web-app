@@ -56,6 +56,31 @@ function validateReason(reason: string): string {
   return trimmed.slice(0, MAX_REASON);
 }
 
+/**
+ * POST to the same-origin /api/moderation proxy, which forwards to the
+ * block-user / report-post / report-user edge functions server-side. The
+ * browser can't call those functions directly (they have no CORS handling, so
+ * the preflight is rejected), so the proxy avoids the CORS preflight while
+ * keeping the moderator email. Returns the edge fn's { success, error? }; throws
+ * on a transport/proxy failure.
+ */
+async function callModeration(
+  body: Record<string, unknown>,
+): Promise<ModerationFnResponse> {
+  const res = await fetch("/api/moderation", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = (await res.json().catch(() => null)) as
+    | (ModerationFnResponse & { error?: string })
+    | null;
+  if (!res.ok) {
+    throw new Error(data?.error ?? "Moderation request failed.");
+  }
+  return data ?? { success: false, error: "Empty response" };
+}
+
 /* ---- Block reads ------------------------------------------------------- */
 
 /** UUIDs the signed-in user has blocked (own-row RLS). Empty pre-config. */
@@ -144,12 +169,7 @@ export async function blockUser(blockedUserId: string): Promise<void> {
   if (!userId) throw new Error("blockUser: no auth session");
   if (userId === blockedUserId) throw new Error("You can't block yourself.");
 
-  const supabase = createClient();
-  const { data, error } =
-    await supabase.functions.invoke<ModerationFnResponse>("block-user", {
-      body: { blockedUserId },
-    });
-  if (error) throw error;
+  const data = await callModeration({ action: "block", blockedUserId });
   assertFnSuccess(data, "Failed to block user.", ["Already blocked"]);
 }
 
@@ -176,12 +196,11 @@ export async function reportPost(
   const trimmed = validateReason(reason);
   if (!isSupabaseConfigured()) return;
 
-  const supabase = createClient();
-  const { data, error } =
-    await supabase.functions.invoke<ModerationFnResponse>("report-post", {
-      body: { postId, reason: trimmed },
-    });
-  if (error) throw error;
+  const data = await callModeration({
+    action: "report-post",
+    postId,
+    reason: trimmed,
+  });
   assertFnSuccess(data, "Failed to submit report.", ["Already reported"]);
 }
 
@@ -192,11 +211,10 @@ export async function reportUser(
   const trimmed = validateReason(reason);
   if (!isSupabaseConfigured()) return;
 
-  const supabase = createClient();
-  const { data, error } =
-    await supabase.functions.invoke<ModerationFnResponse>("report-user", {
-      body: { userId: reportedUserId, reason: trimmed },
-    });
-  if (error) throw error;
+  const data = await callModeration({
+    action: "report-user",
+    userId: reportedUserId,
+    reason: trimmed,
+  });
   assertFnSuccess(data, "Failed to submit report.", ["Already reported"]);
 }
