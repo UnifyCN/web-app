@@ -450,3 +450,24 @@ Reorder the sidebar nav to `Learn → Checklist → Companion → Community → 
 
 **Remove the Unify Circles tab**
 PR #14 only *hides* the Circles tab. Once the product decision is final, remove it (and its route/components) outright rather than leaving it hidden.
+
+---
+
+## Email & Branding
+
+**BIMI (Brand Indicators for Message Identification)**
+Set up BIMI on unifysocial.ca so the Unify logo appears next to emails in Gmail and other
+supporting clients. Requires a DNS TXT record pointing to a hosted SVG logo file. See
+https://bimigroup.org for the implementation guide.
+
+**Supabase Site URL — repoint before launch (blocks the change-email link)**
+The change-email confirmation link uses `{{ .SiteURL }}/auth/callback` (see
+`supabase/email-templates/change-email.html`), because the `emailRedirectTo` option on
+`auth.updateUser` is a confirmed Supabase bug and is ignored. `{{ .SiteURL }}` resolves to the
+project's single **Site URL** field, which is currently the mobile Expo URL
+`exp://172.29.182.205:8081` — so the link won't resolve in a browser as-is. Before launch, update
+the Supabase Site URL (Authentication → URL Configuration) to the **production web domain**, and
+add `http://localhost:3000` to the **Redirect URLs** allowlist for local dev. Because Site URL is
+a single value, change-email links resolve against whatever it's set to (so for local browser
+testing of email change, temporarily point Site URL at `http://localhost:3000`). Coordinate with
+the mobile app, which shares this Supabase project.

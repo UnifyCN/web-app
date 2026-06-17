@@ -20,8 +20,8 @@ import { validateImageFile } from "@/lib/supabase/imageValidation";
 
 const isHttpUrl = (value: string): boolean => /^https?:\/\//i.test(value);
 
-const DEFAULT_TTL_MS = 4 * 60 * 1000; // fallback when the signature has no expiry
-const REFRESH_BUFFER_MS = 30 * 1000; // re-sign 30s before the URL actually expires
+export const DEFAULT_TTL_MS = 4 * 60 * 1000; // fallback when the signature has no expiry
+export const REFRESH_BUFFER_MS = 30 * 1000; // re-sign 30s before the URL actually expires
 
 interface CacheEntry {
   url: string;

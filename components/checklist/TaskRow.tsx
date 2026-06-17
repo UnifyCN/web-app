@@ -2,7 +2,11 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Trash2 } from "lucide-react";
+import { Check, GripVertical, Trash2 } from "lucide-react";
+import type {
+  DraggableAttributes,
+  DraggableSyntheticListeners,
+} from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import { fireTaskConfetti } from "@/lib/confetti";
 import type { ChecklistTask } from "@/types";
@@ -11,10 +15,22 @@ interface TaskRowProps {
   task: ChecklistTask;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  /** @dnd-kit sortable handle wiring — when present, renders the right-side
+   *  drag handle that initiates a reorder (and supports keyboard reordering). */
+  dragHandleRef?: (element: HTMLElement | null) => void;
+  dragHandleAttributes?: DraggableAttributes;
+  dragHandleListeners?: DraggableSyntheticListeners;
 }
 
 /** A single checklist task — checkbox, title, description, "Learn how" link. */
-export function TaskRow({ task, onToggle, onDelete }: TaskRowProps) {
+export function TaskRow({
+  task,
+  onToggle,
+  onDelete,
+  dragHandleRef,
+  dragHandleAttributes,
+  dragHandleListeners,
+}: TaskRowProps) {
   const [pop, setPop] = useState(false);
   const checkboxRef = useRef<HTMLButtonElement>(null);
 
@@ -92,6 +108,19 @@ export function TaskRow({ task, onToggle, onDelete }: TaskRowProps) {
           className="mt-0.5 flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" aria-hidden />
+        </button>
+      )}
+
+      {dragHandleListeners && (
+        <button
+          type="button"
+          ref={dragHandleRef}
+          aria-label={`Reorder task: ${task.title}`}
+          className="mt-0.5 flex h-5 w-5 shrink-0 cursor-grab touch-none items-center justify-center text-ink-placeholder transition-colors hover:text-ink-muted active:cursor-grabbing"
+          {...dragHandleAttributes}
+          {...dragHandleListeners}
+        >
+          <GripVertical className="h-4 w-4" aria-hidden />
         </button>
       )}
     </div>

@@ -12,6 +12,7 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: CURRENT_USER_KEY,
     queryFn: profile.getCurrentUser,
+    staleTime: 60_000,
   });
 }
 
@@ -20,6 +21,7 @@ export function useUserProfile(id: string) {
     queryKey: ["user-profile", id],
     queryFn: () => profile.getUserById(id),
     enabled: Boolean(id),
+    staleTime: 60_000,
   });
 }
 

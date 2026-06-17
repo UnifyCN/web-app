@@ -34,7 +34,8 @@ const STAGE_TO_SLUG: Record<Stage, string> = {
   4: "years_3_plus",
 };
 
-const PRIORITY_ORDER: Priority[] = [
+/** Canonical priority bucket order — shared with the React Query layer. */
+export const PRIORITY_ORDER: Priority[] = [
   "Do now",
   "Do soon",
   "Explore and connect",
@@ -105,12 +106,39 @@ async function getChecklistByPersonaAndStage(
   }
 }
 
-function sortByPriority(tasks: ChecklistTask[]): ChecklistTask[] {
-  const index = new Map(PRIORITY_ORDER.map((p, i) => [p, i]));
-  return [...tasks].sort(
-    (a, b) =>
-      (index.get(a.priority) ?? 99) - (index.get(b.priority) ?? 99),
-  );
+/**
+ * Stable per-task key stored in `checklist_task_order.ordered_keys`. Matches the
+ * mobile app's `custom:`/`sanity:` prefixes, so a user's manual order syncs
+ * across web + mobile (same shared table).
+ */
+export function taskOrderKey(task: ChecklistTask): string {
+  return task.isCustom ? `custom:${task.id}` : `sanity:${task.id}`;
+}
+
+/**
+ * Order tasks by priority bucket, then within each bucket by the user's saved
+ * drag order (`orderMap`). Tasks absent from a bucket's saved order (newly added)
+ * keep their default relative order at the end (Array.sort is stable).
+ */
+function applySavedOrder(
+  tasks: ChecklistTask[],
+  orderMap: Map<Priority, string[]>,
+): ChecklistTask[] {
+  const result: ChecklistTask[] = [];
+  for (const priority of PRIORITY_ORDER) {
+    const bucket = tasks.filter((task) => task.priority === priority);
+    const keys = orderMap.get(priority);
+    if (keys && keys.length) {
+      const pos = new Map(keys.map((k, i) => [k, i] as const));
+      bucket.sort(
+        (a, b) =>
+          (pos.get(taskOrderKey(a)) ?? Number.MAX_SAFE_INTEGER) -
+          (pos.get(taskOrderKey(b)) ?? Number.MAX_SAFE_INTEGER),
+      );
+    }
+    result.push(...bucket);
+  }
+  return result;
 }
 
 export async function getTasks(): Promise<ChecklistTask[]> {
@@ -135,7 +163,7 @@ export async function getTasks(): Promise<ChecklistTask[]> {
   const persona = onboarding.persona as Persona;
   const stageSlug = STAGE_TO_SLUG[Number(onboarding.stage) as Stage];
 
-  const [items, userTasksRes, customRes] = await Promise.all([
+  const [items, userTasksRes, customRes, orderRes] = await Promise.all([
     getChecklistByPersonaAndStage(persona, stageSlug),
     supabase
       .from("user_tasks")
@@ -146,6 +174,10 @@ export async function getTasks(): Promise<ChecklistTask[]> {
       .select("id, priority, title, description, completed, completed_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true }),
+    supabase
+      .from("checklist_task_order")
+      .select("priority, ordered_keys")
+      .eq("user_id", user.id),
   ]);
 
   // Sanity errors are swallowed inside getChecklistByPersonaAndStage so a CMS
@@ -191,7 +223,45 @@ export async function getTasks(): Promise<ChecklistTask[]> {
     isCustom: true,
   }));
 
-  return sortByPriority([...sanityTasks, ...customTasks]);
+  // Graceful degradation: unlike user_tasks/custom_tasks (which throw above), a
+  // missing or inaccessible `checklist_task_order` (e.g. RLS, table absent) is
+  // non-fatal — we skip the user's custom drag order and fall through to the
+  // default priority-bucket ordering in applySavedOrder. Tasks still load.
+  const orderMap = new Map<Priority, string[]>();
+  if (!orderRes.error) {
+    (orderRes.data ?? []).forEach((row) => {
+      orderMap.set(
+        row.priority as Priority,
+        (row.ordered_keys as string[] | null) ?? [],
+      );
+    });
+  }
+
+  return applySavedOrder([...sanityTasks, ...customTasks], orderMap);
+}
+
+/**
+ * Persist the user's manual order for one priority bucket. `orderedKeys` is the
+ * full ordered list of `taskOrderKey()`s for that bucket; upsert replaces the
+ * row's array (one row per user + priority), matching the mobile app.
+ */
+export async function saveChecklistOrder(
+  priority: Priority,
+  orderedKeys: string[],
+): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("saveChecklistOrder: no auth session");
+
+  const { error } = await supabase.from("checklist_task_order").upsert(
+    { user_id: user.id, priority, ordered_keys: orderedKeys },
+    { onConflict: "user_id,priority" },
+  );
+  if (error) throw error;
 }
 
 export async function getCustomTasks(): Promise<ChecklistTask[]> {

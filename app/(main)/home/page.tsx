@@ -44,7 +44,7 @@ export default function HomePage() {
   return (
     <div className="mx-auto max-w-[1080px] animate-fade-in px-6 py-6">
       <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
-        Home
+        Social
       </h1>
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">

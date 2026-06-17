@@ -1,13 +1,18 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, ChevronRight, LogOut, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Camera, ChevronRight, KeyRound, LogOut, Mail, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
 import { useToast } from "@/components/ui/ToastProvider";
 import { OnboardingEditModal } from "@/components/onboarding/OnboardingEditModal";
+import { ChangeEmailModal } from "@/components/account/ChangeEmailModal";
+import { ChangePasswordModal } from "@/components/account/ChangePasswordModal";
+import { DeleteAccountModal } from "@/components/account/DeleteAccountModal";
+import { useAuthUser } from "@/hooks/useAuthUser";
 import { signOut } from "@/services/auth";
 import {
   useCurrentUser,
@@ -485,7 +490,30 @@ function LegalSection() {
 
 function AccountSection() {
   const router = useRouter();
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const { data: authUser } = useAuthUser();
   const [signingOut, setSigningOut] = useState(false);
+  const [showChangeEmail, setShowChangeEmail] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+
+  // The change-email magic link lands back here as /settings?emailChanged=1
+  // (via the auth callback). Confirm it once, then strip the param so a reload
+  // doesn't re-toast. Read from the URL directly to avoid a Suspense boundary.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("emailChanged") === "1") {
+      toast.success("Email updated");
+      params.delete("emailChanged");
+      const query = params.toString();
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + (query ? `?${query}` : ""),
+      );
+    }
+  }, [toast]);
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -495,7 +523,9 @@ function AccountSection() {
       setSigningOut(false);
       return; // stay put rather than pretend the session is cleared
     }
-    router.push("/login");
+    // Clear cached data so the next session starts clean, then to /welcome.
+    queryClient.clear();
+    router.replace("/welcome");
   };
 
   return (
@@ -522,25 +552,78 @@ function AccountSection() {
         <div className="flex items-center justify-between gap-4 border-t border-border-card pt-4">
           <div className="min-w-0">
             <p className="text-sm font-medium text-ink-secondary">
-              Delete account
+              Change email
             </p>
-            <p className="text-xs text-ink-placeholder">
-              Account deletion is coming soon.
+            <p className="truncate text-xs text-ink-muted">
+              {authUser?.email
+                ? `Currently ${authUser.email}.`
+                : "Update the email address for your account."}
             </p>
           </div>
-          {/* Wrap the disabled button so the tooltip still shows on hover. */}
-          <span title="Coming soon" className="inline-flex shrink-0">
-            <Button
-              variant="destructive"
-              size="sm"
-              leftIcon={<Trash2 className="h-4 w-4" aria-hidden />}
-              disabled
-            >
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<Mail className="h-4 w-4" aria-hidden />}
+            onClick={() => setShowChangeEmail(true)}
+          >
+            Change
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 border-t border-border-card pt-4">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-ink-secondary">
+              Change password
+            </p>
+            <p className="text-xs text-ink-muted">
+              Set a new password for signing in with email.
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<KeyRound className="h-4 w-4" aria-hidden />}
+            onClick={() => setShowChangePassword(true)}
+          >
+            Change
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 border-t border-border-card pt-4">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-ink-secondary">
               Delete account
-            </Button>
-          </span>
+            </p>
+            <p className="text-xs text-ink-muted">
+              Permanently delete your account and all your data.
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="shrink-0"
+            leftIcon={<Trash2 className="h-4 w-4" aria-hidden />}
+            onClick={() => setShowDeleteAccount(true)}
+          >
+            Delete account
+          </Button>
         </div>
       </div>
+
+      <ChangeEmailModal
+        open={showChangeEmail}
+        onClose={() => setShowChangeEmail(false)}
+        currentEmail={authUser?.email ?? undefined}
+      />
+      <ChangePasswordModal
+        open={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+        currentEmail={authUser?.email ?? undefined}
+      />
+      <DeleteAccountModal
+        open={showDeleteAccount}
+        onClose={() => setShowDeleteAccount(false)}
+      />
     </Section>
   );
 }

@@ -112,16 +112,18 @@ export const REFERRAL_LABEL = Object.fromEntries(
 
 /* ----- Hobbies ---------------------------------------------------- */
 
+// `value` slugs must match the mobile `user_onboarding_profiles_hobbies_check`
+// CHECK constraint (the shared DB); labels are UI-only.
 export const HOBBY_OPTIONS = [
   { value: "career_growth", label: "Career growth" },
-  { value: "explore_canada", label: "Explore Canada" },
-  { value: "wellness_growth", label: "Wellness & growth" },
-  { value: "tech_digital", label: "Tech & digital" },
-  { value: "music_arts", label: "Music & arts" },
-  { value: "fitness_sports", label: "Fitness & sports" },
+  { value: "exploring_canada", label: "Explore Canada" },
+  { value: "wellness", label: "Wellness & growth" },
+  { value: "technology", label: "Tech & digital" },
+  { value: "music", label: "Music & arts" },
+  { value: "fitness", label: "Fitness & sports" },
   { value: "personal_finance", label: "Personal finance" },
   { value: "family_parenting", label: "Family & parenting" },
-  { value: "education_learning", label: "Education & learning" },
+  { value: "education", label: "Education & learning" },
   { value: "food_cooking", label: "Food & cooking" },
   { value: "movies", label: "Movies" },
 ] as const;
