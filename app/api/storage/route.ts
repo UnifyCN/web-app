@@ -19,6 +19,12 @@ export const maxDuration = 10;
 // stuck transfer can't hang the route.
 const STORAGE_TIMEOUT_MS = 10_000;
 
+// Allowance for multipart/form-data framing (boundaries + part headers) that
+// inflates Content-Length beyond the file's own bytes, so a valid image near
+// MAX_IMAGE_BYTES isn't rejected by the early guard. The exact per-file limit
+// is still enforced by validateImageFile after parsing.
+const MAX_MULTIPART_OVERHEAD_BYTES = 64 * 1024;
+
 // A storage object's filename segment. Matching the remainder after
 // `users/<uid>/` against this (which has no `/`) bounds the key to a single
 // segment, so it can't reach another user's path via extra segments.
@@ -92,8 +98,9 @@ export async function POST(req: NextRequest) {
     // yields Number(null) === 0, which would otherwise slip past the size check
     // and then be fully buffered by req.formData() — so reject those outright
     // (411 Length Required) rather than trusting an absent length. The exact
-    // per-file limit is still re-checked by validateImageFile after parsing.
-    // Multipart framing adds a little overhead, so the cap is slightly conservative.
+    // per-file limit is still re-checked by validateImageFile after parsing, so
+    // the early cap adds MAX_MULTIPART_OVERHEAD_BYTES for form framing to avoid
+    // rejecting a valid image whose Content-Length sits just over MAX_IMAGE_BYTES.
     const declaredLength = Number(req.headers.get("content-length"));
     if (!Number.isFinite(declaredLength) || declaredLength <= 0) {
       return NextResponse.json(
@@ -101,7 +108,7 @@ export async function POST(req: NextRequest) {
         { status: 411 },
       );
     }
-    if (declaredLength > MAX_IMAGE_BYTES) {
+    if (declaredLength > MAX_IMAGE_BYTES + MAX_MULTIPART_OVERHEAD_BYTES) {
       return NextResponse.json(
         { error: "Image is too large. Maximum size is 4MB." },
         { status: 413 },
