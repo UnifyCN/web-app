@@ -31,8 +31,8 @@ old Phase 19/20/21 entries (now folded in as P10/P11/P5).
   under "Profile / Social" below).
 - **Account settings — ✅ shipped (P6, this PR).** `/settings` (edit profile, learning
   reminders, redo onboarding, legal links, sign out, disabled delete).
-- **Notifications, search, block/report**: still absent.
-  (Image upload — ✅ shipped with P1.)
+- **Notifications, search**: still absent. **Block/report** is **next up** — PR B
+  (`feat/block-report`, = P4 below). (Image upload — ✅ shipped with P1.)
 
 **Constraints to carry into every phase:**
 - The web app has its **own** Supabase project (`pbiszrycmcxmzxrnkkwr`), separate from
@@ -53,7 +53,7 @@ old Phase 19/20/21 entries (now folded in as P10/P11/P5).
 | **P1 ✅** | Compose post + image-upload utility — shipped (PR #18) | Core: users can't contribute today | — |
 | **P2 ✅** | Post detail page + comments (threaded + replies) — shipped (PR #19) | Core engagement loop | P1 |
 | **P3 ✅** | Follow/unfollow + other-user profiles + followers/following lists — shipped (PR #29) | Unblocks the Following feed; social graph | — |
-| **P4** | Block & report (users + posts) | Launch/app-store safety requirement | P2, P3 |
+| **P4 ⏭️ NEXT** | Block & report (users + posts) — **next up: PR B (`feat/block-report`)** | Launch/app-store safety requirement | P2, P3 |
 | **P5 ✅** | Profile editing + avatar upload (display name vs @handle) — shipped (avatar/bio/pronouns PR #24; display name in the settings PR) | Identity; reuses P1 upload | P1 |
 | **P6 ✅** | Account settings (prefs, legal docs, sign out) — shipped (settings PR); delete account still stubbed (no RPC) | Launch/policy table-stakes | P5 |
 | **P7** | Notifications (list + unread badge + write-on-action) | Retention | P2, P3 |
@@ -96,7 +96,7 @@ links, comment deep-link anchors (`#comment-<id>` + `:target`), a profile **Comm
 (`users.created_at`). *Remaining:* other-user persona/city/stage hidden by own-row RLS
 (see "Profile / Social" below — needs the DB sandbox).
 
-**P4 — Block & report (users + posts)**
+**P4 — Block & report (users + posts) — ⏭️ NEXT UP (PR B, `feat/block-report`)**
 Mobile: `services/users/{blockUser,unblockUser,reportUser,getBlockedUserIds}.ts`,
 `services/posts/reportPost.ts`, `app/ReportScreen.tsx`. Web gap: none of it exists.
 Scope: **block table** migration (web) + RLS + `blockUser`/`unblockUser`/`getBlockedUserIds`;
@@ -204,7 +204,7 @@ so they're unblocked today. Ordered roughly by value. Scope each into its own PR
 | **G3** | **Learn: save/favourite lessons UI** — star/save a module or lesson | `learn-saves` (#225) | **Backend already done:** `learn_favourites` service in `services/learn.ts` + `useToggleFavouriteModule` hook + `Module.isFavourite`. Just **no UI calls them** — add a star toggle on the module card/detail and a "Saved" filter. |
 | **G4** | **Post image full-screen viewer / lightbox** — tap a post image to enlarge | `image-viewer` (#231) | Pure frontend. Compose + `post_image_urls` already ship (P1); add a modal lightbox in `PostCard`/post detail. |
 | **G5** | **Rich-text rendering in posts** — posts currently render plain text only | `image-uploading` (#208), `rich-text` (#241) | Content rendering; reuse the lesson `PortableTextRenderer`/markdown approach. No social graph. |
-| **G6** | **Checklist: drag-and-drop reordering** | `feat/checklist-drag-reorder` (#249) | Single-user ordering; needs a `@dnd-kit` (or similar) integration + a per-user order column/persist. |
+| **G6 ✅** | **Checklist: drag-and-drop reordering — shipped (PR #33)** | `feat/checklist-drag-reorder` (#249) | Rebuilt on `@dnd-kit` (translate-only transform); the framer-motion `Reorder` + `useDragControls` combo stuck on release. |
 | **G7** | **Checklist: confetti on completion** | `feature/checklist-confetti-animation` (#251) | Pure frontend polish (checkbox-pop animation already exists; add confetti on section/all-complete). |
 | **G8** | **Companion: dynamic personalized starter chips** — chips that refresh on tap, generated from the profile | `feat/companion-dynamic-chips` (#257) | Web chips are a **static array** (`StarterPromptChips.tsx`). Single-user personalization; can reuse the OpenRouter plumbing already deployed. |
 | **G9** | **First-name personalization** — onboarding now collects `first_name`, but the Learn greeting still uses `@username` | `feat/personalized-name-greeting` (#270) | Tiny: thread `first_name` into the Learn (and optionally Home) greeting. |
@@ -230,6 +230,43 @@ show-mutuals.
 ---
 
 ## Shipped / in-flight
+
+**PR #35 — Security hardening + KB `source_url` backfill (`feat/web-security-hardening`, = PR A)**
+Storage upload hardening in `app/api/storage/route.ts` + `lib/supabase/imageValidation.ts`:
+**magic-byte MIME sniffing** (`file-type`) rejecting non-image content or a payload that
+contradicts the spoofable client `Content-Type`, signing/PUT-ing with the *detected* MIME off a
+single `arrayBuffer()` read (route pinned to the Node.js runtime); `MAX_IMAGE_BYTES` lowered
+**5MB → 4MB** (under Vercel's ~4.5MB body cap) with reconciled size strings; **411** on
+missing/zero/non-numeric `Content-Length` (closes the `Number(null)===0` bypass). Plus a **KB
+`source_url` backfill** migration (`20260617_kb_source_url_backfill.sql`) filling 14 of 16 NULL
+`knowledge_documents` rows with authoritative gov/agency URLs (ids 17 Goals / 18 Networking left
+NULL — no gov source; idempotent, applied to the web project via the dashboard, committed for
+history) so `rag-query` answers carry a citation link, and the leaked-password-protection note in
+the Security section. **Resolves the three storage Security items below.** (Remaining A3 audit
+items — broad anon REVOKE, the 4 SECURITY DEFINER RPCs, enabling leaked-password protection —
+still need DB/dashboard work; see Security.)
+
+**PR #34 — Mobile DB security hardening (`fix/mobile-security-hardening-v3`)**
+Records, as a versioned migration, the PR #25 hardening that was applied to the legacy **mobile**
+Supabase project (`unify-social`, `wrbauxutkysljmsqojts`) via the dashboard:
+`supabase/mobile-migrations/20260617_security_hardening_v3_web_parity.sql` REVOKEs anon/PUBLIC
+`EXECUTE` on `pin_post`/`unpin_post`/`get_post_metadata_batch`/`merge_highlights` (advisor 0028)
+and pins `search_path=public` on `set_updated_at()` (advisor 0011). Uses **mobile** signatures
+(`pin_post(integer)`, 11-arg `merge_highlights`) — **do not run against the web-app project.**
+Web-only/no-op sections of PR #25 (count-sync trigger fns, storage-listing policies) are N/A on
+mobile. No change to the web app.
+
+**PR #33 — Email/password auth + account management + checklist drag (`feat/email-auth`)**
+Full email/password flow alongside Google SSO: welcome carousel → signup / login / verify-email
+(6-digit OTP) / forgot-password / reset-password / before-you-continue (legal-consent gate),
+backed by `services/auth.ts` (+ signup password-strength / common-password / email-typo
+validation; Caps-Lock warning + eye-toggle on login). `proxy.ts` allows the public auth paths,
+redirects signed-out → `/welcome`, and runs a terminal consent gate before the onboarding gate.
+**Account management:** Change email / Change password modals (`components/account/`,
+`hooks/useAccount.ts`). Also on this branch: **checklist drag-to-reorder rebuilt on `@dnd-kit`**
+(closes G6) and the home-feed header renamed **"Home" → "Social"**. No DB migrations (email
+provider toggled on the dashboard). *(Surfaced the leaked-password advisor item now that
+email/password auth ships — see Security.)*
 
 **PR #29 — Social graph (`feat/social-graph`)**
 Follow loop end-to-end: `followUser`/`unfollowUser` (insert/delete `user_followers`,
@@ -296,7 +333,7 @@ As news grows, new publishers' image hosts must be added to `next.config.ts`.
 
 ## Feed
 
-**Block filtering in home feed**
+**Block filtering in home feed** *(lands with PR B / P4)*
 Deferred from Phase 4. The web app has no block feature yet (no block table, no block UI, no edge function). When block functionality is built, the home feed services (getForYouFeed, getFollowingFeed, getGroupsFeed) need to fetch the current user's blocked IDs and filter them out of results — same pattern as mobile's getBlockedUserIdsForUser utility.
 
 **Infinite scroll on home feed**
@@ -383,14 +420,24 @@ Enable leaked password protection (HaveIBeenPwned.org) in Supabase Dashboard →
 **`is_circle_member` SECURITY DEFINER (accepted)**
 `public.is_circle_member` is intentionally `SECURITY DEFINER` and executable by `authenticated` (required to break the RLS recursion between `community_circles` and `community_circle_members`); it only returns whether the caller is a member of the passed circle id — no data leak. Flagged by the `authenticated_security_definer_function_executable` advisor; accepted, not a fix.
 
-**Storage upload MIME type enforcement (medium priority)**
-Add magic-byte verification (e.g. using the `file-type` npm package) to `app/api/storage/route.ts` to verify actual file content matches the declared `Content-Type`, not just the client-declared MIME type. Today the upload branch validates `file.type` (the client-declared MIME) and `file.size` via `validateImageFile` (`lib/supabase/imageValidation.ts`), but a non-image sent with `Content-Type: image/png` still passes. Sniff the leading bytes server-side before signing/uploading.
+**Storage upload MIME type enforcement — ✅ SHIPPED (PR #35)**
+`app/api/storage/route.ts` now sniffs the actual leading bytes with the `file-type` package and
+rejects uploads whose content isn't an allowed image (png/jpeg/webp/gif) or **contradicts the
+client-declared `Content-Type`** (which is spoofable); it signs + S3-PUTs with the *detected* MIME,
+reusing the single `arrayBuffer()` read (route pinned to the Node.js runtime). Previously only
+`file.type` + `file.size` were validated, so a non-image sent as `Content-Type: image/png` passed.
 
-**Storage Content-Length bypass (medium priority)**
-The Content-Length guard in `app/api/storage/route.ts` (early 413 on the upload branch) can be bypassed with chunked transfer-encoding or an omitted `Content-Length` header — `Number(null)` is `0`, so the guard passes and `req.formData()` still buffers the whole body before `validateImageFile` checks size. Full protection requires bounding the body read itself (stream with a running byte cap), not trusting the declared header. Vercel's platform request-body cap backstops this in production, but local/other hosts have no such backstop.
+**Storage Content-Length bypass — ✅ ADDRESSED (PR #35)**
+The upload branch now rejects missing/zero/non-numeric `Content-Length` with **411**, closing the
+`Number(null)===0` path that let an unbounded body slip into `req.formData()`. *Residual (lower
+priority now):* a true streaming byte-cap on the body read itself was **not** added — Vercel's
+platform request-body cap remains the backstop in production, so a host without such a cap would
+still buffer the full body before the size check.
 
-**MAX_IMAGE_BYTES vs Vercel body cap (low/medium priority)**
-`MAX_IMAGE_BYTES` is 5MB but Vercel's serverless request-body cap is ~4.5MB, so on Vercel a 4.5–5MB image is rejected by the platform with a generic error before reaching `app/api/storage/route.ts`, and the "Maximum size is 5MB" message is misleading. Reconcile the two (lower `MAX_IMAGE_BYTES` to match the platform cap, or document the discrepancy) so the limit the UI promises matches actual platform behaviour.
+**MAX_IMAGE_BYTES vs Vercel body cap — ✅ RESOLVED (PR #35)**
+`MAX_IMAGE_BYTES` was lowered **5MB → 4MB** (under Vercel's ~4.5MB serverless body cap) and the two
+user-facing size strings were reconciled, so the limit the UI promises now matches platform
+behaviour.
 
 **Storage `get` is cross-user by design (accepted)**
 `app/api/storage/route.ts` `get` signs a read URL for **any** key for any authenticated user — the edge function has no per-user scoping, and (unlike `remove`) `get` is intentionally not owner-scoped because the feed/profiles/comments must resolve other users' avatars and post images. This means any authenticated user who knows a key can read any stored object. Mitigation today: filenames are unguessable random UUIDs (`users/<uid>/<uuid>.<ext>`), so keys can't be enumerated, and only keys already visible to the user (from posts/profiles they can see) are resolvable. Future option if non-social/private content is ever stored under the same namespace: add per-user read scoping (or a separate private path) so `get` enforces ownership for those keys.
@@ -402,7 +449,7 @@ The Content-Length guard in `app/api/storage/route.ts` (early 413 on the upload 
 **int4/int8 mismatch between mobile and web databases**
 All identity columns in the mobile database are int4 (SERIAL) while the web uses int8 (BIGINT). Safe to read across both, but risky to join or write. Needs reconciliation in Phase 9 before web reads from mobile DB.
 
-**Block user feature**
+**Block user feature** *(→ next up: PR B, `feat/block-report`, = P4)*
 No block table exists on web. When building block functionality, reference mobile's implementation. Required before block filtering can be added to the feed (see above).
 
 **Circle pool_key / stage vocabulary reconciliation**

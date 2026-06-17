@@ -20,11 +20,17 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
 > live in `~/.claude.json` (not committed). After adding/changing MCP servers, restart
 > Claude Code so the `mcp__supabase-mobile__*` tools load.
 
-- **Auth — Google SSO is wired and working.** Login runs `signInWithOAuth`;
-  `app/(auth)/auth/callback/route.ts` exchanges the code for a session; `proxy.ts`
-  refreshes the session and redirects unauthenticated traffic to `/login`; sign-out
-  lives in the sidebar. The browser client is a singleton (`lib/supabase/client.ts`)
-  to avoid multiple GoTrueClient instances.
+- **Auth — Google SSO + email/password are wired and working.** Google login runs
+  `signInWithOAuth`; `app/(auth)/auth/callback/route.ts` exchanges the code for a session.
+  **Email/password (PR #33)** adds a full mobile-parity flow in `app/(auth)/` — welcome
+  carousel → signup / login / verify-email (6-digit OTP) / forgot-password / reset-password /
+  before-you-continue (legal-consent gate) — backed by `services/auth.ts` (`signUp` /
+  `verifyOtp` / `resend` / `resetPassword` / `updateUser` + consent stamping), with signup
+  password-strength / common-password / email-typo validation and a Caps-Lock + eye-toggle on
+  login. `proxy.ts` allows the public auth paths, refreshes the session, redirects signed-out
+  traffic to `/welcome`, and runs a terminal consent gate before the onboarding gate; sign-out
+  lives in Settings (and the sidebar). The browser client is a singleton
+  (`lib/supabase/client.ts`) to avoid multiple GoTrueClient instances.
 - **Database — schema lives in `supabase/migrations/`** (the web-app's own schema,
   separate from the mobile back-end), with **RLS enabled and own-row policies** on
   every table, plus a grants migration restoring public-schema API-role access.
@@ -114,6 +120,23 @@ web-app project (ID `pbiszrycmcxmzxrnkkwr`):
   **"Member since"** (`users.created_at`). *Known gap:* an other user's persona / city /
   stage stay hidden because `user_onboarding_profiles` is own-row RLS — needs the DB
   sandbox to add a public-profile read path (see `BACKLOG.md`).
+- **Email/password auth + account management + checklist drag (PR #33).** Beyond the auth
+  flow (see Auth above), PR #33 shipped **Change email / Change password** modals in Settings
+  (`components/account/`, `hooks/useAccount.ts`), rebuilt **checklist drag-to-reorder** on
+  `@dnd-kit` (translate-only transform; the old framer-motion `Reorder` combo stuck on
+  release), and renamed the home-feed header **"Home" → "Social"** to match the sidebar/mobile.
+  No DB migrations (email provider toggled on the dashboard).
+- **Storage + security hardening (PR #32 + PR #35).** Images upload through a signed-URL
+  CORS-proxy route (`app/api/storage/route.ts`, PR #32). **PR #35** hardened it: **magic-byte
+  MIME sniffing** via `file-type` (rejects content that isn't an allowed image or contradicts
+  the spoofable client `Content-Type`; signs/PUTs with the *detected* MIME off a single
+  `arrayBuffer()` read; route pinned to the Node.js runtime), `MAX_IMAGE_BYTES` lowered
+  **5MB → 4MB** (under Vercel's ~4.5MB body cap) with reconciled size strings, and **411** on
+  missing/zero/non-numeric `Content-Length` (closes the `Number(null)===0` body-size bypass).
+  PR #35 also **backfilled `knowledge_documents.source_url`** for 14 of 16 NULL KB rows so
+  `rag-query` answers carry a citation link. **PR #34** ported the PR #25 RPC/`search_path`
+  hardening to the legacy **mobile** Supabase project (recorded under
+  `supabase/mobile-migrations/`; mobile function signatures — do not run against web).
 
 ---
 
