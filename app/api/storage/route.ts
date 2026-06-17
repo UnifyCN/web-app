@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   validateImageFile,
   ImageValidationError,
+  IMAGE_TOO_LARGE_MESSAGE,
   MAX_IMAGE_BYTES,
   ALLOWED_IMAGE_MIME_TYPES,
 } from "@/lib/supabase/imageValidation";
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
     }
     if (declaredLength > MAX_IMAGE_BYTES + MAX_MULTIPART_OVERHEAD_BYTES) {
       return NextResponse.json(
-        { error: "Image is too large. Maximum size is 4MB." },
+        { error: IMAGE_TOO_LARGE_MESSAGE },
         { status: 413 },
       );
     }
@@ -131,6 +132,8 @@ export async function POST(req: NextRequest) {
       // bad MIME / other validation failure is 400.
       const tooLarge =
         err instanceof ImageValidationError && err.reason === "size";
+      // validateImageFile only throws ImageValidationError (an Error), so the
+      // non-Error branch is defensive only — guards against a future throw type.
       return NextResponse.json(
         { error: err instanceof Error ? err.message : "Invalid file" },
         { status: tooLarge ? 413 : 400 },

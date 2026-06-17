@@ -16,15 +16,28 @@ export const ALLOWED_IMAGE_MIME_TYPES: readonly string[] = [
   "image/gif",
 ];
 
-/** Error thrown by validateImageFile. `reason` lets the server route map the
- *  cause to the right HTTP status (size → 413 Payload Too Large, type → 400).
+// Single source of truth for the "too large" copy, derived from the limit so the
+// message can never drift from MAX_IMAGE_BYTES. Used by the validator's size throw
+// and the route's early Content-Length 413 guard.
+export const IMAGE_TOO_LARGE_MESSAGE = `Image is too large. Maximum size is ${
+  MAX_IMAGE_BYTES / (1024 * 1024)
+}MB.`;
+
+/** Which validateImageFile check failed — lets the server route map the cause to
+ *  the right HTTP status (size → 413 Payload Too Large, type → 400). */
+export type ImageValidationReason = "type" | "size";
+
+/** Error thrown by validateImageFile. `reason` carries the failing check.
  *  Extends Error, so browser callers that only read `.message` are unaffected. */
 export class ImageValidationError extends Error {
   constructor(
     message: string,
-    readonly reason: "type" | "size",
+    readonly reason: ImageValidationReason,
   ) {
     super(message);
+    // Restore the prototype chain so `instanceof ImageValidationError` (which the
+    // route's 413 mapping relies on) holds even if this is ever downleveled to ES5.
+    Object.setPrototypeOf(this, ImageValidationError.prototype);
     this.name = "ImageValidationError";
   }
 }
@@ -44,9 +57,6 @@ export function validateImageFile(file: File): void {
     );
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    throw new ImageValidationError(
-      "Image is too large. Maximum size is 4MB.",
-      "size",
-    );
+    throw new ImageValidationError(IMAGE_TOO_LARGE_MESSAGE, "size");
   }
 }
