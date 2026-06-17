@@ -9,16 +9,19 @@ The mobile app repo (read-only reference) is at `github.com/UnifyCN/mobile-app`.
 ## Build Status
 
 The frontend is complete on mock data. **Supabase integration is underway** on the
-web-app project (ID `pbiszrycmcxmzxrnkkwr`):
+**shared production DB `wrbauxutkysljmsqojts`** (web + mobile on one database since the
+**PR #31 DB cutover**; the original web-only project `pbiszrycmcxmzxrnkkwr` is retired):
 
-> **Supabase MCP access (two projects, both read-only).** Two Supabase MCP servers are
-> configured for this repo: `supabase` → the **web-app** backend (`pbiszrycmcxmzxrnkkwr`,
-> this app's own schema) and `supabase-mobile` → the legacy **unify-social** mobile
-> backend (`wrbauxutkysljmsqojts`). The mobile server is added **read-only for
-> schema-drift reference only** — read the mobile schema to mirror tables/columns/RLS,
-> but never write to it (it has live mobile users). Both run with `--read-only`. Tokens
-> live in `~/.claude.json` (not committed). After adding/changing MCP servers, restart
-> Claude Code so the `mcp__supabase-mobile__*` tools load.
+> **Supabase MCP access (two servers, both read-only).** Since the **PR #31 DB cutover**,
+> the web app's canonical production DB is the **shared** project `wrbauxutkysljmsqojts`
+> (web + mobile on one database). Two MCP servers are configured (tokens in
+> `~/.claude.json`, not committed): `supabase-mobile` → the **live shared DB**
+> `wrbauxutkysljmsqojts` — use this to inspect the real web+mobile schema/data — and
+> `supabase` → the **retired** original web-only project `pbiszrycmcxmzxrnkkwr`, kept for
+> historical schema reference only (no longer used by the app). Both run with
+> `--read-only`; the shared DB has **live mobile + web users**, so never run destructive
+> writes against it. After adding/changing MCP servers, restart Claude Code so the tools
+> reload.
 
 - **Auth — Google SSO + email/password are wired and working.** Google login runs
   `signInWithOAuth`; `app/(auth)/auth/callback/route.ts` exchanges the code for a session.
@@ -239,7 +242,7 @@ Never animate: sidebar nav clicks, page transitions, form submissions, any actio
 | Language        | TypeScript                                                  |
 | Styling         | Tailwind CSS v4 (brand tokens in `app/globals.css` `@theme`) |
 | Data fetching   | TanStack React Query v5                                     |
-| Backend (later) | Supabase — web `pbiszrycmcxmzxrnkkwr`; mobile (read-only ref) `wrbauxutkysljmsqojts` |
+| Backend (later) | Supabase — shared web+mobile DB `wrbauxutkysljmsqojts` (since the PR #31 cutover; the web-only `pbiszrycmcxmzxrnkkwr` is retired) |
 | CMS (later)     | Sanity (reuse mobile app project — same project ID/dataset) |
 | Auth (later)    | Google SSO first, Apple SSO second                          |
 | Icons           | lucide-react                                                |

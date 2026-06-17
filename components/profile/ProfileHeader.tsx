@@ -9,6 +9,7 @@ import { FollowButton } from "./FollowButton";
 import { PersonaBadge } from "./PersonaBadge";
 import { StageIndicator } from "./StageIndicator";
 import { OnboardingEditModal } from "@/components/onboarding/OnboardingEditModal";
+import { UserModerationMenu } from "@/components/moderation/UserModerationMenu";
 import {
   useRemoveAvatar,
   useUpdateAvatar,
@@ -334,7 +335,13 @@ export function ProfileHeader({
             )}
           </>
         ) : (
-          <FollowButton userId={profile.id} />
+          <>
+            <FollowButton userId={profile.id} />
+            <UserModerationMenu
+              userId={profile.id}
+              username={profile.username}
+            />
+          </>
         )}
       </div>
 

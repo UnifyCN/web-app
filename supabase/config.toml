@@ -1,6 +1,10 @@
 # Supabase CLI config for the web project. Generated minimally for edge-function
 # deploys; `supabase link` populates the rest if you run a fuller init later.
-project_id = "pbiszrycmcxmzxrnkkwr"
+#
+# Canonical production DB is the shared project wrbauxutkysljmsqojts (web + mobile on
+# one database) since the PR #31 DB cutover. The original web-only project
+# pbiszrycmcxmzxrnkkwr is retired and no longer used by the app.
+project_id = "wrbauxutkysljmsqojts"
 
 [functions.rag-query]
 # Auth is enforced inside the function (resolveAuthenticatedUserId validates the

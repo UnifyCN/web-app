@@ -1,6 +1,8 @@
 -- Bring web `lesson_highlights` to mobile-schema parity so the two project
--- databases (web pbiszrycmcxmzxrnkkwr + mobile wrbauxutkysljmsqojts) can be
--- merged with compatible rows. Web shipped a simpler whole-page-text model
+-- databases (the then-separate web `pbiszrycmcxmzxrnkkwr` + mobile
+-- `wrbauxutkysljmsqojts`) had compatible rows for the merge — since consolidated
+-- onto the shared `wrbauxutkysljmsqojts` in the PR #31 DB cutover. Web shipped a
+-- simpler whole-page-text model
 -- (id, user_id, lesson_id, page_key, selected_text, created_at); mobile stores
 -- word-range highlights with block + navigation context. This adds the missing
 -- columns/constraints/indexes/policy and replaces merge_highlights with mobile's

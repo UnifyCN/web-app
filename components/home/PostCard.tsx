@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { useLikePost, useSavePost } from "@/hooks/useFeed";
+import { PostModerationMenu } from "@/components/moderation/PostModerationMenu";
 import { cn, formatRelativeTime, stripHtml } from "@/lib/utils";
 import type { Post } from "@/types";
 
@@ -114,6 +115,7 @@ export function PostCard({
             Pinned
           </span>
         )}
+        <PostModerationMenu post={post} />
       </div>
 
       {/* Body */}

@@ -35,9 +35,12 @@ old Phase 19/20/21 entries (now folded in as P10/P11/P5).
   (`feat/block-report`, = P4 below). (Image upload — ✅ shipped with P1.)
 
 **Constraints to carry into every phase:**
-- The web app has its **own** Supabase project (`pbiszrycmcxmzxrnkkwr`), separate from
-  mobile. "Wire to real data" = web tables; notification/comment rows only exist if the
-  **web** writes them.
+- Since the **PR #31 DB cutover**, the web app runs on the **shared** Supabase project
+  `wrbauxutkysljmsqojts` (web + mobile on one database; the original web-only
+  `pbiszrycmcxmzxrnkkwr` is retired). "Wire to real data" = the shared tables — which the
+  mobile app also reads/writes, so rows can already exist from mobile activity. *(Note:
+  older "the web's own / separate DB" framing elsewhere in this backlog predates the
+  cutover and should be read in that light.)*
 - Follow the established wiring pattern (`services/*` + `hooks/*`, `isSupabaseConfigured()`
   + `getAuthUserId()` guards, snake_case mappers, mock fallback, React Query keys +
   `onSuccess` invalidation).
