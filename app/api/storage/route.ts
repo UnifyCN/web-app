@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
     const sniffed = await fileTypeFromBuffer(new Uint8Array(fileBytes));
     if (!sniffed || !ALLOWED_IMAGE_MIME_TYPES.includes(sniffed.mime)) {
       return NextResponse.json(
-        { error: "Unsupported file type. Use PNG, JPEG, WebP, or GIF." },
+        { error: "Unsupported file type. Use PNG, JPEG, or WebP." },
         { status: 400 },
       );
     }

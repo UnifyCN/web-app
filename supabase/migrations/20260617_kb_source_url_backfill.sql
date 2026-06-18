@@ -1,4 +1,5 @@
--- KB source_url backfill — web project pbiszrycmcxmzxrnkkwr.
+-- KB source_url backfill — web project `wrbauxutkysljmsqojts` (the shared web+mobile DB
+-- after the PR #31 cutover; the original web-only `pbiszrycmcxmzxrnkkwr` is retired).
 --
 -- 16 of 32 knowledge_documents rows have a NULL source_url. rag-query cites a
 -- chunk's source only when source_url is set (resolvedUrl = source_url || s3Url;

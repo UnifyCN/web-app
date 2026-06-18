@@ -421,7 +421,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp"
                 multiple
                 className="hidden"
                 onChange={(event) => {

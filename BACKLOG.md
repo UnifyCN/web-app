@@ -35,9 +35,12 @@ old Phase 19/20/21 entries (now folded in as P10/P11/P5).
   (`feat/block-report`, = P4 below). (Image upload — ✅ shipped with P1.)
 
 **Constraints to carry into every phase:**
-- The web app has its **own** Supabase project (`pbiszrycmcxmzxrnkkwr`), separate from
-  mobile. "Wire to real data" = web tables; notification/comment rows only exist if the
-  **web** writes them.
+- Since the **PR #31 DB cutover**, the web app runs on the **shared** Supabase project
+  `wrbauxutkysljmsqojts` (web + mobile on one database; the original web-only
+  `pbiszrycmcxmzxrnkkwr` is retired). "Wire to real data" = the shared tables — which the
+  mobile app also reads/writes, so rows can already exist from mobile activity. *(Note:
+  older "the web's own / separate DB" framing elsewhere in this backlog predates the
+  cutover and should be read in that light.)*
 - Follow the established wiring pattern (`services/*` + `hooks/*`, `isSupabaseConfigured()`
   + `getAuthUserId()` guards, snake_case mappers, mock fallback, React Query keys +
   `onSuccess` invalidation).
@@ -186,6 +189,90 @@ infinite scroll on the home feed; the int4/int8 + own-DB cross-join caveat; grow
 3. Confirm the **mock fallback** still works with env vars unset (the local-dev case).
 4. `npm run build` must pass; run the section's `/impeccable audit` per CLAUDE.md gates.
 5. For any new table: confirm the **web** migration applied with own-row RLS + grants.
+
+---
+
+## Post-cutover audit (2026-06-17) — unfixed findings
+
+A deep regression audit (every feature compared before/after the PR #31 DB cutover,
+plus PRs #33–35 and PR B), verified against the live shared DB `wrbauxutkysljmsqojts`.
+The companion `rag-query` CORS proxy and six other fixes shipped on `feat/block-report`
+(daily-limit constant aligned to the edge function at 6/day, onboarding gate →
+`onboarding_completed`, `ChatLimitError` surfaced in the Companion UI, GIF dropped from
+the upload allow-list, an `/api/onboarding-profile` proxy for the no-CORS
+`public-onboarding-profile` fn, and a `post_report` UNIQUE migration). The items below were
+**left unfixed** because they need shared-DB / mobile-owned-edge-function coordination or
+are lower-priority latent risks.
+
+**H2 — Companion refund infra (jsonb RPC) is not deployed to the shared DB** *(needs DB + edge deploy)*
+The repo ships `supabase/migrations/20260530120100_chatbot_rate_limit.sql` (redefines
+`check_and_increment_chatbot_usage` to return **jsonb**, adds `decrement_chatbot_usage`)
+and a CORS-enabled `supabase/functions/rag-query/index.ts` that reads `quota.allowed` /
+`quota.charged_date` and calls `decrement_chatbot_usage`. **That migration is still pending:**
+the live RPC returns **boolean** and `decrement_chatbot_usage` does not exist. The deployed
+`rag-query` now **enforces 6/day**, so the UI's `FREE_TIER_DAILY_LIMIT` and the edge function
+are aligned at 6 — but it still uses the boolean RPC and has no refund (see H3). **Hazard:**
+deploying the repo's jsonb-expecting `rag-query` before the migration lands would 503 every
+chat (reads jsonb fields off a boolean) and error every refund. Decision: either (a) stay on
+the proxy + the current boolean-RPC function (working — UI and edge aligned at 6), or
+(b) coordinate the shared-DB migration + function deploy to add the refund. Until then keep
+the companion rate-limit constant at 6.
+
+**H3 — A failed AI generation permanently burns a daily message (no refund)** *(ships with H2)*
+The live v124 increments quota atomically with zero refund logic; on an upstream LLM failure
+the user is charged and gets no answer (`hooks/useCompanion.ts` also persists the user message
+before `generateReply`). The refund (`decrement_chatbot_usage`) exists only in the undeployed
+web code above. Fixed only once H2 is resolved.
+
+**KB `source_url` — legacy-seed gap, not an ingestion bug** *(backfill + mobile/ops follow-up)*
+Some `knowledge_documents` have NULL `source_url`, so the Companion answer carries no citation pill
+for them. Root cause: the `ingest-documents` **crawler** (mobile-owned, URL-sourced) **already sets
+`source_url` on every doc it ingests** — the NULL rows are legacy from the original one-time CSV KB
+seed (commit `c858d8d`) that imported files with `storage_path` but no `source_url`. Past migrations
+backfilled most; SIN (5/22) and MSP/TFSA (8/11) are backfilled via the
+`20260618130000` / `20260618140000` manual-apply migrations. ids 17 (Goals) / 18 (Networking) are
+internal modules with no external source — intentionally left NULL. **No web code change**: the web
+app has no KB-ingestion path, and a DB constraint/trigger on `source_url` would wrongly reject the
+source-less internal docs. *Separate real blocker:* the crawler is currently failing with a
+**resource-limit kill** (HTTP 546, ~6s runtime — likely OOM or a CPU timeout while batching
+chunks/embeddings; verified the hourly cron POSTs are all 546, and it is NOT the OPENAI_API_KEY,
+which is set — a missing key returns 500, not 546). Fix is smaller batches or streaming — in the
+**mobile-owned** `ingest-documents`, out of web scope. Until then no new KB docs get ingested at all.
+
+**M1 follow-up — `report-post` edge fn checks a non-existent `reports` table** *(mobile-owned edge fn)*
+The live `report-post` function does its duplicate check against a `reports` table that doesn't
+exist on the shared DB, so the check errors silently and every report inserts (firing a
+moderator email each time). The committed `20260617160000_post_report_unique_reporter_post.sql`
+migration (manual dashboard apply) enforces dedup at the DB level, but the mobile-owned
+`report-post` fn should additionally map the resulting **23505** unique-violation → an
+"Already reported" success/no-op so both web and mobile show a clean message rather than a
+generic failure. (`services/moderation.ts` already treats `"Already reported"` as benign.)
+
+**F1 — `posts.comment_count` drifts; no comment-count sync trigger on the shared DB** *(needs mobile-coordinated trigger)*
+The web (and CLAUDE.md / this backlog's P2 note) assume an `update_post_comment_count` trigger
+on `post_comments`. It **does not exist** on the shared DB — `comment_count` disagrees with the
+real count on ~73% of live posts. User-facing counts are currently correct (the feed card reads
+the **RPC-derived** count, the detail page uses `comments.length`), so impact is limited to the
+RPC-error fallback in `services/feed.ts` and any other consumer trusting the column. Fix: add the
+count-sync trigger on the shared DB (mobile-coordinated), or stop relying on the column.
+
+**Lower-severity latent items**
+- **Learn — `total_questions = 0` would violate a CHECK constraint.** The shared progress tables
+  enforce `total_questions > 0`; `services/learn.ts` upserts pass it through unvalidated. Guarded
+  today only by component/page render guards — any future caller reaching the service with an
+  empty set throws a 23514. Add a service-layer guard.
+- **Learn — `learn_favourites` / practice / quiz tables FK `public.users`** (not `auth.users`), so a
+  brand-new account 23503s on those writes until `ensureUserRow` has bootstrapped its `public.users`
+  row. Confirm the bootstrap runs before any Learn write.
+- **Community — `news_details.category` has no data** on the shared DB (the badge never renders) and
+  `getNews` sorts on a nullable `date` without `nullsLast`; `groups.member_count` is nullable but
+  `rowToGroup` passes it through as `number`.
+- **Feed — `createPost` inserts `title: ""`** instead of `null`, bypassing the mobile `'Untitled'`
+  default (latent — the composer requires a title today).
+- **Community Circles — stage ↔ `time_in_canada` mapping is non-bijective and type-unsound** (the
+  `2_to_3_years` cohort, and `onboarding.stage as Stage` casts at `services/community.ts:354,401`).
+  Latent because `timeInCanada` is unrendered and Circles is hidden. See Schema → "Circle pool_key /
+  stage vocabulary reconciliation".
 
 ---
 
@@ -363,19 +450,19 @@ Deferred from Phase 5. Group.memberAvatars is a UI-only convenience seeded from 
 
 ## Profile / Social
 
-**Other-user persona / city / stage hidden by own-row RLS** *(needs the DB sandbox)*
+**Other-user persona / stage — ✅ now surfaced via the `/api/onboarding-profile` proxy (PR B)**
 From P3 (PR #29). `user_onboarding_profiles` has own-row SELECT RLS
-(`onboarding_select_own`: `id = auth.uid()`), so `getUserById` (`services/profile.ts`)
-can only read the *caller's* onboarding row — for any other user it comes back null. The
-result: on another user's profile the **persona badge, city/province, and stage indicator
-don't render** (name/handle/bio/pronouns/follow counts/posts/comments all work). This is
-by design (privacy-preserving), not a bug, and is documented in the `services/profile.ts`
-header comment. To surface a sanitized public profile, add **one** of: (a) a
-`public_profiles` view exposing only `persona`/`city`/`province`/`stage` with a
-read-to-`authenticated` policy; (b) an additive SELECT policy on the table scoped to those
-columns; or (c) an edge function returning a vetted public-profile shape. All three need
-**DB write access** (the MCP is read-only and `db push` is unsafe against the drifted
-remote history — see Phase 18 note), so this is parked until the DB sandbox is available.
+(`onboarding_select_own`: `id = auth.uid()`), so a direct read of another user's onboarding
+row returns null. The mobile `public-onboarding-profile` edge function (service-role) already
+exposes the public-facing fields (`persona` / `persona_other` / `arrival_date`, with stage
+derived from `arrival_date`); `getUserById` (`services/profile.ts`) calls it, but the function
+ships **no CORS headers**, so the browser invoke was silently failing and the badges never
+rendered. PR B added the same-origin **`/api/onboarding-profile` proxy** (mirrors
+`/api/companion`), so the **persona badge + stage indicator now render** on other users'
+profiles. *Still hidden by design:* **city / province / goals** (private — the function
+deliberately doesn't return them). To also surface those, add option (a) a `public_profiles`
+view, (b) a column-scoped additive SELECT policy, or (c) extend the edge function — all need
+**DB write access** (the MCP is read-only; `db push` unsafe against the drifted history).
 
 **Delete account** *(needs the DB sandbox)*
 From P6 (settings PR). The Settings → Account "Delete account" button is already stubbed
@@ -422,7 +509,7 @@ Enable leaked password protection (HaveIBeenPwned.org) in Supabase Dashboard →
 
 **Storage upload MIME type enforcement — ✅ SHIPPED (PR #35)**
 `app/api/storage/route.ts` now sniffs the actual leading bytes with the `file-type` package and
-rejects uploads whose content isn't an allowed image (png/jpeg/webp/gif) or **contradicts the
+rejects uploads whose content isn't an allowed image (png/jpeg/webp) or **contradicts the
 client-declared `Content-Type`** (which is spoofable); it signs + S3-PUTs with the *detected* MIME,
 reusing the single `arrayBuffer()` read (route pinned to the Node.js runtime). Previously only
 `file.type` + `file.size` were validated, so a non-image sent as `Content-Type: image/png` passed.

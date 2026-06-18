@@ -12,6 +12,7 @@ import { OnboardingEditModal } from "@/components/onboarding/OnboardingEditModal
 import { ChangeEmailModal } from "@/components/account/ChangeEmailModal";
 import { ChangePasswordModal } from "@/components/account/ChangePasswordModal";
 import { DeleteAccountModal } from "@/components/account/DeleteAccountModal";
+import { BlockedAccountsList } from "@/components/moderation/BlockedAccountsList";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { signOut } from "@/services/auth";
 import {
@@ -693,6 +694,9 @@ export default function SettingsPage() {
       <div className="space-y-5">
         <EditProfileSection profile={profile} />
         <PreferencesSection profile={profile} />
+        <Section title="Blocked accounts">
+          <BlockedAccountsList />
+        </Section>
         <LegalSection />
         <AccountSection />
       </div>

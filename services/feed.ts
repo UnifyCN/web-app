@@ -11,6 +11,7 @@ import {
   getAuthUserId,
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
+import { getBlockedUserIds } from "./moderation";
 import { posts as mockPosts, followedUsernames } from "@/lib/mock/posts";
 import { currentUser } from "@/lib/mock/users";
 import { mockCommentsForPost } from "@/lib/mock/comments";
@@ -172,25 +173,32 @@ export async function getForYouFeed(
   if (!userId) return { posts: mockForTab("For You"), nextCursor: undefined };
 
   const supabase = createClient();
+  // Drop posts authored by users the caller has blocked (applied server-side
+  // before ordering so it stays on the filter builder).
+  const blocked = await getBlockedUserIds();
+  const blockedList = blocked.length ? `(${blocked.join(",")})` : null;
   const isFirstPage = !cursor;
 
   if (isFirstPage) {
     // Page 1: pinned (ordered by created_at since there's no pinned_at column)
     // spliced ahead of the first `limit` non-pinned posts.
+    let pinnedQuery = supabase
+      .from("posts")
+      .select(POSTS_SELECT)
+      .is("group_id", null)
+      .eq("is_pinned", true);
+    let nonPinnedQuery = supabase
+      .from("posts")
+      .select(POSTS_SELECT)
+      .is("group_id", null)
+      .eq("is_pinned", false);
+    if (blockedList) {
+      pinnedQuery = pinnedQuery.not("user_id", "in", blockedList);
+      nonPinnedQuery = nonPinnedQuery.not("user_id", "in", blockedList);
+    }
     const [pinnedRes, nonPinnedRes] = await Promise.all([
-      supabase
-        .from("posts")
-        .select(POSTS_SELECT)
-        .is("group_id", null)
-        .eq("is_pinned", true)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("posts")
-        .select(POSTS_SELECT)
-        .is("group_id", null)
-        .eq("is_pinned", false)
-        .order("created_at", { ascending: false })
-        .limit(limit),
+      pinnedQuery.order("created_at", { ascending: false }),
+      nonPinnedQuery.order("created_at", { ascending: false }).limit(limit),
     ]);
 
     if (pinnedRes.error) throw pinnedRes.error;
@@ -225,12 +233,14 @@ export async function getForYouFeed(
   }
 
   // Page 2+: only non-pinned, keyset on created_at.
-  const { data, error } = await supabase
+  let page2Query = supabase
     .from("posts")
     .select(POSTS_SELECT)
     .is("group_id", null)
     .eq("is_pinned", false)
-    .lt("created_at", cursor)
+    .lt("created_at", cursor);
+  if (blockedList) page2Query = page2Query.not("user_id", "in", blockedList);
+  const { data, error } = await page2Query
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -260,13 +270,20 @@ export async function getFollowingFeed(
 
   const supabase = createClient();
 
-  const followingRes = await supabase
-    .from("user_followers")
-    .select("following_id")
-    .eq("follower_id", userId);
+  const [followingRes, blocked] = await Promise.all([
+    supabase
+      .from("user_followers")
+      .select("following_id")
+      .eq("follower_id", userId),
+    getBlockedUserIds(),
+  ]);
   if (followingRes.error) throw followingRes.error;
 
-  const followingIds = (followingRes.data ?? []).map((r) => r.following_id);
+  // Following is filtered client-side (the id list is already in hand).
+  const blockedSet = new Set(blocked);
+  const followingIds = (followingRes.data ?? [])
+    .map((r) => r.following_id)
+    .filter((id) => !blockedSet.has(id));
   if (followingIds.length === 0) return { posts: [], nextCursor: undefined };
 
   const parsed = cursor ? parseInt(cursor, 10) : 0;
@@ -300,10 +317,10 @@ export async function getGroupsFeed(
 
   const supabase = createClient();
 
-  const membershipRes = await supabase
-    .from("group_members")
-    .select("group_id")
-    .eq("user_id", userId);
+  const [membershipRes, blocked] = await Promise.all([
+    supabase.from("group_members").select("group_id").eq("user_id", userId),
+    getBlockedUserIds(),
+  ]);
   if (membershipRes.error) throw membershipRes.error;
 
   const groupIds = (membershipRes.data ?? []).map((r) => r.group_id);
@@ -311,10 +328,14 @@ export async function getGroupsFeed(
 
   const parsed = cursor ? parseInt(cursor, 10) : 0;
   const offset = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
-  const { data, error } = await supabase
+  let groupsQuery = supabase
     .from("posts")
     .select(POSTS_SELECT)
-    .in("group_id", groupIds)
+    .in("group_id", groupIds);
+  if (blocked.length) {
+    groupsQuery = groupsQuery.not("user_id", "in", `(${blocked.join(",")})`);
+  }
+  const { data, error } = await groupsQuery
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
   if (error) throw error;

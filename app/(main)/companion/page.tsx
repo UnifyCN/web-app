@@ -14,15 +14,19 @@ import {
   useSendMessage,
 } from "@/hooks/useCompanion";
 import { useCurrentUser } from "@/hooks/useProfile";
+import { ChatLimitError } from "@/services/companion";
 import type { ChatMessage } from "@/types";
 
-// Free-tier daily cap shown next to the input. Enforced server-side by the
-// rag-query edge function's check_and_increment_chatbot_usage RPC (same limit).
+// Free-tier daily cap shown next to the input. Must match the limit the deployed
+// rag-query edge function enforces via check_and_increment_chatbot_usage — the
+// shared-DB function now allows 6 messages/day.
 const FREE_TIER_DAILY_LIMIT = 6;
 
 export default function CompanionPage() {
   const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
+  // Surfaced beneath the input — e.g. the daily-limit message (rag-query 429).
+  const [sendError, setSendError] = useState<string | null>(null);
 
   const conversationsQuery = useConversations();
   const messagesQuery = useConversationMessages(activeId);
@@ -42,6 +46,7 @@ export default function CompanionPage() {
   const freeTierRemaining = Math.max(0, FREE_TIER_DAILY_LIMIT - messageCount);
 
   async function handleSend(text: string) {
+    setSendError(null);
     try {
       let conversationIdentifier = activeId;
       if (!conversationIdentifier) {
@@ -60,7 +65,15 @@ export default function CompanionPage() {
       }
       await sendMessage.mutateAsync({ conversationIdentifier, text });
     } catch (err) {
-      console.error("Companion: failed to send message", err);
+      // The daily free-tier cap surfaces as a typed ChatLimitError (rag-query
+      // 429, relayed verbatim by the /api/companion proxy) — show its message;
+      // anything else gets a generic retry prompt instead of failing silently.
+      if (err instanceof ChatLimitError) {
+        setSendError(err.message);
+      } else {
+        console.error("Companion: failed to send message", err);
+        setSendError("Couldn't send your message. Please try again.");
+      }
     }
   }
 
@@ -79,8 +92,14 @@ export default function CompanionPage() {
       <ConversationList
         conversations={conversations}
         activeId={activeId}
-        onSelect={setActiveId}
-        onNew={() => setActiveId(null)}
+        onSelect={(id) => {
+          setSendError(null);
+          setActiveId(id);
+        }}
+        onNew={() => {
+          setSendError(null);
+          setActiveId(null);
+        }}
         onDelete={handleDelete}
         isDeleting={deleteConversation.isPending}
       />
@@ -89,6 +108,7 @@ export default function CompanionPage() {
         messages={messages}
         isTyping={sendMessage.isPending}
         freeTierRemaining={freeTierRemaining}
+        errorMessage={sendError}
         onSend={handleSend}
         onboarding={currentUser?.onboarding ?? null}
       />

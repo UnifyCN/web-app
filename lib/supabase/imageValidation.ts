@@ -9,11 +9,14 @@
 // UI promises matches what the platform actually accepts (a 4.5–5MB image used
 // to be rejected by Vercel with a generic error before reaching our handler).
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4MB
+// Must stay in sync with the upload backend: the profile-picture-upload edge
+// function (AWS S3) only accepts jpeg/png/webp and 400s on anything else, so a
+// type the web accepts but the function rejects surfaces as a confusing generic
+// failure. GIF was removed for exactly this reason.
 export const ALLOWED_IMAGE_MIME_TYPES: readonly string[] = [
   "image/png",
   "image/jpeg",
   "image/webp",
-  "image/gif",
 ];
 
 // Single source of truth for the "too large" copy, derived from the limit so the
@@ -52,7 +55,7 @@ export class ImageValidationError extends Error {
 export function validateImageFile(file: File): void {
   if (!ALLOWED_IMAGE_MIME_TYPES.includes(file.type)) {
     throw new ImageValidationError(
-      "Unsupported file type. Use PNG, JPEG, WebP, or GIF.",
+      "Unsupported file type. Use PNG, JPEG, or WebP.",
       "type",
     );
   }
