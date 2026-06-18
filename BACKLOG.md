@@ -233,10 +233,11 @@ backfilled most; SIN (5/22) and MSP/TFSA (8/11) are backfilled via the
 `20260618130000` / `20260618140000` manual-apply migrations. ids 17 (Goals) / 18 (Networking) are
 internal modules with no external source — intentionally left NULL. **No web code change**: the web
 app has no KB-ingestion path, and a DB constraint/trigger on `source_url` would wrongly reject the
-source-less internal docs. *Separate real blocker:* the crawler is currently **HTTP 546-failing** on
-the shared project because it requires `OPENAI_API_KEY` (the project standardized on
-`OPENROUTER_API_KEY`) — until that secret is set (or the crawler is ported to OpenRouter, both
-mobile/ops), no new KB docs get ingested at all.
+source-less internal docs. *Separate real blocker:* the crawler is currently failing with a
+**resource-limit kill** (HTTP 546, ~6s runtime — likely OOM or a CPU timeout while batching
+chunks/embeddings; verified the hourly cron POSTs are all 546, and it is NOT the OPENAI_API_KEY,
+which is set — a missing key returns 500, not 546). Fix is smaller batches or streaming — in the
+**mobile-owned** `ingest-documents`, out of web scope. Until then no new KB docs get ingested at all.
 
 **M1 follow-up — `report-post` edge fn checks a non-existent `reports` table** *(mobile-owned edge fn)*
 The live `report-post` function does its duplicate check against a `reports` table that doesn't
