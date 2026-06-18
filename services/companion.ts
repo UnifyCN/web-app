@@ -265,12 +265,11 @@ export async function generateReply(
     return { answer: MOCK_REPLY, sources: null, suggestedNextSteps: null };
   }
 
-  // The rag-query edge function ships no CORS headers and doesn't answer the
-  // OPTIONS preflight, so the browser can't call it directly. POST to the
-  // same-origin /api/companion proxy, which forwards to rag-query server-side
-  // with the user's JWT (no preflight). A 429 surfaces as ChatLimitError; the
-  // IRCC disclaimer the function returns is appended to the answer (the web UI
-  // has no separate disclaimer slot like mobile).
+  // POST to the same-origin /api/companion proxy, which forwards to the
+  // rag-query-web edge function server-side with the user's JWT (keeping the
+  // call same-origin and the JWT in an httpOnly cookie). A 429 surfaces as
+  // ChatLimitError; the IRCC disclaimer the function returns is appended to the
+  // answer (the web UI has no separate disclaimer slot like mobile).
   const res = await fetch("/api/companion", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

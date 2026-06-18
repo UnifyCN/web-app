@@ -2,20 +2,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Server-side proxy for the `rag-query` edge function (AI Companion replies).
+ * Server-side proxy for the `rag-query-web` edge function (AI Companion replies).
  *
- * The deployed `rag-query` function (mobile-owned, on the shared project) sets
- * no CORS headers and never answers the OPTIONS preflight, so a browser call via
- * `supabase.functions.invoke` is rejected before the function ever runs. The
- * browser instead POSTs to this same-origin route, which does a server→server
- * `functions.invoke` (no preflight) while forwarding the user's JWT (from
- * cookies) so the function identifies the user, enforces the daily quota, and
- * logs usage. Mirrors /api/moderation + /api/storage (Node runtime).
+ * `rag-query-web` is the web-dedicated function on the shared project (mobile
+ * keeps calling `rag-query`). It does ship CORS, but the browser still POSTs to
+ * this same-origin route, which does a server→server `functions.invoke` (no
+ * preflight) while forwarding the user's JWT (from cookies) so the function
+ * identifies the user, enforces the daily quota, and logs usage. Mirrors
+ * /api/moderation + /api/storage (Node runtime).
  *
  * The 429 daily-limit response is preserved verbatim (status + error body) so
  * the client can raise a ChatLimitError; other upstream errors are forwarded
- * with their status. maxDuration is higher than the other proxies because
- * rag-query runs an embedding lookup + an LLM completion (with retries).
+ * with their status. maxDuration is higher than the other proxies because the
+ * function runs an embedding lookup + an LLM completion (with retries).
  */
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -46,7 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
   }
 
-  const { data, error } = await supabase.functions.invoke("rag-query", {
+  const { data, error } = await supabase.functions.invoke("rag-query-web", {
     body: {
       prompt: body.prompt,
       conversationIdentifier: body.conversationIdentifier,
@@ -75,7 +74,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status });
   }
 
-  // rag-query (non-streaming) returns its body with an application/json
+  // rag-query-web (non-streaming) returns its body with an application/json
   // Content-Type, so supabase-js hands `data` back already parsed. Pass it
   // through; guard the string case defensively in case the header is dropped.
   let result: unknown = data;

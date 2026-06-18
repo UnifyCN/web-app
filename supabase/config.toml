@@ -13,6 +13,13 @@ project_id = "wrbauxutkysljmsqojts"
 # before reaching the function's own OPTIONS handler.
 verify_jwt = false
 
+[functions.rag-query-web]
+# Web-dedicated Companion function (mobile keeps calling rag-query). Same rationale
+# as rag-query: it validates the JWT itself (resolveAuthenticatedUserId) and 401s if
+# missing/invalid; gateway JWT off so the browser CORS preflight (OPTIONS, no auth
+# header) reaches the function's own OPTIONS handler.
+verify_jwt = false
+
 [functions.practice-feedback]
 # Same rationale as rag-query: the function validates the user's JWT itself
 # (supabase.auth.getUser) and 401s if missing/invalid. Gateway JWT off so the
