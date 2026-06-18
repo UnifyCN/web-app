@@ -265,50 +265,50 @@ export async function generateReply(
     return { answer: MOCK_REPLY, sources: null, suggestedNextSteps: null };
   }
 
-  const supabase = createClient();
-  const { data, error } = await supabase.functions.invoke<RagQueryResponse>(
-    "rag-query",
-    {
-      body: {
-        prompt: input.prompt,
-        conversationIdentifier: input.conversationIdentifier,
-        messages: input.history,
-      },
-    },
-  );
+  // The rag-query edge function ships no CORS headers and doesn't answer the
+  // OPTIONS preflight, so the browser can't call it directly. POST to the
+  // same-origin /api/companion proxy, which forwards to rag-query server-side
+  // with the user's JWT (no preflight). A 429 surfaces as ChatLimitError; the
+  // IRCC disclaimer the function returns is appended to the answer (the web UI
+  // has no separate disclaimer slot like mobile).
+  const res = await fetch("/api/companion", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      prompt: input.prompt,
+      conversationIdentifier: input.conversationIdentifier,
+      messages: input.history,
+    }),
+  });
 
-  if (error) {
-    // supabase-js FunctionsHttpError carries the Response on `.context`.
-    const ctx = (error as { context?: Response }).context;
-    if (ctx && typeof ctx.json === "function") {
-      let body: { error?: string } = {};
-      try {
-        body = await ctx.json();
-      } catch {
-        // non-JSON error body — fall through to the generic message
-      }
-      if (ctx.status === 429) {
-        throw new ChatLimitError(
-          body.error ?? "Daily message limit reached. Try again tomorrow.",
-        );
-      }
-      throw new Error(body.error ?? `rag-query failed (${ctx.status})`);
-    }
-    throw error;
+  let body: (RagQueryResponse & { error?: string }) | null = null;
+  try {
+    body = (await res.json()) as RagQueryResponse & { error?: string };
+  } catch {
+    // non-JSON body — handled by the !res.ok / missing-answer branches below
   }
 
-  if (!data || typeof data.answer !== "string") {
+  if (!res.ok) {
+    if (res.status === 429) {
+      throw new ChatLimitError(
+        body?.error ?? "Daily message limit reached. Try again tomorrow.",
+      );
+    }
+    throw new Error(body?.error ?? `rag-query failed (${res.status})`);
+  }
+
+  if (!body || typeof body.answer !== "string") {
     throw new Error("rag-query returned no answer");
   }
 
-  const answer = data.disclaimer
-    ? `${data.answer}\n\n${data.disclaimer}`
-    : data.answer;
+  const answer = body.disclaimer
+    ? `${body.answer}\n\n${body.disclaimer}`
+    : body.answer;
 
   return {
     answer,
-    sources: normalizeSources(data.sources),
-    suggestedNextSteps: normalizeSuggestions(data.suggestedNextSteps),
+    sources: normalizeSources(body.sources),
+    suggestedNextSteps: normalizeSuggestions(body.suggestedNextSteps),
   };
 }
 

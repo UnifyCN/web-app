@@ -72,9 +72,22 @@ async function callModeration(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  const data = (await res.json().catch(() => null)) as
-    | (ModerationFnResponse & { error?: string })
-    | null;
+  // The edge fn's body can arrive as a JSON string (text/plain Content-Type) and
+  // even double-encoded through the proxy, so parse defensively until we have an
+  // object — otherwise `data.success` reads as undefined and a genuine success
+  // is mis-reported as a failure.
+  let parsed: unknown = await res.json().catch(() => null);
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      // leave as the raw string — handled as a non-object below
+    }
+  }
+  const data =
+    parsed && typeof parsed === "object"
+      ? (parsed as ModerationFnResponse & { error?: string })
+      : null;
   if (!res.ok) {
     throw new Error(data?.error ?? "Moderation request failed.");
   }

@@ -177,13 +177,22 @@ export async function getUserById(
   // user_onboarding_profiles is own-row RLS, so a direct read of another user's
   // row returns nothing. The mobile `public-onboarding-profile` edge function
   // exposes the public-facing fields (persona + arrival_date); city / province /
-  // goals stay private and stage is derived from arrival_date. Best-effort: a
-  // failure just leaves the profile without persona / stage badges.
+  // goals stay private and stage is derived from arrival_date. It ships no CORS
+  // headers, so the browser can't invoke it directly — we go through the
+  // same-origin /api/onboarding-profile proxy. Best-effort: a failure just
+  // leaves the profile without persona / stage badges.
   let onboarding: UserProfile["onboarding"] = null;
   try {
-    const { data: fnData } = await supabase.functions.invoke<{
-      profile: { persona: Persona; arrival_date: string | null } | null;
-    }>("public-onboarding-profile", { body: { userId: id } });
+    const res = await fetch("/api/onboarding-profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: id }),
+    });
+    const fnData = res.ok
+      ? ((await res.json()) as {
+          profile: { persona: Persona; arrival_date: string | null } | null;
+        })
+      : null;
     const p = fnData?.profile;
     if (p) {
       onboarding = {

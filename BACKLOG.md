@@ -192,6 +192,73 @@ infinite scroll on the home feed; the int4/int8 + own-DB cross-join caveat; grow
 
 ---
 
+## Post-cutover audit (2026-06-17) — unfixed findings
+
+A deep regression audit (every feature compared before/after the PR #31 DB cutover,
+plus PRs #32–35 and PR B), verified against the live shared DB `wrbauxutkysljmsqojts`.
+The companion `rag-query` CORS proxy and six other fixes shipped on `feat/block-report`
+(daily-limit constant 6→30, onboarding gate → `onboarding_completed`, `ChatLimitError`
+surfaced in the Companion UI, GIF dropped from the upload allow-list, an
+`/api/onboarding-profile` proxy for the no-CORS `public-onboarding-profile` fn, and a
+`post_report` UNIQUE migration). The items below were **left unfixed** because they need
+shared-DB / mobile-owned-edge-function coordination or are lower-priority latent risks.
+
+**H2 — Companion rate-limit + refund infra is not deployed to the shared DB** *(needs DB + edge deploy)*
+The repo ships `supabase/migrations/20260530120100_chatbot_rate_limit.sql` (redefines
+`check_and_increment_chatbot_usage` to return **jsonb**, adds `decrement_chatbot_usage`)
+and a CORS-enabled `supabase/functions/rag-query/index.ts` that reads `quota.allowed` /
+`quota.charged_date` and calls `decrement_chatbot_usage`. **None is live:** the shared DB's
+`list_migrations` ends at mobile's `20260523221703`, the live RPC returns **boolean** (limit
+**30/day**), and `decrement_chatbot_usage` does not exist. The deployed `rag-query` is mobile's
+**v124** (no CORS — hence the `/api/companion` proxy — boolean-aware, no refund). **Hazard:**
+deploying the repo's `rag-query` as-is would 503 every chat (reads jsonb fields off a boolean)
+and error every refund. Decision: either (a) stay on the proxy + v124 (current, working — the
+UI now shows 30/day to match), or (b) coordinate a shared-DB migration + function deploy to get
+the intended 6/day cap + refund. Until then keep H1's constant at 30.
+
+**H3 — A failed AI generation permanently burns a daily message (no refund)** *(ships with H2)*
+The live v124 increments quota atomically with zero refund logic; on an upstream LLM failure
+the user is charged and gets no answer (`hooks/useCompanion.ts` also persists the user message
+before `generateReply`). The refund (`decrement_chatbot_usage`) exists only in the undeployed
+web code above. Fixed only once H2 is resolved.
+
+**M1 follow-up — `report-post` edge fn checks a non-existent `reports` table** *(mobile-owned edge fn)*
+The live `report-post` function does its duplicate check against a `reports` table that doesn't
+exist on the shared DB, so the check errors silently and every report inserts (firing a
+moderator email each time). The committed `20260617160000_post_report_unique_reporter_post.sql`
+migration (manual dashboard apply) enforces dedup at the DB level, but the mobile-owned
+`report-post` fn should additionally map the resulting **23505** unique-violation → an
+"Already reported" success/no-op so both web and mobile show a clean message rather than a
+generic failure. (`services/moderation.ts` already treats `"Already reported"` as benign.)
+
+**F1 — `posts.comment_count` drifts; no comment-count sync trigger on the shared DB** *(needs mobile-coordinated trigger)*
+The web (and CLAUDE.md / this backlog's P2 note) assume an `update_post_comment_count` trigger
+on `post_comments`. It **does not exist** on the shared DB — `comment_count` disagrees with the
+real count on ~73% of live posts. User-facing counts are currently correct (the feed card reads
+the **RPC-derived** count, the detail page uses `comments.length`), so impact is limited to the
+RPC-error fallback in `services/feed.ts` and any other consumer trusting the column. Fix: add the
+count-sync trigger on the shared DB (mobile-coordinated), or stop relying on the column.
+
+**Lower-severity latent items**
+- **Learn — `total_questions = 0` would violate a CHECK constraint.** The shared progress tables
+  enforce `total_questions > 0`; `services/learn.ts` upserts pass it through unvalidated. Guarded
+  today only by component/page render guards — any future caller reaching the service with an
+  empty set throws a 23514. Add a service-layer guard.
+- **Learn — `learn_favourites` / practice / quiz tables FK `public.users`** (not `auth.users`), so a
+  brand-new account 23503s on those writes until `ensureUserRow` has bootstrapped its `public.users`
+  row. Confirm the bootstrap runs before any Learn write.
+- **Community — `news_details.category` has no data** on the shared DB (the badge never renders) and
+  `getNews` sorts on a nullable `date` without `nullsLast`; `groups.member_count` is nullable but
+  `rowToGroup` passes it through as `number`.
+- **Feed — `createPost` inserts `title: ""`** instead of `null`, bypassing the mobile `'Untitled'`
+  default (latent — the composer requires a title today).
+- **Community Circles — stage ↔ `time_in_canada` mapping is non-bijective and type-unsound** (the
+  `2_to_3_years` cohort, and `onboarding.stage as Stage` casts at `services/community.ts:354,401`).
+  Latent because `timeInCanada` is unrendered and Circles is hidden. See Schema → "Circle pool_key /
+  stage vocabulary reconciliation".
+
+---
+
 ## Feasible mobile-parity gaps (no shared social graph / DB sandbox needed)
 
 Surfaced from a mobile-repo sweep (`UnifyCN/mobile-app`, merged PRs #1–#276, 2026-06-06)
@@ -366,19 +433,19 @@ Deferred from Phase 5. Group.memberAvatars is a UI-only convenience seeded from 
 
 ## Profile / Social
 
-**Other-user persona / city / stage hidden by own-row RLS** *(needs the DB sandbox)*
+**Other-user persona / stage — ✅ now surfaced via the `/api/onboarding-profile` proxy (PR B)**
 From P3 (PR #29). `user_onboarding_profiles` has own-row SELECT RLS
-(`onboarding_select_own`: `id = auth.uid()`), so `getUserById` (`services/profile.ts`)
-can only read the *caller's* onboarding row — for any other user it comes back null. The
-result: on another user's profile the **persona badge, city/province, and stage indicator
-don't render** (name/handle/bio/pronouns/follow counts/posts/comments all work). This is
-by design (privacy-preserving), not a bug, and is documented in the `services/profile.ts`
-header comment. To surface a sanitized public profile, add **one** of: (a) a
-`public_profiles` view exposing only `persona`/`city`/`province`/`stage` with a
-read-to-`authenticated` policy; (b) an additive SELECT policy on the table scoped to those
-columns; or (c) an edge function returning a vetted public-profile shape. All three need
-**DB write access** (the MCP is read-only and `db push` is unsafe against the drifted
-remote history — see Phase 18 note), so this is parked until the DB sandbox is available.
+(`onboarding_select_own`: `id = auth.uid()`), so a direct read of another user's onboarding
+row returns null. The mobile `public-onboarding-profile` edge function (service-role) already
+exposes the public-facing fields (`persona` / `persona_other` / `arrival_date`, with stage
+derived from `arrival_date`); `getUserById` (`services/profile.ts`) calls it, but the function
+ships **no CORS headers**, so the browser invoke was silently failing and the badges never
+rendered. PR B added the same-origin **`/api/onboarding-profile` proxy** (mirrors
+`/api/companion`), so the **persona badge + stage indicator now render** on other users'
+profiles. *Still hidden by design:* **city / province / goals** (private — the function
+deliberately doesn't return them). To also surface those, add option (a) a `public_profiles`
+view, (b) a column-scoped additive SELECT policy, or (c) extend the edge function — all need
+**DB write access** (the MCP is read-only; `db push` unsafe against the drifted history).
 
 **Delete account** *(needs the DB sandbox)*
 From P6 (settings PR). The Settings → Account "Delete account" button is already stubbed

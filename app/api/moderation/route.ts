@@ -75,6 +75,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  // The edge fn returns { success, error? } at HTTP 200.
-  return NextResponse.json(data ?? { success: false, error: "Empty response" });
+  // The edge fns return their JSON body with a text/plain Content-Type (they
+  // don't set application/json), so supabase-js hands `data` back as a raw
+  // STRING. Normalize to an object so the client gets a real { success, error? }
+  // instead of an unparsed string (whose `.success` would read as undefined).
+  let result: unknown = data;
+  if (typeof data === "string") {
+    try {
+      result = JSON.parse(data);
+    } catch {
+      result = { success: false, error: data || "Unexpected response" };
+    }
+  }
+  return NextResponse.json(result ?? { success: false, error: "Empty response" });
 }

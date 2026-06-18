@@ -163,7 +163,7 @@ export async function proxy(request: NextRequest) {
   if (!onboarded) {
     const { data, error } = await supabase
       .from("user_onboarding_profiles")
-      .select("id")
+      .select("onboarding_completed")
       .eq("id", user.id)
       .maybeSingle();
     if (error) {
@@ -172,7 +172,11 @@ export async function proxy(request: NextRequest) {
       console.error("proxy: onboarding gate query failed", error);
       return response;
     }
-    onboarded = Boolean(data);
+    // Gate on the explicit completion flag, not mere row existence: the shared
+    // mobile DB has partially-onboarded rows (onboarding_completed=false, stage
+    // NULL) that must still be routed through the web wizard. A missing row or a
+    // NULL flag both read as not-onboarded.
+    onboarded = data?.onboarding_completed === true;
     if (onboarded) {
       response.cookies.set(ONBOARDED_COOKIE, user.id, hintCookieOptions());
     }

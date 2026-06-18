@@ -16,6 +16,8 @@ interface ChatPanelProps {
   messages: ChatMessage[];
   isTyping: boolean;
   freeTierRemaining: number;
+  /** Non-blocking send error (e.g. daily-limit reached) shown above the input. */
+  errorMessage?: string | null;
   onSend: (text: string) => void;
   onboarding: UserOnboardingProfile | null;
 }
@@ -42,6 +44,7 @@ export function ChatPanel({
   messages,
   isTyping,
   freeTierRemaining,
+  errorMessage,
   onSend,
   onboarding,
 }: ChatPanelProps) {
@@ -119,6 +122,14 @@ export function ChatPanel({
       {/* Input area */}
       <div className="border-t border-border-card px-6 py-3">
         <div className="mx-auto w-full max-w-2xl space-y-1.5">
+          {errorMessage && (
+            <p
+              role="alert"
+              className="text-center text-xs font-medium text-destructive"
+            >
+              {errorMessage}
+            </p>
+          )}
           <ChatInput
             value={draft}
             onValueChange={setDraft}
