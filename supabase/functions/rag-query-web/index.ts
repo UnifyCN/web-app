@@ -208,24 +208,6 @@ function buildUserProfileContext(profile: Record<string, unknown>): string {
   return `\nUSER PROFILE CONTEXT:\n${parts.join(' ')}`;
 }
 
-/**
- * Build a profile-aware string to embed for vector retrieval. Prepending
- * province + persona pulls more relevant chunks (e.g. a Quebec user pulls
- * Quebec-specific content) without changing the user-visible answer.
- */
-function buildRetrievalQuery(
-  prompt: string,
-  profile: Record<string, unknown> | null
-): string {
-  if (!profile) return prompt;
-  const province = profile.province as string | null;
-  const persona = profile.persona as string | null;
-  const cues = [province, persona?.replace(/_/g, ' ')]
-    .filter(Boolean)
-    .join(', ');
-  return cues ? `[Context: ${cues}] ${prompt}` : prompt;
-}
-
 type ProfileBundle = {
   text: string;
   raw: Record<string, unknown> | null;
@@ -657,12 +639,12 @@ Deno.serve(async (req: Request) => {
       // than throwing a 500. hasGoodKBHits stays false, so the no-KB prompt +
       // disclaimer take over below.
       try {
-        const profileBundleForRetrieval = await profilePromise;
-        const retrievalQuery = buildRetrievalQuery(
-          prompt,
-          profileBundleForRetrieval.raw
-        );
-
+        // Embed the RAW user question for vector retrieval (no persona/province
+        // prefix). Prepending "[Context: <province>, <persona>]" biased retrieval
+        // toward persona-general docs and buried specific-topic docs (e.g. a SIN
+        // question pulled generic study/work/immigration pages instead of the SIN
+        // docs). Personalization is kept in the ANSWER prompt via the USER PROFILE
+        // CONTEXT block (buildUserProfileContext), so the answer is still tailored.
         const embeddingResponse = await fetchWithRetry(
           'https://openrouter.ai/api/v1/embeddings',
           {
@@ -673,7 +655,7 @@ Deno.serve(async (req: Request) => {
             },
             body: JSON.stringify({
               model: EMBEDDING_MODEL,
-              input: retrievalQuery,
+              input: prompt,
             }),
           },
           { timeoutMs: 15000, retries: 2, retryDelayMs: 400 }
