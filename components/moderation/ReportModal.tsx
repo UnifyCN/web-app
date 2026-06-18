@@ -63,7 +63,7 @@ export function ReportModal({
       />
       <div className="mt-1 flex justify-end">
         <span className="text-xs text-ink-placeholder">
-          {trimmed.length}/{MAX_REASON}
+          {reason.length}/{MAX_REASON}
         </span>
       </div>
       <div className="mt-3 flex items-center justify-end gap-2">

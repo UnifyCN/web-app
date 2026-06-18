@@ -195,26 +195,28 @@ infinite scroll on the home feed; the int4/int8 + own-DB cross-join caveat; grow
 ## Post-cutover audit (2026-06-17) — unfixed findings
 
 A deep regression audit (every feature compared before/after the PR #31 DB cutover,
-plus PRs #32–35 and PR B), verified against the live shared DB `wrbauxutkysljmsqojts`.
+plus PRs #33–35 and PR B), verified against the live shared DB `wrbauxutkysljmsqojts`.
 The companion `rag-query` CORS proxy and six other fixes shipped on `feat/block-report`
-(daily-limit constant 6→30, onboarding gate → `onboarding_completed`, `ChatLimitError`
-surfaced in the Companion UI, GIF dropped from the upload allow-list, an
-`/api/onboarding-profile` proxy for the no-CORS `public-onboarding-profile` fn, and a
-`post_report` UNIQUE migration). The items below were **left unfixed** because they need
-shared-DB / mobile-owned-edge-function coordination or are lower-priority latent risks.
+(daily-limit constant aligned to the edge function at 6/day, onboarding gate →
+`onboarding_completed`, `ChatLimitError` surfaced in the Companion UI, GIF dropped from
+the upload allow-list, an `/api/onboarding-profile` proxy for the no-CORS
+`public-onboarding-profile` fn, and a `post_report` UNIQUE migration). The items below were
+**left unfixed** because they need shared-DB / mobile-owned-edge-function coordination or
+are lower-priority latent risks.
 
-**H2 — Companion rate-limit + refund infra is not deployed to the shared DB** *(needs DB + edge deploy)*
+**H2 — Companion refund infra (jsonb RPC) is not deployed to the shared DB** *(needs DB + edge deploy)*
 The repo ships `supabase/migrations/20260530120100_chatbot_rate_limit.sql` (redefines
 `check_and_increment_chatbot_usage` to return **jsonb**, adds `decrement_chatbot_usage`)
 and a CORS-enabled `supabase/functions/rag-query/index.ts` that reads `quota.allowed` /
-`quota.charged_date` and calls `decrement_chatbot_usage`. **None is live:** the shared DB's
-`list_migrations` ends at mobile's `20260523221703`, the live RPC returns **boolean** (limit
-**30/day**), and `decrement_chatbot_usage` does not exist. The deployed `rag-query` is mobile's
-**v124** (no CORS — hence the `/api/companion` proxy — boolean-aware, no refund). **Hazard:**
-deploying the repo's `rag-query` as-is would 503 every chat (reads jsonb fields off a boolean)
-and error every refund. Decision: either (a) stay on the proxy + v124 (current, working — the
-UI now shows 30/day to match), or (b) coordinate a shared-DB migration + function deploy to get
-the intended 6/day cap + refund. Until then keep H1's constant at 30.
+`quota.charged_date` and calls `decrement_chatbot_usage`. **That migration is still pending:**
+the live RPC returns **boolean** and `decrement_chatbot_usage` does not exist. The deployed
+`rag-query` now **enforces 6/day**, so the UI's `FREE_TIER_DAILY_LIMIT` and the edge function
+are aligned at 6 — but it still uses the boolean RPC and has no refund (see H3). **Hazard:**
+deploying the repo's jsonb-expecting `rag-query` before the migration lands would 503 every
+chat (reads jsonb fields off a boolean) and error every refund. Decision: either (a) stay on
+the proxy + the current boolean-RPC function (working — UI and edge aligned at 6), or
+(b) coordinate the shared-DB migration + function deploy to add the refund. Until then keep
+the companion rate-limit constant at 6.
 
 **H3 — A failed AI generation permanently burns a daily message (no refund)** *(ships with H2)*
 The live v124 increments quota atomically with zero refund logic; on an upstream LLM failure
@@ -492,7 +494,7 @@ Enable leaked password protection (HaveIBeenPwned.org) in Supabase Dashboard →
 
 **Storage upload MIME type enforcement — ✅ SHIPPED (PR #35)**
 `app/api/storage/route.ts` now sniffs the actual leading bytes with the `file-type` package and
-rejects uploads whose content isn't an allowed image (png/jpeg/webp/gif) or **contradicts the
+rejects uploads whose content isn't an allowed image (png/jpeg/webp) or **contradicts the
 client-declared `Content-Type`** (which is spoofable); it signs + S3-PUTs with the *detected* MIME,
 reusing the single `arrayBuffer()` read (route pinned to the Node.js runtime). Previously only
 `file.type` + `file.size` were validated, so a non-image sent as `Content-Type: image/png` passed.

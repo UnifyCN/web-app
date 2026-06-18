@@ -32,6 +32,15 @@ WHERE a.reporter_id IS NOT NULL
   AND a.post_id = b.post_id
   AND a.id > b.id;
 
--- 2. One report per (reporter, post).
-ALTER TABLE public.post_report
-  ADD CONSTRAINT post_report_reporter_post_unique UNIQUE (reporter_id, post_id);
+-- 2. One report per (reporter, post). Wrapped so the migration is replay-safe
+--    (re-running it when the constraint already exists is a no-op rather than a
+--    "constraint already exists" error).
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'post_report_reporter_post_unique'
+  ) THEN
+    ALTER TABLE public.post_report
+      ADD CONSTRAINT post_report_reporter_post_unique UNIQUE (reporter_id, post_id);
+  END IF;
+END $$;

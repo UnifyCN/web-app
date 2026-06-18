@@ -188,12 +188,24 @@ export async function getUserById(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: id }),
     });
-    const fnData = res.ok
-      ? ((await res.json()) as {
-          profile: { persona: Persona; arrival_date: string | null } | null;
-        })
-      : null;
-    const p = fnData?.profile;
+    // Validate the proxy payload at runtime before trusting its shape (no blind
+    // cast): an object whose `profile` carries a string persona, with
+    // arrival_date normalized to string | null. Anything else leaves badges unset.
+    const isRecord = (v: unknown): v is Record<string, unknown> =>
+      typeof v === "object" && v !== null && !Array.isArray(v);
+    const parsed: unknown = res.ok ? await res.json().catch(() => null) : null;
+    const rawProfile =
+      isRecord(parsed) && isRecord(parsed.profile) ? parsed.profile : null;
+    const p =
+      rawProfile && typeof rawProfile.persona === "string"
+        ? {
+            persona: rawProfile.persona as Persona,
+            arrival_date:
+              typeof rawProfile.arrival_date === "string"
+                ? rawProfile.arrival_date
+                : null,
+          }
+        : null;
     if (p) {
       onboarding = {
         id,

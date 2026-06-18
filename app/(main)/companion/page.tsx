@@ -19,8 +19,8 @@ import type { ChatMessage } from "@/types";
 
 // Free-tier daily cap shown next to the input. Must match the limit the deployed
 // rag-query edge function enforces via check_and_increment_chatbot_usage — the
-// shared-DB function currently allows 30 messages/day.
-const FREE_TIER_DAILY_LIMIT = 30;
+// shared-DB function now allows 6 messages/day.
+const FREE_TIER_DAILY_LIMIT = 6;
 
 export default function CompanionPage() {
   const queryClient = useQueryClient();

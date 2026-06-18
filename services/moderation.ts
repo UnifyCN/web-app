@@ -45,7 +45,8 @@ function assertFnSuccess(
   throw new Error(err ?? fallback);
 }
 
-/** Trim + length-validate a report reason (matches the edge functions' 5–500). */
+/** Trim + length-validate a report reason (matches the edge functions' 5–500).
+ *  Throws on both bounds rather than silently truncating an over-long reason. */
 function validateReason(reason: string): string {
   const trimmed = reason.trim();
   if (trimmed.length < MIN_REASON) {
@@ -53,7 +54,12 @@ function validateReason(reason: string): string {
       `Please provide a short reason (min ${MIN_REASON} characters).`,
     );
   }
-  return trimmed.slice(0, MAX_REASON);
+  if (trimmed.length > MAX_REASON) {
+    throw new Error(
+      `Reason is too long (max ${MAX_REASON} characters).`,
+    );
+  }
+  return trimmed;
 }
 
 /**
@@ -182,7 +188,10 @@ export async function blockUser(blockedUserId: string): Promise<void> {
   if (!userId) throw new Error("blockUser: no auth session");
   if (userId === blockedUserId) throw new Error("You can't block yourself.");
 
-  const data = await callModeration({ action: "block", blockedUserId });
+  const data = await callModeration({
+    action: "block",
+    blocked_user_id: blockedUserId,
+  });
   assertFnSuccess(data, "Failed to block user.", ["Already blocked"]);
 }
 
@@ -208,10 +217,12 @@ export async function reportPost(
 ): Promise<void> {
   const trimmed = validateReason(reason);
   if (!isSupabaseConfigured()) return;
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("reportPost: no auth session");
 
   const data = await callModeration({
     action: "report-post",
-    postId,
+    post_id: postId,
     reason: trimmed,
   });
   assertFnSuccess(data, "Failed to submit report.", ["Already reported"]);
@@ -223,10 +234,12 @@ export async function reportUser(
 ): Promise<void> {
   const trimmed = validateReason(reason);
   if (!isSupabaseConfigured()) return;
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("reportUser: no auth session");
 
   const data = await callModeration({
     action: "report-user",
-    userId: reportedUserId,
+    user_id: reportedUserId,
     reason: trimmed,
   });
   assertFnSuccess(data, "Failed to submit report.", ["Already reported"]);

@@ -15,10 +15,32 @@ import { createClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const maxDuration = 10;
 
-type ModerationBody =
-  | { action: "block"; blockedUserId: string }
-  | { action: "report-post"; postId: number; reason: string }
-  | { action: "report-user"; userId: string; reason: string };
+// Mirror the service-side reason bounds (services/moderation.ts) and the edge
+// functions' own 5–500 validation.
+const MIN_REASON = 5;
+const MAX_REASON = 500;
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function asNonEmptyString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function asReason(value: unknown): string | null {
+  const reason = asNonEmptyString(value);
+  if (!reason || reason.length < MIN_REASON || reason.length > MAX_REASON) {
+    return null;
+  }
+  return reason;
+}
+
+/** Whether an upstream error/body looks like a unique-constraint duplicate, i.e.
+ *  the new post_report UNIQUE(reporter_id, post_id) firing on a repeat report. */
+function isDuplicateConstraint(text: string | undefined): boolean {
+  return Boolean(text) && /23505|duplicate key|unique constraint/i.test(text!);
+}
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -29,28 +51,80 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: ModerationBody;
+  let body: Record<string, unknown>;
   try {
-    body = (await req.json()) as ModerationBody;
+    const parsed = await req.json();
+    if (!isObject(parsed)) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    body = parsed;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  // The browser sends snake_case (services/moderation.ts); also accept camelCase
+  // for backwards compatibility. The edge functions themselves read camelCase,
+  // so this route stays the snake_case → camelCase translation layer.
   let slug: string;
   let payload: Record<string, unknown>;
   switch (body.action) {
-    case "block":
+    case "block": {
+      const blockedUserId = asNonEmptyString(
+        body.blocked_user_id ?? body.blockedUserId,
+      );
+      if (!blockedUserId) {
+        return NextResponse.json(
+          { error: "Missing blocked user." },
+          { status: 400 },
+        );
+      }
+      if (blockedUserId === user.id) {
+        return NextResponse.json(
+          { error: "You can't block yourself." },
+          { status: 400 },
+        );
+      }
       slug = "block-user";
-      payload = { blockedUserId: body.blockedUserId };
+      payload = { blockedUserId };
       break;
-    case "report-post":
+    }
+    case "report-post": {
+      const postId = body.post_id ?? body.postId;
+      const reason = asReason(body.reason);
+      if (
+        typeof postId !== "number" ||
+        !Number.isInteger(postId) ||
+        postId <= 0 ||
+        !reason
+      ) {
+        return NextResponse.json(
+          { error: "Invalid post report." },
+          { status: 400 },
+        );
+      }
       slug = "report-post";
-      payload = { postId: body.postId, reason: body.reason };
+      payload = { postId, reason };
       break;
-    case "report-user":
+    }
+    case "report-user": {
+      const reportedUserId = asNonEmptyString(body.user_id ?? body.userId);
+      const reason = asReason(body.reason);
+      if (!reportedUserId || !reason) {
+        return NextResponse.json(
+          { error: "Invalid user report." },
+          { status: 400 },
+        );
+      }
+      if (reportedUserId === user.id) {
+        return NextResponse.json(
+          { error: "You can't report yourself." },
+          { status: 400 },
+        );
+      }
       slug = "report-user";
-      payload = { userId: body.userId, reason: body.reason };
+      payload = { userId: reportedUserId, reason };
       break;
+    }
     default:
       return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   }
@@ -72,6 +146,12 @@ export async function POST(req: NextRequest) {
         // non-JSON error body — keep the generic message
       }
     }
+    // A repeat report can surface as the post_report UNIQUE constraint firing
+    // upstream. Don't turn that into a 502 the client treats as a transport
+    // failure — normalize it to a benign success so the report reads as a no-op.
+    if (isDuplicateConstraint(message)) {
+      return NextResponse.json({ success: true });
+    }
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
@@ -86,6 +166,15 @@ export async function POST(req: NextRequest) {
     } catch {
       result = { success: false, error: data || "Unexpected response" };
     }
+  }
+  // Same duplicate normalization for the 200-with-{success:false} shape, in case
+  // the edge fn reports the unique violation in its JSON body instead of erroring.
+  if (
+    isObject(result) &&
+    result.success === false &&
+    isDuplicateConstraint(typeof result.error === "string" ? result.error : undefined)
+  ) {
+    return NextResponse.json({ success: true });
   }
   return NextResponse.json(result ?? { success: false, error: "Empty response" });
 }
