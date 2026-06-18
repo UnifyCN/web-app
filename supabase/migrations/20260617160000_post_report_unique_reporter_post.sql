@@ -38,9 +38,11 @@ WHERE a.reporter_id IS NOT NULL
 DO $$
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'post_report_reporter_post_unique'
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'post_report_reporter_post_unique'
+      AND conrelid = 'public.post_report'::regclass
   ) THEN
     ALTER TABLE public.post_report
       ADD CONSTRAINT post_report_reporter_post_unique UNIQUE (reporter_id, post_id);
   END IF;
-END $$;
+END; $$;
