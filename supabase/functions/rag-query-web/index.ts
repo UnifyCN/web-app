@@ -8,10 +8,11 @@
 //     on the shared DB (the jsonb { allowed, charged_date } variant is NOT
 //     deployed). No refund: decrement_chatbot_usage does not exist on the shared
 //     DB, so a failed generation still consumes the message (accepted tradeoff).
-//   - Vector search match_threshold = 0.5 (was 0.3) for tighter source relevance.
+//   - Vector search match_threshold = 0.3 (cosine) — appropriate for
+//     text-embedding-3-small short-query→chunk similarity (0.5 over-filtered).
 //   - Profile context uses the web user_onboarding_profiles schema (persona,
 //     stage 0-4, city, province, arrival_date, goals[], learning_interests[]).
-//   - Name personalization uses users.username (web has no first_name).
+//   - Name personalization uses users.first_name (fallback users.username).
 //   - Daily message limit = 6 (web free tier).
 //   - Non-streaming only; token/cost tracking RPC dropped (web chatbot_usage has
 //     no token columns, and analytics is disabled).
@@ -609,21 +610,23 @@ Deno.serve(async (req: Request) => {
       ? fetchUserProfileContext(supabase, effectiveUserId)
       : Promise.resolve<ProfileBundle>({ text: '', raw: null });
 
-    // Web has no users.first_name — personalize with the username instead.
+    // Personalize with the user's first name, falling back to username.
     const firstNamePromise: Promise<string | null> =
       !isEvalMode && effectiveUserId
         ? (async () => {
             try {
               const { data: userRow } = await supabase
                 .from('users')
-                .select('username')
+                .select('first_name, username')
                 .eq('id', effectiveUserId)
                 .maybeSingle();
               return sanitizeNameForPrompt(
-                (userRow?.username as string | null) ?? null
+                (userRow?.first_name as string | null) ??
+                  (userRow?.username as string | null) ??
+                  null
               );
             } catch (err) {
-              console.warn('[rag-query] username lookup failed (non-fatal)', err);
+              console.warn('[rag-query] name lookup failed (non-fatal)', err);
               return null;
             }
           })()
@@ -701,7 +704,7 @@ Deno.serve(async (req: Request) => {
           'match_chunks',
           {
             query_embedding: queryEmbedding,
-            match_threshold: 0.5,
+            match_threshold: 0.3,
             match_count: 10,
           }
         );
