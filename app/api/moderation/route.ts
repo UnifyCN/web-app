@@ -104,14 +104,20 @@ export async function POST(req: NextRequest) {
       }
       // Self-report guard (mirrors block / report-user). The post author isn't in
       // the request body, so look it up; posts are world-readable under RLS.
-      // Best-effort: a missing post / failed lookup leaves `post` null and lets
-      // the report proceed rather than blocking a legit report on a transient error.
-      const { data: post } = await supabase
+      // Fail-closed: if the lookup errors or the post is missing, reject rather
+      // than letting an unverifiable report through.
+      const { data: post, error: postErr } = await supabase
         .from("posts")
         .select("user_id")
         .eq("id", postId)
         .maybeSingle();
-      if (post?.user_id === user.id) {
+      if (postErr || !post) {
+        return NextResponse.json(
+          { error: "Could not verify post ownership." },
+          { status: 400 },
+        );
+      }
+      if (post.user_id === user.id) {
         return NextResponse.json(
           { error: "Cannot report your own post." },
           { status: 400 },

@@ -224,6 +224,20 @@ the user is charged and gets no answer (`hooks/useCompanion.ts` also persists th
 before `generateReply`). The refund (`decrement_chatbot_usage`) exists only in the undeployed
 web code above. Fixed only once H2 is resolved.
 
+**KB `source_url` — legacy-seed gap, not an ingestion bug** *(backfill + mobile/ops follow-up)*
+Some `knowledge_documents` have NULL `source_url`, so the Companion answer carries no citation pill
+for them. Root cause: the `ingest-documents` **crawler** (mobile-owned, URL-sourced) **already sets
+`source_url` on every doc it ingests** — the NULL rows are legacy from the original one-time CSV KB
+seed (commit `c858d8d`) that imported files with `storage_path` but no `source_url`. Past migrations
+backfilled most; SIN (5/22) and MSP/TFSA (8/11) are backfilled via the
+`20260618130000` / `20260618140000` manual-apply migrations. ids 17 (Goals) / 18 (Networking) are
+internal modules with no external source — intentionally left NULL. **No web code change**: the web
+app has no KB-ingestion path, and a DB constraint/trigger on `source_url` would wrongly reject the
+source-less internal docs. *Separate real blocker:* the crawler is currently **HTTP 546-failing** on
+the shared project because it requires `OPENAI_API_KEY` (the project standardized on
+`OPENROUTER_API_KEY`) — until that secret is set (or the crawler is ported to OpenRouter, both
+mobile/ops), no new KB docs get ingested at all.
+
 **M1 follow-up — `report-post` edge fn checks a non-existent `reports` table** *(mobile-owned edge fn)*
 The live `report-post` function does its duplicate check against a `reports` table that doesn't
 exist on the shared DB, so the check errors silently and every report inserts (firing a
