@@ -2,15 +2,15 @@
   Supabase "Change Email Address" email template (reference copy — version control only).
   Apply in the dashboard: Authentication → Email Templates → Change Email Address → paste this HTML.
 
-  The confirm button links to the web app's /auth/callback via the token-hash flow. It points
-  at http://localhost:3000 (the local web origin) because the emailRedirectTo option on
-  auth.updateUser is a confirmed Supabase bug (ignored), and {{ .SiteURL }} on this shared
-  project is the mobile Expo URL (exp://…), which a browser can't open. The callback runs
-  verifyOtp({ token_hash, type: 'email_change' }) and redirects to /settings?emailChanged=1.
-  At production launch, update http://localhost:3000 to the production domain. Coordinate with
-  the mobile team since this Supabase project is shared. See BACKLOG.md → Email & Branding.
-  With "Secure email change" on, both the old and new addresses receive this email; both links
-  must be clicked to complete the change.
+  The confirm button links to the web app's /auth/callback via the token-hash flow, built from
+  {{ .SiteURL }}. The Supabase Site URL is now set to the production domain
+  (https://app.unifysocial.ca), so the link resolves in a browser. (The emailRedirectTo option on
+  auth.updateUser is a confirmed Supabase bug and is ignored, so the link relies on Site URL.)
+  The callback runs verifyOtp({ token_hash, type: 'email_change' }) and redirects to
+  /settings?emailChanged=1. This Supabase project is shared with the mobile app and the Site URL
+  is a single shared value — coordinate any Site URL change with the mobile team. See
+  BACKLOG.md → Email & Branding. With "Secure email change" on, both the old and new addresses
+  receive this email; both links must be clicked to complete the change.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -32,13 +32,13 @@
                   We received a request to change the email on your Unify account. Click the button below to confirm this is your new address.
                 </p>
 
-                <!-- Confirm button → web /auth/callback (token-hash flow).
-                     At production launch, update http://localhost:3000 to the production domain.
-                     Coordinate with mobile team since this Supabase project is shared. -->
+                <!-- Confirm button → web /auth/callback (token-hash flow) via {{ .SiteURL }}
+                     (now the production domain). Shared Supabase project — coordinate Site URL
+                     changes with the mobile team. -->
                 <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto 30px;">
                   <tr>
                     <td align="center" style="border-radius: 8px; background-color: #000000;">
-                      <a href="https://app.unifysocial.ca/auth/callback?token_hash={{ .TokenHash }}&amp;type=email_change" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: bold; color: #ffffff; text-decoration: none; border-radius: 8px;">
+                      <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&amp;type=email_change" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: bold; color: #ffffff; text-decoration: none; border-radius: 8px;">
                         Confirm new email
                       </a>
                     </td>
