@@ -10,6 +10,7 @@ import { PersonaBadge } from "./PersonaBadge";
 import { StageIndicator } from "./StageIndicator";
 import { OnboardingEditModal } from "@/components/onboarding/OnboardingEditModal";
 import { UserModerationMenu } from "@/components/moderation/UserModerationMenu";
+import { moveCaretToEnd } from "@/lib/utils";
 import {
   useRemoveAvatar,
   useUpdateAvatar,
@@ -238,19 +239,23 @@ export function ProfileHeader({
       {editingDetails ? (
         <div className="mt-3 space-y-2">
           <textarea
+            aria-label="Bio"
             value={bioDraft}
             onChange={(event) => setBioDraft(event.target.value)}
             rows={3}
             maxLength={300}
             placeholder="Add a short bio"
-            className="w-full resize-none rounded-lg border border-border-card bg-surface px-3 py-2 text-sm text-ink-muted outline-none focus:border-primary"
+            className="w-full resize-none rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink-muted outline-none focus:border-primary"
           />
           <input
+            type="text"
+            aria-label="Pronouns"
             value={pronounsDraft}
             onChange={(event) => setPronounsDraft(event.target.value)}
             maxLength={30}
             placeholder="Pronouns (e.g. she/her)"
-            className="w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-sm text-ink-muted outline-none focus:border-primary"
+            onFocus={moveCaretToEnd}
+            className="w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink-muted outline-none focus:border-primary"
           />
           <div className="flex gap-2">
             <Button

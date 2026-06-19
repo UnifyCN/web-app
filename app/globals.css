@@ -265,23 +265,24 @@ input:-webkit-autofill:active {
   transform: scaleX(1);
 }
 
-/* Skeleton → content / list entrance — subtle fade. Gated on no-preference
- * so reduced-motion users see content appear instantly. */
-@media (prefers-reduced-motion: no-preference) {
-  /* Opacity-only — must NOT use `transform`: a persisted transform (animation
-   * `both`) establishes a containing block that clips `fixed` modal overlays
-   * rendered inside these page wrappers to the content column. */
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+/* Skeleton → content / list entrance — subtle fade. Defined unconditionally so
+ * it fires on mobile Safari: the previous `prefers-reduced-motion: no-preference`
+ * wrapper silently suppressed it whenever that query didn't evaluate true on a
+ * phone (notably iOS Low Power Mode, which forces the reduce signal). Users who
+ * actually enabled Reduce Motion are still covered by the `reduce` override below. */
+/* Opacity-only — must NOT use `transform`: a persisted transform (animation
+ * `both`) establishes a containing block that clips `fixed` modal overlays
+ * rendered inside these page wrappers to the content column. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
   }
-  .animate-fade-in {
-    animation: fade-in 150ms ease-out both;
+  to {
+    opacity: 1;
   }
+}
+.animate-fade-in {
+  animation: fade-in 150ms ease-out both;
 }
 
 /* Respect reduced-motion — disable non-essential animation */

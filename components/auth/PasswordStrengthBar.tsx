@@ -7,16 +7,26 @@ const META: Record<
   StrengthLevel,
   { label: string; text: string; bar: string }
 > = {
+  "very-weak": {
+    label: "Very weak",
+    text: "text-destructive-label",
+    bar: "bg-destructive",
+  },
   weak: { label: "Weak", text: "text-destructive-label", bar: "bg-destructive" },
-  medium: { label: "Medium", text: "text-warning", bar: "bg-warning" },
+  fair: { label: "Fair", text: "text-warning", bar: "bg-warning" },
   strong: {
     label: "Strong",
     text: "text-success-label",
     bar: "bg-success-bright",
   },
+  "very-strong": {
+    label: "Very strong",
+    text: "text-success-label",
+    bar: "bg-success-bright",
+  },
 };
 
-/** Three-segment password-strength meter shown under the signup password field. */
+/** Five-segment password-strength meter shown under the signup password field. */
 export function PasswordStrengthBar({ password }: { password: string }) {
   if (!password) return null;
   const { level, filled } = passwordStrength(password);
@@ -24,7 +34,7 @@ export function PasswordStrengthBar({ password }: { password: string }) {
   return (
     <div className="mt-2">
       <div className="flex gap-1.5" aria-hidden>
-        {[1, 2, 3].map((i) => (
+        {[1, 2, 3, 4, 5].map((i) => (
           <span
             key={i}
             className={cn(

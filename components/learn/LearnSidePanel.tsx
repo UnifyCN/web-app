@@ -88,7 +88,7 @@ export function LearnSidePanel({
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-placeholder"
+            className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-placeholder"
           />
         </label>
 

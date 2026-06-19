@@ -11,6 +11,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  // Resolves relative metadata URLs (incl. the auto-injected opengraph-image
+  // route) to absolute https://app.unifysocial.ca/... links for crawlers.
+  metadataBase: new URL("https://app.unifysocial.ca"),
   title: "Unify — Settling in Canada",
   description:
     "Unify is a newcomer support platform for people settling in Canada.",
@@ -18,6 +21,22 @@ export const metadata: Metadata = {
   // create-next-app favicon.ico, which was removed so this is the only icon.
   icons: {
     icon: "/favicon.png",
+  },
+  // og:image + twitter:image are auto-generated from app/opengraph-image.tsx.
+  openGraph: {
+    type: "website",
+    siteName: "Unify Social",
+    title: "Unify — Settling in Canada",
+    description:
+      "Unify is a newcomer support platform for people settling in Canada.",
+    url: "https://app.unifysocial.ca",
+    locale: "en_CA",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Unify — Settling in Canada",
+    description:
+      "Unify is a newcomer support platform for people settling in Canada.",
   },
 };
 

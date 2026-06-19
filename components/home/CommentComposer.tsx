@@ -75,7 +75,7 @@ export function CommentComposer({
               void submit();
             }
           }}
-          className="min-h-[2.5rem] flex-1 resize-none rounded-md bg-surface-input px-3 py-2 text-sm text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className="min-h-[2.5rem] flex-1 resize-none rounded-md bg-surface-input px-3 py-2 text-base text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-2 focus:ring-primary/40"
         />
         <Button
           size="sm"

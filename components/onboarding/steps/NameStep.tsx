@@ -1,8 +1,9 @@
+import { moveCaretToEnd } from "@/lib/utils";
 import { StepHeading } from "../StepHeading";
 import type { OnboardingStepProps } from "../types";
 
 const FIELD_CLASS =
-  "mt-5 h-11 w-full rounded-lg border border-border-card bg-surface px-3 text-sm text-ink-muted " +
+  "mt-5 h-11 w-full rounded-lg border border-border-card bg-surface px-3 text-base text-ink-muted " +
   "placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
 /**
@@ -28,6 +29,7 @@ export function NameStep({ draft, update, mode }: OnboardingStepProps) {
         placeholder="Your first name"
         value={draft.firstName}
         onChange={(e) => update({ firstName: e.target.value })}
+        onFocus={moveCaretToEnd}
         className={FIELD_CLASS}
         autoComplete="given-name"
       />

@@ -1,58 +1,67 @@
 import type { NewsItem } from "@/types";
 
 /**
- * National newcomer news — the real `news_details` rows (Phase 18). Mirrors the
- * Supabase seed so the local-dev / env-not-configured fallback matches
- * production. The Home widget shows the first 3; the Community News tab shows
- * all. `category` is null until the content team tags rows; items link out to
- * the source article (no in-app news detail page).
+ * National newcomer news. The Home `NationalNewsWidget` renders this list
+ * directly (it does not read the DB), and it doubles as the local-dev /
+ * env-not-configured fallback for the Community News tab (`getNews`). Curated,
+ * verified-working links to Canadian government + reputable settlement / news
+ * sources; `imageLink` is null (no thumbnails — avoids dead images), `category`
+ * is null (untagged), and items link out to the source (no in-app detail page).
  */
 export const newsItems: NewsItem[] = [
   {
     id: 1,
-    title: "Navigating Winter Roads in Canada",
+    title: "Latest Canadian immigration news and updates",
     description:
-      "New to snow? ICBC article to help you avoid issues on the icy, winter roads. Learn essential winter driving tips and safety precautions.",
-    author: "ICBC",
-    date: "2024-12-15T10:00:00Z",
+      "Stay current on Express Entry draws, PR pathways, and policy changes affecting newcomers to Canada.",
+    author: "CIC News",
+    date: "2026-06-17T10:00:00Z",
     category: null,
-    imageLink:
-      "https://media.canadianunderwriter.ca/uploads/2017/10/iStock-636598208.jpg",
-    link: "https://www.icbc.com/driver-licensing/winter-driving",
+    imageLink: null,
+    link: "https://www.cicnews.com/",
   },
   {
     id: 2,
-    title: "Financial Planning Tips for Newcomers",
+    title: "Renting a home in Canada: what newcomers should know",
     description:
-      "Essential tips for managing your finances in Canada. Learn about banking, credit, taxes, and budgeting strategies.",
-    author: "Financial Advisor",
-    date: "2024-12-10T14:30:00Z",
+      "Leases, deposits, tenant rights, and how to find a place to rent — a guide from Canada's national housing agency.",
+    author: "CMHC",
+    date: "2026-06-12T14:30:00Z",
     category: null,
-    imageLink:
-      "https://www.bankrate.com/2023/06/27140300/What-is-financial-planning-SEO-NEW-ARTICLE-.jpeg?auto=webp&optimize=high&crop=16:9",
-    link: "https://www.canada.ca/en/financial-consumer-agency.html",
+    imageLink: null,
+    link: "https://www.cmhc-schl.gc.ca/consumers/renting-a-home",
   },
   {
     id: 3,
-    title: "Understanding Canadian Healthcare System",
+    title: "Getting health care as a newcomer to Canada",
     description:
-      "A comprehensive guide to navigating the Canadian healthcare system and understanding your coverage options.",
-    author: "Health Canada",
-    date: "2024-12-05T09:15:00Z",
+      "How to apply for a health card, find a doctor, and access free and low-cost health services after you arrive.",
+    author: "Settlement.org",
+    date: "2026-06-09T09:15:00Z",
     category: null,
-    imageLink:
-      "https://www.heritage.org/sites/default/files/styles/facebook_optimized/public/images/2020-02/GettyImages-1178057952.jpg?itok=6OFC17zR4",
-    link: "https://www.canada.ca/en/health-canada/services/health-care-system.html",
+    imageLink: null,
+    link: "https://settlement.org/ontario/health/",
   },
   {
     id: 4,
-    title: "Complete Guide to Settling in Canada",
+    title: "Find a job in Canada with Job Bank",
     description:
-      "A comprehensive resource covering all aspects of life in Canada for newcomers, from housing to employment to social integration.",
-    author: "Immigration Services Canada",
-    date: "2024-11-28T16:45:00Z",
+      "Search thousands of verified job postings and explore careers across Canada on the Government of Canada's job board.",
+    author: "Government of Canada",
+    date: "2026-06-04T16:45:00Z",
     category: null,
-    imageLink: "https://www.cicnews.com/wp-content/uploads/2023/06/WES-ECA-1024x683.jpg",
-    link: "https://www.canada.ca/en/immigration-refugees-citizenship/services/new-immigrants.html",
+    imageLink: null,
+    link: "https://www.jobbank.gc.ca/findajob",
+  },
+  {
+    id: 5,
+    title: "Banking and money basics for newcomers",
+    description:
+      "Opening your first Canadian bank account, building credit, and budgeting tips for settling in.",
+    author: "Settlement.org",
+    date: "2026-05-28T11:00:00Z",
+    category: null,
+    imageLink: null,
+    link: "https://settlement.org/ontario/daily-life/banking-and-money/",
   },
 ];

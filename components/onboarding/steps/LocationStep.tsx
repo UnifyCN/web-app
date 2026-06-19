@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, moveCaretToEnd } from "@/lib/utils";
 import {
   CITY_OPTIONS,
   CITY_TO_PROVINCE,
@@ -15,7 +15,7 @@ const OTHER = "__other__";
 const KNOWN = new Set<string>(CITY_OPTIONS);
 
 const FIELD_CLASS =
-  "h-11 w-full rounded-lg border border-border-card bg-surface px-3 text-sm text-ink-muted " +
+  "h-11 w-full rounded-lg border border-border-card bg-surface px-3 text-base text-ink-muted " +
   "placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
 // Selects: hide the inconsistent native arrow; we draw one ChevronDown instead.
@@ -92,6 +92,7 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
             placeholder="Type your city"
             value={draft.city}
             onChange={(e) => update({ city: e.target.value })}
+            onFocus={moveCaretToEnd}
             className={FIELD_CLASS}
           />
         )}
