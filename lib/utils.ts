@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { FocusEvent } from "react";
 import type { SanityBlock } from "@/types";
 
 /**
@@ -104,4 +105,24 @@ export function formatRelativeTime(iso: string): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+/**
+ * Move the text caret to the end of a field on focus. iOS Safari (and some
+ * desktop cases) drop the caret at the START of a pre-filled input, so editing an
+ * existing value means manually moving to the end first. Use as an `onFocus`
+ * handler on fields that arrive pre-filled. Guarded: `setSelectionRange` throws on
+ * input types that don't support text selection (e.g. `type="email"`), so those
+ * just keep their default caret behavior.
+ */
+export function moveCaretToEnd(
+  e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>,
+): void {
+  const el = e.currentTarget;
+  try {
+    const n = el.value.length;
+    el.setSelectionRange(n, n);
+  } catch {
+    // input type doesn't support text selection — leave the caret as-is.
+  }
 }

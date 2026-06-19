@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArrowBigUp, Eye, EyeOff } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, moveCaretToEnd } from "@/lib/utils";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   /** Leading glyph (e.g. <Mail />, <Lock />), rendered muted on the left. */
@@ -27,6 +27,7 @@ export function Input({
   onKeyDown,
   onKeyUp,
   onBlur,
+  onFocus,
   ...props
 }: InputProps) {
   const isPassword = type === "password";
@@ -71,6 +72,12 @@ export function Input({
         onBlur={(event) => {
           setCapsLock(false);
           onBlur?.(event);
+        }}
+        onFocus={(event) => {
+          // Pre-filled fields (e.g. an edited email) should land the caret at the
+          // end, not the start. moveCaretToEnd guards the type="email" case.
+          moveCaretToEnd(event);
+          onFocus?.(event);
         }}
         className={cn(
           "h-14 w-full rounded-xl bg-transparent text-base text-ink-secondary outline-none placeholder:text-ink-placeholder",

@@ -10,6 +10,7 @@ import { PersonaBadge } from "./PersonaBadge";
 import { StageIndicator } from "./StageIndicator";
 import { OnboardingEditModal } from "@/components/onboarding/OnboardingEditModal";
 import { UserModerationMenu } from "@/components/moderation/UserModerationMenu";
+import { moveCaretToEnd } from "@/lib/utils";
 import {
   useRemoveAvatar,
   useUpdateAvatar,
@@ -238,6 +239,7 @@ export function ProfileHeader({
       {editingDetails ? (
         <div className="mt-3 space-y-2">
           <textarea
+            aria-label="Bio"
             value={bioDraft}
             onChange={(event) => setBioDraft(event.target.value)}
             rows={3}
@@ -246,10 +248,13 @@ export function ProfileHeader({
             className="w-full resize-none rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink-muted outline-none focus:border-primary"
           />
           <input
+            type="text"
+            aria-label="Pronouns"
             value={pronounsDraft}
             onChange={(event) => setPronounsDraft(event.target.value)}
             maxLength={30}
             placeholder="Pronouns (e.g. she/her)"
+            onFocus={moveCaretToEnd}
             className="w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink-muted outline-none focus:border-primary"
           />
           <div className="flex gap-2">

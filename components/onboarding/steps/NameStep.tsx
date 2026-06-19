@@ -1,3 +1,4 @@
+import { moveCaretToEnd } from "@/lib/utils";
 import { StepHeading } from "../StepHeading";
 import type { OnboardingStepProps } from "../types";
 
@@ -28,6 +29,7 @@ export function NameStep({ draft, update, mode }: OnboardingStepProps) {
         placeholder="Your first name"
         value={draft.firstName}
         onChange={(e) => update({ firstName: e.target.value })}
+        onFocus={moveCaretToEnd}
         className={FIELD_CLASS}
         autoComplete="given-name"
       />

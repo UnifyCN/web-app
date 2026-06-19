@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, moveCaretToEnd } from "@/lib/utils";
 import {
   CITY_OPTIONS,
   CITY_TO_PROVINCE,
@@ -92,6 +92,7 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
             placeholder="Type your city"
             value={draft.city}
             onChange={(e) => update({ city: e.target.value })}
+            onFocus={moveCaretToEnd}
             className={FIELD_CLASS}
           />
         )}

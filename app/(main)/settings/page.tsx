@@ -27,7 +27,7 @@ import {
   useUpdateLearningReminders,
 } from "@/hooks/useOnboarding";
 import { USERNAME_RE } from "@/lib/supabase/username";
-import { cn } from "@/lib/utils";
+import { cn, moveCaretToEnd } from "@/lib/utils";
 import type { UserProfile } from "@/types";
 
 /** Readable text for a failed mutation, falling back when there's no message. */
@@ -92,6 +92,7 @@ function DisplayNameField({ initial }: { initial: string }) {
             setDraft(event.target.value);
             mutation.reset();
           }}
+          onFocus={moveCaretToEnd}
           className={inputClass}
         />
         <Button
@@ -152,6 +153,7 @@ function UsernameField({ initial }: { initial: string }) {
               setDraft(event.target.value);
               mutation.reset();
             }}
+            onFocus={moveCaretToEnd}
             className={cn(inputClass, "pl-7")}
           />
         </div>
@@ -236,6 +238,7 @@ function BioPronounsField({
             setPronouns(event.target.value);
             mutation.reset();
           }}
+          onFocus={moveCaretToEnd}
           className={cn(inputClass, "mt-1.5")}
         />
       </div>
