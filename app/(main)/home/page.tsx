@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Tabs } from "@/components/ui/Tabs";
 import { FeedTabs, FEED_TABS } from "@/components/home/FeedTabs";
 import { PostCard } from "@/components/home/PostCard";
 import { PostCardSkeleton } from "@/components/home/PostCardSkeleton";
@@ -28,8 +30,12 @@ const FEED_EMPTY: Record<string, { title: string; sub: string }> = {
   },
 };
 
+/** Phone-only section switcher (md+ shows all three at once). */
+const MOBILE_SECTIONS = ["Feed", "News", "Learning"];
+
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState(FEED_TABS[0]);
+  const [mobileSection, setMobileSection] = useState(MOBILE_SECTIONS[0]);
 
   const forYou = useForYouFeed(activeTab === "For You");
   const following = useFollowingFeed(activeTab === "Following");
@@ -47,9 +53,25 @@ export default function HomePage() {
         Social
       </h1>
 
+      {/* Phones stack Learning + News above the feed, pushing it far down the
+          page — split the three into tabs so the feed is reachable. md+ keeps
+          the full multi-column layout with every section visible. */}
+      <div className="mb-5 md:hidden">
+        <Tabs
+          tabs={MOBILE_SECTIONS}
+          activeTab={mobileSection}
+          onChange={setMobileSection}
+        />
+      </div>
+
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        {/* Feed */}
-        <section className="order-2 min-w-0 flex-1 lg:order-1 lg:max-w-[680px]">
+        {/* Feed — on phones only when the Feed tab is active; always shown md+ */}
+        <section
+          className={cn(
+            "order-2 min-w-0 flex-1 md:block lg:order-1 lg:max-w-[680px]",
+            mobileSection === "Feed" ? "block" : "hidden",
+          )}
+        >
           <div className="overflow-hidden rounded-card border border-border-card bg-surface">
             <div className="px-3 pt-1">
               <FeedTabs activeTab={activeTab} onChange={setActiveTab} />
@@ -94,7 +116,7 @@ export default function HomePage() {
         </section>
 
         {/* Right-hand widgets */}
-        <RightPanel />
+        <RightPanel mobileSection={mobileSection} />
       </div>
 
       <ComposeButton />
