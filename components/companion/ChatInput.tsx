@@ -41,7 +41,7 @@ export function ChatInput({
         rows={1}
         placeholder={placeholder}
         aria-label="Message Companion"
-        className="max-h-32 min-h-9 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none"
+        className="max-h-32 min-h-9 flex-1 resize-none bg-transparent px-2 py-1.5 text-base text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none"
       />
       <button
         type="button"

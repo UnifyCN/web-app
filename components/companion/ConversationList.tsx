@@ -173,7 +173,7 @@ export function ConversationList({
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search chats"
               aria-label="Search chats"
-              className="h-9 w-full rounded-lg border border-border-card bg-surface pl-9 pr-3 text-sm text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="h-9 w-full rounded-lg border border-border-card bg-surface pl-9 pr-3 text-base text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             />
           </div>
         </div>

@@ -243,14 +243,14 @@ export function ProfileHeader({
             rows={3}
             maxLength={300}
             placeholder="Add a short bio"
-            className="w-full resize-none rounded-lg border border-border-card bg-surface px-3 py-2 text-sm text-ink-muted outline-none focus:border-primary"
+            className="w-full resize-none rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink-muted outline-none focus:border-primary"
           />
           <input
             value={pronounsDraft}
             onChange={(event) => setPronounsDraft(event.target.value)}
             maxLength={30}
             placeholder="Pronouns (e.g. she/her)"
-            className="w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-sm text-ink-muted outline-none focus:border-primary"
+            className="w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink-muted outline-none focus:border-primary"
           />
           <div className="flex gap-2">
             <Button

@@ -36,7 +36,7 @@ function errorText(error: unknown, fallback: string): string {
 }
 
 const inputClass =
-  "w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-sm text-ink-muted outline-none focus:border-primary";
+  "w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink-muted outline-none focus:border-primary";
 const labelClass = "block text-sm font-medium text-ink-secondary";
 
 /** A titled settings card. */

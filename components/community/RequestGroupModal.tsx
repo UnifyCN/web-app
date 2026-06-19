@@ -10,7 +10,7 @@ interface RequestGroupModalProps {
 }
 
 const INPUT_CLASS =
-  "w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-sm " +
+  "w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-base " +
   "text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none " +
   "focus-visible:ring-2 focus-visible:ring-primary";
 

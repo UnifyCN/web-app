@@ -31,7 +31,7 @@ export function FreeTextQuestion({
         disabled={submitted}
         placeholder="Type here…"
         rows={isReflection ? 8 : 3}
-        className="w-full resize-none rounded-card border border-border-card bg-surface p-4 text-sm text-ink-secondary outline-none transition-colors placeholder:text-ink-placeholder focus:border-ink disabled:opacity-70"
+        className="w-full resize-none rounded-card border border-border-card bg-surface p-4 text-base text-ink-secondary outline-none transition-colors placeholder:text-ink-placeholder focus:border-ink disabled:opacity-70"
       />
 
       {submitted && !isReflection && accepted.length > 0 && (

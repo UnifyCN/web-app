@@ -2,7 +2,7 @@ import { StepHeading } from "../StepHeading";
 import type { OnboardingStepProps } from "../types";
 
 const FIELD_CLASS =
-  "mt-5 h-11 w-full rounded-lg border border-border-card bg-surface px-3 text-sm text-ink-muted " +
+  "mt-5 h-11 w-full rounded-lg border border-border-card bg-surface px-3 text-base text-ink-muted " +
   "placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
 /**

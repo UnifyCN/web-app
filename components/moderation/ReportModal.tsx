@@ -59,7 +59,7 @@ export function ReportModal({
             ? "Tell us why you're reporting this post…"
             : "Tell us why you're reporting this user…"
         }
-        className="w-full resize-none rounded-card border border-border bg-surface px-3 py-2 text-sm text-ink-muted outline-none transition-colors placeholder:text-ink-placeholder focus:border-primary"
+        className="w-full resize-none rounded-card border border-border bg-surface px-3 py-2 text-base text-ink-muted outline-none transition-colors placeholder:text-ink-placeholder focus:border-primary"
       />
       <div className="mt-1 flex justify-end">
         <span className="text-xs text-ink-placeholder">

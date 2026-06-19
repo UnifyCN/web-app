@@ -15,7 +15,7 @@ const OTHER = "__other__";
 const KNOWN = new Set<string>(CITY_OPTIONS);
 
 const FIELD_CLASS =
-  "h-11 w-full rounded-lg border border-border-card bg-surface px-3 text-sm text-ink-muted " +
+  "h-11 w-full rounded-lg border border-border-card bg-surface px-3 text-base text-ink-muted " +
   "placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
 // Selects: hide the inconsistent native arrow; we draw one ChevronDown instead.

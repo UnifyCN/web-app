@@ -73,7 +73,7 @@ export function Input({
           onBlur?.(event);
         }}
         className={cn(
-          "h-14 w-full rounded-xl bg-transparent text-sm text-ink-secondary outline-none placeholder:text-ink-placeholder",
+          "h-14 w-full rounded-xl bg-transparent text-base text-ink-secondary outline-none placeholder:text-ink-placeholder",
           leftIcon ? "pl-12" : "pl-4",
           isPassword ? "pr-16" : "pr-4",
         )}
