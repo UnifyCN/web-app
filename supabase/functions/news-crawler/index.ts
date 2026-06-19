@@ -32,6 +32,26 @@ const FEEDS: Feed[] = [
     source: 'IRCC',
     category: 'Immigration',
   },
+  { url: 'https://canadianimmigrant.ca/feed', source: 'Canadian Immigrant', category: 'Immigration' },
+  // Service Canada / ESDC — benefits, EI, SIN, employment. (canada.ca dept feeds
+  // key off the legal department name; the .atom.xml path the source links is dead.)
+  {
+    url: 'https://api.io.canada.ca/io-server/gc/news/en/v2?dept=departmentofemploymentandsocialdevelopment&type=newsreleases&pick=25&format=atom',
+    source: 'Service Canada',
+    category: 'Benefits',
+  },
+  {
+    url: 'https://api.io.canada.ca/io-server/gc/news/en/v2?dept=departmentofhealth&type=newsreleases&pick=25&format=atom',
+    source: 'Health Canada',
+    category: 'Health',
+  },
+  // All-department federal newsroom (no dept filter). Overlaps the dept feeds
+  // above; the link-dedup in the handler collapses the duplicates.
+  {
+    url: 'https://api.io.canada.ca/io-server/gc/news/en/v2?type=newsreleases&pick=25&format=atom',
+    source: 'Government of Canada',
+    category: 'Government',
+  },
 ];
 
 const MAX_ITEMS_PER_FEED = 15;
