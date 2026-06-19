@@ -14,7 +14,7 @@ export function AuthShell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex min-h-[100dvh] flex-col bg-surface px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
+    <main className="flex min-h-[100dvh] flex-col bg-surface px-6 pb-[calc(2.5rem_+_env(safe-area-inset-bottom))]">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
         <div className="flex h-16 shrink-0 items-center">
           {backHref && (

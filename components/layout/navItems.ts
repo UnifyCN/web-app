@@ -1,3 +1,4 @@
+import React from "react";
 import { User, Settings } from "lucide-react";
 import { LearnIcon } from "@/components/icons/LearnIcon";
 import { ChecklistIcon } from "@/components/icons/ChecklistIcon";

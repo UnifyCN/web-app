@@ -226,17 +226,19 @@ Deno.serve(async (req: Request) => {
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // Fetch + parse every feed, then dedupe within the batch by link.
+  // Fetch + parse every feed concurrently, then dedupe within the batch by link.
+  const feedResults = await Promise.all(
+    FEEDS.map(async (feed) => {
+      const xml = await fetchFeed(feed.url);
+      const rows = xml ? parseFeed(xml, feed) : [];
+      return { source: feed.source, rows };
+    }),
+  );
+
   const collected: NewsRow[] = [];
   const perFeed: Record<string, number> = {};
-  for (const feed of FEEDS) {
-    const xml = await fetchFeed(feed.url);
-    if (!xml) {
-      perFeed[feed.source] = 0;
-      continue;
-    }
-    const rows = parseFeed(xml, feed);
-    perFeed[feed.source] = rows.length;
+  for (const { source, rows } of feedResults) {
+    perFeed[source] = rows.length;
     collected.push(...rows);
   }
 

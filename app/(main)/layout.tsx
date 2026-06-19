@@ -18,7 +18,7 @@ export default function MainLayout({
     <ToastProvider>
       <div className="flex min-h-dvh bg-surface">
         <Sidebar />
-        <main className="min-w-0 flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <main className="min-w-0 flex-1 pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] md:pb-0">
           {children}
         </main>
       </div>

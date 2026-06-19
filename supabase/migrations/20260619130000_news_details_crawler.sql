@@ -1,7 +1,8 @@
 -- news-crawler support: dedupe key + weekly pg_cron schedule.
 --
--- Apply via the Supabase Dashboard SQL editor (shared prod DB `wrbauxutkysljmsqojts`;
--- the MCP is read-only and `db push` is unsafe against the drifted history).
+-- ALREADY APPLIED to the shared DB (`wrbauxutkysljmsqojts`) via the Dashboard SQL
+-- editor — this file is kept for version-control / reference only; do not re-run
+-- blindly. (The MCP is read-only and `db push` is unsafe against the drifted history.)
 -- Drives supabase/functions/news-crawler/index.ts.
 
 -- 1) Dedupe key ------------------------------------------------------------
@@ -36,17 +37,31 @@ select cron.schedule(
   'news-crawler-weekly',
   '0 13 * * 1',
   $$
-  select net.http_post(
-    url := 'https://wrbauxutkysljmsqojts.supabase.co/functions/v1/news-crawler',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization',
-      'Bearer ' || (
-        select decrypted_secret from vault.decrypted_secrets
-        where name = 'service_role_key'
-      )
-    ),
-    body := '{}'::jsonb
-  );
+  do $cron$
+  declare
+    v_secret text;
+  begin
+    select decrypted_secret into v_secret
+    from vault.decrypted_secrets
+    where name = 'service_role_key';
+
+    -- Guard: without the Vault secret the Authorization header would be
+    -- 'Bearer ' || NULL = NULL and the call would fail unauthorized. Skip
+    -- with a notice instead so the cron run is a clean no-op.
+    if v_secret is null then
+      raise notice 'news-crawler-weekly: vault secret "service_role_key" is NULL; skipping run';
+      return;
+    end if;
+
+    perform net.http_post(
+      url := 'https://wrbauxutkysljmsqojts.supabase.co/functions/v1/news-crawler',
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        'Authorization', 'Bearer ' || v_secret
+      ),
+      body := '{}'::jsonb
+    );
+  end
+  $cron$;
   $$
 );
