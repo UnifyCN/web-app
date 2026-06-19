@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The opengraph-image route reads its font + logo binaries from app/_og-assets
+  // at runtime via fs. Force the serverless bundle to include them — output file
+  // tracing doesn't reliably follow process.cwd()-relative reads.
+  outputFileTracingIncludes: {
+    "/opengraph-image": ["./app/_og-assets/**"],
+  },
   images: {
     // picsum.photos supplies stable placeholder photos for mock surfaces
     // (group member avatars, etc.). cdn.sanity.io serves lesson content images

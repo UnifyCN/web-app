@@ -200,8 +200,11 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except static assets and image files.
+     * Match all request paths except static assets, image files, and the
+     * file-based metadata image routes (opengraph-image / twitter-image) — those
+     * are public social-card assets fetched by unauthenticated crawlers and must
+     * never be bounced through the /welcome auth gate.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
