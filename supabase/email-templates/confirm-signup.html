@@ -10,8 +10,8 @@
   - The only functional fix vs. the live template is the footer slogan: the
     "put our slogan here? i guess" placeholder is replaced with Unify's official
     tagline, "The all-in-one newcomer settlement app".
-  - The logo uses {{ .SiteURL }}/logo/unify-mark.png — make sure the configured
-    Site URL serves that asset, or swap in an absolute CDN URL.
+  - The logo is served from the public `email-assets` Supabase storage bucket
+    (stable absolute URL — independent of the configured Site URL).
 -->
 <!doctype html>
 <html lang="en">
@@ -25,7 +25,7 @@
 
                 <!-- Logo -->
                 <img
-                  src="{{ .SiteURL }}/logo/unify-mark.png"
+                  src="https://wrbauxutkysljmsqojts.supabase.co/storage/v1/object/public/email-assets/unify-email-logo.png"
                   width="64"
                   height="64"
                   alt="Unify"
@@ -59,7 +59,7 @@
                         The all-in-one newcomer settlement app
                       </p>
                       <p style="margin:0;font-size:12px;color:#636366;">
-                        &copy; 2025 Unify Social. All rights reserved.
+                        &copy; 2026 Unify Social. All rights reserved.
                       </p>
                     </td>
                   </tr>

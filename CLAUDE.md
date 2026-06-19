@@ -393,13 +393,13 @@ design-system/
 
 ## Navigation & Layout
 
-### Sidebar (consistent across all breakpoints — no switching)
+### Navigation (responsive — left sidebar on desktop, bottom tab bar on mobile)
 
-- **Always a left sidebar** — no bottom tab bar, no top nav, on any screen size
-- Fixed-width **100px** rail — no collapse, no toggle. Each item is an icon with its label beneath it (`text-xs`), vertically centred
-- Unify wordmark lockup at the top; the nav group is vertically centred; Profile + Sign out sit at the bottom behind a border
-- Active item: `bg-primary-bg text-primary font-semibold`
-- Inactive item: `text-ink-muted`, hover `bg-surface-gray text-ink`
+- **Desktop (≥ `md`):** a fixed-width **100px** left sidebar — no collapse, no toggle. Each item is an icon with its label beneath it (`text-xs`), vertically centred (`components/layout/Sidebar.tsx`).
+- **Mobile (< `md`):** the sidebar is hidden and a **fixed bottom tab bar** takes over (`components/layout/BottomNav.tsx`), mirroring the mobile app — it carries `pb-[env(safe-area-inset-bottom)]` for the iOS home indicator, and `(main)/layout.tsx` pads `<main>` so page content clears it. **This supersedes the original "no bottom tab bar on any screen size" rule** — a 100px left rail on a 375px phone crushed content (~275px) and broke Companion. Nav items are shared between the two via `components/layout/navItems.ts`; `viewport-fit=cover` is set in `app/layout.tsx` so `env(safe-area-inset-*)` resolves.
+- No top nav on any breakpoint.
+- Unify wordmark lockup at the top of the desktop sidebar; the nav group is vertically centred; Profile + Settings + Sign out sit at the bottom behind a border.
+- Active item: `bg-primary-bg text-primary font-semibold` (sidebar) / `text-primary` (bottom nav); inactive: `text-ink-muted`, hover `text-ink`.
 
 **Top nav items:**
 

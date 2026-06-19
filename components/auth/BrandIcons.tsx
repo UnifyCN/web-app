@@ -26,18 +26,3 @@ export function GoogleIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-
-/** Apple logo — inherits the surrounding text colour via `currentColor`. */
-export function AppleIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden
-      focusable="false"
-    >
-      <path d="M16.365 1.43c0 1.14-.42 2.2-1.26 3.04-.84.84-1.9 1.32-3.04 1.23-.13-1.1.42-2.27 1.2-3.04C14.05.94 15.27.45 16.36.43c.02.33.01.66.01 1zM20.5 17.1c-.55 1.27-.82 1.84-1.53 2.96-.99 1.57-2.39 3.53-4.12 3.54-1.54.02-1.94-1-4.03-.99-2.09.01-2.53 1.01-4.07.99-1.73-.02-3.05-1.79-4.04-3.36C.36 16.5-.13 11.43 1.6 8.85c1.23-1.83 3.17-2.9 5-2.9 1.86 0 3.03 1.02 4.57 1.02 1.49 0 2.4-1.02 4.55-1.02 1.63 0 3.36.89 4.59 2.42-4.03 2.21-3.37 7.96.59 9.73z" />
-    </svg>
-  );
-}

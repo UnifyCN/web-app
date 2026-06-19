@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signInWithGoogle } from "@/services/auth";
-import { AppleIcon, GoogleIcon } from "@/components/auth/BrandIcons";
+import { GoogleIcon } from "@/components/auth/BrandIcons";
 
 const SQUARE =
   "flex h-14 w-16 items-center justify-center rounded-xl border border-border-card bg-surface " +
@@ -10,8 +10,8 @@ const SQUARE =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
 
 /**
- * Compact Google + Apple SSO buttons shown under the "or" divider on the sign-in
- * and sign-up screens. Google runs the OAuth flow; Apple is still a visual stub.
+ * Compact Google SSO button shown under the "or" divider on the sign-in and
+ * sign-up screens. Runs the Google OAuth flow.
  */
 export function OAuthButtons({
   onError,
@@ -41,15 +41,6 @@ export function OAuthButtons({
         aria-label="Continue with Google"
       >
         <GoogleIcon className="h-6 w-6" />
-      </button>
-      {/* Stub — Apple SSO is a later priority. */}
-      <button
-        type="button"
-        className={SQUARE}
-        title="Apple sign-in coming soon"
-        aria-label="Continue with Apple (coming soon)"
-      >
-        <AppleIcon className="h-6 w-6 text-ink" />
       </button>
     </div>
   );

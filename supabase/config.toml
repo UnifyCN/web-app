@@ -25,3 +25,10 @@ verify_jwt = false
 # (supabase.auth.getUser) and 401s if missing/invalid. Gateway JWT off so the
 # browser CORS preflight reaches the function's own OPTIONS handler.
 verify_jwt = false
+
+[functions.news-crawler]
+# Cron-only (pg_cron → net.http_post; see 20260619130000_news_details_crawler.sql).
+# The function authorizes itself by requiring the project service-role key as the
+# Bearer token, so the gateway JWT check is disabled — the request carries the
+# service-role key, not a user JWT, and there is no browser/CORS surface.
+verify_jwt = false

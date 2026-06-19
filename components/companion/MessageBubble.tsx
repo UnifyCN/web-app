@@ -26,7 +26,8 @@ function hostFromUrl(url: string): string {
 
 /** Collapsible "Sources (N)" list — full-width rows with domain + linked title. */
 function SourceList({ sources }: { sources: ChatSource[] }) {
-  const [open, setOpen] = useState(true);
+  // Collapsed by default — users expand if they want to inspect citations.
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="mt-3 border-t border-border-card pt-3">
@@ -104,7 +105,7 @@ function AssistantMessage({
           type="button"
           onClick={copy}
           aria-label={copied ? "Copied" : "Copy message"}
-          className="absolute right-2.5 top-2.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink-muted"
+          className="absolute right-2.5 top-2.5 flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink-muted"
         >
           {copied ? (
             <Check className="h-4 w-4" aria-hidden />

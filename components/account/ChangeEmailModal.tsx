@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Mail } from "lucide-react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import { AuthButton } from "@/components/auth/AuthButton";
 import { FormError } from "@/components/auth/FormError";
 import { useRequestEmailChange } from "@/hooks/useAccount";
 import { EMAIL_RE } from "@/lib/authValidation";
@@ -86,24 +86,22 @@ export function ChangeEmailModal({
             }}
           />
           <FormError className="text-xs">{error}</FormError>
-          <div className="flex justify-end gap-2 pt-1">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={close}
-              disabled={request.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
+          <div className="space-y-2 pt-2">
+            <AuthButton
               type="submit"
-              size="sm"
               loading={request.isPending}
               disabled={!EMAIL_RE.test(email.trim())}
             >
               Submit
-            </Button>
+            </AuthButton>
+            <button
+              type="button"
+              onClick={close}
+              disabled={request.isPending}
+              className="w-full cursor-pointer rounded-full py-2.5 text-sm font-semibold text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Cancel
+            </button>
           </div>
         </form>
       ) : (
@@ -116,11 +114,9 @@ export function ChangeEmailModal({
             it to confirm the change. Your current email address will receive a
             notification once the change is complete.
           </p>
-          <div className="flex justify-end">
-            <Button type="button" size="sm" onClick={close}>
-              Done
-            </Button>
-          </div>
+          <AuthButton type="button" onClick={close}>
+            Done
+          </AuthButton>
         </div>
       )}
     </ModalShell>

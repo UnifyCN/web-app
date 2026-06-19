@@ -16,7 +16,7 @@ import { LEGAL_URLS } from "@/lib/legalUrls";
 import { EMAIL_RE } from "@/lib/authValidation";
 import { getAuthUser, signInWithEmail } from "@/services/auth";
 
-/** Sign in — email + password alongside Google/Apple SSO (image 9). */
+/** Sign in — email + password alongside Google SSO (image 9). */
 function LoginScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();

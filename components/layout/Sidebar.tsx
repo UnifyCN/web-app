@@ -3,39 +3,17 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { User, LogOut, Settings } from "lucide-react";
-import { LearnIcon } from "@/components/icons/LearnIcon";
-import { ChecklistIcon } from "@/components/icons/ChecklistIcon";
-import { CompanionIcon } from "@/components/icons/CompanionIcon";
-import { CommunityIcon } from "@/components/icons/CommunityIcon";
-import { SocialIcon } from "@/components/icons/SocialIcon";
+import { LogOut } from "lucide-react";
 import { UnifyLogo } from "@/components/UnifyLogo";
 import { signOut as signOutService } from "@/services/auth";
 import { cn } from "@/lib/utils";
-
-interface NavItem {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-// Order + icons mirror the mobile app's bottom-tab nav (Learn → Checklist →
-// Companion → Community → Social). Mobile has no Home tab; its Social tab is the
-// post feed, which the web app serves at /home.
-const TOP_NAV: NavItem[] = [
-  { label: "Learn", href: "/learn", icon: LearnIcon },
-  { label: "Checklist", href: "/checklist", icon: ChecklistIcon },
-  { label: "Companion", href: "/companion", icon: CompanionIcon },
-  { label: "Community", href: "/community", icon: CommunityIcon },
-  { label: "Social", href: "/home", icon: SocialIcon },
-];
-
-const PROFILE_ITEM: NavItem = { label: "Profile", href: "/profile", icon: User };
-const SETTINGS_ITEM: NavItem = {
-  label: "Settings",
-  href: "/settings",
-  icon: Settings,
-};
+import {
+  MAIN_NAV,
+  PROFILE_ITEM,
+  SETTINGS_ITEM,
+  isNavItemActive,
+  type NavItem,
+} from "./navItems";
 
 // Fixed-width icon rail with a label under each icon. Width is set so the full
 // "unify" wordmark lockup fits comfortably at the top (lockup ratio ≈ 2.24, so a
@@ -66,8 +44,7 @@ export function Sidebar() {
     router.replace("/welcome");
   };
 
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (href: string) => isNavItemActive(pathname, href);
 
   // Shared vertical tile: centred icon above a small label.
   const tileClass =
@@ -99,7 +76,9 @@ export function Sidebar() {
     <aside
       style={{ width: SIDEBAR_WIDTH }}
       className={cn(
-        "sticky top-0 flex h-screen shrink-0 flex-col",
+        // Hidden on mobile (< md) — replaced by the fixed BottomNav; a left
+        // rail on a 375px phone would crush content to ~275px.
+        "sticky top-0 hidden h-screen shrink-0 flex-col md:flex",
         "border-r border-border-card bg-surface",
       )}
     >
@@ -112,7 +91,7 @@ export function Sidebar() {
 
       {/* Primary navigation — vertically centred icon group */}
       <nav className="flex flex-1 flex-col justify-center gap-1.5 px-2">
-        {TOP_NAV.map(renderNavLink)}
+        {MAIN_NAV.map(renderNavLink)}
       </nav>
 
       {/* Profile + sign out, separated by a border */}

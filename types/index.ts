@@ -134,8 +134,16 @@ export interface Group {
   memberCount: number;
   coverPhotoUrl: string | null;
   joinedByMe: boolean;
-  /** A handful of member avatar URLs for the member avatar stack. */
-  memberAvatars: string[];
+  /** A handful of real members for the avatar stack (resolved + initials
+   *  fallback). Populated on the group detail path; empty on list rows. */
+  memberAvatars: GroupMemberAvatar[];
+}
+
+/** One member shown in a group's overlapping avatar stack. `profilePictureUrl`
+ *  is a stored object key (or null → initials fallback), resolved at render. */
+export interface GroupMemberAvatar {
+  username: string;
+  profilePictureUrl: string | null;
 }
 
 export type EventType = "in-person" | "online" | "hybrid";

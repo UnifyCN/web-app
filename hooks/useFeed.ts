@@ -51,7 +51,7 @@ export function useFeedPosts(tab: FeedTab = "For You") {
   };
 }
 
-/* ---- Profile feeds (wired) + group posts (mock-only) ----------------- */
+/* ---- Profile + group feeds (Supabase-wired) -------------------------- */
 
 export function useGroupPosts(groupId: number) {
   return useQuery({

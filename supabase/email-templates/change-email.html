@@ -2,15 +2,15 @@
   Supabase "Change Email Address" email template (reference copy — version control only).
   Apply in the dashboard: Authentication → Email Templates → Change Email Address → paste this HTML.
 
-  The confirm button links to the web app's /auth/callback via the token-hash flow. It points
-  at http://localhost:3000 (the local web origin) because the emailRedirectTo option on
-  auth.updateUser is a confirmed Supabase bug (ignored), and {{ .SiteURL }} on this shared
-  project is the mobile Expo URL (exp://…), which a browser can't open. The callback runs
-  verifyOtp({ token_hash, type: 'email_change' }) and redirects to /settings?emailChanged=1.
-  At production launch, update http://localhost:3000 to the production domain. Coordinate with
-  the mobile team since this Supabase project is shared. See BACKLOG.md → Email & Branding.
-  With "Secure email change" on, both the old and new addresses receive this email; both links
-  must be clicked to complete the change.
+  The confirm button links to the web app's /auth/callback via the token-hash flow, built from
+  {{ .SiteURL }}. The Supabase Site URL is now set to the production domain
+  (https://app.unifysocial.ca), so the link resolves in a browser. (The emailRedirectTo option on
+  auth.updateUser is a confirmed Supabase bug and is ignored, so the link relies on Site URL.)
+  The callback runs verifyOtp({ token_hash, type: 'email_change' }) and redirects to
+  /settings?emailChanged=1. This Supabase project is shared with the mobile app and the Site URL
+  is a single shared value — coordinate any Site URL change with the mobile team. See
+  BACKLOG.md → Email & Branding. With "Secure email change" on, both the old and new addresses
+  receive this email; both links must be clicked to complete the change.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -25,21 +25,20 @@
           <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; padding: 40px 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
             <tr>
               <td align="center">
-                <!-- putting the logo as my website image for now, to change after -->
-                <img src="https://www.paul-pham.com/static/media/Unify.d3b7b7bcf3df25d6e7a2.png" alt="Logo" style="height: 40px; margin-bottom: 30px;" />
+                <img src="https://wrbauxutkysljmsqojts.supabase.co/storage/v1/object/public/email-assets/unify-email-logo.png" alt="Unify" style="height: 40px; margin-bottom: 30px;" />
 
                 <h2 style="font-size: 22px; color: #333; margin: 0 0 10px;">Confirm your new email</h2>
                 <p style="font-size: 15px; color: #555; margin: 0 0 30px;">
                   We received a request to change the email on your Unify account. Click the button below to confirm this is your new address.
                 </p>
 
-                <!-- Confirm button → web /auth/callback (token-hash flow).
-                     At production launch, update http://localhost:3000 to the production domain.
-                     Coordinate with mobile team since this Supabase project is shared. -->
+                <!-- Confirm button → web /auth/callback (token-hash flow) via {{ .SiteURL }}
+                     (now the production domain). Shared Supabase project — coordinate Site URL
+                     changes with the mobile team. -->
                 <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 auto 30px;">
                   <tr>
-                    <td align="center" style="border-radius: 8px; background-color: #f68b26;">
-                      <a href="http://localhost:3000/auth/callback?token_hash={{ .TokenHash }}&amp;type=email_change" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: bold; color: #ffffff; text-decoration: none; border-radius: 8px;">
+                    <td align="center" style="border-radius: 8px; background-color: #000000;">
+                      <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&amp;type=email_change" style="display: inline-block; padding: 14px 32px; font-size: 15px; font-weight: bold; color: #ffffff; text-decoration: none; border-radius: 8px;">
                         Confirm new email
                       </a>
                     </td>
@@ -58,12 +57,12 @@
                 </p>
                 <!-- Optional social icons -->
                 <div style="margin-bottom: 20px;">
-                  <a href="#" style="margin: 0 8px;"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/facebook.svg" alt="Facebook" height="20" /></a>
-                  <a href="#" style="margin: 0 8px;"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/apple.svg" alt="Apple" height="20" /></a>
-                  <a href="#" style="margin: 0 8px;"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/instagram.svg" alt="Instagram" height="20" /></a>
-                  <a href="#" style="margin: 0 8px;"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/gmail.svg" alt="Email" height="20" /></a>
+                  <a href="https://www.facebook.com/unifysocial" style="margin: 0 8px;"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/facebook.svg" alt="Facebook" height="20" /></a>
+                  <a href="https://apps.apple.com/ca/app/unify-social/id6741682634" style="margin: 0 8px;"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/apple.svg" alt="Apple" height="20" /></a>
+                  <a href="https://www.instagram.com/unifysocial" style="margin: 0 8px;"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/instagram.svg" alt="Instagram" height="20" /></a>
+                  <a href="mailto:contact@unifysocial.ca" style="margin: 0 8px;"><img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/gmail.svg" alt="Email" height="20" /></a>
                 </div>
-                <p style="font-size: 12px; color: #bbb;">© 2025 Unify Social. All rights reserved.</p>
+                <p style="font-size: 12px; color: #bbb;">© 2026 Unify Social. All rights reserved.</p>
               </td>
             </tr>
           </table>

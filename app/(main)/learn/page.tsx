@@ -389,7 +389,7 @@ function LearnPageContent() {
             )}
         </div>
 
-        <div className="order-1 scrollbar-thin lg:order-2 lg:w-[320px] lg:shrink-0 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
+        <div className="order-1 scrollbar-thin lg:order-2 lg:w-[320px] lg:shrink-0 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh_-_3rem)] lg:overflow-y-auto">
           <LearnSidePanel
             greeting={greeting}
             modulesCompleted={modulesCompleted}

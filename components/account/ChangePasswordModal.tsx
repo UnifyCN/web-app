@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Lock } from "lucide-react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import { AuthButton } from "@/components/auth/AuthButton";
 import { FormError } from "@/components/auth/FormError";
 import { useToast } from "@/components/ui/ToastProvider";
 import { useUpdatePassword } from "@/hooks/useAccount";
@@ -120,24 +120,18 @@ export function ChangePasswordModal({
           }}
         />
         <FormError className="text-xs">{error}</FormError>
-        <div className="flex justify-end gap-2 pt-1">
-          <Button
+        <div className="space-y-2 pt-2">
+          <AuthButton type="submit" loading={mutation.isPending} disabled={!valid}>
+            Update password
+          </AuthButton>
+          <button
             type="button"
-            variant="secondary"
-            size="sm"
             onClick={close}
             disabled={mutation.isPending}
+            className="w-full cursor-pointer rounded-full py-2.5 text-sm font-semibold text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel
-          </Button>
-          <Button
-            type="submit"
-            size="sm"
-            loading={mutation.isPending}
-            disabled={!valid}
-          >
-            Update password
-          </Button>
+          </button>
         </div>
       </form>
     </ModalShell>

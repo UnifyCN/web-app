@@ -27,6 +27,9 @@ export default function CompanionPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   // Surfaced beneath the input — e.g. the daily-limit message (rag-query 429).
   const [sendError, setSendError] = useState<string | null>(null);
+  // Mobile-only master/detail: when true the conversation list is shown instead
+  // of the chat (the two sit side-by-side only at md+). Ignored on desktop.
+  const [mobileListOpen, setMobileListOpen] = useState(false);
 
   const conversationsQuery = useConversations();
   const messagesQuery = useConversationMessages(activeId);
@@ -88,17 +91,20 @@ export default function CompanionPage() {
   }
 
   return (
-    <div className="flex h-screen animate-fade-in">
+    <div className="flex h-[calc(100dvh_-_3.5rem_-_env(safe-area-inset-bottom))] animate-fade-in md:h-dvh">
       <ConversationList
         conversations={conversations}
         activeId={activeId}
+        mobileActive={mobileListOpen}
         onSelect={(id) => {
           setSendError(null);
           setActiveId(id);
+          setMobileListOpen(false);
         }}
         onNew={() => {
           setSendError(null);
           setActiveId(null);
+          setMobileListOpen(false);
         }}
         onDelete={handleDelete}
         isDeleting={deleteConversation.isPending}
@@ -111,6 +117,8 @@ export default function CompanionPage() {
         errorMessage={sendError}
         onSend={handleSend}
         onboarding={currentUser?.onboarding ?? null}
+        mobileActive={!mobileListOpen}
+        onOpenList={() => setMobileListOpen(true)}
       />
     </div>
   );

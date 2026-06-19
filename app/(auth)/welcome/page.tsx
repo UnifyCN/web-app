@@ -71,7 +71,7 @@ function WelcomeScreen() {
   const motionDir = reduce ? 0 : direction;
 
   return (
-    <main className="flex min-h-screen flex-col bg-surface px-6 pb-10">
+    <main className="flex min-h-[100dvh] flex-col bg-surface px-6 pb-[calc(2.5rem_+_env(safe-area-inset-bottom))]">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
         <div className="flex h-16 shrink-0 items-center justify-between">
           {step > 0 ? (
@@ -79,7 +79,7 @@ function WelcomeScreen() {
               type="button"
               onClick={goBack}
               aria-label="Back"
-              className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-ink-secondary transition-all hover:-translate-x-0.5 hover:bg-surface-gray motion-reduce:transition-none motion-reduce:hover:translate-x-0"
+              className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-ink-secondary transition-all hover:-translate-x-0.5 hover:bg-surface-gray motion-reduce:transition-none motion-reduce:hover:translate-x-0"
             >
               <ChevronLeft className="h-6 w-6" aria-hidden />
             </button>
@@ -90,7 +90,7 @@ function WelcomeScreen() {
             <button
               type="button"
               onClick={() => go(SLIDES.length)}
-              className="text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+              className="-mr-2 flex min-h-11 items-center px-2 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
             >
               Skip
             </button>

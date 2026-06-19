@@ -108,7 +108,7 @@ export function PracticeFeedbackModal({
             onClick={onClose}
             disabled={isLoading}
             aria-label="Close feedback"
-            className="-mr-1 rounded-full p-1 text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink-secondary disabled:pointer-events-none disabled:opacity-40"
+            className="-mr-1 rounded-full p-2 text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink-secondary disabled:pointer-events-none disabled:opacity-40"
           >
             <X className="h-5 w-5" />
           </button>

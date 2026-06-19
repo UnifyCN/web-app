@@ -3,6 +3,7 @@ import type {
   CommunityCircle,
   CommunityEvent,
   Group,
+  GroupMemberAvatar,
   NewsItem,
   Persona,
   Stage,
@@ -31,14 +32,6 @@ import { currentCircle } from "@/lib/mock/circles";
  * (mirrors profile/checklist/feed).
  */
 
-const AVATAR_SEED_PREFIX = "grp";
-
-function seededMemberAvatars(id: number): string[] {
-  return [1, 2, 3, 4].map(
-    (n) => `https://picsum.photos/seed/${AVATAR_SEED_PREFIX}-${id}-m${n}/64/64`,
-  );
-}
-
 interface GroupRow {
   id: number;
   group_name: string;
@@ -55,8 +48,47 @@ function rowToGroup(row: GroupRow, joinedByMe: boolean): Group {
     memberCount: row.member_count,
     coverPhotoUrl: row.cover_photo_url,
     joinedByMe,
-    memberAvatars: seededMemberAvatars(row.id),
+    // Populated only on the detail path (getGroupById); list rows don't render
+    // the avatar stack.
+    memberAvatars: [],
   };
+}
+
+interface GroupMemberRow {
+  users: { username: string; profile_picture_url: string | null } | null;
+}
+
+/**
+ * Up to a handful of a group's members for the avatar stack, members with a
+ * real profile picture first (the stack shows the first 4). `profile_picture_url`
+ * is a storage object key resolved to a signed URL at render time by `Avatar`.
+ */
+async function fetchGroupMemberAvatars(
+  supabase: ReturnType<typeof createClient>,
+  groupId: number,
+): Promise<GroupMemberAvatar[]> {
+  const { data, error } = await supabase
+    .from("group_members")
+    .select("users!user_id ( username, profile_picture_url )")
+    .eq("group_id", groupId)
+    .limit(12);
+  if (error) throw error;
+
+  return (data ?? [])
+    .map((row) => (row as unknown as GroupMemberRow).users)
+    .filter((user): user is NonNullable<GroupMemberRow["users"]> =>
+      Boolean(user),
+    )
+    .map((user) => ({
+      username: user.username,
+      profilePictureUrl: user.profile_picture_url,
+    }))
+    .sort(
+      (a, b) =>
+        Number(Boolean(b.profilePictureUrl)) -
+        Number(Boolean(a.profilePictureUrl)),
+    )
+    .slice(0, 6);
 }
 
 async function fetchJoinedGroupIds(
@@ -99,18 +131,21 @@ export async function getGroupById(id: number): Promise<Group | undefined> {
   if (!userId) return findMockGroup(id);
 
   const supabase = createClient();
-  const [groupRes, joinedIds] = await Promise.all([
+  const [groupRes, joinedIds, memberAvatars] = await Promise.all([
     supabase
       .from("groups")
       .select("id, group_name, group_description, member_count, cover_photo_url")
       .eq("id", id)
       .maybeSingle(),
     fetchJoinedGroupIds(supabase, userId),
+    fetchGroupMemberAvatars(supabase, id),
   ]);
   if (groupRes.error) throw groupRes.error;
   if (!groupRes.data) return undefined;
 
-  return rowToGroup(groupRes.data as GroupRow, joinedIds.has(id));
+  const group = rowToGroup(groupRes.data as GroupRow, joinedIds.has(id));
+  group.memberAvatars = memberAvatars;
+  return group;
 }
 
 export async function getJoinedGroups(): Promise<Group[]> {

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { PanelLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { StarterPromptChips } from "./StarterPromptChips";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
@@ -20,6 +22,10 @@ interface ChatPanelProps {
   errorMessage?: string | null;
   onSend: (text: string) => void;
   onboarding: UserOnboardingProfile | null;
+  /** Mobile master/detail: is the chat the visible pane (vs the list)? */
+  mobileActive: boolean;
+  /** Mobile-only: open the conversation list. */
+  onOpenList: () => void;
 }
 
 function TypingIndicator() {
@@ -47,6 +53,8 @@ export function ChatPanel({
   errorMessage,
   onSend,
   onboarding,
+  mobileActive,
+  onOpenList,
 }: ChatPanelProps) {
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -68,10 +76,30 @@ export function ChatPanel({
   }
 
   return (
-    <div className="flex h-full min-w-0 flex-1 flex-col bg-surface">
-      {/* Conversation header — shows the full title (the list is narrow). */}
+    <div
+      className={cn(
+        "h-full min-w-0 flex-1 flex-col bg-surface md:flex",
+        mobileActive ? "flex" : "hidden",
+      )}
+    >
+      {/* Mobile-only top bar: toggle to the conversation list + current title. */}
+      <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border-card px-3 md:hidden">
+        <button
+          type="button"
+          onClick={onOpenList}
+          aria-label="Conversations"
+          className="-ml-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
+        >
+          <PanelLeft className="h-5 w-5" aria-hidden />
+        </button>
+        <h1 className="truncate text-sm font-semibold text-ink-secondary">
+          {conversation?.title ?? "New conversation"}
+        </h1>
+      </header>
+
+      {/* Conversation header (desktop) — shows the full title (the list is narrow). */}
       {conversation && (
-        <header className="flex h-14 shrink-0 items-center border-b border-border-card px-6">
+        <header className="hidden h-14 shrink-0 items-center border-b border-border-card px-6 md:flex">
           <h1 className="truncate text-sm font-semibold text-ink-secondary">
             {conversation.title ?? "New conversation"}
           </h1>
