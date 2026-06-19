@@ -174,7 +174,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="cursor-pointer rounded-md p-1 text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
+                className="cursor-pointer rounded-md p-2 text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
               >
                 <X className="h-5 w-5" aria-hidden />
               </button>
@@ -408,7 +408,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                         type="button"
                         onClick={() => handleRemoveImage(index)}
                         aria-label={`Remove image ${index + 1}`}
-                        className="absolute right-1 top-1 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full bg-ink/60 text-white transition-colors hover:bg-ink/80"
+                        className="absolute right-1 top-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-ink/60 text-white transition-colors hover:bg-ink/80"
                       >
                         <X className="h-3 w-3" aria-hidden />
                       </button>

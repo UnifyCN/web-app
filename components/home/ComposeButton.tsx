@@ -17,7 +17,7 @@ export function ComposeButton() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Create a post"
-        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border border-border-card bg-surface text-ink-tertiary shadow-md transition-colors duration-150 hover:bg-surface-gray hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] right-6 z-30 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border border-border-card bg-surface text-ink-tertiary shadow-md transition-colors duration-150 hover:bg-surface-gray hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:bottom-6"
       >
         <SquarePen className="h-5 w-5" aria-hidden />
       </button>

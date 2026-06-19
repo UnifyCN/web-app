@@ -81,7 +81,7 @@ export function ExplainTermModal({
             ref={closeRef}
             type="button"
             onClick={onClose}
-            className="rounded-md p-1 text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink"
+            className="rounded-md p-2 text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink"
             aria-label="Close"
           >
             <X className="h-4 w-4" aria-hidden />

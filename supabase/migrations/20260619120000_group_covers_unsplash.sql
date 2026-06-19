@@ -18,8 +18,8 @@ update public.groups set cover_photo_url = 'https://images.unsplash.com/photo-15
 update public.groups set cover_photo_url = 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80&auto=format&fit=crop' where id = 14; -- English Practice and Conversation
 update public.groups set cover_photo_url = 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80&auto=format&fit=crop' where id = 15; -- Banking, Credit, and Taxes
 update public.groups set cover_photo_url = 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800&q=80&auto=format&fit=crop' where id = 16; -- Parents and Families
-update public.groups set cover_photo_url = 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&q=80&auto=format&fit=crop' where id = 17; -- Scam Alerts and Safety
+update public.groups set cover_photo_url = 'https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=800&q=80&auto=format&fit=crop' where id = 17; -- Scam Alerts and Safety
 update public.groups set cover_photo_url = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80&auto=format&fit=crop' where id = 18; -- Food Club
 update public.groups set cover_photo_url = 'https://images.unsplash.com/photo-1531206715517-5c0ba140b2b8?w=800&q=80&auto=format&fit=crop' where id = 19; -- Newcomer Wins
-update public.groups set cover_photo_url = 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&q=80&auto=format&fit=crop' where id = 20; -- Movie Club
-update public.groups set cover_photo_url = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&q=80&auto=format&fit=crop' where id = 21; -- Music Club
+update public.groups set cover_photo_url = 'https://images.unsplash.com/photo-1715093974416-b52c38bf982b?w=800&q=80&auto=format&fit=crop' where id = 20; -- Movie Club
+update public.groups set cover_photo_url = 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&q=80&auto=format&fit=crop' where id = 21; -- Music Club

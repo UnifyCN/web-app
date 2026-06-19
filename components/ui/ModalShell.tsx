@@ -127,7 +127,7 @@ export function ModalShell({
             onClick={onClose}
             disabled={busy}
             aria-label="Close"
-            className="-mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-placeholder transition-colors hover:bg-surface-gray disabled:opacity-50"
+            className="-mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-placeholder transition-colors hover:bg-surface-gray disabled:opacity-50"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>

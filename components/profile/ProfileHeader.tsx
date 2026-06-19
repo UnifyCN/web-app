@@ -286,7 +286,7 @@ export function ProfileHeader({
               type="button"
               onClick={openDetailsEditor}
               aria-label="Edit bio and pronouns"
-              className="shrink-0 cursor-pointer p-1 text-ink-placeholder transition-colors hover:text-primary"
+              className="shrink-0 cursor-pointer p-2 text-ink-placeholder transition-colors hover:text-primary"
             >
               <Pencil className="h-3.5 w-3.5" aria-hidden />
             </button>

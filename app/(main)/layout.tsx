@@ -1,11 +1,13 @@
 import { Sidebar } from "@/components/layout/Sidebar";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 
 /**
- * Shell for all authenticated app pages — fixed left sidebar + content area.
- * Individual pages decide their own internal layout (Home is 3-column,
- * the rest are 2-column). Wrapped in ToastProvider so any page can surface
- * brief notifications (e.g. "Lesson complete!").
+ * Shell for all authenticated app pages. Desktop (≥ md): fixed left sidebar +
+ * content. Mobile (< md): the sidebar is hidden and a fixed BottomNav takes
+ * over; `<main>` reserves bottom space (nav height + safe-area inset) so page
+ * content isn't hidden behind it. Wrapped in ToastProvider so any page can
+ * surface brief notifications (e.g. "Lesson complete!").
  */
 export default function MainLayout({
   children,
@@ -14,10 +16,13 @@ export default function MainLayout({
 }) {
   return (
     <ToastProvider>
-      <div className="flex min-h-screen bg-surface">
+      <div className="flex min-h-dvh bg-surface">
         <Sidebar />
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
+          {children}
+        </main>
       </div>
+      <BottomNav />
     </ToastProvider>
   );
 }

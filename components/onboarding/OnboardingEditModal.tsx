@@ -122,7 +122,7 @@ export function OnboardingEditModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="cursor-pointer rounded-md p-1 text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
+            className="cursor-pointer rounded-md p-2 text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
           >
             <X className="h-5 w-5" aria-hidden />
           </button>

@@ -14,6 +14,8 @@ interface ConversationListProps {
   onNew: () => void;
   onDelete: (conversationIdentifier: string) => Promise<void>;
   isDeleting: boolean;
+  /** Mobile master/detail: is the list the visible pane (vs the chat)? */
+  mobileActive: boolean;
 }
 
 /**
@@ -83,6 +85,7 @@ export function ConversationList({
   onNew,
   onDelete,
   isDeleting,
+  mobileActive,
 }: ConversationListProps) {
   const [search, setSearch] = useState("");
   const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
@@ -143,7 +146,13 @@ export function ConversationList({
 
   return (
     <>
-      <aside className="flex w-[240px] shrink-0 flex-col border-r border-border-card bg-surface">
+      <aside
+        className={cn(
+          // Full-width on mobile (master/detail); a 240px rail at md+.
+          "w-full shrink-0 flex-col border-r border-border-card bg-surface md:flex md:w-[240px]",
+          mobileActive ? "flex" : "hidden",
+        )}
+      >
         <div className="space-y-3 p-3">
           <button
             type="button"
@@ -180,7 +189,7 @@ export function ConversationList({
                     type="button"
                     onClick={() => onSelect(conversation.id)}
                     className={cn(
-                      "flex w-full cursor-pointer flex-col items-start rounded-lg py-2 pl-3 pr-9 text-left transition-colors",
+                      "flex w-full cursor-pointer flex-col items-start rounded-lg py-2 pl-3 pr-11 text-left transition-colors",
                       active ? "bg-primary-bg" : "hover:bg-surface-gray",
                     )}
                   >
@@ -206,11 +215,12 @@ export function ConversationList({
                     aria-haspopup="menu"
                     aria-expanded={menuOpen}
                     className={cn(
-                      "absolute right-1 top-1.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-ink-muted transition-opacity",
+                      "absolute right-1 top-1.5 flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-ink-muted transition-opacity",
                       "hover:bg-surface focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                      // Always visible on touch (no hover); hover-reveal at md+.
                       menuOpen
                         ? "opacity-100"
-                        : "opacity-0 group-hover:opacity-100",
+                        : "opacity-100 md:opacity-0 md:group-hover:opacity-100",
                     )}
                   >
                     <MoreHorizontal className="h-4 w-4" aria-hidden />

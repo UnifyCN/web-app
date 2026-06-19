@@ -105,7 +105,7 @@ function AssistantMessage({
           type="button"
           onClick={copy}
           aria-label={copied ? "Copied" : "Copy message"}
-          className="absolute right-2.5 top-2.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink-muted"
+          className="absolute right-2.5 top-2.5 flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink-muted"
         >
           {copied ? (
             <Check className="h-4 w-4" aria-hidden />

@@ -30,7 +30,7 @@ export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
             aria-selected={isActive}
             onClick={() => onChange(tab)}
             className={cn(
-              "relative -mb-px cursor-pointer border-b-2 px-5 py-2",
+              "relative -mb-px cursor-pointer border-b-2 px-5 py-3",
               "text-sm transition-colors duration-150",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
               isActive
