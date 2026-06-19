@@ -348,10 +348,28 @@ export async function getGroupsFeed(
   return { posts: enriched, nextCursor };
 }
 
-/* ---- mock-only helpers (kept for unwired surfaces) -------------------- */
+/* ---- group feed (Supabase-wired, mock fallback) ---------------------- */
 
+/**
+ * All posts in `groupId`, newest first, enriched with per-user metadata.
+ * `posts` is public-read RLS so any group's posts resolve; falls back to the
+ * local feed pre-config. Mirrors getUserPosts.
+ */
 export async function getGroupPosts(groupId: number): Promise<Post[]> {
-  return mockPosts.filter((post) => post.groupId === groupId);
+  if (!isSupabaseConfigured()) {
+    return mockPosts.filter((post) => post.groupId === groupId);
+  }
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POSTS_SELECT)
+    .eq("group_id", groupId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  const posts = (data as unknown as JoinedPostRow[]).map(rowToPost);
+  return enrichPostsWithMetadata(posts);
 }
 
 /* ---- profile feeds (Supabase-wired, mock fallback) -------------------- */

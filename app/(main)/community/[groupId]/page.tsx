@@ -8,7 +8,7 @@ import { GroupCover } from "@/components/community/GroupCover";
 import { GroupMemberAvatarStack } from "@/components/community/GroupMemberAvatarStack";
 import { PostCard } from "@/components/home/PostCard";
 import { useGroup, useJoinGroup, useLeaveGroup } from "@/hooks/useCommunity";
-import { posts } from "@/lib/mock/posts";
+import { useGroupPosts } from "@/hooks/useFeed";
 
 export default function GroupDetailPage({
   params,
@@ -20,6 +20,7 @@ export default function GroupDetailPage({
   const id = Number.isFinite(parsedId) && parsedId > 0 ? parsedId : 0;
 
   const groupQuery = useGroup(id);
+  const groupPostsQuery = useGroupPosts(id);
   const joinMutation = useJoinGroup();
   const leaveMutation = useLeaveGroup();
 
@@ -51,7 +52,7 @@ export default function GroupDetailPage({
 
   const memberCount =
     group.memberCount + (joined ? 1 : 0) - (group.joinedByMe ? 1 : 0);
-  const groupPosts = posts.filter((post) => post.groupId === group.id);
+  const groupPosts = groupPostsQuery.data ?? [];
 
   function toggleJoin() {
     if (!group) return;
@@ -111,7 +112,11 @@ export default function GroupDetailPage({
       <h2 className="mb-2 mt-6 text-sm font-semibold text-ink-secondary">
         Recent posts
       </h2>
-      {groupPosts.length > 0 ? (
+      {groupPostsQuery.isLoading ? (
+        <p className="rounded-card border border-border-card bg-surface px-5 py-12 text-center text-sm text-ink-placeholder">
+          Loading posts…
+        </p>
+      ) : groupPosts.length > 0 ? (
         <div className="divide-y divide-border-card overflow-hidden rounded-card border border-border-card bg-surface">
           {groupPosts.map((post) => (
             <PostCard key={post.id} post={post} />

@@ -79,8 +79,7 @@ function VerifyEmailScreen() {
 
   return (
     <AuthShell>
-      <div className="flex flex-1 flex-col justify-center pb-10">
-        <h1 className="text-3xl font-bold text-ink">Verify your email</h1>
+      <h1 className="text-3xl font-bold text-ink">Verify your email</h1>
 
         {success ? (
           <div className="mt-8 flex flex-col items-center text-center">
@@ -180,7 +179,6 @@ function VerifyEmailScreen() {
           </Link>
         </>
       )}
-      </div>
     </AuthShell>
   );
 }

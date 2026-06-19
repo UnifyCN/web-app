@@ -27,7 +27,9 @@ export function AuthShell({
             </Link>
           )}
         </div>
-        {children}
+        <div className="flex flex-1 flex-col justify-center pb-10">
+          {children}
+        </div>
       </div>
     </main>
   );

@@ -26,7 +26,8 @@ function hostFromUrl(url: string): string {
 
 /** Collapsible "Sources (N)" list — full-width rows with domain + linked title. */
 function SourceList({ sources }: { sources: ChatSource[] }) {
-  const [open, setOpen] = useState(true);
+  // Collapsed by default — users expand if they want to inspect citations.
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="mt-3 border-t border-border-card pt-3">

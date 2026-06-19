@@ -1,15 +1,17 @@
-import Image from "next/image";
+import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
+import type { GroupMemberAvatar } from "@/types";
 
 const MAX_VISIBLE = 4;
 
 interface GroupMemberAvatarStackProps {
-  avatars: string[];
+  avatars: GroupMemberAvatar[];
   totalCount: number;
   className?: string;
 }
 
-/** Overlapping member avatars + a "+N members" label. */
+/** Overlapping member avatars (resolved signed URL or initials) + a "+N
+ *  members" label. */
 export function GroupMemberAvatarStack({
   avatars,
   totalCount,
@@ -20,21 +22,19 @@ export function GroupMemberAvatarStack({
   return (
     <div className={cn("flex items-center", className)}>
       <div className="flex">
-        {visible.map((url, index) => (
+        {visible.map((member, index) => (
           <div
-            key={url}
+            key={`${member.username}-${index}`}
             style={{ zIndex: MAX_VISIBLE - index }}
             className={cn(
-              "relative h-8 w-8 overflow-hidden rounded-full ring-2 ring-surface",
+              "rounded-full ring-2 ring-surface",
               index > 0 && "-ml-2.5",
             )}
           >
-            <Image
-              src={url}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="32px"
+            <Avatar
+              profilePictureUrl={member.profilePictureUrl}
+              username={member.username}
+              size={32}
             />
           </div>
         ))}

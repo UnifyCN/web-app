@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "cdn.sanity.io" },
+      // Curated group cover photos (groups.cover_photo_url) — see
+      // 20260619120000_group_covers_unsplash.sql.
+      { protocol: "https", hostname: "images.unsplash.com" },
       // Community event cover photos
       { protocol: "https", hostname: "events.ubc.ca" },
       { protocol: "https", hostname: "img.freepik.com" },

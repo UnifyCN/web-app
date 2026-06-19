@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 import { externalHref, formatRelativeTime } from "@/lib/utils";
 import type { NewsItem } from "@/types";
@@ -14,12 +13,11 @@ export function NewsArticleItem({ item }: { item: NewsItem }) {
     <>
       {item.imageLink && (
         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg sm:h-24 sm:w-24">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element -- crawled news images come from arbitrary publisher hosts (not in the next.config allowlist) */}
+          <img
             src={item.imageLink}
             alt=""
-            fill
-            className="object-cover"
-            sizes="96px"
+            className="absolute inset-0 h-full w-full object-cover"
           />
         </div>
       )}

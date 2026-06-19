@@ -1,10 +1,12 @@
-import type { Group } from "@/types";
+import type { Group, GroupMemberAvatar } from "@/types";
 
-/** Four seeded member-avatar URLs for a group's avatar stack. */
-function memberAvatars(seed: string): string[] {
-  return [1, 2, 3, 4].map(
-    (n) => `https://picsum.photos/seed/${seed}-m${n}/64/64`,
-  );
+/** Four seeded members for a group's avatar stack (initials fallback — mock /
+ *  local-dev has no real pictures; the real path resolves member avatars). */
+function memberAvatars(seed: string): GroupMemberAvatar[] {
+  return [1, 2, 3, 4].map((n) => ({
+    username: `${seed}-m${n}`,
+    profilePictureUrl: null,
+  }));
 }
 
 // TODO: replace with real data — mock Canadian newcomer groups.
