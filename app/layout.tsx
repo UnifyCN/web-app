@@ -14,6 +14,11 @@ export const metadata: Metadata = {
   title: "Unify — Settling in Canada",
   description:
     "Unify is a newcomer support platform for people settling in Canada.",
+  // Unify ring mark (transparent, public/favicon.png) — replaces the default
+  // create-next-app favicon.ico, which was removed so this is the only icon.
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 // `viewportFit: "cover"` is required for `env(safe-area-inset-*)` to resolve to
