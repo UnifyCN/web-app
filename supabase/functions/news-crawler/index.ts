@@ -399,18 +399,27 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: 'Insert failed', detail: error.message }, 500);
   }
 
-  // Cap the table at the 30 most-recent rows (by date desc) so it never grows
-  // unbounded as feeds are added. Supabase-JS can't express
-  // `delete … where id not in (<subquery>)`, so fetch the ids to keep, then delete
-  // the rest.
+  // Cap each SOURCE at its 5 most-recent articles (by date desc) so every feed
+  // contributes regardless of publish frequency — a date-only global cap let prolific
+  // sources crowd out the rest. Bounded at ~5 × #feeds rows. supabase-js has no window
+  // functions, so fetch (id, author, date) newest-first and keep the first 5 per
+  // author, then delete the remainder.
+  const MAX_PER_SOURCE = 5;
   let pruned = 0;
-  const { data: keep } = await supabase
+  const { data: all } = await supabase
     .from('news_details')
-    .select('id')
-    .order('date', { ascending: false })
-    .limit(30);
-  const keepIds = (keep ?? []).map((r) => r.id);
-  if (keepIds.length > 0) {
+    .select('id, author, date')
+    .order('date', { ascending: false });
+  const perSource: Record<string, number> = {};
+  const keepIds: number[] = [];
+  for (const row of all ?? []) {
+    const n = perSource[row.author] ?? 0;
+    if (n < MAX_PER_SOURCE) {
+      keepIds.push(row.id);
+      perSource[row.author] = n + 1;
+    }
+  }
+  if (keepIds.length > 0 && keepIds.length < (all?.length ?? 0)) {
     const { data: removed, error: pruneError } = await supabase
       .from('news_details')
       .delete()
