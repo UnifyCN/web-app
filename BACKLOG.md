@@ -552,6 +552,9 @@ The CLAUDE.md rule + the `news-crawler` Unsplash fallback (PR #39) enforce a non
 **Remove dead signed-out fallback mock returns**
 Across services/feed.ts, services/community.ts, services/checklist.ts, services/companion.ts, and services/profile.ts, each query function has an `if (!await getAuthUserId()) return mock…` branch as a defensive fallback. The (main) route group is gated by the authenticated layout (proxy.ts redirects unauthenticated traffic to /login), so these paths are unreachable in production. Strip them in a separate PR after Phase 6 (Companion) merges, keeping only the `isSupabaseConfigured()` branch for the local-without-env case.
 
+**Remove dead `LearningProgressSummary` chain** *(orphaned by PR #41)*
+`PR #41` (`feat/learn-cards-social`) repointed the Home Learning-Progress widget to `useModules()` + the Learn `ModuleGridCard`, so the old summary path has **no live consumer** left. It's a self-contained dead chain: `useLearningProgressSummary` (`hooks/useLearn.ts`), `getLearningProgressSummary` (`services/learn.ts`), the `LearningProgressSummary` type (`types/index.ts`), and the `mockLearningProgress` mock (`lib/mock/progress.ts`). Left in place deliberately (not deleted) — strip in a follow-up PR. When removing, also drop the now-pointless `LEARNING_PROGRESS_KEY` invalidations in `useSetModuleStatus` + `useSetLessonProgress` (`hooks/useLearn.ts`) and the `LEARNING_PROGRESS_KEY` constant — nothing subscribes to that query key anymore.
+
 ---
 
 ## Learn
