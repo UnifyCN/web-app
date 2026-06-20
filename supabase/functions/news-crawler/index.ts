@@ -229,7 +229,7 @@ function extractLink(block: string): string | null {
   return firstMatch(block, /<link[^>]*href=["']([^"']+)["']/i);
 }
 
-function extractImage(block: string): string | null {
+function extractImageCandidate(block: string): string | null {
   const media =
     firstMatch(block, /<media:content[^>]*url=["']([^"']+)["']/i) ||
     firstMatch(block, /<media:thumbnail[^>]*url=["']([^"']+)["']/i);
@@ -245,6 +245,82 @@ function extractImage(block: string): string | null {
   return null;
 }
 
+// Reject obvious non-photos (logos / brand marks / icons) so they don't become
+// article thumbnails — the per-category Unsplash fallback takes over instead.
+// 1) URL-pattern rejection (case-insensitive). `icon` subsumes `favicon` and
+//    `logo` subsumes `wp-content/uploads.*logo`; both kept explicit per spec.
+//    `\/tm(?:[\/?#._-]|$)` matches "/tm" only as a complete path segment (so it
+//    catches /tm, /tm/, /tm.png, /tm-x, /tm?… but NOT /tmp/).
+const ICON_URL_RE =
+  /logo|icon|brand|favicon|placeholder|avatar|trademark|\/tm(?:[\/?#._-]|$)|spinner|badge|wp-content\/uploads.*logo/i;
+// 2) Anything under MIN_IMAGE_BYTES is almost certainly a logo/icon, not a photo.
+const MIN_IMAGE_BYTES = 10 * 1024;
+const IMAGE_HEAD_TIMEOUT_MS = 3000;
+
+// SSRF guard: only HEAD public http(s) URLs. Rejects non-http(s) schemes and hosts
+// in localhost / loopback / private / link-local ranges — the crawler runs
+// server-side with the service role, so a crafted feed image URL must never reach
+// an internal host.
+function isPublicHttpUrl(raw: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+  const host = u.hostname.toLowerCase();
+  if (host === 'localhost' || host.endsWith('.localhost')) return false;
+  if (host === '::1' || host === '[::1]') return false; // IPv6 loopback
+  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.\d{1,3}$/);
+  if (m) {
+    const a = Number(m[1]);
+    const b = Number(m[2]);
+    if (a === 127) return false; // loopback 127.0.0.0/8
+    if (a === 10) return false; // private 10.0.0.0/8
+    if (a === 172 && b >= 16 && b <= 31) return false; // private 172.16.0.0/12
+    if (a === 192 && b === 168) return false; // private 192.168.0.0/16
+    if (a === 169 && b === 254) return false; // link-local 169.254.0.0/16
+    if (a === 0) return false; // 0.0.0.0/8 (loopback-equivalent bypass)
+  }
+  return true;
+}
+
+/**
+ * Extract the feed item's image and keep it only if it looks like a real photo:
+ * reject icon-ish URLs, then HEAD-check the byte size (3s cap). Reject only on a
+ * positive Content-Length below the threshold — a missing header, a non-OK status,
+ * or a thrown/timed-out request all keep the image (benefit of the doubt). Returns
+ * null when there's no usable photo, so the caller applies the category fallback.
+ */
+async function resolveImage(block: string): Promise<string | null> {
+  const url = extractImageCandidate(block);
+  if (!url) return null;
+  if (ICON_URL_RE.test(url)) return null;
+  if (!isPublicHttpUrl(url)) return null; // SSRF guard before the HEAD fetch
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), IMAGE_HEAD_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      method: 'HEAD',
+      signal: controller.signal,
+      headers: { 'User-Agent': 'UnifyNewsBot/1.0 (+https://unifysocial.ca)' },
+    });
+    if (!res.ok) return url; // non-OK ⇒ keep (benefit of the doubt)
+    const lenHeader = res.headers.get('content-length');
+    if (lenHeader !== null) {
+      const bytes = Number(lenHeader);
+      if (Number.isFinite(bytes) && bytes < MIN_IMAGE_BYTES) return null;
+    }
+    return url;
+  } catch {
+    return url;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function parseDate(block: string): string {
   const raw =
     firstMatch(block, /<pubDate>([\s\S]*?)<\/pubDate>/i) ||
@@ -256,30 +332,36 @@ function parseDate(block: string): string {
   return new Date().toISOString();
 }
 
-function parseFeed(xml: string, feed: Feed): NewsRow[] {
-  const rows: NewsRow[] = [];
-  for (const block of extractItemBlocks(xml).slice(0, MAX_ITEMS_PER_FEED)) {
-    const title = clean(firstMatch(block, /<title[^>]*>([\s\S]*?)<\/title>/i));
-    const link = extractLink(block);
-    if (!title || !link) continue; // title is NOT NULL; link is the dedupe key
+async function parseFeed(xml: string, feed: Feed): Promise<NewsRow[]> {
+  // Resolve every item (incl. its HEAD-checked image) concurrently so the image
+  // validation adds ~one timeout to the feed, not one per item.
+  const rows = await Promise.all(
+    extractItemBlocks(xml)
+      .slice(0, MAX_ITEMS_PER_FEED)
+      .map(async (block): Promise<NewsRow | null> => {
+        const title = clean(firstMatch(block, /<title[^>]*>([\s\S]*?)<\/title>/i));
+        const link = extractLink(block);
+        if (!title || !link) return null; // title is NOT NULL; link is the dedupe key
 
-    const rawDescription =
-      firstMatch(block, /<description>([\s\S]*?)<\/description>/i) ||
-      firstMatch(block, /<summary[^>]*>([\s\S]*?)<\/summary>/i) ||
-      firstMatch(block, /<content[^>]*>([\s\S]*?)<\/content>/i);
-    const description = toPlainText(rawDescription).slice(0, MAX_DESCRIPTION_CHARS) || null;
+        const rawDescription =
+          firstMatch(block, /<description>([\s\S]*?)<\/description>/i) ||
+          firstMatch(block, /<summary[^>]*>([\s\S]*?)<\/summary>/i) ||
+          firstMatch(block, /<content[^>]*>([\s\S]*?)<\/content>/i);
+        const description =
+          toPlainText(rawDescription).slice(0, MAX_DESCRIPTION_CHARS) || null;
 
-    rows.push({
-      title: title.slice(0, 300),
-      description,
-      author: feed.source,
-      category: feed.category,
-      date: parseDate(block),
-      image_link: extractImage(block) ?? fallbackImage(feed.category, link),
-      link: link.trim(),
-    });
-  }
-  return rows;
+        return {
+          title: title.slice(0, 300),
+          description,
+          author: feed.source,
+          category: feed.category,
+          date: parseDate(block),
+          image_link: (await resolveImage(block)) ?? fallbackImage(feed.category, link),
+          link: link.trim(),
+        };
+      }),
+  );
+  return rows.filter((r): r is NewsRow => r !== null);
 }
 
 async function fetchFeed(url: string): Promise<string | null> {
@@ -365,7 +447,7 @@ Deno.serve(async (req: Request) => {
   const feedResults = await Promise.all(
     FEEDS.map(async (feed) => {
       const xml = await fetchFeed(feed.url);
-      const rows = xml ? parseFeed(xml, feed) : [];
+      const rows = xml ? await parseFeed(xml, feed) : [];
       return { source: feed.source, rows };
     }),
   );
