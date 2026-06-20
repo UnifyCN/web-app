@@ -406,10 +406,11 @@ Deno.serve(async (req: Request) => {
   // author, then delete the remainder.
   const MAX_PER_SOURCE = 5;
   let pruned = 0;
-  const { data: all } = await supabase
+  const { data: all, error: selectError } = await supabase
     .from('news_details')
     .select('id, author, date')
     .order('date', { ascending: false });
+  if (selectError) console.error('Prune select failed:', selectError);
   const perSource: Record<string, number> = {};
   const keepIds: number[] = [];
   for (const row of all ?? []) {
