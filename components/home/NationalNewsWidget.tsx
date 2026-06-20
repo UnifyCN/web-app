@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import Image from "next/image";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { externalHref, formatRelativeTime } from "@/lib/utils";
+import { handleNewsImageError } from "@/lib/news/fallbackImage";
 import { useNews } from "@/hooks/useCommunity";
 import type { NewsItem } from "@/types";
 
@@ -80,12 +80,12 @@ export function NationalNewsWidget() {
               <>
                 {item.imageLink && (
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md">
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element -- crawled news images come from arbitrary publisher hosts (not in the next.config allowlist); a plain <img> lets the onError fallback work */}
+                    <img
                       src={item.imageLink}
                       alt=""
-                      fill
-                      className="object-cover"
-                      sizes="56px"
+                      className="absolute inset-0 h-full w-full object-cover"
+                      onError={(e) => handleNewsImageError(e, item.category)}
                     />
                   </div>
                 )}

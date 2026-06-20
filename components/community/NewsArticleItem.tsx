@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/Badge";
 import { externalHref, formatRelativeTime } from "@/lib/utils";
+import { handleNewsImageError } from "@/lib/news/fallbackImage";
 import type { NewsItem } from "@/types";
 
 /**
@@ -18,6 +19,7 @@ export function NewsArticleItem({ item }: { item: NewsItem }) {
             src={item.imageLink}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
+            onError={(e) => handleNewsImageError(e, item.category)}
           />
         </div>
       )}
