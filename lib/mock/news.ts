@@ -1,14 +1,16 @@
 import type { NewsItem } from "@/types";
 
 /**
- * National newcomer news. The Home `NationalNewsWidget` renders this list
- * directly (it does not read the DB), and it doubles as the local-dev /
- * env-not-configured fallback for the Community News tab (`getNews`). Curated,
- * verified-working links to Canadian government + reputable settlement / news
- * sources, each with a topical Unsplash thumbnail (`images.unsplash.com` is
- * allowlisted in next.config.ts). Per CLAUDE.md, news items must always carry an
- * `imageLink` — never null. `category` is null (untagged); items link out to the
- * source (no in-app detail page).
+ * National newcomer news — the **local-dev / env-not-configured fallback** for
+ * `getNews()` (services/community.ts). Both the Community → News tab and the Home
+ * `NationalNewsWidget` read `news_details` (crawler-fed) via `useNews()`; this
+ * list is returned only when Supabase isn't configured (or there's no auth user),
+ * so the app stays browsable without a backend — it is NOT rendered directly in
+ * production. Curated, verified-working links to Canadian government + reputable
+ * settlement / news sources, each with a topical Unsplash thumbnail
+ * (`images.unsplash.com` is allowlisted in next.config.ts). Per CLAUDE.md, news
+ * items must always carry an `imageLink` — never null. `category` is null
+ * (untagged); items link out to the source (no in-app detail page).
  */
 export const newsItems: NewsItem[] = [
   {
