@@ -49,13 +49,9 @@ const FEEDS: Feed[] = [
     source: 'Health Canada',
     category: 'Health',
   },
-  // All-department federal newsroom (no dept filter). Overlaps the dept feeds
-  // above; the link-dedup in the handler collapses the duplicates.
-  {
-    url: 'https://api.io.canada.ca/io-server/gc/news/en/v2?type=newsreleases&sort=publishedDate&orderBy=desc&pick=25&format=atom',
-    source: 'Government of Canada',
-    category: 'Government',
-  },
+  // NB: the all-department federal newsroom feed (no dept= filter) was removed — it
+  // pulled newcomer-irrelevant content (corrections lockdowns, defence/NATO visits,
+  // CBSA trade probes, etc.). Only targeted department + immigration sources remain.
 ];
 
 const MAX_ITEMS_PER_FEED = 15;
