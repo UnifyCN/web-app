@@ -25,30 +25,34 @@ interface Feed {
 
 // Immigration/newcomer-focused sources. Add feeds here to broaden coverage;
 // each row carries its source as the author and a default category.
+// NOTE: the canada.ca io-server feeds REQUIRE sort=publishedDate&orderBy=desc —
+// without it the endpoint returns its OLDEST entries first (a frozen 2020-2021
+// archive), which then get stamped 2020 and look stale / get cleaned up.
 const FEEDS: Feed[] = [
   { url: 'https://www.cicnews.com/feed', source: 'CIC News', category: 'Immigration' },
   {
-    url: 'https://api.io.canada.ca/io-server/gc/news/en/v2?dept=departmentofcitizenshipandimmigration&type=newsreleases&pick=25&format=atom',
+    url: 'https://api.io.canada.ca/io-server/gc/news/en/v2?dept=departmentofcitizenshipandimmigration&type=newsreleases&sort=publishedDate&orderBy=desc&pick=25&format=atom',
     source: 'IRCC',
     category: 'Immigration',
   },
   { url: 'https://canadianimmigrant.ca/feed', source: 'Canadian Immigrant', category: 'Immigration' },
+  { url: 'https://moving2canada.com/feed/', source: 'Moving2Canada', category: 'Immigration' },
   // Service Canada / ESDC — benefits, EI, SIN, employment. (canada.ca dept feeds
   // key off the legal department name; the .atom.xml path the source links is dead.)
   {
-    url: 'https://api.io.canada.ca/io-server/gc/news/en/v2?dept=departmentofemploymentandsocialdevelopment&type=newsreleases&pick=25&format=atom',
+    url: 'https://api.io.canada.ca/io-server/gc/news/en/v2?dept=departmentofemploymentandsocialdevelopment&type=newsreleases&sort=publishedDate&orderBy=desc&pick=25&format=atom',
     source: 'Service Canada',
     category: 'Benefits',
   },
   {
-    url: 'https://api.io.canada.ca/io-server/gc/news/en/v2?dept=departmentofhealth&type=newsreleases&pick=25&format=atom',
+    url: 'https://api.io.canada.ca/io-server/gc/news/en/v2?dept=departmentofhealth&type=newsreleases&sort=publishedDate&orderBy=desc&pick=25&format=atom',
     source: 'Health Canada',
     category: 'Health',
   },
   // All-department federal newsroom (no dept filter). Overlaps the dept feeds
   // above; the link-dedup in the handler collapses the duplicates.
   {
-    url: 'https://api.io.canada.ca/io-server/gc/news/en/v2?type=newsreleases&pick=25&format=atom',
+    url: 'https://api.io.canada.ca/io-server/gc/news/en/v2?type=newsreleases&sort=publishedDate&orderBy=desc&pick=25&format=atom',
     source: 'Government of Canada',
     category: 'Government',
   },

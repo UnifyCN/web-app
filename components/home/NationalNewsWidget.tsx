@@ -39,17 +39,22 @@ export function NationalNewsWidget() {
             </li>
           ))}
         </ul>
-      ) : error ? (
-        <p
-          role="alert"
-          className="px-4 py-8 text-center text-sm text-destructive"
-        >
-          Couldn&apos;t load news.
-        </p>
       ) : items.length === 0 ? (
-        <p className="px-4 py-8 text-center text-sm text-ink-placeholder">
-          No news yet.
-        </p>
+        // Items take precedence over a (background) error: only fall back to the
+        // error/empty placeholder when there's genuinely nothing to show, so a
+        // failed refetch never blanks out already-loaded news. (CodeRabbit, PR #40.)
+        error ? (
+          <p
+            role="alert"
+            className="px-4 py-8 text-center text-sm text-destructive"
+          >
+            Couldn&apos;t load news.
+          </p>
+        ) : (
+          <p className="px-4 py-8 text-center text-sm text-ink-placeholder">
+            No news yet.
+          </p>
+        )
       ) : (
         <ul className="divide-y divide-border-card">
           {items.map((item) => {
