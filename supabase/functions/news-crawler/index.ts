@@ -52,32 +52,111 @@ const FEEDS: Feed[] = [
   // NB: the all-department federal newsroom feed (no dept= filter) was removed — it
   // pulled newcomer-irrelevant content (corrections lockdowns, defence/NATO visits,
   // CBSA trade probes, etc.). Only targeted department + immigration sources remain.
+  // Non-government sources — human stories, finance, housing, settlement guides — to
+  // balance the government press releases. All verified (2026 items, real per-article
+  // links).
+  { url: 'https://www.moneysense.ca/feed/', source: 'MoneySense', category: 'Finance' },
+  { url: 'https://cms.ratehub.ca/feed/', source: 'Ratehub', category: 'Housing' },
+  { url: 'https://issbc.org/feed/', source: 'ISSofBC', category: 'Community' },
+  { url: 'https://prepareforcanada.com/blog/feed', source: 'Prepare for Canada', category: 'Immigration' },
+  { url: 'https://www.immigration.ca/feed/', source: 'immigration.ca', category: 'Immigration' },
 ];
 
 const MAX_ITEMS_PER_FEED = 15;
 const MAX_DESCRIPTION_CHARS = 400;
 const FETCH_TIMEOUT_MS = 20000;
 
-// Topic-appropriate Unsplash fallbacks (images.unsplash.com is allowlisted in the
-// web app's next.config.ts), keyed by the feed's category, so every row carries a
-// thumbnail even when the feed item ships no image. Per CLAUDE.md, news items must
-// always have an image_link — never null. Stable photo-<id> form (short
-// /photos/<slug> URLs 404 on the CDN).
-const FALLBACK_IMAGE: Record<string, string> = {
-  Immigration:
-    'https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=800&q=80&auto=format&fit=crop',
-  Benefits:
-    'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80&auto=format&fit=crop',
-  Health:
-    'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80&auto=format&fit=crop',
-  Government:
-    'https://images.unsplash.com/photo-1517935706615-2717063c2225?w=800&q=80&auto=format&fit=crop',
-};
-// Canadian skyline — neutral default for any category without its own fallback.
-const DEFAULT_FALLBACK_IMAGE = FALLBACK_IMAGE.Government;
+// Topic-appropriate Unsplash fallback POOLS (images.unsplash.com is allowlisted in
+// next.config.ts), keyed by the feed's category. Government dept feeds ship no image
+// in their RSS, so without this every such row would repeat ONE category image —
+// instead each article deterministically gets a different pool image (hash of its
+// link). Per CLAUDE.md news items always have an image_link — never null. Stable
+// photo-<id> form only (short /photos/<slug> URLs 404); every id verified 200 image/jpeg.
+const IMG = (id: string) =>
+  `https://images.unsplash.com/${id}?w=800&q=80&auto=format&fit=crop`;
 
-function fallbackImage(category: string): string {
-  return FALLBACK_IMAGE[category] ?? DEFAULT_FALLBACK_IMAGE;
+const FALLBACK_POOLS: Record<string, string[]> = {
+  Immigration: [
+    'photo-1588733103629-b77afe0425ce',
+    'photo-1517935706615-2717063c2225',
+    'photo-1568036998293-09f73fcd6835',
+    'photo-1593478210686-8ec9852cff87',
+    'photo-1578973615934-8d9cdb0792b4',
+    'photo-1566438503908-4f8377461f58',
+    'photo-1523580846011-d3a5bc25702b',
+    'photo-1531206715517-5c0ba140b2b8',
+  ].map(IMG),
+  Benefits: [
+    'photo-1686771416282-3888ddaf249b',
+    'photo-1573497620053-ea5300f94f21',
+    'photo-1511376979163-f804dff7ad7b',
+    'photo-1635350736475-c8cef4b21906',
+    'photo-1507679799987-c73779587ccf',
+    'photo-1521791136064-7986c2920216',
+    'photo-1517048676732-d65bc937f952',
+    'photo-1499750310107-5fef28a66643',
+    'photo-1487528278747-ba99ed528ebc',
+    'photo-1573497491208-6b1acb260507',
+  ].map(IMG),
+  Health: [
+    'photo-1532938911079-1b06ac7ceec7',
+    'photo-1638202993928-7267aad84c31',
+    'photo-1582750433449-648ed127bb54',
+    'photo-1584432810601-6c7f27d2362b',
+    'photo-1659353888906-adb3e0041693',
+    'photo-1673865641073-4479f93a7776',
+    'photo-1666887360388-93e684b6474a',
+    'photo-1576091160550-2173dba999ef',
+  ].map(IMG),
+  Finance: [
+    'photo-1526304640581-d334cdbbf45e',
+    'photo-1604594849809-dfedbc827105',
+    'photo-1518458028785-8fbcd101ebb9',
+    'photo-1534951009808-766178b47a4f',
+    'photo-1554224155-6726b3ff858f',
+    'photo-1633158829585-23ba8f7c8caf',
+    'photo-1633158829875-e5316a358c6f',
+    'photo-1607863680198-23d4b2565df0',
+  ].map(IMG),
+  Housing: [
+    'photo-1560518883-ce09059eeffa',
+    'photo-1722487631997-cf1e0f92c2c4',
+    'photo-1744782351841-9cc6b86a5add',
+    'photo-1733244766159-f58f4184fd38',
+    'photo-1742318592061-15c5f19e1e47',
+    'photo-1643804926339-e94f0a655185',
+    'photo-1634979149798-e9a118734e93',
+    'photo-1685886069739-c1b96bba7953',
+    'photo-1604445415362-2a9840bd5ff6',
+    'photo-1603508102977-02688e3265fd',
+  ].map(IMG),
+  Community: [
+    'photo-1517456793572-1d8efd6dc135',
+    'photo-1697490251788-21888514f669',
+    'photo-1517457373958-b7bdd4587205',
+    'photo-1498661694102-0a3793edbe74',
+    'photo-1642307063371-2e3e8909c3cb',
+    'photo-1758272133542-b3107b947fc2',
+    'photo-1761435739748-879d2ecf0c70',
+    'photo-1758272133693-d2124dbe00de',
+    'photo-1761957371985-3c6d08e9ec68',
+    'photo-1758275557250-894dd1e8feb3',
+  ].map(IMG),
+};
+// Canadian community imagery — neutral default for any category without its own pool.
+const DEFAULT_POOL = FALLBACK_POOLS.Community;
+
+// Deterministic non-crypto string hash so a given link always maps to the same pool
+// image (stable across re-crawls) while different links spread across the pool.
+function hashStr(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+function fallbackImage(category: string, link: string): string {
+  const pool = FALLBACK_POOLS[category] ?? DEFAULT_POOL;
+  return pool[hashStr(link) % pool.length];
 }
 
 interface NewsRow {
@@ -196,7 +275,7 @@ function parseFeed(xml: string, feed: Feed): NewsRow[] {
       author: feed.source,
       category: feed.category,
       date: parseDate(block),
-      image_link: extractImage(block) ?? fallbackImage(feed.category),
+      image_link: extractImage(block) ?? fallbackImage(feed.category, link),
       link: link.trim(),
     });
   }
@@ -320,10 +399,32 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: 'Insert failed', detail: error.message }, 500);
   }
 
+  // Cap the table at the 30 most-recent rows (by date desc) so it never grows
+  // unbounded as feeds are added. Supabase-JS can't express
+  // `delete … where id not in (<subquery>)`, so fetch the ids to keep, then delete
+  // the rest.
+  let pruned = 0;
+  const { data: keep } = await supabase
+    .from('news_details')
+    .select('id')
+    .order('date', { ascending: false })
+    .limit(30);
+  const keepIds = (keep ?? []).map((r) => r.id);
+  if (keepIds.length > 0) {
+    const { data: removed, error: pruneError } = await supabase
+      .from('news_details')
+      .delete()
+      .not('id', 'in', `(${keepIds.join(',')})`)
+      .select('id');
+    if (pruneError) console.error('Prune failed:', pruneError);
+    else pruned = removed?.length ?? 0;
+  }
+
   return jsonResponse({
     ok: true,
     fetched: deduped.length,
     inserted: data?.length ?? 0,
+    pruned,
     perFeed,
   });
 });
