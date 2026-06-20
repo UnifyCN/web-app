@@ -6,6 +6,7 @@
  * 200 image/jpeg; do not add unverified URLs. `images.unsplash.com` is
  * allowlisted in next.config.ts.
  */
+import type { SyntheticEvent } from "react";
 const IMG = (id: string) =>
   `https://images.unsplash.com/${id}?w=800&q=80&auto=format&fit=crop`;
 
@@ -24,4 +25,19 @@ export const DEFAULT_FALLBACK = FALLBACK_BY_CATEGORY.Community;
 /** Category → a verified fallback image URL, defaulting when unknown/null. */
 export function newsFallbackSrc(category: string | null | undefined): string {
   return (category && FALLBACK_BY_CATEGORY[category]) || DEFAULT_FALLBACK;
+}
+
+/**
+ * `<img onError>` handler for a news thumbnail: swap a failed `image_link` to the
+ * category fallback. Clears `onerror` first so a failing fallback can't loop, and
+ * guards the equality to avoid a redundant reload. Shared by the Home + Community
+ * news image rows.
+ */
+export function handleNewsImageError(
+  e: SyntheticEvent<HTMLImageElement>,
+  category: string | null | undefined,
+): void {
+  const fb = newsFallbackSrc(category);
+  e.currentTarget.onerror = null;
+  if (e.currentTarget.src !== fb) e.currentTarget.src = fb;
 }
