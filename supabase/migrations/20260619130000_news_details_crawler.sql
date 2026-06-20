@@ -4,6 +4,10 @@
 -- editor — this file is kept for version-control / reference only; do not re-run
 -- blindly. (The MCP is read-only and `db push` is unsafe against the drifted history.)
 -- Drives supabase/functions/news-crawler/index.ts.
+--
+-- NOTE: the cron body's `btrim(v_secret)` hardening below is reference-only too —
+-- the LIVE schedule still carries the old body, so re-run the `cron.schedule(...)`
+-- block in the Dashboard SQL editor for the trim to take effect.
 
 -- 1) Dedupe key ------------------------------------------------------------
 -- The crawler upserts with ON CONFLICT (link) DO NOTHING, which requires a
@@ -57,7 +61,10 @@ select cron.schedule(
       url := 'https://wrbauxutkysljmsqojts.supabase.co/functions/v1/news-crawler',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || v_secret
+        -- btrim the secret: a Vault value stored with a trailing newline/space would
+        -- otherwise make the header 'Bearer <key>\n' and 401 every run. (The function
+        -- also trims, but keep both ends defensive.) CodeRabbit, PR #40.
+        'Authorization', 'Bearer ' || btrim(v_secret, E' \t\n\r')
       ),
       body := '{}'::jsonb
     );

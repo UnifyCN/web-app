@@ -28,7 +28,9 @@ verify_jwt = false
 
 [functions.news-crawler]
 # Cron-only (pg_cron → net.http_post; see 20260619130000_news_details_crawler.sql).
-# The function authorizes itself by requiring the project service-role key as the
-# Bearer token, so the gateway JWT check is disabled — the request carries the
-# service-role key, not a user JWT, and there is no browser/CORS surface.
-verify_jwt = false
+# verify_jwt = true: the gateway verifies the bearer's signature, so the function can
+# safely trust the JWT's `role` claim (must be service_role) in addition to an exact
+# service-role-key match. Safe to enable here because this is cron-only — there is no
+# browser/CORS preflight surface (the reason rag-query et al. keep it off). The cron
+# sends the project service-role key (a valid JWT) as the Bearer token.
+verify_jwt = true
