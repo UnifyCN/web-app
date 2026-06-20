@@ -3,12 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { MAIN_NAV, PROFILE_ITEM, isNavItemActive } from "./navItems";
+import {
+  MAIN_NAV,
+  PROFILE_ITEM,
+  SETTINGS_ITEM,
+  isNavItemActive,
+} from "./navItems";
 
 // Mobile-only (< md) bottom tab bar — replaces the left sidebar on phones.
-// The 5 primary tabs + Profile (so the profile / settings / sign-out chain
-// stays reachable once the sidebar is hidden). Sign out itself lives in Settings.
-const TABS = [...MAIN_NAV, PROFILE_ITEM];
+// The 5 primary tabs + Profile + Settings, so the profile / settings / sign-out
+// chain stays reachable once the sidebar is hidden. Sign out lives in Settings —
+// without this Settings tab, mobile users had no way to sign out.
+const TABS = [...MAIN_NAV, PROFILE_ITEM, SETTINGS_ITEM];
 
 /**
  * Fixed bottom navigation shown only below the `md` breakpoint. Pads itself with
