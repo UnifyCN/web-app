@@ -671,3 +671,6 @@ NEXT_PUBLIC_SANITY_DATASET=production
 
 **Always wire mutations to the component**
 When adding a service function and hook mutation, verify the component that renders the relevant button actually imports and calls the hook. It is easy to wire the service and hook correctly but leave the component calling local state only. Before committing any mutation work, grep for the hook name in the component file to confirm it is imported and called.
+
+**News items must always have an `imageLink` — never `null`.**
+The `NationalNewsWidget` (Home) and the Community News card render a thumbnail, so a `null` image leaves an empty slot. Every news item needs an image: in `lib/mock/news.ts` set a topic-appropriate Unsplash photo, and in the `news-crawler` edge function fall back to a category-appropriate Unsplash image when an RSS/Atom item ships none. Use `images.unsplash.com` (already allowlisted in `next.config.ts`) in the stable `photo-<id>?w=800&q=80&auto=format&fit=crop` form — never short `/photos/<slug>` URLs (those 404 on the CDN).

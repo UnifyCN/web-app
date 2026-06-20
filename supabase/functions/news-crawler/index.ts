@@ -58,6 +58,28 @@ const MAX_ITEMS_PER_FEED = 15;
 const MAX_DESCRIPTION_CHARS = 400;
 const FETCH_TIMEOUT_MS = 20000;
 
+// Topic-appropriate Unsplash fallbacks (images.unsplash.com is allowlisted in the
+// web app's next.config.ts), keyed by the feed's category, so every row carries a
+// thumbnail even when the feed item ships no image. Per CLAUDE.md, news items must
+// always have an image_link — never null. Stable photo-<id> form (short
+// /photos/<slug> URLs 404 on the CDN).
+const FALLBACK_IMAGE: Record<string, string> = {
+  Immigration:
+    'https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=800&q=80&auto=format&fit=crop',
+  Benefits:
+    'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80&auto=format&fit=crop',
+  Health:
+    'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80&auto=format&fit=crop',
+  Government:
+    'https://images.unsplash.com/photo-1517935706615-2717063c2225?w=800&q=80&auto=format&fit=crop',
+};
+// Canadian skyline — neutral default for any category without its own fallback.
+const DEFAULT_FALLBACK_IMAGE = FALLBACK_IMAGE.Government;
+
+function fallbackImage(category: string): string {
+  return FALLBACK_IMAGE[category] ?? DEFAULT_FALLBACK_IMAGE;
+}
+
 interface NewsRow {
   title: string;
   description: string | null;
@@ -174,7 +196,7 @@ function parseFeed(xml: string, feed: Feed): NewsRow[] {
       author: feed.source,
       category: feed.category,
       date: parseDate(block),
-      image_link: extractImage(block),
+      image_link: extractImage(block) ?? fallbackImage(feed.category),
       link: link.trim(),
     });
   }
