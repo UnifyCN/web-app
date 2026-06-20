@@ -231,6 +231,26 @@ function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   });
 }
 
+/**
+ * Read a JWT payload's `role` claim WITHOUT verifying the signature. Safe to trust
+ * ONLY because this function runs with verify_jwt=true (config.toml) — the gateway
+ * has already verified the signature before we get here. Returns null on any
+ * malformed token. Used to accept any valid service-role token (robust to which
+ * service-role key string the cron sends) and to log the role on a rejected call.
+ */
+function jwtRole(token: string): string | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4);
+    const claims = JSON.parse(atob(padded)) as { role?: string };
+    return typeof claims.role === 'string' ? claims.role : null;
+  } catch {
+    return null;
+  }
+}
+
 // ---- handler --------------------------------------------------------------
 
 Deno.serve(async (req: Request) => {
@@ -240,11 +260,23 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: 'Missing Supabase env vars' }, 500);
   }
 
-  // Server-to-server only: the cron job sends the service-role key as Bearer.
-  // Trim both sides — a Vault secret stored with a trailing newline/space (a known
-  // gremlin on this shared DB) would otherwise never match and 401 every run.
+  // Server-to-server only: the cron sends the service-role key as Bearer. The gateway
+  // (verify_jwt=true) has already verified the token's signature, so accept either an
+  // exact service-role-key match (fast path; also covers a trailing-newline Vault
+  // secret via trim) OR any token whose verified role is service_role — robust to
+  // which valid service-role key string the cron happens to send. On rejection, log
+  // the presented role (never the token) so a mismatch is instantly diagnosable
+  // (e.g. an anon key mistakenly stored in the Vault service_role_key secret).
   const token = req.headers.get('Authorization')?.replace('Bearer ', '').trim();
-  if (!token || token !== serviceRoleKey.trim()) {
+  const authorized =
+    !!token &&
+    (token === serviceRoleKey.trim() || jwtRole(token) === 'service_role');
+  if (!authorized) {
+    console.error(
+      `news-crawler: unauthorized — bearer role=${
+        token ? (jwtRole(token) ?? 'unknown') : 'missing'
+      }`,
+    );
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
