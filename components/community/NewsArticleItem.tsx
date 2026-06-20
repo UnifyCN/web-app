@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/Badge";
 import { externalHref, formatRelativeTime } from "@/lib/utils";
+import { newsFallbackSrc } from "@/lib/news/fallbackImage";
 import type { NewsItem } from "@/types";
 
 /**
@@ -18,6 +19,14 @@ export function NewsArticleItem({ item }: { item: NewsItem }) {
             src={item.imageLink}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
+            onError={(e) => {
+              // Publisher image 404'd / hotlink-blocked — swap to a verified
+              // category fallback. Clear onerror first so a failing fallback
+              // can't loop; guard the equality to avoid a redundant reload.
+              const fb = newsFallbackSrc(item.category);
+              e.currentTarget.onerror = null;
+              if (e.currentTarget.src !== fb) e.currentTarget.src = fb;
+            }}
           />
         </div>
       )}
