@@ -84,6 +84,9 @@ export function Input({
           leftIcon ? "pl-12" : "pl-4",
           isPassword ? "pr-16" : "pr-4",
         )}
+        autoCapitalize={isPassword ? "none" : undefined}
+        autoCorrect={isPassword ? "off" : undefined}
+        spellCheck={isPassword ? false : undefined}
         {...props}
       />
       {isPassword && capsLock && (

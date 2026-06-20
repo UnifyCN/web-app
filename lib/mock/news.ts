@@ -5,8 +5,10 @@ import type { NewsItem } from "@/types";
  * directly (it does not read the DB), and it doubles as the local-dev /
  * env-not-configured fallback for the Community News tab (`getNews`). Curated,
  * verified-working links to Canadian government + reputable settlement / news
- * sources; `imageLink` is null (no thumbnails — avoids dead images), `category`
- * is null (untagged), and items link out to the source (no in-app detail page).
+ * sources, each with a topical Unsplash thumbnail (`images.unsplash.com` is
+ * allowlisted in next.config.ts). Per CLAUDE.md, news items must always carry an
+ * `imageLink` — never null. `category` is null (untagged); items link out to the
+ * source (no in-app detail page).
  */
 export const newsItems: NewsItem[] = [
   {
@@ -17,8 +19,9 @@ export const newsItems: NewsItem[] = [
     author: "CIC News",
     date: "2026-06-17T10:00:00Z",
     category: null,
-    imageLink: null,
-    link: "https://www.cicnews.com/",
+    imageLink:
+      "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=800&q=80&auto=format&fit=crop",
+    link: "https://www.cicnews.com/2026/06/new-brunswick-invites-over-660-provincial-immigration-candidates-across-six-draws-0676956.html",
   },
   {
     id: 2,
@@ -28,7 +31,8 @@ export const newsItems: NewsItem[] = [
     author: "CMHC",
     date: "2026-06-12T14:30:00Z",
     category: null,
-    imageLink: null,
+    imageLink:
+      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80&auto=format&fit=crop",
     link: "https://www.cmhc-schl.gc.ca/consumers/renting-a-home",
   },
   {
@@ -39,7 +43,8 @@ export const newsItems: NewsItem[] = [
     author: "Settlement.org",
     date: "2026-06-09T09:15:00Z",
     category: null,
-    imageLink: null,
+    imageLink:
+      "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80&auto=format&fit=crop",
     link: "https://settlement.org/ontario/health/",
   },
   {
@@ -50,7 +55,8 @@ export const newsItems: NewsItem[] = [
     author: "Government of Canada",
     date: "2026-06-04T16:45:00Z",
     category: null,
-    imageLink: null,
+    imageLink:
+      "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&q=80&auto=format&fit=crop",
     link: "https://www.jobbank.gc.ca/findajob",
   },
   {
@@ -61,7 +67,8 @@ export const newsItems: NewsItem[] = [
     author: "Settlement.org",
     date: "2026-05-28T11:00:00Z",
     category: null,
-    imageLink: null,
+    imageLink:
+      "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80&auto=format&fit=crop",
     link: "https://settlement.org/ontario/daily-life/banking-and-money/",
   },
 ];
