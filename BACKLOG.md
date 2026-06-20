@@ -542,6 +542,9 @@ No block table exists on web. When building block functionality, reference mobil
 **Circle pool_key / stage vocabulary reconciliation**
 From Circles-wiring. Web `Stage` (0-4) maps to mobile's pool-key time slugs via `STAGE_TO_TIME_SLUG` in `services/community.ts`, but the mapping is non-1:1 — stages 1 & 2 (both under one year on the web scale) collapse to `less_than_1_year`, and mobile's `2_to_3_years` slug is unused from the web side. `pool_key` equality is the matching/pairing key, so confirm this mapping with the mobile team before any cross-DB pooling (web circles currently only pool against web rows, and no engine reads them yet). Note the mapping now lives in **two** places that must stay in sync: the TS `STAGE_TO_TIME_SLUG` and the SQL `circle_time_slug` function (used by the `waitlist_insert_own` RLS check).
 
+**Enforce non-null `news_details.image_link` end-to-end** *(needs Savar / shared-mobile-DB coordination)*
+The CLAUDE.md rule + the `news-crawler` Unsplash fallback (PR #39) enforce a non-null `image_link` at the **app layer** only — every app-side insert now ships an image. But `types/index.ts` `NewsItem.imageLink` is still `string | null` and the shared `news_details.image_link` column is still nullable, so legacy rows and non-crawler / direct inserts can still violate it (the Home `NationalNewsWidget` / Community News card then render an empty thumbnail slot). Future work: make the TS field non-optional (`imageLink: string`, with the row mapper backfilling a fallback) and add a DB `NOT NULL` (+ optional default) constraint. The DB change touches the **shared mobile DB**, so coordinate with Savar / the mobile team before applying.
+
 ---
 
 ## Services
