@@ -1,10 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import Image from "next/image";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { externalHref, formatRelativeTime } from "@/lib/utils";
 import { useNews } from "@/hooks/useCommunity";
+import type { NewsItem } from "@/types";
 
 /**
  * Right-panel widget — a short list of national newcomer news. Reads the same
@@ -15,7 +17,22 @@ import { useNews } from "@/hooks/useCommunity";
  */
 export function NationalNewsWidget() {
   const { data, isLoading, error } = useNews();
-  const items = (data ?? []).slice(0, 5);
+
+  // Show one article per category — the most recent from each of up to 5 distinct
+  // categories — so the widget stays varied no matter what's publishing today
+  // (instead of e.g. 5 Immigration items). `data` is already date-desc (getNews
+  // orders by date), so the first row seen for a category is its most recent; a null
+  // category (the mock fallback) never collapses into one bucket.
+  const items = useMemo(() => {
+    const seen = new Map<string, NewsItem>();
+    for (const it of data ?? []) {
+      const key = it.category ?? `__uncat_${it.id}`;
+      if (!seen.has(key)) seen.set(key, it);
+    }
+    return [...seen.values()]
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+      .slice(0, 5);
+  }, [data]);
 
   return (
     <Card className="p-0">
