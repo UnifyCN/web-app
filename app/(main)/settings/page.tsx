@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Camera, ChevronRight, KeyRound, LogOut, Mail, Trash2 } from "lucide-react";
@@ -695,6 +696,28 @@ export default function SettingsPage() {
         Settings
       </h1>
       <div className="space-y-5">
+        {/* Profile entry — the mobile bottom nav no longer has a Profile tab, so
+            this is the path to the user's own /profile page on phones. */}
+        <Link
+          href="/profile"
+          className="flex items-center gap-3 rounded-card border border-border-card bg-surface p-4 transition-colors hover:bg-surface-card"
+        >
+          <Avatar
+            username={profile.username}
+            profilePictureUrl={profile.profilePictureUrl}
+            size={44}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-ink-secondary">
+              {profile.username}
+            </p>
+            <p className="text-xs text-ink-placeholder">View your profile</p>
+          </div>
+          <ChevronRight
+            className="h-5 w-5 shrink-0 text-ink-placeholder"
+            aria-hidden
+          />
+        </Link>
         <EditProfileSection profile={profile} />
         <PreferencesSection profile={profile} />
         <Section title="Blocked accounts">
