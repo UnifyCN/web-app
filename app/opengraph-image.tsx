@@ -48,8 +48,8 @@ export default async function OpengraphImage() {
       >
         <img
           src={lockupSrc}
-          width={143}
-          height={64}
+          width={291}
+          height={130}
           alt=""
           style={{ objectFit: "contain" }}
         />
@@ -57,11 +57,11 @@ export default async function OpengraphImage() {
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div
             style={{
-              width: 64,
-              height: 6,
+              width: 80,
+              height: 8,
               backgroundColor: "#f68b26",
-              borderRadius: 3,
-              marginBottom: 32,
+              borderRadius: 4,
+              marginBottom: 36,
             }}
           />
           <div
@@ -70,7 +70,7 @@ export default async function OpengraphImage() {
               flexDirection: "column",
               fontFamily: "Inter",
               fontWeight: 700,
-              fontSize: 76,
+              fontSize: 80,
               lineHeight: 1.05,
               letterSpacing: -2,
               color: "#171616",
