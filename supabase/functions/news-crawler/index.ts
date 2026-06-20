@@ -241,8 +241,10 @@ Deno.serve(async (req: Request) => {
   }
 
   // Server-to-server only: the cron job sends the service-role key as Bearer.
-  const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-  if (token !== serviceRoleKey) {
+  // Trim both sides — a Vault secret stored with a trailing newline/space (a known
+  // gremlin on this shared DB) would otherwise never match and 401 every run.
+  const token = req.headers.get('Authorization')?.replace('Bearer ', '').trim();
+  if (!token || token !== serviceRoleKey.trim()) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
