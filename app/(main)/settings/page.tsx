@@ -696,11 +696,13 @@ export default function SettingsPage() {
         Settings
       </h1>
       <div className="space-y-5">
-        {/* Profile entry — the mobile bottom nav no longer has a Profile tab, so
-            this is the path to the user's own /profile page on phones. */}
+        {/* Profile entry — mobile only. The phone bottom nav has no Profile tab,
+            so this is the path to the user's own /profile page there; on desktop
+            the sidebar already has a Profile nav item, so it's hidden (md:hidden)
+            and the page starts with Edit profile. */}
         <Link
           href="/profile"
-          className="flex items-center gap-3 rounded-card border border-border-card bg-surface p-4 transition-colors hover:bg-surface-card"
+          className="flex items-center gap-3 rounded-card border border-border-card bg-surface p-4 transition-colors hover:bg-surface-card md:hidden"
         >
           <Avatar
             username={profile.username}
