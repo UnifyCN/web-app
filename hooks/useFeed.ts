@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import type { FeedTab } from "@/types";
 import * as feed from "@/services/feed";
 
@@ -6,37 +11,46 @@ import * as feed from "@/services/feed";
 
 const FEED_KEY = ["feed"] as const;
 
-/* ---- Per-tab feed queries (first-page-only) --------------------------- */
+/* ---- Per-tab feed queries (cursor-paginated, infinite scroll) --------- */
 
 export function useForYouFeed(enabled: boolean = true) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: [...FEED_KEY, "forYou"],
-    queryFn: () => feed.getForYouFeed(),
+    queryFn: ({ pageParam }) => feed.getForYouFeed(pageParam),
+    // Keyset cursor on created_at; first page has no cursor.
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled,
     staleTime: 60_000,
   });
 }
 
 export function useFollowingFeed(enabled: boolean = true) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: [...FEED_KEY, "following"],
-    queryFn: () => feed.getFollowingFeed(),
+    queryFn: ({ pageParam }) => feed.getFollowingFeed(pageParam),
+    // Offset-based pagination; cursor is a stringified offset.
+    initialPageParam: "0",
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled,
     staleTime: 60_000,
   });
 }
 
 export function useGroupsFeed(enabled: boolean = true) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: [...FEED_KEY, "groups"],
-    queryFn: () => feed.getGroupsFeed(),
+    queryFn: ({ pageParam }) => feed.getGroupsFeed(pageParam),
+    // Offset-based pagination; cursor is a stringified offset.
+    initialPageParam: "0",
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled,
     staleTime: 60_000,
   });
 }
 
 /** Backwards-compatible single-hook entry point — picks the right per-tab
- *  query under the hood. Returns just the posts array (no nextCursor). */
+ *  query under the hood. Returns the flattened posts array (no cursors). */
 export function useFeedPosts(tab: FeedTab = "For You") {
   const forYou = useForYouFeed(tab === "For You");
   const following = useFollowingFeed(tab === "Following");
@@ -47,7 +61,7 @@ export function useFeedPosts(tab: FeedTab = "For You") {
 
   return {
     ...active,
-    data: active.data?.posts,
+    data: active.data?.pages.flatMap((p) => p.posts) ?? [],
   };
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Tabs } from "@/components/ui/Tabs";
 import { FeedTabs, FEED_TABS } from "@/components/home/FeedTabs";
@@ -44,8 +44,39 @@ export default function HomePage() {
   const active =
     activeTab === "Following" ? following : activeTab === "Groups" ? groups : forYou;
 
-  const posts = active.data?.posts ?? [];
+  const posts = active.data?.pages.flatMap((p) => p.posts) ?? [];
+  const { fetchNextPage, hasNextPage, isFetchingNextPage } = active;
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const empty = FEED_EMPTY[activeTab];
+
+  // Take over scroll restoration while the feed is mounted — the browser's
+  // native restore lands on a stale offset before the infinite pages re-fetch.
+  // Revert to "auto" on unmount so other pages keep native behavior.
+  useEffect(() => {
+    window.history.scrollRestoration = "manual";
+    return () => {
+      window.history.scrollRestoration = "auto";
+    };
+  }, []);
+
+  // Load the next page when the sentinel scrolls into view. The destructured
+  // controls change identity when activeTab switches, so the observer re-binds
+  // for the new tab automatically. rootMargin prefetches ~one screen early.
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "300px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
     <div className="mx-auto max-w-[1080px] animate-fade-in px-6 py-6">
@@ -90,7 +121,7 @@ export default function HomePage() {
                 <PostCardSkeleton withImage />
                 <PostCardSkeleton />
               </div>
-            ) : active.error ? (
+            ) : active.error && posts.length === 0 ? (
               <div className="px-5 py-14 text-center">
                 <p role="alert" className="text-sm text-destructive">
                   Couldn&apos;t load the feed.
@@ -101,6 +132,21 @@ export default function HomePage() {
                 {posts.map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}
+
+                {isFetchingNextPage && (
+                  <>
+                    <PostCardSkeleton />
+                    <PostCardSkeleton withImage />
+                  </>
+                )}
+
+                {hasNextPage ? (
+                  <div ref={sentinelRef} aria-hidden className="h-px" />
+                ) : (
+                  <p className="px-5 py-8 text-center text-sm text-ink-placeholder">
+                    You&apos;re all caught up
+                  </p>
+                )}
               </div>
             ) : (
               <div className="px-5 py-14 text-center">
