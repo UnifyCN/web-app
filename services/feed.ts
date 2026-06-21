@@ -197,8 +197,13 @@ export async function getForYouFeed(
       nonPinnedQuery = nonPinnedQuery.not("user_id", "in", blockedList);
     }
     const [pinnedRes, nonPinnedRes] = await Promise.all([
-      pinnedQuery.order("created_at", { ascending: false }),
-      nonPinnedQuery.order("created_at", { ascending: false }).limit(limit),
+      pinnedQuery
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false }),
+      nonPinnedQuery
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(limit),
     ]);
 
     if (pinnedRes.error) throw pinnedRes.error;
@@ -222,26 +227,37 @@ export async function getForYouFeed(
       ...nonPinned,
     ]);
 
-    // Fall back to the last pinned post's createdAt when there are no
-    // non-pinned posts on this page, so page 2 still has a starting point.
+    // Fall back to the last pinned post when there are no non-pinned posts on
+    // this page, so page 2 still has a starting point. Composite (created_at,
+    // id) cursor — read each source with its own casing: nonPinnedRows are raw
+    // JoinedPostRow (snake_case created_at), cappedPinned are mapped Post
+    // (camelCase createdAt). Mixing them up yields a broken cursor.
     const lastNonPinned = nonPinnedRows[nonPinnedRows.length - 1];
-    const nextCursor =
-      lastNonPinned?.created_at ??
-      cappedPinned[cappedPinned.length - 1]?.createdAt;
+    const lastPinned = cappedPinned[cappedPinned.length - 1];
+    const nextCursor = lastNonPinned
+      ? `${lastNonPinned.created_at}__${lastNonPinned.id}`
+      : lastPinned
+        ? `${lastPinned.createdAt}__${lastPinned.id}`
+        : undefined;
 
     return { posts: enriched, nextCursor };
   }
 
-  // Page 2+: only non-pinned, keyset on created_at.
+  // Page 2+: only non-pinned, keyset on (created_at, id). cursor is defined here
+  // (page 1 is the !cursor branch); ?? "" just narrows the type for split.
+  const [cursorTimestamp, cursorId] = (cursor ?? "").split("__");
   let page2Query = supabase
     .from("posts")
     .select(POSTS_SELECT)
     .is("group_id", null)
     .eq("is_pinned", false)
-    .lt("created_at", cursor);
+    .or(
+      `created_at.lt."${cursorTimestamp}",and(created_at.eq."${cursorTimestamp}",id.lt.${cursorId})`,
+    );
   if (blockedList) page2Query = page2Query.not("user_id", "in", blockedList);
   const { data, error } = await page2Query
     .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .limit(limit);
 
   if (error) throw error;
@@ -249,8 +265,11 @@ export async function getForYouFeed(
   const rows = (data as unknown as JoinedPostRow[]) ?? [];
   const posts = rows.map(rowToPost);
   const enriched = await enrichPostsWithMetadata(posts);
+  const lastRow = rows[rows.length - 1];
   const nextCursor =
-    enriched.length === limit ? rows[rows.length - 1]?.created_at : undefined;
+    enriched.length === limit && lastRow
+      ? `${lastRow.created_at}__${lastRow.id}`
+      : undefined;
 
   return { posts: enriched, nextCursor };
 }
@@ -286,20 +305,30 @@ export async function getFollowingFeed(
     .filter((id) => !blockedSet.has(id));
   if (followingIds.length === 0) return { posts: [], nextCursor: undefined };
 
-  const parsed = cursor ? parseInt(cursor, 10) : 0;
-  const offset = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
-  const { data, error } = await supabase
+  let query = supabase
     .from("posts")
     .select(POSTS_SELECT)
-    .in("user_id", followingIds)
+    .in("user_id", followingIds);
+  if (cursor) {
+    const [cursorTimestamp, cursorId] = cursor.split("__");
+    query = query.or(
+      `created_at.lt."${cursorTimestamp}",and(created_at.eq."${cursorTimestamp}",id.lt.${cursorId})`,
+    );
+  }
+  const { data, error } = await query
     .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1);
+    .order("id", { ascending: false })
+    .limit(limit);
   if (error) throw error;
 
-  const posts = (data as unknown as JoinedPostRow[]).map(rowToPost);
+  const rows = (data as unknown as JoinedPostRow[]) ?? [];
+  const posts = rows.map(rowToPost);
   const enriched = await enrichPostsWithMetadata(posts);
+  const lastRow = rows[rows.length - 1];
   const nextCursor =
-    enriched.length === limit ? String(offset + limit) : undefined;
+    enriched.length === limit && lastRow
+      ? `${lastRow.created_at}__${lastRow.id}`
+      : undefined;
 
   return { posts: enriched, nextCursor };
 }
@@ -326,8 +355,6 @@ export async function getGroupsFeed(
   const groupIds = (membershipRes.data ?? []).map((r) => r.group_id);
   if (groupIds.length === 0) return { posts: [], nextCursor: undefined };
 
-  const parsed = cursor ? parseInt(cursor, 10) : 0;
-  const offset = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
   let groupsQuery = supabase
     .from("posts")
     .select(POSTS_SELECT)
@@ -335,15 +362,26 @@ export async function getGroupsFeed(
   if (blocked.length) {
     groupsQuery = groupsQuery.not("user_id", "in", `(${blocked.join(",")})`);
   }
+  if (cursor) {
+    const [cursorTimestamp, cursorId] = cursor.split("__");
+    groupsQuery = groupsQuery.or(
+      `created_at.lt."${cursorTimestamp}",and(created_at.eq."${cursorTimestamp}",id.lt.${cursorId})`,
+    );
+  }
   const { data, error } = await groupsQuery
     .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1);
+    .order("id", { ascending: false })
+    .limit(limit);
   if (error) throw error;
 
-  const posts = (data as unknown as JoinedPostRow[]).map(rowToPost);
+  const rows = (data as unknown as JoinedPostRow[]) ?? [];
+  const posts = rows.map(rowToPost);
   const enriched = await enrichPostsWithMetadata(posts);
+  const lastRow = rows[rows.length - 1];
   const nextCursor =
-    enriched.length === limit ? String(offset + limit) : undefined;
+    enriched.length === limit && lastRow
+      ? `${lastRow.created_at}__${lastRow.id}`
+      : undefined;
 
   return { posts: enriched, nextCursor };
 }

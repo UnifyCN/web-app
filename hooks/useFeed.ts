@@ -17,7 +17,7 @@ export function useForYouFeed(enabled: boolean = true) {
   return useInfiniteQuery({
     queryKey: [...FEED_KEY, "forYou"],
     queryFn: ({ pageParam }) => feed.getForYouFeed(pageParam),
-    // Keyset cursor on created_at; first page has no cursor.
+    // Keyset cursor on (created_at, id); first page has no cursor.
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled,
@@ -29,8 +29,8 @@ export function useFollowingFeed(enabled: boolean = true) {
   return useInfiniteQuery({
     queryKey: [...FEED_KEY, "following"],
     queryFn: ({ pageParam }) => feed.getFollowingFeed(pageParam),
-    // Offset-based pagination; cursor is a stringified offset.
-    initialPageParam: "0",
+    // Keyset cursor on (created_at, id); first page has no cursor.
+    initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled,
     staleTime: 60_000,
@@ -41,8 +41,8 @@ export function useGroupsFeed(enabled: boolean = true) {
   return useInfiniteQuery({
     queryKey: [...FEED_KEY, "groups"],
     queryFn: ({ pageParam }) => feed.getGroupsFeed(pageParam),
-    // Offset-based pagination; cursor is a stringified offset.
-    initialPageParam: "0",
+    // Keyset cursor on (created_at, id); first page has no cursor.
+    initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled,
     staleTime: 60_000,
