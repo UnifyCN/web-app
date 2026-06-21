@@ -227,17 +227,18 @@ export async function getForYouFeed(
       ...nonPinned,
     ]);
 
-    // Fall back to the last pinned post when there are no non-pinned posts on
-    // this page, so page 2 still has a starting point. Composite (created_at,
-    // id) cursor — read each source with its own casing: nonPinnedRows are raw
-    // JoinedPostRow (snake_case created_at), cappedPinned are mapped Post
-    // (camelCase createdAt). Mixing them up yields a broken cursor.
+    // Page 2 paginates non-pinned only, so resume from the last non-pinned
+    // DISPLAYED on page 1 (nonPinnedRows is the sliced/displayed set; raw
+    // JoinedPostRow → snake_case created_at). When pinned filled the whole page
+    // (remaining === 0, no non-pinned shown), resume from the newest non-pinned
+    // via a far-future sentinel so the page-2 keyset `< cursor` includes them
+    // all — anchoring on the last *fetched* non-pinned (nonPinnedRes.data, up to
+    // `limit` rows) would instead skip the fetched-but-undisplayed rows.
     const lastNonPinned = nonPinnedRows[nonPinnedRows.length - 1];
-    const lastPinned = cappedPinned[cappedPinned.length - 1];
     const nextCursor = lastNonPinned
       ? `${lastNonPinned.created_at}__${lastNonPinned.id}`
-      : lastPinned
-        ? `${lastPinned.createdAt}__${lastPinned.id}`
+      : remaining === 0
+        ? `9999-12-31T23:59:59.999Z__${Number.MAX_SAFE_INTEGER}`
         : undefined;
 
     return { posts: enriched, nextCursor };
