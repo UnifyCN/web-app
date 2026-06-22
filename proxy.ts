@@ -207,6 +207,6 @@ export const config = {
      * tunnel receives unauthenticated POSTs from the browser SDK — neither must
      * be bounced through the /welcome auth gate.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|monitoring|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|monitoring(?:/|$)|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

@@ -12,7 +12,8 @@ Sentry.init({
   tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
 
   // Attach local variable values to stack frames for richer server traces.
-  includeLocalVariables: true,
+  // Dev only — avoids leaking server-side locals into production events.
+  includeLocalVariables: process.env.NODE_ENV === "development",
 
   enableLogs: true,
 });
