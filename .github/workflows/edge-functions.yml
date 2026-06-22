@@ -40,4 +40,4 @@ jobs:
         # --node-modules-dir=auto installs npm deps pulled in transitively by
         # the Supabase edge-runtime types (functions-js' edge-runtime.d.ts type-
         # references npm:openai), which `deno check` must resolve to type-check.
-        run: deno check --node-modules-dir=auto supabase/functions/rag-query/index.ts
+        run: deno check --node-modules-dir=auto supabase/functions/rag-query-web/index.ts

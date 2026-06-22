@@ -5,9 +5,11 @@
 // /api/companion proxy (and could call it directly). Differences:
 //   - CORS handling + an OPTIONS preflight handler (browser-callable).
 //   - Quota uses the BOOLEAN check_and_increment_chatbot_usage RPC that is live
-//     on the shared DB (the jsonb { allowed, charged_date } variant is NOT
-//     deployed). No refund: decrement_chatbot_usage does not exist on the shared
-//     DB, so a failed generation still consumes the message (accepted tradeoff).
+//     on the shared DB (the jsonb { allowed, charged_date } variant was never
+//     deployed and is unused). On a generation failure the message is refunded
+//     via refund_chatbot_message(p_user_id) — the boolean-era refund RPC added by
+//     mobile's PR #277, live on the shared DB (it self-scopes to today's row; no
+//     p_charged_date). Mirrors mobile's rag-query refund behavior.
 //   - Vector search match_threshold = 0.3 (cosine) — appropriate for
 //     text-embedding-3-small short-query→chunk similarity (0.5 over-filtered).
 //   - Profile context uses the web user_onboarding_profiles schema (persona,
@@ -490,6 +492,14 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Refund bookkeeping. The daily quota is incremented BEFORE generation; if
+  // generation then fails we hand the slot back via refund_chatbot_message so a
+  // provider/LLM error doesn't burn the user's daily message. Stays a no-op
+  // until the user is resolved and the quota is actually consumed.
+  let usageCounted = false;
+  let usageRefunded = false;
+  let refundUsageOnce: () => Promise<void> = async () => {};
+
   try {
     const {
       prompt,
@@ -540,9 +550,8 @@ Deno.serve(async (req: Request) => {
 
     // Atomic rate limit: check + increment in one RPC (fail-closed). The live
     // shared-DB function RETURNS boolean — true = allowed (already incremented),
-    // false = over the daily cap. There is no refund path: decrement_chatbot_usage
-    // is not deployed on the shared DB, so a later generation failure leaves the
-    // message charged (see header note).
+    // false = over the daily cap. On a later generation failure the slot is
+    // refunded via refund_chatbot_message (see refundUsageOnce, wired below).
     if (!isEvalMode) {
       const { data: allowed, error: quotaError } = await supabase.rpc(
         'check_and_increment_chatbot_usage',
@@ -573,6 +582,21 @@ Deno.serve(async (req: Request) => {
           429
         );
       }
+
+      // Quota consumed — wire the refund so any failure below hands the slot
+      // back. refund_chatbot_message self-scopes to today's row (no date arg).
+      usageCounted = true;
+      refundUsageOnce = async () => {
+        if (!usageCounted || usageRefunded || isEvalMode) return;
+        usageRefunded = true;
+        try {
+          await supabase.rpc('refund_chatbot_message', {
+            p_user_id: effectiveUserId,
+          });
+        } catch (refundErr) {
+          console.error('Failed to refund chatbot message slot:', refundErr);
+        }
+      };
     }
 
     if (
@@ -847,8 +871,8 @@ Deno.serve(async (req: Request) => {
 
     if (!llmResult.ok) {
       if (llmResult.retryable) {
-        // Transient failure. No refund: decrement_chatbot_usage isn't deployed
-        // on the shared DB, so the message stays charged (see header note).
+        // Transient failure after the quota was charged — refund the slot.
+        await refundUsageOnce();
         return jsonResponse(
           {
             error:
@@ -909,6 +933,9 @@ Deno.serve(async (req: Request) => {
     });
   } catch (error: unknown) {
     console.error('rag-query-web error:', error);
+    // Any failure after the quota was charged means the user got no answer —
+    // refund the slot so a provider/DB error doesn't burn their daily message.
+    await refundUsageOnce();
     const message =
       error instanceof Error ? error.message : 'An unknown error occurred';
     return jsonResponse({ error: message }, 500);

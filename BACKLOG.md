@@ -204,25 +204,23 @@ the upload allow-list, an `/api/onboarding-profile` proxy for the no-CORS
 **left unfixed** because they need shared-DB / mobile-owned-edge-function coordination or
 are lower-priority latent risks.
 
-**H2 — Companion refund infra (jsonb RPC) is not deployed to the shared DB** *(needs DB + edge deploy)*
-The repo ships `supabase/migrations/20260530120100_chatbot_rate_limit.sql` (redefines
-`check_and_increment_chatbot_usage` to return **jsonb**, adds `decrement_chatbot_usage`)
-and a CORS-enabled `supabase/functions/rag-query/index.ts` that reads `quota.allowed` /
-`quota.charged_date` and calls `decrement_chatbot_usage`. **That migration is still pending:**
-the live RPC returns **boolean** and `decrement_chatbot_usage` does not exist. The deployed
-`rag-query` now **enforces 6/day**, so the UI's `FREE_TIER_DAILY_LIMIT` and the edge function
-are aligned at 6 — but it still uses the boolean RPC and has no refund (see H3). **Hazard:**
-deploying the repo's jsonb-expecting `rag-query` before the migration lands would 503 every
-chat (reads jsonb fields off a boolean) and error every refund. Decision: either (a) stay on
-the proxy + the current boolean-RPC function (working — UI and edge aligned at 6), or
-(b) coordinate the shared-DB migration + function deploy to add the refund. Until then keep
-the companion rate-limit constant at 6.
-
-**H3 — A failed AI generation permanently burns a daily message (no refund)** *(ships with H2)*
-The live v124 increments quota atomically with zero refund logic; on an upstream LLM failure
-the user is charged and gets no answer (`hooks/useCompanion.ts` also persists the user message
-before `generateReply`). The refund (`decrement_chatbot_usage`) exists only in the undeployed
-web code above. Fixed only once H2 is resolved.
+**H2/H3 — Companion refund — ✅ RESOLVED (boolean `refund_chatbot_message`)**
+*The earlier framing was wrong:* there was never a jsonb RPC or a `decrement_chatbot_usage`
+function in production. The web Companion runs its **own** `rag-query-web` edge function
+(distinct from mobile's `rag-query`), which uses the **boolean** `check_and_increment_chatbot_usage`
+(cap 6) that is live on the shared DB. Savar's mobile **PR #277** added
+`refund_chatbot_message(p_user_id uuid)` to the shared DB (already applied; self-scopes to
+today's row, no `p_charged_date`). `rag-query-web` now refunds a failed generation via that
+RPC on its retryable-503 and outer-catch paths (mirrors mobile). The abandoned jsonb design —
+`supabase/migrations/20260530120100_chatbot_rate_limit.sql` and the old
+`supabase/functions/rag-query/index.ts` port (jsonb `quota.allowed`/`charged_date` +
+`decrement_chatbot_usage`) — was **deleted**; applying/deploying it would have broken the
+shared boolean RPC that mobile + web both depend on. **Deployed:** `rag-query-web` was
+redeployed to the shared project (v6) with the refund wired, so it is now live in production.
+Embeddings go through **OpenRouter**
+(`OPENROUTER_API_KEY`, a Supabase edge-function secret — not a Vercel env var); `OPENAI_API_KEY`
+is unused by web. (`hooks/useCompanion.ts` persists the user message before `generateReply`,
+which is unaffected — the refund corrects the *quota count*, not the message log.)
 
 **KB `source_url` — legacy-seed gap, not an ingestion bug** *(backfill + mobile/ops follow-up)*
 Some `knowledge_documents` have NULL `source_url`, so the Companion answer carries no citation pill

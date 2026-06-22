@@ -154,13 +154,13 @@ embeddings. See `BACKLOG.md` for upcoming phases.
 
 | Function    | Purpose                                                                |
 | ----------- | --------------------------------------------------------------------- |
-| `rag-query` | Embeds the query (OpenAI), retrieves matching Sanity content via the `match_chunks` RPC, and streams a grounded answer with citations (Gemini via OpenRouter) |
+| `rag-query-web` | Embeds the query (OpenRouter), retrieves matching KB content via the `match_chunks` RPC, and returns a grounded answer with citations (Gemini via OpenRouter). Web-dedicated function (mobile keeps its own `rag-query`); reached via the `/api/companion` proxy. |
 
 Other mobile edge functions (`gemini-proxy`, `report-post`, `block-user`, etc.) are
 not yet ported to the web app.
 
 Server-side logic also lives in **Postgres RPCs**, including
-`check_and_increment_chatbot_usage` / `decrement_chatbot_usage` (daily chatbot rate
+`check_and_increment_chatbot_usage` / `refund_chatbot_message` (daily chatbot rate
 limit + refund), `match_chunks` (RAG vector search), `get_post_metadata_batch`,
 `pin_post` / `unpin_post`, `merge_highlights`, and `is_circle_member`.
 
@@ -260,8 +260,8 @@ npm run dev      # dev server → http://localhost:3000
 - **AI keys server-side only** — `OPENROUTER_API_KEY` / `OPENAI_API_KEY` live as edge
   function secrets, never as `NEXT_PUBLIC_*`; the browser client uses the anon key
   only, and the service-role key is confined to edge functions.
-- **Daily rate limiting** — `check_and_increment_chatbot_usage` (cap 3/day) is a
-  `SECURITY DEFINER` RPC, with `decrement_chatbot_usage` refunding the quota when a
+- **Daily rate limiting** — `check_and_increment_chatbot_usage` (cap 6/day) is a
+  `SECURITY DEFINER` RPC, with `refund_chatbot_message` refunding the quota when a
   request fails.
 - **`is_circle_member`** is an intentional `SECURITY DEFINER` helper used to break the
   RLS recursion between `community_circles` and `community_circle_members`; it only
