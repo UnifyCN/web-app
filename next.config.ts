@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   // The opengraph-image route reads its font + logo binaries from app/_og-assets
@@ -51,4 +52,22 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: "unify-kv",
+  project: "unify-web",
+
+  // Source-map upload token — read from .env.sentry-build-plugin / CI. Unset for
+  // now, so builds skip upload with a warning (nothing breaks).
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Upload a wider set of client files for better stack-trace resolution.
+  widenClientFileUpload: true,
+
+  // Route Sentry traffic through a same-origin path to dodge ad-blockers. This
+  // path is exempted from the proxy.ts auth gate (see its matcher).
+  tunnelRoute: "/monitoring",
+
+  // Quiet the build output except in CI. (Turbopack is in use, so the
+  // webpack-only `webpack.treeshake` options are intentionally omitted.)
+  silent: !process.env.CI,
+});

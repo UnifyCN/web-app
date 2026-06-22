@@ -200,11 +200,13 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except static assets, image files, and the
-     * file-based metadata image routes (opengraph-image / twitter-image) — those
-     * are public social-card assets fetched by unauthenticated crawlers and must
-     * never be bounced through the /welcome auth gate.
+     * Match all request paths except static assets, image files, the
+     * file-based metadata image routes (opengraph-image / twitter-image), and
+     * the Sentry tunnel route (/monitoring). The metadata images are public
+     * social-card assets fetched by unauthenticated crawlers, and the Sentry
+     * tunnel receives unauthenticated POSTs from the browser SDK — neither must
+     * be bounced through the /welcome auth gate.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|monitoring(?:/|$)|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
