@@ -592,7 +592,11 @@ Deno.serve(async (req: Request) => {
           const { error } = await supabase.rpc('refund_chatbot_message', {
             p_user_id: effectiveUserId,
           });
-          if (!error) usageRefunded = true;
+          if (error) {
+            console.error('Failed to refund chatbot message slot:', error);
+          } else {
+            usageRefunded = true;
+          }
         } catch (refundErr) {
           console.error('Failed to refund chatbot message slot:', refundErr);
         }
