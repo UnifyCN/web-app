@@ -2,7 +2,7 @@
 --
 -- The rag-query edge function builds each response "source" link as
 --   source_url || s3Url || '<generic IRCC fallback>'
--- (lib: supabase/functions/rag-query/index.ts). S3 is unconfigured, so any doc
+-- (lib: supabase/functions/rag-query-web/index.ts). S3 is unconfigured, so any doc
 -- with a NULL source_url surfaces the hardcoded generic IRCC immigration page
 -- (https://www.canada.ca/en/immigration-refugees-citizenship.html) — generic and,
 -- for non-IRCC topics, wrong. Example bug: "How do I apply for a SIN?" retrieves

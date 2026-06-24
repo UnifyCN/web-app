@@ -61,19 +61,22 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   realtime, and circle chat remain deferred — see `BACKLOG.md`.)
 - **Navigation (PR #14)** — the sidebar mirrors the mobile nav order + icons, and
   the Circles tab is hidden to match the mobile launch navigation.
-- **Companion AI (PR #15 + PR #20) — fully wired to the UI.** The `rag-query`
-  **Supabase Edge Function** (Deno) is deployed and `useSendMessage` now streams the
-  real RAG answer + sources (the canned reply is gone). The KB is seeded (32 docs /
-  350 chunks, 1536-dim) with RLS + grants. **Both embeddings and the chat completion
-  go through OpenRouter** — the query vector uses `openai/text-embedding-3-small`
-  *proxied via OpenRouter* (`OPENROUTER_EMBEDDING_MODEL`), and answers run the shared
-  Gemini-2.5-Flash → DeepSeek-v4-Flash fallback chain (`_shared/openrouter.ts`). This
-  means the old broken `OPENAI_API_KEY` is **no longer a blocker** — only
-  `OPENROUTER_API_KEY` is required. A daily rate-limit RPC caps usage at **6
-  messages/day** (`check_and_increment_chatbot_usage`) and refunds the quota on
-  failure (`decrement_chatbot_usage`). PR #20 also dropped the blue squiggly
-  background, redesigned the conversation sidebar, and surfaces AI "suggested next
-  steps" in the message bubble (`messages.suggested_next_steps`).
+- **Companion AI (PR #15 + PR #20) — fully wired to the UI.** The web app calls its
+  own **`rag-query-web` Supabase Edge Function** (Deno; mobile keeps its separate
+  `rag-query`) through the same-origin `/api/companion` proxy, and `useSendMessage`
+  renders the real RAG answer + sources (the canned reply is gone). The KB is seeded
+  (32 docs / 350 chunks, 1536-dim) with RLS + grants. **Both embeddings and the chat
+  completion go through OpenRouter** — the query vector uses
+  `openai/text-embedding-3-small` *proxied via OpenRouter* (`OPENROUTER_EMBEDDING_MODEL`),
+  and answers run the shared Gemini-2.5-Flash → DeepSeek-v4-Flash fallback chain
+  (`_shared/openrouter.ts`). So the only key required is **`OPENROUTER_API_KEY`** (a
+  Supabase **edge-function secret**, not a Vercel env var); `OPENAI_API_KEY` is unused
+  by web. A daily rate-limit RPC caps usage at **6 messages/day** (the **boolean**
+  `check_and_increment_chatbot_usage`), and a failed generation is refunded via
+  **`refund_chatbot_message`** (Savar's mobile PR #277; live on the shared DB). PR #20
+  also dropped the blue squiggly background, redesigned the conversation sidebar, and
+  surfaces AI "suggested next steps" in the message bubble
+  (`messages.suggested_next_steps`).
 - **Learn + Practice (PR #16)** — section page
   redesign (Learn + Practice timeline cards in the module's colour); lesson
   pagination (`components/learn/LessonPager.tsx`); custom Sanity content-block
