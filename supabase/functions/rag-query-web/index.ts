@@ -588,11 +588,11 @@ Deno.serve(async (req: Request) => {
       usageCounted = true;
       refundUsageOnce = async () => {
         if (!usageCounted || usageRefunded || isEvalMode) return;
-        usageRefunded = true;
         try {
-          await supabase.rpc('refund_chatbot_message', {
+          const { error } = await supabase.rpc('refund_chatbot_message', {
             p_user_id: effectiveUserId,
           });
+          if (!error) usageRefunded = true;
         } catch (refundErr) {
           console.error('Failed to refund chatbot message slot:', refundErr);
         }
