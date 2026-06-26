@@ -724,24 +724,26 @@ Deno.serve(async (req: Request) => {
         })()
       : Promise.resolve<ProfileBundle>({ text: '', raw: null });
 
-    // Fetch first_name to personalize the system prompt. Missing first_name is
-    // expected for existing users — we just skip the name directive. Failures
-    // are non-fatal: the Companion still works without a name.
+    // Personalize the system prompt with the user's first_name, falling back to
+    // username. Missing both is expected for some users — we just skip the name
+    // directive. Failures are non-fatal: the Companion still works without a name.
     const firstNamePromise: Promise<string | null> =
       !isEvalMode && effectiveUserId
         ? (async () => {
             try {
               const { data: userRow } = await supabase
                 .from('users')
-                .select('first_name')
+                .select('first_name, username')
                 .eq('id', effectiveUserId)
                 .maybeSingle();
               return sanitizeNameForPrompt(
-                (userRow?.first_name as string | null) ?? null
+                (userRow?.first_name as string | null) ??
+                  (userRow?.username as string | null) ??
+                  null
               );
             } catch (err) {
               console.warn(
-                '[rag-query] first_name lookup failed (non-fatal)',
+                '[rag-query] name lookup failed (non-fatal)',
                 err
               );
               return null;
@@ -1084,6 +1086,12 @@ Deno.serve(async (req: Request) => {
 
             for await (const chunk of streamResult.stream) {
               if (clientDisconnected) break;
+              // A provider error surfaced mid-stream — fail instead of silently
+              // finishing with a truncated answer. Routes through the catch
+              // below (emits sse('error', …) + refundUsageOnce()).
+              if (chunk.error) {
+                throw new Error(`OpenRouter stream error: ${chunk.error}`);
+              }
               if (chunk.delta) {
                 accumulatedAnswer += chunk.delta;
                 if (!safeEnqueue(sse('token', { delta: chunk.delta }))) break;

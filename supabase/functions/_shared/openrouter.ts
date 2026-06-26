@@ -269,6 +269,12 @@ export async function callOpenRouter(
 export interface OpenRouterStreamChunk {
   /** Incremental token text (may be empty for keep-alives). */
   delta?: string;
+  /**
+   * Provider error surfaced mid-stream (OpenRouter `data: {"error":{…}}`). When
+   * set, the stream is error-terminated — callers must treat it as a failure,
+   * not a successful (possibly empty) completion.
+   */
+  error?: string;
   /** True on the final chunk for a choice (finish_reason set). */
   done?: boolean;
   /** OpenRouter inlines usage on the final chunk when usage.include = true. */
@@ -303,7 +309,10 @@ export type OpenRouterStreamResult =
  * Error handling:
  *  - Connect-time / non-2xx responses return `{ ok: false, ... }` (same as
  *    callOpenRouter).
- *  - Mid-stream parse errors are silently logged and skipped — partial
+ *  - A provider error emitted mid-stream (`data: {"error":{…}}`) is surfaced as
+ *    a chunk with `error` set, so callers can fail instead of treating the
+ *    truncated stream as a successful completion.
+ *  - Malformed (unparseable) SSE chunks are logged and skipped — partial
  *    deltas are still delivered. The final `done: true` chunk is emitted
  *    when `[DONE]` arrives or the stream closes naturally.
  */
@@ -482,6 +491,21 @@ function parseOpenRouterSseMessage(
   } catch (err) {
     console.warn('Failed to parse OpenRouter SSE chunk:', err);
     return null;
+  }
+
+  // OpenRouter can emit an error payload mid-stream (`data: {"error":{…}}`)
+  // instead of choices. Surface it so callers distinguish an error-terminated
+  // stream from a successful completion (otherwise it'd fall through to null
+  // below and be skipped as an empty chunk).
+  if (parsed.error) {
+    const errObj = parsed.error as { message?: unknown };
+    const message =
+      errObj && typeof errObj === 'object' && typeof errObj.message === 'string'
+        ? errObj.message
+        : typeof parsed.error === 'string'
+          ? parsed.error
+          : 'OpenRouter stream error';
+    return { error: message };
   }
 
   const choices = (parsed.choices as Array<Record<string, unknown>>) ?? [];
