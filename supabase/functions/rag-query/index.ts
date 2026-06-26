@@ -45,6 +45,13 @@ type QueryType =
 const EMBEDDING_MODEL =
   Deno.env.get('OPENROUTER_EMBEDDING_MODEL') || 'openai/text-embedding-3-small';
 
+// Source pills are gated to genuinely-relevant docs: a chunk is cited only when
+// its match_chunks score exceeds this. Retrieval keeps everything above the RPC
+// match_threshold (0.3) so the model still sees the full context — this only
+// controls which docs surface as user-visible citations. (match_chunks.similarity
+// is a blended score: cosine * 0.85 + recency * 0.15.)
+const SOURCES_SIMILARITY_THRESHOLD = 0.55;
+
 const INVALID_ASSISTANT_LED_PATTERNS: RegExp[] = [
   /^would you like\b/i,
   /^do you want\b/i,
@@ -736,10 +743,13 @@ Deno.serve(async (req: Request) => {
                 .select('first_name, username')
                 .eq('id', effectiveUserId)
                 .maybeSingle();
-              return sanitizeNameForPrompt(
-                (userRow?.first_name as string | null) ??
-                  (userRow?.username as string | null) ??
-                  null
+              // Sanitize each candidate independently so a blank/rejected
+              // first_name still falls back to username (a combined `??` before
+              // sanitizing would let an empty-after-sanitize first_name win).
+              return (
+                sanitizeNameForPrompt(userRow?.first_name as string | null) ??
+                sanitizeNameForPrompt(userRow?.username as string | null) ??
+                null
               );
             } catch (err) {
               console.warn(
@@ -883,7 +893,11 @@ Deno.serve(async (req: Request) => {
                 : '';
               const resolvedUrl = sourceUrl || s3Url;
 
-              if (resolvedUrl) {
+              // Cite only docs that clear the source-pill threshold AND have a
+              // real URL. Chunks are returned sorted by similarity DESC and
+              // deduped by document_id, so the first chunk seen per doc is its
+              // best — gating here keeps the highest-scoring chunk's decision.
+              if (resolvedUrl && chunk.similarity > SOURCES_SIMILARITY_THRESHOLD) {
                 sourcesMap.set(chunk.document_id, {
                   document_id: chunk.document_id,
                   document_title: doc.title || 'Unknown',
