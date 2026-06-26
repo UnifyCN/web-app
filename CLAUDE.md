@@ -61,9 +61,11 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   realtime, and circle chat remain deferred — see `BACKLOG.md`.)
 - **Navigation (PR #14)** — the sidebar mirrors the mobile nav order + icons, and
   the Circles tab is hidden to match the mobile launch navigation.
-- **Companion AI (PR #15 + PR #20) — fully wired to the UI.** The web app calls its
-  own **`rag-query-web` Supabase Edge Function** (Deno; mobile keeps its separate
-  `rag-query`) through the same-origin `/api/companion` proxy, and `useSendMessage`
+- **Companion AI (PR #15 + PR #20; unified with mobile in the consolidation PR) —
+  fully wired to the UI.** The web app calls the **shared `rag-query` Supabase Edge
+  Function** (Deno; one unified function for web + mobile — the web-only
+  `rag-query-web` fork was retired) through the same-origin `/api/companion` proxy
+  (which tags requests `source:"web"`), and `useSendMessage`
   renders the real RAG answer + sources (the canned reply is gone). The KB is seeded
   (32 docs / 350 chunks, 1536-dim) with RLS + grants. **Both embeddings and the chat
   completion go through OpenRouter** — the query vector uses

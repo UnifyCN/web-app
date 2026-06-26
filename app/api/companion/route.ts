@@ -2,14 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Server-side proxy for the `rag-query-web` edge function (AI Companion replies).
+ * Server-side proxy for the shared `rag-query` edge function (AI Companion
+ * replies) — the unified function both web and mobile call.
  *
- * `rag-query-web` is the web-dedicated function on the shared project (mobile
- * keeps calling `rag-query`). It does ship CORS, but the browser still POSTs to
- * this same-origin route, which does a server→server `functions.invoke` (no
- * preflight) while forwarding the user's JWT (from cookies) so the function
- * identifies the user, enforces the daily quota, and logs usage. Mirrors
- * /api/moderation + /api/storage (Node runtime).
+ * The browser POSTs to this same-origin route, which does a server→server
+ * `functions.invoke` (no preflight) while forwarding the user's JWT (from
+ * cookies) so the function identifies the user, enforces the daily quota, and
+ * logs usage. `source: "web"` tags the request so the function records the
+ * platform on its $ai_generation analytics. Mirrors /api/moderation +
+ * /api/storage (Node runtime).
  *
  * The 429 daily-limit response is preserved verbatim (status + error body) so
  * the client can raise a ChatLimitError; other upstream errors are forwarded
@@ -45,11 +46,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
   }
 
-  const { data, error } = await supabase.functions.invoke("rag-query-web", {
+  const { data, error } = await supabase.functions.invoke("rag-query", {
     body: {
       prompt: body.prompt,
       conversationIdentifier: body.conversationIdentifier,
       messages: body.messages ?? [],
+      source: "web",
     },
   });
 
@@ -74,9 +76,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: message }, { status });
   }
 
-  // rag-query-web (non-streaming) returns its body with an application/json
-  // Content-Type, so supabase-js hands `data` back already parsed. Pass it
-  // through; guard the string case defensively in case the header is dropped.
+  // rag-query returns a non-streaming application/json body here (the proxy
+  // never sends stream:true), so supabase-js hands `data` back already parsed.
+  // Pass it through; guard the string case defensively if the header is dropped.
   let result: unknown = data;
   if (typeof data === "string") {
     try {

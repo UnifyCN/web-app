@@ -316,6 +316,25 @@ show-mutuals.
 
 ## Shipped / in-flight
 
+**Consolidate `rag-query` + `rag-query-web` → one shared function (`fix/consolidate-rag-query`)**
+Merged the web-only `rag-query-web` fork back into the shared mobile-owned `rag-query` (one
+function both platforms call) with Savar's sign-off, adopting the web behaviors for both:
+**OpenRouter embeddings** (`OPENROUTER_API_KEY` / `OPENROUTER_EMBEDDING_MODEL`, replacing
+OpenAI-direct), **raw-prompt retrieval** (dropped the `[Context: province, …]` prefix),
+**no IRCC hardcoded source fallback** (`url = source_url || s3Url`, unattributed otherwise),
+and **PostHog kept for all platforms** with a `platform` tag on `$ai_generation` (web proxy
+sends `source:"web"` → `platform:"web"`, else `"mobile"`). Mobile's **SSE streaming** branch,
+quota/refund RPCs, response shape, eval bypass, and `verify_jwt:true` are preserved unchanged;
+added CORS + OPTIONS and a `first_name → username` name fallback; dropped the dead
+`immigration_status`/`country_of_origin` profile reads (absent on the shared DB). Web side:
+`/api/companion` repointed to `rag-query`, `rag-query-web` deleted, `config.toml`
+`[functions.rag-query] verify_jwt = true` (now authoritative — we deploy `rag-query` from this
+repo), CI `deno check` repointed. The unified source lives in `supabase/functions/rag-query/`;
+**the mobile repo (`unify-front-end/supabase/functions/rag-query`) must be synced to match or a
+future mobile deploy reverts it.** `_shared/openrouter.ts` + `posthogCapture.ts` were upgraded
+to the mobile superset (adds `callOpenRouterStream`); `_shared/fetchWithRetry.ts` kept (web's is
+newer — retries internal timeouts).
+
 **PR #35 — Security hardening + KB `source_url` backfill (`feat/web-security-hardening`, = PR A)**
 Storage upload hardening in `app/api/storage/route.ts` + `lib/supabase/imageValidation.ts`:
 **magic-byte MIME sniffing** (`file-type`) rejecting non-image content or a payload that
