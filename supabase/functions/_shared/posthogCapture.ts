@@ -1,10 +1,6 @@
-// @ts-nocheck Deno runtime — Supabase Edge Functions
 /**
  * Shared PostHog capture utility for edge functions.
- * Ported from the Unify mobile app. NOTE: this web project intentionally does
- * NOT set POSTHOG_PROJECT_API_KEY (see CLAUDE.md — "No PostHog / analytics"),
- * so captureAiGeneration() no-ops here. The file is kept so the rag-query port
- * stays a faithful 1:1 of mobile; flip on analytics later by setting the secret.
+ * Sends events directly via PostHog's HTTP API (no SDK needed in Deno).
  */
 
 const POSTHOG_HOST = 'https://us.i.posthog.com';
@@ -28,6 +24,7 @@ interface AiGenerationProperties {
   $ai_trace_id?: string;
 
   // Conversation content (powers PostHog LLM trace UI + eval mining).
+  // Note: $ai_input may contain PII — audit retention before adding new sinks.
   $ai_input?: Array<{ role: string; content: string }>;
   $ai_output_choices?: Array<{ role: string; content: string }>;
 
@@ -35,6 +32,13 @@ interface AiGenerationProperties {
   [key: string]: unknown;
 }
 
+/**
+ * Register a background promise with the Edge Runtime so the function
+ * instance stays alive until it settles. Without this, async work dispatched
+ * just before the response (or SSE stream) closes gets killed mid-flight —
+ * which is exactly what was dropping the PostHog capture POST in production
+ * after the AI Companion switched to streaming responses.
+ */
 function keepAlive(promise: Promise<unknown>): void {
   const edgeRuntime = (
     globalThis as typeof globalThis & {
@@ -54,7 +58,11 @@ function keepAlive(promise: Promise<unknown>): void {
 
 /**
  * Capture a PostHog `$ai_generation` event from an edge function.
- * No-ops unless POSTHOG_PROJECT_API_KEY (phc_...) is set in Supabase secrets.
+ * This powers the LLM analytics dashboard (Generations view, cost tracking).
+ *
+ * Requires POSTHOG_PROJECT_API_KEY env var (phc_...) set in Supabase secrets.
+ * /capture/ rejects Personal API Keys (phx_...) — those belong to query-API
+ * callers, not ingestion.
  */
 export function captureAiGeneration(
   distinctId: string,
@@ -62,7 +70,9 @@ export function captureAiGeneration(
 ): void {
   const apiKey = Deno.env.get('POSTHOG_PROJECT_API_KEY');
   if (!apiKey) {
-    // Expected on the web project — analytics is intentionally disabled.
+    console.warn(
+      'POSTHOG_PROJECT_API_KEY not set — skipping $ai_generation capture'
+    );
     return;
   }
 
@@ -76,6 +86,11 @@ export function captureAiGeneration(
     },
   });
 
+  // Don't block the response, but DO register with EdgeRuntime.waitUntil so
+  // the runtime keeps the function instance alive until the POST resolves.
+  // A naked fire-and-forget fetch here gets killed when the request closes —
+  // particularly in the streaming path, where the SSE stream ends within
+  // milliseconds of the capture call.
   keepAlive(
     fetch(`${POSTHOG_HOST}/capture/`, {
       method: 'POST',
@@ -85,4 +100,43 @@ export function captureAiGeneration(
       console.error('PostHog capture failed:', err);
     })
   );
+}
+
+/**
+ * Helper to compute Gemini cost from token counts.
+ * Pricing as of 2025 for Gemini 2.5 Flash:
+ *   Input:  $0.15 per 1M tokens
+ *   Output: $0.60 per 1M tokens
+ *
+ * For Gemini 2.0 Flash:
+ *   Input:  $0.10 per 1M tokens
+ *   Output: $0.40 per 1M tokens
+ */
+export function computeGeminiCost(
+  inputTokens: number,
+  outputTokens: number,
+  model: string
+): { inputCost: number; outputCost: number; totalCost: number } {
+  // Determine pricing based on model
+  let inputRate: number;
+  let outputRate: number;
+
+  if (model.includes('2.5')) {
+    // Gemini 2.5 Flash
+    inputRate = 0.15 / 1_000_000;
+    outputRate = 0.6 / 1_000_000;
+  } else {
+    // Gemini 2.0 Flash (default)
+    inputRate = 0.1 / 1_000_000;
+    outputRate = 0.4 / 1_000_000;
+  }
+
+  const inputCost = inputTokens * inputRate;
+  const outputCost = outputTokens * outputRate;
+
+  return {
+    inputCost,
+    outputCost,
+    totalCost: inputCost + outputCost,
+  };
 }

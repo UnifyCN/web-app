@@ -19,7 +19,7 @@ mirroring its features for the browser.
 | State       | React Query v5 (server state), React component state (local)      |
 | Backend     | Supabase (Auth, PostgreSQL, Edge Functions)                       |
 | CMS         | Sanity (Learn content, checklist templates)                       |
-| AI          | OpenAI embeddings + Google Gemini (via OpenRouter), behind the `rag-query` edge function |
+| AI          | OpenRouter embeddings + Google Gemini (via OpenRouter), behind the shared `rag-query` edge function |
 | Images      | Sanity image CDN (`@sanity/image-url`); user uploads not yet built |
 | Fonts       | Inter (`next/font/google`)                                        |
 | Utilities   | clsx, tailwind-merge                                              |
@@ -154,7 +154,7 @@ embeddings. See `BACKLOG.md` for upcoming phases.
 
 | Function    | Purpose                                                                |
 | ----------- | --------------------------------------------------------------------- |
-| `rag-query-web` | Embeds the query (OpenRouter), retrieves matching KB content via the `match_chunks` RPC, and returns a grounded answer with citations (Gemini via OpenRouter). Web-dedicated function (mobile keeps its own `rag-query`); reached via the `/api/companion` proxy. |
+| `rag-query` | Embeds the query (OpenRouter), retrieves matching KB content via the `match_chunks` RPC, and returns a grounded answer with citations (Gemini via OpenRouter). Shared unified function for web + mobile; web reaches it via the `/api/companion` proxy (tagged `source:"web"`). |
 
 Other mobile edge functions (`gemini-proxy`, `report-post`, `block-user`, etc.) are
 not yet ported to the web app.

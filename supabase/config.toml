@@ -7,18 +7,14 @@
 project_id = "wrbauxutkysljmsqojts"
 
 [functions.rag-query]
-# Auth is enforced inside the function (resolveAuthenticatedUserId validates the
-# user's JWT and 401s if missing/invalid). verify_jwt is disabled at the gateway
-# so the browser CORS preflight (OPTIONS, no Authorization header) isn't rejected
-# before reaching the function's own OPTIONS handler.
-verify_jwt = false
-
-[functions.rag-query-web]
-# Web-dedicated Companion function (mobile keeps calling rag-query). Same rationale
-# as rag-query: it validates the JWT itself (resolveAuthenticatedUserId) and 401s if
-# missing/invalid; gateway JWT off so the browser CORS preflight (OPTIONS, no auth
-# header) reaches the function's own OPTIONS handler.
-verify_jwt = false
+# Unified Companion function (web + mobile) — we deploy it from this repo, so this
+# block is authoritative for the deploy. verify_jwt stays ON: released mobile apps
+# call it directly with a valid user JWT, and the web app calls it through the
+# same-origin /api/companion proxy (a server→server invoke that forwards the user's
+# JWT), so no unauthenticated browser preflight needs to reach it. The function
+# also re-validates the JWT in-function (resolveAuthenticatedUserId) as
+# defense-in-depth. Do NOT set this false — that would weaken the live function.
+verify_jwt = true
 
 [functions.practice-feedback]
 # Same rationale as rag-query: the function validates the user's JWT itself
@@ -31,6 +27,6 @@ verify_jwt = false
 # verify_jwt = true: the gateway verifies the bearer's signature, so the function can
 # safely trust the JWT's `role` claim (must be service_role) in addition to an exact
 # service-role-key match. Safe to enable here because this is cron-only — there is no
-# browser/CORS preflight surface (the reason rag-query et al. keep it off). The cron
+# browser/CORS preflight surface (the reason practice-feedback keeps it off). The cron
 # sends the project service-role key (a valid JWT) as the Bearer token.
 verify_jwt = true
