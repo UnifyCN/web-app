@@ -45,13 +45,6 @@ type QueryType =
 const EMBEDDING_MODEL =
   Deno.env.get('OPENROUTER_EMBEDDING_MODEL') || 'openai/text-embedding-3-small';
 
-// Source pills are gated to genuinely-relevant docs: a chunk is cited only when
-// its match_chunks score exceeds this. Retrieval keeps everything above the RPC
-// match_threshold (0.3) so the model still sees the full context — this only
-// controls which docs surface as user-visible citations. (match_chunks.similarity
-// is a blended score: cosine * 0.85 + recency * 0.15.)
-const SOURCES_SIMILARITY_THRESHOLD = 0.55;
-
 const INVALID_ASSISTANT_LED_PATTERNS: RegExp[] = [
   /^would you like\b/i,
   /^do you want\b/i,
@@ -893,11 +886,7 @@ Deno.serve(async (req: Request) => {
                 : '';
               const resolvedUrl = sourceUrl || s3Url;
 
-              // Cite only docs that clear the source-pill threshold AND have a
-              // real URL. Chunks are returned sorted by similarity DESC and
-              // deduped by document_id, so the first chunk seen per doc is its
-              // best — gating here keeps the highest-scoring chunk's decision.
-              if (resolvedUrl && chunk.similarity > SOURCES_SIMILARITY_THRESHOLD) {
+              if (resolvedUrl) {
                 sourcesMap.set(chunk.document_id, {
                   document_id: chunk.document_id,
                   document_title: doc.title || 'Unknown',
