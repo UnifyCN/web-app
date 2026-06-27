@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import type { FeedTab } from "@/types";
 import * as feed from "@/services/feed";
+import { trackCommentCreated, trackPostCreated } from "@/lib/analytics";
 
 /** React Query hooks for feed / posts data. */
 
@@ -136,8 +137,11 @@ export function useCreatePost() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: feed.CreatePostInput) => feed.createPost(input),
-    // Refetch every tab so the new post shows up wherever it belongs.
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: FEED_KEY }),
+    onSuccess: (post, input) => {
+      // Refetch every tab so the new post shows up wherever it belongs.
+      queryClient.invalidateQueries({ queryKey: FEED_KEY });
+      trackPostCreated({ postId: post.id, groupId: input.groupId });
+    },
   });
 }
 
@@ -163,11 +167,17 @@ export function useCreateComment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: feed.CreateCommentInput) => feed.createComment(input),
-    onSuccess: (_data, { postId }) => {
+    onSuccess: (comment, { postId, content, parentCommentId }) => {
       queryClient.invalidateQueries({ queryKey: [...COMMENTS_KEY, postId] });
       // posts.comment_count changes via the DB trigger — refresh the feed
       // badge + the detail post.
       queryClient.invalidateQueries({ queryKey: FEED_KEY });
+      trackCommentCreated({
+        postId,
+        commentId: comment.id,
+        isReply: Boolean(parentCommentId),
+        bodyLength: content.length,
+      });
     },
   });
 }

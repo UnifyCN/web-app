@@ -22,6 +22,7 @@ import {
 import { isCommonPassword } from "@/lib/passwordStrength";
 import { suggestEmailCorrection } from "@/lib/emailTypos";
 import { signUpWithEmail } from "@/services/auth";
+import { trackSignUpFailed, trackSignUpStarted } from "@/lib/analytics";
 
 /** Create account — email + password with a required consent checkbox (image 8). */
 export default function SignUpPage() {
@@ -46,6 +47,7 @@ export default function SignUpPage() {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
     setError(null);
+    trackSignUpStarted();
     const normalized = email.trim().toLowerCase();
     const { error: signUpError, alreadyRegistered } = await signUpWithEmail(
       normalized,
@@ -58,6 +60,7 @@ export default function SignUpPage() {
     }
     if (signUpError) {
       console.error("signUp failed", signUpError);
+      trackSignUpFailed();
       setSubmitting(false);
       setError(signUpError.message || "Couldn't create your account. Try again.");
       return;

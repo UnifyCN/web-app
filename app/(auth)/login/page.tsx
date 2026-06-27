@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/Input";
 import { LEGAL_URLS } from "@/lib/legalUrls";
 import { EMAIL_RE } from "@/lib/authValidation";
 import { getAuthUser, signInWithEmail } from "@/services/auth";
+import { trackSignInCompleted, trackSignInFailed } from "@/lib/analytics";
 
 /** Sign in — email + password alongside Google SSO (image 9). */
 function LoginScreen() {
@@ -63,6 +64,7 @@ function LoginScreen() {
         router.push(`/verify-email?email=${encodeURIComponent(normalized)}`);
         return;
       }
+      trackSignInFailed();
       setError(
         /invalid login credentials/i.test(signInError.message)
           ? "Incorrect email or password."
@@ -70,6 +72,7 @@ function LoginScreen() {
       );
       return;
     }
+    trackSignInCompleted();
     router.replace("/home");
   };
 

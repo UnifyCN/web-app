@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as companion from "@/services/companion";
+import { trackCompanionMessageSent } from "@/lib/analytics";
 import type { ChatMessage, Conversation } from "@/types";
 
 /** React Query hooks for Companion (AI chat). */
@@ -143,7 +144,7 @@ export function useSendMessage() {
         queryClient.invalidateQueries({ queryKey: context.key });
       }
     },
-    onSuccess: ({ conversationIdentifier }) => {
+    onSuccess: ({ conversationIdentifier }, { text }) => {
       queryClient.invalidateQueries({
         queryKey: messagesKey(conversationIdentifier),
       });
@@ -151,6 +152,7 @@ export function useSendMessage() {
       // The edge function incremented chatbot_usage server-side — refetch so
       // the free-tier "remaining" counter reflects the new count.
       queryClient.invalidateQueries({ queryKey: CHATBOT_USAGE_KEY });
+      trackCompanionMessageSent({ messageLength: text.length });
     },
   });
 }

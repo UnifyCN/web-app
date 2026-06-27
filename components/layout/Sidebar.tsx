@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
 import { UnifyLogo } from "@/components/UnifyLogo";
 import { signOut as signOutService } from "@/services/auth";
+import { trackUserSignedOut } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import {
   MAIN_NAV,
@@ -37,6 +38,7 @@ export function Sidebar() {
       console.error("Sign out failed", error);
       return; // stay put rather than pretend the session is cleared
     }
+    trackUserSignedOut();
     // Drop every cached query so the next session never flashes this user's
     // data, then go to the pre-login welcome screen (replace so Back can't
     // return to an authed page).

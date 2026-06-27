@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signInWithGoogle } from "@/services/auth";
+import { trackGoogleSignInUsed } from "@/lib/analytics";
 import { GoogleIcon } from "@/components/auth/BrandIcons";
 
 const SQUARE =
@@ -23,6 +24,7 @@ export function OAuthButtons({
   const handleGoogle = async () => {
     setBusy(true);
     onError?.("");
+    trackGoogleSignInUsed();
     const { error } = await signInWithGoogle();
     if (error) {
       console.error("Google sign-in failed", error);

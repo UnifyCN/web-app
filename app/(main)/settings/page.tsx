@@ -16,6 +16,7 @@ import { DeleteAccountModal } from "@/components/account/DeleteAccountModal";
 import { BlockedAccountsList } from "@/components/moderation/BlockedAccountsList";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { signOut } from "@/services/auth";
+import { trackUserSignedOut } from "@/lib/analytics";
 import {
   useCurrentUser,
   useRemoveAvatar,
@@ -528,6 +529,8 @@ function AccountSection() {
       setSigningOut(false);
       return; // stay put rather than pretend the session is cleared
     }
+    // Capture before reset clears identity (the auth listener calls reset).
+    trackUserSignedOut();
     // Clear cached data so the next session starts clean, then to /welcome.
     queryClient.clear();
     router.replace("/welcome");

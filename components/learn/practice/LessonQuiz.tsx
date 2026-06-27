@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import { useUpsertLessonQuizProgress } from "@/hooks/useLearn";
 import { cn } from "@/lib/utils";
+import { trackQuizCompleted } from "@/lib/analytics";
 import type { SanityQuizQuestion } from "@/types";
 import { QuizQuestion } from "./QuizQuestion";
 import { computeScore, isAnswered } from "./grade";
 
 interface LessonQuizProps {
   lessonId: string;
+  moduleId: string;
+  submoduleId: string;
   title: string;
   questions: SanityQuizQuestion[];
   colorHex: string;
@@ -28,6 +31,8 @@ interface LessonQuizProps {
  */
 export function LessonQuiz({
   lessonId,
+  moduleId,
+  submoduleId,
   title,
   questions,
   colorHex,
@@ -85,6 +90,7 @@ export function LessonQuiz({
       // rather than navigating away on a failed write.
       return;
     }
+    trackQuizCompleted({ lessonId, submoduleId, moduleId, quizTitle: title });
     // Finishing the quiz is what completes the lesson (not merely reaching it).
     onLessonComplete();
     // No results screen — finishing always returns to the section page.

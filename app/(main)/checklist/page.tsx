@@ -11,6 +11,10 @@ import {
   useTasks,
   useToggleTask,
 } from "@/hooks/useChecklist";
+import {
+  trackChecklistTaskCompleted,
+  trackChecklistTaskUncompleted,
+} from "@/lib/analytics";
 import type { ChecklistTask, Priority } from "@/types";
 
 const PRIORITY_ORDER: Priority[] = [
@@ -79,11 +83,25 @@ export default function ChecklistPage() {
   function handleToggle(id: string) {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
-    toggle.mutate({
-      id: task.id,
-      isCustom: task.isCustom,
-      completed: task.completed,
-    });
+    const nowCompleted = !task.completed;
+    toggle.mutate(
+      {
+        id: task.id,
+        isCustom: task.isCustom,
+        completed: task.completed,
+      },
+      {
+        onSuccess: () => {
+          const props = {
+            taskTitle: task.title,
+            taskPriority: task.priority,
+            source: task.isCustom ? "custom" : "sanity",
+          };
+          if (nowCompleted) trackChecklistTaskCompleted(props);
+          else trackChecklistTaskUncompleted(props);
+        },
+      },
+    );
   }
 
   function handleAdd(input: {

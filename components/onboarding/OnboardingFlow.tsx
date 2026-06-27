@@ -4,6 +4,10 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useSaveOnboarding } from "@/hooks/useOnboarding";
+import {
+  trackOnboardingCompleted,
+  trackOnboardingStepCompleted,
+} from "@/lib/analytics";
 import { StepProgress } from "./StepProgress";
 import { NameStep } from "./steps/NameStep";
 import { PersonaStep } from "./steps/PersonaStep";
@@ -91,7 +95,17 @@ export function OnboardingFlow({
     setDraft((d) => ({ ...d, ...patch }));
 
   const goNext = () => {
-    if (canAdvance && !isLast) setIndex((i) => i + 1);
+    if (canAdvance && !isLast) {
+      // Onboarding drop-off funnel: one event per completed step. Skip edit mode
+      // (re-editing a profile is not the onboarding funnel).
+      if (mode === "onboard") {
+        trackOnboardingStepCompleted({
+          stepName: step.key,
+          stepNumber: index + 1,
+        });
+      }
+      setIndex((i) => i + 1);
+    }
   };
   const goBack = () => setIndex((i) => Math.max(i - 1, 0));
 
@@ -102,7 +116,10 @@ export function OnboardingFlow({
     }
     setError(null);
     save.mutate(draftToInput(draft), {
-      onSuccess: onComplete,
+      onSuccess: () => {
+        if (mode === "onboard") trackOnboardingCompleted();
+        onComplete();
+      },
       onError: (e) => {
         // PostgREST errors stringify to `{}` in some consoles — log the fields.
         const err = e as {

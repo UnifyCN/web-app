@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Blob } from "@/components/learn/Blob";
@@ -16,6 +16,7 @@ import {
   useAllPracticeProgresses,
   useModule,
 } from "@/hooks/useLearn";
+import { trackModuleViewed } from "@/lib/analytics";
 
 export default function ModuleDetailPage({
   params,
@@ -28,6 +29,18 @@ export default function ModuleDetailPage({
   const practiceProgressesQuery = useAllPracticeProgresses();
 
   const mod = moduleQuery.data;
+
+  // Fire `module_viewed` once per module once it has loaded.
+  useEffect(() => {
+    if (mod) {
+      trackModuleViewed({
+        moduleId: mod._id,
+        moduleTitle: mod.title,
+        submoduleCount: (mod.submodules ?? []).length,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mod?._id]);
 
   if (moduleQuery.isLoading) {
     return (
