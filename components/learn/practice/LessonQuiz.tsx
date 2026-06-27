@@ -24,7 +24,8 @@ interface LessonQuizProps {
  * Inline "Quick Check" rendered mid-lesson. Reuses the shared QuizQuestion
  * renderers + grade.ts. Holds local quiz state (no mid-quiz resume); on finishing
  * it persists completion via useUpsertLessonQuizProgress and navigates back to the
- * section (no results screen). Back resets the target question for a fresh attempt.
+ * section (no results screen). Back navigates to the previous question, preserving
+ * the answers + submitted state the user already entered.
  */
 export function LessonQuiz({
   lessonId,
@@ -93,20 +94,9 @@ export function LessonQuiz({
 
   function handleBack() {
     if (currentIndex === 0) return;
-    const prevIndex = currentIndex - 1;
-    const prevKey = questions[prevIndex]._key;
-    // Fresh attempt: clear the target question's answer + submitted state.
-    setAnswers((prev) => {
-      const next = { ...prev };
-      delete next[prevKey];
-      return next;
-    });
-    setSubmitted((prev) => {
-      const next = { ...prev };
-      delete next[prevKey];
-      return next;
-    });
-    setCurrentIndex(prevIndex);
+    // Navigate back only — keep the previous question's answer + submitted state so
+    // the user sees what they entered (local state; only the final score is persisted).
+    setCurrentIndex(currentIndex - 1);
   }
 
   return (
