@@ -182,20 +182,10 @@ export function PracticeQuiz({
 
   function handleBack() {
     if (currentIndex === 0) return;
-    const prevIndex = currentIndex - 1;
-    const prevKey = questions[prevIndex].question._key;
-    // Going back is a fresh attempt: clear the target question's answer +
-    // submitted state (matches the mobile app — no restored answer/feedback).
-    const nextAnswers = { ...answers };
-    delete nextAnswers[prevKey];
-    setAnswers(nextAnswers);
-    setSubmitted((prev) => {
-      const next = { ...prev };
-      delete next[prevKey];
-      return next;
-    });
-    setCurrentIndex(prevIndex);
-    persist(prevIndex, nextAnswers, false, false);
+    // Going back preserves the user's saved answers + submitted/feedback state:
+    // navigate only, never clear the answer or persist a wipe (the saved
+    // user_submodule_practice_progress row stays intact).
+    setCurrentIndex(currentIndex - 1);
   }
 
   function handleRetake() {
