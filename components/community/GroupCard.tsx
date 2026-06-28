@@ -6,6 +6,7 @@ import { Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GroupCover } from "@/components/community/GroupCover";
 import { useJoinGroup, useLeaveGroup } from "@/hooks/useCommunity";
+import { trackGroupJoined } from "@/lib/analytics";
 import type { Group } from "@/types";
 
 /** Group card for the Community → Groups grid. Join state flips optimistically;
@@ -27,7 +28,12 @@ export function GroupCard({ group }: { group: Group }) {
     setJoinedOverride(!wasJoined);
     const mutation = wasJoined ? leaveMutation : joinMutation;
     mutation.mutate(group.id, {
-      onSuccess: () => setJoinedOverride(null),
+      onSuccess: () => {
+        setJoinedOverride(null);
+        if (!wasJoined) {
+          trackGroupJoined({ groupId: group.id, groupName: group.groupName });
+        }
+      },
       onError: () => setJoinedOverride(wasJoined),
     });
   }

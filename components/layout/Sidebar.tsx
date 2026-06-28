@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
 import { UnifyLogo } from "@/components/UnifyLogo";
 import { signOut as signOutService } from "@/services/auth";
+import { trackUserSignedOut } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import {
   MAIN_NAV,
@@ -32,6 +33,9 @@ export function Sidebar() {
   const queryClient = useQueryClient();
 
   const signOut = async () => {
+    // Capture before sign-out: signOut() triggers the auth listener's
+    // resetPostHog(), which clears the identity the event needs to attach to.
+    trackUserSignedOut();
     const { error } = await signOutService();
     if (error) {
       console.error("Sign out failed", error);

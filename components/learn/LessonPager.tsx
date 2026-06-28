@@ -8,6 +8,7 @@ import { SelectableLessonContent } from "@/components/learn/SelectableLessonCont
 import { ExplainTermModal } from "@/components/learn/ExplainTermModal";
 import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
 import { escapeRegExp, portableTextToPlain } from "@/lib/utils";
+import { trackLessonPageViewed } from "@/lib/analytics";
 import type { SanityLessonPage, SanityQuizQuestion } from "@/types";
 
 interface LessonPagerProps {
@@ -121,6 +122,21 @@ export function LessonPager({
     return () => window.removeEventListener("keydown", onKey);
   }, [index, isQuizPage, isLastScreen, sectionHref, router, askTerm]);
 
+  // `lesson_page_viewed` per content page (the quiz screen is not a content page;
+  // it fires `quiz_completed` instead). Keyed on the screen index — the pager
+  // remounts per lesson, so this also fires for the first page on open.
+  useEffect(() => {
+    if (isQuizPage) return;
+    trackLessonPageViewed({
+      lessonId,
+      submoduleId,
+      moduleId,
+      pageNumber: index + 1,
+      totalPages: pages.length,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonId, index, isQuizPage]);
+
   return (
     <div>
       {/* Persistent header: lesson title + page progress */}
@@ -203,6 +219,8 @@ export function LessonPager({
         <div className="mt-7">
           <LessonQuiz
             lessonId={lessonId}
+            moduleId={moduleId}
+            submoduleId={submoduleId}
             title={quizTitle}
             questions={quizQuestions}
             colorHex={colorHex}

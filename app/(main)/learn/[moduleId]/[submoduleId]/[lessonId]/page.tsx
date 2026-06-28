@@ -13,6 +13,7 @@ import {
   useModule,
   useSetLessonProgress,
 } from "@/hooks/useLearn";
+import { trackLessonCompleted } from "@/lib/analytics";
 
 export default function LessonDetailPage({
   params,
@@ -135,6 +136,7 @@ export default function LessonDetailPage({
           // Only confirm when a write actually happened (the mock/no-Supabase
           // path resolves "successfully" without persisting anything).
           if (isSupabaseConfigured()) toast.success("Lesson complete!");
+          trackLessonCompleted({ lessonId, submoduleId, moduleId });
         },
       },
     );

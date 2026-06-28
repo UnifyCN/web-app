@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/Input";
 import { LEGAL_URLS } from "@/lib/legalUrls";
 import { EMAIL_RE } from "@/lib/authValidation";
 import { getAuthUser, signInWithEmail } from "@/services/auth";
+import { trackSignInCompleted, trackSignInFailed } from "@/lib/analytics";
 
 /** Sign in — email + password alongside Google SSO (image 9). */
 function LoginScreen() {
@@ -59,6 +60,7 @@ function LoginScreen() {
     const { error: signInError } = await signInWithEmail(normalized, password);
     if (signInError) {
       setSubmitting(false);
+      trackSignInFailed();
       if (/email not confirmed/i.test(signInError.message)) {
         router.push(`/verify-email?email=${encodeURIComponent(normalized)}`);
         return;
@@ -70,6 +72,7 @@ function LoginScreen() {
       );
       return;
     }
+    trackSignInCompleted();
     router.replace("/home");
   };
 

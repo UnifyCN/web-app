@@ -14,6 +14,7 @@ import {
   clearSignupConsentCookie,
   readSignupConsentCookie,
 } from "@/lib/authValidation";
+import { trackSignUpCompleted } from "@/lib/analytics";
 
 /** "Verify your email" — enter the 6-digit signup code (image 10). */
 function VerifyEmailScreen() {
@@ -57,6 +58,7 @@ function VerifyEmailScreen() {
       return;
     }
     clearSignupConsentCookie();
+    trackSignUpCompleted();
     // Brief success beat before routing into the app.
     setSuccess(true);
     window.setTimeout(() => router.replace("/home"), reduce ? 400 : 800);

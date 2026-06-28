@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -9,6 +9,7 @@ import { GroupMemberAvatarStack } from "@/components/community/GroupMemberAvatar
 import { PostCard } from "@/components/home/PostCard";
 import { useGroup, useJoinGroup, useLeaveGroup } from "@/hooks/useCommunity";
 import { useGroupPosts } from "@/hooks/useFeed";
+import { trackGroupJoined, trackGroupViewed } from "@/lib/analytics";
 
 export default function GroupDetailPage({
   params,
@@ -27,6 +28,14 @@ export default function GroupDetailPage({
   const group = groupQuery.data;
   const [joinedOverride, setJoinedOverride] = useState<boolean | null>(null);
   const joined = joinedOverride ?? group?.joinedByMe ?? false;
+
+  // Fire `group_viewed` once per group once it has loaded.
+  useEffect(() => {
+    if (group) {
+      trackGroupViewed({ groupId: group.id, groupName: group.groupName });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [group?.id]);
 
   if (groupQuery.isLoading) {
     return (
@@ -61,7 +70,12 @@ export default function GroupDetailPage({
     setJoinedOverride(!wasJoined);
     const mutation = wasJoined ? leaveMutation : joinMutation;
     mutation.mutate(group.id, {
-      onSuccess: () => setJoinedOverride(null),
+      onSuccess: () => {
+        setJoinedOverride(null);
+        if (!wasJoined) {
+          trackGroupJoined({ groupId: group.id, groupName: group.groupName });
+        }
+      },
       onError: () => setJoinedOverride(wasJoined),
     });
   }

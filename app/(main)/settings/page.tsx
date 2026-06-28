@@ -16,6 +16,7 @@ import { DeleteAccountModal } from "@/components/account/DeleteAccountModal";
 import { BlockedAccountsList } from "@/components/moderation/BlockedAccountsList";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { signOut } from "@/services/auth";
+import { trackUserSignedOut } from "@/lib/analytics";
 import {
   useCurrentUser,
   useRemoveAvatar,
@@ -522,6 +523,9 @@ function AccountSection() {
 
   const handleSignOut = async () => {
     setSigningOut(true);
+    // Capture before sign-out: signOut() triggers the auth listener's
+    // resetPostHog(), which clears the identity the event needs to attach to.
+    trackUserSignedOut();
     const { error } = await signOut();
     if (error) {
       console.error("Sign out failed", error);

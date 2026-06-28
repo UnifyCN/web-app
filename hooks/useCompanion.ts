@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as companion from "@/services/companion";
+import { trackCompanionMessageSent } from "@/lib/analytics";
 import type { ChatMessage, Conversation } from "@/types";
 
 /** React Query hooks for Companion (AI chat). */
@@ -100,6 +101,9 @@ export function useSendMessage() {
         role: "user",
         content: text,
       });
+      // The message is "sent" once persisted — track here so it counts even if
+      // the reply generation below fails (onSuccess wouldn't fire then).
+      trackCompanionMessageSent({ messageLength: text.length });
 
       const { answer, sources, suggestedNextSteps } =
         await companion.generateReply({
