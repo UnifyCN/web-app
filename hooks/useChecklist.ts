@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as checklist from "@/services/checklist";
+import {
+  trackChecklistTaskCompleted,
+  trackChecklistTaskUncompleted,
+} from "@/lib/analytics";
 import type { ChecklistTask, Priority } from "@/types";
 
 /** Rebuild the full task list in priority order, replacing one bucket's order. */
@@ -64,6 +68,23 @@ export function useToggleTask() {
       if (context?.previous) {
         queryClient.setQueryData(TASKS_KEY, context.previous);
       }
+    },
+    onSuccess: (_data, input) => {
+      // Read title/priority from the cache (unchanged by the toggle); `input`
+      // only carries id/isCustom/completed.
+      const tasks = queryClient.getQueryData<ChecklistTask[]>(TASKS_KEY) ?? [];
+      const task = tasks.find(
+        (t) => t.id === input.id && t.isCustom === input.isCustom,
+      );
+      if (!task) return;
+      const props = {
+        taskTitle: task.title,
+        taskPriority: task.priority,
+        source: task.isCustom ? "custom" : "sanity",
+      };
+      // `input.completed` is the pre-toggle state, so the new state is its negation.
+      if (!input.completed) trackChecklistTaskCompleted(props);
+      else trackChecklistTaskUncompleted(props);
     },
     // Settle against the server after success AND error.
     onSettled: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),

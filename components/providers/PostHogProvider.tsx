@@ -42,12 +42,16 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         // The onboarding row is own-row RLS, so this only reads the caller's own.
         if (userId !== identifiedId) {
           identifiedId = userId;
+          const enrichmentUserId = userId;
           void supabase
             .from("user_onboarding_profiles")
             .select("persona, stage")
-            .eq("id", userId)
+            .eq("id", enrichmentUserId)
             .maybeSingle()
             .then(({ data }) => {
+              // Skip if the identity changed (sign-out / switch) while the
+              // fetch was in flight — don't tag a new person with stale data.
+              if (identifiedId !== enrichmentUserId) return;
               if (data) {
                 posthog.setPersonProperties({
                   persona: data.persona,

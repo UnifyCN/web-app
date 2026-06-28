@@ -33,12 +33,14 @@ export function Sidebar() {
   const queryClient = useQueryClient();
 
   const signOut = async () => {
+    // Capture before sign-out: signOut() triggers the auth listener's
+    // resetPostHog(), which clears the identity the event needs to attach to.
+    trackUserSignedOut();
     const { error } = await signOutService();
     if (error) {
       console.error("Sign out failed", error);
       return; // stay put rather than pretend the session is cleared
     }
-    trackUserSignedOut();
     // Drop every cached query so the next session never flashes this user's
     // data, then go to the pre-login welcome screen (replace so Back can't
     // return to an authed page).

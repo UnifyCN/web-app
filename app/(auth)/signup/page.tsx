@@ -54,6 +54,7 @@ export default function SignUpPage() {
       password,
     );
     if (alreadyRegistered) {
+      trackSignUpFailed();
       setSubmitting(false);
       setError("An account with this email already exists. Try signing in.");
       return;

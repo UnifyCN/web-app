@@ -60,11 +60,11 @@ function LoginScreen() {
     const { error: signInError } = await signInWithEmail(normalized, password);
     if (signInError) {
       setSubmitting(false);
+      trackSignInFailed();
       if (/email not confirmed/i.test(signInError.message)) {
         router.push(`/verify-email?email=${encodeURIComponent(normalized)}`);
         return;
       }
-      trackSignInFailed();
       setError(
         /invalid login credentials/i.test(signInError.message)
           ? "Incorrect email or password."

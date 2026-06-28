@@ -523,14 +523,15 @@ function AccountSection() {
 
   const handleSignOut = async () => {
     setSigningOut(true);
+    // Capture before sign-out: signOut() triggers the auth listener's
+    // resetPostHog(), which clears the identity the event needs to attach to.
+    trackUserSignedOut();
     const { error } = await signOut();
     if (error) {
       console.error("Sign out failed", error);
       setSigningOut(false);
       return; // stay put rather than pretend the session is cleared
     }
-    // Capture before reset clears identity (the auth listener calls reset).
-    trackUserSignedOut();
     // Clear cached data so the next session starts clean, then to /welcome.
     queryClient.clear();
     router.replace("/welcome");

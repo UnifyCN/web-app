@@ -101,6 +101,9 @@ export function useSendMessage() {
         role: "user",
         content: text,
       });
+      // The message is "sent" once persisted — track here so it counts even if
+      // the reply generation below fails (onSuccess wouldn't fire then).
+      trackCompanionMessageSent({ messageLength: text.length });
 
       const { answer, sources, suggestedNextSteps } =
         await companion.generateReply({
@@ -144,7 +147,7 @@ export function useSendMessage() {
         queryClient.invalidateQueries({ queryKey: context.key });
       }
     },
-    onSuccess: ({ conversationIdentifier }, { text }) => {
+    onSuccess: ({ conversationIdentifier }) => {
       queryClient.invalidateQueries({
         queryKey: messagesKey(conversationIdentifier),
       });
@@ -152,7 +155,6 @@ export function useSendMessage() {
       // The edge function incremented chatbot_usage server-side — refetch so
       // the free-tier "remaining" counter reflects the new count.
       queryClient.invalidateQueries({ queryKey: CHATBOT_USAGE_KEY });
-      trackCompanionMessageSent({ messageLength: text.length });
     },
   });
 }
