@@ -1,6 +1,9 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { generateUsernameBase, usernameCandidates } from "@/lib/supabase/username";
 
+/** Platform a user first signed up on (mirrors public.users.signup_source). */
+export type SignupSource = "web" | "ios" | "android";
+
 /**
  * Idempotently create the public.users row for an authenticated user. Single
  * source of truth for the bootstrap shape, shared by the OAuth callback and the
@@ -30,7 +33,7 @@ export async function ensureUserRow(
     privacyPolicyAcceptedAt?: string;
     communityGuidelinesAcceptedAt?: string;
   },
-  signupSource?: "web" | "ios" | "android",
+  signupSource?: SignupSource,
 ) {
   const {
     data: { session },
