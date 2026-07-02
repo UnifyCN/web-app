@@ -51,8 +51,10 @@ export async function GET(request: Request) {
   }
 
   if (user) {
-    // Ensure the public.users row exists, regardless of trigger timing.
-    await ensureUserRow(supabase, user);
+    // Ensure the public.users row exists, regardless of trigger timing. Stamp
+    // signup_source 'web' for Google signups (guarded on null in ensureUserRow,
+    // so returning logins / email-change confirmations never re-label).
+    await ensureUserRow(supabase, user, undefined, "web");
     // An email change always lands back on settings with a confirmation, even
     // if `next` wasn't carried through the link (classic token_hash flow).
     const destination =

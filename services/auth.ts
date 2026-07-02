@@ -84,10 +84,15 @@ export async function verifySignupOtp(
   if (error) return { error };
   if (data.user) {
     const at = consentAt ?? new Date().toISOString();
-    await ensureUserRow(supabase, data.user, {
-      privacyPolicyAcceptedAt: at,
-      communityGuidelinesAcceptedAt: at,
-    });
+    await ensureUserRow(
+      supabase,
+      data.user,
+      {
+        privacyPolicyAcceptedAt: at,
+        communityGuidelinesAcceptedAt: at,
+      },
+      "web",
+    );
     // The `handle_new_user` trigger pre-creates public.users at signUp, so the
     // upsert above (ON CONFLICT DO NOTHING) can't stamp consent — set it
     // explicitly so the proxy consent gate is satisfied. Own-row RLS allows it;
