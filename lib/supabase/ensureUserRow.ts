@@ -30,7 +30,7 @@ export async function ensureUserRow(
     privacyPolicyAcceptedAt?: string;
     communityGuidelinesAcceptedAt?: string;
   },
-  signupSource?: string,
+  signupSource?: "web" | "ios" | "android",
 ) {
   const {
     data: { session },
@@ -77,11 +77,17 @@ export async function ensureUserRow(
       // explicitly. Guard on null: never overwrite a source already recorded
       // (e.g. a prior mobile signup).
       if (signupSource) {
-        await supabase
+        const { error: sourceError } = await supabase
           .from("users")
           .update({ signup_source: signupSource })
           .eq("id", user.id)
           .is("signup_source", null);
+        if (sourceError) {
+          console.error(
+            "ensureUserRow: failed to stamp signup_source",
+            sourceError,
+          );
+        }
       }
       return null;
     }
