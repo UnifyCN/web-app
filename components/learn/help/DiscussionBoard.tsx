@@ -87,9 +87,11 @@ export function DiscussionBoard({
             {lessonContext.moduleTitle} · Discussion
           </p>
           <p className="text-xs text-ink-placeholder">
-            {stats
-              ? `${stats.discussionCount} discussion${stats.discussionCount === 1 ? "" : "s"} · ${stats.participantCount} participant${stats.participantCount === 1 ? "" : "s"}`
-              : "Loading…"}
+            {statsQuery.isError
+              ? "Couldn't load stats"
+              : stats
+                ? `${stats.discussionCount} discussion${stats.discussionCount === 1 ? "" : "s"} · ${stats.participantCount} participant${stats.participantCount === 1 ? "" : "s"}`
+                : "Loading…"}
           </p>
         </div>
         {/* Sort toggle */}
@@ -117,8 +119,12 @@ export function DiscussionBoard({
         </div>
       </div>
 
-      {/* Submodule filter chips */}
-      {submodules.length > 0 && (
+      {/* Submodule filter chips (or an inline note if the module failed to load) */}
+      {moduleQuery.isError ? (
+        <div className="border-b border-border-card px-5 py-2.5 text-xs text-ink-placeholder">
+          Couldn&apos;t load sections — showing all discussions.
+        </div>
+      ) : submodules.length > 0 ? (
         <div className="scrollbar-thin flex gap-2 overflow-x-auto border-b border-border-card px-5 py-2.5">
           <button
             type="button"
@@ -150,11 +156,29 @@ export function DiscussionBoard({
             </button>
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Thread list */}
       <div className="scrollbar-thin min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
-        {discussionsQuery.isLoading ? (
+        {discussionsQuery.isError ? (
+          // A failed load must not fall through to the "Be the first to ask"
+          // empty state — surface the error with a retry.
+          <div className="px-4 py-12 text-center">
+            <p className="text-sm font-semibold text-ink-secondary">
+              Couldn&apos;t load discussions.
+            </p>
+            <p className="mt-1 text-xs text-ink-muted">
+              Something went wrong. Please try again.
+            </p>
+            <button
+              type="button"
+              onClick={() => discussionsQuery.refetch()}
+              className="mt-3 cursor-pointer rounded-full bg-purple-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-purple-700"
+            >
+              Retry
+            </button>
+          </div>
+        ) : discussionsQuery.isLoading ? (
           // Skeletons while the first page loads
           <>
             {[0, 1, 2].map((index) => (

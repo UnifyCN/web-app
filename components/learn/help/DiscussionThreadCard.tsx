@@ -101,10 +101,11 @@ export function DiscussionThreadCard({
                 liked,
               })
             }
+            disabled={likeMutation.isPending}
             aria-pressed={liked}
             aria-label={liked ? "Remove upvote" : "Upvote question"}
             className={cn(
-              "flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border transition-colors",
+              "flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-60",
               liked
                 ? "border-purple-600 bg-purple-50 text-purple-700"
                 : "border-border-card text-ink-muted hover:bg-surface-gray hover:text-ink",
@@ -243,7 +244,10 @@ export function DiscussionThreadCard({
                 setReportOpen(false);
                 toast.success("Report sent. Thanks for flagging this.");
               },
-              onError: () => setReportOpen(false),
+              onError: () => {
+                setReportOpen(false);
+                toast.error("Couldn't send report. Please try again.");
+              },
             },
           )
         }

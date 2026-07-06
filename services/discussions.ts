@@ -252,9 +252,12 @@ export async function getDiscussions(
 ): Promise<DiscussionPage> {
   const { submoduleId, sort = "recent", cursor } = options;
 
-  if (!isSupabaseConfigured() || !(await getAuthUserId())) {
-    // Mock mode ignores the module/submodule filters so the board always has
-    // content to render locally (mock ids don't match live Sanity ids).
+  if (!isSupabaseConfigured()) {
+    // Mock mode (env not configured / local dev) ignores the module/submodule
+    // filters so the board always has content to render locally (mock ids don't
+    // match live Sanity ids). A missing auth session is NOT mock mode — it's a
+    // loading/auth-gated state; the query below is RLS-scoped and returns empty
+    // for an unauthenticated caller rather than fake data.
     return { discussions: mockDiscussions, nextCursor: undefined };
   }
 
@@ -306,7 +309,7 @@ export async function getDiscussions(
 export async function getReplies(
   discussionId: string,
 ): Promise<DiscussionReply[]> {
-  if (!isSupabaseConfigured() || !(await getAuthUserId())) {
+  if (!isSupabaseConfigured()) {
     return mockRepliesByDiscussion[discussionId] ?? [];
   }
 
@@ -328,7 +331,7 @@ export async function getReplies(
 export async function getModuleDiscussionStats(
   moduleId: string,
 ): Promise<ModuleDiscussionStats> {
-  if (!isSupabaseConfigured() || !(await getAuthUserId())) {
+  if (!isSupabaseConfigured()) {
     return mockDiscussionStats;
   }
 

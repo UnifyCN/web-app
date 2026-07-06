@@ -13,12 +13,8 @@ import {
   useCreateConversation,
   useSendMessage,
 } from "@/hooks/useCompanion";
-import { ChatLimitError } from "@/services/companion";
+import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
 import type { ChatMessage, LessonContext } from "@/types";
-
-// Mirrors the server-enforced cap (check_and_increment_chatbot_usage, 6/day)
-// — same client constant the Companion tab shows. The server is authoritative.
-const FREE_TIER_DAILY_LIMIT = 6;
 
 function TypingIndicator() {
   return (
@@ -83,6 +79,10 @@ export function InLessonChat({
   ];
 
   async function handleSend(text: string) {
+    // Guard the conversation-creation window: without this, a rapid second send
+    // (e.g. double-tapping starter chips) fires createConversation twice and
+    // spawns a duplicate conversation before the first id is set.
+    if (createConversation.isPending) return;
     setSendError(null);
     setDraft("");
     try {
@@ -147,7 +147,8 @@ export function InLessonChat({
                 key={prompt}
                 type="button"
                 onClick={() => handleSend(prompt)}
-                className="block w-full cursor-pointer rounded-full border border-teal-600/40 px-4 py-2 text-left text-sm text-teal-700 transition-colors hover:bg-teal-50"
+                disabled={createConversation.isPending}
+                className="block w-full cursor-pointer rounded-full border border-teal-600/40 px-4 py-2 text-left text-sm text-teal-700 transition-colors hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {prompt}
               </button>

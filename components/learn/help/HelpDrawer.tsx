@@ -32,6 +32,7 @@ export function HelpDrawer({
   // same conversation instead of spawning a new row per visit.
   const [aiConversationId, setAiConversationId] = useState<string | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   // Only mount path content after first open — the drawer sits in every
   // lesson page, and the board/stats queries shouldn't fire until asked for.
   // Previous-prop pattern (see ReportModal) so we never setState in an effect.
@@ -42,7 +43,31 @@ export function HelpDrawer({
     if (!open) return;
     closeRef.current?.focus();
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      // Trap Tab / Shift+Tab within the drawer so focus can't escape to the
+      // lesson underneath while the modal is open.
+      if (event.key === "Tab" && panelRef.current) {
+        const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length === 0) {
+          event.preventDefault();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement;
+        if (event.shiftKey && active === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && active === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -99,6 +124,7 @@ export function HelpDrawer({
 
       {/* Panel */}
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="Get help with this lesson"

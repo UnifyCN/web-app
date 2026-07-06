@@ -98,6 +98,15 @@ function normalizeSources(raw: unknown): ChatSource[] | null {
   return cleaned.length > 0 ? cleaned : null;
 }
 
+/**
+ * Free-tier daily message cap shown next to the chat input. Must match the limit
+ * the deployed `rag-query` edge function enforces via
+ * `check_and_increment_chatbot_usage` — the shared-DB function allows 6/day. The
+ * server check is authoritative; this constant only mirrors it for UX gating.
+ * Single source of truth for both the Companion tab and the In-Lesson chat.
+ */
+export const FREE_TIER_DAILY_LIMIT = 6;
+
 /* ---- Conversations ---------------------------------------------------- */
 
 export async function getConversations(): Promise<Conversation[]> {
@@ -163,6 +172,11 @@ export async function createConversation(
       (error as { code?: string }).code === "PGRST204" ||
       /column|schema cache/i.test(error.message ?? ""))
   ) {
+    console.warn(
+      "[companion] conversations.source/lesson_id columns not present — " +
+        "falling back to an untagged insert (apply the source-tag migration).",
+      error,
+    );
     ({ data, error } = await supabase
       .from("conversations")
       .insert(baseRow)

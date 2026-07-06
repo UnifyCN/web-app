@@ -152,7 +152,10 @@ export function DiscussionReplyItem({
                 setReportOpen(false);
                 toast.success("Report sent. Thanks for flagging this.");
               },
-              onError: () => setReportOpen(false),
+              onError: () => {
+                setReportOpen(false);
+                toast.error("Couldn't send report. Please try again.");
+              },
             },
           )
         }

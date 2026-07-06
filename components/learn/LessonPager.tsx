@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
@@ -91,16 +91,28 @@ export function LessonPager({
   const percent = totalScreens > 0 ? ((index + 1) / totalScreens) * 100 : 100;
 
   // In-Lesson Help context — tracks the page currently on screen so the AI
-  // path can scope its answer (rag-query LESSON CONTEXT block).
-  const helpLessonContext: LessonContext = {
-    moduleId,
-    submoduleId,
-    lessonId,
-    pageId: currentPage?._key ?? null,
-    moduleTitle: moduleTitle ?? "",
-    submoduleTitle,
-    lessonTitle: title,
-  };
+  // path can scope its answer (rag-query LESSON CONTEXT block). Memoized so the
+  // drawer + its effects don't see a new object reference every render.
+  const helpLessonContext: LessonContext = useMemo(
+    () => ({
+      moduleId,
+      submoduleId,
+      lessonId,
+      pageId: currentPage?._key ?? null,
+      moduleTitle: moduleTitle ?? "",
+      submoduleTitle,
+      lessonTitle: title,
+    }),
+    [
+      moduleId,
+      submoduleId,
+      lessonId,
+      currentPage?._key,
+      moduleTitle,
+      submoduleTitle,
+      title,
+    ],
+  );
 
   function handleBack() {
     if (index > 0) setPageIndex(index - 1);

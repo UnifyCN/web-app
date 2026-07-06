@@ -227,6 +227,12 @@ export function useToggleDiscussionLike() {
         likeCount: Math.max(0, d.likeCount + (liked ? 1 : -1)),
       }));
     },
+    // Reconcile the optimistic patch with the trigger-maintained server counts.
+    onSettled: (_data, _err, { moduleId }) => {
+      queryClient.invalidateQueries({
+        queryKey: [...DISCUSSIONS_KEY, moduleId],
+      });
+    },
   });
 }
 
@@ -271,6 +277,10 @@ export function useToggleReplyLike() {
               : r,
           ),
       );
+    },
+    // Reconcile the optimistic patch with the trigger-maintained server counts.
+    onSettled: (_data, _err, { discussionId }) => {
+      queryClient.invalidateQueries({ queryKey: repliesKey(discussionId) });
     },
   });
 }

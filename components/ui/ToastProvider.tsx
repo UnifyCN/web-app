@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 /**
  * Lightweight, on-brand toast system (no third-party UI dependency). A single
@@ -19,7 +19,7 @@ import { Check } from "lucide-react";
  * politely for screen readers.
  */
 
-type ToastVariant = "success" | "info";
+type ToastVariant = "success" | "info" | "error";
 
 interface ToastItem {
   id: number;
@@ -30,6 +30,7 @@ interface ToastItem {
 interface ToastApi {
   show: (message: string, variant?: ToastVariant) => void;
   success: (message: string) => void;
+  error: (message: string) => void;
 }
 
 const ToastContext = createContext<ToastApi | null>(null);
@@ -71,8 +72,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [show],
   );
 
+  const error = useCallback(
+    (message: string) => show(message, "error"),
+    [show],
+  );
+
   return (
-    <ToastContext.Provider value={{ show, success }}>
+    <ToastContext.Provider value={{ show, success, error }}>
       {children}
       <div
         className="pointer-events-none fixed inset-x-0 bottom-[calc(3.5rem_+_env(safe-area-inset-bottom)_+_1rem)] z-[100] flex flex-col items-center gap-2 px-4 md:bottom-6"
@@ -99,6 +105,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                   <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
                 </span>
               )}
+              {t.variant === "error" && (
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-destructive text-white">
+                  <X className="h-3 w-3" strokeWidth={3} aria-hidden />
+                </span>
+              )}
               <span className="text-sm font-semibold text-ink-secondary">
                 {t.message}
               </span>
@@ -117,5 +128,5 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 export function useToast(): ToastApi {
   const ctx = useContext(ToastContext);
   if (ctx) return ctx;
-  return { show: () => {}, success: () => {} };
+  return { show: () => {}, success: () => {}, error: () => {} };
 }
