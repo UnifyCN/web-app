@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -77,8 +78,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     [show],
   );
 
+  // Stable reference so useToast() consumers don't re-render on every provider
+  // render (e.g. each toast add/remove). show/success/error are already stable.
+  const value = useMemo(
+    () => ({ show, success, error }),
+    [show, success, error],
+  );
+
   return (
-    <ToastContext.Provider value={{ show, success, error }}>
+    <ToastContext.Provider value={value}>
       {children}
       <div
         className="pointer-events-none fixed inset-x-0 bottom-[calc(3.5rem_+_env(safe-area-inset-bottom)_+_1rem)] z-[100] flex flex-col items-center gap-2 px-4 md:bottom-6"
