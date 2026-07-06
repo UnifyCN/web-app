@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 /**
  * Server-side proxy for the block / report edge functions.
  *
- * The browser can't call `block-user` / `report-post` / `report-user` directly:
+ * The browser can't call `block-user` / `report-post` / `report-user` /
+ * `report-discussion` directly:
  * those functions (mobile-owned, on the shared project) have no CORS handling,
  * so a browser preflight (OPTIONS) is rejected with 400 and the call never
  * fires. The browser instead POSTs to this same-origin route, and the route
@@ -34,6 +35,17 @@ function asReason(value: unknown): string | null {
     return null;
   }
   return reason;
+}
+
+/** UUID or null — the discussion/reply ids the report-discussion fn expects. */
+function asUuid(value: unknown): string | null {
+  const str = asNonEmptyString(value);
+  return str &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      str,
+    )
+    ? str
+    : null;
 }
 
 /** Whether an upstream error/body looks like a unique-constraint duplicate, i.e.
@@ -144,6 +156,25 @@ export async function POST(req: NextRequest) {
       }
       slug = "report-user";
       payload = { userId: reportedUserId, reason };
+      break;
+    }
+    case "report-discussion": {
+      // Module-discussion thread OR reply (exactly one target — the edge fn
+      // enforces the same XOR). No self-report lookup here: the fn checks
+      // authorship itself with the service role.
+      const discussionId = asUuid(body.discussion_id ?? body.discussionId);
+      const replyId = asUuid(body.reply_id ?? body.replyId);
+      const reason = asReason(body.reason);
+      if (!reason || Boolean(discussionId) === Boolean(replyId)) {
+        return NextResponse.json(
+          { error: "Invalid discussion report." },
+          { status: 400 },
+        );
+      }
+      slug = "report-discussion";
+      payload = discussionId
+        ? { discussionId, reason }
+        : { replyId, reason };
       break;
     }
     default:

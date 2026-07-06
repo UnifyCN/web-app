@@ -53,7 +53,9 @@ export default function CompanionPage() {
     try {
       let conversationIdentifier = activeId;
       if (!conversationIdentifier) {
-        const created = await createConversation.mutateAsync(text);
+        const created = await createConversation.mutateAsync({
+          firstMessage: text,
+        });
         conversationIdentifier = created.id;
         // Pre-seed an empty messages list for the new conversation. Without
         // this, useConversationMessages mounts and fires a server fetch that

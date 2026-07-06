@@ -1,4 +1,10 @@
-import type { ChatMessage, ChatSource, ChatbotUsage, Conversation } from "@/types";
+import type {
+  ChatMessage,
+  ChatSource,
+  ChatbotUsage,
+  Conversation,
+  LessonContext,
+} from "@/types";
 import {
   createClient,
   getAuthUserId,
@@ -110,8 +116,17 @@ export async function getConversations(): Promise<Conversation[]> {
   return (data as ConversationRow[]).map(rowToConversation);
 }
 
+export interface CreateConversationOptions {
+  /** Where the conversation started — "in-lesson" for In-Lesson Help chats;
+   *  omitted for regular Companion-tab conversations. */
+  source?: "in-lesson";
+  /** Sanity lesson _id the chat was opened from (with source "in-lesson"). */
+  lessonId?: string;
+}
+
 export async function createConversation(
   firstMessage: string,
+  options: CreateConversationOptions = {},
 ): Promise<Conversation> {
   if (!isSupabaseConfigured()) {
     throw new Error("createConversation: Supabase not configured");
@@ -125,11 +140,35 @@ export async function createConversation(
   // deferred until the AI backend lands (see plan / BACKLOG).
   const fallbackTitle = firstMessage.slice(0, 50);
 
-  const { data, error } = await supabase
+  const baseRow = { user_id: userId, title: fallbackTitle };
+  const taggedRow =
+    options.source != null
+      ? { ...baseRow, source: options.source, lesson_id: options.lessonId ?? null }
+      : baseRow;
+
+  let { data, error } = await supabase
     .from("conversations")
-    .insert({ user_id: userId, title: fallbackTitle })
+    .insert(taggedRow)
     .select("conversation_identifier, title, updated_at")
     .single();
+
+  // The source/lesson_id columns land via a shared-DB migration that may not
+  // be applied yet (dashboard apply, needs mobile-team ack). Until then the
+  // tagged insert fails with "column not found" (42703 / PostgREST schema-cache
+  // PGRST204) — retry untagged so the chat still works; PostHog keeps the tag.
+  if (
+    error &&
+    taggedRow !== baseRow &&
+    ((error as { code?: string }).code === "42703" ||
+      (error as { code?: string }).code === "PGRST204" ||
+      /column|schema cache/i.test(error.message ?? ""))
+  ) {
+    ({ data, error } = await supabase
+      .from("conversations")
+      .insert(baseRow)
+      .select("conversation_identifier, title, updated_at")
+      .single());
+  }
   if (error) throw error;
 
   return rowToConversation(data as ConversationRow);
@@ -243,6 +282,8 @@ export interface GenerateReplyInput {
   prompt: string;
   /** Prior turns (oldest→newest), already trimmed to the last ~10 by the caller. */
   history: { role: "user" | "assistant"; message: string }[];
+  /** In-Lesson Help — lesson-reader context; rag-query scopes its answer to it. */
+  lessonContext?: LessonContext;
 }
 
 export interface GeneratedReply {
@@ -277,6 +318,7 @@ export async function generateReply(
       prompt: input.prompt,
       conversationIdentifier: input.conversationIdentifier,
       messages: input.history,
+      ...(input.lessonContext ? { lessonContext: input.lessonContext } : {}),
     }),
   });
 

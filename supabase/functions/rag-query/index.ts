@@ -93,6 +93,105 @@ function sanitizeNameForPrompt(name: string | null): string | null {
   return cleaned.slice(0, 50);
 }
 
+// Looser than sanitizeNameForPrompt — lesson/module titles legitimately carry
+// digits and light punctuation ("Lesson 4: PR cards"). Still drops newlines,
+// control chars, and prompt-terminating quotes/backticks so a crafted title
+// can't inject a follow-on directive, and clamps to 120 chars.
+function sanitizeTitleForPrompt(title: unknown): string | null {
+  if (typeof title !== 'string') return null;
+  const cleaned = title
+    .replace(/[^\p{L}\p{M}\p{N}\s'&,.()/-]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!cleaned) return null;
+  return cleaned.slice(0, 120);
+}
+
+// Sanity document ids ([a-zA-Z0-9._-]); anything else is dropped.
+function sanitizeSanityId(id: unknown): string | null {
+  if (typeof id !== 'string') return null;
+  const cleaned = id.trim();
+  return /^[\w.-]{1,120}$/.test(cleaned) ? cleaned : null;
+}
+
+// In-Lesson Help: the web/mobile clients pass the lesson the user is reading
+// so the answer stays specific to it. All fields optional + sanitized; an
+// unusable payload degrades to the normal (non-lesson) prompt.
+type LessonContextInput = {
+  moduleId: string | null;
+  submoduleId: string | null;
+  lessonId: string | null;
+  pageId: string | null;
+  moduleTitle: string | null;
+  submoduleTitle: string | null;
+  lessonTitle: string | null;
+};
+
+function parseLessonContext(raw: unknown): LessonContextInput | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const rec = raw as Record<string, unknown>;
+  const ctx: LessonContextInput = {
+    moduleId: sanitizeSanityId(rec.moduleId),
+    submoduleId: sanitizeSanityId(rec.submoduleId),
+    lessonId: sanitizeSanityId(rec.lessonId),
+    pageId: sanitizeSanityId(rec.pageId),
+    moduleTitle: sanitizeTitleForPrompt(rec.moduleTitle),
+    submoduleTitle: sanitizeTitleForPrompt(rec.submoduleTitle),
+    lessonTitle: sanitizeTitleForPrompt(rec.lessonTitle),
+  };
+  // A lesson title or id is the minimum for the block to be useful.
+  return ctx.lessonTitle || ctx.lessonId ? ctx : null;
+}
+
+type LessonProgressRow = {
+  progress_percent: number | null;
+  current_page_number: number | null;
+  total_pages: number | null;
+  is_completed: boolean | null;
+};
+
+function buildLessonContextBlock(
+  ctx: LessonContextInput,
+  progress: LessonProgressRow | null
+): string {
+  const parts: string[] = [];
+
+  const where = [
+    ctx.moduleTitle ? `the Unify Learn module "${ctx.moduleTitle}"` : null,
+    ctx.submoduleTitle ? `section "${ctx.submoduleTitle}"` : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  parts.push(
+    `The user asked this from inside a lesson${where ? ` in ${where}` : ''}: "${
+      ctx.lessonTitle ?? 'untitled lesson'
+    }".`
+  );
+
+  if (progress) {
+    if (progress.is_completed) {
+      parts.push(`They have completed this lesson and may be reviewing it.`);
+    } else if (
+      progress.current_page_number != null &&
+      progress.total_pages != null &&
+      progress.total_pages > 0
+    ) {
+      parts.push(
+        `They are on page ${progress.current_page_number} of ${progress.total_pages}` +
+          (progress.progress_percent != null
+            ? ` (~${Math.round(Number(progress.progress_percent))}% complete).`
+            : '.')
+      );
+    }
+  }
+
+  parts.push(
+    `Keep your answer specific to this lesson's topic. If the question is unrelated to the lesson, answer it normally.`
+  );
+
+  return `\nLESSON CONTEXT:\n${parts.join(' ')}`;
+}
+
 function sanitizeSuggestedNextSteps(suggestions: string[]): string[] {
   if (!suggestions || suggestions.length === 0) return [];
 
@@ -580,7 +679,11 @@ Deno.serve(async (req: Request) => {
       eval_profile: evalProfile,
       stream: streamRequested,
       source: requestSource,
+      lessonContext: rawLessonContext,
     } = await req.json();
+
+    // In-Lesson Help — optional, sanitized; null for regular Companion chats.
+    const lessonContext = parseLessonContext(rawLessonContext);
 
     const isStreaming = streamRequested === true;
     // Platform tag for $ai_generation analytics. The web proxy sends
@@ -747,6 +850,32 @@ Deno.serve(async (req: Request) => {
             } catch (err) {
               console.warn(
                 '[rag-query] name lookup failed (non-fatal)',
+                err
+              );
+              return null;
+            }
+          })()
+        : Promise.resolve(null);
+
+    // In-Lesson Help: the user's saved progress for the lesson they're reading
+    // (page position / completion) enriches the LESSON CONTEXT block. Fetched
+    // in parallel with the profile; failures are non-fatal.
+    const lessonProgressPromise: Promise<LessonProgressRow | null> =
+      lessonContext?.lessonId && !isEvalMode && effectiveUserId
+        ? (async () => {
+            try {
+              const { data } = await supabase
+                .from('user_lesson_progress')
+                .select(
+                  'progress_percent, current_page_number, total_pages, is_completed'
+                )
+                .eq('user_id', effectiveUserId)
+                .eq('sanity_lesson_id', lessonContext.lessonId)
+                .maybeSingle();
+              return (data as LessonProgressRow | null) ?? null;
+            } catch (err) {
+              console.warn(
+                '[rag-query] lesson progress lookup failed (non-fatal)',
                 err
               );
               return null;
@@ -961,6 +1090,13 @@ Deno.serve(async (req: Request) => {
     if (userProfileBundle.text) {
       fullSystemInstruction = `${fullSystemInstruction}\n\n${userProfileBundle.text}`;
     }
+    if (lessonContext) {
+      const lessonProgress = await lessonProgressPromise;
+      fullSystemInstruction = `${fullSystemInstruction}\n${buildLessonContextBlock(
+        lessonContext,
+        lessonProgress
+      )}`;
+    }
 
     // ========================================================================
     // STEP 5: BUILD REQUEST AND CALL OPENROUTER
@@ -1160,6 +1296,9 @@ Deno.serve(async (req: Request) => {
                 ],
                 feature: 'ai_companion',
                 platform,
+                // In-lesson chats are distinguishable from full-tab Companion.
+                feature_context: lessonContext ? 'in_lesson' : 'companion_tab',
+                lesson_id: lessonContext?.lessonId ?? undefined,
                 query_type: queryType,
                 has_sources: sources.length > 0,
                 response_time_ms: stageTimings.generation_ms,
@@ -1326,6 +1465,9 @@ Deno.serve(async (req: Request) => {
         // Custom properties for filtering
         feature: 'ai_companion',
         platform,
+        // In-lesson chats are distinguishable from full-tab Companion.
+        feature_context: lessonContext ? 'in_lesson' : 'companion_tab',
+        lesson_id: lessonContext?.lessonId ?? undefined,
         query_type: queryType,
         has_sources: sources.length > 0,
         response_time_ms: stageTimings.generation_ms,

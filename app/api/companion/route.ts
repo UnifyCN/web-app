@@ -24,6 +24,29 @@ interface RagQueryBody {
   prompt: string;
   conversationIdentifier: string;
   messages?: { role: "user" | "assistant"; message: string }[];
+  /** In-Lesson Help — lesson the user is reading; rag-query scopes its answer. */
+  lessonContext?: Record<string, unknown>;
+}
+
+/** Forward only the expected string fields (rag-query re-sanitizes anyway). */
+function pickLessonContext(
+  raw: unknown,
+): Record<string, string> | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const rec = raw as Record<string, unknown>;
+  const out: Record<string, string> = {};
+  for (const key of [
+    "moduleId",
+    "submoduleId",
+    "lessonId",
+    "pageId",
+    "moduleTitle",
+    "submoduleTitle",
+    "lessonTitle",
+  ]) {
+    if (typeof rec[key] === "string" && rec[key]) out[key] = rec[key];
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 export async function POST(req: NextRequest) {
@@ -46,12 +69,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
   }
 
+  const lessonContext = pickLessonContext(body.lessonContext);
   const { data, error } = await supabase.functions.invoke("rag-query", {
     body: {
       prompt: body.prompt,
       conversationIdentifier: body.conversationIdentifier,
       messages: body.messages ?? [],
       source: "web",
+      ...(lessonContext ? { lessonContext } : {}),
     },
   });
 
