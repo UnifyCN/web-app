@@ -244,3 +244,49 @@ export async function reportUser(
   });
   assertFnSuccess(data, "Failed to submit report.", ["Already reported"]);
 }
+
+/**
+ * Report a module-discussion thread OR reply through the `report-discussion`
+ * edge fn (`discussion_reports` has no INSERT policy — service-role only). The
+ * caller passes exactly one of `discussion_id` / `reply_id`; the edge fn does
+ * its own XOR + self-report checks.
+ */
+async function reportDiscussionTarget(
+  target: { discussion_id: string } | { reply_id: string },
+  reason: string,
+  noSessionLabel: string,
+): Promise<void> {
+  const trimmed = validateReason(reason);
+  if (!isSupabaseConfigured()) return;
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error(noSessionLabel);
+
+  const data = await callModeration({
+    action: "report-discussion",
+    ...target,
+    reason: trimmed,
+  });
+  assertFnSuccess(data, "Failed to submit report.", ["Already reported"]);
+}
+
+export async function reportDiscussion(
+  discussionId: string,
+  reason: string,
+): Promise<void> {
+  return reportDiscussionTarget(
+    { discussion_id: discussionId },
+    reason,
+    "reportDiscussion: no auth session",
+  );
+}
+
+export async function reportReply(
+  replyId: string,
+  reason: string,
+): Promise<void> {
+  return reportDiscussionTarget(
+    { reply_id: replyId },
+    reason,
+    "reportReply: no auth session",
+  );
+}

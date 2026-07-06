@@ -240,6 +240,66 @@ export interface ChatbotUsage {
   lastMessageAt: string | null;
 }
 
+/** Lesson-reader context passed to the in-lesson AI chat so rag-query can
+ *  scope its answer to the lesson the user is reading (In-Lesson Help). */
+export interface LessonContext {
+  moduleId: string;
+  submoduleId: string;
+  lessonId: string;
+  /** `_key` of the lesson page being read when help was opened. */
+  pageId: string | null;
+  moduleTitle: string;
+  submoduleTitle: string;
+  lessonTitle: string;
+}
+
+/* ----- Module discussions (In-Lesson Help, community path) --------- */
+
+export type DiscussionStatus = "visible" | "reported" | "hidden";
+
+/** A top-level question on a module's discussion board
+ *  (`module_discussions` row + joined author + RPC enrichment). */
+export interface Discussion {
+  /** UUID primary key. */
+  id: string;
+  /** Sanity module _id the board is scoped to. */
+  moduleId: string;
+  /** Sanity submodule _id the question was asked from (filter/context pill). */
+  submoduleId: string | null;
+  /** Sanity lesson _id the question was asked from. */
+  lessonId: string | null;
+  body: string;
+  likeCount: number;
+  replyCount: number;
+  status: DiscussionStatus;
+  createdAt: string;
+  /** Joined author row (mirrors Post.author). */
+  author: User;
+  /** Enriched from get_discussion_metadata_batch for the current user. */
+  likedByMe?: boolean;
+}
+
+/** One-level reply to a Discussion (`discussion_replies` row). */
+export interface DiscussionReply {
+  /** UUID primary key. */
+  id: string;
+  discussionId: string;
+  body: string;
+  likeCount: number;
+  createdAt: string;
+  author: User;
+  /** Enriched from get_discussion_reply_metadata_batch for the current user. */
+  likedByMe?: boolean;
+}
+
+/** get_module_discussion_stats — chooser badge + board header. */
+export interface ModuleDiscussionStats {
+  discussionCount: number;
+  participantCount: number;
+}
+
+export type DiscussionSort = "recent" | "top";
+
 /* ----- Checklist --------------------------------------------------- */
 
 export type Priority =

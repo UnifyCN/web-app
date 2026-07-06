@@ -1,15 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { SelectableLessonContent } from "@/components/learn/SelectableLessonContent";
 import { ExplainTermModal } from "@/components/learn/ExplainTermModal";
 import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
+import { HelpFab } from "@/components/learn/help/HelpFab";
+import { HelpDrawer } from "@/components/learn/help/HelpDrawer";
 import { escapeRegExp, portableTextToPlain } from "@/lib/utils";
-import { trackLessonPageViewed } from "@/lib/analytics";
-import type { SanityLessonPage, SanityQuizQuestion } from "@/types";
+import { trackHelpOpened, trackLessonPageViewed } from "@/lib/analytics";
+import type {
+  LessonContext,
+  SanityLessonPage,
+  SanityQuizQuestion,
+} from "@/types";
 
 interface LessonPagerProps {
   lessonId: string;
@@ -72,6 +78,7 @@ export function LessonPager({
     return idx >= 0 ? idx : 0;
   });
   const [askTerm, setAskTerm] = useState<string | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // The Quick Check is its own trailing screen after the content pages.
   const hasQuiz = quizQuestions.length > 0;
@@ -82,6 +89,30 @@ export function LessonPager({
   const isLastScreen = index >= totalScreens - 1;
   const currentPage = isQuizPage ? undefined : pages[index];
   const percent = totalScreens > 0 ? ((index + 1) / totalScreens) * 100 : 100;
+
+  // In-Lesson Help context — tracks the page currently on screen so the AI
+  // path can scope its answer (rag-query LESSON CONTEXT block). Memoized so the
+  // drawer + its effects don't see a new object reference every render.
+  const helpLessonContext: LessonContext = useMemo(
+    () => ({
+      moduleId,
+      submoduleId,
+      lessonId,
+      pageId: currentPage?._key ?? null,
+      moduleTitle: moduleTitle ?? "",
+      submoduleTitle,
+      lessonTitle: title,
+    }),
+    [
+      moduleId,
+      submoduleId,
+      lessonId,
+      currentPage?._key,
+      moduleTitle,
+      submoduleTitle,
+      title,
+    ],
+  );
 
   function handleBack() {
     if (index > 0) setPageIndex(index - 1);
@@ -99,7 +130,7 @@ export function LessonPager({
   // free-text) or on the Quick Check screen (which has its own controls).
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (isQuizPage || askTerm) return;
+      if (isQuizPage || askTerm || helpOpen) return;
       const el = document.activeElement as HTMLElement | null;
       if (
         el &&
@@ -120,7 +151,7 @@ export function LessonPager({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [index, isQuizPage, isLastScreen, sectionHref, router, askTerm]);
+  }, [index, isQuizPage, isLastScreen, sectionHref, router, askTerm, helpOpen]);
 
   // `lesson_page_viewed` per content page (the quiz screen is not a content page;
   // it fires `quiz_completed` instead). Keyed on the screen index — the pager
@@ -282,6 +313,22 @@ export function LessonPager({
         term={askTerm}
         lessonContext={title}
         onClose={() => setAskTerm(null)}
+      />
+
+      {/* In-Lesson Help — floating bubble + chooser drawer (AI / Discussion).
+          Hidden while the drawer is open; persists across pages in a lesson. */}
+      {!helpOpen && (
+        <HelpFab
+          onOpen={() => {
+            trackHelpOpened({ moduleId, lessonId });
+            setHelpOpen(true);
+          }}
+        />
+      )}
+      <HelpDrawer
+        open={helpOpen}
+        lessonContext={helpLessonContext}
+        onClose={() => setHelpOpen(false)}
       />
     </div>
   );

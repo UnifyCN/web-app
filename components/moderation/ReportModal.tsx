@@ -7,7 +7,33 @@ import { Button } from "@/components/ui/Button";
 const MIN_REASON = 5;
 const MAX_REASON = 500;
 
-export type ReportTarget = { type: "post" } | { type: "user" };
+export type ReportTarget =
+  | { type: "post" }
+  | { type: "user" }
+  | { type: "discussion" }
+  | { type: "discussion-reply" };
+
+const TARGET_COPY: Record<
+  ReportTarget["type"],
+  { title: string; placeholder: string }
+> = {
+  post: {
+    title: "Report post",
+    placeholder: "Tell us why you're reporting this post…",
+  },
+  user: {
+    title: "Report user",
+    placeholder: "Tell us why you're reporting this user…",
+  },
+  discussion: {
+    title: "Report question",
+    placeholder: "Tell us why you're reporting this question…",
+  },
+  "discussion-reply": {
+    title: "Report reply",
+    placeholder: "Tell us why you're reporting this reply…",
+  },
+};
 
 /**
  * Free-text report form (mirrors mobile's ReportScreen): a single reason field
@@ -36,7 +62,7 @@ export function ReportModal({
     setWasOpen(open);
     if (!open) setReason("");
   }
-  const isPost = target.type === "post";
+  const copy = TARGET_COPY[target.type];
   const trimmed = reason.trim();
   const tooShort = trimmed.length < MIN_REASON;
 
@@ -45,7 +71,7 @@ export function ReportModal({
       open={open}
       busy={isPending}
       onClose={onClose}
-      title={isPost ? "Report post" : "Report user"}
+      title={copy.title}
       description="This is private and only visible to moderators."
     >
       <textarea
@@ -54,11 +80,7 @@ export function ReportModal({
         rows={4}
         maxLength={MAX_REASON}
         autoFocus
-        placeholder={
-          isPost
-            ? "Tell us why you're reporting this post…"
-            : "Tell us why you're reporting this user…"
-        }
+        placeholder={copy.placeholder}
         className="w-full resize-none rounded-card border border-border bg-surface px-3 py-2 text-base text-ink-muted outline-none transition-colors placeholder:text-ink-placeholder focus:border-primary"
       />
       <div className="mt-1 flex justify-end">

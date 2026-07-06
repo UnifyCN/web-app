@@ -14,13 +14,8 @@ import {
   useSendMessage,
 } from "@/hooks/useCompanion";
 import { useCurrentUser } from "@/hooks/useProfile";
-import { ChatLimitError } from "@/services/companion";
+import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
 import type { ChatMessage } from "@/types";
-
-// Free-tier daily cap shown next to the input. Must match the limit the deployed
-// rag-query edge function enforces via check_and_increment_chatbot_usage — the
-// shared-DB function now allows 6 messages/day.
-const FREE_TIER_DAILY_LIMIT = 6;
 
 export default function CompanionPage() {
   const queryClient = useQueryClient();
@@ -53,7 +48,9 @@ export default function CompanionPage() {
     try {
       let conversationIdentifier = activeId;
       if (!conversationIdentifier) {
-        const created = await createConversation.mutateAsync(text);
+        const created = await createConversation.mutateAsync({
+          firstMessage: text,
+        });
         conversationIdentifier = created.id;
         // Pre-seed an empty messages list for the new conversation. Without
         // this, useConversationMessages mounts and fires a server fetch that

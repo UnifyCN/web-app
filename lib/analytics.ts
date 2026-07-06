@@ -44,6 +44,59 @@ export const trackOnboardingCompleted = () => capture("onboarding_completed");
 export const trackCompanionMessageSent = (p: { messageLength: number }) =>
   capture("companion_message_sent", { message_length: p.messageLength });
 
+/* ---- In-Lesson Help ---------------------------------------------------- */
+// Event names shared with mobile (PRD R5); `platform:'web'` comes from the
+// super property in lib/posthog.ts — never set it here.
+
+export const trackHelpOpened = (p: { moduleId: string; lessonId: string }) =>
+  capture("help_opened", { module_id: p.moduleId, lesson_id: p.lessonId });
+
+export const trackHelpPathSelected = (p: {
+  path: "ai" | "community";
+  moduleId: string;
+  lessonId: string;
+}) =>
+  capture("help_path_selected", {
+    path: p.path,
+    module_id: p.moduleId,
+    lesson_id: p.lessonId,
+  });
+
+export const trackInLessonAiQuestionSent = (p: {
+  moduleId: string;
+  lessonId: string;
+  messageLength: number;
+}) =>
+  capture("inlesson_ai_question_sent", {
+    module_id: p.moduleId,
+    lesson_id: p.lessonId,
+    message_length: p.messageLength,
+  });
+
+export const trackDiscussionPostCreated = (p: {
+  moduleId: string;
+  submoduleId: string | null;
+  lessonId: string | null;
+  bodyLength: number;
+}) =>
+  capture("discussion_post_created", {
+    module_id: p.moduleId,
+    submodule_id: p.submoduleId,
+    lesson_id: p.lessonId,
+    body_length: p.bodyLength,
+  });
+
+export const trackDiscussionReplyCreated = (p: {
+  discussionId: string;
+  moduleId: string;
+  bodyLength: number;
+}) =>
+  capture("discussion_reply_created", {
+    discussion_id: p.discussionId,
+    module_id: p.moduleId,
+    body_length: p.bodyLength,
+  });
+
 /* ---- Learn ------------------------------------------------------------ */
 
 export const trackModuleViewed = (p: {

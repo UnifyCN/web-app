@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as companion from "@/services/companion";
-import { trackCompanionMessageSent } from "@/lib/analytics";
-import type { ChatMessage, Conversation } from "@/types";
+import {
+  trackCompanionMessageSent,
+  trackInLessonAiQuestionSent,
+} from "@/lib/analytics";
+import type { ChatMessage, Conversation, LessonContext } from "@/types";
 
 /** React Query hooks for Companion (AI chat). */
 
@@ -48,8 +51,13 @@ export function useChatbotUsage() {
 export function useCreateConversation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (firstMessage: string) =>
-      companion.createConversation(firstMessage),
+    mutationFn: ({
+      firstMessage,
+      options,
+    }: {
+      firstMessage: string;
+      options?: companion.CreateConversationOptions;
+    }) => companion.createConversation(firstMessage, options),
     onSuccess: (created) => {
       queryClient.setQueryData<Conversation[]>(
         CONVERSATIONS_KEY,
@@ -62,6 +70,9 @@ export function useCreateConversation() {
 interface SendMessageInput {
   conversationIdentifier: string;
   text: string;
+  /** In-Lesson Help — set when sending from the lesson-reader chat; scopes the
+   *  rag-query answer to the lesson and swaps the analytics event. */
+  lessonContext?: LessonContext;
 }
 
 interface SendMessageContext {
@@ -83,7 +94,7 @@ export function useSendMessage() {
     SendMessageInput,
     SendMessageContext
   >({
-    mutationFn: async ({ conversationIdentifier, text }) => {
+    mutationFn: async ({ conversationIdentifier, text, lessonContext }) => {
       // Prior turns = persisted messages already in the cache. Optimistic
       // bubbles carry negative ids (see onMutate) so we drop them, then keep
       // the last 10 turns to bound the prompt size.
@@ -104,12 +115,20 @@ export function useSendMessage() {
       // The message is "sent" once persisted — track here so it counts even if
       // the reply generation below fails (onSuccess wouldn't fire then).
       trackCompanionMessageSent({ messageLength: text.length });
+      if (lessonContext) {
+        trackInLessonAiQuestionSent({
+          moduleId: lessonContext.moduleId,
+          lessonId: lessonContext.lessonId,
+          messageLength: text.length,
+        });
+      }
 
       const { answer, sources, suggestedNextSteps } =
         await companion.generateReply({
           conversationIdentifier,
           prompt: text,
           history,
+          lessonContext,
         });
 
       await companion.saveMessage({
