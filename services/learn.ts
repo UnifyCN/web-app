@@ -528,6 +528,9 @@ export async function requestPracticeFeedback(
 
 interface LessonQuizProgressRow {
   sanity_lesson_id: string;
+  answers: Record<string, string[]> | null;
+  current_question_index: number;
+  current_submitted: boolean;
   is_completed: boolean;
   score: number | null;
   total_questions: number | null;
@@ -537,6 +540,9 @@ interface LessonQuizProgressRow {
 function rowToLessonQuizProgress(row: LessonQuizProgressRow): LessonQuizProgress {
   return {
     lessonId: row.sanity_lesson_id,
+    answers: row.answers ?? {},
+    currentQuestionIndex: row.current_question_index,
+    currentSubmitted: row.current_submitted ?? false,
     isCompleted: row.is_completed,
     score: row.score,
     totalQuestions: row.total_questions,
@@ -555,7 +561,9 @@ export async function getLessonQuizProgress(
   const supabase = createClient();
   const { data, error } = await supabase
     .from("user_lesson_quiz_progress")
-    .select("sanity_lesson_id, is_completed, score, total_questions, updated_at")
+    .select(
+      "sanity_lesson_id, answers, current_question_index, current_submitted, is_completed, score, total_questions, updated_at",
+    )
     .eq("user_id", userId)
     .eq("sanity_lesson_id", lessonId)
     .maybeSingle();
@@ -569,6 +577,10 @@ export interface UpsertLessonQuizProgressInput {
   isCompleted: boolean;
   score?: number | null;
   totalQuestions?: number | null;
+  /** Resume state: question `_key` → the user's selection(s). */
+  answers?: Record<string, string[]>;
+  currentQuestionIndex?: number;
+  currentSubmitted?: boolean;
 }
 
 export async function upsertLessonQuizProgress(
@@ -584,6 +596,9 @@ export async function upsertLessonQuizProgress(
     {
       user_id: userId,
       sanity_lesson_id: input.lessonId,
+      answers: input.answers ?? {},
+      current_question_index: input.currentQuestionIndex ?? 0,
+      current_submitted: input.currentSubmitted ?? false,
       is_completed: input.isCompleted,
       score: input.score ?? null,
       total_questions: input.totalQuestions ?? null,
