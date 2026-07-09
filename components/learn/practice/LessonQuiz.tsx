@@ -105,6 +105,10 @@ export function LessonQuiz({
       ? "Next"
       : "Done";
   const primaryDisabled = !isSubmitted && !answeredEnough;
+  // A write is in flight — disable nav so a stale fire-and-forget persist() can't
+  // resolve after and overwrite the completion (Done) save with intermediate state.
+  const busy = upsert.isPending;
+  const primaryBtnDisabled = primaryDisabled || busy;
 
   function handleAnswerChange(next: string[]) {
     if (isSubmitted) return;
@@ -180,7 +184,7 @@ export function LessonQuiz({
         <button
           type="button"
           onClick={handleBack}
-          disabled={currentIndex === 0}
+          disabled={currentIndex === 0 || busy}
           className="h-11 flex-1 rounded-md bg-surface-gray text-sm font-semibold text-ink-tertiary transition-colors hover:bg-surface-input disabled:opacity-50"
         >
           Back
@@ -188,10 +192,10 @@ export function LessonQuiz({
         <button
           type="button"
           onClick={isSubmitted ? handleNext : handleSubmit}
-          disabled={primaryDisabled}
+          disabled={primaryBtnDisabled}
           className={cn(
             "h-11 flex-1 rounded-md text-sm font-semibold text-white transition-opacity",
-            primaryDisabled ? "opacity-50" : "hover:opacity-90",
+            primaryBtnDisabled ? "opacity-50" : "hover:opacity-90",
           )}
           style={{ backgroundColor: colorHex }}
         >

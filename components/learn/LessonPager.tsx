@@ -71,9 +71,12 @@ export function LessonPager({
   nextLesson,
 }: LessonPagerProps) {
   const router = useRouter();
+  // The Quick Check is its own trailing screen after the content pages.
+  const hasQuiz = quizQuestions.length > 0;
   // Saved Quick Check progress — fetched at lesson mount so it's ready by the time
   // the user pages to the quiz screen; passed into LessonQuiz to seed its state.
-  const quizProgressQuery = useLessonQuizProgress(lessonId);
+  // Gated on hasQuiz so content-only lessons skip the Supabase round-trip.
+  const quizProgressQuery = useLessonQuizProgress(lessonId, hasQuiz);
   // When arriving from search, open on the first page that contains the term.
   const [pageIndex, setPageIndex] = useState(() => {
     if (!highlightQuery) return 0;
@@ -84,8 +87,6 @@ export function LessonPager({
   const [askTerm, setAskTerm] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
 
-  // The Quick Check is its own trailing screen after the content pages.
-  const hasQuiz = quizQuestions.length > 0;
   const totalScreens = pages.length + (hasQuiz ? 1 : 0);
   const index = Math.min(pageIndex, Math.max(0, totalScreens - 1));
   const isQuizPage = hasQuiz && index === pages.length;

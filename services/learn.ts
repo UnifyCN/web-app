@@ -578,9 +578,9 @@ export interface UpsertLessonQuizProgressInput {
   score?: number | null;
   totalQuestions?: number | null;
   /** Resume state: question `_key` → the user's selection(s). */
-  answers?: Record<string, string[]>;
-  currentQuestionIndex?: number;
-  currentSubmitted?: boolean;
+  answers: Record<string, string[]>;
+  currentQuestionIndex: number;
+  currentSubmitted: boolean;
 }
 
 export async function upsertLessonQuizProgress(
@@ -596,9 +596,9 @@ export async function upsertLessonQuizProgress(
     {
       user_id: userId,
       sanity_lesson_id: input.lessonId,
-      answers: input.answers ?? {},
-      current_question_index: input.currentQuestionIndex ?? 0,
-      current_submitted: input.currentSubmitted ?? false,
+      answers: input.answers,
+      current_question_index: input.currentQuestionIndex,
+      current_submitted: input.currentSubmitted,
       is_completed: input.isCompleted,
       score: input.score ?? null,
       total_questions: input.totalQuestions ?? null,

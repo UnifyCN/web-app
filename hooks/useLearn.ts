@@ -117,12 +117,13 @@ export function useLessonQuiz(lessonId: string) {
   });
 }
 
-/** The user's Quick Check completion for a lesson (Supabase). */
-export function useLessonQuizProgress(lessonId: string) {
+/** The user's Quick Check completion for a lesson (Supabase). `enabled` lets a
+ *  caller skip the round-trip for content-only lessons (no Quick Check). */
+export function useLessonQuizProgress(lessonId: string, enabled = true) {
   return useQuery({
     queryKey: [...LESSON_QUIZ_PROGRESS_KEY, lessonId],
     queryFn: () => learn.getLessonQuizProgress(lessonId),
-    enabled: !!lessonId,
+    enabled: enabled && !!lessonId,
   });
 }
 
