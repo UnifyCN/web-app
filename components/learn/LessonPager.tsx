@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { SelectableLessonContent } from "@/components/learn/SelectableLessonContent";
 import { ExplainTermModal } from "@/components/learn/ExplainTermModal";
 import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
+import { useLessonQuizProgress } from "@/hooks/useLearn";
 import { HelpFab } from "@/components/learn/help/HelpFab";
 import { HelpDrawer } from "@/components/learn/help/HelpDrawer";
 import { escapeRegExp, portableTextToPlain } from "@/lib/utils";
@@ -70,6 +71,12 @@ export function LessonPager({
   nextLesson,
 }: LessonPagerProps) {
   const router = useRouter();
+  // The Quick Check is its own trailing screen after the content pages.
+  const hasQuiz = quizQuestions.length > 0;
+  // Saved Quick Check progress — fetched at lesson mount so it's ready by the time
+  // the user pages to the quiz screen; passed into LessonQuiz to seed its state.
+  // Gated on hasQuiz so content-only lessons skip the Supabase round-trip.
+  const quizProgressQuery = useLessonQuizProgress(lessonId, hasQuiz);
   // When arriving from search, open on the first page that contains the term.
   const [pageIndex, setPageIndex] = useState(() => {
     if (!highlightQuery) return 0;
@@ -80,8 +87,6 @@ export function LessonPager({
   const [askTerm, setAskTerm] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
 
-  // The Quick Check is its own trailing screen after the content pages.
-  const hasQuiz = quizQuestions.length > 0;
   const totalScreens = pages.length + (hasQuiz ? 1 : 0);
   const index = Math.min(pageIndex, Math.max(0, totalScreens - 1));
   const isQuizPage = hasQuiz && index === pages.length;
@@ -245,19 +250,26 @@ export function LessonPager({
         </div>
       )}
 
-      {/* The Quick Check is its own dedicated page — quiz only, no content. */}
+      {/* The Quick Check is its own dedicated page — quiz only, no content.
+          Gate on the progress query so LessonQuiz mounts with its saved answers
+          (its useState initializers only run once, on mount). */}
       {isQuizPage && (
         <div className="mt-7">
-          <LessonQuiz
-            lessonId={lessonId}
-            moduleId={moduleId}
-            submoduleId={submoduleId}
-            title={quizTitle}
-            questions={quizQuestions}
-            colorHex={colorHex}
-            onLessonComplete={onLessonComplete}
-            sectionHref={sectionHref}
-          />
+          {quizProgressQuery.isLoading ? (
+            <p className="text-sm text-ink-muted">Loading…</p>
+          ) : (
+            <LessonQuiz
+              lessonId={lessonId}
+              moduleId={moduleId}
+              submoduleId={submoduleId}
+              title={quizTitle}
+              questions={quizQuestions}
+              colorHex={colorHex}
+              onLessonComplete={onLessonComplete}
+              sectionHref={sectionHref}
+              initialProgress={quizProgressQuery.data ?? null}
+            />
+          )}
         </div>
       )}
 

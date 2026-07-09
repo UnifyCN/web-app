@@ -541,9 +541,15 @@ export interface PracticeProgress {
   updatedAt: string;
 }
 
-/** Per-lesson Quick Check completion (one row per user+lesson). */
+/** Per-lesson Quick Check progress (one row per user+lesson). */
 export interface LessonQuizProgress {
   lessonId: string;
+  /** Resume state: question `_key` → the user's selection(s). */
+  answers: Record<string, string[]>;
+  currentQuestionIndex: number;
+  /** Whether the question at `currentQuestionIndex` was already submitted —
+   * so a resume restores its locked/graded state. */
+  currentSubmitted: boolean;
   isCompleted: boolean;
   score: number | null;
   totalQuestions: number | null;
