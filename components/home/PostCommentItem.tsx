@@ -6,6 +6,7 @@ import { Heart, Reply as ReplyIcon, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useDeleteComment, useLikeComment } from "@/hooks/useFeed";
+import { TranslateButton } from "@/components/home/TranslateButton";
 import { cn, formatRelativeTime, stripHtml } from "@/lib/utils";
 import type { PostComment } from "@/types";
 
@@ -109,6 +110,8 @@ export function PostCommentItem({
           <p className="mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-muted">
             {stripHtml(comment.content)}
           </p>
+
+          <TranslateButton type="comment" id={comment.id} className="mt-1" />
 
           <div className="mt-1.5 flex items-center gap-4">
             <button

@@ -595,6 +595,16 @@ Free-text practice/activity answers (`long_answer` / `short_answer`) are graded 
 `practice-feedback` edge function (DeepSeek-v4-Flash via the shared OpenRouter chain) and
 shown in `PracticeFeedbackModal.tsx`. Did **not** need an OpenAI key — runs on OpenRouter.
 
+**Translate button for Learn discussions + replies (i18n Phase 3 follow-up)**
+The Phase 3 Translate UI covers posts + post comments only. Discussions live in
+`module_discussions` / `discussion_replies` with **UUID ids**, but the deployed
+`translate-content` edge function only accepts `type: 'post' | 'comment'` with integer
+ids and fetches source text from `posts` / `post_comments`. Extending it needs backend
+work: new `discussion` / `discussion_reply` types, UUID-keyed translation cache tables
+(+ migration via the dashboard SQL editor), and a decision on whether they share the
+20/day quota. Once that lands, drop `<TranslateButton>` into `DiscussionThreadCard` /
+`DiscussionReplyItem` the same way as `PostCard` / `PostCommentItem`.
+
 **Tasks card on the section page**
 From Phase 16. The submodule section page shows a Learn → Practice activity timeline. Add a Tasks card (checklist-style) so section-relevant tasks surface alongside Learn and Practice.
 

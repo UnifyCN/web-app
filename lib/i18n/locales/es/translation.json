@@ -666,6 +666,14 @@
     "checkBackLaterForNewGroups": "Vuelve más tarde para ver nuevos grupos",
     "contentNotAllowedReason": "Tu publicación contiene lenguaje que infringe nuestras Normas de la Comunidad. Por favor, edítala e inténtalo de nuevo."
   },
+  "translate": {
+    "button": "Traducir",
+    "translating": "Traduciendo…",
+    "machineTranslated": "Traducción automática",
+    "showOriginal": "Ver original",
+    "limitReached": "Has alcanzado el límite diario de traducciones",
+    "unavailable": "Traducción no disponible, inténtalo de nuevo"
+  },
   "news": {
     "title": "Noticias y consejos",
     "loading": "Cargando noticias...",

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { useLikePost, useSavePost } from "@/hooks/useFeed";
 import { PostModerationMenu } from "@/components/moderation/PostModerationMenu";
+import { TranslateButton } from "@/components/home/TranslateButton";
 import { cn, formatRelativeTime, stripHtml } from "@/lib/utils";
 import type { Post } from "@/types";
 
@@ -126,6 +127,9 @@ export function PostCard({
       ) : (
         <div className="mt-3">{body}</div>
       )}
+
+      {/* Outside the detail Link so tapping Translate doesn't navigate. */}
+      <TranslateButton type="post" id={post.id} className="mt-2" />
 
       {/* Images */}
       {hasImages && (
