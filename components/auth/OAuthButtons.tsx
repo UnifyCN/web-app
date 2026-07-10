@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { signInWithGoogle } from "@/services/auth";
 import { trackGoogleSignInUsed } from "@/lib/analytics";
 import { GoogleIcon } from "@/components/auth/BrandIcons";
@@ -19,6 +20,7 @@ export function OAuthButtons({
 }: {
   onError?: (message: string) => void;
 }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
 
   const handleGoogle = async () => {
@@ -29,7 +31,7 @@ export function OAuthButtons({
     if (error) {
       console.error("Google sign-in failed", error);
       setBusy(false);
-      onError?.("Couldn't start Google sign-in. Please try again.");
+      onError?.(t("authWeb.couldntStartGoogle"));
     }
   };
 
@@ -40,7 +42,7 @@ export function OAuthButtons({
         onClick={handleGoogle}
         disabled={busy}
         className={SQUARE}
-        aria-label="Continue with Google"
+        aria-label={t("authWeb.continueWithGoogle")}
       >
         <GoogleIcon className="h-6 w-6" />
       </button>

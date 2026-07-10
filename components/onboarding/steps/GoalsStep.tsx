@@ -1,4 +1,5 @@
 import { BookOpen, MoreHorizontal, Users, Zap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { GOAL_OPTIONS } from "@/lib/onboarding/constants";
 import { CARD_COLORS, SelectableCard } from "../SelectableCard";
 import { StepHeading } from "../StepHeading";
@@ -12,6 +13,7 @@ const GOAL_ICON: Record<string, React.ReactNode> = {
 };
 
 export function GoalsStep({ draft, update }: OnboardingStepProps) {
+  const { t } = useTranslation();
   const toggle = (value: string) => {
     const next = draft.goals.includes(value)
       ? draft.goals.filter((g) => g !== value)
@@ -22,8 +24,8 @@ export function GoalsStep({ draft, update }: OnboardingStepProps) {
   return (
     <div>
       <StepHeading
-        title="What brings you to Unify?"
-        subtitle="Pick any that apply — you can change these anytime."
+        title={t("onboardingWeb.goals.title")}
+        subtitle={t("onboardingWeb.goals.subtitle")}
       />
       <div className="mt-5 space-y-2.5">
         {GOAL_OPTIONS.map((opt, i) => (
@@ -31,7 +33,7 @@ export function GoalsStep({ draft, update }: OnboardingStepProps) {
             key={opt.value}
             selected={draft.goals.includes(opt.value)}
             onToggle={() => toggle(opt.value)}
-            label={opt.label}
+            label={t(`onboardingWeb.goals.options.${opt.value}`)}
             icon={GOAL_ICON[opt.value]}
             color={CARD_COLORS[i % CARD_COLORS.length]}
           />

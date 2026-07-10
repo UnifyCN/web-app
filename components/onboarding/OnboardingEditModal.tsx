@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 import type { UserOnboardingProfile } from "@/types";
 import { OnboardingFlow } from "./OnboardingFlow";
@@ -37,6 +38,7 @@ export function OnboardingEditModal({
   onClose,
   profile,
 }: OnboardingEditModalProps) {
+  const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Keep a stable reference to onClose so the focus effect below depends only on
@@ -112,16 +114,16 @@ export function OnboardingEditModal({
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Edit your profile"
+        aria-label={t("onboardingWeb.editModalTitle")}
       >
         <div className="flex items-center justify-between border-b border-border-card px-5 py-3">
           <h2 className="text-base font-semibold text-ink-secondary">
-            Edit your profile
+            {t("onboardingWeb.editModalTitle")}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t("common.close")}
             className="cursor-pointer rounded-md p-2 text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
           >
             <X className="h-5 w-5" aria-hidden />

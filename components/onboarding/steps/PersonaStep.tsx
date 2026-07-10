@@ -1,4 +1,5 @@
 import { Briefcase, GraduationCap, ShieldCheck, UserRound } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Persona } from "@/types";
 import { PERSONA_OPTIONS } from "@/lib/onboarding/constants";
 import { SelectableCard } from "../SelectableCard";
@@ -13,11 +14,12 @@ const PERSONA_ICON: Record<Persona, React.ReactNode> = {
 };
 
 export function PersonaStep({ draft, update }: OnboardingStepProps) {
+  const { t } = useTranslation();
   return (
     <div>
       <StepHeading
-        title="Which best describes you?"
-        subtitle="This shapes your checklist and the tips you see."
+        title={t("onboardingWeb.persona.title")}
+        subtitle={t("onboardingWeb.persona.subtitle")}
       />
       <div className="mt-5 space-y-2.5">
         {PERSONA_OPTIONS.map((opt) => (
@@ -25,8 +27,8 @@ export function PersonaStep({ draft, update }: OnboardingStepProps) {
             key={opt.value}
             selected={draft.persona === opt.value}
             onToggle={() => update({ persona: opt.value })}
-            label={opt.label}
-            description={opt.description}
+            label={t(`onboardingWeb.persona.options.${opt.value}.label`)}
+            description={t(`onboardingWeb.persona.options.${opt.value}.description`)}
             icon={PERSONA_ICON[opt.value]}
           />
         ))}

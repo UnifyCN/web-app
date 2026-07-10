@@ -7,7 +7,9 @@ import { CommunityIcon } from "@/components/icons/CommunityIcon";
 import { SocialIcon } from "@/components/icons/SocialIcon";
 
 export interface NavItem {
-  label: string;
+  /** i18n key resolved with `t()` at render (labels can't be pre-translated in
+   *  a plain module). */
+  labelKey: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
 }
@@ -17,16 +19,20 @@ export interface NavItem {
 // app's bottom-tab nav (Learn → Checklist → Companion → Community → Social);
 // mobile has no Home tab — its Social tab is the post feed, served at /home.
 export const MAIN_NAV: NavItem[] = [
-  { label: "Learn", href: "/learn", icon: LearnIcon },
-  { label: "Checklist", href: "/checklist", icon: ChecklistIcon },
-  { label: "Companion", href: "/companion", icon: CompanionIcon },
-  { label: "Community", href: "/community", icon: CommunityIcon },
-  { label: "Social", href: "/home", icon: SocialIcon },
+  { labelKey: "tabs.learn", href: "/learn", icon: LearnIcon },
+  { labelKey: "tabs.checklist", href: "/checklist", icon: ChecklistIcon },
+  { labelKey: "tabs.companion", href: "/companion", icon: CompanionIcon },
+  { labelKey: "tabs.community", href: "/community", icon: CommunityIcon },
+  { labelKey: "tabs.social", href: "/home", icon: SocialIcon },
 ];
 
-export const PROFILE_ITEM: NavItem = { label: "Profile", href: "/profile", icon: User };
+export const PROFILE_ITEM: NavItem = {
+  labelKey: "profile.title",
+  href: "/profile",
+  icon: User,
+};
 export const SETTINGS_ITEM: NavItem = {
-  label: "Settings",
+  labelKey: "settings.title",
   href: "/settings",
   icon: Settings,
 };

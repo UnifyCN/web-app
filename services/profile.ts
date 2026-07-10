@@ -1,4 +1,5 @@
 import type { FollowListUser, Persona, Stage, UserProfile } from "@/types";
+import { DEFAULT_LANGUAGE, isSupportedLanguage } from "@/lib/i18n/config";
 import {
   createClient,
   getAuthUserId,
@@ -64,7 +65,7 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     supabase
       .from("user_onboarding_profiles")
       .select(
-        "id, persona, referral_source, arrival_date, city, province, stage, goals, learning_interests, hobbies, wants_reminders",
+        "id, persona, referral_source, arrival_date, city, province, stage, goals, learning_interests, hobbies, wants_reminders, preferred_language",
       )
       .eq("id", user.id)
       .maybeSingle(),
@@ -137,6 +138,9 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
           learningInterests: onb.learning_interests ?? [],
           hobbies: onb.hobbies ?? [],
           learningReminders: onb.wants_reminders ?? false,
+          preferredLanguage: isSupportedLanguage(onb.preferred_language)
+            ? onb.preferred_language
+            : DEFAULT_LANGUAGE,
         }
       : null,
   };
@@ -220,6 +224,8 @@ export async function getUserById(
         learningInterests: [],
         hobbies: [],
         learningReminders: false,
+        // Not exposed for other users; the field is only meaningful for self.
+        preferredLanguage: DEFAULT_LANGUAGE,
       };
     }
   } catch (error) {

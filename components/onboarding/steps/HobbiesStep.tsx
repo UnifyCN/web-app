@@ -11,6 +11,7 @@ import {
   Users,
   Utensils,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { HOBBY_OPTIONS } from "@/lib/onboarding/constants";
 import { CARD_COLORS, SelectableCard } from "../SelectableCard";
 import { StepHeading } from "../StepHeading";
@@ -31,6 +32,7 @@ const HOBBY_ICON: Record<string, React.ReactNode> = {
 };
 
 export function HobbiesStep({ draft, update }: OnboardingStepProps) {
+  const { t } = useTranslation();
   const toggle = (value: string) => {
     const next = draft.hobbies.includes(value)
       ? draft.hobbies.filter((h) => h !== value)
@@ -41,8 +43,8 @@ export function HobbiesStep({ draft, update }: OnboardingStepProps) {
   return (
     <div>
       <StepHeading
-        title="What are your hobbies?"
-        subtitle="Pick any that apply — we'll use them to suggest people and groups."
+        title={t("onboardingWeb.hobbies.title")}
+        subtitle={t("onboardingWeb.hobbies.subtitle")}
       />
       <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {HOBBY_OPTIONS.map((opt, i) => (
@@ -50,7 +52,7 @@ export function HobbiesStep({ draft, update }: OnboardingStepProps) {
             key={opt.value}
             selected={draft.hobbies.includes(opt.value)}
             onToggle={() => toggle(opt.value)}
-            label={opt.label}
+            label={t(`onboardingWeb.hobbies.options.${opt.value}`)}
             icon={HOBBY_ICON[opt.value]}
             color={CARD_COLORS[i % CARD_COLORS.length]}
           />

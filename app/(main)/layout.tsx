@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { LanguageSync } from "@/lib/i18n/useLanguageSync";
 
 /**
  * Shell for all authenticated app pages. Desktop (≥ md): fixed left sidebar +
@@ -16,6 +17,7 @@ export default function MainLayout({
 }) {
   return (
     <ToastProvider>
+      <LanguageSync />
       <div className="flex min-h-dvh bg-surface">
         <Sidebar />
         <main className="min-w-0 flex-1 pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] md:pb-0">

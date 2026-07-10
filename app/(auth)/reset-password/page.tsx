@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Trans, useTranslation } from "react-i18next";
 import { Lock } from "lucide-react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthButton } from "@/components/auth/AuthButton";
@@ -16,6 +17,7 @@ import { resetPasswordWithOtp, signOut } from "@/services/auth";
 function ResetPasswordScreen() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useTranslation();
   const email = params.get("email") ?? "";
 
   const [code, setCode] = useState("");
@@ -27,14 +29,14 @@ function ResetPasswordScreen() {
   if (!email) {
     return (
       <AuthShell backHref="/forgot-password">
-        <h1 className="text-3xl font-bold text-ink">Reset password</h1>
+        <h1 className="text-3xl font-bold text-ink">{t("auth.resetPassword")}</h1>
         <p className="mt-2 text-sm text-ink-muted">
-          This reset link is missing an email.{" "}
+          {t("authWeb.resetMissingEmail")}{" "}
           <Link
             href="/forgot-password"
             className="font-semibold text-mention-blue underline"
           >
-            Request a new code
+            {t("authWeb.requestNewCode")}
           </Link>
           .
         </p>
@@ -61,8 +63,8 @@ function ResetPasswordScreen() {
       setSubmitting(false);
       setError(
         /expired|invalid|token/i.test(resetError.message)
-          ? "That code is invalid or expired. Request a new one."
-          : resetError.message || "Couldn't reset your password.",
+          ? t("authWeb.codeInvalidRequestNew")
+          : resetError.message || t("authWeb.couldntResetPassword"),
       );
       return;
     }
@@ -72,9 +74,7 @@ function ResetPasswordScreen() {
     const { error: signOutError } = await signOut();
     if (signOutError) {
       setSubmitting(false);
-      setError(
-        "Password updated, but we couldn't sign you out. Refresh and sign in with your new password.",
-      );
+      setError(t("authWeb.resetSignOutFailed"));
       return;
     }
     router.replace("/login?reset=1");
@@ -82,11 +82,15 @@ function ResetPasswordScreen() {
 
   return (
     <AuthShell backHref="/login">
-      <h1 className="text-3xl font-bold text-ink">Reset password</h1>
+      <h1 className="text-3xl font-bold text-ink">{t("auth.resetPassword")}</h1>
       <p className="mt-1 text-sm text-ink-muted">
-        Enter the code sent to{" "}
-        <span className="font-semibold text-ink-secondary">{email}</span> and
-        choose a new password.
+        <Trans
+          i18nKey="authWeb.resetEnterCode"
+          values={{ email }}
+          components={{
+            email: <span className="font-semibold text-ink-secondary" />,
+          }}
+        />
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
@@ -103,7 +107,7 @@ function ResetPasswordScreen() {
           leftIcon={<Lock className="h-5 w-5" />}
           type="password"
           autoComplete="new-password"
-          placeholder="New Password"
+          placeholder={t("auth.newPassword")}
           value={password}
           onChange={(e) => {
             setPassword(e.target.value);
@@ -115,7 +119,7 @@ function ResetPasswordScreen() {
             leftIcon={<Lock className="h-5 w-5" />}
             type="password"
             autoComplete="new-password"
-            placeholder="Confirm Password"
+            placeholder={t("auth.confirmPassword")}
             value={confirm}
             error={confirm.length > 0 && !match}
             onChange={(e) => {
@@ -124,14 +128,14 @@ function ResetPasswordScreen() {
             }}
           />
           <FormError className="mt-1 text-xs">
-            {confirm.length > 0 && !match ? "Passwords don't match." : null}
+            {confirm.length > 0 && !match ? t("auth.passwordsDoNotMatch") : null}
           </FormError>
         </div>
 
         <FormError>{error}</FormError>
 
         <AuthButton type="submit" loading={submitting} disabled={!canSubmit}>
-          Reset password
+          {t("auth.resetPassword")}
         </AuthButton>
       </form>
     </AuthShell>

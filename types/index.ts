@@ -6,6 +6,8 @@
  * describe the shape the UI consumes.
  * ------------------------------------------------------------------ */
 
+import type { SupportedLanguage } from "@/lib/i18n/config";
+
 /* ----- Onboarding profile ----------------------------------------- */
 
 export type Persona =
@@ -41,6 +43,8 @@ export interface UserOnboardingProfile {
   hobbies: string[];
   /** Opt-in to learning-reminder nudges. */
   learningReminders: boolean;
+  /** Preferred UI language (shared with mobile via `preferred_language`). */
+  preferredLanguage: SupportedLanguage;
 }
 
 /* ----- Users ------------------------------------------------------- */

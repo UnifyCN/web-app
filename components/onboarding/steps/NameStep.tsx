@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { moveCaretToEnd } from "@/lib/utils";
 import { StepHeading } from "../StepHeading";
 import type { OnboardingStepProps } from "../types";
@@ -12,21 +13,22 @@ const FIELD_CLASS =
  * field is optional so it never blocks the flow.
  */
 export function NameStep({ draft, update, mode }: OnboardingStepProps) {
+  const { t } = useTranslation();
   const isEdit = mode === "edit";
   return (
     <div>
       <StepHeading
-        title={isEdit ? "Update your profile" : "Let's set up Unify for you"}
-        subtitle={
+        title={t(isEdit ? "onboardingWeb.name.titleEdit" : "onboardingWeb.name.titleOnboard")}
+        subtitle={t(
           isEdit
-            ? "Things change — update your answers so your checklist and Companion stay relevant."
-            : "A few quick questions tailor your checklist, learning, and community to your journey. It takes about a minute."
-        }
+            ? "onboardingWeb.name.subtitleEdit"
+            : "onboardingWeb.name.subtitleOnboard",
+        )}
       />
       <input
         type="text"
-        aria-label="First name"
-        placeholder="Your first name"
+        aria-label={t("onboardingWeb.name.ariaFirstName")}
+        placeholder={t("onboardingWeb.name.placeholder")}
         value={draft.firstName}
         onChange={(e) => update({ firstName: e.target.value })}
         onFocus={moveCaretToEnd}

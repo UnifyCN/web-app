@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { Trans, useTranslation } from "react-i18next";
 import { Lock, Mail } from "lucide-react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthButton } from "@/components/auth/AuthButton";
@@ -21,6 +22,7 @@ import { trackSignInCompleted, trackSignInFailed } from "@/lib/analytics";
 function LoginScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
   const { container, item } = useStagger();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +31,7 @@ function LoginScreen() {
 
   const oauthError =
     searchParams.get("error") === "auth"
-      ? "Sign-in failed. Please try again."
+      ? t("auth.signInGenericError")
       : null;
   const resetDone = searchParams.get("reset") === "1";
 
@@ -67,8 +69,8 @@ function LoginScreen() {
       }
       setError(
         /invalid login credentials/i.test(signInError.message)
-          ? "Incorrect email or password."
-          : signInError.message || "Couldn't sign you in.",
+          ? t("authWeb.incorrectCredentials")
+          : signInError.message || t("authWeb.couldntSignIn"),
       );
       return;
     }
@@ -80,17 +82,17 @@ function LoginScreen() {
 
   return (
     <AuthShell backHref="/welcome?step=4">
-      <h1 className="text-3xl font-bold text-ink">Sign in</h1>
+      <h1 className="text-3xl font-bold text-ink">{t("auth.signIn")}</h1>
       <p className="mt-1 text-sm text-ink-muted">
-        New user?{" "}
+        {t("auth.newUser")}
         <Link href="/signup" className="font-semibold text-ink">
-          Create an account
+          {t("auth.createAnAccount")}
         </Link>
       </p>
 
       {resetDone && (
         <p className="mt-4 rounded-lg bg-primary-bg px-3 py-2 text-sm text-ink-secondary">
-          Password updated. Sign in with your new password.
+          {t("authWeb.passwordUpdatedSignIn")}
         </p>
       )}
 
@@ -105,7 +107,7 @@ function LoginScreen() {
             leftIcon={<Mail className="h-5 w-5" />}
             type="email"
             autoComplete="email"
-            placeholder="Email Address"
+            placeholder={t("auth.emailAddress")}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -118,7 +120,7 @@ function LoginScreen() {
             leftIcon={<Lock className="h-5 w-5" />}
             type="password"
             autoComplete="current-password"
-            placeholder="Password"
+            placeholder={t("auth.password")}
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
@@ -131,14 +133,14 @@ function LoginScreen() {
             href="/forgot-password"
             className="text-sm font-medium text-mention-blue hover:underline"
           >
-            Forgot password?
+            {t("auth.forgotPassword")}
           </Link>
         </motion.div>
 
         <motion.div {...item} className="space-y-3">
           <FormError>{errorMsg}</FormError>
           <AuthButton type="submit" loading={submitting} disabled={!canSubmit}>
-            Login
+            {t("auth.login")}
           </AuthButton>
         </motion.div>
       </motion.form>
@@ -147,25 +149,27 @@ function LoginScreen() {
       <OAuthButtons onError={(m) => setError(m || null)} />
 
       <p className="mt-8 text-center text-xs leading-relaxed text-ink-placeholder">
-        By signing in with an account, you agree to Unify&apos;s{" "}
-        <a
-          href={LEGAL_URLS.termsOfService}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-ink-muted underline"
-        >
-          Terms of Service
-        </a>{" "}
-        and{" "}
-        <a
-          href={LEGAL_URLS.privacyPolicy}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-ink-muted underline"
-        >
-          Privacy Policy
-        </a>
-        .
+        <Trans
+          i18nKey="auth.legalSignIn"
+          components={{
+            terms: (
+              <a
+                href={LEGAL_URLS.termsOfService}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-ink-muted underline"
+              />
+            ),
+            privacy: (
+              <a
+                href={LEGAL_URLS.privacyPolicy}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-ink-muted underline"
+              />
+            ),
+          }}
+        />
       </p>
     </AuthShell>
   );

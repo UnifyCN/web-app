@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { Mail } from "lucide-react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthButton } from "@/components/auth/AuthButton";
@@ -15,6 +16,7 @@ import { sendPasswordReset } from "@/services/auth";
 /** Forgot password — collect the email, then send a recovery code. */
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { container, item } = useStagger();
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -32,7 +34,7 @@ export default function ForgotPasswordPage() {
     if (resetError) {
       console.error("resetPasswordForEmail failed", resetError);
       setSubmitting(false);
-      setError(resetError.message || "Couldn't send a reset code. Try again.");
+      setError(resetError.message || t("authWeb.couldntSendReset"));
       return;
     }
     router.push(`/reset-password?email=${encodeURIComponent(normalized)}`);
@@ -40,9 +42,9 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthShell backHref="/login">
-      <h1 className="text-3xl font-bold text-ink">Reset password</h1>
+      <h1 className="text-3xl font-bold text-ink">{t("auth.resetPassword")}</h1>
       <p className="mt-1 text-sm text-ink-muted">
-        Enter your email and we&apos;ll send you a code to reset your password.
+        {t("auth.resetPasswordDesc")}
       </p>
 
       <motion.form
@@ -56,7 +58,7 @@ export default function ForgotPasswordPage() {
             leftIcon={<Mail className="h-5 w-5" />}
             type="email"
             autoComplete="email"
-            placeholder="Email Address"
+            placeholder={t("auth.emailAddress")}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -67,7 +69,7 @@ export default function ForgotPasswordPage() {
         <motion.div {...item} className="space-y-3">
           <FormError>{error}</FormError>
           <AuthButton type="submit" loading={submitting} disabled={!canSubmit}>
-            Send reset code
+            {t("authWeb.sendResetCode")}
           </AuthButton>
         </motion.div>
       </motion.form>

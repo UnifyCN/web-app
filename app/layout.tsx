@@ -1,14 +1,30 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Noto_Sans_Devanagari } from "next/font/google";
+import { cookies, headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Providers } from "./providers";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import {
+  DEFAULT_LANGUAGE,
+  LANGUAGE_COOKIE,
+  isSupportedLanguage,
+  negotiateLanguage,
+  type SupportedLanguage,
+} from "@/lib/i18n/config";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
-  subsets: ["latin"],
+  subsets: ["latin", "vietnamese"],
+});
+
+// Devanagari (Hindi) glyph coverage — Inter has none. Loaded as a fall-through
+// font behind Inter in the --font-sans chain (see globals.css).
+const notoDevanagari = Noto_Sans_Devanagari({
+  variable: "--font-noto-devanagari",
+  subsets: ["devanagari"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -50,19 +66,40 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+/**
+ * Resolve the UI locale for this request: the persisted `unify_lang` cookie wins
+ * (returning users), else negotiate from the browser's Accept-Language header
+ * (first-ever visit), else English. Passing this to the client provider verbatim
+ * keeps the first client render identical to the server HTML — no flash, no
+ * hydration mismatch.
+ */
+async function resolveInitialLocale(): Promise<SupportedLanguage> {
+  const cookieLang = (await cookies()).get(LANGUAGE_COOKIE)?.value;
+  if (isSupportedLanguage(cookieLang)) return cookieLang;
+  return (
+    negotiateLanguage((await headers()).get("accept-language")) ??
+    DEFAULT_LANGUAGE
+  );
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialLocale = await resolveInitialLocale();
+
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    <html
+      lang={initialLocale}
+      className={`${inter.variable} ${notoDevanagari.variable} h-full antialiased`}
+    >
       <body
         className="min-h-full flex flex-col font-sans"
         suppressHydrationWarning
       >
         <PostHogProvider>
-          <Providers>{children}</Providers>
+          <Providers initialLocale={initialLocale}>{children}</Providers>
         </PostHogProvider>
         <Analytics />
         <SpeedInsights />

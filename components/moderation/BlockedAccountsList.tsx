@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -12,6 +13,7 @@ import { useBlockedUsers, useUnblockUser } from "@/hooks/useModeration";
  * + feed caches via the hook.
  */
 export function BlockedAccountsList() {
+  const { t } = useTranslation();
   const { data: blocked, isLoading, isError } = useBlockedUsers();
   const toast = useToast();
   const unblock = useUnblockUser();
@@ -32,7 +34,7 @@ export function BlockedAccountsList() {
   if (isError) {
     return (
       <p className="text-sm text-destructive" role="alert">
-        Couldn&rsquo;t load your blocked accounts.
+        {t("settingsWeb.blockedLoadError")}
       </p>
     );
   }
@@ -40,7 +42,7 @@ export function BlockedAccountsList() {
   if (!blocked || blocked.length === 0) {
     return (
       <p className="text-sm text-ink-placeholder">
-        You haven&rsquo;t blocked anyone.
+        {t("settingsWeb.blockedEmpty")}
       </p>
     );
   }
@@ -71,16 +73,18 @@ export function BlockedAccountsList() {
             loading={unblock.isPending && unblock.variables === user.id}
             onClick={() =>
               unblock.mutate(user.id, {
-                onSuccess: () => toast.success("User unblocked"),
+                onSuccess: () => toast.success(t("settingsWeb.userUnblocked")),
                 onError: (e) =>
                   toast.show(
-                    e instanceof Error ? e.message : "Couldn't unblock user.",
+                    e instanceof Error
+                      ? e.message
+                      : t("settingsWeb.unblockError"),
                     "info",
                   ),
               })
             }
           >
-            Unblock
+            {t("settingsWeb.unblock")}
           </Button>
         </li>
       ))}

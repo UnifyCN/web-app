@@ -9,6 +9,7 @@ import {
   Home,
   MoreHorizontal,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { INTEREST_OPTIONS } from "@/lib/onboarding/constants";
 import { CARD_COLORS, SelectableCard } from "../SelectableCard";
 import { StepHeading } from "../StepHeading";
@@ -27,6 +28,7 @@ const INTEREST_ICON: Record<string, React.ReactNode> = {
 };
 
 export function InterestsStep({ draft, update }: OnboardingStepProps) {
+  const { t } = useTranslation();
   const toggle = (value: string) => {
     const next = draft.learningInterests.includes(value)
       ? draft.learningInterests.filter((i) => i !== value)
@@ -37,8 +39,8 @@ export function InterestsStep({ draft, update }: OnboardingStepProps) {
   return (
     <div>
       <StepHeading
-        title="What would you like help with?"
-        subtitle="Choose the topics you want to learn about."
+        title={t("onboardingWeb.interests.title")}
+        subtitle={t("onboardingWeb.interests.subtitle")}
       />
       <div className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         {INTEREST_OPTIONS.map((opt, i) => (
@@ -46,7 +48,7 @@ export function InterestsStep({ draft, update }: OnboardingStepProps) {
             key={opt.value}
             selected={draft.learningInterests.includes(opt.value)}
             onToggle={() => toggle(opt.value)}
-            label={opt.label}
+            label={t(`onboardingWeb.interests.options.${opt.value}`)}
             icon={INTEREST_ICON[opt.value]}
             color={CARD_COLORS[i % CARD_COLORS.length]}
           />

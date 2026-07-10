@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Check } from "lucide-react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthButton } from "@/components/auth/AuthButton";
@@ -21,6 +22,7 @@ function VerifyEmailScreen() {
   const router = useRouter();
   const params = useSearchParams();
   const reduce = useReducedMotion();
+  const { t } = useTranslation();
   const email = params.get("email") ?? "";
 
   const [code, setCode] = useState("");
@@ -35,9 +37,7 @@ function VerifyEmailScreen() {
     // auto-submit never fires with a one-render-stale `code` state.
     const otp = token ?? code;
     if (!email) {
-      setError(
-        "Missing email context. Please return to sign up and request a new code.",
-      );
+      setError(t("authWeb.missingEmailContext"));
       return;
     }
     if (otp.length !== 6 || verifying) return;
@@ -52,8 +52,8 @@ function VerifyEmailScreen() {
       setVerifying(false);
       setError(
         /expired|invalid|token/i.test(verifyError.message)
-          ? "That code is invalid or expired. Try again or resend."
-          : verifyError.message || "Couldn't verify the code.",
+          ? t("authWeb.codeInvalidResend")
+          : verifyError.message || t("authWeb.couldntVerify"),
       );
       return;
     }
@@ -72,7 +72,7 @@ function VerifyEmailScreen() {
     const { error: resendError } = await resendSignupOtp(email);
     setResending(false);
     if (resendError) {
-      setError(resendError.message || "Couldn't resend the code.");
+      setError(resendError.message || t("authWeb.couldntResend"));
       return;
     }
     setResent(true);
@@ -81,7 +81,7 @@ function VerifyEmailScreen() {
 
   return (
     <AuthShell>
-      <h1 className="text-3xl font-bold text-ink">Verify your email</h1>
+      <h1 className="text-3xl font-bold text-ink">{t("auth.otp.title")}</h1>
 
         {success ? (
           <div className="mt-8 flex flex-col items-center text-center">
@@ -98,19 +98,19 @@ function VerifyEmailScreen() {
             <Check className="h-10 w-10" strokeWidth={3} aria-hidden />
           </motion.div>
           <p className="mt-5 text-base font-semibold text-ink-secondary">
-            Email verified
+            {t("authWeb.emailVerified")}
           </p>
           <p className="mt-1 text-sm text-ink-muted">
-            Taking you to your account…
+            {t("authWeb.takingYouToAccount")}
           </p>
         </div>
       ) : (
         <>
           <p className="mt-6 text-center text-base text-ink-muted">
-            We&apos;ve sent a verification code to
+            {t("auth.otp.sentCodeTo")}
             <br />
             <span className="font-semibold text-ink-secondary">
-              {email || "your email"}
+              {email || t("authWeb.yourEmail")}
             </span>
           </p>
 
@@ -140,7 +140,7 @@ function VerifyEmailScreen() {
                   transition={{ duration: 0.15 }}
                   className="text-sm text-emerald-600"
                 >
-                  A new code is on its way.
+                  {t("authWeb.newCodeOnWay")}
                 </motion.p>
               )}
             </AnimatePresence>
@@ -153,19 +153,19 @@ function VerifyEmailScreen() {
               disabled={code.length !== 6}
               className="w-auto px-16"
             >
-              Verify
+              {t("auth.otp.verifyButton")}
             </AuthButton>
           </div>
 
           <p className="mt-6 text-center text-sm text-ink-muted">
-            Didn&apos;t receive the code?{" "}
+            {t("auth.otp.didntReceive")}
             <button
               type="button"
               onClick={handleResend}
               disabled={resending}
               className="font-semibold text-mention-blue hover:underline disabled:opacity-60"
             >
-              Resend
+              {t("auth.otp.resend")}
             </button>
           </p>
 
@@ -177,7 +177,7 @@ function VerifyEmailScreen() {
               className="h-4 w-4 transition-transform group-hover:-translate-x-0.5 motion-reduce:transform-none"
               aria-hidden
             />
-            Back to Sign Up
+            {t("auth.otp.backToSignUp")}
           </Link>
         </>
       )}

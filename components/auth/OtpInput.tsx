@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { useStagger } from "@/components/auth/motion";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ export function OtpInput({
 }: OtpInputProps) {
   const refs = useRef<Array<HTMLInputElement | null>>([]);
   const { container, item } = useStagger();
+  const { t } = useTranslation();
 
   const setDigit = (index: number, digit: string) => {
     const chars = value.split("");
@@ -103,7 +105,7 @@ export function OtpInput({
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={handlePaste}
-          aria-label={`Digit ${i + 1}`}
+          aria-label={t("authWeb.otpDigit", { number: i + 1 })}
           className={cn(
             "h-14 w-12 rounded-xl border bg-surface text-center text-xl font-semibold text-ink-secondary outline-none transition-colors sm:h-16 sm:w-14",
             "focus:border-primary focus:ring-2 focus:ring-primary/30",

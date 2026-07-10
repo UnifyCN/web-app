@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useSaveOnboarding } from "@/hooks/useOnboarding";
@@ -77,6 +78,7 @@ export function OnboardingFlow({
   onCancel,
 }: OnboardingFlowProps) {
   const steps = ALL_STEPS;
+  const { t } = useTranslation();
 
   const [index, setIndex] = useState(0);
   const [draft, setDraft] = useState<OnboardingDraft>(
@@ -111,7 +113,7 @@ export function OnboardingFlow({
 
   const finish = () => {
     if (!draft.persona) {
-      setError("Please choose the option that best describes you.");
+      setError(t("onboardingWeb.choosePersonaError"));
       return;
     }
     setError(null);
@@ -134,7 +136,7 @@ export function OnboardingFlow({
           details: err?.details,
           hint: err?.hint,
         });
-        setError("Something went wrong saving your answers. Please try again.");
+        setError(t("onboardingWeb.saveError"));
       },
     });
   };
@@ -161,7 +163,7 @@ export function OnboardingFlow({
               onClick={onCancel}
               disabled={save.isPending}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
           ) : (
             <span />
@@ -173,13 +175,15 @@ export function OnboardingFlow({
             onClick={goBack}
             disabled={save.isPending}
           >
-            Back
+            {t("common.back")}
           </Button>
         )}
 
         {isLast ? (
           <Button onClick={finish} loading={save.isPending}>
-            {mode === "edit" ? "Save changes" : "Finish"}
+            {mode === "edit"
+              ? t("onboardingWeb.saveChanges")
+              : t("onboardingWeb.finish")}
           </Button>
         ) : (
           <Button
@@ -187,7 +191,7 @@ export function OnboardingFlow({
             disabled={!canAdvance}
             rightIcon={<ChevronRight className="h-4 w-4" />}
           >
-            Continue
+            {t("common.continue")}
           </Button>
         )}
       </div>
