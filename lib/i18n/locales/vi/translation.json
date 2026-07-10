@@ -666,6 +666,14 @@
     "checkBackLaterForNewGroups": "Quay lại sau để xem nhóm mới",
     "contentNotAllowedReason": "Bài viết của bạn chứa nội dung vi phạm Nguyên tắc Cộng đồng. Vui lòng chỉnh sửa và thử lại."
   },
+  "translate": {
+    "button": "Dịch",
+    "translating": "Đang dịch…",
+    "machineTranslated": "Bản dịch máy",
+    "showOriginal": "Xem bản gốc",
+    "limitReached": "Đã đạt giới hạn dịch trong ngày",
+    "unavailable": "Không thể dịch, hãy thử lại"
+  },
   "news": {
     "title": "Tin tức & Mẹo",
     "loading": "Đang tải tin tức...",

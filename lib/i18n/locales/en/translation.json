@@ -666,6 +666,14 @@
     "checkBackLaterForNewGroups": "Check back later for new groups",
     "contentNotAllowedReason": "Your post contains language that violates our Community Guidelines. Please revise and try again."
   },
+  "translate": {
+    "button": "Translate",
+    "translating": "Translating…",
+    "machineTranslated": "Machine translated",
+    "showOriginal": "Show original",
+    "limitReached": "Daily translation limit reached",
+    "unavailable": "Translation unavailable, try again"
+  },
   "news": {
     "title": "News & Tips",
     "loading": "Loading news...",

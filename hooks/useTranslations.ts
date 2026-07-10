@@ -23,7 +23,8 @@ function useCurrentLanguage(): SupportedLanguage {
   return isSupportedLanguage(i18n.language) ? i18n.language : DEFAULT_LANGUAGE;
 }
 
-function useContentTranslation(type: "post" | "comment", id: number) {
+/** Shared by TranslateButton — prefer the typed wrappers below elsewhere. */
+export function useContentTranslation(type: "post" | "comment", id: number) {
   const lang = useCurrentLanguage();
 
   const query = useQuery({
