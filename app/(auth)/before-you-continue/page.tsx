@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { LegalConsentLabel } from "@/components/auth/LegalConsentLabel";
@@ -15,6 +16,7 @@ import { acceptLegalConsent, signOut } from "@/services/auth";
  */
 export default function BeforeYouContinuePage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -28,7 +30,7 @@ export default function BeforeYouContinuePage() {
     if (consentError) {
       console.error("acceptLegalConsent failed", consentError);
       setSubmitting(false);
-      setError("Couldn't save your consent. Please try again.");
+      setError(t("authWeb.couldntSaveConsent"));
       return;
     }
     router.replace("/home");
@@ -43,9 +45,11 @@ export default function BeforeYouContinuePage() {
 
   return (
     <AuthShell>
-      <h1 className="text-3xl font-bold text-ink">Before you continue</h1>
+      <h1 className="text-3xl font-bold text-ink">
+        {t("auth.legal.beforeContinue")}
+      </h1>
       <p className="mt-2 text-base text-ink-muted">
-        Please review and accept our policies to use Unify.
+        {t("auth.legal.reviewPolicies")}
       </p>
 
       <label className="mt-8 flex cursor-pointer items-start gap-3">
@@ -68,7 +72,7 @@ export default function BeforeYouContinuePage() {
           loading={submitting}
           disabled={!agreed || cancelling}
         >
-          Continue
+          {t("common.continue")}
         </AuthButton>
         <button
           type="button"
@@ -76,7 +80,7 @@ export default function BeforeYouContinuePage() {
           disabled={submitting || cancelling}
           className="w-full py-2 text-center text-sm font-medium text-ink-muted transition-colors hover:text-ink disabled:opacity-60"
         >
-          Cancel
+          {t("common.cancel")}
         </button>
       </div>
     </AuthShell>

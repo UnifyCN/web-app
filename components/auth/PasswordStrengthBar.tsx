@@ -1,26 +1,31 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { passwordStrength, type StrengthLevel } from "@/lib/passwordStrength";
 import { cn } from "@/lib/utils";
 
 const META: Record<
   StrengthLevel,
-  { label: string; text: string; bar: string }
+  { labelKey: string; text: string; bar: string }
 > = {
   "very-weak": {
-    label: "Very weak",
+    labelKey: "authWeb.strengthVeryWeak",
     text: "text-destructive-label",
     bar: "bg-destructive",
   },
-  weak: { label: "Weak", text: "text-destructive-label", bar: "bg-destructive" },
-  fair: { label: "Fair", text: "text-warning", bar: "bg-warning" },
+  weak: {
+    labelKey: "authWeb.strengthWeak",
+    text: "text-destructive-label",
+    bar: "bg-destructive",
+  },
+  fair: { labelKey: "authWeb.strengthFair", text: "text-warning", bar: "bg-warning" },
   strong: {
-    label: "Strong",
+    labelKey: "authWeb.strengthStrong",
     text: "text-success-label",
     bar: "bg-success-bright",
   },
   "very-strong": {
-    label: "Very strong",
+    labelKey: "authWeb.strengthVeryStrong",
     text: "text-success-label",
     bar: "bg-success-bright",
   },
@@ -28,6 +33,7 @@ const META: Record<
 
 /** Five-segment password-strength meter shown under the signup password field. */
 export function PasswordStrengthBar({ password }: { password: string }) {
+  const { t } = useTranslation();
   if (!password) return null;
   const { level, filled } = passwordStrength(password);
   const meta = META[level];
@@ -45,7 +51,7 @@ export function PasswordStrengthBar({ password }: { password: string }) {
         ))}
       </div>
       <p className={cn("mt-1 text-xs font-medium", meta.text)}>
-        {meta.label} password
+        {t(meta.labelKey)}
       </p>
     </div>
   );

@@ -7,6 +7,7 @@ import {
   Smartphone,
   Users,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { REFERRAL_OPTIONS } from "@/lib/onboarding/constants";
 import { SelectableCard } from "../SelectableCard";
 import { StepHeading } from "../StepHeading";
@@ -24,11 +25,12 @@ const REFERRAL_ICON: Record<string, React.ReactNode> = {
 };
 
 export function ReferralStep({ draft, update }: OnboardingStepProps) {
+  const { t } = useTranslation();
   return (
     <div>
       <StepHeading
-        title="How did you hear about Unify?"
-        subtitle="Optional — it helps us reach more newcomers like you."
+        title={t("onboardingWeb.referral.title")}
+        subtitle={t("onboardingWeb.referral.subtitle")}
       />
       <div className="mt-5 space-y-2.5">
         {REFERRAL_OPTIONS.map((opt) => (
@@ -41,7 +43,7 @@ export function ReferralStep({ draft, update }: OnboardingStepProps) {
                   draft.referralSource === opt.value ? null : opt.value,
               })
             }
-            label={opt.label}
+            label={t(`onboardingWeb.referral.options.${opt.value}`)}
             icon={REFERRAL_ICON[opt.value]}
           />
         ))}

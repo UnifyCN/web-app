@@ -1,22 +1,8 @@
 import { Check, ChevronDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { StepHeading } from "../StepHeading";
 import type { OnboardingStepProps } from "../types";
-
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 
 const SELECT_CLASS =
   "h-11 w-full appearance-none rounded-lg border border-border-card bg-surface px-3 pr-10 text-sm text-ink-muted " +
@@ -26,21 +12,27 @@ const CHEVRON_CLASS =
   "pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder";
 
 export function ArrivalDateStep({ draft, update }: OnboardingStepProps) {
+  const { t, i18n } = useTranslation();
   const thisYear = new Date().getFullYear();
   // Next year (planning ahead) down to 40 years back.
   const years = [...Array(42).keys()].map((i) => thisYear + 1 - i);
+  // Month names localized to the active language (no translation keys needed).
+  const monthFmt = new Intl.DateTimeFormat(i18n.language, { month: "long" });
+  const months = [...Array(12).keys()].map((i) =>
+    monthFmt.format(new Date(2021, i, 1)),
+  );
 
   return (
     <div>
       <StepHeading
-        title="When did you arrive in Canada?"
-        subtitle="An approximate month is fine — it sets your settling-in stage."
+        title={t("onboardingWeb.arrival.title")}
+        subtitle={t("onboardingWeb.arrival.subtitle")}
       />
 
       <div className="mt-5 grid grid-cols-2 gap-3">
         <div className="relative">
           <select
-            aria-label="Arrival month"
+            aria-label={t("onboardingWeb.arrival.ariaMonth")}
             className={SELECT_CLASS}
             value={draft.arrivalMonth ?? ""}
             disabled={draft.notArrived}
@@ -50,8 +42,8 @@ export function ArrivalDateStep({ draft, update }: OnboardingStepProps) {
               })
             }
           >
-            <option value="">Month</option>
-            {MONTHS.map((m, i) => (
+            <option value="">{t("onboarding.monthLabel")}</option>
+            {months.map((m, i) => (
               <option key={m} value={i + 1}>
                 {m}
               </option>
@@ -62,7 +54,7 @@ export function ArrivalDateStep({ draft, update }: OnboardingStepProps) {
 
         <div className="relative">
           <select
-            aria-label="Arrival year"
+            aria-label={t("onboardingWeb.arrival.ariaYear")}
             className={SELECT_CLASS}
             value={draft.arrivalYear ?? ""}
             disabled={draft.notArrived}
@@ -72,7 +64,7 @@ export function ArrivalDateStep({ draft, update }: OnboardingStepProps) {
               })
             }
           >
-            <option value="">Year</option>
+            <option value="">{t("onboarding.yearLabel")}</option>
             {years.map((y) => (
               <option key={y} value={y}>
                 {y}
@@ -113,7 +105,7 @@ export function ArrivalDateStep({ draft, update }: OnboardingStepProps) {
         >
           <Check className="h-3 w-3" />
         </span>
-        I haven&apos;t arrived in Canada yet
+        {t("onboardingWeb.arrival.notArrived")}
       </button>
     </div>
   );

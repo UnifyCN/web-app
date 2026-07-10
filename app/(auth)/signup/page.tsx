@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { Check, Lock, Mail } from "lucide-react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthButton } from "@/components/auth/AuthButton";
@@ -27,6 +28,7 @@ import { trackSignUpFailed, trackSignUpStarted } from "@/lib/analytics";
 /** Create account — email + password with a required consent checkbox (image 8). */
 export default function SignUpPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { container, item } = useStagger();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,14 +58,14 @@ export default function SignUpPage() {
     if (alreadyRegistered) {
       trackSignUpFailed();
       setSubmitting(false);
-      setError("An account with this email already exists. Try signing in.");
+      setError(t("authWeb.emailExistsTrySignIn"));
       return;
     }
     if (signUpError) {
       console.error("signUp failed", signUpError);
       trackSignUpFailed();
       setSubmitting(false);
-      setError(signUpError.message || "Couldn't create your account. Try again.");
+      setError(signUpError.message || t("authWeb.couldntCreateAccount"));
       return;
     }
     // Carry the consent timestamp to /verify-email, where it's stamped on the
@@ -74,11 +76,11 @@ export default function SignUpPage() {
 
   return (
     <AuthShell backHref="/welcome?step=4">
-      <h1 className="text-3xl font-bold text-ink">Create account</h1>
+      <h1 className="text-3xl font-bold text-ink">{t("auth.createAccount")}</h1>
       <p className="mt-1 text-sm text-ink-muted">
-        Already have an account?{" "}
+        {t("auth.alreadyHaveAccount")}
         <Link href="/login" className="font-semibold text-ink">
-          Log In
+          {t("auth.logIn")}
         </Link>
       </p>
 
@@ -93,7 +95,7 @@ export default function SignUpPage() {
             leftIcon={<Mail className="h-5 w-5" />}
             type="email"
             autoComplete="email"
-            placeholder="Email Address"
+            placeholder={t("auth.emailAddress")}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -102,7 +104,7 @@ export default function SignUpPage() {
           />
           {emailSuggestion && (
             <p className="mt-1 text-xs text-ink-muted">
-              Did you mean{" "}
+              {t("authWeb.didYouMean")}{" "}
               <button
                 type="button"
                 onClick={() => {
@@ -122,7 +124,7 @@ export default function SignUpPage() {
             leftIcon={<Lock className="h-5 w-5" />}
             type="password"
             autoComplete="new-password"
-            placeholder="Password"
+            placeholder={t("auth.password")}
             value={password}
             error={password.length > 0 && !passwordValid}
             onChange={(e) => {
@@ -133,12 +135,12 @@ export default function SignUpPage() {
           <PasswordStrengthBar password={password} />
           <FormError className="mt-1 text-xs text-ink-placeholder">
             {password.length > 0 && !passwordValid
-              ? `Use at least ${MIN_PASSWORD_LENGTH} characters.`
+              ? t("authWeb.useAtLeastChars", { count: MIN_PASSWORD_LENGTH })
               : null}
           </FormError>
           {password.length > 0 && isCommonPassword(password) && (
             <p className="mt-1 text-xs font-medium text-warning">
-              This password is too common.
+              {t("authWeb.passwordTooCommon")}
             </p>
           )}
         </motion.div>
@@ -147,7 +149,7 @@ export default function SignUpPage() {
             leftIcon={<Lock className="h-5 w-5" />}
             type="password"
             autoComplete="new-password"
-            placeholder="Confirm Password"
+            placeholder={t("auth.confirmPassword")}
             value={confirm}
             error={confirm.length > 0 && !match}
             onChange={(e) => {
@@ -156,12 +158,12 @@ export default function SignUpPage() {
             }}
           />
           <FormError className="mt-1 text-xs">
-            {confirm.length > 0 && !match ? "Passwords don't match." : null}
+            {confirm.length > 0 && !match ? t("auth.passwordsDoNotMatch") : null}
           </FormError>
           {confirm.length > 0 && match && (
             <p className="mt-1 flex items-center gap-1 text-xs font-medium text-priority-optional">
-              <Check className="h-3 w-3" strokeWidth={3} aria-hidden /> Passwords
-              match
+              <Check className="h-3 w-3" strokeWidth={3} aria-hidden />{" "}
+              {t("authWeb.passwordsMatch")}
             </p>
           )}
         </motion.div>
@@ -181,7 +183,7 @@ export default function SignUpPage() {
         <motion.div {...item} className="space-y-3">
           <FormError>{error}</FormError>
           <AuthButton type="submit" loading={submitting} disabled={!canSubmit}>
-            Sign Up
+            {t("auth.signUp")}
           </AuthButton>
         </motion.div>
       </motion.form>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn, moveCaretToEnd } from "@/lib/utils";
 import {
   CITY_OPTIONS,
@@ -22,6 +23,7 @@ const FIELD_CLASS =
 const SELECT_CLASS = cn(FIELD_CLASS, "appearance-none pr-10");
 
 export function LocationStep({ draft, update }: OnboardingStepProps) {
+  const { t } = useTranslation();
   const [other, setOther] = useState(
     () => draft.city !== "" && !KNOWN.has(draft.city),
   );
@@ -59,25 +61,25 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
   return (
     <div>
       <StepHeading
-        title="Where in Canada are you?"
-        subtitle="Helps surface local events, groups, and services."
+        title={t("onboardingWeb.location.title")}
+        subtitle={t("onboardingWeb.location.subtitle")}
       />
 
       <div className="mt-5 space-y-3">
         <div className="relative">
           <select
-            aria-label="City"
+            aria-label={t("onboarding.city")}
             className={SELECT_CLASS}
             value={other ? OTHER : draft.city}
             onChange={(e) => onCityChange(e.target.value)}
           >
-            <option value="">Select a city</option>
+            <option value="">{t("onboardingWeb.location.selectCity")}</option>
             {CITY_OPTIONS.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
             ))}
-            <option value={OTHER}>Other…</option>
+            <option value={OTHER}>{t("onboardingWeb.location.otherCity")}</option>
           </select>
           <ChevronDown
             className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder"
@@ -88,8 +90,8 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
         {other && (
           <input
             type="text"
-            aria-label="City name"
-            placeholder="Type your city"
+            aria-label={t("onboardingWeb.location.ariaCityName")}
+            placeholder={t("onboardingWeb.location.typeCity")}
             value={draft.city}
             onChange={(e) => update({ city: e.target.value })}
             onFocus={moveCaretToEnd}
@@ -99,7 +101,7 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
 
         <div className="relative">
           <select
-            aria-label="Province or territory"
+            aria-label={t("onboardingWeb.location.ariaProvince")}
             className={cn(
               SELECT_CLASS,
               autoFilled &&
@@ -108,7 +110,9 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
             value={draft.province}
             onChange={(e) => onProvinceChange(e.target.value)}
           >
-            <option value="">Select a province or territory</option>
+            <option value="">
+              {t("onboardingWeb.location.selectProvince")}
+            </option>
             {PROVINCES.map((p) => (
               <option key={p.code} value={p.code}>
                 {p.name}
@@ -117,7 +121,7 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
           </select>
           {autoFilled ? (
             <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-mention-blue">
-              Auto-filled
+              {t("onboarding.autoFilled")}
             </span>
           ) : (
             <ChevronDown

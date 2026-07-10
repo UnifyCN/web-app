@@ -5,8 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { UnifyLogo } from "@/components/UnifyLogo";
 import { AuthButton } from "@/components/auth/AuthButton";
+import { LanguagePicker } from "@/components/LanguagePicker";
 import {
   ChecklistGraphic,
   CommunityGraphic,
@@ -16,26 +18,10 @@ import {
 import { cn } from "@/lib/utils";
 
 const SLIDES = [
-  {
-    graphic: <CommunityGraphic />,
-    title: "Belonging Starts Here",
-    body: "Join city-based and topic-based groups, discover events, and connect with people going through similar experiences.",
-  },
-  {
-    graphic: <ChecklistGraphic />,
-    title: "Know What to Do Next",
-    body: "Get a personalized settlement checklist for your situation, and move forward step-by-step with more clarity and less stress.",
-  },
-  {
-    graphic: <CompanionGraphic />,
-    title: "Get Answers You Can Trust",
-    body: "Ask questions in the moment and get personalized, practical guidance grounded in trusted Canadian sources.",
-  },
-  {
-    graphic: <LearnGraphic />,
-    title: "Settle In With Confidence",
-    body: "Explore Unify's simple lessons and trusted resources on immigration, housing, finances, work, and everyday life in Canada.",
-  },
+  { graphic: <CommunityGraphic />, titleKey: "welcomeCarousel.slide1Title", bodyKey: "welcomeCarousel.slide1Body" },
+  { graphic: <ChecklistGraphic />, titleKey: "welcomeCarousel.slide2Title", bodyKey: "welcomeCarousel.slide2Body" },
+  { graphic: <CompanionGraphic />, titleKey: "welcomeCarousel.slide3Title", bodyKey: "welcomeCarousel.slide3Body" },
+  { graphic: <LearnGraphic />, titleKey: "welcomeCarousel.slide4Title", bodyKey: "welcomeCarousel.slide4Body" },
 ];
 
 const slideVariants: Variants = {
@@ -50,6 +36,7 @@ const slideVariants: Variants = {
 function WelcomeScreen() {
   const router = useRouter();
   const reduce = useReducedMotion();
+  const { t } = useTranslation();
   const params = useSearchParams();
   const requested = Number(params.get("step"));
   const initialStep =
@@ -78,7 +65,7 @@ function WelcomeScreen() {
             <button
               type="button"
               onClick={goBack}
-              aria-label="Back"
+              aria-label={t("common.back")}
               className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-ink-secondary transition-all hover:-translate-x-0.5 hover:bg-surface-gray motion-reduce:transition-none motion-reduce:hover:translate-x-0"
             >
               <ChevronLeft className="h-6 w-6" aria-hidden />
@@ -86,15 +73,18 @@ function WelcomeScreen() {
           ) : (
             <span />
           )}
-          {!isCta && (
-            <button
-              type="button"
-              onClick={() => go(SLIDES.length)}
-              className="-mr-2 flex min-h-11 items-center px-2 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
-            >
-              Skip
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+            {!isCta && (
+              <button
+                type="button"
+                onClick={() => go(SLIDES.length)}
+                className="flex min-h-11 items-center px-2 text-sm font-medium text-ink-muted transition-colors hover:text-ink"
+              >
+                {t("common.skip")}
+              </button>
+            )}
+            <LanguagePicker />
+          </div>
         </div>
 
         <AnimatePresence mode="wait" custom={motionDir} initial={false}>
@@ -113,22 +103,21 @@ function WelcomeScreen() {
                 <div className="flex flex-1 flex-col items-center justify-center text-center">
                   <UnifyLogo variant="mark" size={120} priority />
                   <h1 className="mt-10 text-3xl font-bold text-ink">
-                    Start Building Your Life in Canada
+                    {t("auth.welcome.title")}
                   </h1>
                   <p className="mt-4 text-base leading-relaxed text-ink-muted">
-                    Connect with fellow newcomers, learn essential skills, and
-                    build your community — all in one place.
+                    {t("auth.welcome.subtitle")}
                   </p>
                 </div>
                 <div className="space-y-3">
                   <AuthButton onClick={() => router.push("/signup")}>
-                    Create My Account
+                    {t("auth.welcome.createAccount")}
                   </AuthButton>
                   <Link
                     href="/login"
                     className="flex h-14 w-full items-center justify-center rounded-full border border-border-card bg-surface text-base font-semibold text-ink transition-colors hover:bg-surface-gray"
                   >
-                    Log In
+                    {t("auth.welcome.logIn")}
                   </Link>
                 </div>
               </>
@@ -139,18 +128,18 @@ function WelcomeScreen() {
                 </div>
                 <div className="text-center">
                   <h1 className="text-3xl font-bold text-ink">
-                    {SLIDES[step].title}
+                    {t(SLIDES[step].titleKey)}
                   </h1>
                   <p className="mx-auto mt-4 max-w-sm text-base leading-relaxed text-ink-muted">
-                    {SLIDES[step].body}
+                    {t(SLIDES[step].bodyKey)}
                   </p>
                 </div>
                 <div className="mt-8 space-y-6">
-                  <AuthButton onClick={goNext}>Continue</AuthButton>
+                  <AuthButton onClick={goNext}>{t("common.continue")}</AuthButton>
                   <div className="flex items-center justify-center gap-2">
                     {SLIDES.map((slide, i) => (
                       <span
-                        key={slide.title}
+                        key={slide.titleKey}
                         className={cn(
                           "h-2 rounded-full transition-all",
                           i === step ? "w-6 bg-ink" : "w-2 bg-border-card",

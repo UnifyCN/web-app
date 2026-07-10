@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { MAIN_NAV, SETTINGS_ITEM, isNavItemActive } from "./navItems";
 
@@ -18,6 +19,7 @@ const TABS = [...MAIN_NAV, SETTINGS_ITEM];
  */
 export function BottomNav() {
   const pathname = usePathname();
+  const { t } = useTranslation();
 
   return (
     <nav
@@ -41,7 +43,7 @@ export function BottomNav() {
             )}
           >
             <Icon className="h-5 w-5 shrink-0" />
-            <span className="w-full truncate text-center">{item.label}</span>
+            <span className="w-full truncate text-center">{t(item.labelKey)}</span>
           </Link>
         );
       })}

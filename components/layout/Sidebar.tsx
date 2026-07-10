@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { LogOut } from "lucide-react";
 import { UnifyLogo } from "@/components/UnifyLogo";
 import { signOut as signOutService } from "@/services/auth";
@@ -31,6 +32,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const signOut = async () => {
     // Capture before sign-out: signOut() triggers the auth listener's
@@ -71,7 +73,7 @@ export function Sidebar() {
         )}
       >
         <Icon className="h-5 w-5 shrink-0" />
-        <span className="w-full truncate text-center">{item.label}</span>
+        <span className="w-full truncate text-center">{t(item.labelKey)}</span>
       </Link>
     );
   };
@@ -111,7 +113,7 @@ export function Sidebar() {
           )}
         >
           <LogOut className="h-5 w-5 shrink-0" />
-          <span className="w-full truncate text-center">Sign out</span>
+          <span className="w-full truncate text-center">{t("nav.signOut")}</span>
         </button>
       </div>
     </aside>

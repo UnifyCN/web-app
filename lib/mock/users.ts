@@ -26,6 +26,7 @@ export const currentUser: UserProfile = {
     learningInterests: ["Banking", "Housing", "Employment"],
     hobbies: ["career_growth", "exploring_canada", "personal_finance"],
     learningReminders: true,
+    preferredLanguage: "en",
   },
 };
 
@@ -53,6 +54,7 @@ export const priya: UserProfile = {
     learningInterests: ["Documentation", "Employment"],
     hobbies: ["education", "food_cooking"],
     learningReminders: true,
+    preferredLanguage: "en",
   },
 };
 
@@ -80,6 +82,7 @@ export const ahmed: UserProfile = {
     learningInterests: ["Housing", "Healthcare"],
     hobbies: ["family_parenting", "fitness"],
     learningReminders: false,
+    preferredLanguage: "en",
   },
 };
 
@@ -107,6 +110,7 @@ export const mei: UserProfile = {
     learningInterests: ["Healthcare", "Banking"],
     hobbies: ["technology", "wellness"],
     learningReminders: true,
+    preferredLanguage: "en",
   },
 };
 
@@ -134,6 +138,7 @@ export const carlos: UserProfile = {
     learningInterests: ["Daily Life", "Employment"],
     hobbies: ["music", "movies"],
     learningReminders: false,
+    preferredLanguage: "en",
   },
 };
 
@@ -161,6 +166,7 @@ export const olena: UserProfile = {
     learningInterests: ["Employment", "Documentation"],
     hobbies: ["career_growth", "education"],
     learningReminders: true,
+    preferredLanguage: "en",
   },
 };
 
