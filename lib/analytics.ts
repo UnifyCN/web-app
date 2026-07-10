@@ -206,3 +206,34 @@ export const trackGroupJoined = (p: { groupId: number; groupName: string }) =>
 
 export const trackGroupViewed = (p: { groupId: number; groupName: string }) =>
   capture("group_viewed", { group_id: p.groupId, group_name: p.groupName });
+
+/* ---- Content translation (i18n Phase 2) -------------------------------- */
+
+export const trackTranslationRequested = (p: {
+  type: "post" | "comment";
+  targetLanguage: string;
+  postId?: number;
+}) =>
+  capture("translation_requested", {
+    type: p.type,
+    target_language: p.targetLanguage,
+    ...(p.postId != null ? { post_id: p.postId } : {}),
+  });
+
+export const trackTranslationCacheHit = (p: {
+  type: "post" | "comment";
+  targetLanguage: string;
+}) =>
+  capture("translation_cache_hit", {
+    type: p.type,
+    target_language: p.targetLanguage,
+  });
+
+export const trackTranslationCacheMiss = (p: {
+  type: "post" | "comment";
+  targetLanguage: string;
+}) =>
+  capture("translation_cache_miss", {
+    type: p.type,
+    target_language: p.targetLanguage,
+  });
