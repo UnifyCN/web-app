@@ -24,7 +24,11 @@ export function useLanguage() {
       markUserPicked();
       persistLocale(lang);
       await i18n.changeLanguage(lang);
-      await updatePreferredLanguage(lang);
+      try {
+        await updatePreferredLanguage(lang);
+      } catch (e) {
+        console.error("preferred_language sync failed", e);
+      }
       queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
     },
     [i18n, queryClient],

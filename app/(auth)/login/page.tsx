@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Lock, Mail } from "lucide-react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthButton } from "@/components/auth/AuthButton";
@@ -149,25 +149,27 @@ function LoginScreen() {
       <OAuthButtons onError={(m) => setError(m || null)} />
 
       <p className="mt-8 text-center text-xs leading-relaxed text-ink-placeholder">
-        {t("auth.agreeTermsSignIn")}{" "}
-        <a
-          href={LEGAL_URLS.termsOfService}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-ink-muted underline"
-        >
-          {t("auth.termsOfService")}
-        </a>{" "}
-        {t("auth.and")}{" "}
-        <a
-          href={LEGAL_URLS.privacyPolicy}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-ink-muted underline"
-        >
-          {t("auth.privacyPolicy")}
-        </a>
-        .
+        <Trans
+          i18nKey="auth.legalSignIn"
+          components={{
+            terms: (
+              <a
+                href={LEGAL_URLS.termsOfService}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-ink-muted underline"
+              />
+            ),
+            privacy: (
+              <a
+                href={LEGAL_URLS.privacyPolicy}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-ink-muted underline"
+              />
+            ),
+          }}
+        />
       </p>
     </AuthShell>
   );

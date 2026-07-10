@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Lock } from "lucide-react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthButton } from "@/components/auth/AuthButton";
@@ -84,9 +84,13 @@ function ResetPasswordScreen() {
     <AuthShell backHref="/login">
       <h1 className="text-3xl font-bold text-ink">{t("auth.resetPassword")}</h1>
       <p className="mt-1 text-sm text-ink-muted">
-        {t("authWeb.resetEnterCodePrefix")}
-        <span className="font-semibold text-ink-secondary">{email}</span>
-        {t("authWeb.resetEnterCodeSuffix")}
+        <Trans
+          i18nKey="authWeb.resetEnterCode"
+          values={{ email }}
+          components={{
+            email: <span className="font-semibold text-ink-secondary" />,
+          }}
+        />
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
