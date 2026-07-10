@@ -51,7 +51,11 @@ function useContentTranslation(type: "post" | "comment", id: number) {
   });
 
   return {
-    /** Trigger the translation (or re-read it from the TanStack cache). */
+    /**
+     * Trigger the translation. Note: `query.refetch` always invokes `queryFn`
+     * (a network request + quota spend) even when cached data exists — check
+     * `translation` first and skip calling this to avoid redundant requests.
+     */
     translate: query.refetch,
     translation: query.data,
     isTranslating: query.isFetching,

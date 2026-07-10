@@ -291,7 +291,8 @@ Deno.serve(async req => {
         .rpc('refund_translation_request', { p_user_id: userId })
         .then(({ error }) => {
           if (error) console.error('translate-content refund failed:', error);
-        });
+        })
+        .catch((err) => console.error('translate-content refund threw:', err));
       let status = 502;
       if (llmResult.status === 504) status = 504;
       else if (llmResult.retryable) status = 503;
@@ -308,7 +309,8 @@ Deno.serve(async req => {
         .rpc('refund_translation_request', { p_user_id: userId })
         .then(({ error }) => {
           if (error) console.error('translate-content refund failed:', error);
-        });
+        })
+        .catch((err) => console.error('translate-content refund threw:', err));
       return jsonResponse({ error: 'No translation generated' }, 502);
     }
 

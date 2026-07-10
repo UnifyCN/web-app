@@ -37,7 +37,16 @@ async function requestTranslation(
   targetLanguage: SupportedLanguage,
 ): Promise<TranslationResult> {
   if (!isSupabaseConfigured()) {
-    throw new Error("Translation is unavailable in this environment.");
+    // Mock fallback for local dev without Supabase env vars, matching the
+    // other services: return a deterministic fake translation instead of
+    // hard-failing so the Translate UI stays usable.
+    return {
+      translatedContent: `[${targetLanguage}] Mock translation of ${type} #${id}`,
+      translatedTitle:
+        type === "post" ? `[${targetLanguage}] Mock translated title` : null,
+      sourceLang: "en",
+      cached: false,
+    };
   }
 
   const res = await fetch("/api/translate", {
