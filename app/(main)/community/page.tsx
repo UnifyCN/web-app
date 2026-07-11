@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Search, Users, CalendarDays, MessageCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Tabs } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
 import { GroupCard } from "@/components/community/GroupCard";
@@ -21,29 +22,34 @@ import {
   useStartCircleMatching,
 } from "@/hooks/useCommunity";
 
-const TAB_GROUPS = "Join Groups";
-const TAB_EVENTS = "Community Events";
-const TAB_NEWS = "News & Tips";
-const TAB_CIRCLES = "Unify Circles";
-// Circles is hidden for now — re-enable by adding TAB_CIRCLES back to this array.
+const TAB_GROUPS = "groups";
+const TAB_EVENTS = "events";
+const TAB_NEWS = "news";
+const TAB_CIRCLES = "circles";
+// Stable tab keys stay in state; labels are translated at render time.
+// Circles is hidden for now — re-enable by adding the circles entry back to this array.
 // The TAB_CIRCLES constant, CIRCLE_FEATURES, hooks, and render block below are left intact.
-const TABS = [TAB_GROUPS, TAB_EVENTS, TAB_NEWS];
+const TAB_DEFS: { key: string; labelKey: string }[] = [
+  { key: TAB_GROUPS, labelKey: "groups.joinGroups" },
+  { key: TAB_EVENTS, labelKey: "events.title" },
+  { key: TAB_NEWS, labelKey: "news.title" },
+];
 
 const CIRCLE_FEATURES = [
   {
     icon: Users,
-    title: "Matching",
-    description: "Get paired based on your own journey and background.",
+    titleKey: "circles.matching",
+    descriptionKey: "circles.matchingDesc",
   },
   {
     icon: CalendarDays,
-    title: "2-Week Duration",
-    description: "Fixed duration with icebreakers and prompts to keep it going.",
+    titleKey: "circles.twoWeekDuration",
+    descriptionKey: "circles.twoWeekDesc",
   },
   {
     icon: MessageCircle,
-    title: "Group Chat",
-    description: "Connect and share experiences in a safe space.",
+    titleKey: "circles.groupChat",
+    descriptionKey: "circles.groupChatDesc",
   },
 ];
 
@@ -93,7 +99,8 @@ function MyGroupsStripSkeleton() {
 }
 
 export default function CommunityPage() {
-  const [activeTab, setActiveTab] = useState(TABS[0]);
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState(TAB_DEFS[0].key);
   const [search, setSearch] = useState("");
   const [requestOpen, setRequestOpen] = useState(false);
 
@@ -114,13 +121,27 @@ export default function CommunityPage() {
     group.groupName.toLowerCase().includes(search.trim().toLowerCase()),
   );
 
+  // The shared Tabs primitive compares labels by string equality, so pass the
+  // translated labels and map the selected label back to its stable key.
+  const tabLabels = TAB_DEFS.map((tab) => t(tab.labelKey));
+  const activeTabLabel =
+    tabLabels[TAB_DEFS.findIndex((tab) => tab.key === activeTab)] ??
+    tabLabels[0];
+
   return (
     <div className="mx-auto max-w-[1080px] animate-fade-in px-6 py-6">
       <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
-        Community
+        {t("tabs.community")}
       </h1>
 
-      <Tabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
+      <Tabs
+        tabs={tabLabels}
+        activeTab={activeTabLabel}
+        onChange={(label) => {
+          const index = tabLabels.indexOf(label);
+          if (index >= 0) setActiveTab(TAB_DEFS[index].key);
+        }}
+      />
 
       <div className="mt-6">
         {activeTab === TAB_GROUPS && (
@@ -134,8 +155,8 @@ export default function CommunityPage() {
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search groups"
-                aria-label="Search groups"
+                placeholder={t("groups.searchGroups")}
+                aria-label={t("groups.searchGroups")}
                 className="h-10 w-full rounded-lg border border-border-card bg-surface pl-9 pr-3 text-base text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
             </div>
@@ -175,7 +196,7 @@ export default function CommunityPage() {
                 role="alert"
                 className="py-12 text-center text-sm text-destructive"
               >
-                Couldn&apos;t load groups.
+                {t("groups.failedLoad")}
               </p>
             ) : filteredGroups.length > 0 ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -186,8 +207,8 @@ export default function CommunityPage() {
             ) : (
               <p className="py-12 text-center text-sm text-ink-placeholder">
                 {search.trim() === ""
-                  ? "No groups yet."
-                  : "No groups match your search."}
+                  ? t("groups.noGroupsYet")
+                  : t("groups.noGroupsMatch")}
               </p>
             )}
 
@@ -196,7 +217,7 @@ export default function CommunityPage() {
               className="w-full"
               onClick={() => setRequestOpen(true)}
             >
-              Request a Group
+              {t("groups.requestGroup")}
             </Button>
           </div>
         )}
@@ -206,7 +227,7 @@ export default function CommunityPage() {
             <EventsSkeleton />
           ) : eventsQuery.error ? (
             <p role="alert" className="py-12 text-center text-sm text-destructive">
-              Couldn&apos;t load events.
+              {t("events.failedLoad")}
             </p>
           ) : events.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -216,7 +237,7 @@ export default function CommunityPage() {
             </div>
           ) : (
             <p className="py-12 text-center text-sm text-ink-placeholder">
-              No upcoming events.
+              {t("events.noUpcoming")}
             </p>
           )
         )}
@@ -250,7 +271,7 @@ export default function CommunityPage() {
                 role="alert"
                 className="py-12 text-center text-sm text-destructive"
               >
-                Couldn&apos;t load news.
+                {t("news.loadError")}
               </p>
             ) : newsItems.length > 0 ? (
               <div className="divide-y divide-border-card rounded-card border border-border-card bg-surface px-4">
@@ -260,7 +281,7 @@ export default function CommunityPage() {
               </div>
             ) : (
               <p className="py-12 text-center text-sm text-ink-placeholder">
-                No news yet.
+                {t("news.noNews")}
               </p>
             )}
           </div>
@@ -270,14 +291,14 @@ export default function CommunityPage() {
           <div className="max-w-2xl space-y-4">
             {circleQuery.isLoading ? (
               <p className="py-12 text-center text-sm text-ink-muted">
-                Loading…
+                {t("common.loading")}
               </p>
             ) : circleQuery.error ? (
               <p
                 role="alert"
                 className="py-12 text-center text-sm text-destructive"
               >
-                Couldn&apos;t load your circle.
+                {t("circles.failedLoad")}
               </p>
             ) : (
               <CirclesEntryCard
@@ -290,7 +311,7 @@ export default function CommunityPage() {
 
             {(startMatching.error || cancelMatching.error) && (
               <p role="alert" className="text-sm text-destructive">
-                Couldn&apos;t update your matching status. Please try again.
+                {t("circles.updateMatchingFailed")}
               </p>
             )}
 
@@ -298,16 +319,16 @@ export default function CommunityPage() {
               {CIRCLE_FEATURES.map((feature) => {
                 const Icon = feature.icon;
                 return (
-                  <div key={feature.title} className="flex gap-3">
+                  <div key={feature.titleKey} className="flex gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-bg">
                       <Icon className="h-5 w-5 text-primary" aria-hidden />
                     </span>
                     <div>
                       <p className="text-sm font-semibold text-ink-secondary">
-                        {feature.title}
+                        {t(feature.titleKey)}
                       </p>
                       <p className="mt-0.5 text-xs leading-relaxed text-ink-muted">
-                        {feature.description}
+                        {t(feature.descriptionKey)}
                       </p>
                     </div>
                   </div>

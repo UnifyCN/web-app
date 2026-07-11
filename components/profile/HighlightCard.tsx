@@ -1,10 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { Quote } from "lucide-react";
 import type { LessonHighlight } from "@/lib/mock/users";
 
 /** A saved text highlight from a Learn lesson; links back to the lesson when
  * the deep-link ids are known. */
 export function HighlightCard({ highlight }: { highlight: LessonHighlight }) {
+  const { t } = useTranslation();
   const href =
     highlight.moduleId && highlight.submoduleId && highlight.lessonId
       ? `/learn/${highlight.moduleId}/${highlight.submoduleId}/${highlight.lessonId}`
@@ -17,7 +21,10 @@ export function HighlightCard({ highlight }: { highlight: LessonHighlight }) {
         {highlight.text}
       </p>
       <p className="mt-2 text-xs text-ink-placeholder">
-        From {highlight.lessonTitle} · {highlight.moduleTitle}
+        {t("profile.highlightFrom", {
+          lesson: highlight.lessonTitle,
+          module: highlight.moduleTitle,
+        })}
       </p>
     </>
   );

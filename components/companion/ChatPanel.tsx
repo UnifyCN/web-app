@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PanelLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { StarterPromptChips } from "./StarterPromptChips";
 import { MessageBubble } from "./MessageBubble";
@@ -56,6 +57,7 @@ export function ChatPanel({
   mobileActive,
   onOpenList,
 }: ChatPanelProps) {
+  const { t } = useTranslation();
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState("");
@@ -87,13 +89,13 @@ export function ChatPanel({
         <button
           type="button"
           onClick={onOpenList}
-          aria-label="Conversations"
+          aria-label={t("companion.conversationsAria")}
           className="-ml-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
         >
           <PanelLeft className="h-5 w-5" aria-hidden />
         </button>
         <h1 className="truncate text-sm font-semibold text-ink-secondary">
-          {conversation?.title ?? "New conversation"}
+          {conversation?.title ?? t("companion.newConversation")}
         </h1>
       </header>
 
@@ -101,7 +103,7 @@ export function ChatPanel({
       {conversation && (
         <header className="hidden h-14 shrink-0 items-center border-b border-border-card px-6 md:flex">
           <h1 className="truncate text-sm font-semibold text-ink-secondary">
-            {conversation.title ?? "New conversation"}
+            {conversation.title ?? t("companion.newConversation")}
           </h1>
         </header>
       )}
@@ -131,13 +133,15 @@ export function ChatPanel({
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-6 py-16 text-center">
             <h1 className="text-2xl font-bold text-ink-secondary">
-              {firstName ? `Ask me anything, ${firstName}.` : "Ask me anything."}
+              {firstName
+                ? t("companion.welcomeTitleNamed", { name: firstName })
+                : t("companion.welcomeTitle")}
             </h1>
             <p className="mt-1 text-sm text-ink-muted">
-              Fact-checked answers about anything in Canada.
+              {t("companion.welcomeCaption")}
             </p>
             <p className="mb-3 mt-8 self-start text-xs font-medium text-ink-placeholder">
-              Try one of these
+              {t("companion.tryOneOfThese")}
             </p>
             <StarterPromptChips
               onSelect={handleSubmit}
@@ -166,7 +170,7 @@ export function ChatPanel({
           />
           <FreeTierIndicator remaining={freeTierRemaining} />
           <p className="text-center text-xs text-ink-placeholder">
-            Companion can make mistakes. Verify important info.
+            {t("companion.disclaimer")}
           </p>
         </div>
       </div>

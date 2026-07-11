@@ -3,14 +3,16 @@
 import { useState } from "react";
 import { StorageImage } from "@/components/ui/StorageImage";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { Heart, MessageCircle, Bookmark, Pin } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { useLikePost, useSavePost } from "@/hooks/useFeed";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
 import { PostModerationMenu } from "@/components/moderation/PostModerationMenu";
 import { TranslateButton } from "@/components/home/TranslateButton";
-import { cn, formatRelativeTime, stripHtml } from "@/lib/utils";
+import { cn, stripHtml } from "@/lib/utils";
 import type { Post } from "@/types";
 
 /** A single feed post — header, body, optional images, and an action row.
@@ -24,6 +26,8 @@ export function PostCard({
   post: Post;
   linkToDetail?: boolean;
 }) {
+  const { t } = useTranslation();
+  const formatRelativeTime = useRelativeTime();
   const [liked, setLiked] = useState(post.likedByMe ?? false);
   const [saved, setSaved] = useState(post.savedByMe ?? false);
   const [popping, setPopping] = useState(false);
@@ -87,7 +91,9 @@ export function PostCard({
       <div className="flex items-center gap-3">
         <Link
           href={profileHref}
-          aria-label={`View ${post.author.username}'s profile`}
+          aria-label={t("posts.viewProfileAria", {
+            username: post.author.username,
+          })}
           className="shrink-0 rounded-full transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <Avatar
@@ -113,7 +119,7 @@ export function PostCard({
         {post.isPinned && (
           <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary">
             <Pin className="h-3.5 w-3.5" aria-hidden />
-            Pinned
+            {t("common.pinned")}
           </span>
         )}
         <PostModerationMenu post={post} />
@@ -144,15 +150,18 @@ export function PostCard({
               key={`${url}-${index}`}
               type="button"
               onClick={() => setLightboxIndex(index)}
-              aria-label={`View image ${index + 1} full screen`}
+              aria-label={t("posts.viewImageAria", { number: index + 1 })}
               className="relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-lg border border-border"
             >
               <StorageImage
                 src={url}
                 alt={
                   cleanTitle
-                    ? `${cleanTitle} — image ${index + 1}`
-                    : `Post image ${index + 1}`
+                    ? t("posts.postImageAltTitled", {
+                        title: cleanTitle,
+                        number: index + 1,
+                      })
+                    : t("posts.postImageAlt", { number: index + 1 })
                 }
                 className="absolute inset-0 h-full w-full object-cover"
               />
@@ -178,7 +187,7 @@ export function PostCard({
           type="button"
           onClick={toggleLike}
           aria-pressed={liked}
-          aria-label={liked ? "Unlike post" : "Like post"}
+          aria-label={liked ? t("posts.unlikeAria") : t("posts.likeAria")}
           className="flex cursor-pointer items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
         >
           <Heart
@@ -195,7 +204,7 @@ export function PostCard({
         {linkToDetail ? (
           <Link
             href={detailHref}
-            aria-label="View comments"
+            aria-label={t("posts.viewCommentsAria")}
             className="flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
           >
             <MessageCircle className="h-5 w-5" aria-hidden />
@@ -212,7 +221,7 @@ export function PostCard({
           type="button"
           onClick={toggleSave}
           aria-pressed={saved}
-          aria-label={saved ? "Remove from saved" : "Save post"}
+          aria-label={saved ? t("posts.unsaveAria") : t("posts.saveAria")}
           className="flex cursor-pointer items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
         >
           <Bookmark

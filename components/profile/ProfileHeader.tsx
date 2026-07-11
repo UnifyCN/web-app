@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Calendar, Camera, Loader2, MapPin, Pencil } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -63,6 +64,7 @@ export function ProfileHeader({
   isOwnProfile,
   followsYou = false,
 }: ProfileHeaderProps) {
+  const { t, i18n } = useTranslation();
   const [editing, setEditing] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -83,9 +85,9 @@ export function ProfileHeader({
   };
 
   const avatarError = updateAvatar.isError
-    ? errorText(updateAvatar.error, "Couldn't update your photo.")
+    ? errorText(updateAvatar.error, t("settingsWeb.photoUpdateError"))
     : removeAvatar.isError
-      ? errorText(removeAvatar.error, "Couldn't remove your photo.")
+      ? errorText(removeAvatar.error, t("settingsWeb.photoRemoveError"))
       : null;
 
   const handleSaveDetails = () => {
@@ -106,7 +108,7 @@ export function ProfileHeader({
   const firstName = profile.onboarding?.firstName?.trim();
 
   const memberSince = profile.createdAt
-    ? new Date(profile.createdAt).toLocaleDateString("en-CA", {
+    ? new Date(profile.createdAt).toLocaleDateString(i18n.language, {
         month: "long",
         year: "numeric",
       })
@@ -115,7 +117,7 @@ export function ProfileHeader({
   const followsYouBadge =
     followsYou && !isOwnProfile ? (
       <span className="shrink-0 rounded-full bg-surface-gray px-2 py-0.5 text-[11px] font-medium text-ink-muted">
-        Follows you
+        {t("profile.followsYou")}
       </span>
     ) : null;
 
@@ -134,7 +136,7 @@ export function ProfileHeader({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={avatarBusy}
-                aria-label="Change profile photo"
+                aria-label={t("profile.changePhotoAria")}
                 className="absolute -right-1 -bottom-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-surface bg-primary text-white shadow-sm transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {avatarBusy ? (
@@ -200,7 +202,7 @@ export function ProfileHeader({
       {memberSince && (
         <p className="mt-3 flex items-center gap-1.5 text-xs text-ink-placeholder">
           <Calendar className="h-3.5 w-3.5" aria-hidden />
-          Member since {memberSince}
+          {t("profile.memberSince", { date: memberSince })}
         </p>
       )}
 
@@ -231,7 +233,7 @@ export function ProfileHeader({
             onClick={() => setEditing(true)}
             className="mt-3 cursor-pointer text-left text-xs font-medium text-primary hover:underline"
           >
-            Complete your profile to add your persona, location, and stage.
+            {t("profile.completeProfileHint")}
           </button>
         )
       )}
@@ -239,21 +241,21 @@ export function ProfileHeader({
       {editingDetails ? (
         <div className="mt-3 space-y-2">
           <textarea
-            aria-label="Bio"
+            aria-label={t("settingsWeb.bio")}
             value={bioDraft}
             onChange={(event) => setBioDraft(event.target.value)}
             rows={3}
             maxLength={300}
-            placeholder="Add a short bio"
+            placeholder={t("settingsWeb.bioPlaceholder")}
             className="w-full resize-none rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink-muted outline-none focus:border-primary"
           />
           <input
             type="text"
-            aria-label="Pronouns"
+            aria-label={t("settingsWeb.pronouns")}
             value={pronounsDraft}
             onChange={(event) => setPronounsDraft(event.target.value)}
             maxLength={30}
-            placeholder="Pronouns (e.g. she/her)"
+            placeholder={t("profile.pronounsPlaceholder")}
             onFocus={moveCaretToEnd}
             className="w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink-muted outline-none focus:border-primary"
           />
@@ -264,7 +266,7 @@ export function ProfileHeader({
               loading={updateDetails.isPending}
               onClick={handleSaveDetails}
             >
-              Save
+              {t("common.save")}
             </Button>
             <Button
               variant="ghost"
@@ -272,12 +274,12 @@ export function ProfileHeader({
               disabled={updateDetails.isPending}
               onClick={() => setEditingDetails(false)}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
           {updateDetails.isError && (
             <p className="text-xs text-destructive" role="alert">
-              {errorText(updateDetails.error, "Couldn't save your changes.")}
+              {errorText(updateDetails.error, t("settingsWeb.saveChangesError"))}
             </p>
           )}
         </div>
@@ -290,7 +292,7 @@ export function ProfileHeader({
             <button
               type="button"
               onClick={openDetailsEditor}
-              aria-label="Edit bio and pronouns"
+              aria-label={t("profile.editBioAria")}
               className="shrink-0 cursor-pointer p-2 text-ink-placeholder transition-colors hover:text-primary"
             >
               <Pencil className="h-3.5 w-3.5" aria-hidden />
@@ -304,7 +306,7 @@ export function ProfileHeader({
             onClick={openDetailsEditor}
             className="mt-3 cursor-pointer text-left text-xs font-medium text-primary hover:underline"
           >
-            Add a bio and pronouns
+            {t("profile.addBioPrompt")}
           </button>
         )
       )}
@@ -323,10 +325,10 @@ export function ProfileHeader({
               size="sm"
               onClick={() => setEditing(true)}
             >
-              Edit profile
+              {t("settingsWeb.editProfile")}
             </Button>
             <Button variant="secondary" size="sm">
-              Share profile
+              {t("profile.shareProfile")}
             </Button>
             {profile.profilePictureUrl && (
               <Button
@@ -335,7 +337,7 @@ export function ProfileHeader({
                 loading={removeAvatar.isPending}
                 onClick={() => removeAvatar.mutate()}
               >
-                Remove photo
+                {t("profile.removePhoto")}
               </Button>
             )}
           </>

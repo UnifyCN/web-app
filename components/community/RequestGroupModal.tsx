@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 
 interface RequestGroupModalProps {
@@ -33,6 +34,7 @@ function Field({
 
 /** "Request a Group" form modal. Frontend stub — no real submission. */
 export function RequestGroupModal({ open, onClose }: RequestGroupModalProps) {
+  const { t } = useTranslation();
   const [groupName, setGroupName] = useState("");
   const [audience, setAudience] = useState("");
   const [reason, setReason] = useState("");
@@ -96,7 +98,7 @@ export function RequestGroupModal({ open, onClose }: RequestGroupModalProps) {
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Request a group"
+        aria-label={t("groups.requestGroup")}
       >
         {submitted ? (
           <div className="flex flex-col items-center px-6 py-12 text-center">
@@ -104,22 +106,22 @@ export function RequestGroupModal({ open, onClose }: RequestGroupModalProps) {
               <Check className="h-6 w-6 text-priority-optional" aria-hidden />
             </span>
             <h2 className="mt-4 text-base font-semibold text-ink-secondary">
-              Request sent!
+              {t("groups.requestSent")}
             </h2>
             <p className="mt-1 text-sm text-ink-muted">
-              Thanks — we review every request and follow up by email.
+              {t("groups.requestFollowUp")}
             </p>
           </div>
         ) : (
           <>
             <div className="flex items-center justify-between border-b border-border-card px-5 py-4">
               <h2 className="text-base font-semibold text-ink-secondary">
-                Request a Group
+                {t("groups.requestGroup")}
               </h2>
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Close"
+                aria-label={t("common.close")}
                 className="cursor-pointer rounded-md p-2 text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
               >
                 <X className="h-5 w-5" aria-hidden />
@@ -129,51 +131,51 @@ export function RequestGroupModal({ open, onClose }: RequestGroupModalProps) {
               onSubmit={handleSubmit}
               className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4"
             >
-              <Field label="Group name">
+              <Field label={t("groups.requestNameLabel")}>
                 <input
                   type="text"
                   value={groupName}
                   onChange={(event) => setGroupName(event.target.value)}
-                  placeholder="e.g. Newcomer Cyclists"
+                  placeholder={t("groups.requestNamePlaceholder")}
                   className={INPUT_CLASS}
                 />
               </Field>
-              <Field label="Who is this group for?">
+              <Field label={t("groups.requestAudienceLabel")}>
                 <input
                   type="text"
                   value={audience}
                   onChange={(event) => setAudience(event.target.value)}
-                  placeholder="e.g. Newcomers who commute by bike"
+                  placeholder={t("groups.requestAudiencePlaceholder")}
                   className={INPUT_CLASS}
                 />
               </Field>
-              <Field label="Why should we create it?">
+              <Field label={t("groups.requestReasonLabel")}>
                 <textarea
                   value={reason}
                   onChange={(event) => setReason(event.target.value)}
-                  placeholder="Tell us a little about the need (at least 10 characters)."
+                  placeholder={t("groups.requestReasonPlaceholder")}
                   className={`${INPUT_CLASS} min-h-[88px] resize-none`}
                 />
               </Field>
-              <Field label="Your email">
+              <Field label={t("groups.requestEmailLabel")}>
                 <input
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@example.com"
+                  placeholder={t("groups.requestEmailPlaceholder")}
                   className={INPUT_CLASS}
                 />
               </Field>
-              <Field label="Anything else? (optional)">
+              <Field label={t("groups.requestNotesLabel")}>
                 <textarea
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
-                  placeholder="Extra notes for the team"
+                  placeholder={t("groups.requestNotesPlaceholder")}
                   className={`${INPUT_CLASS} min-h-[64px] resize-none`}
                 />
               </Field>
               <p className="text-xs text-ink-placeholder">
-                We review every request and follow up by email.
+                {t("groups.requestReviewNote")}
               </p>
               <Button
                 type="submit"
@@ -181,7 +183,7 @@ export function RequestGroupModal({ open, onClose }: RequestGroupModalProps) {
                 className="w-full"
                 disabled={!canSubmit}
               >
-                Send Request
+                {t("groups.sendRequest")}
               </Button>
             </form>
           </>

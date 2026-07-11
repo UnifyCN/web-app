@@ -7,14 +7,16 @@ import { NationalNewsWidget } from "./NationalNewsWidget";
  * above it below the `lg` breakpoint (matches the tablet mockup).
  *
  * On phones the home page splits Feed / News / Learning into tabs (the stacked
- * column buried the feed). `mobileSection` selects which widget shows below the
- * `md` breakpoint; both are always visible at `md+`. When the prop is omitted the
- * column behaves exactly as before (both widgets, all breakpoints).
+ * column buried the feed). `mobileSection` is the stable section id from the
+ * home page ("feed" | "news" | "learning" — never a translated label) and
+ * selects which widget shows below the `md` breakpoint; both are always visible
+ * at `md+`. When the prop is omitted the column behaves exactly as before
+ * (both widgets, all breakpoints).
  */
 export function RightPanel({ mobileSection }: { mobileSection?: string }) {
-  const asideMobile = mobileSection === "Feed" ? "hidden" : "block";
-  const learningMobile = mobileSection && mobileSection !== "Learning" ? "hidden" : "block";
-  const newsMobile = mobileSection && mobileSection !== "News" ? "hidden" : "block";
+  const asideMobile = mobileSection === "feed" ? "hidden" : "block";
+  const learningMobile = mobileSection && mobileSection !== "learning" ? "hidden" : "block";
+  const newsMobile = mobileSection && mobileSection !== "news" ? "hidden" : "block";
 
   return (
     <aside

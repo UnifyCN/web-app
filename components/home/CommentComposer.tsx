@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Send, X } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -24,9 +25,10 @@ export function CommentComposer({
   pending = false,
   replyingTo,
   onCancelReply,
-  placeholder = "Add a comment…",
+  placeholder,
   onSubmit,
 }: CommentComposerProps) {
+  const { t } = useTranslation();
   const [text, setText] = useState("");
   const trimmed = text.trim();
 
@@ -40,17 +42,14 @@ export function CommentComposer({
     <div className="rounded-card border border-border-card bg-surface p-3">
       {replyingTo && (
         <div className="mb-2 flex items-center justify-between rounded-md bg-primary-bg px-3 py-1.5 text-xs text-ink-muted">
-          <span>
-            Replying to{" "}
-            <span className="font-semibold text-primary">
-              @{replyingTo.username}
-            </span>
+          <span className="font-medium">
+            {t("home.replyingTo", { username: `@${replyingTo.username}` })}
           </span>
           {onCancelReply && (
             <button
               type="button"
               onClick={onCancelReply}
-              aria-label="Cancel reply"
+              aria-label={t("posts.cancelReplyAria")}
               className="cursor-pointer rounded p-0.5 text-ink-muted transition-colors hover:text-ink"
             >
               <X className="h-3.5 w-3.5" aria-hidden />
@@ -60,14 +59,14 @@ export function CommentComposer({
       )}
       <div className="flex items-start gap-3">
         <Avatar
-          username={currentUser?.username ?? "You"}
+          username={currentUser?.username ?? t("common.you")}
           profilePictureUrl={currentUser?.profilePictureUrl}
           size={36}
         />
         <textarea
           value={text}
           onChange={(event) => setText(event.target.value)}
-          placeholder={placeholder}
+          placeholder={placeholder ?? t("posts.addCommentPlaceholder")}
           rows={2}
           onKeyDown={(event) => {
             if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
@@ -84,7 +83,7 @@ export function CommentComposer({
           loading={pending}
           leftIcon={<Send className="h-4 w-4" aria-hidden />}
         >
-          {replyingTo ? "Reply" : "Post"}
+          {replyingTo ? t("posts.reply") : t("posts.postButton")}
         </Button>
       </div>
     </div>

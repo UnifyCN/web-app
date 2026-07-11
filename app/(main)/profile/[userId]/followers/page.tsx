@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
@@ -15,7 +16,10 @@ import {
 } from "@/hooks/useProfile";
 import type { FollowListUser } from "@/types";
 
-const TABS = ["Followers", "Following"];
+/** Stable (non-translated) tab identifiers — safe to keep in state. */
+type FollowTabKey = "followers" | "following";
+
+const TAB_KEYS: FollowTabKey[] = ["followers", "following"];
 
 /** One row in the follow list — avatar + handle linking to the profile, plus a
  *  Follow button (hidden when the row is the signed-in user). */
@@ -54,30 +58,35 @@ function ListSkeleton() {
 }
 
 function FollowersFollowingContent() {
+  const { t } = useTranslation();
   const { userId } = useParams<{ userId: string }>();
   const searchParams = useSearchParams();
-  const initialTab =
-    searchParams.get("tab") === "following" ? "Following" : "Followers";
+  const initialTab: FollowTabKey =
+    searchParams.get("tab") === "following" ? "following" : "followers";
 
-  const [tab, setTab] = useState<string>(initialTab);
+  const [tab, setTab] = useState<FollowTabKey>(initialTab);
 
   const { data: currentUser } = useCurrentUser();
   const { data: profile } = useUserProfile(userId);
   const followers = useFollowers(userId);
   const following = useFollowing(userId);
 
-  const active = tab === "Following" ? following : followers;
+  const active = tab === "following" ? following : followers;
   const users = active.data ?? [];
   const title =
     profile?.onboarding?.firstName?.trim() ||
-    (profile ? `@${profile.username}` : "Profile");
+    (profile ? `@${profile.username}` : t("profile.title"));
+
+  // The shared Tabs primitive compares by label string, so hand it translated
+  // labels and map the change callback back to the stable key by index.
+  const tabLabels = [t("profile.followersTab"), t("profile.followingTab")];
 
   return (
     <div className="mx-auto max-w-[680px] animate-fade-in px-6 py-6">
       <div className="mb-4 flex items-center gap-3">
         <Link
           href={`/profile/${userId}`}
-          aria-label="Back to profile"
+          aria-label={t("profile.backToProfileAria")}
           className="flex h-8 w-8 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
         >
           <ArrowLeft className="h-5 w-5" aria-hidden />
@@ -87,7 +96,14 @@ function FollowersFollowingContent() {
         </h1>
       </div>
 
-      <Tabs tabs={TABS} activeTab={tab} onChange={setTab} />
+      <Tabs
+        tabs={tabLabels}
+        activeTab={tab === "following" ? tabLabels[1] : tabLabels[0]}
+        onChange={(label) => {
+          const index = tabLabels.indexOf(label);
+          if (index !== -1) setTab(TAB_KEYS[index]);
+        }}
+      />
 
       <div className="mt-4 space-y-1">
         {active.isLoading ? (
@@ -102,9 +118,9 @@ function FollowersFollowingContent() {
           ))
         ) : (
           <p className="rounded-card border border-border-card bg-surface px-5 py-12 text-center text-sm text-ink-placeholder">
-            {tab === "Following"
-              ? "Not following anyone yet."
-              : "No followers yet."}
+            {tab === "following"
+              ? t("profile.notFollowingAnyone")
+              : t("profile.noFollowersYet")}
           </p>
         )}
       </div>

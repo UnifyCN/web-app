@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 
 interface DeleteConversationModalProps {
@@ -29,6 +30,7 @@ export function DeleteConversationModal({
   onConfirm,
   onCancel,
 }: DeleteConversationModalProps) {
+  const { t } = useTranslation();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const deleteRef = useRef<HTMLButtonElement>(null);
 
@@ -84,14 +86,16 @@ export function DeleteConversationModal({
             id="delete-conversation-title"
             className="text-base font-semibold text-ink-secondary"
           >
-            Delete this conversation?
+            {t("companion.deleteConversationTitle")}
           </h2>
           <p className="mt-2 text-sm text-ink-muted">
-            This will permanently remove{" "}
-            <span className="font-medium text-ink-secondary">
-              &ldquo;{conversationTitle}&rdquo;
-            </span>{" "}
-            and all its messages. This can&rsquo;t be undone.
+            <Trans
+              i18nKey="companion.deleteConversationBody"
+              values={{ title: conversationTitle }}
+              components={{
+                strong: <span className="font-medium text-ink-secondary" />,
+              }}
+            />
           </p>
         </div>
         <div className="flex items-center justify-end gap-2 border-t border-border-card bg-surface-card px-5 py-3">
@@ -103,7 +107,7 @@ export function DeleteConversationModal({
             onClick={onCancel}
             disabled={isPending}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             ref={deleteRef}
@@ -113,7 +117,7 @@ export function DeleteConversationModal({
             onClick={onConfirm}
             loading={isPending}
           >
-            Delete
+            {t("common.delete")}
           </Button>
         </div>
       </div>

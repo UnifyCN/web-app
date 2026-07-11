@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { Heart, Reply as ReplyIcon, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { useDeleteComment, useLikeComment } from "@/hooks/useFeed";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
 import { TranslateButton } from "@/components/home/TranslateButton";
-import { cn, formatRelativeTime, stripHtml } from "@/lib/utils";
+import { cn, stripHtml } from "@/lib/utils";
 import type { PostComment } from "@/types";
 
 interface PostCommentItemProps {
@@ -30,6 +32,8 @@ export function PostCommentItem({
   onReply,
   isReply = false,
 }: PostCommentItemProps) {
+  const { t } = useTranslation();
+  const formatRelativeTime = useRelativeTime();
   const [liked, setLiked] = useState(comment.likedByMe ?? false);
   const [popping, setPopping] = useState(false);
   const [showReplies, setShowReplies] = useState(true);
@@ -86,7 +90,9 @@ export function PostCommentItem({
       >
         <Link
           href={`/profile/${comment.author.id}`}
-          aria-label={`View ${comment.author.username}'s profile`}
+          aria-label={t("posts.viewProfileAria", {
+            username: comment.author.username,
+          })}
           className="shrink-0 self-start rounded-full transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <Avatar
@@ -119,7 +125,9 @@ export function PostCommentItem({
               onClick={toggleLike}
               disabled={likeMutation.isPending}
               aria-pressed={liked}
-              aria-label={liked ? "Unlike comment" : "Like comment"}
+              aria-label={
+                liked ? t("posts.unlikeCommentAria") : t("posts.likeCommentAria")
+              }
               className="flex cursor-pointer items-center gap-1 text-xs text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed"
             >
               <Heart
@@ -144,7 +152,7 @@ export function PostCommentItem({
                 className="flex cursor-pointer items-center gap-1 text-xs font-medium text-ink-muted transition-colors hover:text-ink"
               >
                 <ReplyIcon className="h-3.5 w-3.5" aria-hidden />
-                Reply
+                {t("posts.reply")}
               </button>
             )}
 
@@ -152,7 +160,7 @@ export function PostCommentItem({
               <button
                 type="button"
                 onClick={() => setConfirmOpen(true)}
-                aria-label="Delete comment"
+                aria-label={t("posts.deleteCommentAria")}
                 className="flex cursor-pointer items-center gap-1 text-xs text-ink-muted transition-colors hover:text-destructive"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden />
@@ -168,10 +176,8 @@ export function PostCommentItem({
                 className="cursor-pointer text-xs font-medium text-primary hover:underline"
               >
                 {showReplies
-                  ? "Hide replies"
-                  : `View ${replies.length} ${
-                      replies.length === 1 ? "reply" : "replies"
-                    }`}
+                  ? t("posts.hideReplies")
+                  : t("posts.viewReplies", { count: replies.length })}
               </button>
               {showReplies && (
                 <div className="mt-2 space-y-3 border-l border-border-card pl-3">
@@ -193,9 +199,9 @@ export function PostCommentItem({
 
       <ConfirmModal
         open={confirmOpen}
-        title="Delete this comment?"
-        description="This will permanently remove your comment. This can't be undone."
-        confirmLabel="Delete"
+        title={t("posts.deleteCommentTitle")}
+        description={t("posts.deleteCommentDesc")}
+        confirmLabel={t("common.delete")}
         isPending={deleteMutation.isPending}
         onConfirm={confirmDelete}
         onCancel={() => setConfirmOpen(false)}

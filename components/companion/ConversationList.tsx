@@ -3,7 +3,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MoreHorizontal, Search, SquarePen, Trash2 } from "lucide-react";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
 import type { Conversation } from "@/types";
 import { DeleteConversationModal } from "./DeleteConversationModal";
 
@@ -32,6 +34,7 @@ function RowMenu({
   portalRef: React.RefObject<HTMLDivElement | null>;
   onDelete: () => void;
 }) {
+  const { t } = useTranslation();
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
 
   useLayoutEffect(() => {
@@ -70,7 +73,7 @@ function RowMenu({
         className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-sm text-destructive hover:bg-surface-gray"
       >
         <Trash2 className="h-4 w-4" aria-hidden />
-        Delete
+        {t("common.delete")}
       </button>
     </div>,
     document.body,
@@ -87,6 +90,8 @@ export function ConversationList({
   isDeleting,
   mobileActive,
 }: ConversationListProps) {
+  const { t } = useTranslation();
+  const formatRelativeTime = useRelativeTime();
   const [search, setSearch] = useState("");
   const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -127,7 +132,7 @@ export function ConversationList({
   const items = conversations
     .map((conversation) => ({
       conversation,
-      displayTitle: conversation.title ?? "New conversation",
+      displayTitle: conversation.title ?? t("companion.newConversation"),
     }))
     .filter(({ displayTitle }) =>
       displayTitle.toLowerCase().includes(term),
@@ -160,7 +165,7 @@ export function ConversationList({
             className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
           >
             <SquarePen className="h-4 w-4" aria-hidden />
-            New conversation
+            {t("companion.newConversation")}
           </button>
           <div className="relative">
             <Search
@@ -171,8 +176,8 @@ export function ConversationList({
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search chats"
-              aria-label="Search chats"
+              placeholder={t("companion.searchChats")}
+              aria-label={t("companion.searchChats")}
               className="h-9 w-full rounded-lg border border-border-card bg-surface pl-9 pr-3 text-base text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             />
           </div>
@@ -211,7 +216,7 @@ export function ConversationList({
                     onClick={() =>
                       setOpenMenuFor(menuOpen ? null : conversation.id)
                     }
-                    aria-label="Conversation options"
+                    aria-label={t("companion.conversationOptionsAria")}
                     aria-haspopup="menu"
                     aria-expanded={menuOpen}
                     className={cn(
@@ -243,7 +248,7 @@ export function ConversationList({
             })
           ) : (
             <p className="px-3 py-6 text-center text-xs text-ink-placeholder">
-              No chats found.
+              {t("companion.noChatsFound")}
             </p>
           )}
         </div>

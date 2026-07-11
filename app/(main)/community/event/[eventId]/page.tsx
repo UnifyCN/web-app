@@ -1,3 +1,6 @@
+"use client";
+
+import { use } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -7,22 +10,24 @@ import {
   User,
   ExternalLink,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/Badge";
 import { getEventById } from "@/lib/mock/events";
 import type { EventType } from "@/types";
 
-const EVENT_TYPE_LABEL: Record<EventType, string> = {
-  "in-person": "In person",
-  online: "Online",
-  hybrid: "Hybrid",
+const EVENT_TYPE_LABEL_KEY: Record<EventType, string> = {
+  "in-person": "events.typeInPerson",
+  online: "events.typeOnline",
+  hybrid: "events.typeHybrid",
 };
 
-export default async function EventDetailPage({
+export default function EventDetailPage({
   params,
 }: {
   params: Promise<{ eventId: string }>;
 }) {
-  const { eventId } = await params;
+  const { t, i18n } = useTranslation();
+  const { eventId } = use(params);
   const parsedId = Number(eventId);
   const event = Number.isFinite(parsedId) && parsedId > 0
     ? getEventById(parsedId)
@@ -32,29 +37,29 @@ export default async function EventDetailPage({
     return (
       <div className="mx-auto max-w-[680px] px-6 py-16 text-center">
         <p className="text-sm text-ink-muted">
-          This event could not be found.
+          {t("events.eventNotFound")}
         </p>
         <Link
           href="/community"
           className="mt-3 inline-block text-sm font-semibold text-primary"
         >
-          Back to Community
+          {t("circles.backToCommunity")}
         </Link>
       </div>
     );
   }
 
-  // Events are BC-based; render in Pacific so the time is correct on the
-  // server-rendered page (the stored datetime is the exact UTC instant).
+  // Events are BC-based; render in Pacific so the time is correct
+  // (the stored datetime is the exact UTC instant).
   const TZ = "America/Vancouver";
   const date = new Date(event.eventDatetime);
-  const dateLabel = date.toLocaleDateString("en-CA", {
+  const dateLabel = date.toLocaleDateString(i18n.language, {
     weekday: "long",
     month: "long",
     day: "numeric",
     timeZone: TZ,
   });
-  const time = date.toLocaleTimeString("en-CA", {
+  const time = date.toLocaleTimeString(i18n.language, {
     hour: "numeric",
     minute: "2-digit",
     timeZone: TZ,
@@ -74,7 +79,7 @@ export default async function EventDetailPage({
         className="mb-4 inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden />
-        Community
+        {t("tabs.community")}
       </Link>
 
       <h1 className="text-xl font-semibold text-ink-secondary">
@@ -94,7 +99,9 @@ export default async function EventDetailPage({
       )}
 
       <div className="mt-4">
-        <Badge variant="primary">{EVENT_TYPE_LABEL[event.eventType]}</Badge>
+        <Badge variant="primary">
+          {t(EVENT_TYPE_LABEL_KEY[event.eventType])}
+        </Badge>
       </div>
 
       <div className="mt-3 space-y-2">
@@ -109,7 +116,7 @@ export default async function EventDetailPage({
         {event.hostedBy && (
           <p className="flex items-center gap-2 text-sm text-ink-muted">
             <User className="h-4 w-4 shrink-0 text-ink-placeholder" aria-hidden />
-            Hosted by{" "}
+            {t("events.hostedBy")}{" "}
             <span className="font-medium text-ink-secondary">
               {event.hostedBy}
             </span>
@@ -132,7 +139,7 @@ export default async function EventDetailPage({
               rel="noopener noreferrer"
               className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
-              View Event Details
+              {t("events.viewDetails")}
               <ExternalLink className="h-4 w-4" aria-hidden />
             </a>
           )
@@ -140,7 +147,7 @@ export default async function EventDetailPage({
       })()}
 
       <h2 className="mt-7 text-base font-semibold text-ink-secondary">
-        About Event
+        {t("events.aboutEvent")}
       </h2>
       <div className="mt-2 space-y-2 text-sm leading-relaxed text-ink-muted">
         {paragraphs.map((para, i) => (

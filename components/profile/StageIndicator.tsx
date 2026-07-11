@@ -1,9 +1,12 @@
+"use client";
+
 import { cn } from "@/lib/utils";
-import { STAGE_LABEL } from "@/lib/onboarding/constants";
+import { useStageLabel } from "@/lib/i18n/labels";
 import type { Stage } from "@/types";
 
 /** A 5-segment stepped bar showing the user's time-in-Canada stage. */
 export function StageIndicator({ stage }: { stage: Stage }) {
+  const stageLabel = useStageLabel();
   return (
     <div className="flex items-center gap-2">
       <div className="flex gap-1">
@@ -18,7 +21,7 @@ export function StageIndicator({ stage }: { stage: Stage }) {
         ))}
       </div>
       <span className="text-xs font-medium text-ink-tertiary">
-        {STAGE_LABEL[stage]}
+        {stageLabel(stage)}
       </span>
     </div>
   );

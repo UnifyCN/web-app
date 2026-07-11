@@ -1,6 +1,7 @@
 "use client";
 
 import { Lightbulb } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/Badge";
 import { useDailyTip } from "@/hooks/useDailyTip";
 import { externalHref } from "@/lib/utils";
@@ -10,12 +11,13 @@ import { externalHref } from "@/lib/utils";
  * tab. Fails quietly (renders nothing) on error — the tip is a nice-to-have.
  */
 export function DailyTipCard() {
+  const { t } = useTranslation();
   const { data: tip, isLoading, error } = useDailyTip();
 
   if (isLoading) {
     return (
       <div className="rounded-card border border-border-card bg-primary-bg p-4">
-        <p className="text-sm text-ink-muted">Loading today&apos;s tip…</p>
+        <p className="text-sm text-ink-muted">{t("tips.loadingToday")}</p>
       </div>
     );
   }
@@ -24,7 +26,7 @@ export function DailyTipCard() {
 
   return (
     <section
-      aria-label="Daily tip"
+      aria-label={t("tips.dailyTip")}
       className="rounded-card border border-border-card bg-primary-bg p-4"
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -32,7 +34,7 @@ export function DailyTipCard() {
           <Lightbulb className="h-4 w-4" aria-hidden />
         </span>
         <span className="text-xs font-semibold uppercase tracking-wide text-primary">
-          Daily tip
+          {t("tips.dailyTip")}
         </span>
         {tip.category && <Badge variant="neutral">{tip.category}</Badge>}
       </div>

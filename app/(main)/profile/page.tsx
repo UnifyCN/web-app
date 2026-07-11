@@ -2,9 +2,14 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { Pencil } from "lucide-react";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
-import { ProfileTabs, PROFILE_TABS } from "@/components/profile/ProfileTabs";
+import {
+  ProfileTabs,
+  PROFILE_TABS,
+  type ProfileTabKey,
+} from "@/components/profile/ProfileTabs";
 import { HighlightCard } from "@/components/profile/HighlightCard";
 import { CommentCard } from "@/components/profile/CommentCard";
 import { SkeletonCommentList } from "@/components/profile/SkeletonCommentList";
@@ -148,7 +153,8 @@ function SkeletonHighlightList({ count = 3 }: { count?: number }) {
 }
 
 export default function ProfilePage() {
-  const [tab, setTab] = useState(PROFILE_TABS[0]);
+  const { t } = useTranslation();
+  const [tab, setTab] = useState<ProfileTabKey>(PROFILE_TABS[0]);
   const { data: profile, isLoading } = useCurrentUser();
 
   const { data: myPosts, isLoading: postsLoading } = useUserPosts(
@@ -167,7 +173,7 @@ export default function ProfilePage() {
     return (
       <div className="mx-auto max-w-[680px] animate-fade-in px-6 py-6">
         <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
-          Profile
+          {t("profile.title")}
         </h1>
         <ProfileHeaderSkeleton />
         <div className="mt-5">
@@ -183,7 +189,7 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="mx-auto max-w-[680px] px-6 py-16 text-center text-sm text-ink-placeholder">
-        Sign in to view your profile.
+        {t("profile.signInToView")}
       </div>
     );
   }
@@ -196,7 +202,7 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-[680px] animate-fade-in px-6 py-6">
       <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
-        Profile
+        {t("profile.title")}
       </h1>
 
       <ProfileHeader profile={profile} postCount={posts.length} isOwnProfile />
@@ -206,23 +212,23 @@ export default function ProfilePage() {
       </div>
 
       <div className="mt-4">
-        {tab === "Posts" && (
+        {tab === "posts" && (
           <PostFeed
             items={posts}
             isLoading={postsLoading}
-            emptyText="Share your first post with the community."
+            emptyText={t("profile.shareFirstPost")}
             emptyAction={
               <Link
                 href="/home"
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
               >
                 <Pencil className="h-4 w-4" aria-hidden />
-                Share a post
+                {t("profile.sharePostCta")}
               </Link>
             }
           />
         )}
-        {tab === "Comments" &&
+        {tab === "comments" &&
           (commentsLoading ? (
             <SkeletonCommentList />
           ) : commentItems.length > 0 ? (
@@ -232,18 +238,16 @@ export default function ProfilePage() {
               ))}
             </div>
           ) : (
-            <TabMessage>
-              You haven&rsquo;t commented yet — join the conversation.
-            </TabMessage>
+            <TabMessage>{t("profile.noCommentsSelfHint")}</TabMessage>
           ))}
-        {tab === "Saved" && (
+        {tab === "saved" && (
           <PostFeed
             items={saved}
             isLoading={savedLoading}
-            emptyText="No saved posts yet."
+            emptyText={t("profile.noSavedPosts")}
           />
         )}
-        {tab === "Highlights" &&
+        {tab === "highlights" &&
           (highlightsLoading ? (
             <SkeletonHighlightList />
           ) : highlightItems.length > 0 ? (
@@ -253,7 +257,7 @@ export default function ProfilePage() {
               ))}
             </div>
           ) : (
-            <TabMessage>No highlights yet.</TabMessage>
+            <TabMessage>{t("profile.noHighlights")}</TabMessage>
           ))}
       </div>
     </div>

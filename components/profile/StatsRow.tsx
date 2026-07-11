@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 interface StatsRowProps {
   posts: number;
@@ -13,15 +16,17 @@ function Stat({
   label,
   value,
   href,
+  locale,
 }: {
   label: string;
   value: number;
   href?: string;
+  locale: string;
 }) {
   const content = (
     <>
       <p className="text-base font-bold text-ink-secondary">
-        {value.toLocaleString("en-CA")}
+        {value.toLocaleString(locale)}
       </p>
       <p className="text-xs text-ink-placeholder">{label}</p>
     </>
@@ -41,6 +46,7 @@ function Stat({
 
 /** Posts / Followers / Following counts for the profile header. */
 export function StatsRow({ posts, followers, following, userId }: StatsRowProps) {
+  const { t, i18n } = useTranslation();
   const followersHref = userId
     ? `/profile/${userId}/followers?tab=followers`
     : undefined;
@@ -50,9 +56,19 @@ export function StatsRow({ posts, followers, following, userId }: StatsRowProps)
 
   return (
     <div className="flex gap-6">
-      <Stat label="Posts" value={posts} />
-      <Stat label="Followers" value={followers} href={followersHref} />
-      <Stat label="Following" value={following} href={followingHref} />
+      <Stat label={t("profile.posts")} value={posts} locale={i18n.language} />
+      <Stat
+        label={t("profile.followersLabel")}
+        value={followers}
+        href={followersHref}
+        locale={i18n.language}
+      />
+      <Stat
+        label={t("profile.followingLabel")}
+        value={following}
+        href={followingHref}
+        locale={i18n.language}
+      />
     </div>
   );
 }

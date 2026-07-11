@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
+
 interface OverallProgressBarProps {
   completed: number;
   total: number;
@@ -8,14 +12,17 @@ export function OverallProgressBar({
   completed,
   total,
 }: OverallProgressBarProps) {
+  const { t } = useTranslation();
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
     <div className="rounded-card border border-border-card bg-surface p-4">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-semibold text-ink-secondary">Your progress</span>
+        <span className="font-semibold text-ink-secondary">
+          {t("checklist.yourProgress")}
+        </span>
         <span className="text-ink-muted">
-          {completed}/{total} complete · {percent}%
+          {t("checklist.progressSummary", { completed, total, percent })}
         </span>
       </div>
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-input">

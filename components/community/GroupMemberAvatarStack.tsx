@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
 import type { GroupMemberAvatar } from "@/types";
@@ -17,6 +20,7 @@ export function GroupMemberAvatarStack({
   totalCount,
   className,
 }: GroupMemberAvatarStackProps) {
+  const { t } = useTranslation();
   const visible = avatars.slice(0, MAX_VISIBLE);
 
   return (
@@ -40,7 +44,7 @@ export function GroupMemberAvatarStack({
         ))}
       </div>
       <span className="ml-2.5 text-sm text-ink-muted">
-        +{totalCount.toLocaleString("en-CA")} members
+        {t("groups.plusMembers", { count: totalCount })}
       </span>
     </div>
   );

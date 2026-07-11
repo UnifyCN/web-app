@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { Check, GripVertical, Trash2 } from "lucide-react";
 import type {
   DraggableAttributes,
@@ -31,6 +32,7 @@ export function TaskRow({
   dragHandleAttributes,
   dragHandleListeners,
 }: TaskRowProps) {
+  const { t } = useTranslation();
   const [pop, setPop] = useState(false);
   const checkboxRef = useRef<HTMLButtonElement>(null);
 
@@ -56,7 +58,11 @@ export function TaskRow({
         type="button"
         role="checkbox"
         aria-checked={task.completed}
-        aria-label={task.completed ? "Mark as not done" : "Mark as done"}
+        aria-label={
+          task.completed
+            ? t("checklist.markNotDoneAria")
+            : t("checklist.markDoneAria")
+        }
         onClick={handleToggle}
         className={cn(
           "mt-0.5 flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-md border-2 transition-colors",
@@ -95,7 +101,7 @@ export function TaskRow({
             href={task.learnHowHref}
             className="mt-1 inline-block text-xs font-semibold text-primary transition-colors hover:text-primary-dark"
           >
-            Learn how
+            {t("checklist.learnHow")}
           </Link>
         )}
       </div>
@@ -104,7 +110,7 @@ export function TaskRow({
         <button
           type="button"
           onClick={() => onDelete(task.id)}
-          aria-label={`Delete task: ${task.title}`}
+          aria-label={t("checklist.deleteTaskAria", { title: task.title })}
           className="mt-0.5 flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" aria-hidden />
@@ -115,7 +121,7 @@ export function TaskRow({
         <button
           type="button"
           ref={dragHandleRef}
-          aria-label={`Reorder task: ${task.title}`}
+          aria-label={t("checklist.reorderTaskAria", { title: task.title })}
           className="mt-0.5 flex h-5 w-5 shrink-0 cursor-grab touch-none items-center justify-center text-ink-placeholder transition-colors hover:text-ink-muted active:cursor-grabbing"
           {...dragHandleAttributes}
           {...dragHandleListeners}

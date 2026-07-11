@@ -1,10 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 /**
  * Promo card shown on the Home feed's Groups tab — nudges the user toward
  * the Community section. Decorative arcs are clipped by `overflow-hidden`.
  */
 export function JoinGroupsCard() {
+  const { t } = useTranslation();
   return (
     <Link
       href="/community"
@@ -24,9 +28,11 @@ export function JoinGroupsCard() {
         className="pointer-events-none absolute -bottom-5 left-5 h-16 w-16 rounded-full border-2 border-dashed border-mention-blue/40"
       />
       <div className="relative">
-        <p className="text-base font-bold text-ink-secondary">Join groups!</p>
+        <p className="text-base font-bold text-ink-secondary">
+          {t("home.joinGroups")}
+        </p>
         <p className="mt-1 text-sm text-ink-muted">
-          There&apos;s more to check out!
+          {t("news.moreToCheckOut")}
         </p>
       </div>
     </Link>

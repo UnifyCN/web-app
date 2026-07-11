@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Mail } from "lucide-react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { Input } from "@/components/ui/Input";
@@ -24,6 +25,7 @@ export function ChangeEmailModal({
   onClose: () => void;
   currentEmail?: string;
 }) {
+  const { t } = useTranslation();
   const request = useRequestEmailChange();
   const [step, setStep] = useState<"email" | "sent">("email");
   const [email, setEmail] = useState("");
@@ -41,11 +43,11 @@ export function ChangeEmailModal({
     event.preventDefault();
     const normalized = email.trim().toLowerCase();
     if (!EMAIL_RE.test(normalized)) {
-      setError("Enter a valid email address.");
+      setError(t("settingsWeb.emailInvalid"));
       return;
     }
     if (currentEmail && normalized === currentEmail.toLowerCase()) {
-      setError("That's already your email.");
+      setError(t("settingsWeb.emailSame"));
       return;
     }
     setError(null);
@@ -55,7 +57,7 @@ export function ChangeEmailModal({
         setError(
           err instanceof Error
             ? err.message
-            : "Couldn't start the email change.",
+            : t("settingsWeb.emailChangeFailed"),
         ),
     });
   };
@@ -65,11 +67,9 @@ export function ChangeEmailModal({
       open={open}
       onClose={close}
       busy={request.isPending}
-      title="Change email"
+      title={t("settingsWeb.changeEmail")}
       description={
-        step === "email"
-          ? "We'll email a confirmation link to your new address."
-          : undefined
+        step === "email" ? t("settingsWeb.emailChangeDesc") : undefined
       }
     >
       {step === "email" ? (
@@ -78,7 +78,7 @@ export function ChangeEmailModal({
             leftIcon={<Mail className="h-5 w-5" />}
             type="email"
             autoComplete="email"
-            placeholder="New email address"
+            placeholder={t("settingsWeb.newEmailPlaceholder")}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -92,7 +92,7 @@ export function ChangeEmailModal({
               loading={request.isPending}
               disabled={!EMAIL_RE.test(email.trim())}
             >
-              Submit
+              {t("common.submit")}
             </AuthButton>
             <button
               type="button"
@@ -100,7 +100,7 @@ export function ChangeEmailModal({
               disabled={request.isPending}
               className="w-full cursor-pointer rounded-full py-2.5 text-sm font-semibold text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </form>
@@ -110,12 +110,10 @@ export function ChangeEmailModal({
             <Mail className="h-5 w-5 text-primary" aria-hidden />
           </div>
           <p className="text-sm text-ink-muted">
-            We&apos;ve sent a confirmation link to your new email address. Click
-            it to confirm the change. Your current email address will receive a
-            notification once the change is complete.
+            {t("settingsWeb.emailChangeSentBody")}
           </p>
           <AuthButton type="button" onClick={close}>
-            Done
+            {t("common.done")}
           </AuthButton>
         </div>
       )}

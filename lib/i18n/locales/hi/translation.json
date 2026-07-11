@@ -59,7 +59,11 @@
     "openNotifications": "सूचनाएं खोलें",
     "openSettings": "सेटिंग्स खोलें",
     "openProfileMenu": "प्रोफ़ाइल मेनू खोलें",
-    "close": "बंद करें"
+    "close": "बंद करें",
+    "backToHome": "होम पर वापस जाएं",
+    "daysShort": "{{count}} दिन",
+    "home": "होम",
+    "you": "आप"
   },
   "tabs": {
     "social": "सोशल",
@@ -447,7 +451,27 @@
       "priorityDoSoon": "जल्दी करें",
       "priorityExploreConnect": "अन्वेषण करें और जुड़ें",
       "priorityOptionalLater": "वैकल्पिक / बाद में"
-    }
+    },
+    "addTask": "कार्य जोड़ें",
+    "deleteTaskAria": "कार्य हटाएं: {{title}}",
+    "deleteTaskDesc": "यह <strong>\"{{title}}\"</strong> को स्थायी रूप से हटा देगा। इसे पूर्ववत नहीं किया जा सकता।",
+    "deleteTaskTitle": "इस कार्य को हटाएं?",
+    "loadError": "आपकी चेकलिस्ट लोड नहीं हो सकी।",
+    "markDoneAria": "पूर्ण चिह्नित करें",
+    "markNotDoneAria": "अधूरा चिह्नित करें",
+    "priority": {
+      "doNow": "अभी करें",
+      "doSoon": "जल्दी करें",
+      "explore": "अन्वेषण करें और जुड़ें",
+      "optional": "वैकल्पिक / बाद में"
+    },
+    "priorityAria": "प्राथमिकता",
+    "progressSummary": "{{completed}}/{{total}} पूर्ण · {{percent}}%",
+    "reorderTaskAria": "कार्य पुनर्व्यवस्थित करें: {{title}}",
+    "subtitle": "कनाडा में बसने के लिए आपकी चरण-दर-चरण गाइड।",
+    "taskDescriptionAria": "कार्य विवरण",
+    "taskNamePlaceholder": "कार्य का नाम",
+    "yourProgress": "आपकी प्रगति"
   },
   "companion": {
     "goBack": "वापस जाएं",
@@ -514,7 +538,55 @@
       "newChat": "नई चैट",
       "noConversationsFound": "कोई बातचीत नहीं मिली",
       "noConversationsYet": "अभी तक कोई बातचीत नहीं"
-    }
+    },
+    "conversationOptionsAria": "बातचीत विकल्प",
+    "conversationsAria": "बातचीत",
+    "copied": "कॉपी हो गया",
+    "copyMessage": "संदेश कॉपी करें",
+    "deleteConversationBody": "यह <strong>“{{title}}”</strong> और उसके सभी संदेशों को स्थायी रूप से हटा देगा। इसे पूर्ववत नहीं किया जा सकता।",
+    "deleteConversationTitle": "इस बातचीत को हटाएं?",
+    "messageInputAria": "सहायक को संदेश भेजें",
+    "messagesPerDayRemaining": "{{count}} संदेश/दिन शेष",
+    "messagesPerDayRemaining_plural": "{{count}} संदेश/दिन शेष",
+    "newConversation": "नई बातचीत",
+    "noChatsFound": "कोई चैट नहीं मिली।",
+    "searchChats": "चैट खोजें",
+    "sendFailed": "आपका संदेश नहीं भेजा जा सका। कृपया पुनः प्रयास करें।",
+    "sendMessageAria": "संदेश भेजें",
+    "webStarters": {
+      "bankingQ": "मैं कनाडा में बैंक खाता कैसे खोलूं और क्रेडिट कैसे बनाऊं?",
+      "bankingTopic": "बैंकिंग",
+      "beforeArrivalQ": "कनाडा जाने से पहले मुझे क्या तैयारी करनी चाहिए?",
+      "beforeArrivalTopic": "पहुंचने से पहले",
+      "careerQ": "मैं कनाडा में अपनी विदेशी योग्यताओं को मान्यता कैसे दिलाऊं?",
+      "careerTopic": "आपका करियर",
+      "communityCityQ": "मैं {{city}} में लोगों से कैसे मिलूं और दोस्त कैसे बनाऊं?",
+      "communityQ": "एक नवागंतुक के रूप में मैं लोगों से कैसे मिलूं और समुदाय कैसे बनाऊं?",
+      "communityTopic": "समुदाय",
+      "documentsQ": "मुझे SIN और कनाडा में ज़रूरी पहचान पत्र कैसे मिलेंगे?",
+      "documentsTopic": "दस्तावेज़",
+      "familyQ": "मैं अपने बच्चों को स्कूल में कैसे भर्ती कराऊं और चाइल्डकेयर कैसे ढूंढूं?",
+      "familyTopic": "परिवार",
+      "financeTopic": "वित्त",
+      "healthcareQ": "मैं प्रांतीय स्वास्थ्य कार्ड के लिए आवेदन कैसे करूं?",
+      "healthcareTopic": "स्वास्थ्य सेवा",
+      "housingQ": "मैं कनाडा में अपार्टमेंट कैसे ढूंढूं और किराए पर कैसे लूं?",
+      "housingTopic": "आवास",
+      "immigrationQ": "स्थायी निवास के लिए एक्सप्रेस एंट्री कैसे काम करती है?",
+      "immigrationTopic": "आव्रजन",
+      "jobsQ": "मैं नौकरी कैसे ढूंढूं और कनाडाई शैली का रिज्यूमे कैसे लिखूं?",
+      "jobsTopic": "नौकरियां",
+      "localServicesQ": "{{city}} में नवागंतुकों के लिए कौन सी सेवाएं उपलब्ध हैं?",
+      "localServicesTopic": "स्थानीय सेवाएं",
+      "refugeeSettlementQ": "कनाडा में शरणार्थियों के लिए कौन सा बसावट समर्थन उपलब्ध है?",
+      "settlementQ": "कनाडा में बसने वाले नवागंतुकों के लिए कौन से संसाधन उपलब्ध हैं?",
+      "settlementTopic": "बसावट",
+      "studyPermitQ": "मैं अपना स्टडी परमिट कैसे बनाए रखूं और छात्र के रूप में पार्ट-टाइम काम कैसे करूं?",
+      "studyPermitTopic": "स्टडी परमिट",
+      "transitQ": "मैं अपने शहर में सार्वजनिक परिवहन का उपयोग करके कैसे घूमूं?",
+      "transitTopic": "परिवहन"
+    },
+    "welcomeTitleNamed": "मुझसे कुछ भी पूछें, {{name}}।"
   },
   "home": {
     "forYou": "आपके लिए",
@@ -551,7 +623,15 @@
     "pinPost": "पोस्ट पिन करें",
     "reportPost": "पोस्ट रिपोर्ट करें",
     "postSavedToast": "पोस्ट सहेजी गई! सेटिंग्स > सहेजी गई पोस्ट में खोजें",
-    "failedPinPost": "पोस्ट पिन करने में विफल। कृपया पुनः प्रयास करें।"
+    "failedPinPost": "पोस्ट पिन करने में विफल। कृपया पुनः प्रयास करें।",
+    "allCaughtUp": "आपने सब कुछ देख लिया है",
+    "feedLoadError": "फ़ीड लोड नहीं हो सकी।",
+    "forYouEmptySub": "नई पोस्ट के लिए जल्द ही वापस आएं।",
+    "forYouEmptyTitle": "अभी तक कोई पोस्ट नहीं",
+    "sectionFeed": "फ़ीड",
+    "sectionLearning": "सीखना",
+    "sectionNews": "समाचार",
+    "showSlideAria": "{{title}} दिखाएं"
   },
   "profile": {
     "title": "प्रोफ़ाइल",
@@ -592,7 +672,36 @@
     "noFollowersYet": "अभी तक कोई अनुयायी नहीं",
     "notFollowingAnyone": "अभी तक किसी को फॉलो नहीं किया",
     "followersTab": "अनुयायी",
-    "followingTab": "अनुसरण"
+    "followingTab": "अनुसरण",
+    "addBioPrompt": "बायो और सर्वनाम जोड़ें",
+    "backToProfileAria": "प्रोफ़ाइल पर वापस जाएं",
+    "changePhotoAria": "प्रोफ़ाइल फ़ोटो बदलें",
+    "commentByAuthor": "@{{username}} द्वारा",
+    "completeProfileHint": "अपनी स्थिति, स्थान और चरण जोड़ने के लिए अपनी प्रोफ़ाइल पूरी करें।",
+    "editBioAria": "बायो और सर्वनाम संपादित करें",
+    "followsYou": "आपको फॉलो करता है",
+    "highlightFrom": "{{lesson}} · {{module}} से",
+    "highlightsTab": "हाइलाइट्स",
+    "memberSince": "{{date}} से सदस्य",
+    "noCommentsSelfHint": "आपने अभी तक टिप्पणी नहीं की है — बातचीत में शामिल हों।",
+    "noHighlights": "अभी तक कोई हाइलाइट नहीं।",
+    "noSavedPosts": "अभी तक कोई सहेजी गई पोस्ट नहीं।",
+    "persona": {
+      "other": "नवागंतुक"
+    },
+    "profileNotFound": "यह प्रोफ़ाइल नहीं मिली।",
+    "pronounsPlaceholder": "सर्वनाम (जैसे she/her)",
+    "removePhoto": "फ़ोटो हटाएं",
+    "shareFirstPost": "समुदाय के साथ अपनी पहली पोस्ट साझा करें।",
+    "sharePostCta": "एक पोस्ट साझा करें",
+    "shareProfile": "प्रोफ़ाइल साझा करें",
+    "signInToView": "अपनी प्रोफ़ाइल देखने के लिए साइन इन करें।",
+    "stage": {
+      "1": "कनाडा में 0–3 महीने",
+      "2": "कनाडा में 3–12 महीने",
+      "3": "कनाडा में 1–3 साल",
+      "4": "कनाडा में 3+ साल"
+    }
   },
   "profilePicture": {
     "chooseFromLibrary": "लाइब्रेरी से चुनें",
@@ -632,7 +741,29 @@
     "mutuals": "आपसी",
     "followsYou": "आपको फॉलो करता है",
     "discoverTabLabel": "समूह खोजें टैब",
-    "joinedTabLabel": "जुड़े समूह टैब"
+    "joinedTabLabel": "जुड़े समूह टैब",
+    "failedLoad": "समूह लोड नहीं हो सके।",
+    "groupNotFoundLong": "यह समूह नहीं मिला।",
+    "join": "शामिल हों",
+    "loadingPosts": "पोस्ट लोड हो रहे हैं…",
+    "myGroups": "आपके समूह",
+    "noGroupsYet": "अभी तक कोई समूह नहीं।",
+    "noPostsInGroup": "इस समूह में अभी तक कोई पोस्ट नहीं।",
+    "plusMembers": "+{{count}} सदस्य",
+    "plusMembers_plural": "+{{count}} सदस्य",
+    "recentPosts": "हाल की पोस्ट",
+    "requestAudienceLabel": "यह समूह किसके लिए है?",
+    "requestAudiencePlaceholder": "जैसे साइकिल से आने-जाने वाले नवागंतुक",
+    "requestEmailLabel": "आपका ईमेल",
+    "requestEmailPlaceholder": "you@example.com",
+    "requestFollowUp": "धन्यवाद — हम हर अनुरोध की समीक्षा करते हैं और ईमेल द्वारा जवाब देते हैं।",
+    "requestNameLabel": "समूह का नाम",
+    "requestNamePlaceholder": "जैसे नवागंतुक साइकिल चालक",
+    "requestNotesLabel": "कुछ और? (वैकल्पिक)",
+    "requestNotesPlaceholder": "टीम के लिए अतिरिक्त नोट्स",
+    "requestReasonLabel": "हमें इसे क्यों बनाना चाहिए?",
+    "requestReasonPlaceholder": "हमें ज़रूरत के बारे में थोड़ा बताएं (कम से कम 10 अक्षर)।",
+    "requestReviewNote": "हम हर अनुरोध की समीक्षा करते हैं और ईमेल द्वारा जवाब देते हैं।"
   },
   "posts": {
     "postButton": "पोस्ट करें",
@@ -664,7 +795,47 @@
     "tryDifferentSearchTerm": "कोई अन्य खोज शब्द आज़माएँ",
     "noGroupsAvailable": "कोई समूह उपलब्ध नहीं है",
     "checkBackLaterForNewGroups": "नए समूहों के लिए बाद में वापस जाँचें",
-    "contentNotAllowedReason": "आपकी पोस्ट में ऐसी भाषा है जो हमारे सामुदायिक दिशानिर्देशों का उल्लंघन करती है। कृपया संशोधित करें और पुनः प्रयास करें।"
+    "contentNotAllowedReason": "आपकी पोस्ट में ऐसी भाषा है जो हमारे सामुदायिक दिशानिर्देशों का उल्लंघन करती है। कृपया संशोधित करें और पुनः प्रयास करें।",
+    "addCommentPlaceholder": "एक टिप्पणी जोड़ें…",
+    "addPhotos": "फ़ोटो जोड़ें",
+    "addPhotosCount": "फ़ोटो जोड़ें ({{count}}/{{max}})",
+    "addPhotosCount_plural": "फ़ोटो जोड़ें ({{count}}/{{max}})",
+    "cancelReplyAria": "जवाब रद्द करें",
+    "clearGroupAria": "चयनित समूह हटाएं",
+    "commentCount": "{{count}} टिप्पणी",
+    "commentCount_plural": "{{count}} टिप्पणियां",
+    "createPostAria": "पोस्ट बनाएं",
+    "deleteCommentAria": "टिप्पणी हटाएं",
+    "deleteCommentDesc": "यह आपकी टिप्पणी को स्थायी रूप से हटा देगा। इसे पूर्ववत नहीं किया जा सकता।",
+    "deleteCommentTitle": "इस टिप्पणी को हटाएं?",
+    "deletePostError": "यह पोस्ट हटाई नहीं जा सकी। कृपया पुनः प्रयास करें।",
+    "deletePostTitle": "इस पोस्ट को हटाएं?",
+    "hideReplies": "जवाब छुपाएं",
+    "likeAria": "पोस्ट को लाइक करें",
+    "likeCommentAria": "टिप्पणी को लाइक करें",
+    "loadCommentsError": "टिप्पणियां लोड नहीं हो सकीं।",
+    "loadPostError": "इस पोस्ट को लोड करने में कुछ गलत हो गया।",
+    "loadingComments": "टिप्पणियां लोड हो रही हैं…",
+    "postBodyAria": "पोस्ट सामग्री",
+    "postImageAlt": "पोस्ट छवि {{number}}",
+    "postImageAltTitled": "{{title}} — छवि {{number}}",
+    "postNotFound": "यह पोस्ट नहीं मिली।",
+    "postTitleAria": "पोस्ट शीर्षक",
+    "postedHeading": "पोस्ट हो गई!",
+    "postedSubtext": "आपकी पोस्ट अब फ़ीड में लाइव है।",
+    "removeImageAria": "छवि {{number}} हटाएं",
+    "reply": "जवाब",
+    "saveAria": "पोस्ट सहेजें",
+    "selectedImageAlt": "चयनित छवि {{number}}",
+    "unlikeAria": "पोस्ट अनलाइक करें",
+    "unlikeCommentAria": "टिप्पणी अनलाइक करें",
+    "unsaveAria": "सहेजे गए से हटाएं",
+    "viewCommentsAria": "टिप्पणियां देखें",
+    "viewImageAria": "छवि {{number}} पूर्ण स्क्रीन में देखें",
+    "viewProfileAria": "{{username}} की प्रोफ़ाइल देखें",
+    "viewReplies": "{{count}} जवाब देखें",
+    "viewReplies_plural": "{{count}} जवाब देखें",
+    "writeReplyPlaceholder": "एक जवाब लिखें…"
   },
   "translate": {
     "button": "अनुवाद करें",
@@ -685,7 +856,9 @@
     "noContent": "कोई सामग्री उपलब्ध नहीं।",
     "linkToArticle": "बाहरी लेख का लिंक",
     "byAuthorOnDate": "{{date}} को {{author}} द्वारा",
-    "byAuthor": "{{author}} द्वारा"
+    "byAuthor": "{{author}} द्वारा",
+    "loadError": "समाचार लोड नहीं हो सके।",
+    "nationalNews": "राष्ट्रीय समाचार"
   },
   "tips": {
     "pastTips": "पिछले सुझाव",
@@ -695,7 +868,8 @@
     "tipNotFound": "सुझाव नहीं मिला",
     "sources": "स्रोत",
     "seePastTips": "पिछले सुझाव देखें",
-    "dailyTip": "दैनिक सुझाव"
+    "dailyTip": "दैनिक सुझाव",
+    "loadingToday": "आज का सुझाव लोड हो रहा है…"
   },
   "events": {
     "title": "सामुदायिक कार्यक्रम",
@@ -712,7 +886,13 @@
     "hostedBy": "आयोजक",
     "viewDetails": "कार्यक्रम विवरण देखें",
     "aboutEvent": "कार्यक्रम के बारे में",
-    "noEventDescription": "इस कार्यक्रम के लिए कोई विवरण उपलब्ध नहीं।"
+    "noEventDescription": "इस कार्यक्रम के लिए कोई विवरण उपलब्ध नहीं।",
+    "eventNotFound": "यह कार्यक्रम नहीं मिला।",
+    "failedLoad": "कार्यक्रम लोड नहीं हो सके।",
+    "noUpcoming": "कोई आगामी कार्यक्रम नहीं।",
+    "typeHybrid": "हाइब्रिड",
+    "typeInPerson": "आमने-सामने",
+    "typeOnline": "ऑनलाइन"
   },
   "resetPassword": {
     "title": "पासवर्ड रीसेट करें",
@@ -833,7 +1013,14 @@
     "hourAgo": "{{count}} घंटा पहले",
     "hourAgo_plural": "{{count}} घंटे पहले",
     "dayAgo": "{{count}} दिन पहले",
-    "dayAgo_plural": "{{count}} दिन पहले"
+    "dayAgo_plural": "{{count}} दिन पहले",
+    "cancelMatching": "मैचिंग रद्द करें",
+    "chatComingSoon": "चैट जल्द आ रही है।",
+    "circleActive": "आपका सर्कल सक्रिय है",
+    "circleActiveDesc": "आपका मिलान 3 नवागंतुकों से हुआ है। ग्रुप चैट में शामिल हों और नमस्ते कहें।",
+    "failedLoad": "आपका सर्कल लोड नहीं हो सका।",
+    "starting": "शुरू हो रहा है…",
+    "updateMatchingFailed": "हम आपकी मैचिंग स्थिति अपडेट नहीं कर सके। कृपया पुनः प्रयास करें।"
   },
   "onboarding": {
     "stepOf": "चरण {{current}} / {{total}}",
@@ -887,7 +1074,12 @@
     "missingPostId": "पोस्ट आईडी अनुपस्थित।",
     "missingUserId": "उपयोगकर्ता आईडी अनुपस्थित।",
     "submittedToast": "रिपोर्ट जमा की गई। धन्यवाद।",
-    "submitFailed": "रिपोर्ट जमा करने में विफल। कृपया पुनः प्रयास करें।"
+    "submitFailed": "रिपोर्ट जमा करने में विफल। कृपया पुनः प्रयास करें।",
+    "placeholderQuestion": "लिखें कि आप इस प्रश्न को क्यों रिपोर्ट कर रहे हैं...",
+    "placeholderReply": "लिखें कि आप इस जवाब को क्यों रिपोर्ट कर रहे हैं...",
+    "privacyNote": "यह निजी है और केवल मॉडरेटरों को दिखाई देता है।",
+    "titleQuestion": "प्रश्न रिपोर्ट करें",
+    "titleReply": "जवाब रिपोर्ट करें"
   },
   "quiz": {
     "errors": {
@@ -1116,7 +1308,27 @@
     "changePasswordDesc": "ईमेल से साइन इन करने के लिए नया पासवर्ड सेट करें।",
     "deleteAccountDesc": "अपना खाता और अपना सारा डेटा स्थायी रूप से हटाएं।",
     "change": "बदलें",
-    "emailUpdated": "ईमेल अपडेट हो गया"
+    "emailUpdated": "ईमेल अपडेट हो गया",
+    "addEmailFirst": "पासवर्ड बदलने से पहले अपने खाते में एक ईमेल जोड़ें।",
+    "changePasswordModalDesc": "अपना वर्तमान पासवर्ड पुष्टि करें, फिर एक नया सेट करें।",
+    "currentPasswordPlaceholder": "वर्तमान पासवर्ड",
+    "currentPasswordRequired": "अपना वर्तमान पासवर्ड दर्ज करें।",
+    "deleteAccountBody": "यह आपके खाते और आपके सभी डेटा को स्थायी रूप से हटा देता है। इसे पूर्ववत नहीं किया जा सकता।",
+    "deleteHoldAria": "अपना खाता हटाने के लिए दबाए रखें",
+    "deleteHoldInstruction": "अपना खाता स्थायी रूप से हटाने के लिए नीचे दिए गए बटन को 3 सेकंड तक दबाए रखें।",
+    "deletePermanent": "यह क्रिया स्थायी है।",
+    "deletingAccount": "आपका खाता हटाया जा रहा है…",
+    "emailChangeDesc": "हम आपके नए पते पर पुष्टिकरण लिंक ईमेल करेंगे।",
+    "emailChangeFailed": "ईमेल परिवर्तन शुरू नहीं हो सका।",
+    "emailChangeSentBody": "हमने आपके नए ईमेल पते पर एक पुष्टिकरण लिंक भेज दिया है। बदलाव की पुष्टि करने के लिए उस पर क्लिक करें। बदलाव पूरा होने पर आपके वर्तमान ईमेल पते पर एक सूचना भेजी जाएगी।",
+    "emailInvalid": "एक वैध ईमेल पता दर्ज करें।",
+    "emailSame": "यह पहले से ही आपका ईमेल है।",
+    "holdToDelete": "हटाने के लिए दबाए रखें",
+    "newEmailPlaceholder": "नया ईमेल पता",
+    "passwordMinLength": "पासवर्ड कम से कम {{count}} अक्षरों का होना चाहिए।",
+    "passwordUpdateFailed": "आपका पासवर्ड अपडेट नहीं हो सका।",
+    "passwordUpdated": "पासवर्ड अपडेट हो गया",
+    "updatePassword": "पासवर्ड अपडेट करें"
   },
   "authWeb": {
     "incorrectCredentials": "ईमेल या पासवर्ड गलत है।",
@@ -1284,5 +1496,24 @@
       "bodyOnboard": "आपकी चेकलिस्ट, सीखना और सहायक अब आपके अनुसार ढल गए हैं। शुरू करने के लिए समाप्त करें दबाएं।",
       "bodyEdit": "आपकी प्राथमिकताएं अपडेट हो गई हैं। आपकी चेकलिस्ट और सहायक के जवाब अब आपके नवीनतम उत्तरों के अनुसार होंगे।"
     }
+  },
+  "moderation": {
+    "blockConfirmDesc": "आपको उनकी पोस्ट अपनी फ़ीड में नहीं दिखेंगी।",
+    "blockConfirmTitle": "@{{username}} को ब्लॉक करें?",
+    "blockUser": "@{{username}} को ब्लॉक करें",
+    "postOptionsAria": "पोस्ट विकल्प",
+    "userOptionsAria": "@{{username}} के लिए विकल्प"
+  },
+  "ui": {
+    "capsLockOn": "Caps Lock चालू है",
+    "closeImageViewerAria": "छवि व्यूअर बंद करें",
+    "hidePassword": "पासवर्ड छिपाएं",
+    "imageOfAlt": "छवि {{count}} में से {{number}}",
+    "imageOfAltTitled": "{{title}} — छवि {{count}} में से {{number}}",
+    "imageViewerAria": "छवि व्यूअर",
+    "moreOptionsAria": "अधिक विकल्प",
+    "nextImageAria": "अगली छवि",
+    "previousImageAria": "पिछली छवि",
+    "showPassword": "पासवर्ड दिखाएं"
   }
 }

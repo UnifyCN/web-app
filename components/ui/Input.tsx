@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ArrowBigUp, Eye, EyeOff } from "lucide-react";
 import { cn, moveCaretToEnd } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ export function Input({
   onFocus,
   ...props
 }: InputProps) {
+  const { t } = useTranslation();
   const isPassword = type === "password";
   const [show, setShow] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
@@ -93,8 +95,8 @@ export function Input({
         <span
           className="pointer-events-none absolute right-11 flex text-warning"
           role="img"
-          aria-label="Caps Lock is on"
-          title="Caps Lock is on"
+          aria-label={t("ui.capsLockOn")}
+          title={t("ui.capsLockOn")}
         >
           <ArrowBigUp className="h-4 w-4" aria-hidden />
         </span>
@@ -105,7 +107,7 @@ export function Input({
           tabIndex={-1}
           onClick={() => setShow((s) => !s)}
           className="absolute right-4 flex text-ink-placeholder transition-colors hover:text-ink-muted"
-          aria-label={show ? "Hide password" : "Show password"}
+          aria-label={show ? t("ui.hidePassword") : t("ui.showPassword")}
         >
           {show ? (
             <EyeOff className="h-5 w-5" aria-hidden />

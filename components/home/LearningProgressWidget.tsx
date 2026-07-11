@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 import { useModules } from "@/hooks/useLearn";
@@ -18,6 +19,7 @@ import { ModuleGridCard } from "@/components/learn/ModuleGridCard";
  * consecutive swipes work freely.
  */
 export function LearningProgressWidget() {
+  const { t } = useTranslation();
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const { data } = useModules();
@@ -61,7 +63,7 @@ export function LearningProgressWidget() {
               key={mod._id}
               type="button"
               onClick={() => goToSlide(index)}
-              aria-label={`Show ${mod.title}`}
+              aria-label={t("home.showSlideAria", { title: mod.title })}
               className={cn(
                 "h-1.5 w-1.5 cursor-pointer rounded-full transition-colors duration-150",
                 index === activeIndex

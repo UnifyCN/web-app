@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, ChevronDown, ChevronUp, Copy, Globe } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { ChatMessage, ChatSource } from "@/types";
 
@@ -26,6 +27,7 @@ function hostFromUrl(url: string): string {
 
 /** Collapsible "Sources (N)" list — full-width rows with domain + linked title. */
 function SourceList({ sources }: { sources: ChatSource[] }) {
+  const { t } = useTranslation();
   // Collapsed by default — users expand if they want to inspect citations.
   const [open, setOpen] = useState(false);
 
@@ -37,7 +39,7 @@ function SourceList({ sources }: { sources: ChatSource[] }) {
         aria-expanded={open}
         className="flex w-full cursor-pointer items-center justify-between text-sm font-semibold text-ink-secondary"
       >
-        <span>Sources ({sources.length})</span>
+        <span>{t("companion.sourcesCount", { count: sources.length })}</span>
         {open ? (
           <ChevronUp className="h-4 w-4 text-ink-muted" aria-hidden />
         ) : (
@@ -90,6 +92,7 @@ function AssistantMessage({
   isLast?: boolean;
   onSuggestionClick?: (text: string) => void;
 }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   function copy() {
@@ -104,7 +107,7 @@ function AssistantMessage({
         <button
           type="button"
           onClick={copy}
-          aria-label={copied ? "Copied" : "Copy message"}
+          aria-label={copied ? t("companion.copied") : t("companion.copyMessage")}
           className="absolute right-2.5 top-2.5 flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink-muted"
         >
           {copied ? (
@@ -127,7 +130,7 @@ function AssistantMessage({
           message.suggestedNextSteps.length > 0 && (
             <div className="mt-3 border-t border-border-card pt-3">
               <p className="mb-2 text-xs font-medium text-ink-muted">
-                Ask a follow-up:
+                {t("companion.askFollowUp")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {message.suggestedNextSteps.map((question) => (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SquarePen } from "lucide-react";
 import { CreatePostModal } from "./CreatePostModal";
 
@@ -9,6 +10,7 @@ import { CreatePostModal } from "./CreatePostModal";
  * create-post composer.
  */
 export function ComposeButton() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
@@ -16,7 +18,7 @@ export function ComposeButton() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Create a post"
+        aria-label={t("posts.createPostAria")}
         className="fixed bottom-[calc(3.5rem_+_env(safe-area-inset-bottom)_+_1rem)] right-6 z-30 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border border-border-card bg-surface text-ink-tertiary shadow-md transition-colors duration-150 hover:bg-surface-gray hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 md:bottom-6"
       >
         <SquarePen className="h-5 w-5" aria-hidden />

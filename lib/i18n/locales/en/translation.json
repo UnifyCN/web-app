@@ -59,7 +59,11 @@
     "openNotifications": "Open notifications",
     "openSettings": "Open settings",
     "openProfileMenu": "Open profile menu",
-    "close": "Close"
+    "close": "Close",
+    "backToHome": "Back to Home",
+    "daysShort": "{{count}}d",
+    "home": "Home",
+    "you": "You"
   },
   "tabs": {
     "social": "Social",
@@ -447,7 +451,27 @@
       "priorityDoSoon": "Do soon",
       "priorityExploreConnect": "Explore and connect",
       "priorityOptionalLater": "Optional / later"
-    }
+    },
+    "addTask": "Add task",
+    "deleteTaskAria": "Delete task: {{title}}",
+    "deleteTaskDesc": "This will permanently remove <strong>\"{{title}}\"</strong>. This can't be undone.",
+    "deleteTaskTitle": "Delete this task?",
+    "loadError": "Couldn't load your checklist.",
+    "markDoneAria": "Mark as done",
+    "markNotDoneAria": "Mark as not done",
+    "priority": {
+      "doNow": "Do now",
+      "doSoon": "Do soon",
+      "explore": "Explore & connect",
+      "optional": "Optional / later"
+    },
+    "priorityAria": "Priority",
+    "progressSummary": "{{completed}}/{{total}} complete · {{percent}}%",
+    "reorderTaskAria": "Reorder task: {{title}}",
+    "subtitle": "Your step-by-step guide to settling into Canada.",
+    "taskDescriptionAria": "Task description",
+    "taskNamePlaceholder": "Task name",
+    "yourProgress": "Your progress"
   },
   "companion": {
     "goBack": "Go back",
@@ -514,7 +538,55 @@
       "newChat": "New chat",
       "noConversationsFound": "No conversations found",
       "noConversationsYet": "No conversations yet"
-    }
+    },
+    "conversationOptionsAria": "Conversation options",
+    "conversationsAria": "Conversations",
+    "copied": "Copied",
+    "copyMessage": "Copy message",
+    "deleteConversationBody": "This will permanently remove <strong>“{{title}}”</strong> and all its messages. This can’t be undone.",
+    "deleteConversationTitle": "Delete this conversation?",
+    "messageInputAria": "Message Companion",
+    "messagesPerDayRemaining": "{{count}} message/day remaining",
+    "messagesPerDayRemaining_plural": "{{count}} messages/day remaining",
+    "newConversation": "New conversation",
+    "noChatsFound": "No chats found.",
+    "searchChats": "Search chats",
+    "sendFailed": "Couldn't send your message. Please try again.",
+    "sendMessageAria": "Send message",
+    "webStarters": {
+      "bankingQ": "How do I open a bank account and build credit in Canada?",
+      "bankingTopic": "Banking",
+      "beforeArrivalQ": "What should I prepare before moving to Canada?",
+      "beforeArrivalTopic": "Before you arrive",
+      "careerQ": "How do I get my foreign credentials recognized in Canada?",
+      "careerTopic": "Your career",
+      "communityCityQ": "How can I meet people and make friends in {{city}}?",
+      "communityQ": "How can I meet people and build community as a newcomer?",
+      "communityTopic": "Community",
+      "documentsQ": "How do I get a SIN and the IDs I need in Canada?",
+      "documentsTopic": "Documents",
+      "familyQ": "How do I enrol my kids in school and find childcare?",
+      "familyTopic": "Family",
+      "financeTopic": "Finance",
+      "healthcareQ": "How do I apply for a provincial health card?",
+      "healthcareTopic": "Healthcare",
+      "housingQ": "How do I find and rent an apartment in Canada?",
+      "housingTopic": "Housing",
+      "immigrationQ": "How does Express Entry work for permanent residence?",
+      "immigrationTopic": "Immigration",
+      "jobsQ": "How do I find a job and write a Canadian-style resume?",
+      "jobsTopic": "Jobs",
+      "localServicesQ": "What newcomer services are available in {{city}}?",
+      "localServicesTopic": "Local services",
+      "refugeeSettlementQ": "What settlement support is available for refugees in Canada?",
+      "settlementQ": "What resources are available for newcomers settling in Canada?",
+      "settlementTopic": "Settlement",
+      "studyPermitQ": "How do I maintain my study permit and work part-time as a student?",
+      "studyPermitTopic": "Study permit",
+      "transitQ": "How do I get around using public transit in my city?",
+      "transitTopic": "Transit"
+    },
+    "welcomeTitleNamed": "Ask me anything, {{name}}."
   },
   "home": {
     "forYou": "For You",
@@ -551,7 +623,15 @@
     "pinPost": "Pin Post",
     "reportPost": "Report Post",
     "postSavedToast": "Post saved! Find it in Settings > Saved Posts",
-    "failedPinPost": "Failed to pin post. Please try again."
+    "failedPinPost": "Failed to pin post. Please try again.",
+    "allCaughtUp": "You're all caught up",
+    "feedLoadError": "Couldn't load the feed.",
+    "forYouEmptySub": "Check back soon for new posts.",
+    "forYouEmptyTitle": "No posts yet",
+    "sectionFeed": "Feed",
+    "sectionLearning": "Learning",
+    "sectionNews": "News",
+    "showSlideAria": "Show {{title}}"
   },
   "profile": {
     "title": "Profile",
@@ -592,7 +672,36 @@
     "noFollowersYet": "No followers yet",
     "notFollowingAnyone": "Not following anyone yet",
     "followersTab": "Followers",
-    "followingTab": "Following"
+    "followingTab": "Following",
+    "addBioPrompt": "Add a bio and pronouns",
+    "backToProfileAria": "Back to profile",
+    "changePhotoAria": "Change profile photo",
+    "commentByAuthor": "by @{{username}}",
+    "completeProfileHint": "Complete your profile to add your persona, location, and stage.",
+    "editBioAria": "Edit bio and pronouns",
+    "followsYou": "Follows you",
+    "highlightFrom": "From {{lesson}} · {{module}}",
+    "highlightsTab": "Highlights",
+    "memberSince": "Member since {{date}}",
+    "noCommentsSelfHint": "You haven't commented yet — join the conversation.",
+    "noHighlights": "No highlights yet.",
+    "noSavedPosts": "No saved posts yet.",
+    "persona": {
+      "other": "Newcomer"
+    },
+    "profileNotFound": "This profile could not be found.",
+    "pronounsPlaceholder": "Pronouns (e.g. she/her)",
+    "removePhoto": "Remove photo",
+    "shareFirstPost": "Share your first post with the community.",
+    "sharePostCta": "Share a post",
+    "shareProfile": "Share profile",
+    "signInToView": "Sign in to view your profile.",
+    "stage": {
+      "1": "0–3 months in Canada",
+      "2": "3–12 months in Canada",
+      "3": "1–3 years in Canada",
+      "4": "3+ years in Canada"
+    }
   },
   "profilePicture": {
     "chooseFromLibrary": "Choose from library",
@@ -632,7 +741,29 @@
     "mutuals": "Mutuals",
     "followsYou": "Follows you",
     "discoverTabLabel": "Discover groups tab",
-    "joinedTabLabel": "Joined groups tab"
+    "joinedTabLabel": "Joined groups tab",
+    "failedLoad": "Couldn't load groups.",
+    "groupNotFoundLong": "This group could not be found.",
+    "join": "Join",
+    "loadingPosts": "Loading posts…",
+    "myGroups": "My Groups",
+    "noGroupsYet": "No groups yet.",
+    "noPostsInGroup": "No posts in this group yet.",
+    "plusMembers": "+{{count}} member",
+    "plusMembers_plural": "+{{count}} members",
+    "recentPosts": "Recent posts",
+    "requestAudienceLabel": "Who is this group for?",
+    "requestAudiencePlaceholder": "e.g. Newcomers who commute by bike",
+    "requestEmailLabel": "Your email",
+    "requestEmailPlaceholder": "you@example.com",
+    "requestFollowUp": "Thanks — we review every request and follow up by email.",
+    "requestNameLabel": "Group name",
+    "requestNamePlaceholder": "e.g. Newcomer Cyclists",
+    "requestNotesLabel": "Anything else? (optional)",
+    "requestNotesPlaceholder": "Extra notes for the team",
+    "requestReasonLabel": "Why should we create it?",
+    "requestReasonPlaceholder": "Tell us a little about the need (at least 10 characters).",
+    "requestReviewNote": "We review every request and follow up by email."
   },
   "posts": {
     "postButton": "Post",
@@ -664,7 +795,47 @@
     "tryDifferentSearchTerm": "Try a different search term",
     "noGroupsAvailable": "No groups available",
     "checkBackLaterForNewGroups": "Check back later for new groups",
-    "contentNotAllowedReason": "Your post contains language that violates our Community Guidelines. Please revise and try again."
+    "contentNotAllowedReason": "Your post contains language that violates our Community Guidelines. Please revise and try again.",
+    "addCommentPlaceholder": "Add a comment…",
+    "addPhotos": "Add photos",
+    "addPhotosCount": "Add photos ({{count}}/{{max}})",
+    "addPhotosCount_plural": "Add photos ({{count}}/{{max}})",
+    "cancelReplyAria": "Cancel reply",
+    "clearGroupAria": "Clear selected group",
+    "commentCount": "{{count}} comment",
+    "commentCount_plural": "{{count}} comments",
+    "createPostAria": "Create a post",
+    "deleteCommentAria": "Delete comment",
+    "deleteCommentDesc": "This will permanently remove your comment. This can't be undone.",
+    "deleteCommentTitle": "Delete this comment?",
+    "deletePostError": "Couldn't delete this post. Please try again.",
+    "deletePostTitle": "Delete this post?",
+    "hideReplies": "Hide replies",
+    "likeAria": "Like post",
+    "likeCommentAria": "Like comment",
+    "loadCommentsError": "Couldn't load comments.",
+    "loadPostError": "Something went wrong loading this post.",
+    "loadingComments": "Loading comments…",
+    "postBodyAria": "Post body",
+    "postImageAlt": "Post image {{number}}",
+    "postImageAltTitled": "{{title}} — image {{number}}",
+    "postNotFound": "This post could not be found.",
+    "postTitleAria": "Post title",
+    "postedHeading": "Posted!",
+    "postedSubtext": "Your post is live in the feed.",
+    "removeImageAria": "Remove image {{number}}",
+    "reply": "Reply",
+    "saveAria": "Save post",
+    "selectedImageAlt": "Selected image {{number}}",
+    "unlikeAria": "Unlike post",
+    "unlikeCommentAria": "Unlike comment",
+    "unsaveAria": "Remove from saved",
+    "viewCommentsAria": "View comments",
+    "viewImageAria": "View image {{number}} full screen",
+    "viewProfileAria": "View {{username}}'s profile",
+    "viewReplies": "View {{count}} reply",
+    "viewReplies_plural": "View {{count}} replies",
+    "writeReplyPlaceholder": "Write a reply…"
   },
   "translate": {
     "button": "Translate",
@@ -685,7 +856,9 @@
     "noContent": "No content available.",
     "linkToArticle": "Link to external article",
     "byAuthorOnDate": "By {{author}} on {{date}}",
-    "byAuthor": "By {{author}}"
+    "byAuthor": "By {{author}}",
+    "loadError": "Couldn't load news.",
+    "nationalNews": "National News"
   },
   "tips": {
     "pastTips": "Past Tips",
@@ -695,7 +868,8 @@
     "tipNotFound": "Tip not found",
     "sources": "Sources",
     "seePastTips": "See past tips",
-    "dailyTip": "Daily Tip"
+    "dailyTip": "Daily Tip",
+    "loadingToday": "Loading today's tip…"
   },
   "events": {
     "title": "Community Events",
@@ -712,7 +886,13 @@
     "hostedBy": "Hosted by",
     "viewDetails": "View Event Details",
     "aboutEvent": "About Event",
-    "noEventDescription": "No description available for this event."
+    "noEventDescription": "No description available for this event.",
+    "eventNotFound": "This event could not be found.",
+    "failedLoad": "Couldn't load events.",
+    "noUpcoming": "No upcoming events.",
+    "typeHybrid": "Hybrid",
+    "typeInPerson": "In person",
+    "typeOnline": "Online"
   },
   "resetPassword": {
     "title": "Reset Password",
@@ -833,7 +1013,14 @@
     "hourAgo": "{{count}} hour ago",
     "hourAgo_plural": "{{count}} hours ago",
     "dayAgo": "{{count}} day ago",
-    "dayAgo_plural": "{{count}} days ago"
+    "dayAgo_plural": "{{count}} days ago",
+    "cancelMatching": "Cancel matching",
+    "chatComingSoon": "Chat coming soon.",
+    "circleActive": "Your circle is active",
+    "circleActiveDesc": "You've been matched with 3 newcomers. Jump into the group chat and say hello.",
+    "failedLoad": "Couldn't load your circle.",
+    "starting": "Starting…",
+    "updateMatchingFailed": "Couldn't update your matching status. Please try again."
   },
   "onboarding": {
     "stepOf": "Step {{current}} of {{total}}",
@@ -887,7 +1074,12 @@
     "missingPostId": "Missing post ID.",
     "missingUserId": "Missing user ID.",
     "submittedToast": "Report submitted. Thank you.",
-    "submitFailed": "Failed to submit report. Please try again."
+    "submitFailed": "Failed to submit report. Please try again.",
+    "placeholderQuestion": "Write why you're reporting this question...",
+    "placeholderReply": "Write why you're reporting this reply...",
+    "privacyNote": "This is private and only visible to moderators.",
+    "titleQuestion": "Report question",
+    "titleReply": "Report reply"
   },
   "quiz": {
     "errors": {
@@ -1116,7 +1308,27 @@
     "changePasswordDesc": "Set a new password for signing in with email.",
     "deleteAccountDesc": "Permanently delete your account and all your data.",
     "change": "Change",
-    "emailUpdated": "Email updated"
+    "emailUpdated": "Email updated",
+    "addEmailFirst": "Add an email to your account before changing your password.",
+    "changePasswordModalDesc": "Confirm your current password, then set a new one.",
+    "currentPasswordPlaceholder": "Current Password",
+    "currentPasswordRequired": "Enter your current password.",
+    "deleteAccountBody": "This permanently deletes your account and all of your data. This cannot be undone.",
+    "deleteHoldAria": "Hold to delete your account",
+    "deleteHoldInstruction": "Press and hold the button below for 3 seconds to permanently delete your account.",
+    "deletePermanent": "This action is permanent.",
+    "deletingAccount": "Deleting your account…",
+    "emailChangeDesc": "We'll email a confirmation link to your new address.",
+    "emailChangeFailed": "Couldn't start the email change.",
+    "emailChangeSentBody": "We've sent a confirmation link to your new email address. Click it to confirm the change. Your current email address will receive a notification once the change is complete.",
+    "emailInvalid": "Enter a valid email address.",
+    "emailSame": "That's already your email.",
+    "holdToDelete": "Hold to delete",
+    "newEmailPlaceholder": "New email address",
+    "passwordMinLength": "Password must be at least {{count}} characters.",
+    "passwordUpdateFailed": "Couldn't update your password.",
+    "passwordUpdated": "Password updated",
+    "updatePassword": "Update password"
   },
   "authWeb": {
     "incorrectCredentials": "Incorrect email or password.",
@@ -1284,5 +1496,24 @@
       "bodyOnboard": "Your Checklist, Learning, and Companion are now tailored to you. Press Finish to jump in.",
       "bodyEdit": "Your preferences have been updated. Your Checklist and Companion responses will now reflect your latest answers."
     }
+  },
+  "moderation": {
+    "blockConfirmDesc": "You won't see their posts in your feed.",
+    "blockConfirmTitle": "Block @{{username}}?",
+    "blockUser": "Block @{{username}}",
+    "postOptionsAria": "Post options",
+    "userOptionsAria": "Options for @{{username}}"
+  },
+  "ui": {
+    "capsLockOn": "Caps Lock is on",
+    "closeImageViewerAria": "Close image viewer",
+    "hidePassword": "Hide password",
+    "imageOfAlt": "Image {{number}} of {{count}}",
+    "imageOfAltTitled": "{{title}} — image {{number}} of {{count}}",
+    "imageViewerAria": "Image viewer",
+    "moreOptionsAria": "More options",
+    "nextImageAria": "Next image",
+    "previousImageAria": "Previous image",
+    "showPassword": "Show password"
   }
 }

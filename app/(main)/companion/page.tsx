@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { ConversationList } from "@/components/companion/ConversationList";
 import { ChatPanel } from "@/components/companion/ChatPanel";
 import {
@@ -18,6 +19,7 @@ import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
 import type { ChatMessage } from "@/types";
 
 export default function CompanionPage() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
   // Surfaced beneath the input — e.g. the daily-limit message (rag-query 429).
@@ -66,13 +68,13 @@ export default function CompanionPage() {
       await sendMessage.mutateAsync({ conversationIdentifier, text });
     } catch (err) {
       // The daily free-tier cap surfaces as a typed ChatLimitError (rag-query
-      // 429, relayed verbatim by the /api/companion proxy) — show its message;
+      // 429, relayed by the /api/companion proxy) — show localized limit copy;
       // anything else gets a generic retry prompt instead of failing silently.
       if (err instanceof ChatLimitError) {
-        setSendError(err.message);
+        setSendError(t("companion.dailyLimitReachedToast"));
       } else {
         console.error("Companion: failed to send message", err);
-        setSendError("Couldn't send your message. Please try again.");
+        setSendError(t("companion.sendFailed"));
       }
     }
   }
