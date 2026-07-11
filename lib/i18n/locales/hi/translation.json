@@ -1583,6 +1583,33 @@
         "family_kids": "परिवार और बच्चे",
         "transit": "परिवहन"
       }
+    },
+    "module": {
+      "backToLearn": "सीखें पर वापस जाएं",
+      "notFound": "यह मॉड्यूल नहीं मिला।",
+      "noSections": "इस मॉड्यूल में अभी कोई अनुभाग नहीं है।",
+      "lessonProgress": "{{completed}}/{{count}} पाठ",
+      "lessonProgress_plural": "{{completed}}/{{count}} पाठ",
+      "showLessons": "पाठ दिखाएं",
+      "hideLessons": "पाठ छिपाएं",
+      "noLessons": "इस अनुभाग में अभी कोई पाठ नहीं है।",
+      "minRead": "{{count}} मिनट में पढ़ें",
+      "breadcrumbAria": "ब्रेडक्रम्ब",
+      "removeFromSaved": "सहेजे गए से हटाएं",
+      "saveModule": "मॉड्यूल सहेजें"
+    },
+    "section": {
+      "notFound": "यह अनुभाग नहीं मिला।",
+      "backToModule": "मॉड्यूल पर वापस जाएं",
+      "backTo": "{{title}} पर वापस जाएं",
+      "finished": "बहुत बढ़िया! आपने यह अनुभाग पूरा कर लिया",
+      "readyPractice": "अनुभाग पूरा हुआ! अभ्यास के लिए तैयार हैं?",
+      "getStarted": "शुरू करें",
+      "pickUp": "जहाँ छोड़ा था वहीं से आगे बढ़ें",
+      "startLesson1": "पाठ 1 से शुरू करें",
+      "continueWhereLeft": "जहाँ छोड़ा था वहीं से जारी रखें",
+      "completeCount": "{{completed}}/{{total}} पूर्ण",
+      "resume": "फिर से शुरू करें"
     }
   }
 }

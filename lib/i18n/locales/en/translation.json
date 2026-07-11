@@ -1583,6 +1583,33 @@
         "family_kids": "family & kids",
         "transit": "transit"
       }
+    },
+    "module": {
+      "backToLearn": "Back to Learn",
+      "notFound": "This module could not be found.",
+      "noSections": "This module has no sections yet.",
+      "lessonProgress": "{{completed}}/{{count}} lesson",
+      "lessonProgress_plural": "{{completed}}/{{count}} lessons",
+      "showLessons": "Show lessons",
+      "hideLessons": "Hide lessons",
+      "noLessons": "No lessons in this section yet.",
+      "minRead": "{{count}} min read",
+      "breadcrumbAria": "Breadcrumb",
+      "removeFromSaved": "Remove from saved",
+      "saveModule": "Save module"
+    },
+    "section": {
+      "notFound": "This section could not be found.",
+      "backToModule": "Back to module",
+      "backTo": "Back to {{title}}",
+      "finished": "Nice work! You've finished this section",
+      "readyPractice": "Section complete! Ready for the practice?",
+      "getStarted": "Get started",
+      "pickUp": "Pick up where you left off",
+      "startLesson1": "Start with Lesson 1",
+      "continueWhereLeft": "Continue where you left off",
+      "completeCount": "{{completed}}/{{total}} complete",
+      "resume": "Resume"
     }
   }
 }

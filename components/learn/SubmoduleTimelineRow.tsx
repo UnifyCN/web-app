@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, ChevronDown, HelpCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { Collapse } from "@/components/ui/Collapse";
 import { LessonListRow } from "./LessonListRow";
@@ -46,6 +47,7 @@ export function SubmoduleTimelineRow({
   hasPractice,
   practiceProgress,
 }: SubmoduleTimelineRowProps) {
+  const { t } = useTranslation();
   // Open the active (first-incomplete) section by default; otherwise collapsed.
   const [open, setOpen] = useState(isActiveCTA);
   const reduce = useReducedMotion();
@@ -141,8 +143,10 @@ export function SubmoduleTimelineRow({
                   isActiveCTA ? "text-white/85" : "text-ink-muted",
                 )}
               >
-                {completedCount}/{lessonCount}{" "}
-                {lessonCount === 1 ? "lesson" : "lessons"}
+                {t("learnWeb.module.lessonProgress", {
+                  completed: completedCount,
+                  count: lessonCount,
+                })}
               </p>
             </div>
             {isActiveCTA && (
@@ -150,7 +154,7 @@ export function SubmoduleTimelineRow({
                 className="inline-flex h-9 shrink-0 items-center gap-1 rounded-md bg-white px-3 text-xs font-semibold"
                 style={{ color: colorHex }}
               >
-                Continue
+                {t("common.continue")}
                 <ArrowRight className="h-3.5 w-3.5" aria-hidden />
               </span>
             )}
@@ -160,7 +164,11 @@ export function SubmoduleTimelineRow({
             type="button"
             onClick={() => setOpen((o) => !o)}
             aria-expanded={open}
-            aria-label={open ? "Hide lessons" : "Show lessons"}
+            aria-label={
+              open
+                ? t("learnWeb.module.hideLessons")
+                : t("learnWeb.module.showLessons")
+            }
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border-card bg-surface text-ink-muted transition-all duration-200 hover:bg-surface-gray hover:text-ink active:scale-95"
           >
             <motion.span
@@ -187,7 +195,7 @@ export function SubmoduleTimelineRow({
             ))}
             {lessons.length === 0 && (
               <p className="px-3 py-2.5 text-sm text-ink-muted">
-                No lessons in this section yet.
+                {t("learnWeb.module.noLessons")}
               </p>
             )}
             {hasPractice && (
@@ -207,14 +215,14 @@ export function SubmoduleTimelineRow({
                   />
                 </span>
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-secondary transition-colors group-hover:text-ink">
-                  Practice
+                  {t("learn.submodule.practiceTitle")}
                 </span>
                 <span className="shrink-0 text-xs text-ink-placeholder">
                   {practiceScore != null && practiceTotal
                     ? `${practiceScore}/${practiceTotal}`
                     : practiceCompleted
-                      ? "Done"
-                      : "Practice"}
+                      ? t("common.done")
+                      : t("learn.submodule.practiceTitle")}
                 </span>
               </Link>
             )}

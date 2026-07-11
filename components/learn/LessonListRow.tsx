@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface LessonListRowProps {
   href: string;
@@ -22,6 +23,7 @@ export function LessonListRow({
   readMinutes,
   colorHex,
 }: LessonListRowProps) {
+  const { t } = useTranslation();
   return (
     <Link
       href={href}
@@ -43,7 +45,7 @@ export function LessonListRow({
         {title}
       </span>
       <span className="shrink-0 text-xs text-ink-placeholder">
-        {readMinutes} min read
+        {t("learnWeb.module.minRead", { count: readMinutes })}
       </span>
     </Link>
   );

@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import { Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useToggleFavouriteModule } from "@/hooks/useLearn";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ export function FavouriteButton({
   style,
   size = 18,
 }: FavouriteButtonProps) {
+  const { t } = useTranslation();
   const toggle = useToggleFavouriteModule();
 
   return (
@@ -42,7 +44,11 @@ export function FavouriteButton({
       }}
       disabled={toggle.isPending}
       aria-pressed={isFavourite}
-      aria-label={isFavourite ? "Remove from saved" : "Save module"}
+      aria-label={
+        isFavourite
+          ? t("learnWeb.module.removeFromSaved")
+          : t("learnWeb.module.saveModule")
+      }
       className={cn(
         "inline-flex shrink-0 cursor-pointer items-center justify-center rounded-full p-2 disabled:cursor-default",
         className,

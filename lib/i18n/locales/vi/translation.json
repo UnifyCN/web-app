@@ -1583,6 +1583,33 @@
         "family_kids": "gia đình và con cái",
         "transit": "đi lại"
       }
+    },
+    "module": {
+      "backToLearn": "Quay lại trang Học",
+      "notFound": "Không tìm thấy mô-đun này.",
+      "noSections": "Mô-đun này chưa có phần nào.",
+      "lessonProgress": "{{completed}}/{{count}} bài học",
+      "lessonProgress_plural": "{{completed}}/{{count}} bài học",
+      "showLessons": "Hiện bài học",
+      "hideLessons": "Ẩn bài học",
+      "noLessons": "Phần này chưa có bài học nào.",
+      "minRead": "Đọc trong {{count}} phút",
+      "breadcrumbAria": "Đường dẫn điều hướng",
+      "removeFromSaved": "Bỏ khỏi mục đã lưu",
+      "saveModule": "Lưu mô-đun"
+    },
+    "section": {
+      "notFound": "Không tìm thấy phần này.",
+      "backToModule": "Quay lại mô-đun",
+      "backTo": "Quay lại {{title}}",
+      "finished": "Làm tốt lắm! Bạn đã hoàn thành phần này",
+      "readyPractice": "Hoàn thành phần này rồi! Sẵn sàng thực hành chưa?",
+      "getStarted": "Bắt đầu",
+      "pickUp": "Tiếp tục từ chỗ bạn đã dừng",
+      "startLesson1": "Bắt đầu với Bài học 1",
+      "continueWhereLeft": "Tiếp tục từ chỗ đã dừng",
+      "completeCount": "{{completed}}/{{total}} hoàn thành",
+      "resume": "Tiếp tục"
     }
   }
 }

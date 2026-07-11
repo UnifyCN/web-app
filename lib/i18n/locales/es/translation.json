@@ -1583,6 +1583,33 @@
         "family_kids": "familia e hijos",
         "transit": "transporte"
       }
+    },
+    "module": {
+      "backToLearn": "Volver a Aprender",
+      "notFound": "No se pudo encontrar este módulo.",
+      "noSections": "Este módulo aún no tiene secciones.",
+      "lessonProgress": "{{completed}}/{{count}} lección",
+      "lessonProgress_plural": "{{completed}}/{{count}} lecciones",
+      "showLessons": "Mostrar lecciones",
+      "hideLessons": "Ocultar lecciones",
+      "noLessons": "Esta sección aún no tiene lecciones.",
+      "minRead": "{{count}} min de lectura",
+      "breadcrumbAria": "Ruta de navegación",
+      "removeFromSaved": "Quitar de guardados",
+      "saveModule": "Guardar módulo"
+    },
+    "section": {
+      "notFound": "No se pudo encontrar esta sección.",
+      "backToModule": "Volver al módulo",
+      "backTo": "Volver a {{title}}",
+      "finished": "¡Buen trabajo! Terminaste esta sección",
+      "readyPractice": "¡Sección completada! ¿Listo para la práctica?",
+      "getStarted": "Comienza",
+      "pickUp": "Retoma donde lo dejaste",
+      "startLesson1": "Empieza con la Lección 1",
+      "continueWhereLeft": "Continúa donde lo dejaste",
+      "completeCount": "{{completed}}/{{total}} completadas",
+      "resume": "Reanudar"
     }
   }
 }
