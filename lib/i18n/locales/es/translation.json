@@ -459,12 +459,6 @@
     "loadError": "No se pudo cargar tu lista.",
     "markDoneAria": "Marcar como completado",
     "markNotDoneAria": "Marcar como no completado",
-    "priority": {
-      "doNow": "Hacer ahora",
-      "doSoon": "Hacer pronto",
-      "explore": "Explorar y conectar",
-      "optional": "Opcional / después"
-    },
     "priorityAria": "Prioridad",
     "progressSummary": "{{completed}}/{{total}} completadas · {{percent}}%",
     "reorderTaskAria": "Reordenar tarea: {{title}}",
@@ -749,8 +743,8 @@
     "myGroups": "Tus grupos",
     "noGroupsYet": "Sin grupos aún",
     "noPostsInGroup": "Aún no hay publicaciones en este grupo.",
-    "plusMembers": "+{{count}} miembro",
-    "plusMembers_plural": "+{{count}} miembros",
+    "plusMembers": "+{{count, number}} miembro",
+    "plusMembers_plural": "+{{count, number}} miembros",
     "recentPosts": "Publicaciones recientes",
     "requestAudienceLabel": "¿Para quién es este grupo?",
     "requestAudiencePlaceholder": "p. ej. Recién llegados que se transportan en bicicleta",

@@ -46,10 +46,10 @@ const STAGE_KEY: Record<Stage, string> = {
  * only the rendered label goes through these keys.
  */
 export const PRIORITY_LABEL_KEY: Record<Priority, string> = {
-  "Do now": "checklist.priority.doNow",
-  "Do soon": "checklist.priority.doSoon",
-  "Explore and connect": "checklist.priority.explore",
-  "Optional / later": "checklist.priority.optional",
+  "Do now": "checklist.createItem.priorityDoNow",
+  "Do soon": "checklist.createItem.priorityDoSoon",
+  "Explore and connect": "checklist.createItem.priorityExploreConnect",
+  "Optional / later": "checklist.createItem.priorityOptionalLater",
 };
 
 /** Translated time-in-Canada stage label (English copy matches STAGE_LABEL). */

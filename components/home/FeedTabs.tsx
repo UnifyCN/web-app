@@ -23,16 +23,13 @@ export function FeedTabs({ activeTab, onChange }: FeedTabsProps) {
   const { t } = useTranslation();
   // The shared Tabs primitive compares activeTab to the tabs array by string
   // equality, so hand it translated labels for both and map the change event
-  // back to the stable id by index.
+  // back to the stable id via the index (labels may not be unique).
   const labels = FEED_TABS.map((tab) => t(FEED_TAB_LABEL_KEYS[tab]));
   return (
     <Tabs
       tabs={labels}
       activeTab={labels[FEED_TABS.indexOf(activeTab)]}
-      onChange={(label) => {
-        const index = labels.indexOf(label);
-        if (index >= 0) onChange(FEED_TABS[index]);
-      }}
+      onChange={(_, index) => onChange(FEED_TABS[index])}
     />
   );
 }

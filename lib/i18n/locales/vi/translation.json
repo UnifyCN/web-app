@@ -459,12 +459,6 @@
     "loadError": "Không thể tải danh sách của bạn.",
     "markDoneAria": "Đánh dấu hoàn thành",
     "markNotDoneAria": "Đánh dấu chưa hoàn thành",
-    "priority": {
-      "doNow": "Làm ngay",
-      "doSoon": "Làm sớm",
-      "explore": "Khám phá & kết nối",
-      "optional": "Tùy chọn / sau"
-    },
     "priorityAria": "Mức độ ưu tiên",
     "progressSummary": "{{completed}}/{{total}} hoàn thành · {{percent}}%",
     "reorderTaskAria": "Sắp xếp lại nhiệm vụ: {{title}}",
@@ -749,8 +743,8 @@
     "myGroups": "Nhóm của bạn",
     "noGroupsYet": "Chưa có nhóm nào.",
     "noPostsInGroup": "Chưa có bài viết nào trong nhóm này.",
-    "plusMembers": "+{{count}} thành viên",
-    "plusMembers_plural": "+{{count}} thành viên",
+    "plusMembers": "+{{count, number}} thành viên",
+    "plusMembers_plural": "+{{count, number}} thành viên",
     "recentPosts": "Bài viết gần đây",
     "requestAudienceLabel": "Nhóm này dành cho ai?",
     "requestAudiencePlaceholder": "vd: Người mới đến di chuyển bằng xe đạp",

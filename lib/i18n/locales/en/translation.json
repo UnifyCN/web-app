@@ -459,12 +459,6 @@
     "loadError": "Couldn't load your checklist.",
     "markDoneAria": "Mark as done",
     "markNotDoneAria": "Mark as not done",
-    "priority": {
-      "doNow": "Do now",
-      "doSoon": "Do soon",
-      "explore": "Explore & connect",
-      "optional": "Optional / later"
-    },
     "priorityAria": "Priority",
     "progressSummary": "{{completed}}/{{total}} complete · {{percent}}%",
     "reorderTaskAria": "Reorder task: {{title}}",
@@ -749,8 +743,8 @@
     "myGroups": "My Groups",
     "noGroupsYet": "No groups yet.",
     "noPostsInGroup": "No posts in this group yet.",
-    "plusMembers": "+{{count}} member",
-    "plusMembers_plural": "+{{count}} members",
+    "plusMembers": "+{{count, number}} member",
+    "plusMembers_plural": "+{{count, number}} members",
     "recentPosts": "Recent posts",
     "requestAudienceLabel": "Who is this group for?",
     "requestAudiencePlaceholder": "e.g. Newcomers who commute by bike",

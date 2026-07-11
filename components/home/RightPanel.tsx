@@ -2,6 +2,11 @@ import { cn } from "@/lib/utils";
 import { LearningProgressWidget } from "./LearningProgressWidget";
 import { NationalNewsWidget } from "./NationalNewsWidget";
 
+/** Stable ids for the phone-width Feed / News / Learning section tabs on the
+ *  home page. Owned here (not the page) so both sides share one type. */
+export const MOBILE_SECTIONS = ["feed", "news", "learning"] as const;
+export type MobileSection = (typeof MOBILE_SECTIONS)[number];
+
 /**
  * Home right-hand widget column. Sits beside the feed on desktop and stacks
  * above it below the `lg` breakpoint (matches the tablet mockup).
@@ -13,7 +18,11 @@ import { NationalNewsWidget } from "./NationalNewsWidget";
  * at `md+`. When the prop is omitted the column behaves exactly as before
  * (both widgets, all breakpoints).
  */
-export function RightPanel({ mobileSection }: { mobileSection?: string }) {
+export function RightPanel({
+  mobileSection,
+}: {
+  mobileSection?: MobileSection;
+}) {
   const asideMobile = mobileSection === "feed" ? "hidden" : "block";
   const learningMobile = mobileSection && mobileSection !== "learning" ? "hidden" : "block";
   const newsMobile = mobileSection && mobileSection !== "news" ? "hidden" : "block";

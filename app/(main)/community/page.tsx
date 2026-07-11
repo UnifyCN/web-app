@@ -122,7 +122,8 @@ export default function CommunityPage() {
   );
 
   // The shared Tabs primitive compares labels by string equality, so pass the
-  // translated labels and map the selected label back to its stable key.
+  // translated labels and map the change back to the stable key via the index
+  // (translated labels may not be unique).
   const tabLabels = TAB_DEFS.map((tab) => t(tab.labelKey));
   const activeTabLabel =
     tabLabels[TAB_DEFS.findIndex((tab) => tab.key === activeTab)] ??
@@ -137,10 +138,7 @@ export default function CommunityPage() {
       <Tabs
         tabs={tabLabels}
         activeTab={activeTabLabel}
-        onChange={(label) => {
-          const index = tabLabels.indexOf(label);
-          if (index >= 0) setActiveTab(TAB_DEFS[index].key);
-        }}
+        onChange={(_, index) => setActiveTab(TAB_DEFS[index].key)}
       />
 
       <div className="mt-6">

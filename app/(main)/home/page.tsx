@@ -8,7 +8,11 @@ import { FeedTabs, FEED_TABS, type FeedTab } from "@/components/home/FeedTabs";
 import { PostCard } from "@/components/home/PostCard";
 import { PostCardSkeleton } from "@/components/home/PostCardSkeleton";
 import { ComposeButton } from "@/components/home/ComposeButton";
-import { RightPanel } from "@/components/home/RightPanel";
+import {
+  RightPanel,
+  MOBILE_SECTIONS,
+  type MobileSection,
+} from "@/components/home/RightPanel";
 import { JoinGroupsCard } from "@/components/home/JoinGroupsCard";
 import {
   useFollowingFeed,
@@ -32,11 +36,8 @@ const FEED_EMPTY: Record<FeedTab, { titleKey: string; subKey: string }> = {
   },
 };
 
-/** Phone-only section switcher (md+ shows all three at once). Stable ids —
- *  kept in state and compared against; labels translate only at render. */
-const MOBILE_SECTIONS = ["feed", "news", "learning"] as const;
-type MobileSection = (typeof MOBILE_SECTIONS)[number];
-
+/** Phone-only section switcher labels (md+ shows all three at once). The
+ *  stable ids + type live in RightPanel.tsx; labels translate only at render. */
 const MOBILE_SECTION_LABEL_KEYS: Record<MobileSection, string> = {
   feed: "home.sectionFeed",
   news: "home.sectionNews",
@@ -109,12 +110,7 @@ export default function HomePage() {
             t(MOBILE_SECTION_LABEL_KEYS[section]),
           )}
           activeTab={t(MOBILE_SECTION_LABEL_KEYS[mobileSection])}
-          onChange={(label) => {
-            const index = MOBILE_SECTIONS.findIndex(
-              (section) => t(MOBILE_SECTION_LABEL_KEYS[section]) === label,
-            );
-            if (index >= 0) setMobileSection(MOBILE_SECTIONS[index]);
-          }}
+          onChange={(_, index) => setMobileSection(MOBILE_SECTIONS[index])}
         />
       </div>
 

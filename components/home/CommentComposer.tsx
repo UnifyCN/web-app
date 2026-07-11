@@ -67,6 +67,7 @@ export function CommentComposer({
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder={placeholder ?? t("posts.addCommentPlaceholder")}
+          aria-label={placeholder ?? t("posts.addCommentPlaceholder")}
           rows={2}
           onKeyDown={(event) => {
             if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {

@@ -459,12 +459,6 @@
     "loadError": "आपकी चेकलिस्ट लोड नहीं हो सकी।",
     "markDoneAria": "पूर्ण चिह्नित करें",
     "markNotDoneAria": "अधूरा चिह्नित करें",
-    "priority": {
-      "doNow": "अभी करें",
-      "doSoon": "जल्दी करें",
-      "explore": "अन्वेषण करें और जुड़ें",
-      "optional": "वैकल्पिक / बाद में"
-    },
     "priorityAria": "प्राथमिकता",
     "progressSummary": "{{completed}}/{{total}} पूर्ण · {{percent}}%",
     "reorderTaskAria": "कार्य पुनर्व्यवस्थित करें: {{title}}",
@@ -749,8 +743,8 @@
     "myGroups": "आपके समूह",
     "noGroupsYet": "अभी तक कोई समूह नहीं।",
     "noPostsInGroup": "इस समूह में अभी तक कोई पोस्ट नहीं।",
-    "plusMembers": "+{{count}} सदस्य",
-    "plusMembers_plural": "+{{count}} सदस्य",
+    "plusMembers": "+{{count, number}} सदस्य",
+    "plusMembers_plural": "+{{count, number}} सदस्य",
     "recentPosts": "हाल की पोस्ट",
     "requestAudienceLabel": "यह समूह किसके लिए है?",
     "requestAudiencePlaceholder": "जैसे साइकिल से आने-जाने वाले नवागंतुक",

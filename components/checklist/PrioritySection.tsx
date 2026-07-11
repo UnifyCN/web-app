@@ -88,7 +88,7 @@ interface PriorityMeta {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-// Display labels come from PRIORITY_LABEL_KEY (checklist.priority.*); the
+// Display labels come from PRIORITY_LABEL_KEY (checklist.createItem.*); the
 // Priority enum values themselves are stored data and stay English.
 const PRIORITY_META: Record<Priority, PriorityMeta> = {
   "Do now": {

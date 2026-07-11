@@ -33,7 +33,16 @@ export function createI18n(lng: SupportedLanguage): I18nInstance {
     lng,
     fallbackLng: DEFAULT_LANGUAGE,
     supportedLngs: Object.keys(resources),
-    interpolation: { escapeValue: false },
+    interpolation: {
+      escapeValue: false,
+      // v3 compat (below) disables i18next's modern built-in Intl formatters,
+      // so `{{count, number}}` needs this legacy format hook to get
+      // locale-aware digit grouping (e.g. es "1.234").
+      format: (value, format, formatLng) =>
+        format === "number" && typeof value === "number"
+          ? new Intl.NumberFormat(formatLng).format(value)
+          : String(value),
+    },
     // The mobile app authored the JSON with i18next v3 plural suffixes
     // (`key_plural`); keep v3 compatibility so those files are reused verbatim.
     compatibilityJSON: "v3",
