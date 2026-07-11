@@ -1628,6 +1628,38 @@
       "finalLesson": "¡Última lección! Ya casi terminas {{moduleTitle}}",
       "backToSection": "Volver a la sección",
       "nextUp": "A continuación:"
+    },
+    "practice": {
+      "empty": "Aún no hay práctica para esta sección.",
+      "quizComplete": "Cuestionario completado",
+      "resultGreat": "¡Buen trabajo!",
+      "resultNice": "Buen intento — repasa las que fallaste.",
+      "resultKeep": "Sigue practicando — lo lograrás.",
+      "percentCorrect": "{{percent}}% correctas",
+      "retake": "Repetir",
+      "closeQuizAria": "Cerrar cuestionario",
+      "sectionTitle": "Sección {{number}}: {{title}}",
+      "questionsCount": "Preguntas ({{count}})",
+      "scored": "puntuación {{score}}/{{total}}",
+      "correctAria": "Correcta",
+      "incorrectAria": "Incorrecta",
+      "notAnsweredAria": "Sin responder",
+      "questionAbbrev": "P{{number}}",
+      "selectAll": "Selecciona todas las que correspondan.",
+      "correctAnswer": "Respuesta correcta:",
+      "acceptedAnswer": "Respuesta aceptada:",
+      "typeHere": "Escribe aquí…",
+      "feedbackError": "No pudimos cargar el comentario ahora. Tu respuesta quedó guardada — puedes continuar.",
+      "closeFeedbackAria": "Cerrar comentarios",
+      "types": {
+        "multiple_choice_single": "Opción múltiple",
+        "multiple_choice_multiple": "Selección múltiple",
+        "true_false": "Verdadero / Falso",
+        "matching": "Emparejar",
+        "fill_blank": "Completar el espacio",
+        "short_answer": "Respuesta corta",
+        "long_answer": "Respuesta larga"
+      }
     }
   }
 }

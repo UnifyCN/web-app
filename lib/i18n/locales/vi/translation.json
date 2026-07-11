@@ -1628,6 +1628,38 @@
       "finalLesson": "Bài học cuối cùng! Bạn sắp hoàn thành {{moduleTitle}}",
       "backToSection": "Quay lại phần",
       "nextUp": "Tiếp theo:"
+    },
+    "practice": {
+      "empty": "Phần này chưa có bài thực hành nào.",
+      "quizComplete": "Hoàn thành bài kiểm tra",
+      "resultGreat": "Làm tốt lắm!",
+      "resultNice": "Nỗ lực tốt — hãy xem lại những câu bạn làm sai.",
+      "resultKeep": "Tiếp tục luyện tập — bạn sẽ làm được.",
+      "percentCorrect": "{{percent}}% đúng",
+      "retake": "Làm lại",
+      "closeQuizAria": "Đóng bài kiểm tra",
+      "sectionTitle": "Phần {{number}}: {{title}}",
+      "questionsCount": "Câu hỏi ({{count}})",
+      "scored": "đạt {{score}}/{{total}}",
+      "correctAria": "Đúng",
+      "incorrectAria": "Sai",
+      "notAnsweredAria": "Chưa trả lời",
+      "questionAbbrev": "Câu {{number}}",
+      "selectAll": "Chọn tất cả đáp án đúng.",
+      "correctAnswer": "Đáp án đúng:",
+      "acceptedAnswer": "Đáp án được chấp nhận:",
+      "typeHere": "Nhập tại đây…",
+      "feedbackError": "Hiện không tải được nhận xét. Câu trả lời của bạn vẫn được lưu — cứ tiếp tục nhé.",
+      "closeFeedbackAria": "Đóng nhận xét",
+      "types": {
+        "multiple_choice_single": "Trắc nghiệm",
+        "multiple_choice_multiple": "Chọn nhiều đáp án",
+        "true_false": "Đúng / Sai",
+        "matching": "Nối câu",
+        "fill_blank": "Điền vào chỗ trống",
+        "short_answer": "Trả lời ngắn",
+        "long_answer": "Trả lời dài"
+      }
     }
   }
 }

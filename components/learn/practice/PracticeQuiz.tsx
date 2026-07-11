@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import {
   usePracticeFeedback,
@@ -50,6 +51,7 @@ export function PracticeQuiz({
   questions,
   initialProgress,
 }: PracticeQuizProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const upsert = useUpsertPracticeProgress();
   const feedbackMutation = usePracticeFeedback();
@@ -207,14 +209,14 @@ export function PracticeQuiz({
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
         <p className="text-sm text-ink-muted">
-          There&rsquo;s no practice for this section yet.
+          {t("learnWeb.practice.empty")}
         </p>
         <button
           type="button"
           onClick={() => router.push(sectionHref)}
           className="mt-3 text-sm font-semibold text-primary"
         >
-          Back to section
+          {t("learnWeb.pager.backToSection")}
         </button>
       </div>
     );
@@ -233,11 +235,18 @@ export function PracticeQuiz({
   }
 
   const answeredEnough = isAnswered(current.question, currentAnswer);
-  const primaryLabel = !isSubmitted
-    ? "Submit"
+  // State drives the branch (never the display string, which is localized).
+  const primaryAction: "submit" | "next" | "done" = !isSubmitted
+    ? "submit"
     : currentIndex < total - 1
-      ? "Next"
-      : "Done";
+      ? "next"
+      : "done";
+  const primaryLabel =
+    primaryAction === "submit"
+      ? t("common.submit")
+      : primaryAction === "next"
+        ? t("common.next")
+        : t("common.done");
   const primaryDisabled = !isSubmitted && !answeredEnough;
 
   return (
@@ -278,7 +287,7 @@ export function PracticeQuiz({
             disabled={currentIndex === 0}
             className="h-11 flex-1 rounded-md bg-surface-gray text-sm font-semibold text-ink-tertiary transition-colors hover:bg-surface-input disabled:opacity-50"
           >
-            Back
+            {t("common.back")}
           </button>
           <button
             type="button"
@@ -291,7 +300,7 @@ export function PracticeQuiz({
             style={{ backgroundColor: colorHex }}
           >
             {primaryLabel}
-            {primaryLabel === "Next" && (
+            {primaryAction === "next" && (
               <ArrowRight className="h-4 w-4" aria-hidden />
             )}
           </button>

@@ -1628,6 +1628,38 @@
       "finalLesson": "आख़िरी पाठ! {{moduleTitle}} लगभग पूरा हो गया",
       "backToSection": "अनुभाग पर वापस जाएं",
       "nextUp": "आगे:"
+    },
+    "practice": {
+      "empty": "इस अनुभाग के लिए अभी कोई अभ्यास नहीं है।",
+      "quizComplete": "क्विज़ पूरी हुई",
+      "resultGreat": "बहुत बढ़िया!",
+      "resultNice": "अच्छा प्रयास — जो छूट गए उन्हें दोबारा देखें।",
+      "resultKeep": "अभ्यास जारी रखें — आप कर लेंगे।",
+      "percentCorrect": "{{percent}}% सही",
+      "retake": "फिर से करें",
+      "closeQuizAria": "क्विज़ बंद करें",
+      "sectionTitle": "अनुभाग {{number}}: {{title}}",
+      "questionsCount": "प्रश्न ({{count}})",
+      "scored": "स्कोर {{score}}/{{total}}",
+      "correctAria": "सही",
+      "incorrectAria": "गलत",
+      "notAnsweredAria": "उत्तर नहीं दिया",
+      "questionAbbrev": "प्र{{number}}",
+      "selectAll": "जो भी लागू हों उन सभी को चुनें।",
+      "correctAnswer": "सही उत्तर:",
+      "acceptedAnswer": "स्वीकृत उत्तर:",
+      "typeHere": "यहाँ लिखें…",
+      "feedbackError": "अभी फ़ीडबैक लोड नहीं हो सका। आपका उत्तर सहेज लिया गया है — आगे बढ़ सकते हैं।",
+      "closeFeedbackAria": "फ़ीडबैक बंद करें",
+      "types": {
+        "multiple_choice_single": "बहुविकल्पीय",
+        "multiple_choice_multiple": "सभी लागू चुनें",
+        "true_false": "सही / गलत",
+        "matching": "मिलान",
+        "fill_blank": "रिक्त स्थान भरें",
+        "short_answer": "संक्षिप्त उत्तर",
+        "long_answer": "विस्तृत उत्तर"
+      }
     }
   }
 }

@@ -1628,6 +1628,38 @@
       "finalLesson": "Final lesson! You're almost done with {{moduleTitle}}",
       "backToSection": "Back to section",
       "nextUp": "Next up:"
+    },
+    "practice": {
+      "empty": "There's no practice for this section yet.",
+      "quizComplete": "Quiz complete",
+      "resultGreat": "Great work!",
+      "resultNice": "Nice effort — review the ones you missed.",
+      "resultKeep": "Keep practising — you'll get there.",
+      "percentCorrect": "{{percent}}% correct",
+      "retake": "Retake",
+      "closeQuizAria": "Close quiz",
+      "sectionTitle": "Section {{number}}: {{title}}",
+      "questionsCount": "Questions ({{count}})",
+      "scored": "scored {{score}}/{{total}}",
+      "correctAria": "Correct",
+      "incorrectAria": "Incorrect",
+      "notAnsweredAria": "Not answered",
+      "questionAbbrev": "Q{{number}}",
+      "selectAll": "Select all that apply.",
+      "correctAnswer": "Correct answer:",
+      "acceptedAnswer": "Accepted answer:",
+      "typeHere": "Type here…",
+      "feedbackError": "We couldn't load feedback right now. Your answer was still saved — feel free to continue.",
+      "closeFeedbackAria": "Close feedback",
+      "types": {
+        "multiple_choice_single": "Multiple choice",
+        "multiple_choice_multiple": "Select all",
+        "true_false": "True / False",
+        "matching": "Matching",
+        "fill_blank": "Fill in the blank",
+        "short_answer": "Short answer",
+        "long_answer": "Long answer"
+      }
     }
   }
 }

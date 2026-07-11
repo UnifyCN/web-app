@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Loader2, MessageCircle, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { PracticeFeedbackState } from "@/services/learn";
 
 interface PracticeFeedbackModalProps {
@@ -25,6 +26,7 @@ export function PracticeFeedbackModal({
   colorHex,
   onClose,
 }: PracticeFeedbackModalProps) {
+  const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -100,14 +102,14 @@ export function PracticeFeedbackModal({
             id="practice-feedback-title"
             className="flex-1 text-xl font-bold text-ink-secondary"
           >
-            Feedback
+            {t("learn.practiceFeedback.title")}
           </h2>
           <button
             ref={closeRef}
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            aria-label="Close feedback"
+            aria-label={t("learnWeb.practice.closeFeedbackAria")}
             className="-mr-1 rounded-full p-2 text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink-secondary disabled:pointer-events-none disabled:opacity-40"
           >
             <X className="h-5 w-5" />
@@ -118,12 +120,11 @@ export function PracticeFeedbackModal({
           {isLoading ? (
             <span className="flex items-center gap-2 text-ink-muted">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              Reviewing your answer…
+              {t("learn.practiceFeedback.generating")}
             </span>
           ) : isError ? (
             <span className="text-ink-muted">
-              We couldn&rsquo;t load feedback right now. Your answer was still
-              saved — feel free to continue.
+              {t("learnWeb.practice.feedbackError")}
             </span>
           ) : (
             state?.text
@@ -137,7 +138,7 @@ export function PracticeFeedbackModal({
             className="mt-6 h-12 w-full rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
             style={{ backgroundColor: colorHex }}
           >
-            Got It
+            {t("learn.practiceFeedback.gotIt")}
           </button>
         )}
       </div>
