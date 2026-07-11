@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Send } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 /** Server-side CHECK allows 1–5000 chars (module_discussions / replies). */
@@ -30,6 +31,7 @@ export function DiscussionComposer({
   autoFocus?: boolean;
   compact?: boolean;
 }) {
+  const { t } = useTranslation();
   const [body, setBody] = useState("");
   const trimmed = body.trim();
   const canSubmit = trimmed.length > 0 && !isPending;
@@ -68,7 +70,7 @@ export function DiscussionComposer({
           type="button"
           onClick={() => void submit()}
           disabled={!canSubmit}
-          aria-label="Post"
+          aria-label={t("learnWeb.discussion.postAria")}
           className={cn(
             "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors",
             canSubmit

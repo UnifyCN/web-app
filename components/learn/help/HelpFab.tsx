@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MessageCircleQuestion } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 /** How many lesson views keep the first-run discoverability pulse. */
@@ -17,6 +18,7 @@ const VIEWS_STORAGE_KEY = "unify.helpFabViews";
  * suppressed under prefers-reduced-motion.
  */
 export function HelpFab({ onOpen }: { onOpen: () => void }) {
+  const { t } = useTranslation();
   const [pulse, setPulse] = useState(false);
 
   // Count a "view" per mount (the pager remounts per lesson). localStorage is
@@ -40,7 +42,7 @@ export function HelpFab({ onOpen }: { onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      aria-label="Get help with this lesson"
+      aria-label={t("learnWeb.help.fabAria")}
       className={cn(
         "fixed right-4 z-40 flex h-14 w-14 cursor-pointer items-center justify-center",
         "rounded-2xl bg-gradient-to-br from-teal-600 to-purple-600 text-white shadow-xl",

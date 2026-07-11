@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BookOpen } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 import { MessageBubble } from "@/components/companion/MessageBubble";
 import { ChatInput } from "@/components/companion/ChatInput";
 import { FreeTierIndicator } from "@/components/companion/FreeTierIndicator";
@@ -50,6 +51,7 @@ export function InLessonChat({
   conversationId: string | null;
   onConversationCreated: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const endRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState("");
@@ -72,10 +74,14 @@ export function InLessonChat({
   }, [messages.length, isTyping]);
 
   // Starter prompts derived from the lesson (user-perspective questions).
+  // Localized text is what gets sent — same as the Companion starter chips;
+  // rag-query handles multilingual queries.
   const starterPrompts = [
-    `Explain "${lessonContext.lessonTitle}" in simple terms`,
-    `Why does this matter for newcomers?`,
-    `What should I do after finishing this lesson?`,
+    t("learnWeb.help.chat.starterExplain", {
+      lessonTitle: lessonContext.lessonTitle,
+    }),
+    t("learnWeb.help.chat.starterWhyMatters"),
+    t("learnWeb.help.chat.starterWhatNext"),
   ];
 
   async function handleSend(text: string) {
@@ -107,7 +113,7 @@ export function InLessonChat({
       setSendError(
         err instanceof ChatLimitError
           ? err.message
-          : "Something went wrong sending that. Please try again.",
+          : t("learnWeb.help.chat.sendFailed"),
       );
     }
   }
@@ -119,7 +125,9 @@ export function InLessonChat({
         <div className="flex items-start gap-2 rounded-card bg-teal-50 px-3 py-2 text-xs text-teal-800">
           <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
           <span className="min-w-0">
-            <span className="font-medium">Context: </span>
+            <span className="font-medium">
+              {t("learnWeb.help.contextLabel")}{" "}
+            </span>
             {lessonContext.moduleTitle} › {lessonContext.submoduleTitle} ›{" "}
             {lessonContext.lessonTitle}
           </span>
@@ -131,12 +139,13 @@ export function InLessonChat({
         {/* Static intro bubble (not persisted) */}
         <div className="flex justify-start">
           <div className="max-w-[85%] rounded-2xl border border-border-card bg-surface px-4 py-3 text-sm leading-relaxed text-ink-muted">
-            Hi! I can see you&apos;re on{" "}
-            <span className="font-semibold text-ink-secondary">
-              {lessonContext.lessonTitle}
-            </span>
-            . Ask me anything about this lesson and I&apos;ll keep my answer
-            specific to it.
+            <Trans
+              i18nKey="learnWeb.help.chat.intro"
+              values={{ lessonTitle: lessonContext.lessonTitle }}
+              components={{
+                bold: <span className="font-semibold text-ink-secondary" />,
+              }}
+            />
           </div>
         </div>
 
@@ -189,7 +198,7 @@ export function InLessonChat({
             value={draft}
             onValueChange={setDraft}
             onSend={handleSend}
-            placeholder="Ask about this lesson…"
+            placeholder={t("learnWeb.help.chat.inputPlaceholder")}
           />
           <FreeTierIndicator remaining={freeTierRemaining} />
         </div>
