@@ -1509,5 +1509,80 @@
     "nextImageAria": "Ảnh tiếp theo",
     "previousImageAria": "Ảnh trước",
     "showPassword": "Hiện mật khẩu"
+  },
+  "learnWeb": {
+    "home": {
+      "modulesHeading": "Mô-đun",
+      "lessonsHeading": "Bài học",
+      "noSearchMatch": "Không có mô-đun hay bài học nào khớp với “{{query}}”.",
+      "browseAllModules": "Xem tất cả mô-đun",
+      "exploreModules": "Khám phá mô-đun",
+      "emptySaved": "Chưa có mô-đun nào được lưu — nhấn vào ngôi sao trên mô-đun để lưu.",
+      "emptyStage": "Không có mô-đun nào khớp với bộ lọc giai đoạn hiện tại của bạn.",
+      "emptyNone": "Chưa có mô-đun nào.",
+      "startHere": "Bắt đầu từ đây",
+      "startHereReason": "Dựa trên hồ sơ của bạn, đây là nơi tuyệt vời để bắt đầu",
+      "startLearning": "Bắt đầu học",
+      "resumeLearningAria": "Tiếp tục học",
+      "sectionOf": "{{module}} · Phần {{current}} trên {{total}}",
+      "goToSlide": "Đi tới trang {{number}}"
+    },
+    "sidePanel": {
+      "welcome": "Chào mừng, {{name}}",
+      "welcomeAnon": "Chào mừng",
+      "modulesCompleted": "Mô-đun đã hoàn thành",
+      "lessonsCompleted": "Bài học đã hoàn thành",
+      "lessonsThisWeek": "{{count}} bài học tuần này",
+      "lessonsThisWeek_plural": "{{count}} bài học tuần này",
+      "savedOnly": "Chỉ đã lưu",
+      "showingSaved": "Đang hiển thị đã lưu",
+      "forMyStage": "Cho giai đoạn của tôi",
+      "showingMyStage": "Đang hiển thị giai đoạn của tôi",
+      "sortBy": "Sắp xếp theo",
+      "sortModulesAria": "Sắp xếp mô-đun",
+      "sort": {
+        "relevant": "Phù hợp",
+        "az": "A–Z",
+        "newest": "Mới nhất"
+      }
+    },
+    "microcopy": {
+      "progress": {
+        "begin": "Bắt đầu hành trình của bạn",
+        "goodStart": "Khởi đầu tốt! Tiếp tục nhé",
+        "making": "Bạn đang tiến bộ!",
+        "halfway": "Đã hơn nửa chặng đường!",
+        "almost": "Sắp xong rồi! Chỉ còn vài bài học",
+        "complete": "✓ Hoàn thành 🎉"
+      },
+      "weekly": {
+        "start": "Bắt đầu học tuần này nhé!",
+        "nice": "Khởi đầu tốt trong tuần này!",
+        "roll": "Tuần này bạn đang rất đều đặn!",
+        "great": "Tiến bộ tuyệt vời trong tuần này! 🎉",
+        "crushing": "Tuần này bạn quá xuất sắc! 🔥"
+      }
+    },
+    "recommend": {
+      "forBoth": "Đề xuất cho {{persona}} quan tâm đến {{interest}}",
+      "forInterest": "Dựa trên sự quan tâm của bạn đến {{interest}}",
+      "forPersona": "Đề xuất cho {{persona}}",
+      "personas": {
+        "international_student": "du học sinh",
+        "skilled_worker": "lao động có tay nghề và người nhập cư",
+        "refugee": "người tị nạn và người được bảo vệ",
+        "other": "người mới đến"
+      },
+      "interests": {
+        "documents": "giấy tờ và định danh",
+        "employment": "việc làm và sự nghiệp",
+        "finance": "tiền bạc và ngân hàng",
+        "housing": "nhà ở",
+        "pr_immigration": "thường trú và nhập cư",
+        "healthcare": "chăm sóc sức khỏe",
+        "family_kids": "gia đình và con cái",
+        "transit": "đi lại"
+      }
+    }
   }
 }

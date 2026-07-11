@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { Blob, type BlobVariant } from "./Blob";
 import { FavouriteButton } from "./FavouriteButton";
 import { ModuleIcon } from "./ModuleIcon";
 import { ProgressRing } from "./ProgressRing";
-import { moduleProgressMessage } from "@/lib/learn/microcopy";
+import { moduleProgressKey } from "@/lib/learn/microcopy";
 import type { LearnModuleView } from "@/types";
 
 interface ModuleGridCardProps {
@@ -19,6 +20,7 @@ const BLOB_FIT: Record<(typeof BLOB_CYCLE)[number], string> = {
 };
 
 export function ModuleGridCard({ mod }: ModuleGridCardProps) {
+  const { t } = useTranslation();
   const colorHex = mod.colorTheme?.hex ?? "var(--color-ink-placeholder)";
   const sectionCount = mod.submodules?.length ?? 0;
   const inProgress = mod.status === "in_progress";
@@ -44,7 +46,7 @@ export function ModuleGridCard({ mod }: ModuleGridCardProps) {
               className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
               style={{ color: colorHex }}
             >
-              Continue
+              {t("common.continue")}
             </span>
           ) : (
             <span />
@@ -68,11 +70,11 @@ export function ModuleGridCard({ mod }: ModuleGridCardProps) {
               {mod.title}
             </h3>
             <p className="mt-1 text-xs text-white/85">
-              {sectionCount} {sectionCount === 1 ? "section" : "sections"}
+              {t("learn.sectionCount", { count: sectionCount })}
             </p>
             {percent < 100 && (
               <p className="mt-0.5 text-[11px] font-medium text-white/90">
-                {moduleProgressMessage(percent)}
+                {t(moduleProgressKey(percent))}
               </p>
             )}
           </div>
@@ -81,7 +83,7 @@ export function ModuleGridCard({ mod }: ModuleGridCardProps) {
               className="shrink-0 whitespace-nowrap rounded-full bg-white px-2 py-1 text-[11px] font-bold"
               style={{ color: colorHex }}
             >
-              ✓ Complete 🎉
+              {t("learnWeb.microcopy.progress.complete")}
             </span>
           ) : (
             <ProgressRing

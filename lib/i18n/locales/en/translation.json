@@ -1509,5 +1509,80 @@
     "nextImageAria": "Next image",
     "previousImageAria": "Previous image",
     "showPassword": "Show password"
+  },
+  "learnWeb": {
+    "home": {
+      "modulesHeading": "Modules",
+      "lessonsHeading": "Lessons",
+      "noSearchMatch": "No modules or lessons match “{{query}}”.",
+      "browseAllModules": "Browse all modules",
+      "exploreModules": "Explore Modules",
+      "emptySaved": "No saved modules yet — tap the star on a module to save it.",
+      "emptyStage": "No modules match your current stage filter.",
+      "emptyNone": "No modules available yet.",
+      "startHere": "Start here",
+      "startHereReason": "Based on your profile, a great place to begin",
+      "startLearning": "Start learning",
+      "resumeLearningAria": "Resume learning",
+      "sectionOf": "{{module}} · Section {{current}} of {{total}}",
+      "goToSlide": "Go to slide {{number}}"
+    },
+    "sidePanel": {
+      "welcome": "Welcome, {{name}}",
+      "welcomeAnon": "Welcome",
+      "modulesCompleted": "Modules completed",
+      "lessonsCompleted": "Lessons completed",
+      "lessonsThisWeek": "{{count}} lesson this week",
+      "lessonsThisWeek_plural": "{{count}} lessons this week",
+      "savedOnly": "Saved only",
+      "showingSaved": "Showing saved",
+      "forMyStage": "For my stage",
+      "showingMyStage": "Showing my stage",
+      "sortBy": "Sort by",
+      "sortModulesAria": "Sort modules",
+      "sort": {
+        "relevant": "Relevant",
+        "az": "A–Z",
+        "newest": "Newest"
+      }
+    },
+    "microcopy": {
+      "progress": {
+        "begin": "Begin your journey",
+        "goodStart": "Good start! Keep going",
+        "making": "You're making progress!",
+        "halfway": "More than halfway there!",
+        "almost": "Almost done! Just a few lessons left",
+        "complete": "✓ Complete 🎉"
+      },
+      "weekly": {
+        "start": "Start learning this week!",
+        "nice": "Nice start this week!",
+        "roll": "You're on a roll this week!",
+        "great": "Great progress this week! 🎉",
+        "crushing": "You're crushing it this week! 🔥"
+      }
+    },
+    "recommend": {
+      "forBoth": "Recommended for {{persona}} interested in {{interest}}",
+      "forInterest": "Based on your interest in {{interest}}",
+      "forPersona": "Recommended for {{persona}}",
+      "personas": {
+        "international_student": "international students",
+        "skilled_worker": "skilled workers & immigrants",
+        "refugee": "refugees & protected persons",
+        "other": "newcomers"
+      },
+      "interests": {
+        "documents": "documents & IDs",
+        "employment": "jobs & career",
+        "finance": "money & banking",
+        "housing": "housing",
+        "pr_immigration": "PR & immigration",
+        "healthcare": "healthcare",
+        "family_kids": "family & kids",
+        "transit": "transit"
+      }
+    }
   }
 }

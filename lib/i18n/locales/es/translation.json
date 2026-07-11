@@ -1509,5 +1509,80 @@
     "nextImageAria": "Imagen siguiente",
     "previousImageAria": "Imagen anterior",
     "showPassword": "Mostrar contraseña"
+  },
+  "learnWeb": {
+    "home": {
+      "modulesHeading": "Módulos",
+      "lessonsHeading": "Lecciones",
+      "noSearchMatch": "Ningún módulo o lección coincide con “{{query}}”.",
+      "browseAllModules": "Ver todos los módulos",
+      "exploreModules": "Explorar módulos",
+      "emptySaved": "Aún no has guardado módulos — toca la estrella de un módulo para guardarlo.",
+      "emptyStage": "Ningún módulo coincide con tu filtro de etapa actual.",
+      "emptyNone": "Aún no hay módulos disponibles.",
+      "startHere": "Empieza aquí",
+      "startHereReason": "Según tu perfil, un gran lugar para comenzar",
+      "startLearning": "Empezar a aprender",
+      "resumeLearningAria": "Reanudar el aprendizaje",
+      "sectionOf": "{{module}} · Sección {{current}} de {{total}}",
+      "goToSlide": "Ir a la diapositiva {{number}}"
+    },
+    "sidePanel": {
+      "welcome": "Te damos la bienvenida, {{name}}",
+      "welcomeAnon": "Te damos la bienvenida",
+      "modulesCompleted": "Módulos completados",
+      "lessonsCompleted": "Lecciones completadas",
+      "lessonsThisWeek": "{{count}} lección esta semana",
+      "lessonsThisWeek_plural": "{{count}} lecciones esta semana",
+      "savedOnly": "Solo guardados",
+      "showingSaved": "Mostrando guardados",
+      "forMyStage": "Para mi etapa",
+      "showingMyStage": "Mostrando mi etapa",
+      "sortBy": "Ordenar por",
+      "sortModulesAria": "Ordenar módulos",
+      "sort": {
+        "relevant": "Relevantes",
+        "az": "A–Z",
+        "newest": "Más recientes"
+      }
+    },
+    "microcopy": {
+      "progress": {
+        "begin": "Comienza tu camino",
+        "goodStart": "¡Buen comienzo! Sigue así",
+        "making": "¡Estás progresando!",
+        "halfway": "¡Ya pasaste la mitad!",
+        "almost": "¡Casi listo! Solo quedan unas lecciones",
+        "complete": "✓ Completado 🎉"
+      },
+      "weekly": {
+        "start": "¡Empieza a aprender esta semana!",
+        "nice": "¡Buen comienzo esta semana!",
+        "roll": "¡Esta semana vas con todo!",
+        "great": "¡Gran progreso esta semana! 🎉",
+        "crushing": "¡Lo estás haciendo increíble esta semana! 🔥"
+      }
+    },
+    "recommend": {
+      "forBoth": "Recomendado para {{persona}} con interés en {{interest}}",
+      "forInterest": "Basado en tu interés en {{interest}}",
+      "forPersona": "Recomendado para {{persona}}",
+      "personas": {
+        "international_student": "estudiantes internacionales",
+        "skilled_worker": "trabajadores calificados e inmigrantes",
+        "refugee": "personas refugiadas y protegidas",
+        "other": "recién llegados"
+      },
+      "interests": {
+        "documents": "documentos e identificaciones",
+        "employment": "empleo y carrera",
+        "finance": "dinero y banca",
+        "housing": "vivienda",
+        "pr_immigration": "residencia permanente e inmigración",
+        "healthcare": "salud",
+        "family_kids": "familia e hijos",
+        "transit": "transporte"
+      }
+    }
   }
 }

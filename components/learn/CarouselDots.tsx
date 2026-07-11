@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 interface CarouselDotsProps {
@@ -13,12 +14,13 @@ export function CarouselDots({
   onSelect,
   className,
 }: CarouselDotsProps) {
+  const { t } = useTranslation();
   if (count <= 1) return null;
   return (
     <div className={cn("flex items-center justify-center gap-1.5", className)}>
       {Array.from({ length: count }).map((_, i) => {
         const isActive = i === active;
-        const label = `Go to slide ${i + 1}`;
+        const label = t("learnWeb.home.goToSlide", { number: i + 1 });
         return (
           <button
             key={i}

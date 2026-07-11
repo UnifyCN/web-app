@@ -1509,5 +1509,80 @@
     "nextImageAria": "अगली छवि",
     "previousImageAria": "पिछली छवि",
     "showPassword": "पासवर्ड दिखाएं"
+  },
+  "learnWeb": {
+    "home": {
+      "modulesHeading": "मॉड्यूल",
+      "lessonsHeading": "पाठ",
+      "noSearchMatch": "“{{query}}” से मेल खाता कोई मॉड्यूल या पाठ नहीं मिला।",
+      "browseAllModules": "सभी मॉड्यूल देखें",
+      "exploreModules": "मॉड्यूल एक्सप्लोर करें",
+      "emptySaved": "अभी तक कोई मॉड्यूल सहेजा नहीं गया — सहेजने के लिए मॉड्यूल पर स्टार पर टैप करें।",
+      "emptyStage": "आपके वर्तमान चरण फ़िल्टर से मेल खाता कोई मॉड्यूल नहीं।",
+      "emptyNone": "अभी कोई मॉड्यूल उपलब्ध नहीं।",
+      "startHere": "यहाँ से शुरू करें",
+      "startHereReason": "आपकी प्रोफ़ाइल के आधार पर, शुरुआत के लिए एक बढ़िया जगह",
+      "startLearning": "सीखना शुरू करें",
+      "resumeLearningAria": "सीखना फिर से शुरू करें",
+      "sectionOf": "{{module}} · अनुभाग {{current}} / {{total}}",
+      "goToSlide": "स्लाइड {{number}} पर जाएं"
+    },
+    "sidePanel": {
+      "welcome": "स्वागत है, {{name}}",
+      "welcomeAnon": "स्वागत है",
+      "modulesCompleted": "पूर्ण किए गए मॉड्यूल",
+      "lessonsCompleted": "पूर्ण किए गए पाठ",
+      "lessonsThisWeek": "इस सप्ताह {{count}} पाठ",
+      "lessonsThisWeek_plural": "इस सप्ताह {{count}} पाठ",
+      "savedOnly": "केवल सहेजे गए",
+      "showingSaved": "सहेजे गए दिखा रहे हैं",
+      "forMyStage": "मेरे चरण के लिए",
+      "showingMyStage": "मेरा चरण दिखा रहे हैं",
+      "sortBy": "इसके अनुसार क्रमबद्ध करें",
+      "sortModulesAria": "मॉड्यूल क्रमबद्ध करें",
+      "sort": {
+        "relevant": "प्रासंगिक",
+        "az": "A–Z",
+        "newest": "नवीनतम"
+      }
+    },
+    "microcopy": {
+      "progress": {
+        "begin": "अपनी यात्रा शुरू करें",
+        "goodStart": "अच्छी शुरुआत! जारी रखें",
+        "making": "आप प्रगति कर रहे हैं!",
+        "halfway": "आधे से ज़्यादा पूरा हो गया!",
+        "almost": "लगभग हो गया! बस कुछ पाठ बाकी हैं",
+        "complete": "✓ पूर्ण 🎉"
+      },
+      "weekly": {
+        "start": "इस सप्ताह सीखना शुरू करें!",
+        "nice": "इस सप्ताह अच्छी शुरुआत!",
+        "roll": "इस सप्ताह आप लगातार आगे बढ़ रहे हैं!",
+        "great": "इस सप्ताह शानदार प्रगति! 🎉",
+        "crushing": "इस सप्ताह आप कमाल कर रहे हैं! 🔥"
+      }
+    },
+    "recommend": {
+      "forBoth": "{{interest}} में रुचि रखने वाले {{persona}} के लिए अनुशंसित",
+      "forInterest": "{{interest}} में आपकी रुचि के आधार पर",
+      "forPersona": "{{persona}} के लिए अनुशंसित",
+      "personas": {
+        "international_student": "अंतरराष्ट्रीय छात्रों",
+        "skilled_worker": "कुशल कर्मचारियों और आप्रवासियों",
+        "refugee": "शरणार्थियों और संरक्षित व्यक्तियों",
+        "other": "नए आए लोगों"
+      },
+      "interests": {
+        "documents": "दस्तावेज़ और पहचान पत्र",
+        "employment": "नौकरी और करियर",
+        "finance": "पैसा और बैंकिंग",
+        "housing": "आवास",
+        "pr_immigration": "PR और इमिग्रेशन",
+        "healthcare": "स्वास्थ्य सेवा",
+        "family_kids": "परिवार और बच्चे",
+        "transit": "परिवहन"
+      }
+    }
   }
 }

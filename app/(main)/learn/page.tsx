@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { LearnSidePanel } from "@/components/learn/LearnSidePanel";
 import { LessonSearchResult } from "@/components/learn/LessonSearchResult";
 import { ModuleGridCard } from "@/components/learn/ModuleGridCard";
@@ -79,6 +80,7 @@ interface LessonHit {
 }
 
 function LearnPageContent() {
+  const { t } = useTranslation();
   const modulesQuery = useModules();
   const progressesQuery = useAllLessonProgresses();
   const userQuery = useCurrentUser();
@@ -224,7 +226,7 @@ function LearnPageContent() {
   // --- Sidebar derived values ----------------------------------------------
   const firstName = user?.onboarding?.firstName?.trim();
   const username = user?.username?.trim();
-  const greeting = firstName || (username ? `@${username}` : "there");
+  const displayName = firstName || (username ? `@${username}` : null);
   const savedCount = decoratedModules.filter((m) => m.isFavourite).length;
   const modulesCompleted = decoratedModules.filter(
     (m) => m.status === "completed",
@@ -247,8 +249,8 @@ function LearnPageContent() {
           b.score - a.score || a.module.title.localeCompare(b.module.title),
       )
       .slice(0, 3)
-      .map((r) => ({ module: r.module, why: whyTag(r.module, profile) }));
-  }, [decoratedModules, profile]);
+      .map((r) => ({ module: r.module, why: whyTag(r.module, profile, t) }));
+  }, [decoratedModules, profile, t]);
 
   // --- Start-here (first-time, no progress at all) -------------------------
   // Show when the user has neither completed nor in-progress lessons. The
@@ -280,7 +282,7 @@ function LearnPageContent() {
               {moduleHits.length > 0 && (
                 <section>
                   <h2 className="text-lg font-bold text-ink-secondary">
-                    Modules
+                    {t("learnWeb.home.modulesHeading")}
                   </h2>
                   <div className="mt-3 grid grid-cols-2 gap-3">
                     {moduleHits.map((mod) => (
@@ -292,7 +294,7 @@ function LearnPageContent() {
               {lessonHits.length > 0 && (
                 <section>
                   <h2 className="text-lg font-bold text-ink-secondary">
-                    Lessons
+                    {t("learnWeb.home.lessonsHeading")}
                   </h2>
                   <div className="mt-3 space-y-2">
                     {lessonHits.map((hit) => (
@@ -310,13 +312,13 @@ function LearnPageContent() {
               )}
               {moduleHits.length === 0 && lessonHits.length === 0 && (
                 <p className="text-sm text-ink-muted">
-                  No modules or lessons match “{query}”.
+                  {t("learnWeb.home.noSearchMatch", { query })}
                 </p>
               )}
               <div className="flex items-center gap-3">
                 <span className="h-px flex-1 bg-border-card" />
                 <span className="text-xs font-semibold uppercase tracking-wide text-ink-placeholder">
-                  Browse all modules
+                  {t("learnWeb.home.browseAllModules")}
                 </span>
                 <span className="h-px flex-1 bg-border-card" />
               </div>
@@ -328,7 +330,7 @@ function LearnPageContent() {
             <StartHereCard
               moduleId={startHere._id}
               moduleTitle={startHere.title}
-              reason={whyTag(startHere, profile) || undefined}
+              reason={whyTag(startHere, profile, t) || undefined}
               colorHex={startHere.colorTheme?.hex ?? "var(--color-ink-placeholder)"}
             />
           )}
@@ -340,7 +342,7 @@ function LearnPageContent() {
           {inProgressModules.length > 0 && (
             <section>
               <h2 className="text-lg font-bold text-ink-secondary">
-                Continue Learning
+                {t("learn.continueLearning")}
               </h2>
               <div className="mt-3 grid grid-cols-2 gap-3">
                 {inProgressModules.map((mod) => (
@@ -353,7 +355,7 @@ function LearnPageContent() {
           {exploreModules.length > 0 && (
             <section>
               <h2 className="text-lg font-bold text-ink-secondary">
-                Explore Modules
+                {t("learnWeb.home.exploreModules")}
               </h2>
               <div className="mt-3 grid grid-cols-2 gap-3">
                 {exploreModules.map((mod) => (
@@ -381,17 +383,17 @@ function LearnPageContent() {
             exploreModules.length === 0 && (
               <p className="text-sm text-ink-muted">
                 {savedOnly
-                  ? "No saved modules yet — tap the star on a module to save it."
+                  ? t("learnWeb.home.emptySaved")
                   : stageOnly
-                    ? "No modules match your current stage filter."
-                    : "No modules available yet."}
+                    ? t("learnWeb.home.emptyStage")
+                    : t("learnWeb.home.emptyNone")}
               </p>
             )}
         </div>
 
         <div className="order-1 scrollbar-thin lg:order-2 lg:w-[320px] lg:shrink-0 lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh_-_3rem)] lg:overflow-y-auto">
           <LearnSidePanel
-            greeting={greeting}
+            name={displayName}
             modulesCompleted={modulesCompleted}
             lessonsCompleted={lessonsCompleted}
             weeklyCompleted={weeklyCompleted}
