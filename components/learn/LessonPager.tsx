@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { SelectableLessonContent } from "@/components/learn/SelectableLessonContent";
 import { ExplainTermModal } from "@/components/learn/ExplainTermModal";
 import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
@@ -70,6 +71,7 @@ export function LessonPager({
   isLastLesson,
   nextLesson,
 }: LessonPagerProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   // The Quick Check is its own trailing screen after the content pages.
   const hasQuiz = quizQuestions.length > 0;
@@ -192,8 +194,8 @@ export function LessonPager({
         >
           <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {isFirstLesson
-            ? `Welcome to ${moduleTitle}! Let's get started`
-            : `Final lesson! You're almost done with ${moduleTitle}`}
+            ? t("learnWeb.pager.welcomeFirst", { moduleTitle })
+            : t("learnWeb.pager.finalLesson", { moduleTitle })}
         </div>
       )}
 
@@ -256,7 +258,7 @@ export function LessonPager({
       {isQuizPage && (
         <div className="mt-7">
           {quizProgressQuery.isLoading ? (
-            <p className="text-sm text-ink-muted">Loading…</p>
+            <p className="text-sm text-ink-muted">{t("common.loading")}</p>
           ) : (
             <LessonQuiz
               lessonId={lessonId}
@@ -282,7 +284,7 @@ export function LessonPager({
             className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md bg-surface-gray text-sm font-semibold text-ink-tertiary transition-colors hover:bg-surface-input"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden />
-            Back
+            {t("common.back")}
           </button>
           {isLastScreen ? (
             <Link
@@ -291,7 +293,7 @@ export function LessonPager({
               className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md text-sm font-semibold text-white transition-opacity hover:opacity-90"
               style={{ backgroundColor: colorHex }}
             >
-              Back to section
+              {t("learnWeb.pager.backToSection")}
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           ) : (
@@ -301,7 +303,7 @@ export function LessonPager({
               className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md text-sm font-semibold text-white transition-opacity hover:opacity-90"
               style={{ backgroundColor: colorHex }}
             >
-              Next
+              {t("common.next")}
               <ArrowRight className="h-4 w-4" aria-hidden />
             </button>
           )}
@@ -316,7 +318,8 @@ export function LessonPager({
           onClick={onLessonComplete}
           className="mt-3 flex items-center justify-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-primary"
         >
-          Next up: <span className="font-semibold">{nextLesson.title}</span>
+          {t("learnWeb.pager.nextUp")}{" "}
+          <span className="font-semibold">{nextLesson.title}</span>
           <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>
       )}

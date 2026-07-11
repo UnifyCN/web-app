@@ -1610,6 +1610,24 @@
       "continueWhereLeft": "जहाँ छोड़ा था वहीं से जारी रखें",
       "completeCount": "{{completed}}/{{total}} पूर्ण",
       "resume": "फिर से शुरू करें"
+    },
+    "lesson": {
+      "notFound": "यह पाठ नहीं मिला।",
+      "notInSection": "यह पाठ इस अनुभाग का हिस्सा नहीं है।",
+      "completeToast": "पाठ पूरा हुआ!",
+      "quickCheck": "त्वरित जाँच",
+      "explainTermAria": "शब्द समझाएं",
+      "selectionActionsAria": "चयनित टेक्स्ट की क्रियाएं",
+      "example": "उदाहरण",
+      "tip": "सुझाव",
+      "note": "नोट",
+      "details": "विवरण"
+    },
+    "pager": {
+      "welcomeFirst": "{{moduleTitle}} में आपका स्वागत है! चलिए शुरू करते हैं",
+      "finalLesson": "आख़िरी पाठ! {{moduleTitle}} लगभग पूरा हो गया",
+      "backToSection": "अनुभाग पर वापस जाएं",
+      "nextUp": "आगे:"
     }
   }
 }

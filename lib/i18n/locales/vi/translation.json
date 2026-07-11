@@ -1610,6 +1610,24 @@
       "continueWhereLeft": "Tiếp tục từ chỗ đã dừng",
       "completeCount": "{{completed}}/{{total}} hoàn thành",
       "resume": "Tiếp tục"
+    },
+    "lesson": {
+      "notFound": "Không tìm thấy bài học này.",
+      "notInSection": "Bài học này không thuộc phần này.",
+      "completeToast": "Hoàn thành bài học!",
+      "quickCheck": "Kiểm tra nhanh",
+      "explainTermAria": "Giải thích thuật ngữ",
+      "selectionActionsAria": "Thao tác với đoạn văn bản đã chọn",
+      "example": "Ví dụ",
+      "tip": "Mẹo",
+      "note": "Ghi chú",
+      "details": "Chi tiết"
+    },
+    "pager": {
+      "welcomeFirst": "Chào mừng đến với {{moduleTitle}}! Cùng bắt đầu nào",
+      "finalLesson": "Bài học cuối cùng! Bạn sắp hoàn thành {{moduleTitle}}",
+      "backToSection": "Quay lại phần",
+      "nextUp": "Tiếp theo:"
     }
   }
 }

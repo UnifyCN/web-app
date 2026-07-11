@@ -3,6 +3,7 @@
 import { use } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { LessonPager } from "@/components/learn/LessonPager";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -21,6 +22,7 @@ export default function LessonDetailPage({
   params: Promise<{ moduleId: string; submoduleId: string; lessonId: string }>;
 }) {
   const { moduleId, submoduleId, lessonId } = use(params);
+  const { t } = useTranslation();
   const moduleQuery = useModule(moduleId);
   const lessonQuery = useLesson(lessonId);
   const setLessonProgress = useSetLessonProgress();
@@ -38,7 +40,8 @@ export default function LessonDetailPage({
   const lessonQuizQuestions = (lessonQuizQuery.data ?? []).flatMap(
     (q) => q.questions ?? [],
   );
-  const lessonQuizTitle = lessonQuizQuery.data?.[0]?.title ?? "Quick Check";
+  const lessonQuizTitle =
+    lessonQuizQuery.data?.[0]?.title ?? t("learnWeb.lesson.quickCheck");
 
   if (
     lessonQuery.isLoading ||
@@ -47,7 +50,7 @@ export default function LessonDetailPage({
   ) {
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
-        <p className="text-sm text-ink-muted">Loading…</p>
+        <p className="text-sm text-ink-muted">{t("common.loading")}</p>
       </div>
     );
   }
@@ -56,13 +59,13 @@ export default function LessonDetailPage({
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
         <p className="text-sm text-ink-muted">
-          This lesson could not be found.
+          {t("learnWeb.lesson.notFound")}
         </p>
         <Link
           href="/learn"
           className="mt-3 inline-block text-sm font-semibold text-primary"
         >
-          Back to Learn
+          {t("learnWeb.module.backToLearn")}
         </Link>
       </div>
     );
@@ -85,13 +88,13 @@ export default function LessonDetailPage({
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
         <p className="text-sm text-ink-muted">
-          This lesson isn&rsquo;t part of this section.
+          {t("learnWeb.lesson.notInSection")}
         </p>
         <Link
           href={`/learn/${moduleId}`}
           className="mt-3 inline-block text-sm font-semibold text-primary"
         >
-          Back to module
+          {t("learnWeb.section.backToModule")}
         </Link>
       </div>
     );
@@ -135,7 +138,8 @@ export default function LessonDetailPage({
         onSuccess: () => {
           // Only confirm when a write actually happened (the mock/no-Supabase
           // path resolves "successfully" without persisting anything).
-          if (isSupabaseConfigured()) toast.success("Lesson complete!");
+          if (isSupabaseConfigured())
+            toast.success(t("learnWeb.lesson.completeToast"));
           trackLessonCompleted({ lessonId, submoduleId, moduleId });
         },
       },
@@ -146,7 +150,7 @@ export default function LessonDetailPage({
     <div className="mx-auto max-w-[760px] px-6 py-6">
       <Breadcrumb
         items={[
-          { label: "Learn", href: "/learn" },
+          { label: t("tabs.learn"), href: "/learn" },
           { label: mod.title, href: `/learn/${moduleId}` },
           {
             label: parentSubmodule.title,

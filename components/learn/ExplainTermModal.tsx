@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { HelpCircle, Loader2, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { explainTerm } from "@/services/highlights";
 
 interface ExplainTermModalProps {
@@ -23,6 +24,7 @@ export function ExplainTermModal({
   lessonContext,
   onClose,
 }: ExplainTermModalProps) {
+  const { t } = useTranslation();
   const closeRef = useRef<HTMLButtonElement>(null);
 
   const query = useQuery({
@@ -59,13 +61,13 @@ export function ExplainTermModal({
       className="fixed inset-0 z-[90] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-label="Explain term"
+      aria-label={t("learnWeb.lesson.explainTermAria")}
     >
       <button
         type="button"
         className="absolute inset-0 cursor-default bg-black/40"
         onClick={onClose}
-        aria-label="Close"
+        aria-label={t("common.close")}
       />
       <div className="relative w-full max-w-md rounded-card border border-border-card bg-surface p-5 shadow-xl">
         <div className="flex items-start justify-between gap-3">
@@ -74,7 +76,7 @@ export function ExplainTermModal({
               <HelpCircle className="h-4 w-4" aria-hidden />
             </span>
             <h2 className="text-base font-bold text-ink-secondary">
-              What does this mean?
+              {t("learn.explainTerm.title")}
             </h2>
           </div>
           <button
@@ -82,7 +84,7 @@ export function ExplainTermModal({
             type="button"
             onClick={onClose}
             className="rounded-md p-2 text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink"
-            aria-label="Close"
+            aria-label={t("common.close")}
           >
             <X className="h-4 w-4" aria-hidden />
           </button>
@@ -96,21 +98,21 @@ export function ExplainTermModal({
           {query.isPending || query.isFetching ? (
             <div className="flex items-center gap-2 text-ink-muted">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              Getting explanation…
+              {t("learn.explainTerm.gettingExplanation")}
             </div>
           ) : query.isError ? (
             <div className="space-y-2">
               <p className="text-ink-muted">
                 {query.error instanceof Error
                   ? query.error.message
-                  : "Something went wrong"}
+                  : t("common.somethingWentWrong")}
               </p>
               <button
                 type="button"
                 onClick={() => query.refetch()}
                 className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
               >
-                Try again
+                {t("learn.explainTerm.tryAgain")}
               </button>
             </div>
           ) : (

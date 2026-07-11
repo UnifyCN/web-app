@@ -1610,6 +1610,24 @@
       "continueWhereLeft": "Continúa donde lo dejaste",
       "completeCount": "{{completed}}/{{total}} completadas",
       "resume": "Reanudar"
+    },
+    "lesson": {
+      "notFound": "No se pudo encontrar esta lección.",
+      "notInSection": "Esta lección no pertenece a esta sección.",
+      "completeToast": "¡Lección completada!",
+      "quickCheck": "Comprobación rápida",
+      "explainTermAria": "Explicar término",
+      "selectionActionsAria": "Acciones de selección de texto",
+      "example": "Ejemplo",
+      "tip": "Consejo",
+      "note": "Nota",
+      "details": "Detalles"
+    },
+    "pager": {
+      "welcomeFirst": "¡Te damos la bienvenida a {{moduleTitle}}! Comencemos",
+      "finalLesson": "¡Última lección! Ya casi terminas {{moduleTitle}}",
+      "backToSection": "Volver a la sección",
+      "nextUp": "A continuación:"
     }
   }
 }
