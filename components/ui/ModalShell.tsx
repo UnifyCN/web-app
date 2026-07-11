@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 
 const FOCUSABLE_SELECTOR =
@@ -28,6 +29,7 @@ export function ModalShell({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -126,7 +128,7 @@ export function ModalShell({
             type="button"
             onClick={onClose}
             disabled={busy}
-            aria-label="Close"
+            aria-label={t("common.close")}
             className="-mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink-placeholder transition-colors hover:bg-surface-gray disabled:opacity-50"
           >
             <X className="h-4 w-4" aria-hidden />

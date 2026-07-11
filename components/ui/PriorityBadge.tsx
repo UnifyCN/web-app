@@ -1,4 +1,8 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import { PRIORITY_LABEL_KEY } from "@/lib/i18n/labels";
 import type { Priority } from "@/types";
 
 interface PriorityBadgeProps {
@@ -25,15 +29,9 @@ const PRIORITY_STYLES: Record<Priority, { dot: string; pill: string }> = {
   },
 };
 
-const PRIORITY_LABELS: Record<Priority, string> = {
-  "Do now": "Do now",
-  "Do soon": "Do soon",
-  "Explore and connect": "Explore & connect",
-  "Optional / later": "Optional / later",
-};
-
 /** Checklist priority pill — colored dot + label on a matching tint. */
 export function PriorityBadge({ priority, className }: PriorityBadgeProps) {
+  const { t } = useTranslation();
   const style = PRIORITY_STYLES[priority];
 
   return (
@@ -49,7 +47,7 @@ export function PriorityBadge({ priority, className }: PriorityBadgeProps) {
         className={cn("h-1.5 w-1.5 rounded-full", style.dot)}
         aria-hidden
       />
-      {PRIORITY_LABELS[priority]}
+      {t(PRIORITY_LABEL_KEY[priority])}
     </span>
   );
 }

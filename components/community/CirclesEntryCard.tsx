@@ -1,4 +1,7 @@
+"use client";
+
 import { ArrowRight, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { CircleStatus } from "@/types";
 
@@ -10,25 +13,22 @@ const ELLIPSE_WARM = "#f59d4a";
 
 const STATE_CONTENT: Record<
   CircleStatus,
-  { title: string; description: string; cta: string }
+  { titleKey: string; descriptionKey: string; ctaKey: string }
 > = {
   default: {
-    title: "Unify Circles",
-    description:
-      "Get matched with 3 newcomers who share your background for a 2-week group chat.",
-    cta: "Start Matching",
+    titleKey: "circles.title",
+    descriptionKey: "circles.description",
+    ctaKey: "circles.startMatching",
   },
   waiting: {
-    title: "Looking for your circle",
-    description:
-      "We're finding 3 more newcomers who share your background for a 2-week group chat.",
-    cta: "Hang tight!",
+    titleKey: "circles.lookingForCircle",
+    descriptionKey: "circles.findingNewcomers",
+    ctaKey: "circles.hangTight",
   },
   in_circle: {
-    title: "Your circle is active",
-    description:
-      "You've been matched with 3 newcomers. Jump into the group chat and say hello.",
-    cta: "Open circle chat",
+    titleKey: "circles.circleActive",
+    descriptionKey: "circles.circleActiveDesc",
+    ctaKey: "circles.openCircleChat",
   },
 };
 
@@ -44,6 +44,7 @@ export function CirclesEntryCard({
   onCancel?: () => void;
   isPending?: boolean;
 }) {
+  const { t } = useTranslation();
   const content = STATE_CONTENT[status];
   const isDefault = status === "default";
   const isWaiting = status === "waiting";
@@ -69,22 +70,24 @@ export function CirclesEntryCard({
         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
           <Users className="h-5 w-5 text-white" aria-hidden />
         </span>
-        <h3 className="mt-3 text-lg font-bold text-white">{content.title}</h3>
+        <h3 className="mt-3 text-lg font-bold text-white">
+          {t(content.titleKey)}
+        </h3>
         <p className="mt-1 max-w-md text-sm leading-relaxed text-white/90">
-          {content.description}
+          {t(content.descriptionKey)}
         </p>
         <button
           type="button"
           onClick={isDefault ? onStart : undefined}
           disabled={primaryDisabled}
-          title={isInCircle ? "Chat coming soon" : undefined}
+          title={isInCircle ? t("circles.chatComingSoon") : undefined}
           className={cn(
             "mt-4 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2",
             "text-sm font-semibold text-primary transition-colors hover:bg-primary-bg",
             primaryDisabled ? "cursor-default opacity-70" : "cursor-pointer",
           )}
         >
-          {isDefault && isPending ? "Starting…" : content.cta}
+          {isDefault && isPending ? t("circles.starting") : t(content.ctaKey)}
           {isDefault && !isPending && <ArrowRight className="h-4 w-4" aria-hidden />}
         </button>
 
@@ -95,12 +98,14 @@ export function CirclesEntryCard({
             disabled={isPending}
             className="mt-3 block text-xs font-medium text-white/80 underline underline-offset-2 transition-colors hover:text-white disabled:opacity-60"
           >
-            Cancel matching
+            {t("circles.cancelMatching")}
           </button>
         )}
 
         {isInCircle && (
-          <p className="mt-2 text-xs text-white/70">Chat coming soon.</p>
+          <p className="mt-2 text-xs text-white/70">
+            {t("circles.chatComingSoon")}
+          </p>
         )}
       </div>
     </div>

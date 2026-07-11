@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ export interface DropdownMenuItem {
  */
 export function DropdownMenu({
   items,
-  ariaLabel = "More options",
+  ariaLabel,
   align = "end",
   className,
 }: {
@@ -38,6 +39,7 @@ export function DropdownMenu({
   align?: "start" | "end";
   className?: string;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(
     null,
@@ -97,7 +99,7 @@ export function DropdownMenu({
       <button
         ref={triggerRef}
         type="button"
-        aria-label={ariaLabel}
+        aria-label={ariaLabel ?? t("ui.moreOptionsAria")}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}

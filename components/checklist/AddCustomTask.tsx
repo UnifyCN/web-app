@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { PRIORITY_LABEL_KEY } from "@/lib/i18n/labels";
 import type { Priority } from "@/types";
 
 const PRIORITIES: Priority[] = [
@@ -27,6 +29,7 @@ interface AddCustomTaskProps {
 
 /** "Add your own item" — collapses to a button, expands to a small form. */
 export function AddCustomTask({ onAdd }: AddCustomTaskProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -51,7 +54,7 @@ export function AddCustomTask({ onAdd }: AddCustomTaskProps) {
         className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-card border border-dashed border-border-card bg-surface py-3 text-sm font-semibold text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
       >
         <Plus className="h-4 w-4" aria-hidden />
-        Add your own item
+        {t("checklist.addYourOwnItem")}
       </button>
     );
   }
@@ -65,8 +68,8 @@ export function AddCustomTask({ onAdd }: AddCustomTaskProps) {
         type="text"
         value={title}
         onChange={(event) => setTitle(event.target.value)}
-        placeholder="Task name"
-        aria-label="Task name"
+        placeholder={t("checklist.taskNamePlaceholder")}
+        aria-label={t("checklist.taskNamePlaceholder")}
         autoFocus
         className={FIELD_CLASS}
       />
@@ -74,19 +77,19 @@ export function AddCustomTask({ onAdd }: AddCustomTaskProps) {
         type="text"
         value={description}
         onChange={(event) => setDescription(event.target.value)}
-        placeholder="Short description (optional)"
-        aria-label="Task description"
+        placeholder={t("checklist.createItem.descriptionLabel")}
+        aria-label={t("checklist.taskDescriptionAria")}
         className={FIELD_CLASS}
       />
       <select
         value={priority}
         onChange={(event) => setPriority(event.target.value as Priority)}
-        aria-label="Priority"
+        aria-label={t("checklist.priorityAria")}
         className={FIELD_CLASS}
       >
         {PRIORITIES.map((option) => (
           <option key={option} value={option}>
-            {option}
+            {t(PRIORITY_LABEL_KEY[option])}
           </option>
         ))}
       </select>
@@ -97,7 +100,7 @@ export function AddCustomTask({ onAdd }: AddCustomTaskProps) {
           size="sm"
           disabled={!title.trim()}
         >
-          Add task
+          {t("checklist.addTask")}
         </Button>
         <Button
           type="button"
@@ -105,7 +108,7 @@ export function AddCustomTask({ onAdd }: AddCustomTaskProps) {
           size="sm"
           onClick={() => setOpen(false)}
         >
-          Cancel
+          {t("common.cancel")}
         </Button>
       </div>
     </form>

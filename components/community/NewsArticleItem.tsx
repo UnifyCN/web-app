@@ -1,5 +1,9 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/Badge";
-import { externalHref, formatRelativeTime } from "@/lib/utils";
+import { externalHref } from "@/lib/utils";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
 import { handleNewsImageError } from "@/lib/news/fallbackImage";
 import type { NewsItem } from "@/types";
 
@@ -8,6 +12,8 @@ import type { NewsItem } from "@/types";
  * detail page, so when the item has a source URL the whole row links out.
  */
 export function NewsArticleItem({ item }: { item: NewsItem }) {
+  const { t } = useTranslation();
+  const formatRelativeTime = useRelativeTime();
   const href = externalHref(item.link);
 
   const body = (
@@ -37,7 +43,9 @@ export function NewsArticleItem({ item }: { item: NewsItem }) {
           {item.description}
         </p>
         {item.author && (
-          <p className="mt-1.5 text-xs text-ink-placeholder">By {item.author}</p>
+          <p className="mt-1.5 text-xs text-ink-placeholder">
+            {t("news.byAuthor", { author: item.author })}
+          </p>
         )}
       </div>
     </>

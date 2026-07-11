@@ -59,7 +59,11 @@
     "openNotifications": "Abrir notificaciones",
     "openSettings": "Abrir configuración",
     "openProfileMenu": "Abrir menú de perfil",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "backToHome": "Volver al inicio",
+    "daysShort": "{{count}} d",
+    "home": "Inicio",
+    "you": "Tú"
   },
   "tabs": {
     "social": "Social",
@@ -447,7 +451,21 @@
       "priorityDoSoon": "Hacer pronto",
       "priorityExploreConnect": "Explorar y conectar",
       "priorityOptionalLater": "Opcional / después"
-    }
+    },
+    "addTask": "Agregar tarea",
+    "deleteTaskAria": "Eliminar tarea: {{title}}",
+    "deleteTaskDesc": "Esto eliminará permanentemente <strong>\"{{title}}\"</strong>. Esta acción no se puede deshacer.",
+    "deleteTaskTitle": "¿Eliminar esta tarea?",
+    "loadError": "No se pudo cargar tu lista.",
+    "markDoneAria": "Marcar como completado",
+    "markNotDoneAria": "Marcar como no completado",
+    "priorityAria": "Prioridad",
+    "progressSummary": "{{completed}}/{{total}} completadas · {{percent}}%",
+    "reorderTaskAria": "Reordenar tarea: {{title}}",
+    "subtitle": "Tu guía paso a paso para establecerte en Canadá.",
+    "taskDescriptionAria": "Descripción de la tarea",
+    "taskNamePlaceholder": "Nombre de la tarea",
+    "yourProgress": "Tu progreso"
   },
   "companion": {
     "goBack": "Regresar",
@@ -514,7 +532,55 @@
       "newChat": "Nueva conversación",
       "noConversationsFound": "No se encontraron conversaciones",
       "noConversationsYet": "Aún no hay conversaciones"
-    }
+    },
+    "conversationOptionsAria": "Opciones de la conversación",
+    "conversationsAria": "Conversaciones",
+    "copied": "Copiado",
+    "copyMessage": "Copiar mensaje",
+    "deleteConversationBody": "Esto eliminará permanentemente <strong>\"{{title}}\"</strong> y todos sus mensajes. Esta acción no se puede deshacer.",
+    "deleteConversationTitle": "¿Eliminar esta conversación?",
+    "messageInputAria": "Mensaje al Asistente",
+    "messagesPerDayRemaining": "{{count}} mensaje/día restante",
+    "messagesPerDayRemaining_plural": "{{count}} mensajes/día restantes",
+    "newConversation": "Nueva conversación",
+    "noChatsFound": "No se encontraron chats.",
+    "searchChats": "Buscar chats",
+    "sendFailed": "No se pudo enviar tu mensaje. Inténtalo de nuevo.",
+    "sendMessageAria": "Enviar mensaje",
+    "webStarters": {
+      "bankingQ": "¿Cómo abro una cuenta bancaria y construyo crédito en Canadá?",
+      "bankingTopic": "Banca",
+      "beforeArrivalQ": "¿Qué debo preparar antes de mudarme a Canadá?",
+      "beforeArrivalTopic": "Antes de llegar",
+      "careerQ": "¿Cómo obtengo el reconocimiento de mis credenciales extranjeras en Canadá?",
+      "careerTopic": "Tu carrera",
+      "communityCityQ": "¿Cómo puedo conocer gente y hacer amigos en {{city}}?",
+      "communityQ": "¿Cómo puedo conocer gente y construir comunidad como recién llegado?",
+      "communityTopic": "Comunidad",
+      "documentsQ": "¿Cómo obtengo un SIN y las identificaciones que necesito en Canadá?",
+      "documentsTopic": "Documentos",
+      "familyQ": "¿Cómo inscribo a mis hijos en la escuela y encuentro cuidado infantil?",
+      "familyTopic": "Familia",
+      "financeTopic": "Finanzas",
+      "healthcareQ": "¿Cómo solicito una tarjeta de salud provincial?",
+      "healthcareTopic": "Salud",
+      "housingQ": "¿Cómo encuentro y alquilo un apartamento en Canadá?",
+      "housingTopic": "Vivienda",
+      "immigrationQ": "¿Cómo funciona Express Entry para la residencia permanente?",
+      "immigrationTopic": "Inmigración",
+      "jobsQ": "¿Cómo encuentro trabajo y escribo un currículum al estilo canadiense?",
+      "jobsTopic": "Empleos",
+      "localServicesQ": "¿Qué servicios para recién llegados están disponibles en {{city}}?",
+      "localServicesTopic": "Servicios locales",
+      "refugeeSettlementQ": "¿Qué apoyo de asentamiento está disponible para los refugiados en Canadá?",
+      "settlementQ": "¿Qué recursos están disponibles para los recién llegados que se establecen en Canadá?",
+      "settlementTopic": "Asentamiento",
+      "studyPermitQ": "¿Cómo mantengo mi permiso de estudio y trabajo medio tiempo como estudiante?",
+      "studyPermitTopic": "Permiso de estudio",
+      "transitQ": "¿Cómo me desplazo por mi ciudad usando el transporte público?",
+      "transitTopic": "Transporte"
+    },
+    "welcomeTitleNamed": "Pregúntame lo que sea, {{name}}."
   },
   "home": {
     "forYou": "Para ti",
@@ -551,7 +617,15 @@
     "pinPost": "Fijar publicación",
     "reportPost": "Reportar publicación",
     "postSavedToast": "¡Publicación guardada! Encuéntrala en Configuración > Publicaciones guardadas",
-    "failedPinPost": "No se pudo fijar la publicación. Inténtalo de nuevo."
+    "failedPinPost": "No se pudo fijar la publicación. Inténtalo de nuevo.",
+    "allCaughtUp": "Ya estás al día",
+    "feedLoadError": "No se pudo cargar el feed.",
+    "forYouEmptySub": "Vuelve pronto para ver nuevas publicaciones.",
+    "forYouEmptyTitle": "Sin publicaciones aún",
+    "sectionFeed": "Feed",
+    "sectionLearning": "Aprendizaje",
+    "sectionNews": "Noticias",
+    "showSlideAria": "Mostrar {{title}}"
   },
   "profile": {
     "title": "Perfil",
@@ -592,7 +666,36 @@
     "noFollowersYet": "Sin seguidores aún",
     "notFollowingAnyone": "No sigue a nadie aún",
     "followersTab": "Seguidores",
-    "followingTab": "Siguiendo"
+    "followingTab": "Siguiendo",
+    "addBioPrompt": "Agrega una biografía y pronombres",
+    "backToProfileAria": "Volver al perfil",
+    "changePhotoAria": "Cambiar foto de perfil",
+    "commentByAuthor": "por @{{username}}",
+    "completeProfileHint": "Completa tu perfil para agregar tu situación, ubicación y etapa.",
+    "editBioAria": "Editar biografía y pronombres",
+    "followsYou": "Te sigue",
+    "highlightFrom": "De {{lesson}} · {{module}}",
+    "highlightsTab": "Resaltados",
+    "memberSince": "Miembro desde {{date}}",
+    "noCommentsSelfHint": "Aún no has comentado — únete a la conversación.",
+    "noHighlights": "Sin resaltados aún.",
+    "noSavedPosts": "Sin publicaciones guardadas aún.",
+    "persona": {
+      "other": "Recién llegado"
+    },
+    "profileNotFound": "No se pudo encontrar este perfil.",
+    "pronounsPlaceholder": "Pronombres (p. ej. ella)",
+    "removePhoto": "Quitar foto",
+    "shareFirstPost": "Comparte tu primera publicación con la comunidad.",
+    "sharePostCta": "Compartir una publicación",
+    "shareProfile": "Compartir perfil",
+    "signInToView": "Inicia sesión para ver tu perfil.",
+    "stage": {
+      "1": "0–3 meses en Canadá",
+      "2": "3–12 meses en Canadá",
+      "3": "1–3 años en Canadá",
+      "4": "3+ años en Canadá"
+    }
   },
   "profilePicture": {
     "chooseFromLibrary": "Elegir de la biblioteca",
@@ -632,7 +735,29 @@
     "mutuals": "Mutuos",
     "followsYou": "Te sigue",
     "discoverTabLabel": "Pestaña descubrir grupos",
-    "joinedTabLabel": "Pestaña grupos unidos"
+    "joinedTabLabel": "Pestaña grupos unidos",
+    "failedLoad": "No se pudieron cargar los grupos.",
+    "groupNotFoundLong": "No se pudo encontrar este grupo.",
+    "join": "Unirse",
+    "loadingPosts": "Cargando publicaciones…",
+    "myGroups": "Tus grupos",
+    "noGroupsYet": "Sin grupos aún",
+    "noPostsInGroup": "Aún no hay publicaciones en este grupo.",
+    "plusMembers": "+{{count, number}} miembro",
+    "plusMembers_plural": "+{{count, number}} miembros",
+    "recentPosts": "Publicaciones recientes",
+    "requestAudienceLabel": "¿Para quién es este grupo?",
+    "requestAudiencePlaceholder": "p. ej. Recién llegados que se transportan en bicicleta",
+    "requestEmailLabel": "Tu correo electrónico",
+    "requestEmailPlaceholder": "you@example.com",
+    "requestFollowUp": "Gracias — revisamos cada solicitud y te contactaremos por correo electrónico.",
+    "requestNameLabel": "Nombre del grupo",
+    "requestNamePlaceholder": "p. ej. Ciclistas Recién Llegados",
+    "requestNotesLabel": "¿Algo más? (opcional)",
+    "requestNotesPlaceholder": "Notas adicionales para el equipo",
+    "requestReasonLabel": "¿Por qué deberíamos crearlo?",
+    "requestReasonPlaceholder": "Cuéntanos un poco sobre la necesidad (mínimo 10 caracteres).",
+    "requestReviewNote": "Revisamos cada solicitud y te contactaremos por correo electrónico."
   },
   "posts": {
     "postButton": "Publicar",
@@ -664,7 +789,47 @@
     "tryDifferentSearchTerm": "Prueba con otro término de búsqueda",
     "noGroupsAvailable": "No hay grupos disponibles",
     "checkBackLaterForNewGroups": "Vuelve más tarde para ver nuevos grupos",
-    "contentNotAllowedReason": "Tu publicación contiene lenguaje que infringe nuestras Normas de la Comunidad. Por favor, edítala e inténtalo de nuevo."
+    "contentNotAllowedReason": "Tu publicación contiene lenguaje que infringe nuestras Normas de la Comunidad. Por favor, edítala e inténtalo de nuevo.",
+    "addCommentPlaceholder": "Agregar un comentario…",
+    "addPhotos": "Agregar fotos",
+    "addPhotosCount": "Agregar fotos ({{count}}/{{max}})",
+    "addPhotosCount_plural": "Agregar fotos ({{count}}/{{max}})",
+    "cancelReplyAria": "Cancelar respuesta",
+    "clearGroupAria": "Quitar grupo seleccionado",
+    "commentCount": "{{count}} comentario",
+    "commentCount_plural": "{{count}} comentarios",
+    "createPostAria": "Crear una publicación",
+    "deleteCommentAria": "Eliminar comentario",
+    "deleteCommentDesc": "Esto eliminará permanentemente tu comentario. Esta acción no se puede deshacer.",
+    "deleteCommentTitle": "¿Eliminar este comentario?",
+    "deletePostError": "No se pudo eliminar esta publicación. Inténtalo de nuevo.",
+    "deletePostTitle": "¿Eliminar esta publicación?",
+    "hideReplies": "Ocultar respuestas",
+    "likeAria": "Dar me gusta a la publicación",
+    "likeCommentAria": "Dar me gusta al comentario",
+    "loadCommentsError": "No se pudieron cargar los comentarios.",
+    "loadPostError": "Algo salió mal al cargar esta publicación.",
+    "loadingComments": "Cargando comentarios…",
+    "postBodyAria": "Cuerpo de la publicación",
+    "postImageAlt": "Imagen de la publicación {{number}}",
+    "postImageAltTitled": "{{title}} — imagen {{number}}",
+    "postNotFound": "No se pudo encontrar esta publicación.",
+    "postTitleAria": "Título de la publicación",
+    "postedHeading": "¡Publicado!",
+    "postedSubtext": "Tu publicación ya está en el feed.",
+    "removeImageAria": "Eliminar imagen {{number}}",
+    "reply": "Responder",
+    "saveAria": "Guardar publicación",
+    "selectedImageAlt": "Imagen seleccionada {{number}}",
+    "unlikeAria": "Quitar me gusta a la publicación",
+    "unlikeCommentAria": "Quitar me gusta al comentario",
+    "unsaveAria": "Quitar de guardados",
+    "viewCommentsAria": "Ver comentarios",
+    "viewImageAria": "Ver imagen {{number}} en pantalla completa",
+    "viewProfileAria": "Ver el perfil de {{username}}",
+    "viewReplies": "Ver {{count}} respuesta",
+    "viewReplies_plural": "Ver {{count}} respuestas",
+    "writeReplyPlaceholder": "Escribe una respuesta…"
   },
   "translate": {
     "button": "Traducir",
@@ -685,7 +850,9 @@
     "noContent": "No hay contenido disponible.",
     "linkToArticle": "Enlace al artículo externo",
     "byAuthorOnDate": "Por {{author}} el {{date}}",
-    "byAuthor": "Por {{author}}"
+    "byAuthor": "Por {{author}}",
+    "loadError": "No se pudieron cargar las noticias.",
+    "nationalNews": "Noticias nacionales"
   },
   "tips": {
     "pastTips": "Consejos anteriores",
@@ -695,7 +862,8 @@
     "tipNotFound": "Consejo no encontrado",
     "sources": "Fuentes",
     "seePastTips": "Ver consejos anteriores",
-    "dailyTip": "Consejo del día"
+    "dailyTip": "Consejo del día",
+    "loadingToday": "Cargando el consejo de hoy…"
   },
   "events": {
     "title": "Eventos comunitarios",
@@ -712,7 +880,13 @@
     "hostedBy": "Organizado por",
     "viewDetails": "Ver detalles del evento",
     "aboutEvent": "Sobre el evento",
-    "noEventDescription": "No hay descripción disponible para este evento."
+    "noEventDescription": "No hay descripción disponible para este evento.",
+    "eventNotFound": "No se pudo encontrar este evento.",
+    "failedLoad": "No se pudieron cargar los eventos.",
+    "noUpcoming": "No hay próximos eventos.",
+    "typeHybrid": "Híbrido",
+    "typeInPerson": "Presencial",
+    "typeOnline": "En línea"
   },
   "resetPassword": {
     "title": "Restablecer contraseña",
@@ -833,7 +1007,14 @@
     "hourAgo": "hace {{count}} hora",
     "hourAgo_plural": "hace {{count}} horas",
     "dayAgo": "hace {{count}} día",
-    "dayAgo_plural": "hace {{count}} días"
+    "dayAgo_plural": "hace {{count}} días",
+    "cancelMatching": "Cancelar emparejamiento",
+    "chatComingSoon": "Chat próximamente.",
+    "circleActive": "Tu círculo está activo",
+    "circleActiveDesc": "Te emparejamos con 3 recién llegados. Entra al chat grupal y saluda.",
+    "failedLoad": "No se pudo cargar tu círculo.",
+    "starting": "Iniciando…",
+    "updateMatchingFailed": "No se pudo actualizar tu estado de emparejamiento. Inténtalo de nuevo."
   },
   "onboarding": {
     "stepOf": "Paso {{current}} de {{total}}",
@@ -887,7 +1068,12 @@
     "missingPostId": "Falta el ID de la publicación.",
     "missingUserId": "Falta el ID del usuario.",
     "submittedToast": "Reporte enviado. Gracias.",
-    "submitFailed": "No se pudo enviar el reporte. Inténtalo de nuevo."
+    "submitFailed": "No se pudo enviar el reporte. Inténtalo de nuevo.",
+    "placeholderQuestion": "Escribe por qué estás reportando esta pregunta...",
+    "placeholderReply": "Escribe por qué estás reportando esta respuesta...",
+    "privacyNote": "Esto es privado y solo lo verán los moderadores.",
+    "titleQuestion": "Reportar pregunta",
+    "titleReply": "Reportar respuesta"
   },
   "quiz": {
     "errors": {
@@ -1116,7 +1302,27 @@
     "changePasswordDesc": "Establece una nueva contraseña para iniciar sesión con correo.",
     "deleteAccountDesc": "Elimina permanentemente tu cuenta y todos tus datos.",
     "change": "Cambiar",
-    "emailUpdated": "Correo actualizado"
+    "emailUpdated": "Correo actualizado",
+    "addEmailFirst": "Agrega un correo a tu cuenta antes de cambiar tu contraseña.",
+    "changePasswordModalDesc": "Confirma tu contraseña actual y luego establece una nueva.",
+    "currentPasswordPlaceholder": "Contraseña actual",
+    "currentPasswordRequired": "Ingresa tu contraseña actual.",
+    "deleteAccountBody": "Esto elimina permanentemente tu cuenta y todos tus datos. Esta acción no se puede deshacer.",
+    "deleteHoldAria": "Mantén presionado para eliminar tu cuenta",
+    "deleteHoldInstruction": "Mantén presionado el botón de abajo durante 3 segundos para eliminar tu cuenta permanentemente.",
+    "deletePermanent": "Esta acción es permanente.",
+    "deletingAccount": "Eliminando tu cuenta…",
+    "emailChangeDesc": "Te enviaremos un enlace de confirmación a tu nueva dirección de correo.",
+    "emailChangeFailed": "No se pudo iniciar el cambio de correo.",
+    "emailChangeSentBody": "Enviamos un enlace de confirmación a tu nueva dirección de correo. Haz clic en él para confirmar el cambio. Tu dirección de correo actual recibirá una notificación cuando el cambio se complete.",
+    "emailInvalid": "Ingresa un correo electrónico válido.",
+    "emailSame": "Ese ya es tu correo electrónico.",
+    "holdToDelete": "Mantén presionado para eliminar",
+    "newEmailPlaceholder": "Nuevo correo electrónico",
+    "passwordMinLength": "La contraseña debe tener al menos {{count}} caracteres.",
+    "passwordUpdateFailed": "No se pudo actualizar tu contraseña.",
+    "passwordUpdated": "Contraseña actualizada",
+    "updatePassword": "Actualizar contraseña"
   },
   "authWeb": {
     "incorrectCredentials": "Correo o contraseña incorrectos.",
@@ -1284,5 +1490,24 @@
       "bodyOnboard": "Tu Lista, tu Aprendizaje y tu Asistente ya están adaptados a ti. Presiona Finalizar para comenzar.",
       "bodyEdit": "Tus preferencias se han actualizado. Tu Lista y las respuestas de tu Asistente ahora reflejarán tus últimas respuestas."
     }
+  },
+  "moderation": {
+    "blockConfirmDesc": "No verás sus publicaciones en tu feed.",
+    "blockConfirmTitle": "¿Bloquear a @{{username}}?",
+    "blockUser": "Bloquear a @{{username}}",
+    "postOptionsAria": "Opciones de la publicación",
+    "userOptionsAria": "Opciones para @{{username}}"
+  },
+  "ui": {
+    "capsLockOn": "Bloq Mayús está activado",
+    "closeImageViewerAria": "Cerrar visor de imágenes",
+    "hidePassword": "Ocultar contraseña",
+    "imageOfAlt": "Imagen {{number}} de {{count}}",
+    "imageOfAltTitled": "{{title}} — imagen {{number}} de {{count}}",
+    "imageViewerAria": "Visor de imágenes",
+    "moreOptionsAria": "Más opciones",
+    "nextImageAria": "Imagen siguiente",
+    "previousImageAria": "Imagen anterior",
+    "showPassword": "Mostrar contraseña"
   }
 }

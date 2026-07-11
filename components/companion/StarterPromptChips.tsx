@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Compass,
   Landmark,
@@ -12,37 +14,39 @@ import {
   Users,
   ChevronRight,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { UserOnboardingProfile } from "@/types";
 
 type IconType = React.ComponentType<{ className?: string }>;
 
+/** Entries carry i18n key names; the component translates at render time. */
 interface Candidate {
-  topic: string;
-  question: string;
+  topicKey: string;
+  questionKey: string;
   icon: IconType;
 }
 
 /** The original generic prompts — also the fallback when there's no profile. */
 const DEFAULT_STARTERS: Candidate[] = [
   {
-    topic: "Settlement",
-    question: "What resources are available for newcomers settling in Canada?",
+    topicKey: "companion.webStarters.settlementTopic",
+    questionKey: "companion.webStarters.settlementQ",
     icon: Compass,
   },
   {
-    topic: "Finance",
-    question: "How do I open a bank account and build credit in Canada?",
+    topicKey: "companion.webStarters.financeTopic",
+    questionKey: "companion.webStarters.bankingQ",
     icon: Landmark,
   },
   {
-    topic: "Healthcare",
-    question: "How do I apply for a provincial health card?",
+    topicKey: "companion.webStarters.healthcareTopic",
+    questionKey: "companion.webStarters.healthcareQ",
     icon: HeartPulse,
   },
   {
-    topic: "Immigration",
-    question: "How does Express Entry work for permanent residence?",
+    topicKey: "companion.webStarters.immigrationTopic",
+    questionKey: "companion.webStarters.immigrationQ",
     icon: Plane,
   },
 ];
@@ -58,43 +62,43 @@ const PALETTES = [
 
 const INTEREST_CHIPS: Record<string, Candidate> = {
   finance: {
-    topic: "Banking",
-    question: "How do I open a bank account and build credit in Canada?",
+    topicKey: "companion.webStarters.bankingTopic",
+    questionKey: "companion.webStarters.bankingQ",
     icon: Landmark,
   },
   healthcare: {
-    topic: "Healthcare",
-    question: "How do I apply for a provincial health card?",
+    topicKey: "companion.webStarters.healthcareTopic",
+    questionKey: "companion.webStarters.healthcareQ",
     icon: HeartPulse,
   },
   housing: {
-    topic: "Housing",
-    question: "How do I find and rent an apartment in Canada?",
+    topicKey: "companion.webStarters.housingTopic",
+    questionKey: "companion.webStarters.housingQ",
     icon: Home,
   },
   employment: {
-    topic: "Jobs",
-    question: "How do I find a job and write a Canadian-style resume?",
+    topicKey: "companion.webStarters.jobsTopic",
+    questionKey: "companion.webStarters.jobsQ",
     icon: Briefcase,
   },
   pr_immigration: {
-    topic: "Immigration",
-    question: "How does Express Entry work for permanent residence?",
+    topicKey: "companion.webStarters.immigrationTopic",
+    questionKey: "companion.webStarters.immigrationQ",
     icon: Plane,
   },
   documents: {
-    topic: "Documents",
-    question: "How do I get a SIN and the IDs I need in Canada?",
+    topicKey: "companion.webStarters.documentsTopic",
+    questionKey: "companion.webStarters.documentsQ",
     icon: FileText,
   },
   transit: {
-    topic: "Transit",
-    question: "How do I get around using public transit in my city?",
+    topicKey: "companion.webStarters.transitTopic",
+    questionKey: "companion.webStarters.transitQ",
     icon: Bus,
   },
   family_kids: {
-    topic: "Family",
-    question: "How do I enrol my kids in school and find childcare?",
+    topicKey: "companion.webStarters.familyTopic",
+    questionKey: "companion.webStarters.familyQ",
     icon: Baby,
   },
 };
@@ -111,8 +115,8 @@ function buildCandidates(onboarding: UserOnboardingProfile | null): Candidate[] 
   // Pre-arrival prep leads for users who haven't landed yet.
   if (stage === 0) {
     out.push({
-      topic: "Before you arrive",
-      question: "What should I prepare before moving to Canada?",
+      topicKey: "companion.webStarters.beforeArrivalTopic",
+      questionKey: "companion.webStarters.beforeArrivalQ",
       icon: Plane,
     });
   }
@@ -120,21 +124,20 @@ function buildCandidates(onboarding: UserOnboardingProfile | null): Candidate[] 
   // Persona-led chip.
   if (persona === "international_student") {
     out.push({
-      topic: "Study permit",
-      question:
-        "How do I maintain my study permit and work part-time as a student?",
+      topicKey: "companion.webStarters.studyPermitTopic",
+      questionKey: "companion.webStarters.studyPermitQ",
       icon: GraduationCap,
     });
   } else if (persona === "skilled_worker") {
     out.push({
-      topic: "Your career",
-      question: "How do I get my foreign credentials recognized in Canada?",
+      topicKey: "companion.webStarters.careerTopic",
+      questionKey: "companion.webStarters.careerQ",
       icon: Briefcase,
     });
   } else if (persona === "refugee") {
     out.push({
-      topic: "Settlement",
-      question: "What settlement support is available for refugees in Canada?",
+      topicKey: "companion.webStarters.settlementTopic",
+      questionKey: "companion.webStarters.refugeeSettlementQ",
       icon: Compass,
     });
   }
@@ -148,10 +151,10 @@ function buildCandidates(onboarding: UserOnboardingProfile | null): Candidate[] 
   // Community chip when that's a stated goal.
   if (goals.includes("build_community")) {
     out.push({
-      topic: "Community",
-      question: cityName
-        ? `How can I meet people and make friends in ${cityName}?`
-        : "How can I meet people and build community as a newcomer?",
+      topicKey: "companion.webStarters.communityTopic",
+      questionKey: cityName
+        ? "companion.webStarters.communityCityQ"
+        : "companion.webStarters.communityQ",
       icon: Users,
     });
   }
@@ -159,8 +162,8 @@ function buildCandidates(onboarding: UserOnboardingProfile | null): Candidate[] 
   // Local-services chip when we know the city.
   if (cityName) {
     out.push({
-      topic: "Local services",
-      question: `What newcomer services are available in ${cityName}?`,
+      topicKey: "companion.webStarters.localServicesTopic",
+      questionKey: "companion.webStarters.localServicesQ",
       icon: Compass,
     });
   }
@@ -177,13 +180,15 @@ export function StarterPromptChips({
   onSelect: (question: string) => void;
   onboarding?: UserOnboardingProfile | null;
 }) {
+  const { t } = useTranslation();
+  const city = onboarding?.city?.trim();
   const candidates = buildCandidates(onboarding);
   const picked: Candidate[] = [];
   const seen = new Set<string>();
   for (const candidate of candidates) {
     if (picked.length >= 4) break;
-    if (seen.has(candidate.topic)) continue;
-    seen.add(candidate.topic);
+    if (seen.has(candidate.topicKey)) continue;
+    seen.add(candidate.topicKey);
     picked.push(candidate);
   }
   // Pad from the generic defaults only when a personalized (non-null) profile
@@ -192,8 +197,8 @@ export function StarterPromptChips({
   if (onboarding && picked.length < 4) {
     for (const candidate of DEFAULT_STARTERS) {
       if (picked.length >= 4) break;
-      if (seen.has(candidate.topic)) continue;
-      seen.add(candidate.topic);
+      if (seen.has(candidate.topicKey)) continue;
+      seen.add(candidate.topicKey);
       picked.push(candidate);
     }
   }
@@ -203,11 +208,12 @@ export function StarterPromptChips({
       {picked.map((starter, index) => {
         const Icon = starter.icon;
         const palette = PALETTES[index % PALETTES.length];
+        const question = t(starter.questionKey, { city });
         return (
           <button
-            key={starter.topic}
+            key={starter.topicKey}
             type="button"
-            onClick={() => onSelect(starter.question)}
+            onClick={() => onSelect(question)}
             className="flex cursor-pointer items-start gap-3 rounded-card border border-border-card bg-surface p-3 text-left transition-shadow duration-150 hover:shadow-md"
           >
             <span
@@ -221,7 +227,7 @@ export function StarterPromptChips({
             <span className="min-w-0 flex-1">
               <span className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-ink-secondary">
-                  {starter.topic}
+                  {t(starter.topicKey)}
                 </span>
                 <ChevronRight
                   className="h-4 w-4 text-ink-placeholder"
@@ -229,7 +235,7 @@ export function StarterPromptChips({
                 />
               </span>
               <span className="mt-0.5 block text-xs leading-relaxed text-ink-muted">
-                {starter.question}
+                {question}
               </span>
             </span>
           </button>

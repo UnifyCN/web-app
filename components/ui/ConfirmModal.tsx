@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 
 interface ConfirmModalProps {
@@ -27,16 +28,20 @@ export function ConfirmModal({
   open,
   title,
   description,
-  confirmLabel = "Delete",
-  cancelLabel = "Cancel",
+  confirmLabel,
+  cancelLabel,
   confirmVariant = "destructive",
   isPending = false,
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const { t } = useTranslation();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
+  // Defaults resolve here (not as prop defaults) so the hook runs first.
+  const resolvedConfirmLabel = confirmLabel ?? t("common.delete");
+  const resolvedCancelLabel = cancelLabel ?? t("common.cancel");
 
   // Move focus to Cancel on open.
   useEffect(() => {
@@ -103,7 +108,7 @@ export function ConfirmModal({
             onClick={onCancel}
             disabled={isPending}
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </Button>
           <Button
             ref={confirmRef}
@@ -113,7 +118,7 @@ export function ConfirmModal({
             onClick={onConfirm}
             loading={isPending}
           >
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </Button>
         </div>
       </div>

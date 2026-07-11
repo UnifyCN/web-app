@@ -1,15 +1,19 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { GroupCover } from "@/components/community/GroupCover";
 import type { Group } from "@/types";
 
 /** Horizontal scroll strip of the groups the user has joined. */
 export function MyGroupsStrip({ groups }: { groups: Group[] }) {
+  const { t } = useTranslation();
   if (groups.length === 0) return null;
 
   return (
     <div>
       <h2 className="mb-2 text-sm font-semibold text-ink-secondary">
-        My Groups
+        {t("groups.myGroups")}
       </h2>
       <div className="scrollbar-thin flex gap-3 overflow-x-auto pb-2">
         {groups.map((group) => (

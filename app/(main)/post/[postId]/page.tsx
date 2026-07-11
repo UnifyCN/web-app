@@ -3,6 +3,7 @@
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { PostCard } from "@/components/home/PostCard";
 import { CommentComposer } from "@/components/home/CommentComposer";
@@ -27,6 +28,7 @@ export default function PostDetailPage({
   // Integer ids only — reject fractional (/post/3.5) and non-numeric ids.
   const id = Number.isInteger(parsedId) && parsedId > 0 ? parsedId : 0;
 
+  const { t } = useTranslation();
   const router = useRouter();
   const postQuery = usePost(id);
   const commentsQuery = useComments(id);
@@ -36,7 +38,9 @@ export default function PostDetailPage({
 
   const [replyTarget, setReplyTarget] = useState<PostComment | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  // Boolean flag (not the message itself) so the copy re-resolves on language
+  // switch instead of a stale translated string living in state.
+  const [deleteError, setDeleteError] = useState(false);
 
   const post = postQuery.data;
 
@@ -84,11 +88,11 @@ export default function PostDetailPage({
 
   function confirmDeletePost() {
     if (!post || deletePost.isPending) return;
-    setDeleteError(null);
+    setDeleteError(false);
     deletePost.mutate(post.id, {
       onSuccess: () => router.push("/home"),
       onError: () => {
-        setDeleteError("Couldn't delete this post. Please try again.");
+        setDeleteError(true);
         setConfirmDeleteOpen(false);
       },
     });
@@ -97,7 +101,7 @@ export default function PostDetailPage({
   if (postQuery.isLoading) {
     return (
       <div className="mx-auto max-w-[680px] px-6 py-16 text-center">
-        <p className="text-sm text-ink-muted">Loading…</p>
+        <p className="text-sm text-ink-muted">{t("common.loading")}</p>
       </div>
     );
   }
@@ -105,15 +109,13 @@ export default function PostDetailPage({
   if (postQuery.isError) {
     return (
       <div className="mx-auto max-w-[680px] px-6 py-16 text-center">
-        <p className="text-sm text-ink-muted">
-          Something went wrong loading this post.
-        </p>
+        <p className="text-sm text-ink-muted">{t("posts.loadPostError")}</p>
         <button
           type="button"
           onClick={() => postQuery.refetch()}
           className="mt-3 inline-block cursor-pointer text-sm font-semibold text-primary"
         >
-          Try again
+          {t("common.retry")}
         </button>
       </div>
     );
@@ -122,12 +124,12 @@ export default function PostDetailPage({
   if (!post) {
     return (
       <div className="mx-auto max-w-[680px] px-6 py-16 text-center">
-        <p className="text-sm text-ink-muted">This post could not be found.</p>
+        <p className="text-sm text-ink-muted">{t("posts.postNotFound")}</p>
         <Link
           href="/home"
           className="mt-3 inline-block text-sm font-semibold text-primary"
         >
-          Back to Home
+          {t("common.backToHome")}
         </Link>
       </div>
     );
@@ -144,27 +146,27 @@ export default function PostDetailPage({
           className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          Home
+          {t("common.home")}
         </Link>
         {isOwnPost && (
           <button
             type="button"
             onClick={() => {
-              setDeleteError(null);
+              setDeleteError(false);
               setConfirmDeleteOpen(true);
             }}
             disabled={deletePost.isPending}
             className="inline-flex cursor-pointer items-center gap-1 text-sm text-ink-muted transition-colors hover:text-destructive disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Trash2 className="h-4 w-4" aria-hidden />
-            Delete post
+            {t("home.deletePost")}
           </button>
         )}
       </div>
 
       {deleteError && (
         <p className="mb-4 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {deleteError}
+          {t("posts.deletePostError")}
         </p>
       )}
 
@@ -182,7 +184,11 @@ export default function PostDetailPage({
             replyTarget ? { username: replyTarget.author.username } : null
           }
           onCancelReply={() => setReplyTarget(null)}
-          placeholder={replyTarget ? "Write a reply…" : "Add a comment…"}
+          placeholder={
+            replyTarget
+              ? t("posts.writeReplyPlaceholder")
+              : t("posts.addCommentPlaceholder")
+          }
           onSubmit={handleSubmit}
         />
       </div>
@@ -190,25 +196,25 @@ export default function PostDetailPage({
       {/* Comments */}
       <h2 className="mb-3 mt-6 text-sm font-semibold text-ink-secondary">
         {commentCount > 0
-          ? `${commentCount} ${commentCount === 1 ? "comment" : "comments"}`
-          : "Comments"}
+          ? t("posts.commentCount", { count: commentCount })
+          : t("profile.comments")}
       </h2>
 
       {commentsQuery.isLoading ? (
         <p className="py-8 text-center text-sm text-ink-muted">
-          Loading comments…
+          {t("posts.loadingComments")}
         </p>
       ) : commentsQuery.isError ? (
         <div className="rounded-card border border-border bg-surface px-5 py-10 text-center">
           <p className="text-sm text-ink-muted">
-            Couldn&rsquo;t load comments.
+            {t("posts.loadCommentsError")}
           </p>
           <button
             type="button"
             onClick={() => commentsQuery.refetch()}
             className="mt-2 cursor-pointer text-sm font-semibold text-primary"
           >
-            Try again
+            {t("common.retry")}
           </button>
         </div>
       ) : topLevel.length > 0 ? (
@@ -226,15 +232,15 @@ export default function PostDetailPage({
         </div>
       ) : (
         <p className="rounded-card border border-border bg-surface px-5 py-10 text-center text-sm text-ink-placeholder">
-          Be the first to comment.
+          {t("home.beFirstComment")}
         </p>
       )}
 
       <ConfirmModal
         open={confirmDeleteOpen}
-        title="Delete this post?"
-        description="This will permanently remove your post. This can't be undone."
-        confirmLabel="Delete"
+        title={t("posts.deletePostTitle")}
+        description={t("home.confirmDeletePost")}
+        confirmLabel={t("common.delete")}
         isPending={deletePost.isPending}
         onConfirm={confirmDeletePost}
         onCancel={() => setConfirmDeleteOpen(false)}

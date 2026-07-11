@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Lock } from "lucide-react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { Input } from "@/components/ui/Input";
@@ -21,6 +22,7 @@ export function ChangePasswordModal({
   onClose: () => void;
   currentEmail?: string;
 }) {
+  const { t } = useTranslation();
   const toast = useToast();
   const mutation = useUpdatePassword();
   const [currentPassword, setCurrentPassword] = useState("");
@@ -45,16 +47,18 @@ export function ChangePasswordModal({
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!currentEmail) {
-      setError("Add an email to your account before changing your password.");
+      setError(t("settingsWeb.addEmailFirst"));
       return;
     }
     if (!valid) {
       setError(
         currentPassword.length === 0
-          ? "Enter your current password."
+          ? t("settingsWeb.currentPasswordRequired")
           : password.length < MIN_PASSWORD_LENGTH
-            ? `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`
-            : "Passwords don't match.",
+            ? t("settingsWeb.passwordMinLength", {
+                count: MIN_PASSWORD_LENGTH,
+              })
+            : t("auth.passwordsDoNotMatch"),
       );
       return;
     }
@@ -63,14 +67,14 @@ export function ChangePasswordModal({
       { email: currentEmail, currentPassword, newPassword: password },
       {
         onSuccess: () => {
-          toast.success("Password updated");
+          toast.success(t("settingsWeb.passwordUpdated"));
           close();
         },
         onError: (err) =>
           setError(
             err instanceof Error
               ? err.message
-              : "Couldn't update your password.",
+              : t("settingsWeb.passwordUpdateFailed"),
           ),
       },
     );
@@ -81,15 +85,15 @@ export function ChangePasswordModal({
       open={open}
       onClose={close}
       busy={mutation.isPending}
-      title="Change password"
-      description="Confirm your current password, then set a new one."
+      title={t("settingsWeb.changePassword")}
+      description={t("settingsWeb.changePasswordModalDesc")}
     >
       <form onSubmit={handleSubmit} className="space-y-3" noValidate>
         <Input
           leftIcon={<Lock className="h-5 w-5" />}
           type="password"
           autoComplete="current-password"
-          placeholder="Current Password"
+          placeholder={t("settingsWeb.currentPasswordPlaceholder")}
           value={currentPassword}
           onChange={(e) => {
             setCurrentPassword(e.target.value);
@@ -100,7 +104,7 @@ export function ChangePasswordModal({
           leftIcon={<Lock className="h-5 w-5" />}
           type="password"
           autoComplete="new-password"
-          placeholder="New Password"
+          placeholder={t("auth.newPassword")}
           value={password}
           onChange={(e) => {
             setPassword(e.target.value);
@@ -111,7 +115,7 @@ export function ChangePasswordModal({
           leftIcon={<Lock className="h-5 w-5" />}
           type="password"
           autoComplete="new-password"
-          placeholder="Confirm Password"
+          placeholder={t("auth.confirmPassword")}
           value={confirm}
           error={confirm.length > 0 && confirm !== password}
           onChange={(e) => {
@@ -122,7 +126,7 @@ export function ChangePasswordModal({
         <FormError className="text-xs">{error}</FormError>
         <div className="space-y-2 pt-2">
           <AuthButton type="submit" loading={mutation.isPending} disabled={!valid}>
-            Update password
+            {t("settingsWeb.updatePassword")}
           </AuthButton>
           <button
             type="button"
@@ -130,7 +134,7 @@ export function ChangePasswordModal({
             disabled={mutation.isPending}
             className="w-full cursor-pointer rounded-full py-2.5 text-sm font-semibold text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
         </div>
       </form>

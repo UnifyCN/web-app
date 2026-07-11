@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Flag, Ban, UserCheck } from "lucide-react";
 import {
   DropdownMenu,
@@ -28,6 +29,7 @@ export function UserModerationMenu({
   userId: string;
   username: string;
 }) {
+  const { t } = useTranslation();
   const { data: currentUser } = useCurrentUser();
   const toast = useToast();
   const reportUser = useReportUser();
@@ -44,7 +46,7 @@ export function UserModerationMenu({
 
   const reportItem: DropdownMenuItem = {
     key: "report",
-    label: "Report user",
+    label: t("reportScreen.titleUser"),
     icon: <Flag className="h-4 w-4" aria-hidden />,
     onSelect: () => setReportOpen(true),
   };
@@ -52,21 +54,21 @@ export function UserModerationMenu({
   const blockItem: DropdownMenuItem = isBlocked
     ? {
         key: "unblock",
-        label: "Unblock user",
+        label: t("profile.unblockUser"),
         icon: <UserCheck className="h-4 w-4" aria-hidden />,
         onSelect: () =>
           unblockUser.mutate(userId, {
-            onSuccess: () => toast.success("User unblocked"),
+            onSuccess: () => toast.success(t("profile.userUnblocked")),
             onError: (e) =>
               toast.show(
-                e instanceof Error ? e.message : "Couldn't unblock user.",
+                e instanceof Error ? e.message : t("settingsWeb.unblockError"),
                 "info",
               ),
           }),
       }
     : {
         key: "block",
-        label: "Block user",
+        label: t("profile.blockUser"),
         icon: <Ban className="h-4 w-4" aria-hidden />,
         destructive: true,
         onSelect: () => setBlockOpen(true),
@@ -76,7 +78,7 @@ export function UserModerationMenu({
     <>
       <DropdownMenu
         items={[reportItem, blockItem]}
-        ariaLabel={`Options for @${username}`}
+        ariaLabel={t("moderation.userOptionsAria", { username })}
       />
 
       <ReportModal
@@ -92,11 +94,13 @@ export function UserModerationMenu({
             {
               onSuccess: () => {
                 setReportOpen(false);
-                toast.success("Report submitted. Thank you.");
+                toast.success(t("reportScreen.submittedToast"));
               },
               onError: (e) =>
                 toast.show(
-                  e instanceof Error ? e.message : "Couldn't submit report.",
+                  e instanceof Error
+                    ? e.message
+                    : t("reportScreen.submitFailed"),
                   "info",
                 ),
             },
@@ -106,9 +110,9 @@ export function UserModerationMenu({
 
       <ConfirmModal
         open={blockOpen}
-        title={`Block @${username}?`}
-        description="You won't see their posts in your feed."
-        confirmLabel="Block"
+        title={t("moderation.blockConfirmTitle", { username })}
+        description={t("moderation.blockConfirmDesc")}
+        confirmLabel={t("profile.block")}
         isPending={blockUser.isPending}
         onCancel={() => {
           if (!blockUser.isPending) setBlockOpen(false);
@@ -117,11 +121,11 @@ export function UserModerationMenu({
           blockUser.mutate(userId, {
             onSuccess: () => {
               setBlockOpen(false);
-              toast.success("User blocked");
+              toast.success(t("profile.userBlocked"));
             },
             onError: (e) =>
               toast.show(
-                e instanceof Error ? e.message : "Couldn't block user.",
+                e instanceof Error ? e.message : t("profile.userBlockFailed"),
                 "info",
               ),
           })

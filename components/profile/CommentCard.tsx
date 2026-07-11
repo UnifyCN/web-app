@@ -1,11 +1,17 @@
+"use client";
+
 import Link from "next/link";
-import { formatRelativeTime, stripHtml } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
+import { stripHtml } from "@/lib/utils";
 import type { UserComment } from "@/types";
 
 /** A row in the profile Comments tab, Reddit comment-history style: the post
  *  title + author for context, then the comment text with a brand accent. Links
  *  to the post, deep-anchored to this comment. */
 export function CommentCard({ comment }: { comment: UserComment }) {
+  const { t } = useTranslation();
+  const formatRelativeTime = useRelativeTime();
   return (
     <Link
       href={`/post/${comment.postId}#comment-${comment.id}`}
@@ -20,7 +26,7 @@ export function CommentCard({ comment }: { comment: UserComment }) {
         </span>
       </div>
       <p className="mt-0.5 text-xs text-ink-placeholder">
-        by @{comment.postAuthorUsername}
+        {t("profile.commentByAuthor", { username: comment.postAuthorUsername })}
       </p>
       <p className="mt-2 line-clamp-3 border-l-2 border-primary pl-3 text-sm leading-relaxed text-ink">
         {stripHtml(comment.content)}

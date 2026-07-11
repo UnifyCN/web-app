@@ -1,11 +1,13 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { externalHref, formatRelativeTime } from "@/lib/utils";
+import { externalHref } from "@/lib/utils";
 import { handleNewsImageError } from "@/lib/news/fallbackImage";
 import { useNews } from "@/hooks/useCommunity";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
 import type { NewsItem } from "@/types";
 
 /**
@@ -16,6 +18,8 @@ import type { NewsItem } from "@/types";
  * `getNews()`.
  */
 export function NationalNewsWidget() {
+  const { t } = useTranslation();
+  const formatRelativeTime = useRelativeTime();
   const { data, isLoading, error } = useNews();
 
   // Show one article per category — the most recent from each of up to 5 distinct
@@ -37,7 +41,7 @@ export function NationalNewsWidget() {
   return (
     <Card className="p-0">
       <h3 className="border-b border-border-card px-4 py-3 text-sm font-semibold text-ink-secondary">
-        National News
+        {t("news.nationalNews")}
       </h3>
 
       {isLoading ? (
@@ -65,11 +69,11 @@ export function NationalNewsWidget() {
             role="alert"
             className="px-4 py-8 text-center text-sm text-destructive"
           >
-            Couldn&apos;t load news.
+            {t("news.loadError")}
           </p>
         ) : (
           <p className="px-4 py-8 text-center text-sm text-ink-placeholder">
-            No news yet.
+            {t("news.noNews")}
           </p>
         )
       ) : (

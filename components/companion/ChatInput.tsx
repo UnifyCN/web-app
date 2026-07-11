@@ -1,6 +1,7 @@
 "use client";
 
 import { Send } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
@@ -16,9 +17,10 @@ export function ChatInput({
   value,
   onValueChange,
   onSend,
-  placeholder = "Ask anything…",
+  placeholder,
   inputRef,
 }: ChatInputProps) {
+  const { t } = useTranslation();
   const canSend = value.trim().length > 0;
 
   function send() {
@@ -39,15 +41,15 @@ export function ChatInput({
           }
         }}
         rows={1}
-        placeholder={placeholder}
-        aria-label="Message Companion"
+        placeholder={placeholder ?? t("companion.inputPlaceholder")}
+        aria-label={t("companion.messageInputAria")}
         className="max-h-32 min-h-9 flex-1 resize-none bg-transparent px-2 py-1.5 text-base text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none"
       />
       <button
         type="button"
         onClick={send}
         disabled={!canSend}
-        aria-label="Send message"
+        aria-label={t("companion.sendMessageAria")}
         className={cn(
           "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors",
           canSend

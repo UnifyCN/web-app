@@ -18,6 +18,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useTranslation } from "react-i18next";
 import {
   AlertCircle,
   Clock,
@@ -26,6 +27,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PRIORITY_LABEL_KEY } from "@/lib/i18n/labels";
 import { useReorderTasks } from "@/hooks/useChecklist";
 import { TaskRow } from "./TaskRow";
 import type { ChecklistTask, Priority } from "@/types";
@@ -81,33 +83,30 @@ function SortableTaskRow({
 }
 
 interface PriorityMeta {
-  label: string;
   accent: string;
   tile: string;
   icon: React.ComponentType<{ className?: string }>;
 }
 
+// Display labels come from PRIORITY_LABEL_KEY (checklist.createItem.*); the
+// Priority enum values themselves are stored data and stay English.
 const PRIORITY_META: Record<Priority, PriorityMeta> = {
   "Do now": {
-    label: "Do now",
     accent: "text-priority-do-now",
     tile: "bg-priority-do-now-bg",
     icon: AlertCircle,
   },
   "Do soon": {
-    label: "Do soon",
     accent: "text-priority-do-soon",
     tile: "bg-priority-do-soon-bg",
     icon: Clock,
   },
   "Explore and connect": {
-    label: "Explore & connect",
     accent: "text-priority-explore",
     tile: "bg-priority-explore-bg",
     icon: Compass,
   },
   "Optional / later": {
-    label: "Optional / later",
     accent: "text-priority-optional",
     tile: "bg-priority-optional-bg",
     icon: CircleDashed,
@@ -129,6 +128,7 @@ export function PrioritySection({
   onToggle,
   onDelete,
 }: PrioritySectionProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(true);
   const reorder = useReorderTasks();
 
@@ -198,7 +198,7 @@ export function PrioritySection({
           <Icon className={cn("h-4 w-4", meta.accent)} />
         </span>
         <span className="flex-1 text-left text-sm font-semibold text-ink-secondary">
-          {meta.label}
+          {t(PRIORITY_LABEL_KEY[priority])}
         </span>
         <span className="rounded-full bg-surface-gray px-2 py-0.5 text-xs font-medium text-ink-muted">
           {done}/{tasks.length}

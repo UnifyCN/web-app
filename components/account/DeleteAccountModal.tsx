@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, Lock } from "lucide-react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { Button } from "@/components/ui/Button";
@@ -30,6 +31,7 @@ export function DeleteAccountModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
   const del = useDeleteAccount();
@@ -67,7 +69,7 @@ export function DeleteAccountModal({
       },
       onError: (err) => {
         setError(
-          err instanceof Error ? err.message : "Couldn't delete your account.",
+          err instanceof Error ? err.message : t("settings.couldNotDelete"),
         );
         setPhase("error");
       },
@@ -94,8 +96,10 @@ export function DeleteAccountModal({
       open={open}
       onClose={close}
       busy={busy}
-      title="Delete account"
-      description={phase === "confirm" ? "This action is permanent." : undefined}
+      title={t("settings.deleteAccount")}
+      description={
+        phase === "confirm" ? t("settingsWeb.deletePermanent") : undefined
+      }
     >
       {phase === "confirm" ? (
         <div className="space-y-4">
@@ -104,13 +108,12 @@ export function DeleteAccountModal({
               <AlertTriangle className="h-5 w-5 text-destructive" aria-hidden />
             </span>
             <p className="text-sm text-ink-muted">
-              This permanently deletes your account and all of your data. This
-              cannot be undone.
+              {t("settingsWeb.deleteAccountBody")}
             </p>
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" size="sm" onClick={close}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="button"
@@ -121,7 +124,7 @@ export function DeleteAccountModal({
                 setPhase("hold");
               }}
             >
-              Delete account
+              {t("settings.deleteAccount")}
             </Button>
           </div>
         </div>
@@ -131,8 +134,7 @@ export function DeleteAccountModal({
             <FormError className="text-sm">{error}</FormError>
           ) : (
             <p className="text-sm text-ink-muted">
-              Press and hold the button below for 3 seconds to permanently
-              delete your account.
+              {t("settingsWeb.deleteHoldInstruction")}
             </p>
           )}
 
@@ -145,7 +147,7 @@ export function DeleteAccountModal({
             onTouchStart={startHold}
             onTouchEnd={cancelHold}
             onContextMenu={(e) => e.preventDefault()}
-            aria-label="Hold to delete your account"
+            aria-label={t("settingsWeb.deleteHoldAria")}
             className="hold-delete-btn relative block w-full cursor-pointer touch-none overflow-hidden rounded-lg select-none disabled:cursor-not-allowed disabled:opacity-70"
           >
             {/* Base (pale) layer — defines the button's size. Red text on a
@@ -153,10 +155,11 @@ export function DeleteAccountModal({
                 on vivid red) reads clearly as it reveals. */}
             <span className="flex items-center justify-center gap-2 rounded-lg bg-destructive/15 px-4 py-3 text-sm font-semibold text-destructive">
               {busy ? (
-                "Deleting your account…"
+                t("settingsWeb.deletingAccount")
               ) : (
                 <>
-                  <Lock className="h-4 w-4" aria-hidden /> Hold to delete
+                  <Lock className="h-4 w-4" aria-hidden />{" "}
+                  {t("settingsWeb.holdToDelete")}
                 </>
               )}
             </span>
@@ -166,10 +169,11 @@ export function DeleteAccountModal({
               className="hold-overlay absolute inset-0 flex items-center justify-center gap-2 rounded-lg bg-destructive text-sm font-semibold text-white"
             >
               {busy ? (
-                "Deleting your account…"
+                t("settingsWeb.deletingAccount")
               ) : (
                 <>
-                  <Lock className="h-4 w-4" aria-hidden /> Hold to delete
+                  <Lock className="h-4 w-4" aria-hidden />{" "}
+                  {t("settingsWeb.holdToDelete")}
                 </>
               )}
             </span>
@@ -183,7 +187,7 @@ export function DeleteAccountModal({
               onClick={close}
               disabled={busy}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
         </div>

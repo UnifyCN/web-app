@@ -59,7 +59,11 @@
     "openNotifications": "Mở thông báo",
     "openSettings": "Mở cài đặt",
     "openProfileMenu": "Mở menu hồ sơ",
-    "close": "Đóng"
+    "close": "Đóng",
+    "backToHome": "Quay lại trang chủ",
+    "daysShort": "{{count}} ngày",
+    "home": "Trang chủ",
+    "you": "Bạn"
   },
   "tabs": {
     "social": "Xã hội",
@@ -447,7 +451,21 @@
       "priorityDoSoon": "Làm sớm",
       "priorityExploreConnect": "Khám phá & kết nối",
       "priorityOptionalLater": "Tùy chọn / sau"
-    }
+    },
+    "addTask": "Thêm nhiệm vụ",
+    "deleteTaskAria": "Xóa nhiệm vụ: {{title}}",
+    "deleteTaskDesc": "Thao tác này sẽ xóa vĩnh viễn <strong>\"{{title}}\"</strong>. Không thể hoàn tác.",
+    "deleteTaskTitle": "Xóa nhiệm vụ này?",
+    "loadError": "Không thể tải danh sách của bạn.",
+    "markDoneAria": "Đánh dấu hoàn thành",
+    "markNotDoneAria": "Đánh dấu chưa hoàn thành",
+    "priorityAria": "Mức độ ưu tiên",
+    "progressSummary": "{{completed}}/{{total}} hoàn thành · {{percent}}%",
+    "reorderTaskAria": "Sắp xếp lại nhiệm vụ: {{title}}",
+    "subtitle": "Hướng dẫn từng bước để bạn ổn định cuộc sống tại Canada.",
+    "taskDescriptionAria": "Mô tả nhiệm vụ",
+    "taskNamePlaceholder": "Tên nhiệm vụ",
+    "yourProgress": "Tiến trình của bạn"
   },
   "companion": {
     "goBack": "Quay lại",
@@ -514,7 +532,55 @@
       "newChat": "Cuộc trò chuyện mới",
       "noConversationsFound": "Không tìm thấy cuộc trò chuyện",
       "noConversationsYet": "Chưa có cuộc trò chuyện nào"
-    }
+    },
+    "conversationOptionsAria": "Tùy chọn cuộc trò chuyện",
+    "conversationsAria": "Cuộc trò chuyện",
+    "copied": "Đã sao chép",
+    "copyMessage": "Sao chép tin nhắn",
+    "deleteConversationBody": "Thao tác này sẽ xóa vĩnh viễn <strong>“{{title}}”</strong> và toàn bộ tin nhắn trong đó. Không thể hoàn tác.",
+    "deleteConversationTitle": "Xóa cuộc trò chuyện này?",
+    "messageInputAria": "Nhắn tin cho Trợ lý",
+    "messagesPerDayRemaining": "Còn {{count}} tin nhắn/ngày",
+    "messagesPerDayRemaining_plural": "Còn {{count}} tin nhắn/ngày",
+    "newConversation": "Cuộc trò chuyện mới",
+    "noChatsFound": "Không tìm thấy cuộc trò chuyện nào.",
+    "searchChats": "Tìm cuộc trò chuyện",
+    "sendFailed": "Không thể gửi tin nhắn của bạn. Vui lòng thử lại.",
+    "sendMessageAria": "Gửi tin nhắn",
+    "webStarters": {
+      "bankingQ": "Làm sao để mở tài khoản ngân hàng và xây dựng điểm tín dụng ở Canada?",
+      "bankingTopic": "Ngân hàng",
+      "beforeArrivalQ": "Tôi cần chuẩn bị gì trước khi chuyển đến Canada?",
+      "beforeArrivalTopic": "Trước khi đến",
+      "careerQ": "Làm sao để được công nhận bằng cấp nước ngoài tại Canada?",
+      "careerTopic": "Sự nghiệp của bạn",
+      "communityCityQ": "Làm sao để gặp gỡ mọi người và kết bạn ở {{city}}?",
+      "communityQ": "Làm sao để gặp gỡ mọi người và xây dựng cộng đồng khi là người mới đến?",
+      "communityTopic": "Cộng đồng",
+      "documentsQ": "Làm sao để xin SIN và các giấy tờ tùy thân cần thiết ở Canada?",
+      "documentsTopic": "Giấy tờ",
+      "familyQ": "Làm sao để đăng ký cho con đi học và tìm dịch vụ giữ trẻ?",
+      "familyTopic": "Gia đình",
+      "financeTopic": "Tài chính",
+      "healthcareQ": "Làm sao để đăng ký thẻ y tế của tỉnh bang?",
+      "healthcareTopic": "Y tế",
+      "housingQ": "Làm sao để tìm và thuê căn hộ ở Canada?",
+      "housingTopic": "Nhà ở",
+      "immigrationQ": "Express Entry hoạt động như thế nào đối với thường trú nhân?",
+      "immigrationTopic": "Nhập cư",
+      "jobsQ": "Làm sao để tìm việc và viết sơ yếu lý lịch theo kiểu Canada?",
+      "jobsTopic": "Việc làm",
+      "localServicesQ": "Có những dịch vụ hỗ trợ người mới đến nào ở {{city}}?",
+      "localServicesTopic": "Dịch vụ địa phương",
+      "refugeeSettlementQ": "Có những hỗ trợ định cư nào dành cho người tị nạn ở Canada?",
+      "settlementQ": "Có những nguồn hỗ trợ nào cho người mới đến đang ổn định cuộc sống tại Canada?",
+      "settlementTopic": "Định cư",
+      "studyPermitQ": "Làm sao để duy trì giấy phép du học và làm thêm khi là sinh viên?",
+      "studyPermitTopic": "Giấy phép du học",
+      "transitQ": "Làm sao để di chuyển bằng phương tiện công cộng ở thành phố của tôi?",
+      "transitTopic": "Giao thông"
+    },
+    "welcomeTitleNamed": "Hỏi tôi bất cứ điều gì, {{name}}."
   },
   "home": {
     "forYou": "Dành cho bạn",
@@ -551,7 +617,15 @@
     "pinPost": "Ghim bài viết",
     "reportPost": "Báo cáo bài viết",
     "postSavedToast": "Đã lưu bài viết! Tìm trong Cài đặt > Bài viết đã lưu",
-    "failedPinPost": "Không thể ghim bài viết. Vui lòng thử lại."
+    "failedPinPost": "Không thể ghim bài viết. Vui lòng thử lại.",
+    "allCaughtUp": "Bạn đã xem hết rồi",
+    "feedLoadError": "Không thể tải nguồn cấp.",
+    "forYouEmptySub": "Hãy quay lại sau để xem bài viết mới.",
+    "forYouEmptyTitle": "Chưa có bài viết nào",
+    "sectionFeed": "Nguồn cấp",
+    "sectionLearning": "Học tập",
+    "sectionNews": "Tin tức",
+    "showSlideAria": "Hiển thị {{title}}"
   },
   "profile": {
     "title": "Hồ sơ",
@@ -592,7 +666,36 @@
     "noFollowersYet": "Chưa có người theo dõi",
     "notFollowingAnyone": "Chưa theo dõi ai",
     "followersTab": "Người theo dõi",
-    "followingTab": "Đang theo dõi"
+    "followingTab": "Đang theo dõi",
+    "addBioPrompt": "Thêm tiểu sử và đại từ xưng hô",
+    "backToProfileAria": "Quay lại hồ sơ",
+    "changePhotoAria": "Đổi ảnh hồ sơ",
+    "commentByAuthor": "bởi @{{username}}",
+    "completeProfileHint": "Hoàn thiện hồ sơ để thêm hoàn cảnh, vị trí và giai đoạn của bạn.",
+    "editBioAria": "Chỉnh sửa tiểu sử và đại từ xưng hô",
+    "followsYou": "Theo dõi bạn",
+    "highlightFrom": "Từ {{lesson}} · {{module}}",
+    "highlightsTab": "Nổi bật",
+    "memberSince": "Thành viên từ {{date}}",
+    "noCommentsSelfHint": "Bạn chưa bình luận — hãy tham gia trò chuyện.",
+    "noHighlights": "Chưa có nội dung nổi bật nào.",
+    "noSavedPosts": "Chưa có bài viết đã lưu nào.",
+    "persona": {
+      "other": "Người mới đến"
+    },
+    "profileNotFound": "Không tìm thấy hồ sơ này.",
+    "pronounsPlaceholder": "Đại từ xưng hô (vd: cô ấy)",
+    "removePhoto": "Xóa ảnh",
+    "shareFirstPost": "Chia sẻ bài viết đầu tiên của bạn với cộng đồng.",
+    "sharePostCta": "Chia sẻ bài viết",
+    "shareProfile": "Chia sẻ hồ sơ",
+    "signInToView": "Đăng nhập để xem hồ sơ của bạn.",
+    "stage": {
+      "1": "0–3 tháng tại Canada",
+      "2": "3–12 tháng tại Canada",
+      "3": "1–3 năm tại Canada",
+      "4": "3+ năm tại Canada"
+    }
   },
   "profilePicture": {
     "chooseFromLibrary": "Chọn từ thư viện",
@@ -632,7 +735,29 @@
     "mutuals": "Chung",
     "followsYou": "Theo dõi bạn",
     "discoverTabLabel": "Tab khám phá nhóm",
-    "joinedTabLabel": "Tab nhóm đã tham gia"
+    "joinedTabLabel": "Tab nhóm đã tham gia",
+    "failedLoad": "Không thể tải nhóm.",
+    "groupNotFoundLong": "Không tìm thấy nhóm này.",
+    "join": "Tham gia",
+    "loadingPosts": "Đang tải bài viết…",
+    "myGroups": "Nhóm của bạn",
+    "noGroupsYet": "Chưa có nhóm nào.",
+    "noPostsInGroup": "Chưa có bài viết nào trong nhóm này.",
+    "plusMembers": "+{{count, number}} thành viên",
+    "plusMembers_plural": "+{{count, number}} thành viên",
+    "recentPosts": "Bài viết gần đây",
+    "requestAudienceLabel": "Nhóm này dành cho ai?",
+    "requestAudiencePlaceholder": "vd: Người mới đến di chuyển bằng xe đạp",
+    "requestEmailLabel": "Email của bạn",
+    "requestEmailPlaceholder": "you@example.com",
+    "requestFollowUp": "Cảm ơn bạn — chúng tôi sẽ xem xét mọi yêu cầu và phản hồi qua email.",
+    "requestNameLabel": "Tên nhóm",
+    "requestNamePlaceholder": "vd: Người mới đến đam mê đạp xe",
+    "requestNotesLabel": "Còn điều gì khác không? (tùy chọn)",
+    "requestNotesPlaceholder": "Ghi chú thêm cho đội ngũ",
+    "requestReasonLabel": "Vì sao chúng tôi nên tạo nhóm này?",
+    "requestReasonPlaceholder": "Hãy cho chúng tôi biết đôi chút về nhu cầu này (tối thiểu 10 ký tự).",
+    "requestReviewNote": "Chúng tôi sẽ xem xét mọi yêu cầu và phản hồi qua email."
   },
   "posts": {
     "postButton": "Đăng",
@@ -664,7 +789,47 @@
     "tryDifferentSearchTerm": "Thử từ khóa tìm kiếm khác",
     "noGroupsAvailable": "Không có nhóm nào",
     "checkBackLaterForNewGroups": "Quay lại sau để xem nhóm mới",
-    "contentNotAllowedReason": "Bài viết của bạn chứa nội dung vi phạm Nguyên tắc Cộng đồng. Vui lòng chỉnh sửa và thử lại."
+    "contentNotAllowedReason": "Bài viết của bạn chứa nội dung vi phạm Nguyên tắc Cộng đồng. Vui lòng chỉnh sửa và thử lại.",
+    "addCommentPlaceholder": "Thêm bình luận…",
+    "addPhotos": "Thêm ảnh",
+    "addPhotosCount": "Thêm ảnh ({{count}}/{{max}})",
+    "addPhotosCount_plural": "Thêm ảnh ({{count}}/{{max}})",
+    "cancelReplyAria": "Hủy trả lời",
+    "clearGroupAria": "Bỏ chọn nhóm đã chọn",
+    "commentCount": "{{count}} bình luận",
+    "commentCount_plural": "{{count}} bình luận",
+    "createPostAria": "Tạo bài viết",
+    "deleteCommentAria": "Xóa bình luận",
+    "deleteCommentDesc": "Thao tác này sẽ xóa vĩnh viễn bình luận của bạn. Không thể hoàn tác.",
+    "deleteCommentTitle": "Xóa bình luận này?",
+    "deletePostError": "Không thể xóa bài viết này. Vui lòng thử lại.",
+    "deletePostTitle": "Xóa bài viết này?",
+    "hideReplies": "Ẩn trả lời",
+    "likeAria": "Thích bài viết",
+    "likeCommentAria": "Thích bình luận",
+    "loadCommentsError": "Không thể tải bình luận.",
+    "loadPostError": "Đã xảy ra lỗi khi tải bài viết này.",
+    "loadingComments": "Đang tải bình luận…",
+    "postBodyAria": "Nội dung bài viết",
+    "postImageAlt": "Ảnh bài viết {{number}}",
+    "postImageAltTitled": "{{title}} — ảnh {{number}}",
+    "postNotFound": "Không tìm thấy bài viết này.",
+    "postTitleAria": "Tiêu đề bài viết",
+    "postedHeading": "Đã đăng!",
+    "postedSubtext": "Bài viết của bạn đã xuất hiện trong nguồn cấp.",
+    "removeImageAria": "Xóa ảnh {{number}}",
+    "reply": "Trả lời",
+    "saveAria": "Lưu bài viết",
+    "selectedImageAlt": "Ảnh đã chọn {{number}}",
+    "unlikeAria": "Bỏ thích bài viết",
+    "unlikeCommentAria": "Bỏ thích bình luận",
+    "unsaveAria": "Bỏ lưu",
+    "viewCommentsAria": "Xem bình luận",
+    "viewImageAria": "Xem ảnh {{number}} toàn màn hình",
+    "viewProfileAria": "Xem hồ sơ của {{username}}",
+    "viewReplies": "Xem {{count}} trả lời",
+    "viewReplies_plural": "Xem {{count}} trả lời",
+    "writeReplyPlaceholder": "Viết trả lời…"
   },
   "translate": {
     "button": "Dịch",
@@ -685,7 +850,9 @@
     "noContent": "Không có nội dung.",
     "linkToArticle": "Liên kết đến bài viết ngoài",
     "byAuthorOnDate": "Bởi {{author}} vào {{date}}",
-    "byAuthor": "Bởi {{author}}"
+    "byAuthor": "Bởi {{author}}",
+    "loadError": "Không thể tải tin tức.",
+    "nationalNews": "Tin tức quốc gia"
   },
   "tips": {
     "pastTips": "Mẹo trước đây",
@@ -695,7 +862,8 @@
     "tipNotFound": "Không tìm thấy mẹo",
     "sources": "Nguồn",
     "seePastTips": "Xem mẹo trước đây",
-    "dailyTip": "Mẹo hàng ngày"
+    "dailyTip": "Mẹo hàng ngày",
+    "loadingToday": "Đang tải mẹo hôm nay…"
   },
   "events": {
     "title": "Sự kiện cộng đồng",
@@ -712,7 +880,13 @@
     "hostedBy": "Tổ chức bởi",
     "viewDetails": "Xem chi tiết sự kiện",
     "aboutEvent": "Về sự kiện",
-    "noEventDescription": "Chưa có mô tả cho sự kiện này."
+    "noEventDescription": "Chưa có mô tả cho sự kiện này.",
+    "eventNotFound": "Không tìm thấy sự kiện này.",
+    "failedLoad": "Không thể tải sự kiện.",
+    "noUpcoming": "Không có sự kiện sắp tới.",
+    "typeHybrid": "Kết hợp",
+    "typeInPerson": "Trực tiếp",
+    "typeOnline": "Trực tuyến"
   },
   "resetPassword": {
     "title": "Đặt lại mật khẩu",
@@ -833,7 +1007,14 @@
     "hourAgo": "{{count}} giờ trước",
     "hourAgo_plural": "{{count}} giờ trước",
     "dayAgo": "{{count}} ngày trước",
-    "dayAgo_plural": "{{count}} ngày trước"
+    "dayAgo_plural": "{{count}} ngày trước",
+    "cancelMatching": "Hủy ghép đôi",
+    "chatComingSoon": "Trò chuyện sắp ra mắt.",
+    "circleActive": "Vòng kết nối của bạn đang hoạt động",
+    "circleActiveDesc": "Bạn đã được ghép với 3 người mới đến. Hãy vào trò chuyện nhóm và chào hỏi mọi người.",
+    "failedLoad": "Không thể tải vòng kết nối của bạn.",
+    "starting": "Đang bắt đầu…",
+    "updateMatchingFailed": "Không thể cập nhật trạng thái ghép đôi của bạn. Vui lòng thử lại."
   },
   "onboarding": {
     "stepOf": "Bước {{current}} trên {{total}}",
@@ -887,7 +1068,12 @@
     "missingPostId": "Thiếu ID bài viết.",
     "missingUserId": "Thiếu ID người dùng.",
     "submittedToast": "Đã gửi báo cáo. Cảm ơn bạn.",
-    "submitFailed": "Không thể gửi báo cáo. Vui lòng thử lại."
+    "submitFailed": "Không thể gửi báo cáo. Vui lòng thử lại.",
+    "placeholderQuestion": "Viết lý do bạn báo cáo câu hỏi này...",
+    "placeholderReply": "Viết lý do bạn báo cáo trả lời này...",
+    "privacyNote": "Nội dung này là riêng tư và chỉ hiển thị cho người kiểm duyệt.",
+    "titleQuestion": "Báo cáo câu hỏi",
+    "titleReply": "Báo cáo trả lời"
   },
   "quiz": {
     "errors": {
@@ -1116,7 +1302,27 @@
     "changePasswordDesc": "Đặt mật khẩu mới để đăng nhập bằng email.",
     "deleteAccountDesc": "Xóa vĩnh viễn tài khoản và toàn bộ dữ liệu của bạn.",
     "change": "Thay đổi",
-    "emailUpdated": "Đã cập nhật email"
+    "emailUpdated": "Đã cập nhật email",
+    "addEmailFirst": "Thêm email vào tài khoản trước khi đổi mật khẩu.",
+    "changePasswordModalDesc": "Xác nhận mật khẩu hiện tại, sau đó đặt mật khẩu mới.",
+    "currentPasswordPlaceholder": "Mật khẩu hiện tại",
+    "currentPasswordRequired": "Nhập mật khẩu hiện tại của bạn.",
+    "deleteAccountBody": "Thao tác này sẽ xóa vĩnh viễn tài khoản và toàn bộ dữ liệu của bạn. Không thể hoàn tác.",
+    "deleteHoldAria": "Giữ để xóa tài khoản của bạn",
+    "deleteHoldInstruction": "Nhấn và giữ nút bên dưới trong 3 giây để xóa vĩnh viễn tài khoản của bạn.",
+    "deletePermanent": "Hành động này không thể hoàn tác.",
+    "deletingAccount": "Đang xóa tài khoản của bạn…",
+    "emailChangeDesc": "Chúng tôi sẽ gửi email liên kết xác nhận đến địa chỉ mới của bạn.",
+    "emailChangeFailed": "Không thể bắt đầu đổi email.",
+    "emailChangeSentBody": "Chúng tôi đã gửi liên kết xác nhận đến địa chỉ email mới của bạn. Nhấp vào liên kết để xác nhận thay đổi. Địa chỉ email hiện tại của bạn sẽ nhận được thông báo khi thay đổi hoàn tất.",
+    "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ.",
+    "emailSame": "Đó đã là email của bạn.",
+    "holdToDelete": "Giữ để xóa",
+    "newEmailPlaceholder": "Địa chỉ email mới",
+    "passwordMinLength": "Mật khẩu phải có ít nhất {{count}} ký tự.",
+    "passwordUpdateFailed": "Không thể cập nhật mật khẩu của bạn.",
+    "passwordUpdated": "Đã cập nhật mật khẩu",
+    "updatePassword": "Cập nhật mật khẩu"
   },
   "authWeb": {
     "incorrectCredentials": "Email hoặc mật khẩu không đúng.",
@@ -1284,5 +1490,24 @@
       "bodyOnboard": "Danh sách, Học tập và Trợ lý của bạn giờ đã được điều chỉnh cho bạn. Nhấn Hoàn tất để bắt đầu.",
       "bodyEdit": "Tùy chọn của bạn đã được cập nhật. Danh sách và các phản hồi của Trợ lý giờ sẽ phản ánh những câu trả lời mới nhất của bạn."
     }
+  },
+  "moderation": {
+    "blockConfirmDesc": "Bạn sẽ không thấy bài viết của họ trong nguồn cấp của bạn.",
+    "blockConfirmTitle": "Chặn @{{username}}?",
+    "blockUser": "Chặn @{{username}}",
+    "postOptionsAria": "Tùy chọn bài viết",
+    "userOptionsAria": "Tùy chọn cho @{{username}}"
+  },
+  "ui": {
+    "capsLockOn": "Caps Lock đang bật",
+    "closeImageViewerAria": "Đóng trình xem ảnh",
+    "hidePassword": "Ẩn mật khẩu",
+    "imageOfAlt": "Ảnh {{number}} trên {{count}}",
+    "imageOfAltTitled": "{{title}} — ảnh {{number}} trên {{count}}",
+    "imageViewerAria": "Trình xem ảnh",
+    "moreOptionsAria": "Thêm tùy chọn",
+    "nextImageAria": "Ảnh tiếp theo",
+    "previousImageAria": "Ảnh trước",
+    "showPassword": "Hiện mật khẩu"
   }
 }

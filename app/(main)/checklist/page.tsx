@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { OverallProgressBar } from "@/components/checklist/OverallProgressBar";
 import { PrioritySection } from "@/components/checklist/PrioritySection";
 import { AddCustomTask } from "@/components/checklist/AddCustomTask";
@@ -68,6 +69,7 @@ function ChecklistSkeleton() {
 }
 
 export default function ChecklistPage() {
+  const { t } = useTranslation();
   const { data: tasks = [], isLoading, error } = useTasks();
   const toggle = useToggleTask();
   const add = useAddCustomTask();
@@ -112,16 +114,16 @@ export default function ChecklistPage() {
 
   return (
     <div className="mx-auto max-w-[720px] animate-fade-in px-6 py-6">
-      <h1 className="text-xl font-semibold text-ink-secondary">Checklist</h1>
-      <p className="mt-1 text-sm text-ink-muted">
-        Your step-by-step guide to settling into Canada.
-      </p>
+      <h1 className="text-xl font-semibold text-ink-secondary">
+        {t("tabs.checklist")}
+      </h1>
+      <p className="mt-1 text-sm text-ink-muted">{t("checklist.subtitle")}</p>
 
       {isLoading && <ChecklistSkeleton />}
 
       {error && (
         <p role="alert" className="mt-5 text-sm text-destructive">
-          Couldn&apos;t load your checklist.
+          {t("checklist.loadError")}
         </p>
       )}
 

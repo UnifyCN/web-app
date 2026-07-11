@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { X, Check, ImagePlus, Search } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -9,7 +10,18 @@ import { useGroups, useJoinGroup } from "@/hooks/useCommunity";
 import { uploadPostImages } from "@/lib/supabase/uploadImage";
 import { cn } from "@/lib/utils";
 
-type Destination = "For You" | "Group";
+/** Stable destination ids — translated only at render. */
+type Destination = "forYou" | "group";
+
+const DESTINATIONS: Destination[] = ["forYou", "group"];
+const DESTINATION_LABEL_KEYS: Record<Destination, string> = {
+  forYou: "posts.forYou",
+  group: "posts.group",
+};
+
+/** Error state keeps an i18n key (or a raw upstream message) — never a
+ *  translated string — so the copy re-resolves on language switch. */
+type PostError = { key: string } | { message: string };
 
 const TITLE_MAX = 100;
 const BODY_MAX = 2000;
@@ -29,7 +41,8 @@ interface CreatePostModalProps {
 /** Create-post composer — wired to `useCreatePost` (uploads any selected
  *  images to the post-images bucket first, then inserts the post). */
 export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
-  const [destination, setDestination] = useState<Destination>("For You");
+  const { t } = useTranslation();
+  const [destination, setDestination] = useState<Destination>("forYou");
   const [groupId, setGroupId] = useState<number | null>(null);
   const [groupSearch, setGroupSearch] = useState("");
   const [joiningId, setJoiningId] = useState<number | null>(null);
@@ -37,7 +50,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
   const [body, setBody] = useState("");
   const [images, setImages] = useState<SelectedImage[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<PostError | null>(null);
   const [posted, setPosted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -78,7 +91,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
   const canPost =
     title.trim().length > 0 &&
     body.trim().length > 0 &&
-    (destination === "For You" || groupId !== null);
+    (destination === "forYou" || groupId !== null);
 
   const selectedGroup = allGroups.find((group) => group.id === groupId) ?? null;
   const groupQuery = groupSearch.trim().toLowerCase();
@@ -120,7 +133,11 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
       postImageUrls = await uploadPostImages(images.map((i) => i.file));
     } catch (err) {
       console.error("image upload failed", err);
-      setError(err instanceof Error ? err.message : "Couldn't upload images.");
+      setError(
+        err instanceof Error
+          ? { message: err.message }
+          : { key: "posts.imageUploadFailed" },
+      );
       setSubmitting(false);
       return;
     }
@@ -129,14 +146,14 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
       await createPost.mutateAsync({
         title,
         content: body,
-        groupId: destination === "For You" ? null : groupId,
+        groupId: destination === "forYou" ? null : groupId,
         postImageUrls,
       });
       setPosted(true);
       window.setTimeout(onClose, 800);
     } catch (err) {
       console.error("create post failed", err);
-      setError("Couldn't post. Please try again.");
+      setError({ key: "posts.createPostFailed" });
       setSubmitting(false);
     }
   }
@@ -152,7 +169,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Create a post"
+        aria-label={t("posts.createPostAria")}
       >
         {posted ? (
           <div className="flex flex-col items-center px-6 py-14 text-center">
@@ -160,10 +177,10 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
               <Check className="h-6 w-6 text-priority-optional" aria-hidden />
             </span>
             <h2 className="mt-4 text-base font-semibold text-ink-secondary">
-              Posted!
+              {t("posts.postedHeading")}
             </h2>
             <p className="mt-1 text-sm text-ink-muted">
-              Your post is live in the feed.
+              {t("posts.postedSubtext")}
             </p>
           </div>
         ) : (
@@ -173,7 +190,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Close"
+                aria-label={t("common.close")}
                 className="cursor-pointer rounded-md p-2 text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
               >
                 <X className="h-5 w-5" aria-hidden />
@@ -185,20 +202,20 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                 loading={submitting}
                 onClick={handlePost}
               >
-                Post
+                {t("posts.postButton")}
               </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4">
               {/* Destination toggle */}
               <div className="flex gap-2">
-                {(["For You", "Group"] as Destination[]).map((dest) => (
+                {DESTINATIONS.map((dest) => (
                   <button
                     key={dest}
                     type="button"
                     onClick={() => {
                       setDestination(dest);
-                      if (dest === "For You") {
+                      if (dest === "forYou") {
                         setGroupId(null);
                         setGroupSearch("");
                       }
@@ -210,26 +227,26 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                         : "border-border-card text-ink-muted hover:bg-surface-gray",
                     )}
                   >
-                    {dest}
+                    {t(DESTINATION_LABEL_KEYS[dest])}
                   </button>
                 ))}
               </div>
-              {destination === "For You" && (
+              {destination === "forYou" && (
                 <p className="mt-2 text-xs italic text-ink-placeholder">
-                  Posting to For You feed
+                  {t("posts.postingToForYou")}
                 </p>
               )}
 
               {/* Group destination — selected pill, else the picker */}
-              {destination === "Group" && selectedGroup && (
+              {destination === "group" && selectedGroup && (
                 <div className="mt-3 flex items-center gap-2 text-sm">
                   <span className="font-semibold text-ink-secondary">
-                    Posting to {selectedGroup.groupName}
+                    {t("posts.postingTo", { name: selectedGroup.groupName })}
                   </span>
                   <button
                     type="button"
                     onClick={() => setGroupId(null)}
-                    aria-label="Clear selected group"
+                    aria-label={t("posts.clearGroupAria")}
                     className="cursor-pointer rounded-md p-0.5 text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
                   >
                     <X className="h-4 w-4" aria-hidden />
@@ -237,7 +254,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                 </div>
               )}
 
-              {destination === "Group" && !selectedGroup && (
+              {destination === "group" && !selectedGroup && (
                 <div className="mt-3">
                   {/* Search — pinned above the scrollable list */}
                   <div className="flex items-center gap-2 rounded-full bg-surface-gray px-3.5 py-2">
@@ -249,14 +266,16 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                       type="text"
                       value={groupSearch}
                       onChange={(event) => setGroupSearch(event.target.value)}
-                      placeholder="Search groups"
-                      aria-label="Search groups"
+                      placeholder={t("groups.searchGroups")}
+                      aria-label={t("groups.searchGroups")}
                       className="w-full bg-transparent text-base text-ink-secondary placeholder:text-ink-placeholder focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                     />
                   </div>
 
                   {groupsLoading ? (
-                    <p className="mt-4 text-sm text-ink-muted">Loading groups…</p>
+                    <p className="mt-4 text-sm text-ink-muted">
+                      {t("groups.loadingGroups")}
+                    </p>
                   ) : (
                     <div className="relative mt-1">
                       {/* Scrolls internally; the bottom fade hints there are more
@@ -265,7 +284,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                       <div className="max-h-72 overflow-y-auto pb-6">
                         {/* Your Groups */}
                         <h3 className="text-sm font-bold text-ink-secondary">
-                          Your Groups
+                          {t("groups.yourGroups")}
                         </h3>
                         {joinedGroups.length > 0 ? (
                           <div className="mt-1 space-y-1">
@@ -296,7 +315,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                           </div>
                         ) : (
                           <p className="mt-1 text-sm text-ink-muted">
-                            You haven&apos;t joined any groups yet.
+                            {t("groups.notJoinedHint")}
                           </p>
                         )}
 
@@ -304,10 +323,10 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                         {discoverGroups.length > 0 && (
                           <>
                             <h3 className="mt-4 text-sm font-bold text-ink-secondary">
-                              Discover More Groups
+                              {t("groups.discoverMore")}
                             </h3>
                             <p className="text-xs text-ink-muted">
-                              Join a group to post there
+                              {t("groups.joinToPost")}
                             </p>
                             <div className="mt-1 space-y-1">
                               {discoverGroups.map((group) => (
@@ -344,7 +363,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                                       });
                                     }}
                                   >
-                                    Join & Post
+                                    {t("posts.joinAndPost")}
                                   </Button>
                                 </div>
                               ))}
@@ -366,8 +385,8 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
                   maxLength={TITLE_MAX}
-                  placeholder="Title"
-                  aria-label="Post title"
+                  placeholder={t("posts.titlePlaceholder")}
+                  aria-label={t("posts.postTitleAria")}
                   className="w-full bg-transparent text-lg font-semibold text-ink-secondary placeholder:text-ink-placeholder focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 />
                 <p className="mt-1 text-right text-xs text-ink-placeholder">
@@ -381,8 +400,8 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                   value={body}
                   onChange={(event) => setBody(event.target.value)}
                   maxLength={BODY_MAX}
-                  placeholder="What's on your mind?"
-                  aria-label="Post body"
+                  placeholder={t("posts.contentPlaceholder")}
+                  aria-label={t("posts.postBodyAria")}
                   className="min-h-[160px] w-full resize-none bg-transparent text-base leading-relaxed text-ink-muted placeholder:text-ink-placeholder focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                 />
                 <p className="text-right text-xs text-ink-placeholder">
@@ -401,13 +420,15 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                       {/* eslint-disable-next-line @next/next/no-img-element -- local object-URL preview, not a remote asset */}
                       <img
                         src={img.url}
-                        alt={`Selected image ${index + 1}`}
+                        alt={t("posts.selectedImageAlt", { number: index + 1 })}
                         className="h-full w-full object-cover"
                       />
                       <button
                         type="button"
                         onClick={() => handleRemoveImage(index)}
-                        aria-label={`Remove image ${index + 1}`}
+                        aria-label={t("posts.removeImageAria", {
+                          number: index + 1,
+                        })}
                         className="absolute right-1 top-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-ink/60 text-white transition-colors hover:bg-ink/80"
                       >
                         <X className="h-3 w-3" aria-hidden />
@@ -437,13 +458,16 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
               >
                 <ImagePlus className="h-4 w-4" aria-hidden />
                 {images.length > 0
-                  ? `Add photos (${images.length}/${IMAGE_MAX})`
-                  : "Add photos"}
+                  ? t("posts.addPhotosCount", {
+                      count: images.length,
+                      max: IMAGE_MAX,
+                    })
+                  : t("posts.addPhotos")}
               </button>
 
               {error && (
                 <p className="mt-3 text-sm text-destructive" role="alert">
-                  {error}
+                  {"key" in error ? t(error.key) : error.message}
                 </p>
               )}
             </div>

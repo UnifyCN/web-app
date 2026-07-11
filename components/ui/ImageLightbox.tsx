@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { StorageImage } from "@/components/ui/StorageImage";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
@@ -31,6 +32,7 @@ export function ImageLightbox({
   onClose,
   alt,
 }: ImageLightboxProps) {
+  const { t } = useTranslation();
   const count = images.length;
   const multi = count > 1;
 
@@ -74,7 +76,7 @@ export function ImageLightbox({
           e.stopPropagation();
           onClose();
         }}
-        aria-label="Close image viewer"
+        aria-label={t("ui.closeImageViewerAria")}
         className="absolute right-4 top-4 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ink/40 text-white transition-colors hover:bg-ink/60"
       >
         <X className="h-5 w-5" aria-hidden />
@@ -85,14 +87,18 @@ export function ImageLightbox({
         onClick={(event) => event.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label={alt ?? "Image viewer"}
+        aria-label={alt ?? t("ui.imageViewerAria")}
       >
         <StorageImage
           src={images[safeIndex]}
           alt={
             alt
-              ? `${alt} — image ${safeIndex + 1} of ${count}`
-              : `Image ${safeIndex + 1} of ${count}`
+              ? t("ui.imageOfAltTitled", {
+                  title: alt,
+                  number: safeIndex + 1,
+                  count,
+                })
+              : t("ui.imageOfAlt", { number: safeIndex + 1, count })
           }
           className="absolute inset-0 h-full w-full object-contain"
         />
@@ -102,7 +108,7 @@ export function ImageLightbox({
             <button
               type="button"
               onClick={goPrev}
-              aria-label="Previous image"
+              aria-label={t("ui.previousImageAria")}
               className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-ink/40 text-white transition-colors hover:bg-ink/60"
             >
               <ChevronLeft className="h-6 w-6" aria-hidden />
@@ -110,7 +116,7 @@ export function ImageLightbox({
             <button
               type="button"
               onClick={goNext}
-              aria-label="Next image"
+              aria-label={t("ui.nextImageAria")}
               className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-ink/40 text-white transition-colors hover:bg-ink/60"
             >
               <ChevronRight className="h-6 w-6" aria-hidden />

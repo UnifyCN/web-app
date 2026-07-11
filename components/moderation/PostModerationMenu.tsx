@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Flag, Ban } from "lucide-react";
 import {
   DropdownMenu,
@@ -26,6 +27,7 @@ export function PostModerationMenu({
   post: Post;
   align?: "start" | "end";
 }) {
+  const { t } = useTranslation();
   const { data: currentUser } = useCurrentUser();
   const toast = useToast();
   const reportPost = useReportPost();
@@ -39,13 +41,13 @@ export function PostModerationMenu({
   const items: DropdownMenuItem[] = [
     {
       key: "report",
-      label: "Report post",
+      label: t("reportScreen.titlePost"),
       icon: <Flag className="h-4 w-4" aria-hidden />,
       onSelect: () => setReportOpen(true),
     },
     {
       key: "block",
-      label: `Block @${post.author.username}`,
+      label: t("moderation.blockUser", { username: post.author.username }),
       icon: <Ban className="h-4 w-4" aria-hidden />,
       destructive: true,
       onSelect: () => setBlockOpen(true),
@@ -54,7 +56,11 @@ export function PostModerationMenu({
 
   return (
     <>
-      <DropdownMenu items={items} ariaLabel="Post options" align={align} />
+      <DropdownMenu
+        items={items}
+        ariaLabel={t("moderation.postOptionsAria")}
+        align={align}
+      />
 
       <ReportModal
         open={reportOpen}
@@ -69,11 +75,13 @@ export function PostModerationMenu({
             {
               onSuccess: () => {
                 setReportOpen(false);
-                toast.success("Report submitted. Thank you.");
+                toast.success(t("reportScreen.submittedToast"));
               },
               onError: (e) =>
                 toast.show(
-                  e instanceof Error ? e.message : "Couldn't submit report.",
+                  e instanceof Error
+                    ? e.message
+                    : t("reportScreen.submitFailed"),
                   "info",
                 ),
             },
@@ -83,9 +91,11 @@ export function PostModerationMenu({
 
       <ConfirmModal
         open={blockOpen}
-        title={`Block @${post.author.username}?`}
-        description="You won't see their posts in your feed."
-        confirmLabel="Block"
+        title={t("moderation.blockConfirmTitle", {
+          username: post.author.username,
+        })}
+        description={t("moderation.blockConfirmDesc")}
+        confirmLabel={t("profile.block")}
         isPending={blockUser.isPending}
         onCancel={() => {
           if (!blockUser.isPending) setBlockOpen(false);
@@ -94,11 +104,11 @@ export function PostModerationMenu({
           blockUser.mutate(authorId, {
             onSuccess: () => {
               setBlockOpen(false);
-              toast.success("User blocked");
+              toast.success(t("profile.userBlocked"));
             },
             onError: (e) =>
               toast.show(
-                e instanceof Error ? e.message : "Couldn't block user.",
+                e instanceof Error ? e.message : t("profile.userBlockFailed"),
                 "info",
               ),
           })

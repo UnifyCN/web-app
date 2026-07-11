@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 import { GroupCover } from "@/components/community/GroupCover";
 import { useJoinGroup, useLeaveGroup } from "@/hooks/useCommunity";
@@ -14,6 +15,7 @@ import type { Group } from "@/types";
  *  prop) means a refetched group.joinedByMe takes over automatically — no
  *  prop→state sync effect needed. */
 export function GroupCard({ group }: { group: Group }) {
+  const { t } = useTranslation();
   const [joinedOverride, setJoinedOverride] = useState<boolean | null>(null);
   const joinMutation = useJoinGroup();
   const leaveMutation = useLeaveGroup();
@@ -62,14 +64,14 @@ export function GroupCard({ group }: { group: Group }) {
         <div className="mt-3 flex items-center justify-between">
           <span className="flex items-center gap-1 text-xs text-ink-placeholder">
             <Users className="h-3.5 w-3.5" aria-hidden />
-            {memberCount.toLocaleString("en-CA")} members
+            {t("common.memberCount", { count: memberCount })}
           </span>
           <Button
             variant={joined ? "secondary" : "primary"}
             size="sm"
             onClick={toggleJoin}
           >
-            {joined ? "Joined" : "Join"}
+            {joined ? t("groups.joined") : t("groups.join")}
           </Button>
         </div>
       </div>

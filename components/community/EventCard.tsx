@@ -1,27 +1,34 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Calendar, MapPin } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/Badge";
 import type { CommunityEvent, EventType } from "@/types";
 
-const EVENT_TYPE_LABEL: Record<EventType, string> = {
-  "in-person": "In person",
-  online: "Online",
-  hybrid: "Hybrid",
+const EVENT_TYPE_LABEL_KEY: Record<EventType, string> = {
+  "in-person": "events.typeInPerson",
+  online: "events.typeOnline",
+  hybrid: "events.typeHybrid",
 };
 
 /** Community event card — links through to the event detail page. */
 export function EventCard({ event }: { event: CommunityEvent }) {
+  const { t, i18n } = useTranslation();
   // Events are BC-based; render in Pacific so the time is correct and stable
   // across server/client (the stored datetime is the exact UTC instant).
   const TZ = "America/Vancouver";
   const date = new Date(event.eventDatetime);
-  const day = date.toLocaleDateString("en-CA", { day: "numeric", timeZone: TZ });
-  const month = date.toLocaleDateString("en-CA", {
+  const day = date.toLocaleDateString(i18n.language, {
+    day: "numeric",
+    timeZone: TZ,
+  });
+  const month = date.toLocaleDateString(i18n.language, {
     month: "short",
     timeZone: TZ,
   });
-  const time = date.toLocaleTimeString("en-CA", {
+  const time = date.toLocaleTimeString(i18n.language, {
     hour: "numeric",
     minute: "2-digit",
     timeZone: TZ,
@@ -56,7 +63,9 @@ export function EventCard({ event }: { event: CommunityEvent }) {
           {event.title}
         </h3>
         <div className="mt-1.5">
-          <Badge variant="primary">{EVENT_TYPE_LABEL[event.eventType]}</Badge>
+          <Badge variant="primary">
+            {t(EVENT_TYPE_LABEL_KEY[event.eventType])}
+          </Badge>
         </div>
         <div className="mt-2.5 space-y-1.5">
           <p className="flex items-center gap-2 text-xs text-ink-muted">

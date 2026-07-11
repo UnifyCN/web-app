@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { Button } from "@/components/ui/Button";
 
@@ -13,25 +14,26 @@ export type ReportTarget =
   | { type: "discussion" }
   | { type: "discussion-reply" };
 
-const TARGET_COPY: Record<
+/** i18n keys per target type; resolved with t() inside the component. */
+const TARGET_KEYS: Record<
   ReportTarget["type"],
   { title: string; placeholder: string }
 > = {
   post: {
-    title: "Report post",
-    placeholder: "Tell us why you're reporting this post…",
+    title: "reportScreen.titlePost",
+    placeholder: "reportScreen.placeholderPost",
   },
   user: {
-    title: "Report user",
-    placeholder: "Tell us why you're reporting this user…",
+    title: "reportScreen.titleUser",
+    placeholder: "reportScreen.placeholderUser",
   },
   discussion: {
-    title: "Report question",
-    placeholder: "Tell us why you're reporting this question…",
+    title: "reportScreen.titleQuestion",
+    placeholder: "reportScreen.placeholderQuestion",
   },
   "discussion-reply": {
-    title: "Report reply",
-    placeholder: "Tell us why you're reporting this reply…",
+    title: "reportScreen.titleReply",
+    placeholder: "reportScreen.placeholderReply",
   },
 };
 
@@ -54,6 +56,7 @@ export function ReportModal({
   onSubmit: (reason: string) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [reason, setReason] = useState("");
   // Clear the field when the modal transitions closed (covers cancel + submit),
   // using the previous-prop pattern so we never setState inside an effect.
@@ -62,7 +65,7 @@ export function ReportModal({
     setWasOpen(open);
     if (!open) setReason("");
   }
-  const copy = TARGET_COPY[target.type];
+  const copy = TARGET_KEYS[target.type];
   const trimmed = reason.trim();
   const tooShort = trimmed.length < MIN_REASON;
 
@@ -71,8 +74,8 @@ export function ReportModal({
       open={open}
       busy={isPending}
       onClose={onClose}
-      title={copy.title}
-      description="This is private and only visible to moderators."
+      title={t(copy.title)}
+      description={t("reportScreen.privacyNote")}
     >
       <textarea
         value={reason}
@@ -80,7 +83,8 @@ export function ReportModal({
         rows={4}
         maxLength={MAX_REASON}
         autoFocus
-        placeholder={copy.placeholder}
+        placeholder={t(copy.placeholder)}
+        aria-label={t(copy.placeholder)}
         className="w-full resize-none rounded-card border border-border bg-surface px-3 py-2 text-base text-ink-muted outline-none transition-colors placeholder:text-ink-placeholder focus:border-primary"
       />
       <div className="mt-1 flex justify-end">
@@ -96,7 +100,7 @@ export function ReportModal({
           onClick={onClose}
           disabled={isPending}
         >
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button
           type="button"
@@ -106,7 +110,7 @@ export function ReportModal({
           disabled={tooShort || isPending}
           loading={isPending}
         >
-          Send report
+          {t("report.sendReport")}
         </Button>
       </div>
     </ModalShell>

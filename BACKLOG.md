@@ -595,6 +595,17 @@ Free-text practice/activity answers (`long_answer` / `short_answer`) are graded 
 `practice-feedback` edge function (DeepSeek-v4-Flash via the shared OpenRouter chain) and
 shown in `PracticeFeedbackModal.tsx`. Did **not** need an OpenAI key — runs on OpenRouter.
 
+**i18n Phase 4b — Learn static-string coverage (follow-up to Phase 4a)**
+Phase 4a extracted the social surfaces (feed/post, community, companion, profile,
+checklist, account, moderation, UI primitives). Learn remains hardcoded English:
+route pages, chrome components (LearnSidePanel, ModuleGridCard, SubmoduleTimelineRow,
+StartHereCard, …), practice/quiz (PracticeQuiz, QuizResults, PracticeQuestionList
+type labels, **LessonPager + LessonQuiz — never translated in Phase 1 despite the
+build-status claim**), and the entire help/discussion board (~55 keys, no namespace
+exists). Recon estimated ~143 new keys. Also port `lib/learn/microcopy.ts`
+(moduleProgressMessage/weeklyMessage) to key maps and switch
+DiscussionThreadCard/DiscussionReplyItem to `useRelativeTime`.
+
 **Translate button for Learn discussions + replies (i18n Phase 3 follow-up)**
 The Phase 3 Translate UI covers posts + post comments only. Discussions live in
 `module_discussions` / `discussion_replies` with **UUID ids**, but the deployed

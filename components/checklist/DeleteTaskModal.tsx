@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 
 interface DeleteTaskModalProps {
@@ -26,6 +27,7 @@ export function DeleteTaskModal({
   onConfirm,
   onCancel,
 }: DeleteTaskModalProps) {
+  const { t } = useTranslation();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const deleteRef = useRef<HTMLButtonElement>(null);
 
@@ -81,14 +83,16 @@ export function DeleteTaskModal({
             id="delete-task-title"
             className="text-base font-semibold text-ink-secondary"
           >
-            Delete this task?
+            {t("checklist.deleteTaskTitle")}
           </h2>
           <p className="mt-2 text-sm text-ink-muted">
-            This will permanently remove{" "}
-            <span className="font-medium text-ink-secondary">
-              &ldquo;{taskTitle}&rdquo;
-            </span>
-            . This can&rsquo;t be undone.
+            <Trans
+              i18nKey="checklist.deleteTaskDesc"
+              values={{ title: taskTitle }}
+              components={{
+                strong: <span className="font-medium text-ink-secondary" />,
+              }}
+            />
           </p>
         </div>
         <div className="flex items-center justify-end gap-2 border-t border-border-card bg-surface-card px-5 py-3">
@@ -100,7 +104,7 @@ export function DeleteTaskModal({
             onClick={onCancel}
             disabled={isPending}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             ref={deleteRef}
@@ -110,7 +114,7 @@ export function DeleteTaskModal({
             onClick={onConfirm}
             loading={isPending}
           >
-            Delete
+            {t("common.delete")}
           </Button>
         </div>
       </div>

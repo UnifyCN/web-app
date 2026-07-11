@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 import {
   useFollowStatus,
@@ -21,6 +22,7 @@ interface FollowButtonProps {
  * header and the followers / following list rows.
  */
 export function FollowButton({ userId, className }: FollowButtonProps) {
+  const { t } = useTranslation();
   const { data: isFollowing = false, isLoading } = useFollowStatus(userId);
   const followUser = useFollowUser();
   const unfollowUser = useUnfollowUser();
@@ -39,7 +41,7 @@ export function FollowButton({ userId, className }: FollowButtonProps) {
       onClick={handleToggle}
       className={className}
     >
-      {isFollowing ? "Following" : "Follow"}
+      {isFollowing ? t("profile.following") : t("profile.follow")}
     </Button>
   );
 }

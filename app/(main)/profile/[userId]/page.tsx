@@ -3,10 +3,12 @@
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import {
   ProfileTabs,
   OTHER_PROFILE_TABS,
+  type ProfileTabKey,
 } from "@/components/profile/ProfileTabs";
 import { CommentCard } from "@/components/profile/CommentCard";
 import { SkeletonCommentList } from "@/components/profile/SkeletonCommentList";
@@ -65,8 +67,9 @@ function EmptyMessage({ children }: { children: ReactNode }) {
 }
 
 export default function UserProfilePage() {
+  const { t } = useTranslation();
   const { userId } = useParams<{ userId: string }>();
-  const [tab, setTab] = useState(OTHER_PROFILE_TABS[0]);
+  const [tab, setTab] = useState<ProfileTabKey>(OTHER_PROFILE_TABS[0]);
 
   const { data: currentUser } = useCurrentUser();
   const { data: profile, isLoading } = useUserProfile(userId);
@@ -90,7 +93,7 @@ export default function UserProfilePage() {
     return (
       <div className="mx-auto max-w-[680px] px-6 py-6">
         <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
-          Profile
+          {t("profile.title")}
         </h1>
         <HeaderSkeleton />
         <div className="mt-6">
@@ -103,12 +106,12 @@ export default function UserProfilePage() {
   if (!profile) {
     return (
       <div className="mx-auto max-w-[680px] px-6 py-16 text-center">
-        <p className="text-sm text-ink-muted">This profile could not be found.</p>
+        <p className="text-sm text-ink-muted">{t("profile.profileNotFound")}</p>
         <Link
           href="/home"
           className="mt-3 inline-block text-sm font-semibold text-primary"
         >
-          Back to Home
+          {t("common.backToHome")}
         </Link>
       </div>
     );
@@ -120,7 +123,7 @@ export default function UserProfilePage() {
   return (
     <div className="mx-auto max-w-[680px] animate-fade-in px-6 py-6">
       <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
-        Profile
+        {t("profile.title")}
       </h1>
 
       <ProfileHeader
@@ -139,7 +142,7 @@ export default function UserProfilePage() {
       </div>
 
       <div className="mt-4">
-        {tab === "Posts" &&
+        {tab === "posts" &&
           (postsLoading ? (
             <SkeletonPostList />
           ) : posts.length > 0 ? (
@@ -149,10 +152,10 @@ export default function UserProfilePage() {
               ))}
             </div>
           ) : (
-            <EmptyMessage>No posts yet.</EmptyMessage>
+            <EmptyMessage>{t("profile.noPostsYet")}</EmptyMessage>
           ))}
 
-        {tab === "Comments" &&
+        {tab === "comments" &&
           (commentsLoading ? (
             <SkeletonCommentList />
           ) : commentItems.length > 0 ? (
@@ -162,7 +165,7 @@ export default function UserProfilePage() {
               ))}
             </div>
           ) : (
-            <EmptyMessage>No comments yet.</EmptyMessage>
+            <EmptyMessage>{t("profile.noCommentsYet")}</EmptyMessage>
           ))}
       </div>
     </div>
