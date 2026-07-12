@@ -45,6 +45,17 @@ type QueryType =
 const EMBEDDING_MODEL =
   Deno.env.get('OPENROUTER_EMBEDDING_MODEL') || 'openai/text-embedding-3-small';
 
+// Optional per-request response-language override (web i18n). Maps a UI language
+// code to the language name used in the system-prompt directive. English is the
+// default, so it has no entry — an absent/`en`/unknown/non-string code yields no
+// directive. The whitelist lookup IS the validation, so no extra sanitizing is
+// needed before it reaches the prompt. Mobile omits the field and is unaffected.
+const RESPONSE_LANGUAGE_NAMES: Record<string, string> = {
+  vi: 'Vietnamese',
+  es: 'Spanish',
+  hi: 'Hindi',
+};
+
 const INVALID_ASSISTANT_LED_PATTERNS: RegExp[] = [
   /^would you like\b/i,
   /^do you want\b/i,
@@ -680,6 +691,7 @@ Deno.serve(async (req: Request) => {
       stream: streamRequested,
       source: requestSource,
       lessonContext: rawLessonContext,
+      responseLanguage,
     } = await req.json();
 
     // In-Lesson Help — optional, sanitized; null for regular Companion chats.
@@ -1096,6 +1108,17 @@ Deno.serve(async (req: Request) => {
         lessonContext,
         lessonProgress
       )}`;
+    }
+
+    // Response-language override (web i18n). Appended LAST so it doesn't disturb
+    // the existing instructions and covers the whole reply, including the
+    // [SUGGESTIONS] follow-ups. Absent/`en`/unknown code -> no directive (English).
+    const responseLanguageName =
+      typeof responseLanguage === 'string'
+        ? RESPONSE_LANGUAGE_NAMES[responseLanguage]
+        : undefined;
+    if (responseLanguageName) {
+      fullSystemInstruction = `${fullSystemInstruction}\n\nRESPONSE LANGUAGE:\nRespond in ${responseLanguageName} only. Do not switch to English.`;
     }
 
     // ========================================================================

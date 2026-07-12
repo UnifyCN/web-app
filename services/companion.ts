@@ -14,6 +14,7 @@ import {
   mockConversations,
   mockMessagesByConversation,
 } from "@/lib/mock/conversations";
+import { isInternalSourceUrl } from "@/lib/utils";
 
 /**
  * Companion (AI chat) data access — conversations, messages, daily usage, and
@@ -94,7 +95,9 @@ function normalizeSources(raw: unknown): ChatSource[] | null {
       if (!title || !url) return null;
       return { title, url } satisfies ChatSource;
     })
-    .filter((value): value is ChatSource => value !== null);
+    .filter((value): value is ChatSource => value !== null)
+    // Drop internal KB files (S3) — only public sources are shown as citations.
+    .filter((value) => !isInternalSourceUrl(value.url));
   return cleaned.length > 0 ? cleaned : null;
 }
 
@@ -298,6 +301,9 @@ export interface GenerateReplyInput {
   history: { role: "user" | "assistant"; message: string }[];
   /** In-Lesson Help — lesson-reader context; rag-query scopes its answer to it. */
   lessonContext?: LessonContext;
+  /** Web i18n — UI language code ("vi"/"es"/"hi"); rag-query replies in it.
+   *  Omitted for English (the default) so backward compatibility is preserved. */
+  responseLanguage?: string;
 }
 
 export interface GeneratedReply {
@@ -333,6 +339,9 @@ export async function generateReply(
       conversationIdentifier: input.conversationIdentifier,
       messages: input.history,
       ...(input.lessonContext ? { lessonContext: input.lessonContext } : {}),
+      ...(input.responseLanguage
+        ? { responseLanguage: input.responseLanguage }
+        : {}),
     }),
   });
 

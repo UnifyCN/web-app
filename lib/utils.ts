@@ -84,6 +84,30 @@ export function externalHref(link: string | null | undefined): string | null {
 }
 
 /**
+ * True when a citation URL points at an internal knowledge-base file rather than
+ * a public source. `rag-query` resolves each source URL as `source_url || s3Url`,
+ * so docs without a backfilled `source_url` fall back to a raw S3 link
+ * (`https://<bucket>.s3.<region>.amazonaws.com/<path>`). Those internal files must
+ * never be shown to users as citations — the web app drops them on display.
+ * Matches on the host (not the whole URL) so a path substring like ".../s3.pdf"
+ * can't false-positive; falls back to a raw-string check if the URL won't parse.
+ */
+export function isInternalSourceUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return (
+      host.includes("amazonaws.com") ||
+      host.includes("s3.") ||
+      host.startsWith("s3-")
+    );
+  } catch {
+    const lower = url.toLowerCase();
+    return lower.includes("amazonaws.com") || lower.includes("s3.");
+  }
+}
+
+/**
  * Short relative timestamp — "Just now", "5m", "3h", "2d", then a calendar
  * date with the year once past a week ("May 8, 2026").
  */
