@@ -3,6 +3,7 @@
 import { use } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, Target } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { LessonListRow } from "@/components/learn/LessonListRow";
 import { PracticeQuestionList } from "@/components/learn/practice/PracticeQuestionList";
@@ -20,6 +21,7 @@ export default function SubmoduleLandingPage({
   params: Promise<{ moduleId: string; submoduleId: string }>;
 }) {
   const { moduleId, submoduleId } = use(params);
+  const { t } = useTranslation();
   const moduleQuery = useModule(moduleId);
   const progressesQuery = useAllLessonProgresses();
   const practicesQuery = usePractices(submoduleId);
@@ -34,7 +36,7 @@ export default function SubmoduleLandingPage({
   if (moduleQuery.isLoading) {
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
-        <p className="text-sm text-ink-muted">Loading…</p>
+        <p className="text-sm text-ink-muted">{t("common.loading")}</p>
       </div>
     );
   }
@@ -43,13 +45,15 @@ export default function SubmoduleLandingPage({
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
         <p className="text-sm text-ink-muted">
-          This section could not be found.
+          {t("learnWeb.section.notFound")}
         </p>
         <Link
           href={mod ? `/learn/${moduleId}` : "/learn"}
           className="mt-3 inline-block text-sm font-semibold text-primary"
         >
-          {mod ? "Back to module" : "Back to Learn"}
+          {mod
+            ? t("learnWeb.section.backToModule")
+            : t("learnWeb.module.backToLearn")}
         </Link>
       </div>
     );
@@ -78,22 +82,22 @@ export default function SubmoduleLandingPage({
       Object.keys(practiceProgress.answers ?? {}).length > 0 ||
       practiceProgress.currentSubmitted);
   const practiceLabel = practiceCompleted
-    ? "Review"
+    ? t("common.review")
     : practiceStarted
-      ? "Resume"
-      : "Start";
+      ? t("learnWeb.section.resume")
+      : t("common.start");
   const practiceScore = practiceProgress?.score;
   const practiceTotal = practiceProgress?.totalQuestions;
   const practiceSubtitle =
     practiceCompleted && practiceScore != null && practiceTotal
       ? `${practiceScore}/${practiceTotal} · ${Math.round((practiceScore / practiceTotal) * 100)}%`
-      : "Test your understanding";
+      : t("learn.submodule.practiceDescription");
 
   return (
     <div className="mx-auto max-w-[760px] px-6 py-8">
       <Breadcrumb
         items={[
-          { label: "Learn", href: "/learn" },
+          { label: t("tabs.learn"), href: "/learn" },
           { label: mod.title, href: `/learn/${moduleId}` },
           { label: submodule.title },
         ]}
@@ -105,13 +109,13 @@ export default function SubmoduleLandingPage({
           className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
-          Back to {mod.title}
+          {t("learnWeb.section.backTo", { title: mod.title })}
         </Link>
       </div>
 
       <div className="mt-6">
         <span className="inline-block rounded-full bg-surface-gray px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink-tertiary">
-          Section {sectionNumber}
+          {t("learn.module.section", { number: sectionNumber })}
         </span>
       </div>
 
@@ -119,7 +123,7 @@ export default function SubmoduleLandingPage({
         {submodule.title}
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-ink-muted">
-        {submodule.description ?? "Learn key concepts and practice your skills."}
+        {submodule.description ?? t("learn.submodule.defaultDescription")}
       </p>
 
       {/* Lesson list */}
@@ -136,8 +140,8 @@ export default function SubmoduleLandingPage({
               </span>
               <p className="text-sm font-semibold text-ink-secondary">
                 {practiceCompleted || !hasPractice
-                  ? "Nice work! You've finished this section"
-                  : "Section complete! Ready for the practice?"}
+                  ? t("learnWeb.section.finished")
+                  : t("learnWeb.section.readyPractice")}
               </p>
             </div>
           ) : (
@@ -149,13 +153,13 @@ export default function SubmoduleLandingPage({
               <div className="min-w-0">
                 <p className="text-xs text-white/85">
                   {completedCount === 0
-                    ? "Get started"
-                    : "Pick up where you left off"}
+                    ? t("learnWeb.section.getStarted")
+                    : t("learnWeb.section.pickUp")}
                 </p>
                 <p className="text-base font-bold">
                   {completedCount === 0
-                    ? "Start with Lesson 1"
-                    : "Continue where you left off"}
+                    ? t("learnWeb.section.startLesson1")
+                    : t("learnWeb.section.continueWhereLeft")}
                 </p>
               </div>
               <ArrowRight className="h-5 w-5 shrink-0" aria-hidden />
@@ -164,10 +168,13 @@ export default function SubmoduleLandingPage({
 
           <div className="mt-5 flex items-baseline justify-between">
             <h2 className="text-sm font-bold uppercase tracking-wide text-ink-tertiary">
-              Lessons
+              {t("learnWeb.home.lessonsHeading")}
             </h2>
             <span className="text-xs text-ink-placeholder">
-              {completedCount}/{lessons.length} complete
+              {t("learnWeb.section.completeCount", {
+                completed: completedCount,
+                total: lessons.length,
+              })}
             </span>
           </div>
           <div className="mt-2 rounded-card border border-border-card bg-surface p-1.5">
@@ -199,7 +206,9 @@ export default function SubmoduleLandingPage({
               <Target className="h-5 w-5" strokeWidth={1.75} aria-hidden />
             </span>
             <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-bold text-ink-secondary">Practice</h3>
+              <h3 className="text-sm font-bold text-ink-secondary">
+                {t("learn.submodule.practiceTitle")}
+              </h3>
               <p className="mt-0.5 text-xs text-ink-muted">
                 {practiceSubtitle}
               </p>

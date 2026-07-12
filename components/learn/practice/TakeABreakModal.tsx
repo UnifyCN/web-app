@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 interface TakeABreakModalProps {
   open: boolean;
@@ -19,6 +20,7 @@ export function TakeABreakModal({
   onSaveAndLeave,
   onContinue,
 }: TakeABreakModalProps) {
+  const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement>(null);
   const continueRef = useRef<HTMLButtonElement>(null);
 
@@ -82,11 +84,10 @@ export function TakeABreakModal({
           id="take-a-break-title"
           className="text-center text-lg font-bold text-ink-secondary"
         >
-          Take a break from this quiz?
+          {t("learn.practice.exitTitle")}
         </h2>
         <p className="mt-2 text-center text-sm text-ink-muted">
-          Your progress will be saved. You can resume from the section page
-          later.
+          {t("learn.practice.exitBody")}
         </p>
         <div className="mt-6 flex flex-col gap-3">
           <button
@@ -94,7 +95,7 @@ export function TakeABreakModal({
             onClick={onSaveAndLeave}
             className="w-full rounded-md bg-ink-tertiary py-3 text-sm font-semibold text-white transition-colors hover:bg-ink-secondary"
           >
-            Save progress &amp; leave
+            {t("learn.practice.exitSave")}
           </button>
           <button
             ref={continueRef}
@@ -102,7 +103,7 @@ export function TakeABreakModal({
             onClick={onContinue}
             className="w-full rounded-md bg-surface-gray py-3 text-sm font-semibold text-ink-secondary transition-colors hover:bg-surface-input"
           >
-            Continue Activity
+            {t("learn.practice.exitActivityContinue")}
           </button>
         </div>
       </div>

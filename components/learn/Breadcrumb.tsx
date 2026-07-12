@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface Crumb {
   label: string;
@@ -8,8 +9,12 @@ interface Crumb {
 
 /** Simple breadcrumb trail — the last item is the current page. */
 export function Breadcrumb({ items }: { items: Crumb[] }) {
+  const { t } = useTranslation();
   return (
-    <nav className="flex items-center gap-1 text-sm" aria-label="Breadcrumb">
+    <nav
+      className="flex items-center gap-1 text-sm"
+      aria-label={t("learnWeb.module.breadcrumbAria")}
+    >
       {items.map((item, index) => (
         <span key={item.label} className="flex items-center gap-1">
           {index > 0 && (

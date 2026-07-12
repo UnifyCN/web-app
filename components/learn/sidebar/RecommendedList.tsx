@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { ModuleIcon } from "../ModuleIcon";
 import type { LearnModuleView } from "@/types";
 
@@ -13,11 +14,12 @@ export interface RecommendedItem {
  * persona, each with a short "why" line. Hidden when there's nothing to suggest.
  */
 export function RecommendedList({ items }: { items: RecommendedItem[] }) {
+  const { t } = useTranslation();
   if (items.length === 0) return null;
   return (
     <section className="rounded-card border border-border-card bg-surface p-4">
       <h2 className="text-sm font-bold text-ink-secondary">
-        Recommended for you
+        {t("learn.recommendedForYou")}
       </h2>
       <div className="mt-3 space-y-1">
         {items.map(({ module, why }) => (

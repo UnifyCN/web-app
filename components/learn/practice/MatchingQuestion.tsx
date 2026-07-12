@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import { cn } from "@/lib/utils";
 import type { SanityQuizQuestion } from "@/types";
@@ -24,6 +25,7 @@ export function MatchingQuestion({
   submitted,
   onChange,
 }: MatchingQuestionProps) {
+  const { t } = useTranslation();
   const pairs = question.matching_pairs ?? [];
   const categories = [...new Set(pairs.map((p) => p.right_item))];
   const selected = parseMatching(answer);
@@ -82,7 +84,7 @@ export function MatchingQuestion({
               </div>
               {submitted && wrong && (
                 <p className="mt-2 text-xs font-medium text-ink-muted">
-                  Correct answer:{" "}
+                  {t("learnWeb.practice.correctAnswer")}{" "}
                   <span className="text-ink-secondary">{pair.right_item}</span>
                 </p>
               )}

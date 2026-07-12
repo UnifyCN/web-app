@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ArrowBigUp, Flag, MessageSquare, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Avatar } from "@/components/ui/Avatar";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
@@ -16,7 +17,8 @@ import {
 } from "@/hooks/useDiscussions";
 import { DiscussionReplyItem } from "./DiscussionReplyItem";
 import { DiscussionComposer } from "./DiscussionComposer";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
 import type { Discussion } from "@/types";
 
 /**
@@ -37,6 +39,8 @@ export function DiscussionThreadCard({
   submoduleTitle: string | null;
   currentUserId?: string;
 }) {
+  const { t } = useTranslation();
+  const formatRelativeTime = useRelativeTime();
   const toast = useToast();
   const [expanded, setExpanded] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -76,7 +80,9 @@ export function DiscussionThreadCard({
       });
     } catch (err) {
       setReplyError(
-        err instanceof Error ? err.message : "Failed to post the reply.",
+        err instanceof Error
+          ? err.message
+          : t("learnWeb.discussion.replyFailed"),
       );
       throw err; // keep the draft in the composer
     }
@@ -103,7 +109,11 @@ export function DiscussionThreadCard({
             }
             disabled={likeMutation.isPending}
             aria-pressed={liked}
-            aria-label={liked ? "Remove upvote" : "Upvote question"}
+            aria-label={
+              liked
+                ? t("learnWeb.discussion.removeUpvoteAria")
+                : t("learnWeb.discussion.upvoteAria")
+            }
             className={cn(
               "flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-60",
               liked
@@ -147,13 +157,13 @@ export function DiscussionThreadCard({
             </span>
             <div className="ml-auto">
               <DropdownMenu
-                ariaLabel="Question options"
+                ariaLabel={t("learnWeb.discussion.questionOptionsAria")}
                 items={
                   isOwn
                     ? [
                         {
                           key: "delete",
-                          label: "Delete question",
+                          label: t("learnWeb.discussion.deleteQuestion"),
                           icon: <Trash2 className="h-4 w-4" aria-hidden />,
                           destructive: true,
                           onSelect: () => setConfirmOpen(true),
@@ -162,7 +172,7 @@ export function DiscussionThreadCard({
                     : [
                         {
                           key: "report",
-                          label: "Report question",
+                          label: t("learnWeb.discussion.reportQuestion"),
                           icon: <Flag className="h-4 w-4" aria-hidden />,
                           destructive: true,
                           onSelect: () => setReportOpen(true),
@@ -185,14 +195,18 @@ export function DiscussionThreadCard({
           >
             <MessageSquare className="h-3.5 w-3.5" aria-hidden />
             {discussion.replyCount === 0
-              ? "Reply"
-              : `${discussion.replyCount} ${discussion.replyCount === 1 ? "reply" : "replies"}`}
+              ? t("learnWeb.discussion.reply")
+              : t("learnWeb.discussion.replyCount", {
+                  count: discussion.replyCount,
+                })}
           </button>
 
           {expanded && (
             <div className="mt-3 space-y-3 border-l-2 border-purple-100 pl-3">
               {repliesQuery.isLoading ? (
-                <p className="text-xs text-ink-placeholder">Loading replies…</p>
+                <p className="text-xs text-ink-placeholder">
+                  {t("learnWeb.discussion.loadingReplies")}
+                </p>
               ) : (
                 replies.map((reply) => (
                   <DiscussionReplyItem
@@ -206,7 +220,7 @@ export function DiscussionThreadCard({
                 ))
               )}
               <DiscussionComposer
-                placeholder="Write a reply…"
+                placeholder={t("learnWeb.discussion.writeReplyPlaceholder")}
                 isPending={createReply.isPending}
                 onSubmit={submitReply}
                 errorMessage={replyError}
@@ -219,9 +233,9 @@ export function DiscussionThreadCard({
 
       <ConfirmModal
         open={confirmOpen}
-        title="Delete this question?"
-        description="This will permanently remove your question and its replies. This can't be undone."
-        confirmLabel="Delete"
+        title={t("learnWeb.discussion.deleteQuestionTitle")}
+        description={t("learnWeb.discussion.deleteQuestionBody")}
+        confirmLabel={t("common.delete")}
         isPending={deleteMutation.isPending}
         onConfirm={() =>
           deleteMutation.mutate(
@@ -242,11 +256,11 @@ export function DiscussionThreadCard({
             {
               onSuccess: () => {
                 setReportOpen(false);
-                toast.success("Report sent. Thanks for flagging this.");
+                toast.success(t("learnWeb.discussion.reportSent"));
               },
               onError: () => {
                 setReportOpen(false);
-                toast.error("Couldn't send report. Please try again.");
+                toast.error(t("learnWeb.discussion.reportFailed"));
               },
             },
           )

@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import type { Persona, SanityModule, Stage } from "@/types";
 
 /**
@@ -20,23 +21,17 @@ export interface RecommendProfile {
 /** Only the bits of a module needed to score it. */
 type ScorableModule = Pick<SanityModule, "personas" | "interests">;
 
-export const PERSONA_LABELS: Record<Persona, string> = {
-  international_student: "international students",
-  skilled_worker: "skilled workers & immigrants",
-  refugee: "refugees & protected persons",
-  other: "newcomers",
-};
-
-export const INTEREST_LABELS: Record<string, string> = {
-  documents: "documents & IDs",
-  employment: "jobs & career",
-  finance: "money & banking",
-  housing: "housing",
-  pr_immigration: "PR & immigration",
-  healthcare: "healthcare",
-  family_kids: "family & kids",
-  transit: "transit",
-};
+/** Interest slugs with a learnWeb.recommend.interests.* display key. */
+const KNOWN_INTERESTS = new Set([
+  "documents",
+  "employment",
+  "finance",
+  "housing",
+  "pr_immigration",
+  "healthcare",
+  "family_kids",
+  "transit",
+]);
 
 /**
  * Heuristic stage → relevant interests map. Sanity modules have NO `stage`
@@ -83,6 +78,7 @@ export function scoreModule(
 export function whyTag(
   module: ScorableModule,
   profile: RecommendProfile,
+  t: TFunction,
 ): string {
   const hasInterest = interestMatch(module, profile);
   const hasPersona = personaMatch(module, profile);
@@ -93,18 +89,27 @@ export function whyTag(
       )
     : undefined;
   const interestLabel = matchedInterest
-    ? (INTEREST_LABELS[matchedInterest] ?? matchedInterest.replace(/_/g, " "))
+    ? KNOWN_INTERESTS.has(matchedInterest)
+      ? t(`learnWeb.recommend.interests.${matchedInterest}`)
+      : matchedInterest.replace(/_/g, " ")
     : "";
   const personaLabel =
     hasPersona && profile.persona
-      ? (PERSONA_LABELS[profile.persona] ?? profile.persona.replace(/_/g, " "))
+      ? t(`learnWeb.recommend.personas.${profile.persona}`, {
+          defaultValue: profile.persona.replace(/_/g, " "),
+        })
       : "";
 
   if (hasInterest && hasPersona) {
-    return `Recommended for ${personaLabel} interested in ${interestLabel}`;
+    return t("learnWeb.recommend.forBoth", {
+      persona: personaLabel,
+      interest: interestLabel,
+    });
   }
-  if (hasInterest) return `Based on your interest in ${interestLabel}`;
-  if (hasPersona) return `Recommended for ${personaLabel}`;
+  if (hasInterest)
+    return t("learnWeb.recommend.forInterest", { interest: interestLabel });
+  if (hasPersona)
+    return t("learnWeb.recommend.forPersona", { persona: personaLabel });
   return "";
 }
 

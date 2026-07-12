@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BadgeCheck, Flag, Heart, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Avatar } from "@/components/ui/Avatar";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
@@ -12,7 +13,8 @@ import {
   useReportReply,
   useToggleReplyLike,
 } from "@/hooks/useDiscussions";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
 import type { DiscussionReply } from "@/types";
 
 /**
@@ -33,6 +35,8 @@ export function DiscussionReplyItem({
   currentUserId?: string;
   isTopReply: boolean;
 }) {
+  const { t } = useTranslation();
+  const formatRelativeTime = useRelativeTime();
   const toast = useToast();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -64,7 +68,7 @@ export function DiscussionReplyItem({
           {isTopReply && (
             <span className="flex shrink-0 items-center gap-1 rounded-full bg-success-label/10 px-1.5 py-0.5 text-[10px] font-semibold text-success-label">
               <BadgeCheck className="h-3 w-3" aria-hidden />
-              Top reply
+              {t("learnWeb.discussion.topReply")}
             </span>
           )}
           <span className="shrink-0 text-xs text-ink-placeholder">
@@ -72,13 +76,13 @@ export function DiscussionReplyItem({
           </span>
           <div className="ml-auto">
             <DropdownMenu
-              ariaLabel="Reply options"
+              ariaLabel={t("learnWeb.discussion.replyOptionsAria")}
               items={
                 isOwn
                   ? [
                       {
                         key: "delete",
-                        label: "Delete reply",
+                        label: t("learnWeb.discussion.deleteReply"),
                         icon: <Trash2 className="h-4 w-4" aria-hidden />,
                         destructive: true,
                         onSelect: () => setConfirmOpen(true),
@@ -87,7 +91,7 @@ export function DiscussionReplyItem({
                   : [
                       {
                         key: "report",
-                        label: "Report reply",
+                        label: t("learnWeb.discussion.reportReply"),
                         icon: <Flag className="h-4 w-4" aria-hidden />,
                         destructive: true,
                         onSelect: () => setReportOpen(true),
@@ -107,7 +111,11 @@ export function DiscussionReplyItem({
           }
           disabled={likeMutation.isPending}
           aria-pressed={liked}
-          aria-label={liked ? "Unlike reply" : "Like reply"}
+          aria-label={
+            liked
+              ? t("learnWeb.discussion.unlikeReplyAria")
+              : t("learnWeb.discussion.likeReplyAria")
+          }
           className="mt-1 flex cursor-pointer items-center gap-1 text-xs text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed"
         >
           <Heart
@@ -127,9 +135,9 @@ export function DiscussionReplyItem({
 
       <ConfirmModal
         open={confirmOpen}
-        title="Delete this reply?"
-        description="This will permanently remove your reply. This can't be undone."
-        confirmLabel="Delete"
+        title={t("learnWeb.discussion.deleteReplyTitle")}
+        description={t("learnWeb.discussion.deleteReplyBody")}
+        confirmLabel={t("common.delete")}
         isPending={deleteMutation.isPending}
         onConfirm={() =>
           deleteMutation.mutate(
@@ -150,11 +158,11 @@ export function DiscussionReplyItem({
             {
               onSuccess: () => {
                 setReportOpen(false);
-                toast.success("Report sent. Thanks for flagging this.");
+                toast.success(t("learnWeb.discussion.reportSent"));
               },
               onError: () => {
                 setReportOpen(false);
-                toast.error("Couldn't send report. Please try again.");
+                toast.error(t("learnWeb.discussion.reportFailed"));
               },
             },
           )

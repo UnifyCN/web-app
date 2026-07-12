@@ -1,12 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 export type SortMode = "relevant" | "az" | "newest";
 
-const OPTIONS: { key: SortMode; label: string }[] = [
-  { key: "relevant", label: "Relevant" },
-  { key: "az", label: "A–Z" },
-  { key: "newest", label: "Newest" },
-];
+const OPTIONS: SortMode[] = ["relevant", "az", "newest"];
 
 /** Segmented control for module sort order. */
 export function SortControl({
@@ -16,26 +13,27 @@ export function SortControl({
   value: SortMode;
   onChange: (mode: SortMode) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className="flex rounded-md border border-border-card p-0.5"
       role="group"
-      aria-label="Sort modules"
+      aria-label={t("learnWeb.sidePanel.sortModulesAria")}
     >
-      {OPTIONS.map((o) => (
+      {OPTIONS.map((key) => (
         <button
-          key={o.key}
+          key={key}
           type="button"
-          onClick={() => onChange(o.key)}
-          aria-pressed={value === o.key}
+          onClick={() => onChange(key)}
+          aria-pressed={value === key}
           className={cn(
             "flex-1 cursor-pointer rounded px-2 py-1.5 text-xs font-semibold transition-colors",
-            value === o.key
+            value === key
               ? "bg-primary-bg text-primary"
               : "text-ink-muted hover:text-ink",
           )}
         >
-          {o.label}
+          {t(`learnWeb.sidePanel.sort.${key}`)}
         </button>
       ))}
     </div>

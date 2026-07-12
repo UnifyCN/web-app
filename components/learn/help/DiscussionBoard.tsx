@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useModule } from "@/hooks/useLearn";
 import { useCurrentUser } from "@/hooks/useProfile";
 import {
@@ -27,6 +28,7 @@ export function DiscussionBoard({
 }: {
   lessonContext: LessonContext;
 }) {
+  const { t } = useTranslation();
   const { moduleId } = lessonContext;
   const [submoduleFilter, setSubmoduleFilter] = useState<string | null>(
     lessonContext.submoduleId,
@@ -69,7 +71,9 @@ export function DiscussionBoard({
       });
     } catch (err) {
       setPostError(
-        err instanceof Error ? err.message : "Failed to post the question.",
+        err instanceof Error
+          ? err.message
+          : t("learnWeb.discussion.postFailed"),
       );
       throw err; // keep the draft in the composer
     }
@@ -84,21 +88,23 @@ export function DiscussionBoard({
         </span>
         <div className="min-w-0">
           <p className="truncate text-sm font-bold text-ink-secondary">
-            {lessonContext.moduleTitle} · Discussion
+            {t("learnWeb.discussion.headerTitle", {
+              module: lessonContext.moduleTitle,
+            })}
           </p>
           <p className="text-xs text-ink-placeholder">
             {statsQuery.isError
-              ? "Couldn't load stats"
+              ? t("learnWeb.discussion.statsFailed")
               : stats
-                ? `${stats.discussionCount} discussion${stats.discussionCount === 1 ? "" : "s"} · ${stats.participantCount} participant${stats.participantCount === 1 ? "" : "s"}`
-                : "Loading…"}
+                ? `${t("learnWeb.discussion.discussionCount", { count: stats.discussionCount })} · ${t("learnWeb.discussion.participantCount", { count: stats.participantCount })}`
+                : t("common.loading")}
           </p>
         </div>
         {/* Sort toggle */}
         <div
           className="ml-auto flex shrink-0 rounded-full bg-surface-gray p-0.5"
           role="group"
-          aria-label="Sort discussions"
+          aria-label={t("learnWeb.discussion.sortAria")}
         >
           {(["recent", "top"] as const).map((value) => (
             <button
@@ -107,13 +113,13 @@ export function DiscussionBoard({
               onClick={() => setSort(value)}
               aria-pressed={sort === value}
               className={cn(
-                "cursor-pointer rounded-full px-2.5 py-1 text-xs font-medium capitalize transition-colors",
+                "cursor-pointer rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
                 sort === value
                   ? "bg-surface text-ink-secondary shadow-sm"
                   : "text-ink-muted hover:text-ink",
               )}
             >
-              {value}
+              {t(`learnWeb.discussion.sort.${value}`)}
             </button>
           ))}
         </div>
@@ -122,7 +128,7 @@ export function DiscussionBoard({
       {/* Submodule filter chips (or an inline note if the module failed to load) */}
       {moduleQuery.isError ? (
         <div className="border-b border-border-card px-5 py-2.5 text-xs text-ink-placeholder">
-          Couldn&apos;t load sections — showing all discussions.
+          {t("learnWeb.discussion.sectionsFailed")}
         </div>
       ) : submodules.length > 0 ? (
         <div className="scrollbar-thin flex gap-2 overflow-x-auto border-b border-border-card px-5 py-2.5">
@@ -137,7 +143,7 @@ export function DiscussionBoard({
                 : "bg-surface-gray text-ink-muted hover:text-ink",
             )}
           >
-            All
+            {t("learnWeb.discussion.filterAll")}
           </button>
           {submodules.map((submodule) => (
             <button
@@ -165,17 +171,17 @@ export function DiscussionBoard({
           // empty state — surface the error with a retry.
           <div className="px-4 py-12 text-center">
             <p className="text-sm font-semibold text-ink-secondary">
-              Couldn&apos;t load discussions.
+              {t("learnWeb.discussion.loadFailed")}
             </p>
             <p className="mt-1 text-xs text-ink-muted">
-              Something went wrong. Please try again.
+              {t("common.errorGeneric")}
             </p>
             <button
               type="button"
               onClick={() => discussionsQuery.refetch()}
               className="mt-3 cursor-pointer rounded-full bg-purple-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-purple-700"
             >
-              Retry
+              {t("common.retry")}
             </button>
           </div>
         ) : discussionsQuery.isLoading ? (
@@ -195,11 +201,10 @@ export function DiscussionBoard({
         ) : discussions.length === 0 ? (
           <div className="px-4 py-12 text-center">
             <p className="text-sm font-semibold text-ink-secondary">
-              Be the first to ask.
+              {t("learnWeb.discussion.beFirst")}
             </p>
             <p className="mt-1 text-xs text-ink-muted">
-              Questions you post here help every newcomer who takes this
-              module after you.
+              {t("learnWeb.discussion.beFirstHint")}
             </p>
           </div>
         ) : (
@@ -225,8 +230,8 @@ export function DiscussionBoard({
                 className="w-full cursor-pointer rounded-card border border-border-card py-2 text-xs font-medium text-ink-muted transition-colors hover:bg-surface-gray disabled:cursor-not-allowed"
               >
                 {discussionsQuery.isFetchingNextPage
-                  ? "Loading…"
-                  : "Load more"}
+                  ? t("common.loading")
+                  : t("learnWeb.discussion.loadMore")}
               </button>
             )}
           </>
@@ -236,7 +241,9 @@ export function DiscussionBoard({
       {/* New-question composer */}
       <div className="border-t border-border-card px-5 py-3">
         <DiscussionComposer
-          placeholder={`Ask the ${lessonContext.moduleTitle} community…`}
+          placeholder={t("learnWeb.discussion.askCommunityPlaceholder", {
+            module: lessonContext.moduleTitle,
+          })}
           isPending={createDiscussion.isPending}
           onSubmit={submitQuestion}
           errorMessage={postError}

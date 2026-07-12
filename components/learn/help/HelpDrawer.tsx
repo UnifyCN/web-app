@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Sparkles, Users, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { trackHelpPathSelected } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { HelpChooser } from "./HelpChooser";
@@ -27,6 +28,7 @@ export function HelpDrawer({
   lessonContext: LessonContext;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [view, setView] = useState<HelpView>("chooser");
   // Owned here (not in InLessonChat) so revisiting the AI path continues the
   // same conversation instead of spawning a new row per visit.
@@ -86,10 +88,10 @@ export function HelpDrawer({
     HelpView,
     { title: string; subtitle?: string; icon?: React.ReactNode }
   > = {
-    chooser: { title: "Get help with this lesson" },
+    chooser: { title: t("learnWeb.help.chooserTitle") },
     ai: {
-      title: "AI Companion",
-      subtitle: "Knows what lesson you're on",
+      title: t("learnWeb.help.aiTitle"),
+      subtitle: t("learnWeb.help.aiSubtitle"),
       icon: (
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-600 text-white">
           <Sparkles className="h-4 w-4" aria-hidden />
@@ -97,7 +99,7 @@ export function HelpDrawer({
       ),
     },
     discussion: {
-      title: "Community Discussion",
+      title: t("learnWeb.help.communityTitle"),
       subtitle: lessonContext.moduleTitle,
       icon: (
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-600 text-white">
@@ -127,7 +129,7 @@ export function HelpDrawer({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Get help with this lesson"
+        aria-label={t("learnWeb.help.chooserTitle")}
         className={cn(
           "absolute inset-y-0 right-0 flex w-full flex-col bg-surface shadow-xl sm:max-w-[420px] sm:border-l sm:border-border-card",
           "transition-transform duration-200 motion-reduce:transition-none",
@@ -140,7 +142,7 @@ export function HelpDrawer({
             <button
               type="button"
               onClick={() => setView("chooser")}
-              aria-label="Back to help options"
+              aria-label={t("learnWeb.help.backToOptionsAria")}
               className="-ml-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <ArrowLeft className="h-5 w-5" aria-hidden />
@@ -161,7 +163,7 @@ export function HelpDrawer({
             ref={closeRef}
             type="button"
             onClick={onClose}
-            aria-label="Close help"
+            aria-label={t("learnWeb.help.closeAria")}
             className="-mr-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <X className="h-5 w-5" aria-hidden />

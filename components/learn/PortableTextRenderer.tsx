@@ -4,6 +4,7 @@ import {
   type PortableTextTypeComponentProps,
 } from "@portabletext/react";
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { sanityImageUrl } from "@/lib/sanity";
 import type { SanityBlock, SanityImage } from "@/types";
@@ -18,16 +19,17 @@ const SAFE_PROTOCOL = /^https?:\/\//i;
 
 /** Grey callout box with an uppercase label (example / tip / note). */
 function CalloutBox({
-  label,
+  labelKey,
   content,
 }: {
-  label: string;
+  labelKey: string;
   content?: SanityBlock[];
 }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-card border border-border-card bg-surface-gray p-5">
       <p className="mb-3 text-sm font-bold uppercase tracking-wide text-ink-secondary">
-        {label}
+        {t(labelKey)}
       </p>
       <PortableTextRenderer value={content} />
     </div>
@@ -42,10 +44,11 @@ function DropdownBlock({
   label?: string;
   content?: SanityBlock[];
 }) {
+  const { t } = useTranslation();
   return (
     <details className="rounded-card border border-border-card bg-surface-gray">
       <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-ink-secondary">
-        {label ?? "Details"}
+        {label ?? t("learnWeb.lesson.details")}
       </summary>
       <div className="px-4 pb-4">
         <PortableTextRenderer value={content} />
@@ -129,17 +132,17 @@ const components: PortableTextComponents = {
     example_box: ({
       value,
     }: PortableTextTypeComponentProps<{ content?: SanityBlock[] }>) => (
-      <CalloutBox label="Example" content={value.content} />
+      <CalloutBox labelKey="learnWeb.lesson.example" content={value.content} />
     ),
     tip_box: ({
       value,
     }: PortableTextTypeComponentProps<{ content?: SanityBlock[] }>) => (
-      <CalloutBox label="Tip" content={value.content} />
+      <CalloutBox labelKey="learnWeb.lesson.tip" content={value.content} />
     ),
     note_box: ({
       value,
     }: PortableTextTypeComponentProps<{ content?: SanityBlock[] }>) => (
-      <CalloutBox label="Note" content={value.content} />
+      <CalloutBox labelKey="learnWeb.lesson.note" content={value.content} />
     ),
     dropdown: ({
       value,

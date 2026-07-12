@@ -3,6 +3,7 @@
 import { use, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Blob } from "@/components/learn/Blob";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { FavouriteButton } from "@/components/learn/FavouriteButton";
@@ -24,6 +25,7 @@ export default function ModuleDetailPage({
   params: Promise<{ moduleId: string }>;
 }) {
   const { moduleId } = use(params);
+  const { t } = useTranslation();
   const moduleQuery = useModule(moduleId);
   const progressesQuery = useAllLessonProgresses();
   const practiceProgressesQuery = useAllPracticeProgresses();
@@ -45,7 +47,7 @@ export default function ModuleDetailPage({
   if (moduleQuery.isLoading) {
     return (
       <div className="mx-auto max-w-[860px] px-6 py-16 text-center">
-        <p className="text-sm text-ink-muted">Loading…</p>
+        <p className="text-sm text-ink-muted">{t("common.loading")}</p>
       </div>
     );
   }
@@ -54,13 +56,13 @@ export default function ModuleDetailPage({
     return (
       <div className="mx-auto max-w-[860px] px-6 py-16 text-center">
         <p className="text-sm text-ink-muted">
-          This module could not be found.
+          {t("learnWeb.module.notFound")}
         </p>
         <Link
           href="/learn"
           className="mt-3 inline-block text-sm font-semibold text-primary"
         >
-          Back to Learn
+          {t("learnWeb.module.backToLearn")}
         </Link>
       </div>
     );
@@ -92,7 +94,7 @@ export default function ModuleDetailPage({
   return (
     <div className="mx-auto max-w-[860px] px-6 py-6">
       <Breadcrumb
-        items={[{ label: "Learn", href: "/learn" }, { label: mod.title }]}
+        items={[{ label: t("tabs.learn"), href: "/learn" }, { label: mod.title }]}
       />
 
       <div
@@ -111,7 +113,7 @@ export default function ModuleDetailPage({
               className="inline-flex items-center gap-1 text-sm text-white/90 transition-colors hover:text-white"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden />
-              Back to Learn
+              {t("learnWeb.module.backToLearn")}
             </Link>
             <div className="flex items-center gap-2">
               <FavouriteButton
@@ -164,7 +166,7 @@ export default function ModuleDetailPage({
         </ol>
       ) : (
         <p className="mt-8 text-sm text-ink-muted">
-          This module has no sections yet.
+          {t("learnWeb.module.noSections")}
         </p>
       )}
     </div>

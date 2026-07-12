@@ -1,6 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import { cn } from "@/lib/utils";
 import type { SanityQuizQuestion } from "@/types";
@@ -22,6 +23,7 @@ export function MultipleChoiceQuestion({
   submitted,
   onChange,
 }: MultipleChoiceQuestionProps) {
+  const { t } = useTranslation();
   const multi = question.question_type === "multiple_choice_multiple";
   const isTrueFalse = question.question_type === "true_false";
   // Square indicator for multi-select and True/False (matches mobile); single
@@ -46,7 +48,7 @@ export function MultipleChoiceQuestion({
     <div>
       {multi && (
         <p className="mb-4 text-center text-sm font-medium text-ink-muted">
-          Select all that apply.
+          {t("learnWeb.practice.selectAll")}
         </p>
       )}
       <div className="flex flex-col gap-3">

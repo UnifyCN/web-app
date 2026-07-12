@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import type { SanityQuizQuestion } from "@/types";
 
@@ -19,6 +20,7 @@ export function FreeTextQuestion({
   submitted,
   onChange,
 }: FreeTextQuestionProps) {
+  const { t } = useTranslation();
   const value = answer[0] ?? "";
   const accepted = question.correct_answer?.value ?? [];
   const isReflection = question.question_type === "long_answer";
@@ -29,14 +31,14 @@ export function FreeTextQuestion({
         value={value}
         onChange={(e) => onChange([e.target.value])}
         disabled={submitted}
-        placeholder="Type here…"
+        placeholder={t("learnWeb.practice.typeHere")}
         rows={isReflection ? 8 : 3}
         className="w-full resize-none rounded-card border border-border-card bg-surface p-4 text-base text-ink-secondary outline-none transition-colors placeholder:text-ink-placeholder focus:border-ink disabled:opacity-70"
       />
 
       {submitted && !isReflection && accepted.length > 0 && (
         <p className="mt-3 text-sm text-ink-muted">
-          Accepted answer:{" "}
+          {t("learnWeb.practice.acceptedAnswer")}{" "}
           <span className="font-semibold text-ink-secondary">
             {accepted.join(", ")}
           </span>

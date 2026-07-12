@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface QuizProgressBarProps {
   sectionNumber: number;
@@ -26,6 +27,7 @@ export function QuizProgressBar({
   colorHex,
   onClose,
 }: QuizProgressBarProps) {
+  const { t } = useTranslation();
   const clamped = Math.max(0, Math.min(100, percent));
   return (
     <div className="mb-7">
@@ -33,13 +35,16 @@ export function QuizProgressBar({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close quiz"
+          aria-label={t("learnWeb.practice.closeQuizAria")}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink"
         >
           <X className="h-5 w-5" aria-hidden />
         </button>
         <h1 className="line-clamp-2 flex-1 text-center text-base font-semibold text-ink-secondary">
-          Section {sectionNumber}: {title}
+          {t("learnWeb.practice.sectionTitle", {
+            number: sectionNumber,
+            title,
+          })}
         </h1>
         <span className="h-9 w-9 shrink-0" aria-hidden />
       </div>

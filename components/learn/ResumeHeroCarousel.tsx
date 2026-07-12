@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Blob } from "./Blob";
 import { CarouselDots } from "./CarouselDots";
 import { FavouriteButton } from "./FavouriteButton";
@@ -26,6 +27,7 @@ interface ResumeHeroCarouselProps {
 }
 
 export function ResumeHeroCarousel({ entries }: ResumeHeroCarouselProps) {
+  const { t } = useTranslation();
   const trackRef = useRef<HTMLDivElement | null>(null);
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [active, setActive] = useState(0);
@@ -65,7 +67,7 @@ export function ResumeHeroCarousel({ entries }: ResumeHeroCarouselProps) {
   if (entries.length === 0) return null;
 
   return (
-    <section aria-label="Resume learning">
+    <section aria-label={t("learnWeb.home.resumeLearningAria")}>
       <div
         ref={trackRef}
         className="scrollbar-none flex snap-x snap-mandatory overflow-x-auto"
@@ -93,6 +95,7 @@ export function ResumeHeroCarousel({ entries }: ResumeHeroCarouselProps) {
 }
 
 function ResumeCard({ entry }: { entry: ResumeEntry }) {
+  const { t } = useTranslation();
   return (
     <div className="relative overflow-hidden rounded-card border border-border-card bg-surface p-5 shadow-sm">
       <Blob
@@ -122,14 +125,17 @@ function ResumeCard({ entry }: { entry: ResumeEntry }) {
             className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-md px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             style={{ backgroundColor: entry.colorHex }}
           >
-            Continue
+            {t("common.continue")}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>
         <div>
           <p className="text-xs text-ink-muted">
-            {entry.moduleTitle} · Section {entry.sectionNumber} of{" "}
-            {entry.totalSections}
+            {t("learnWeb.home.sectionOf", {
+              module: entry.moduleTitle,
+              current: entry.sectionNumber,
+              total: entry.totalSections,
+            })}
           </p>
           <h3 className="mt-1 text-lg font-bold leading-tight text-ink-secondary">
             {entry.submoduleTitle}

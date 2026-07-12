@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import { useUpsertLessonQuizProgress } from "@/hooks/useLearn";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ export function LessonQuiz({
   sectionHref,
   initialProgress,
 }: LessonQuizProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const upsert = useUpsertLessonQuizProgress();
   const total = questions.length;
@@ -72,7 +74,7 @@ export function LessonQuiz({
     return init;
   });
 
-  const heading = title || "Quick Check";
+  const heading = title || t("learnWeb.lesson.quickCheck");
 
   if (total === 0) return null;
 
@@ -100,10 +102,10 @@ export function LessonQuiz({
   const isSubmitted = !!submitted[currentKey];
   const answeredEnough = isAnswered(current, currentAnswer);
   const primaryLabel = !isSubmitted
-    ? "Submit"
+    ? t("common.submit")
     : currentIndex < total - 1
-      ? "Next"
-      : "Done";
+      ? t("common.next")
+      : t("common.done");
   const primaryDisabled = !isSubmitted && !answeredEnough;
   // A write is in flight — disable nav so a stale fire-and-forget persist() can't
   // resolve after and overwrite the completion (Done) save with intermediate state.
@@ -187,7 +189,7 @@ export function LessonQuiz({
           disabled={currentIndex === 0 || busy}
           className="h-11 flex-1 rounded-md bg-surface-gray text-sm font-semibold text-ink-tertiary transition-colors hover:bg-surface-input disabled:opacity-50"
         >
-          Back
+          {t("common.back")}
         </button>
         <button
           type="button"

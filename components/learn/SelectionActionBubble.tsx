@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { Highlighter, Sparkles, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface SelectionActionBubbleProps {
   /** Viewport coords of the top-center of the selection. */
@@ -28,6 +29,7 @@ export function SelectionActionBubble({
   onRemove,
   onAskAI,
 }: SelectionActionBubbleProps) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 
@@ -64,7 +66,7 @@ export function SelectionActionBubble({
         visibility: pos ? "visible" : "hidden",
       }}
       role="toolbar"
-      aria-label="Text selection actions"
+      aria-label={t("learnWeb.lesson.selectionActionsAria")}
     >
       <button
         type="button"
@@ -72,7 +74,7 @@ export function SelectionActionBubble({
         className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/15"
       >
         <Highlighter className="h-3.5 w-3.5" aria-hidden />
-        Highlight
+        {t("learn.selectionBubble.highlight")}
       </button>
       {canRemove && (
         <button
@@ -81,7 +83,7 @@ export function SelectionActionBubble({
           className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/15"
         >
           <Trash2 className="h-3.5 w-3.5" aria-hidden />
-          Remove
+          {t("learn.selectionBubble.remove")}
         </button>
       )}
       <button
@@ -90,7 +92,7 @@ export function SelectionActionBubble({
         className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/15"
       >
         <Sparkles className="h-3.5 w-3.5" aria-hidden />
-        Ask AI
+        {t("learn.selectionBubble.askAI")}
       </button>
     </div>
   );

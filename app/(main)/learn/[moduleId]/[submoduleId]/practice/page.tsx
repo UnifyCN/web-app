@@ -2,6 +2,7 @@
 
 import { use, useMemo } from "react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import {
   useModule,
   usePractices,
@@ -16,6 +17,7 @@ export default function PracticePage({
   params: Promise<{ moduleId: string; submoduleId: string }>;
 }) {
   const { moduleId, submoduleId } = use(params);
+  const { t } = useTranslation();
   const moduleQuery = useModule(moduleId);
   const practicesQuery = usePractices(submoduleId);
   const progressQuery = usePracticeProgress(submoduleId);
@@ -41,7 +43,7 @@ export default function PracticePage({
   ) {
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
-        <p className="text-sm text-ink-muted">Loading…</p>
+        <p className="text-sm text-ink-muted">{t("common.loading")}</p>
       </div>
     );
   }
@@ -50,13 +52,15 @@ export default function PracticePage({
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
         <p className="text-sm text-ink-muted">
-          This section could not be found.
+          {t("learnWeb.section.notFound")}
         </p>
         <Link
           href={mod ? `/learn/${moduleId}` : "/learn"}
           className="mt-3 inline-block text-sm font-semibold text-primary"
         >
-          {mod ? "Back to module" : "Back to Learn"}
+          {mod
+            ? t("learnWeb.section.backToModule")
+            : t("learnWeb.module.backToLearn")}
         </Link>
       </div>
     );
@@ -67,13 +71,13 @@ export default function PracticePage({
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
         <p className="text-sm text-ink-muted">
-          This section has no practice yet.
+          {t("learnWeb.practice.empty")}
         </p>
         <Link
           href={`/learn/${moduleId}/${submoduleId}`}
           className="mt-3 inline-block text-sm font-semibold text-primary"
         >
-          Back to section
+          {t("learnWeb.pager.backToSection")}
         </Link>
       </div>
     );
