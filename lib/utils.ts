@@ -89,8 +89,13 @@ export function externalHref(link: string | null | undefined): string | null {
  * so docs without a backfilled `source_url` fall back to a raw S3 link
  * (`https://<bucket>.s3.<region>.amazonaws.com/<path>`). Those internal files must
  * never be shown to users as citations — the web app drops them on display.
- * Matches on the host (not the whole URL) so a path substring like ".../s3.pdf"
- * can't false-positive; falls back to a raw-string check if the URL won't parse.
+ * Matches on the host (not the whole URL), and anchors the `s3` checks to the
+ * start of the host so `datas3.example.com` or a path like ".../s3.pdf" can't
+ * false-positive and silently hide a valid public citation. Real AWS S3 URLs
+ * (`<bucket>.s3.<region>.amazonaws.com`) are still caught by the `amazonaws.com`
+ * check; the `s3.`/`s3-` prefixes only add genuine S3-compatible hosts
+ * (e.g. `s3.wasabisys.com`). Falls back to a raw-string check if the URL won't
+ * parse, using only the unambiguous `amazonaws.com` signal.
  */
 export function isInternalSourceUrl(url: string | null | undefined): boolean {
   if (!url) return false;
@@ -98,12 +103,11 @@ export function isInternalSourceUrl(url: string | null | undefined): boolean {
     const host = new URL(url).hostname.toLowerCase();
     return (
       host.includes("amazonaws.com") ||
-      host.includes("s3.") ||
+      host.startsWith("s3.") ||
       host.startsWith("s3-")
     );
   } catch {
-    const lower = url.toLowerCase();
-    return lower.includes("amazonaws.com") || lower.includes("s3.");
+    return url.toLowerCase().includes("amazonaws.com");
   }
 }
 
