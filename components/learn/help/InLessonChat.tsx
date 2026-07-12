@@ -112,7 +112,7 @@ export function InLessonChat({
     } catch (err) {
       setSendError(
         err instanceof ChatLimitError
-          ? err.message
+          ? t("companion.dailyLimitReachedToast")
           : t("learnWeb.help.chat.sendFailed"),
       );
     }

@@ -95,7 +95,9 @@ export function whyTag(
     : "";
   const personaLabel =
     hasPersona && profile.persona
-      ? t(`learnWeb.recommend.personas.${profile.persona}`)
+      ? t(`learnWeb.recommend.personas.${profile.persona}`, {
+          defaultValue: profile.persona.replace(/_/g, " "),
+        })
       : "";
 
   if (hasInterest && hasPersona) {
