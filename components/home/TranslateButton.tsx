@@ -4,7 +4,10 @@ import { useState } from "react";
 import { Languages, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useContentTranslation } from "@/hooks/useTranslations";
-import { TranslationLimitError } from "@/services/translations";
+import {
+  TranslationLimitError,
+  type TranslatableType,
+} from "@/services/translations";
 import { DEFAULT_LANGUAGE } from "@/lib/i18n/config";
 import { cn, stripHtml } from "@/lib/utils";
 
@@ -22,8 +25,8 @@ export function TranslateButton({
   id,
   className,
 }: {
-  type: "post" | "comment";
-  id: number;
+  type: TranslatableType;
+  id: number | string;
   className?: string;
 }) {
   const { t } = useTranslation();
