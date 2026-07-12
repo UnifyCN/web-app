@@ -4,6 +4,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
 import { mockDailyTip } from "@/lib/mock/dailyTip";
+import { isInternalSourceUrl } from "@/lib/utils";
 import type { DailyTip, DailyTipSource } from "@/types";
 
 interface RawDailyTip {
@@ -22,6 +23,8 @@ function normalizeSources(
   if (!Array.isArray(refs)) return null;
   const out = refs
     .filter((r) => r && r.url && r.document_title)
+    // Drop internal KB files (S3) — only public sources are shown as citations.
+    .filter((r) => !isInternalSourceUrl(r.url))
     .map((r) => ({ documentTitle: r.document_title as string, url: r.url as string }));
   return out.length > 0 ? out : null;
 }

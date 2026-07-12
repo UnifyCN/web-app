@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import * as companion from "@/services/companion";
 import {
   trackCompanionMessageSent,
@@ -88,6 +89,11 @@ interface SendMessageContext {
  */
 export function useSendMessage() {
   const queryClient = useQueryClient();
+  // Current UI language — passed to rag-query so the reply matches the app
+  // language. Read via react-i18next (the i18n instance is provider-scoped, not
+  // a module singleton); English is the server default so it's sent only for
+  // other languages.
+  const { i18n } = useTranslation();
   return useMutation<
     { conversationIdentifier: string },
     Error,
@@ -123,12 +129,15 @@ export function useSendMessage() {
         });
       }
 
+      const responseLanguage =
+        i18n.language && i18n.language !== "en" ? i18n.language : undefined;
       const { answer, sources, suggestedNextSteps } =
         await companion.generateReply({
           conversationIdentifier,
           prompt: text,
           history,
           lessonContext,
+          responseLanguage,
         });
 
       await companion.saveMessage({

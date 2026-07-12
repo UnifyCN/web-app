@@ -26,6 +26,8 @@ interface RagQueryBody {
   messages?: { role: "user" | "assistant"; message: string }[];
   /** In-Lesson Help — lesson the user is reading; rag-query scopes its answer. */
   lessonContext?: Record<string, unknown>;
+  /** Web i18n — UI language code ("vi"/"es"/"hi"); rag-query replies in it. */
+  responseLanguage?: string;
 }
 
 /** Forward only the expected string fields (rag-query re-sanitizes anyway). */
@@ -77,6 +79,9 @@ export async function POST(req: NextRequest) {
       messages: body.messages ?? [],
       source: "web",
       ...(lessonContext ? { lessonContext } : {}),
+      ...(typeof body.responseLanguage === "string" && body.responseLanguage
+        ? { responseLanguage: body.responseLanguage }
+        : {}),
     },
   });
 
