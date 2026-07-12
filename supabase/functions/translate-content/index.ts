@@ -1,15 +1,19 @@
 // @ts-nocheck Deno runtime — Supabase Edge Functions
 //
 // translate-content — on-demand cached translation of user-generated content
-// (posts + comments) into the viewer's UI language (i18n Phase 2).
+// (posts + comments in Phase 2; In-Lesson Help discussions + replies in
+// Phase 6) into the viewer's UI language.
 //
 // Distinct from mobile's `translate-post` (raw text in → translation out, no
 // cache): this function is id-based — it fetches the source row itself with
 // the service role, caches the result in post_translations /
-// comment_translations keyed by (row, lang) with a source_hash so edits
-// invalidate stale entries, and enforces a per-user daily quota (cache hits
-// are free). Reuses the shared OpenRouter chain (Gemini Flash → DeepSeek) and
-// the web CORS/auth conventions (see explain-term).
+// comment_translations / discussion_translations / discussion_reply_translations
+// keyed by (row, lang) with a source_hash so edits invalidate stale entries,
+// and enforces a per-user daily quota (cache hits are free). Posts carry a
+// title; comments, discussions, and replies are content-only. posts/comments
+// use integer ids; discussions/replies use UUIDs. Reuses the shared OpenRouter
+// chain (Gemini Flash → DeepSeek) and the web CORS/auth conventions (see
+// explain-term).
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { callOpenRouter } from '../_shared/openrouter.ts';
@@ -146,17 +150,34 @@ Deno.serve(async req => {
     }
     const { type, id, targetLanguage } = body ?? {};
 
-    if (type !== 'post' && type !== 'comment') {
-      return jsonResponse({ error: "type must be 'post' or 'comment'" }, 400);
+    if (
+      type !== 'post' &&
+      type !== 'comment' &&
+      type !== 'discussion' &&
+      type !== 'discussion_reply'
+    ) {
+      return jsonResponse(
+        {
+          error:
+            "type must be 'post', 'comment', 'discussion', or 'discussion_reply'",
+        },
+        400,
+      );
     }
-    // posts.id / post_comments.id are integer serials on the shared DB.
-    const numericId =
-      typeof id === 'number' && Number.isInteger(id) && id > 0
+    // posts.id / post_comments.id are integer serials; module_discussions.id /
+    // discussion_replies.id are UUIDs. Validate per type.
+    const isDiscussionType = type === 'discussion' || type === 'discussion_reply';
+    const resolvedId: number | string | null = isDiscussionType
+      ? typeof id === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+        ? id
+        : null
+      : typeof id === 'number' && Number.isInteger(id) && id > 0
         ? id
         : typeof id === 'string' && /^\d+$/.test(id)
           ? Number(id)
           : null;
-    if (numericId === null) {
+    if (resolvedId === null) {
       return jsonResponse({ error: 'Invalid id' }, 400);
     }
     if (
@@ -181,7 +202,7 @@ Deno.serve(async req => {
       const { data: post, error } = await supabase
         .from('posts')
         .select('title, content')
-        .eq('id', numericId)
+        .eq('id', resolvedId)
         .maybeSingle();
       if (error) {
         console.error('translate-content post lookup failed:', error);
@@ -190,11 +211,11 @@ Deno.serve(async req => {
       if (!post) return jsonResponse({ error: 'Post not found' }, 404);
       title = post.title ?? null;
       content = post.content ?? '';
-    } else {
+    } else if (type === 'comment') {
       const { data: comment, error } = await supabase
         .from('post_comments')
         .select('content')
-        .eq('id', numericId)
+        .eq('id', resolvedId)
         .maybeSingle();
       if (error) {
         console.error('translate-content comment lookup failed:', error);
@@ -202,6 +223,30 @@ Deno.serve(async req => {
       }
       if (!comment) return jsonResponse({ error: 'Comment not found' }, 404);
       content = comment.content ?? '';
+    } else if (type === 'discussion') {
+      const { data: discussion, error } = await supabase
+        .from('module_discussions')
+        .select('body')
+        .eq('id', resolvedId)
+        .maybeSingle();
+      if (error) {
+        console.error('translate-content discussion lookup failed:', error);
+        return jsonResponse({ error: 'Lookup failed' }, 500);
+      }
+      if (!discussion) return jsonResponse({ error: 'Discussion not found' }, 404);
+      content = discussion.body ?? '';
+    } else {
+      const { data: reply, error } = await supabase
+        .from('discussion_replies')
+        .select('body')
+        .eq('id', resolvedId)
+        .maybeSingle();
+      if (error) {
+        console.error('translate-content reply lookup failed:', error);
+        return jsonResponse({ error: 'Lookup failed' }, 500);
+      }
+      if (!reply) return jsonResponse({ error: 'Reply not found' }, 404);
+      content = reply.body ?? '';
     }
 
     if (!content.trim()) {
@@ -218,9 +263,23 @@ Deno.serve(async req => {
     const sourceHash = await sha256Hex(sourceText);
 
     // Cache lookup — a hit with a matching hash is free (no quota consumed).
-    const table = type === 'post' ? 'post_translations' : 'comment_translations';
-    const idColumn = type === 'post' ? 'post_id' : 'comment_id';
-    // comment_translations has no translated_title column — select per type.
+    const table =
+      type === 'post'
+        ? 'post_translations'
+        : type === 'comment'
+          ? 'comment_translations'
+          : type === 'discussion'
+            ? 'discussion_translations'
+            : 'discussion_reply_translations';
+    const idColumn =
+      type === 'post'
+        ? 'post_id'
+        : type === 'comment'
+          ? 'comment_id'
+          : type === 'discussion'
+            ? 'discussion_id'
+            : 'reply_id';
+    // Only post_translations has a translated_title column — select per type.
     const cacheColumns =
       type === 'post'
         ? 'translated_title, translated_content, source_lang, source_hash'
@@ -228,7 +287,7 @@ Deno.serve(async req => {
     const { data: cached, error: cacheError } = await supabase
       .from(table)
       .select(cacheColumns)
-      .eq(idColumn, numericId)
+      .eq(idColumn, resolvedId)
       .eq('lang', targetLanguage)
       .maybeSingle();
     if (cacheError) {
@@ -315,7 +374,7 @@ Deno.serve(async req => {
     }
 
     const row = {
-      [idColumn]: numericId,
+      [idColumn]: resolvedId,
       lang: targetLanguage,
       translated_content: parsed.translatedContent,
       ...(type === 'post' ? { translated_title: parsed.translatedTitle } : {}),

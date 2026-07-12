@@ -209,8 +209,14 @@ export const trackGroupViewed = (p: { groupId: number; groupName: string }) =>
 
 /* ---- Content translation (i18n Phase 2) -------------------------------- */
 
+type TranslatableContentType =
+  | "post"
+  | "comment"
+  | "discussion"
+  | "discussion_reply";
+
 export const trackTranslationRequested = (p: {
-  type: "post" | "comment";
+  type: TranslatableContentType;
   targetLanguage: string;
   postId?: number;
 }) =>
@@ -221,7 +227,7 @@ export const trackTranslationRequested = (p: {
   });
 
 export const trackTranslationCacheHit = (p: {
-  type: "post" | "comment";
+  type: TranslatableContentType;
   targetLanguage: string;
 }) =>
   capture("translation_cache_hit", {
@@ -230,7 +236,7 @@ export const trackTranslationCacheHit = (p: {
   });
 
 export const trackTranslationCacheMiss = (p: {
-  type: "post" | "comment";
+  type: TranslatableContentType;
   targetLanguage: string;
 }) =>
   capture("translation_cache_miss", {

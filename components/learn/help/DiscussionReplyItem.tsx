@@ -13,6 +13,7 @@ import {
   useReportReply,
   useToggleReplyLike,
 } from "@/hooks/useDiscussions";
+import { TranslateButton } from "@/components/home/TranslateButton";
 import { cn } from "@/lib/utils";
 import { useRelativeTime } from "@/hooks/useRelativeTime";
 import type { DiscussionReply } from "@/types";
@@ -104,6 +105,11 @@ export function DiscussionReplyItem({
         <p className="mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-muted">
           {reply.body}
         </p>
+        <TranslateButton
+          type="discussion_reply"
+          id={reply.id}
+          className="mt-1"
+        />
         <button
           type="button"
           onClick={() =>

@@ -17,6 +17,7 @@ import {
 } from "@/hooks/useDiscussions";
 import { DiscussionReplyItem } from "./DiscussionReplyItem";
 import { DiscussionComposer } from "./DiscussionComposer";
+import { TranslateButton } from "@/components/home/TranslateButton";
 import { cn } from "@/lib/utils";
 import { useRelativeTime } from "@/hooks/useRelativeTime";
 import type { Discussion } from "@/types";
@@ -186,6 +187,12 @@ export function DiscussionThreadCard({
           <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-secondary">
             {discussion.body}
           </p>
+
+          <TranslateButton
+            type="discussion"
+            id={discussion.id}
+            className="mt-1.5"
+          />
 
           <button
             type="button"

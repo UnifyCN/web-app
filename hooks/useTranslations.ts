@@ -1,6 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { translateComment, translatePost } from "@/services/translations";
+import {
+  translateComment,
+  translateDiscussion,
+  translateDiscussionReply,
+  translatePost,
+  type TranslatableType,
+} from "@/services/translations";
 import type { SupportedLanguage } from "@/lib/i18n/config";
 import { DEFAULT_LANGUAGE, isSupportedLanguage } from "@/lib/i18n/config";
 import {
@@ -24,7 +30,10 @@ function useCurrentLanguage(): SupportedLanguage {
 }
 
 /** Shared by TranslateButton — prefer the typed wrappers below elsewhere. */
-export function useContentTranslation(type: "post" | "comment", id: number) {
+export function useContentTranslation(
+  type: TranslatableType,
+  id: number | string,
+) {
   const lang = useCurrentLanguage();
 
   const query = useQuery({
@@ -33,12 +42,16 @@ export function useContentTranslation(type: "post" | "comment", id: number) {
       trackTranslationRequested({
         type,
         targetLanguage: lang,
-        ...(type === "post" ? { postId: id } : {}),
+        ...(type === "post" ? { postId: id as number } : {}),
       });
       const result =
         type === "post"
-          ? await translatePost(id, lang)
-          : await translateComment(id, lang);
+          ? await translatePost(id as number, lang)
+          : type === "comment"
+            ? await translateComment(id as number, lang)
+            : type === "discussion"
+              ? await translateDiscussion(id as string, lang)
+              : await translateDiscussionReply(id as string, lang);
       if (result.cached) {
         trackTranslationCacheHit({ type, targetLanguage: lang });
       } else {
@@ -71,4 +84,12 @@ export function useTranslatePost(postId: number) {
 
 export function useTranslateComment(commentId: number) {
   return useContentTranslation("comment", commentId);
+}
+
+export function useTranslateDiscussion(discussionId: string) {
+  return useContentTranslation("discussion", discussionId);
+}
+
+export function useTranslateDiscussionReply(replyId: string) {
+  return useContentTranslation("discussion_reply", replyId);
 }

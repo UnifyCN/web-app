@@ -2,16 +2,27 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 import type { SupportedLanguage } from "@/lib/i18n/config";
 
 /**
- * On-demand translation of user-generated content (posts + comments) into the
- * viewer's UI language — i18n Phase 2.
+ * On-demand translation of user-generated content (posts + comments in Phase 2;
+ * In-Lesson Help discussions + replies in Phase 6) into the viewer's UI
+ * language.
  *
  * Calls the web-owned `translate-content` edge function through the
  * same-origin `/api/translate` proxy (same CORS pattern as /api/companion and
  * /api/moderation; the proxy forwards the user's JWT from cookies). The
  * function caches translations server-side (post_translations /
- * comment_translations) and enforces a 20/day per-user quota — cache hits are
- * free and flagged with `cached: true`.
+ * comment_translations / discussion_translations /
+ * discussion_reply_translations) and enforces a 20/day per-user quota — cache
+ * hits are free and flagged with `cached: true`.
  */
+
+/** Content kinds the translate-content function understands. Posts carry a
+ *  title; the rest are content-only. Posts/comments use integer ids;
+ *  discussions/replies use UUID strings. */
+export type TranslatableType =
+  | "post"
+  | "comment"
+  | "discussion"
+  | "discussion_reply";
 
 export interface TranslationResult {
   translatedContent: string;
@@ -32,8 +43,8 @@ export class TranslationLimitError extends Error {
 }
 
 async function requestTranslation(
-  type: "post" | "comment",
-  id: number,
+  type: TranslatableType,
+  id: number | string,
   targetLanguage: SupportedLanguage,
 ): Promise<TranslationResult> {
   if (!isSupabaseConfigured()) {
@@ -90,4 +101,18 @@ export function translateComment(
   targetLang: SupportedLanguage,
 ): Promise<TranslationResult> {
   return requestTranslation("comment", commentId, targetLang);
+}
+
+export function translateDiscussion(
+  discussionId: string,
+  targetLang: SupportedLanguage,
+): Promise<TranslationResult> {
+  return requestTranslation("discussion", discussionId, targetLang);
+}
+
+export function translateDiscussionReply(
+  replyId: string,
+  targetLang: SupportedLanguage,
+): Promise<TranslationResult> {
+  return requestTranslation("discussion_reply", replyId, targetLang);
 }
