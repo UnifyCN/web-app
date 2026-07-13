@@ -66,12 +66,6 @@ export function DiscussionReplyItem({
           <span className="min-w-0 truncate text-xs font-semibold text-ink-secondary">
             {reply.author.username}
           </span>
-          {isTopReply && (
-            <span className="flex shrink-0 items-center gap-1 rounded-full bg-success-label/10 px-1.5 py-0.5 text-[10px] font-semibold text-success-label">
-              <BadgeCheck className="h-3 w-3" aria-hidden />
-              {t("learnWeb.discussion.topReply")}
-            </span>
-          )}
           <span className="shrink-0 text-xs text-ink-placeholder">
             {formatRelativeTime(reply.createdAt)}
           </span>
@@ -102,6 +96,16 @@ export function DiscussionReplyItem({
             />
           </div>
         </div>
+        {isTopReply && (
+          <div className="mt-1">
+            <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-success-label/10 px-1.5 py-0.5 align-middle text-[10px] font-semibold text-success-label">
+              <BadgeCheck className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="truncate">
+                {t("learnWeb.discussion.topReply")}
+              </span>
+            </span>
+          </div>
+        )}
         <p className="mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-muted">
           {reply.body}
         </p>
