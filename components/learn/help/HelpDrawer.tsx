@@ -156,11 +156,9 @@ export function HelpDrawer({
   useEffect(() => {
     function onResize() {
       setEffectiveMax(effectiveMaxDrawerWidth());
-      setWidth((current) => {
-        const clamped = clampDrawerWidth(current);
-        widthRef.current = clamped;
-        return clamped;
-      });
+      const clamped = clampDrawerWidth(widthRef.current);
+      widthRef.current = clamped;
+      setWidth(clamped);
     }
     // Correct the static-max SSR seed with the real viewport max post-mount.
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe post-mount viewport read
