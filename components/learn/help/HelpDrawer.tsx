@@ -27,13 +27,17 @@ const MAX_DRAWER_WIDTH = 800;
 const DRAWER_WIDTH_STORAGE_KEY = "unify.helpDrawerWidth";
 const DRAWER_WIDTH_STEP = 24;
 
-/** Clamp a candidate width to [MIN, min(MAX, 60% of viewport)]. */
+/** The reachable maximum width: the static cap, but never more than 60% of the
+ *  viewport. `window`-free on the server → falls back to the static cap. */
+function effectiveMaxDrawerWidth(): number {
+  return typeof window !== "undefined"
+    ? Math.min(MAX_DRAWER_WIDTH, window.innerWidth * 0.6)
+    : MAX_DRAWER_WIDTH;
+}
+
+/** Clamp a candidate width to [MIN, effective max]. */
 function clampDrawerWidth(px: number): number {
-  const viewportMax =
-    typeof window !== "undefined"
-      ? Math.min(MAX_DRAWER_WIDTH, window.innerWidth * 0.6)
-      : MAX_DRAWER_WIDTH;
-  return Math.max(MIN_DRAWER_WIDTH, Math.min(px, viewportMax));
+  return Math.max(MIN_DRAWER_WIDTH, Math.min(px, effectiveMaxDrawerWidth()));
 }
 
 function readStoredDrawerWidth(): number | null {
@@ -97,6 +101,10 @@ export function HelpDrawer({
   const [width, setWidth] = useState(DEFAULT_DRAWER_WIDTH);
   const widthRef = useRef(DEFAULT_DRAWER_WIDTH);
   const [dragging, setDragging] = useState(false);
+  // Viewport-capped max (min of MAX and 60vw), exposed via aria-valuemax. Held in
+  // state — a render-time window read would break hydration — seeded at the static
+  // max (matches SSR) and corrected post-mount + on resize.
+  const [effectiveMax, setEffectiveMax] = useState(MAX_DRAWER_WIDTH);
 
   useEffect(() => {
     if (!open) return;
@@ -143,15 +151,20 @@ export function HelpDrawer({
     setWidth(clamped);
   }, []);
 
-  // Re-clamp when the viewport shrinks so the drawer can't exceed 60% of it.
+  // Track the viewport-capped max (for aria-valuemax) and re-clamp the width when
+  // the viewport shrinks so the drawer can't exceed 60% of it.
   useEffect(() => {
     function onResize() {
+      setEffectiveMax(effectiveMaxDrawerWidth());
       setWidth((current) => {
         const clamped = clampDrawerWidth(current);
         widthRef.current = clamped;
         return clamped;
       });
     }
+    // Correct the static-max SSR seed with the real viewport max post-mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe post-mount viewport read
+    setEffectiveMax(effectiveMaxDrawerWidth());
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
@@ -214,7 +227,7 @@ export function HelpDrawer({
     else if (event.key === "ArrowRight")
       next = widthRef.current - DRAWER_WIDTH_STEP;
     else if (event.key === "Home") next = MIN_DRAWER_WIDTH;
-    else if (event.key === "End") next = MAX_DRAWER_WIDTH;
+    else if (event.key === "End") next = effectiveMaxDrawerWidth();
     if (next == null) return;
     event.preventDefault();
     const clamped = clampDrawerWidth(next);
@@ -294,7 +307,7 @@ export function HelpDrawer({
           aria-controls={panelId}
           aria-valuenow={Math.round(width)}
           aria-valuemin={MIN_DRAWER_WIDTH}
-          aria-valuemax={MAX_DRAWER_WIDTH}
+          aria-valuemax={Math.round(effectiveMax)}
           tabIndex={0}
           onPointerDown={onHandlePointerDown}
           onKeyDown={onHandleKeyDown}
