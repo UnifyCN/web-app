@@ -1679,6 +1679,7 @@
       "beFirstModule": "Be the first to ask in this module",
       "backToOptionsAria": "Back to help options",
       "closeAria": "Close help",
+      "resizeAria": "Resize panel",
       "chat": {
         "intro": "Hi! I can see you're on <bold>{{lessonTitle}}</bold>. Ask me anything about this lesson and I'll keep my answer specific to it.",
         "starterExplain": "Explain \"{{lessonTitle}}\" in simple terms",
