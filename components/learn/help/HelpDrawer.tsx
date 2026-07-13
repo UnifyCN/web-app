@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { ArrowLeft, Sparkles, Users, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { trackHelpPathSelected } from "@/lib/analytics";
@@ -82,6 +82,9 @@ export function HelpDrawer({
   const [aiConversationId, setAiConversationId] = useState<string | null>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  // Stable id so the resize handle (role="separator") can point aria-controls at
+  // the panel it resizes (WAI-ARIA window-splitter pattern).
+  const panelId = useId();
   // Only mount path content after first open — the drawer sits in every
   // lesson page, and the board/stats queries shouldn't fire until asked for.
   // Previous-prop pattern (see ReportModal) so we never setState in an effect.
@@ -188,6 +191,17 @@ export function HelpDrawer({
     };
   }, [dragging]);
 
+  // While dragging, React `width` is intentionally stale — onMove writes the DOM
+  // directly to avoid re-rendering the chat/board children every frame. If an
+  // unrelated state change (e.g. a window-resize `setWidth`) re-renders mid-drag,
+  // the panel's `style` prop would reset `--drawer-w` to that stale value, so
+  // re-assert the live width from the ref after every commit while dragging.
+  // (Refs must be read in effects, not render, so the style prop can't read it.)
+  useIsomorphicLayoutEffect(() => {
+    if (!dragging) return;
+    panelRef.current?.style.setProperty("--drawer-w", `${widthRef.current}px`);
+  });
+
   function onHandlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
     event.preventDefault();
     setDragging(true);
@@ -199,8 +213,8 @@ export function HelpDrawer({
     if (event.key === "ArrowLeft") next = widthRef.current + DRAWER_WIDTH_STEP;
     else if (event.key === "ArrowRight")
       next = widthRef.current - DRAWER_WIDTH_STEP;
-    else if (event.key === "Home") next = MAX_DRAWER_WIDTH;
-    else if (event.key === "End") next = MIN_DRAWER_WIDTH;
+    else if (event.key === "Home") next = MIN_DRAWER_WIDTH;
+    else if (event.key === "End") next = MAX_DRAWER_WIDTH;
     if (next == null) return;
     event.preventDefault();
     const clamped = clampDrawerWidth(next);
@@ -261,6 +275,7 @@ export function HelpDrawer({
       {/* Panel */}
       <div
         ref={panelRef}
+        id={panelId}
         role="dialog"
         aria-modal="true"
         aria-label={t("learnWeb.help.chooserTitle")}
@@ -276,6 +291,10 @@ export function HelpDrawer({
           role="separator"
           aria-orientation="vertical"
           aria-label={t("learnWeb.help.resizeAria")}
+          aria-controls={panelId}
+          aria-valuenow={Math.round(width)}
+          aria-valuemin={MIN_DRAWER_WIDTH}
+          aria-valuemax={MAX_DRAWER_WIDTH}
           tabIndex={0}
           onPointerDown={onHandlePointerDown}
           onKeyDown={onHandleKeyDown}

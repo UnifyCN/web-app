@@ -1679,7 +1679,7 @@
       "beFirstModule": "Hãy là người đầu tiên đặt câu hỏi trong mô-đun này",
       "backToOptionsAria": "Quay lại các tùy chọn trợ giúp",
       "closeAria": "Đóng trợ giúp",
-      "resizeAria": "Thay đổi kích thước bảng",
+      "resizeAria": "Thay đổi kích thước bảng điều khiển",
       "chat": {
         "intro": "Chào bạn! Mình thấy bạn đang ở <bold>{{lessonTitle}}</bold>. Hãy hỏi mình bất cứ điều gì về bài học này và mình sẽ trả lời sát với nội dung bài.",
         "starterExplain": "Giải thích \"{{lessonTitle}}\" một cách đơn giản",
