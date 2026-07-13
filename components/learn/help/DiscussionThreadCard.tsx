@@ -148,11 +148,6 @@ export function DiscussionThreadCard({
             <span className="min-w-0 truncate text-xs font-semibold text-ink-secondary">
               {discussion.author.username}
             </span>
-            {submoduleTitle && (
-              <span className="hidden shrink-0 rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-700 sm:inline">
-                {submoduleTitle}
-              </span>
-            )}
             <span className="shrink-0 text-xs text-ink-placeholder">
               {formatRelativeTime(discussion.createdAt)}
             </span>
@@ -183,6 +178,14 @@ export function DiscussionThreadCard({
               />
             </div>
           </div>
+
+          {submoduleTitle && (
+            <div className="mt-1">
+              <span className="inline-block max-w-full truncate rounded-full bg-purple-50 px-2 py-0.5 align-middle text-[10px] font-medium text-purple-700">
+                {submoduleTitle}
+              </span>
+            </div>
+          )}
 
           <p className="mt-1.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-secondary">
             {discussion.body}

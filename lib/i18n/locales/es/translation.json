@@ -1679,6 +1679,7 @@
       "beFirstModule": "Sé la primera persona en preguntar en este módulo",
       "backToOptionsAria": "Volver a las opciones de ayuda",
       "closeAria": "Cerrar la ayuda",
+      "resizeAria": "Redimensionar el panel",
       "chat": {
         "intro": "¡Hola! Veo que estás en <bold>{{lessonTitle}}</bold>. Pregúntame lo que quieras sobre esta lección y mantendré mi respuesta enfocada en ella.",
         "starterExplain": "Explica \"{{lessonTitle}}\" en términos sencillos",

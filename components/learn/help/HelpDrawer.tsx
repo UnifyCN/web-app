@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowLeft, Sparkles, Users, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { trackHelpPathSelected } from "@/lib/analytics";
@@ -10,7 +10,54 @@ import { InLessonChat } from "./InLessonChat";
 import { DiscussionBoard } from "./DiscussionBoard";
 import type { LessonContext } from "@/types";
 
+// useLayoutEffect on the client so the drag listeners attach synchronously (before
+// the browser can deliver a pointerup); useEffect on the server to avoid the SSR
+// "useLayoutEffect does nothing on the server" warning.
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 type HelpView = "chooser" | "ai" | "discussion";
+
+// Resizable-width drawer (desktop only). Width is applied via a `--drawer-w`
+// CSS var that is consumed only at the `sm:` breakpoint, so mobile stays
+// full-width and the resize handle is hidden there.
+const DEFAULT_DRAWER_WIDTH = 420;
+const MIN_DRAWER_WIDTH = 320;
+const MAX_DRAWER_WIDTH = 800;
+const DRAWER_WIDTH_STORAGE_KEY = "unify.helpDrawerWidth";
+const DRAWER_WIDTH_STEP = 24;
+
+/** Clamp a candidate width to [MIN, min(MAX, 60% of viewport)]. */
+function clampDrawerWidth(px: number): number {
+  const viewportMax =
+    typeof window !== "undefined"
+      ? Math.min(MAX_DRAWER_WIDTH, window.innerWidth * 0.6)
+      : MAX_DRAWER_WIDTH;
+  return Math.max(MIN_DRAWER_WIDTH, Math.min(px, viewportMax));
+}
+
+function readStoredDrawerWidth(): number | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(DRAWER_WIDTH_STORAGE_KEY);
+    const n = raw == null ? NaN : Number(raw);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistDrawerWidth(px: number): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(
+      DRAWER_WIDTH_STORAGE_KEY,
+      String(Math.round(px)),
+    );
+  } catch {
+    // private mode / storage disabled — non-fatal
+  }
+}
 
 /**
  * In-Lesson Help drawer (PRD R2) — a right-side slide-in panel over the lesson
@@ -40,6 +87,13 @@ export function HelpDrawer({
   // Previous-prop pattern (see ReportModal) so we never setState in an effect.
   const [everOpened, setEverOpened] = useState(open);
   if (open && !everOpened) setEverOpened(true);
+
+  // Drawer width (desktop). `widthRef` mirrors it so a drag can write the width
+  // straight to the DOM without a re-render (keeps the heavy chat/board children
+  // from re-rendering ~60x/s mid-drag); React state is synced on pointer-up.
+  const [width, setWidth] = useState(DEFAULT_DRAWER_WIDTH);
+  const widthRef = useRef(DEFAULT_DRAWER_WIDTH);
+  const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -74,6 +128,86 @@ export function HelpDrawer({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
+
+  // Hydrate the persisted width post-mount (a lazy useState initializer would
+  // read localStorage during SSR/first render and cause a hydration mismatch).
+  useEffect(() => {
+    const stored = readStoredDrawerWidth();
+    if (stored == null) return;
+    const clamped = clampDrawerWidth(stored);
+    widthRef.current = clamped;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe persisted width; runs once on mount
+    setWidth(clamped);
+  }, []);
+
+  // Re-clamp when the viewport shrinks so the drawer can't exceed 60% of it.
+  useEffect(() => {
+    function onResize() {
+      setWidth((current) => {
+        const clamped = clampDrawerWidth(current);
+        widthRef.current = clamped;
+        return clamped;
+      });
+    }
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // While a drag is active, listen on `window` (not the handle) so move/up are
+  // caught even if the pointer leaves the handle, then tear the listeners down on
+  // release. Handlers are declared inside the effect, so add/remove identities
+  // always match — no leaked or stacked listeners (the previous handle-bound +
+  // setPointerCapture version could miss pointerup and resize on hover forever).
+  // A layout effect attaches them synchronously right after the `dragging` commit,
+  // before the browser can deliver a pointerup (closes the fast press/release
+  // race). Width is written straight to the DOM per move, so the heavy chat/board
+  // children never re-render mid-drag; React state syncs once on release.
+  useIsomorphicLayoutEffect(() => {
+    if (!dragging) return;
+    function onMove(event: PointerEvent) {
+      const clamped = clampDrawerWidth(window.innerWidth - event.clientX);
+      widthRef.current = clamped;
+      panelRef.current?.style.setProperty("--drawer-w", `${clamped}px`);
+    }
+    function onUp() {
+      setWidth(widthRef.current); // sync React state to the final dragged width
+      setDragging(false);
+    }
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "col-resize";
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+      persistDrawerWidth(widthRef.current);
+    };
+  }, [dragging]);
+
+  function onHandlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    setDragging(true);
+  }
+
+  function onHandleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    // Drawer grows leftward, so Left = wider, Right = narrower.
+    let next: number | null = null;
+    if (event.key === "ArrowLeft") next = widthRef.current + DRAWER_WIDTH_STEP;
+    else if (event.key === "ArrowRight")
+      next = widthRef.current - DRAWER_WIDTH_STEP;
+    else if (event.key === "Home") next = MAX_DRAWER_WIDTH;
+    else if (event.key === "End") next = MIN_DRAWER_WIDTH;
+    if (next == null) return;
+    event.preventDefault();
+    const clamped = clampDrawerWidth(next);
+    widthRef.current = clamped;
+    setWidth(clamped);
+    persistDrawerWidth(clamped);
+  }
 
   function selectPath(path: "ai" | "community") {
     trackHelpPathSelected({
@@ -130,12 +264,35 @@ export function HelpDrawer({
         role="dialog"
         aria-modal="true"
         aria-label={t("learnWeb.help.chooserTitle")}
+        style={{ "--drawer-w": `${width}px` } as React.CSSProperties}
         className={cn(
-          "absolute inset-y-0 right-0 flex w-full flex-col bg-surface shadow-xl sm:max-w-[420px] sm:border-l sm:border-border-card",
+          "absolute inset-y-0 right-0 flex w-full flex-col bg-surface shadow-xl sm:w-[var(--drawer-w)] sm:max-w-[92vw] sm:border-l sm:border-border-card",
           "transition-transform duration-200 motion-reduce:transition-none",
           open ? "translate-x-0" : "translate-x-full",
         )}
       >
+        {/* Resize handle — desktop only; drag the left edge to set the width */}
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={t("learnWeb.help.resizeAria")}
+          tabIndex={0}
+          onPointerDown={onHandlePointerDown}
+          onKeyDown={onHandleKeyDown}
+          className={cn(
+            "group absolute inset-y-0 left-0 z-10 hidden w-1.5 cursor-col-resize touch-none items-center justify-center hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:flex",
+            dragging && "bg-primary/10",
+          )}
+        >
+          <span
+            aria-hidden
+            className={cn(
+              "h-8 w-1 rounded-full bg-border-card transition-colors group-hover:bg-primary",
+              dragging && "bg-primary",
+            )}
+          />
+        </div>
+
         {/* Header */}
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border-card px-4">
           {view !== "chooser" && (
