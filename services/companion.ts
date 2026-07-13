@@ -306,31 +306,62 @@ export interface GenerateReplyInput {
   responseLanguage?: string;
 }
 
+/**
+ * Which fixed IRCC disclaimer rag-query chose for this answer: `"legal"` (the
+ * standard "general information, not legal advice" notice when the KB had good
+ * hits) or `"legalNoKb"` (the standard notice preceded by the "may not be in
+ * Unify's internal resources" notice when it didn't). `null` when the function
+ * returned no disclaimer. The caller resolves this to a localized string via the
+ * `companion.legalDisclaimer` / `companion.noKbDisclaimer` translation keys — the
+ * service stays free of React/i18n.
+ */
+export type DisclaimerKind = "legal" | "legalNoKb" | null;
+
 export interface GeneratedReply {
   answer: string;
   sources: ChatSource[] | null;
   suggestedNextSteps: string[] | null;
+  disclaimerKind: DisclaimerKind;
+}
+
+/**
+ * rag-query returns its IRCC disclaimer as a fixed *English* string in a separate
+ * `disclaimer` field, so it isn't localized even when the answer is (the
+ * `responseLanguage` directive only steers the LLM). We classify which variant it
+ * is here and let the hook render a translated equivalent instead. The
+ * "internal resources" marker is a stable substring of the no-KB notice.
+ */
+function classifyDisclaimer(disclaimer: unknown): DisclaimerKind {
+  if (typeof disclaimer !== "string" || disclaimer.trim() === "") return null;
+  return disclaimer.includes("internal resources") ? "legalNoKb" : "legal";
 }
 
 /**
  * Calls the `rag-query` edge function and returns the assistant answer +
  * normalized citations. The browser Supabase client attaches the user's JWT
- * automatically. A 429 surfaces as {@link ChatLimitError}; the IRCC disclaimer
- * the function returns is appended to the answer (the web UI has no separate
- * disclaimer slot like mobile).
+ * automatically. A 429 surfaces as {@link ChatLimitError}. The IRCC disclaimer is
+ * NOT appended here — {@link classifyDisclaimer} reports which variant applies so
+ * the caller can render a localized version (the web UI has no separate disclaimer
+ * slot like mobile, so the hook appends the translated text to the answer).
  */
 export async function generateReply(
   input: GenerateReplyInput,
 ): Promise<GeneratedReply> {
   if (!isSupabaseConfigured()) {
-    return { answer: MOCK_REPLY, sources: null, suggestedNextSteps: null };
+    return {
+      answer: MOCK_REPLY,
+      sources: null,
+      suggestedNextSteps: null,
+      disclaimerKind: null,
+    };
   }
 
   // POST to the same-origin /api/companion proxy, which forwards to the
   // rag-query-web edge function server-side with the user's JWT (keeping the
   // call same-origin and the JWT in an httpOnly cookie). A 429 surfaces as
-  // ChatLimitError; the IRCC disclaimer the function returns is appended to the
-  // answer (the web UI has no separate disclaimer slot like mobile).
+  // ChatLimitError. The IRCC disclaimer is classified (not appended) here so the
+  // caller can render a localized version (the web UI has no separate disclaimer
+  // slot like mobile).
   const res = await fetch("/api/companion", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -365,14 +396,11 @@ export async function generateReply(
     throw new Error("rag-query returned no answer");
   }
 
-  const answer = body.disclaimer
-    ? `${body.answer}\n\n${body.disclaimer}`
-    : body.answer;
-
   return {
-    answer,
+    answer: body.answer,
     sources: normalizeSources(body.sources),
     suggestedNextSteps: normalizeSuggestions(body.suggestedNextSteps),
+    disclaimerKind: classifyDisclaimer(body.disclaimer),
   };
 }
 

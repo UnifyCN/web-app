@@ -63,7 +63,7 @@ export function DiscussionReplyItem({
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate text-xs font-semibold text-ink-secondary">
+          <span className="min-w-0 truncate text-xs font-semibold text-ink-secondary">
             {reply.author.username}
           </span>
           {isTopReply && (
@@ -75,7 +75,7 @@ export function DiscussionReplyItem({
           <span className="shrink-0 text-xs text-ink-placeholder">
             {formatRelativeTime(reply.createdAt)}
           </span>
-          <div className="ml-auto">
+          <div className="ml-auto shrink-0">
             <DropdownMenu
               ariaLabel={t("learnWeb.discussion.replyOptionsAria")}
               items={

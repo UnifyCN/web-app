@@ -480,6 +480,8 @@
     "dailyLimitReachedToast": "Bạn đã đạt giới hạn tin nhắn hàng ngày. Vui lòng thử lại vào ngày mai.",
     "busyToast": "Trợ lý đang bận. Vui lòng thử lại sau một phút.",
     "disclaimer": "Trợ lý có thể mắc lỗi. Hãy xác minh thông tin quan trọng.",
+    "legalDisclaimer": "Đây là thông tin chung, không phải tư vấn pháp lý. Đối với các quyết định liên quan đến tình huống cụ thể của bạn, vui lòng kiểm tra trang web chính thức của IRCC hoặc trao đổi với một chuyên gia di trú được cấp phép.",
+    "noKbDisclaimer": "Nội dung này có thể không có trong tài nguyên nội bộ của Unify; vui lòng kiểm tra lại với IRCC hoặc một chuyên gia di trú được cấp phép.",
     "openHistory": "Mở lịch sử",
     "newChat": "Cuộc trò chuyện mới",
     "sourcesVerified": "Nguồn được xác minh lần cuối: ",

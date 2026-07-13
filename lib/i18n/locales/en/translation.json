@@ -480,6 +480,8 @@
     "dailyLimitReachedToast": "You've reached your daily message limit. Please try again tomorrow.",
     "busyToast": "AI Companion is busy right now. Please try again in a minute.",
     "disclaimer": "Companion can make mistakes. Verify important info.",
+    "legalDisclaimer": "This is general information, not legal advice. For decisions about your specific situation, please check the official IRCC website or talk to a licensed immigration professional.",
+    "noKbDisclaimer": "This may not be covered in Unify's internal resources; please double-check with IRCC or a licensed immigration professional.",
     "openHistory": "Open history",
     "newChat": "New chat",
     "sourcesVerified": "Sources last verified: ",

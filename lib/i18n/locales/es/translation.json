@@ -480,6 +480,8 @@
     "dailyLimitReachedToast": "Has alcanzado tu límite diario de mensajes. Inténtalo de nuevo mañana.",
     "busyToast": "El asistente está ocupado en este momento. Inténtalo de nuevo en un minuto.",
     "disclaimer": "El asistente puede cometer errores. Verifica la información importante.",
+    "legalDisclaimer": "Esta es información general, no asesoramiento legal. Para decisiones sobre tu situación específica, consulta el sitio web oficial de IRCC o habla con un profesional de inmigración autorizado.",
+    "noKbDisclaimer": "Es posible que esto no esté cubierto en los recursos internos de Unify; verifícalo con IRCC o con un profesional de inmigración autorizado.",
     "openHistory": "Abrir historial",
     "newChat": "Nueva conversación",
     "sourcesVerified": "Fuentes verificadas por última vez: ",

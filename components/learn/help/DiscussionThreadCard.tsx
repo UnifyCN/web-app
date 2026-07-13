@@ -145,7 +145,7 @@ export function DiscussionThreadCard({
               profilePictureUrl={discussion.author.profilePictureUrl}
               size={24}
             />
-            <span className="truncate text-xs font-semibold text-ink-secondary">
+            <span className="min-w-0 truncate text-xs font-semibold text-ink-secondary">
               {discussion.author.username}
             </span>
             {submoduleTitle && (
@@ -156,7 +156,7 @@ export function DiscussionThreadCard({
             <span className="shrink-0 text-xs text-ink-placeholder">
               {formatRelativeTime(discussion.createdAt)}
             </span>
-            <div className="ml-auto">
+            <div className="ml-auto shrink-0">
               <DropdownMenu
                 ariaLabel={t("learnWeb.discussion.questionOptionsAria")}
                 items={

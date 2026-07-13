@@ -93,7 +93,7 @@ export function useSendMessage() {
   // language. Read via react-i18next (the i18n instance is provider-scoped, not
   // a module singleton); English is the server default so it's sent only for
   // other languages.
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   return useMutation<
     { conversationIdentifier: string },
     Error,
@@ -131,7 +131,7 @@ export function useSendMessage() {
 
       const responseLanguage =
         i18n.language && i18n.language !== "en" ? i18n.language : undefined;
-      const { answer, sources, suggestedNextSteps } =
+      const { answer, sources, suggestedNextSteps, disclaimerKind } =
         await companion.generateReply({
           conversationIdentifier,
           prompt: text,
@@ -140,10 +140,23 @@ export function useSendMessage() {
           responseLanguage,
         });
 
+      // rag-query returns the IRCC disclaimer as fixed English text; render it
+      // from the locale files instead so it matches the answer's language.
+      // Appended to the answer body because the web UI has no separate disclaimer
+      // slot (mobile does). The no-KB variant leads with the extra notice, then
+      // the standard one — matching the server's ordering.
+      const disclaimer =
+        disclaimerKind === "legalNoKb"
+          ? `${t("companion.noKbDisclaimer")} ${t("companion.legalDisclaimer")}`
+          : disclaimerKind === "legal"
+            ? t("companion.legalDisclaimer")
+            : "";
+      const content = disclaimer ? `${answer}\n\n${disclaimer}` : answer;
+
       await companion.saveMessage({
         conversationIdentifier,
         role: "assistant",
-        content: answer,
+        content,
         sources,
         suggestedNextSteps,
       });
