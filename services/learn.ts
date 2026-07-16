@@ -9,6 +9,7 @@ import type {
   SanityLessonQuiz,
   SanityModule,
   SanityPractice,
+  SanitySubmodule,
 } from "@/types";
 import {
   createClient,
@@ -18,12 +19,15 @@ import {
 import {
   isSanityConfigured,
   sanityClient,
+  mergeI18nOverlay,
+  type WithI18n,
   MODULES_LIST_QUERY,
   MODULE_DETAIL_QUERY,
   LESSON_DETAIL_QUERY,
   PRACTICES_BY_SUBMODULE_QUERY,
   LESSON_QUIZ_QUERY,
 } from "@/lib/sanity";
+import type { SupportedLanguage } from "@/lib/i18n/config";
 import {
   getMockLessonById,
   getMockModuleById,
@@ -90,6 +94,32 @@ function rowToPracticeProgress(row: PracticeProgressRow): PracticeProgress {
   };
 }
 
+/** Raw module row as fetched: each node may carry a translated-content
+ * overlay (see lib/sanity.ts). Merged away before mapping to view types. */
+type ModuleRow = WithI18n<SanityModule> & {
+  submodules?: (WithI18n<SanitySubmodule> & {
+    lessons?: WithI18n<SanityLesson>[];
+  })[];
+};
+
+/** Merge the language overlay on a module and every nested submodule/lesson.
+ * `_id`s are untouched — only content fields (title, description, …) change. */
+function mergeModuleTreeI18n(mod: ModuleRow): SanityModule {
+  const merged: SanityModule = mergeI18nOverlay(mod);
+  return {
+    ...merged,
+    submodules: (mod.submodules ?? []).map((sub) => {
+      const s: SanitySubmodule = mergeI18nOverlay(sub);
+      return {
+        ...s,
+        lessons: (sub.lessons ?? []).map((l): SanityLesson =>
+          mergeI18nOverlay(l),
+        ),
+      };
+    }),
+  };
+}
+
 /** Real percent from a set of completed-lesson IDs over the module's total. */
 function computeModulePercent(
   lessonIds: string[],
@@ -109,7 +139,9 @@ function computeModulePercent(
  */
 const mockFavouriteModuleIds = new Set<string>();
 
-export async function getModules(): Promise<LearnModuleView[]> {
+export async function getModules(
+  language: SupportedLanguage = "en",
+): Promise<LearnModuleView[]> {
   if (!isSanityConfigured()) {
     return mockModules.map((m) => ({
       ...m,
@@ -117,9 +149,10 @@ export async function getModules(): Promise<LearnModuleView[]> {
     }));
   }
 
-  const sanityModules = await sanityClient.fetch<SanityModule[]>(
-    MODULES_LIST_QUERY,
-  );
+  const rows = await sanityClient.fetch<ModuleRow[]>(MODULES_LIST_QUERY, {
+    lang: language,
+  });
+  const sanityModules = rows.map(mergeModuleTreeI18n);
 
   // Per-user merge: only when Supabase is configured AND the caller is
   // signed in. Otherwise return the Sanity modules with default state
@@ -190,6 +223,7 @@ export async function getModules(): Promise<LearnModuleView[]> {
 
 export async function getModule(
   moduleId: string,
+  language: SupportedLanguage = "en",
 ): Promise<LearnModuleView | undefined> {
   if (!isSanityConfigured()) {
     const mock = getMockModuleById(moduleId);
@@ -198,11 +232,12 @@ export async function getModule(
       : mock;
   }
 
-  const sanityModule = await sanityClient.fetch<SanityModule | null>(
-    MODULE_DETAIL_QUERY,
-    { moduleId },
-  );
-  if (!sanityModule) return undefined;
+  const row = await sanityClient.fetch<ModuleRow | null>(MODULE_DETAIL_QUERY, {
+    moduleId,
+    lang: language,
+  });
+  if (!row) return undefined;
+  const sanityModule = mergeModuleTreeI18n(row);
 
   let status: ModuleStatus = "not_started";
   let isFavourite = false;
@@ -272,14 +307,16 @@ export async function getModule(
 
 export async function getLesson(
   lessonId: string,
+  language: SupportedLanguage = "en",
 ): Promise<SanityLesson | undefined> {
   if (!isSanityConfigured()) return getMockLessonById(lessonId);
 
-  const lesson = await sanityClient.fetch<SanityLesson | null>(
+  const lesson = await sanityClient.fetch<WithI18n<SanityLesson> | null>(
     LESSON_DETAIL_QUERY,
-    { lessonId },
+    { lessonId, lang: language },
   );
-  return lesson ?? undefined;
+  if (!lesson) return undefined;
+  return mergeI18nOverlay(lesson);
 }
 
 /* ---- Practices (quiz content) ---------------------------------------- */
@@ -612,9 +649,9 @@ export async function upsertLessonQuizProgress(
 
 /* ---- Home right-panel summary ----------------------------------------- */
 
-export async function getLearningProgressSummary(): Promise<
-  LearningProgressSummary[]
-> {
+export async function getLearningProgressSummary(
+  language: SupportedLanguage = "en",
+): Promise<LearningProgressSummary[]> {
   // Mock fallback only kicks in when env vars aren't set (local dev). A
   // signed-out user in a configured environment gets an empty list — they
   // shouldn't see other-people's-shaped placeholder data.
@@ -640,19 +677,23 @@ export async function getLearningProgressSummary(): Promise<
   // can compute real percent. One Sanity query + one Supabase query, both
   // in parallel.
   const moduleIds = rows.map((r) => r.module_id);
-  const [sanityModules, lessonsRes] = await Promise.all([
-    sanityClient.fetch<
-      (Pick<SanityModule, "_id" | "title" | "colorTheme"> & {
-        lessonIds?: string[];
-      })[]
-    >(
+  type SummaryModuleRow = Pick<SanityModule, "_id" | "title" | "colorTheme"> & {
+    lessonIds?: string[];
+    i18n?: { title?: string | null } | null;
+  };
+  const [summaryRows, lessonsRes] = await Promise.all([
+    sanityClient.fetch<SummaryModuleRow[]>(
+      // Base-language guards on the nested listings keep lessonIds scoped to
+      // base docs (progress is tracked against base ids); the overlay only
+      // localizes the module title shown on the Home progress card.
       `*[_type == "module" && _id in $ids]{
         _id, title, colorTheme { hex },
-        "lessonIds": *[_type == "submodule" && references(^._id)][]{
-          "ids": *[_type == "lesson" && references(^._id)]._id
+        "i18n": select($lang != "en" => *[_type == "translation.metadata" && references(^._id)][0].translations[_key == $lang][0].value->{ title }, null),
+        "lessonIds": *[_type == "submodule" && references(^._id) && (language == "en" || !defined(language))][]{
+          "ids": *[_type == "lesson" && references(^._id) && (language == "en" || !defined(language))]._id
         }.ids[]
       }`,
-      { ids: moduleIds },
+      { ids: moduleIds, lang: language },
     ),
     supabase
       .from("user_lesson_progress")
@@ -667,7 +708,7 @@ export async function getLearningProgressSummary(): Promise<
       (r) => r.sanity_lesson_id,
     ),
   );
-  const sanityById = new Map(sanityModules.map((m) => [m._id, m]));
+  const sanityById = new Map(summaryRows.map((m) => [m._id, m]));
 
   // Preserve learn_progress ordering (most-recently-updated first).
   return rows
@@ -676,7 +717,7 @@ export async function getLearningProgressSummary(): Promise<
       if (!mod) return null;
       return {
         moduleId: mod._id,
-        moduleName: mod.title,
+        moduleName: mod.i18n?.title ?? mod.title,
         progressPercent: computeModulePercent(
           mod.lessonIds ?? [],
           completedSet,

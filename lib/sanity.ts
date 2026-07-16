@@ -48,12 +48,58 @@ export function sanityImageUrl(
   }
 }
 
-/* ---- GROQ queries (verbatim from mobile UnifyCN/mobile-app) ----------- */
+/* ---- Language overlay (document-internationalization) ------------------ */
+
+/**
+ * Learn/Checklist content lives in per-language Sanity documents linked by
+ * `translation.metadata` groups (base docs carry `language: "en"`). Queries
+ * ALWAYS return the base English document — its `_id` is the stable key for
+ * Supabase progress tables (shared with mobile), quiz/practice `_ref` filters
+ * and `/learn/{id}` routes — plus an `i18n` object holding the translated
+ * content fields, resolved through the metadata group for `$lang`.
+ *
+ * While a translation is an unpublished draft, the weak-reference deref
+ * returns null under this client's `perspective: "published"`, so the overlay
+ * is empty and English renders — i.e. translated content activates the moment
+ * a translation is published, with no code change.
+ */
+
+/** GROQ fragment: translated variant of the enclosing doc for `$lang`
+ * (null for English or when no published translation exists). `fields` is a
+ * projection body, e.g. `title, description`. */
+const i18nOverlay = (fields: string) =>
+  `"i18n": select($lang != "en" => *[_type == "translation.metadata" && references(^._id)][0].translations[_key == $lang][0].value->{ ${fields} }, null)`;
+
+/** Base-language guard for type-scoped listings. Without it, published
+ * translations (separate docs referencing the same parents) would appear as
+ * duplicate entries. `!defined` keeps legacy/untagged docs visible, matching
+ * the Studio structure filter. */
+const BASE_LANG = `(language == "en" || !defined(language))`;
+
+/** A Sanity row that may carry a translated-content overlay. */
+export type WithI18n<T> = T & { i18n?: Partial<T> | null };
+
+/**
+ * Merge a row's `i18n` overlay over its base fields (nulls in the overlay are
+ * ignored so partial translations fall back per-field), dropping the `i18n`
+ * key. No-op for English/missing overlays.
+ */
+export function mergeI18nOverlay<T extends object>(row: WithI18n<T>): T {
+  const { i18n, ...base } = row;
+  if (!i18n) return base as unknown as T;
+  const overlay = Object.fromEntries(
+    Object.entries(i18n).filter(([, v]) => v !== null && v !== undefined),
+  ) as Partial<T>;
+  return { ...(base as unknown as T), ...overlay };
+}
+
+/* ---- GROQ queries (mobile-derived + web language overlay) -------------- */
 
 /** All modules with their submodules + per-submodule lesson stubs (id +
  * title + order). Used to compute progress percent client-side and to
- * resolve the first-incomplete lesson's submodule for resume cards. */
-export const MODULES_LIST_QUERY = `*[_type == "module"] | order(title) {
+ * resolve the first-incomplete lesson's submodule for resume cards.
+ * Params: `$lang`. */
+export const MODULES_LIST_QUERY = `*[_type == "module" && ${BASE_LANG}] | order(title) {
   _id,
   _type,
   _createdAt,
@@ -63,22 +109,28 @@ export const MODULES_LIST_QUERY = `*[_type == "module"] | order(title) {
   icon,
   "personas": coalesce(personas, []),
   "interests": coalesce(interests, []),
-  "submodules": *[_type == "submodule" && references(^._id)] | order(order) {
+  ${i18nOverlay("title, description")},
+  "submodules": *[_type == "submodule" && references(^._id) && ${BASE_LANG}] | order(order) {
     _id,
     _type,
     title,
     description,
     order,
-    "lessons": *[_type == "lesson" && references(^._id)] | order(order) {
+    ${i18nOverlay("title, description")},
+    "lessons": *[_type == "lesson" && references(^._id) && ${BASE_LANG}] | order(order) {
       _id,
       _type,
       title,
-      order
+      order,
+      ${i18nOverlay("title")}
     }
   }
 }`;
 
-/** Single module with full submodule + lesson hierarchy. */
+/** Single module with full submodule + lesson hierarchy. Params: `$moduleId`,
+ * `$lang`. (Lesson `pages`/`ending_pages` stay base-language here — they feed
+ * page COUNTS and resume positions, which translations preserve; full lesson
+ * content is overlaid in LESSON_DETAIL_QUERY.) */
 export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $moduleId][0] {
   _id,
   _type,
@@ -89,14 +141,16 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $moduleId][0] 
   icon,
   "personas": coalesce(personas, []),
   "interests": coalesce(interests, []),
-  "submodules": *[_type == "submodule" && references(^._id)] | order(order) {
+  ${i18nOverlay("title, description")},
+  "submodules": *[_type == "submodule" && references(^._id) && ${BASE_LANG}] | order(order) {
     _id,
     _type,
     title,
     description,
     order,
     "practice_count": count(*[_type == "practice" && submodule._ref == ^._id]),
-    "lessons": *[_type == "lesson" && references(^._id)] | order(order) {
+    ${i18nOverlay("title, description")},
+    "lessons": *[_type == "lesson" && references(^._id) && ${BASE_LANG}] | order(order) {
       _id,
       _type,
       title,
@@ -105,12 +159,13 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $moduleId][0] 
       order,
       "lesson_page_count": count(pages),
       pages,
-      ending_pages
+      ending_pages,
+      ${i18nOverlay("title, description")}
     }
   }
 }`;
 
-/** Single lesson with full body content. */
+/** Single lesson with full body content. Params: `$lessonId`, `$lang`. */
 export const LESSON_DETAIL_QUERY = `*[_type == "lesson" && _id == $lessonId][0] {
   _id,
   _type,
@@ -121,7 +176,8 @@ export const LESSON_DETAIL_QUERY = `*[_type == "lesson" && _id == $lessonId][0] 
   order,
   pages,
   activity_pages,
-  ending_pages
+  ending_pages,
+  ${i18nOverlay("title, description, pages, activity_pages, ending_pages")}
 }`;
 
 /** All practices for a submodule (quiz + activity), ordered. The caller
