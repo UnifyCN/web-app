@@ -19,12 +19,27 @@ export function isSanityConfigured() {
   );
 }
 
+/**
+ * DEV-ONLY draft preview: with `NEXT_PUBLIC_SANITY_PREVIEW_DRAFTS=true` (+ a
+ * read token) in `.env.local`, the client reads the `drafts` perspective so
+ * unpublished translation drafts render locally for visual review. Hard-gated
+ * on NODE_ENV=development — production builds always read `published`.
+ * The token is exposed to the local browser context; never set these vars
+ * outside local dev.
+ */
+const PREVIEW_DRAFTS =
+  process.env.NODE_ENV === "development" &&
+  process.env.NEXT_PUBLIC_SANITY_PREVIEW_DRAFTS === "true";
+
 export const sanityClient = createClient({
   projectId: PROJECT_ID,
   dataset: DATASET,
   apiVersion: "2024-01-01",
-  useCdn: true,
-  perspective: "published",
+  useCdn: !PREVIEW_DRAFTS,
+  perspective: PREVIEW_DRAFTS ? "drafts" : "published",
+  token: PREVIEW_DRAFTS
+    ? process.env.NEXT_PUBLIC_SANITY_PREVIEW_TOKEN
+    : undefined,
 });
 
 const imageBuilder = createImageUrlBuilder(sanityClient);
