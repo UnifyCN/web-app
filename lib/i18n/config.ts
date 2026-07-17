@@ -5,17 +5,66 @@
  * `user_onboarding_profiles.preferred_language` column.
  */
 
-/** Supported UI languages (code → native display label). Same four as mobile. */
+/**
+ * Supported UI languages (code → native display label). en/vi/es/hi mirror the
+ * mobile app; `ar` (Arabic) is web-first (mobile has no Arabic yet) and RTL —
+ * see RTL_LANGUAGES / dirForLanguage below. Arabic is gated out of the public
+ * picker until its machine translation is native-reviewed (GATED_LANGUAGES).
+ */
 export const SUPPORTED_LANGUAGES = {
   en: "English",
   vi: "Tiếng Việt",
   es: "Español",
   hi: "हिन्दी",
+  ar: "العربية",
 } as const;
 
 export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
 
 export const DEFAULT_LANGUAGE: SupportedLanguage = "en";
+
+export type Direction = "ltr" | "rtl";
+
+/** Right-to-left locales. Drives `<html dir>` (SSR) + `document.dir` (client). */
+export const RTL_LANGUAGES = new Set<SupportedLanguage>(["ar"]);
+
+/** Text direction for a language — used by the root layout and persistLocale(). */
+export function dirForLanguage(lang: SupportedLanguage): Direction {
+  return RTL_LANGUAGES.has(lang) ? "rtl" : "ltr";
+}
+
+/** True when the value is a supported RTL language (safe on unknown input). */
+export function isRtlLanguage(value: unknown): boolean {
+  return isSupportedLanguage(value) && RTL_LANGUAGES.has(value);
+}
+
+/**
+ * Languages built + testable but hidden from the public picker until their
+ * translation is reviewed. They stay valid SupportedLanguages — a stored cookie
+ * / DB value still renders (and mirrors RTL) — they're just not user-selectable
+ * unless explicitly enabled via NEXT_PUBLIC_ENABLE_ARABIC.
+ */
+const GATED_LANGUAGES = new Set<SupportedLanguage>(["ar"]);
+
+function isLanguageEnabled(lang: SupportedLanguage): boolean {
+  if (!GATED_LANGUAGES.has(lang)) return true;
+  return process.env.NEXT_PUBLIC_ENABLE_ARABIC === "true";
+}
+
+/**
+ * Languages offered in the UI picker (code → native label). Gated languages are
+ * excluded unless their flag is on. Callers should still include the *active*
+ * language so a `<select value>` always has a matching option.
+ */
+export function getSelectableLanguages(): Partial<
+  Record<SupportedLanguage, string>
+> {
+  return Object.fromEntries(
+    (Object.entries(SUPPORTED_LANGUAGES) as [SupportedLanguage, string][]).filter(
+      ([code]) => isLanguageEnabled(code),
+    ),
+  );
+}
 
 /** localStorage key — identical to the mobile app's, kept for parity. */
 export const LANGUAGE_STORAGE_KEY = "user_preferred_language";

@@ -4,6 +4,7 @@ import {
   DEFAULT_LANGUAGE,
   LANGUAGE_COOKIE,
   LANGUAGE_STORAGE_KEY,
+  dirForLanguage,
   isSupportedLanguage,
   type SupportedLanguage,
 } from "./config";
@@ -11,12 +12,14 @@ import en from "./locales/en/translation.json";
 import vi from "./locales/vi/translation.json";
 import es from "./locales/es/translation.json";
 import hi from "./locales/hi/translation.json";
+import ar from "./locales/ar/translation.json";
 
 const resources = {
   en: { translation: en },
   vi: { translation: vi },
   es: { translation: es },
   hi: { translation: hi },
+  ar: { translation: ar },
 } as const;
 
 /**
@@ -83,9 +86,12 @@ export function persistLocale(lang: SupportedLanguage) {
     // Private mode / storage disabled — the cookie still carries the choice.
   }
   document.cookie = `${LANGUAGE_COOKIE}=${lang}; path=/; max-age=31536000; samesite=lax`;
-  // Keep <html lang> in sync on a client-side switch (SSR sets it per request);
-  // matters for screen readers and `:lang()` CSS before the next reload.
+  // Keep <html lang> + <html dir> in sync on a client-side switch (SSR sets both
+  // per request); `lang` matters for screen readers and `:lang()` CSS, and `dir`
+  // flips the whole layout to RTL/LTR immediately — without it, switching to/from
+  // Arabic would leave a stale direction until the next full reload.
   document.documentElement.lang = lang;
+  document.documentElement.dir = dirForLanguage(lang);
 }
 
 /**
