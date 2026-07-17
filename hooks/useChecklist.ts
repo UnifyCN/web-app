@@ -56,7 +56,7 @@ export function useToggleTask() {
     void,
     Error,
     checklist.ToggleTaskInput,
-    { previous: ChecklistTask[] | undefined }
+    { previous: ChecklistTask[] | undefined; tasksKey: readonly unknown[] }
   >({
     mutationFn: checklist.toggleTask,
     onMutate: async (input) => {
@@ -64,27 +64,36 @@ export function useToggleTask() {
       const previous = queryClient.getQueryData<ChecklistTask[]>(tasksKey);
       const nextCompleted = !input.completed;
       queryClient.setQueryData<ChecklistTask[]>(tasksKey, (prev) =>
-        (prev ?? []).map((task) =>
-          task.id === input.id && task.isCustom === input.isCustom
-            ? {
-                ...task,
-                completed: nextCompleted,
-                completedAt: nextCompleted ? new Date().toISOString() : null,
-              }
-            : task,
-        ),
+        prev
+          ? prev.map((task) =>
+              task.id === input.id && task.isCustom === input.isCustom
+                ? {
+                    ...task,
+                    completed: nextCompleted,
+                    completedAt: nextCompleted
+                      ? new Date().toISOString()
+                      : null,
+                  }
+                : task,
+            )
+          : prev,
       );
-      return { previous };
+      // Return the mutation-time key: a mid-flight language switch rebinds the
+      // closure `tasksKey`, but rollback/analytics must hit the slot we wrote.
+      return { previous, tasksKey };
     },
     onError: (_error, _input, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(tasksKey, context.previous);
+        queryClient.setQueryData(context.tasksKey, context.previous);
       }
     },
-    onSuccess: (_data, input) => {
+    onSuccess: (_data, input, context) => {
       // Read title/priority from the cache (unchanged by the toggle); `input`
       // only carries id/isCustom/completed.
-      const tasks = queryClient.getQueryData<ChecklistTask[]>(tasksKey) ?? [];
+      const tasks =
+        queryClient.getQueryData<ChecklistTask[]>(
+          context?.tasksKey ?? tasksKey,
+        ) ?? [];
       const task = tasks.find(
         (t) => t.id === input.id && t.isCustom === input.isCustom,
       );
@@ -117,7 +126,7 @@ export function useReorderTasks() {
     void,
     Error,
     { priority: Priority; bucket: ChecklistTask[] },
-    { previous: ChecklistTask[] | undefined }
+    { previous: ChecklistTask[] | undefined; tasksKey: readonly unknown[] }
   >({
     mutationFn: ({ priority, bucket }) =>
       checklist.saveChecklistOrder(priority, bucket.map(checklist.taskOrderKey)),
@@ -127,11 +136,12 @@ export function useReorderTasks() {
       queryClient.setQueryData<ChecklistTask[]>(tasksKey, (prev) =>
         prev ? rebuildWithBucket(prev, priority, bucket) : prev,
       );
-      return { previous };
+      // Mutation-time key — see useToggleTask.
+      return { previous, tasksKey };
     },
     onError: (_error, _vars, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(tasksKey, context.previous);
+        queryClient.setQueryData(context.tasksKey, context.previous);
       }
     },
     // Settle against the server after success AND error, matching the other
@@ -161,20 +171,23 @@ export function useDeleteCustomTask() {
     void,
     Error,
     string,
-    { previous: ChecklistTask[] | undefined }
+    { previous: ChecklistTask[] | undefined; tasksKey: readonly unknown[] }
   >({
     mutationFn: checklist.deleteCustomTask,
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: TASKS_KEY });
       const previous = queryClient.getQueryData<ChecklistTask[]>(tasksKey);
       queryClient.setQueryData<ChecklistTask[]>(tasksKey, (prev) =>
-        (prev ?? []).filter((task) => !(task.isCustom && task.id === id)),
+        prev
+          ? prev.filter((task) => !(task.isCustom && task.id === id))
+          : prev,
       );
-      return { previous };
+      // Mutation-time key — see useToggleTask.
+      return { previous, tasksKey };
     },
     onError: (_error, _id, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(tasksKey, context.previous);
+        queryClient.setQueryData(context.tasksKey, context.previous);
       }
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),

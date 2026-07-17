@@ -176,6 +176,7 @@ export function useToggleFavouriteModule() {
     {
       previousList: LearnModuleView[] | undefined;
       previousDetail: LearnModuleView | undefined;
+      listKey: readonly unknown[];
       moduleKey: readonly unknown[];
     }
   >({
@@ -183,6 +184,9 @@ export function useToggleFavouriteModule() {
       learn.toggleFavouriteModule(moduleId, isFavourite),
     onMutate: async ({ moduleId, isFavourite }) => {
       // Exact (language-aware) keys — setQueryData/getQueryData don't prefix-match.
+      // Captured at mutation time and returned in context: onError must roll
+      // back the SAME cache slot even if the user switches language mid-flight
+      // (RQ v5 rebinds callbacks on re-render, so closures see the new language).
       const listKey = [...MODULES_KEY, currentLanguage];
       const moduleKey = [...MODULES_KEY, currentLanguage, moduleId];
       // Cancelling MODULES_KEY prefix-matches every language + the detail query.
@@ -192,9 +196,9 @@ export function useToggleFavouriteModule() {
       const previousDetail =
         queryClient.getQueryData<LearnModuleView>(moduleKey);
       queryClient.setQueryData<LearnModuleView[]>(listKey, (prev) =>
-        (prev ?? []).map((m) =>
-          m._id === moduleId ? { ...m, isFavourite } : m,
-        ),
+        prev
+          ? prev.map((m) => (m._id === moduleId ? { ...m, isFavourite } : m))
+          : prev,
       );
       if (previousDetail) {
         queryClient.setQueryData<LearnModuleView>(moduleKey, {
@@ -202,15 +206,12 @@ export function useToggleFavouriteModule() {
           isFavourite,
         });
       }
-      return { previousList, previousDetail, moduleKey };
+      return { previousList, previousDetail, listKey, moduleKey };
     },
     onError: (_err, _vars, context) => {
       if (!context) return;
       if (context.previousList) {
-        queryClient.setQueryData(
-          [...MODULES_KEY, currentLanguage],
-          context.previousList,
-        );
+        queryClient.setQueryData(context.listKey, context.previousList);
       }
       if (context.previousDetail) {
         queryClient.setQueryData(context.moduleKey, context.previousDetail);
