@@ -31,7 +31,7 @@ export function LanguagePicker({ className }: { className?: string }) {
   return (
     <div className={cn("relative inline-flex items-center", className)}>
       <Globe
-        className="pointer-events-none absolute left-3 h-4 w-4 text-ink-muted"
+        className="pointer-events-none absolute start-3 h-4 w-4 text-ink-muted"
         aria-hidden
       />
       <select
@@ -40,7 +40,7 @@ export function LanguagePicker({ className }: { className?: string }) {
         onChange={(e) =>
           void changeLanguage(e.target.value as SupportedLanguage)
         }
-        className="w-full appearance-none rounded-full border border-border-card bg-surface py-2 pl-9 pr-9 text-sm font-medium text-ink-secondary transition-colors hover:bg-surface-gray focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+        className="w-full appearance-none rounded-full border border-border-card bg-surface py-2 ps-9 pe-9 text-sm font-medium text-ink-secondary transition-colors hover:bg-surface-gray focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
       >
         {(
           Object.entries(selectableLanguages) as [SupportedLanguage, string][]
@@ -51,7 +51,7 @@ export function LanguagePicker({ className }: { className?: string }) {
         ))}
       </select>
       <ChevronDown
-        className="pointer-events-none absolute right-3 h-4 w-4 text-ink-muted"
+        className="pointer-events-none absolute end-3 h-4 w-4 text-ink-muted"
         aria-hidden
       />
     </div>

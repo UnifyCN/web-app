@@ -11,6 +11,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Horizontally mirrors a directional icon (back-arrows, chevrons, pagers) under
+ * RTL, keying off the `dir="rtl"` on `<html>`. Opt-in per icon — compose via
+ * `cn(...)`, e.g. `<ChevronLeft className={cn("h-5 w-5", RTL_FLIP)} />`. Leave it
+ * off non-directional icons (a kebab "…", a close "×", etc.).
+ */
+export const RTL_FLIP = "rtl:-scale-x-100";
+
 /** Escape a string for safe use inside a `RegExp`. */
 export function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

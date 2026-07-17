@@ -4,6 +4,8 @@ import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { StorageImage } from "@/components/ui/StorageImage";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useIsRtl } from "@/hooks/useDirection";
+import { cn, RTL_FLIP } from "@/lib/utils";
 
 interface ImageLightboxProps {
   open: boolean;
@@ -33,6 +35,7 @@ export function ImageLightbox({
   alt,
 }: ImageLightboxProps) {
   const { t } = useTranslation();
+  const isRtl = useIsRtl();
   const count = images.length;
   const multi = count > 1;
 
@@ -47,9 +50,10 @@ export function ImageLightbox({
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
+      // Under RTL the arrow keys mirror: Left advances, Right goes back.
       if (event.key === "Escape") onClose();
-      else if (multi && event.key === "ArrowLeft") goPrev();
-      else if (multi && event.key === "ArrowRight") goNext();
+      else if (multi && event.key === "ArrowLeft") (isRtl ? goNext : goPrev)();
+      else if (multi && event.key === "ArrowRight") (isRtl ? goPrev : goNext)();
     };
     document.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
@@ -58,7 +62,7 @@ export function ImageLightbox({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
     };
-  }, [open, multi, goPrev, goNext, onClose]);
+  }, [open, multi, isRtl, goPrev, goNext, onClose]);
 
   if (!open || count === 0) return null;
 
@@ -77,7 +81,7 @@ export function ImageLightbox({
           onClose();
         }}
         aria-label={t("ui.closeImageViewerAria")}
-        className="absolute right-4 top-4 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ink/40 text-white transition-colors hover:bg-ink/60"
+        className="absolute end-4 top-4 z-10 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-ink/40 text-white transition-colors hover:bg-ink/60"
       >
         <X className="h-5 w-5" aria-hidden />
       </button>
@@ -109,17 +113,17 @@ export function ImageLightbox({
               type="button"
               onClick={goPrev}
               aria-label={t("ui.previousImageAria")}
-              className="absolute left-2 top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-ink/40 text-white transition-colors hover:bg-ink/60"
+              className="absolute start-2 top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-ink/40 text-white transition-colors hover:bg-ink/60"
             >
-              <ChevronLeft className="h-6 w-6" aria-hidden />
+              <ChevronLeft className={cn("h-6 w-6", RTL_FLIP)} aria-hidden />
             </button>
             <button
               type="button"
               onClick={goNext}
               aria-label={t("ui.nextImageAria")}
-              className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-ink/40 text-white transition-colors hover:bg-ink/60"
+              className="absolute end-2 top-1/2 flex h-10 w-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-ink/40 text-white transition-colors hover:bg-ink/60"
             >
-              <ChevronRight className="h-6 w-6" aria-hidden />
+              <ChevronRight className={cn("h-6 w-6", RTL_FLIP)} aria-hidden />
             </button>
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-ink/50 px-3 py-1 text-xs font-medium text-white">
               {safeIndex + 1} / {count}

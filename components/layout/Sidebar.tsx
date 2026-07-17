@@ -85,7 +85,9 @@ export function Sidebar() {
         // Hidden on mobile (< md) — replaced by the fixed BottomNav; a left
         // rail on a 375px phone would crush content to ~275px.
         "sticky top-0 hidden h-screen shrink-0 flex-col md:flex",
-        "border-r border-border-card bg-surface",
+        // Logical border-inline-end: the divider follows the rail — right edge in
+        // LTR, left edge when the flex row reverses under dir="rtl".
+        "border-e border-border-card bg-surface",
       )}
     >
       {/* Logo — full "unify" wordmark lockup, centred in the rail. */}

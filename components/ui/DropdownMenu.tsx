@@ -11,6 +11,7 @@ import {
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { MoreHorizontal } from "lucide-react";
+import { useIsRtl } from "@/hooks/useDirection";
 import { cn } from "@/lib/utils";
 
 export interface DropdownMenuItem {
@@ -47,13 +48,19 @@ export function DropdownMenu({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+  const isRtl = useIsRtl();
+
+  // Whether the menu's right edge pins to the trigger's right edge (vs its left
+  // edge to the trigger's left). `align="end"` targets the trigger's *end* side —
+  // right in LTR, left in RTL — so the physical right-alignment is (end XOR rtl).
+  const rightAlign = (align === "end") !== isRtl;
 
   const reposition = useCallback(() => {
     const el = triggerRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    setCoords({ top: r.bottom + 4, left: align === "end" ? r.right : r.left });
-  }, [align]);
+    setCoords({ top: r.bottom + 4, left: rightAlign ? r.right : r.left });
+  }, [rightAlign]);
 
   // Position on open, then keep in sync with scroll/resize.
   useEffect(() => {
@@ -125,7 +132,7 @@ export function DropdownMenu({
             style={{
               top: coords.top,
               left: coords.left,
-              transform: align === "end" ? "translateX(-100%)" : undefined,
+              transform: rightAlign ? "translateX(-100%)" : undefined,
             }}
           >
             {items.map((item) => (
@@ -138,7 +145,7 @@ export function DropdownMenu({
                   item.onSelect();
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm transition-colors hover:bg-surface-gray",
+                  "flex w-full items-center gap-2.5 px-3.5 py-2 text-start text-sm transition-colors hover:bg-surface-gray",
                   item.destructive ? "text-destructive" : "text-ink-secondary",
                 )}
               >
