@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as profile from "@/services/profile";
 import type { UserProfile } from "@/types";
+import { useLanguage } from "@/hooks/useLanguage";
 
 /** React Query hooks for Profile data. */
 
@@ -26,9 +27,10 @@ export function useUserProfile(id: string) {
 }
 
 export function useLessonHighlights() {
+  const { currentLanguage } = useLanguage();
   return useQuery({
-    queryKey: ["lesson-highlights"],
-    queryFn: profile.getLessonHighlights,
+    queryKey: ["lesson-highlights", currentLanguage],
+    queryFn: () => profile.getLessonHighlights(currentLanguage),
   });
 }
 

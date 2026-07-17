@@ -1,6 +1,7 @@
 import type { ChecklistTask, Persona, Priority, Stage } from "@/types";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
-import { sanityClient } from "@/lib/sanity";
+import { mergeI18nOverlay, sanityClient, type WithI18n } from "@/lib/sanity";
+import type { SupportedLanguage } from "@/lib/i18n/config";
 import { tasks as mockTasks } from "@/lib/mock/tasks";
 
 /**
@@ -42,8 +43,12 @@ export const PRIORITY_ORDER: Priority[] = [
   "Optional / later",
 ];
 
+/** Base-language filter + `i18n` content overlay — see lib/sanity.ts for the
+ * pattern. `_id`s stay base (they key `user_tasks.sanity_checklist_id` and the
+ * drag-order keys, shared with mobile); only displayed text is overlaid. */
 const CHECKLIST_GROQ = `*[
   _type == "checklist"
+  && (language == "en" || !defined(language))
   && $persona in personas
   && stage == $stage
 ] | order(class asc, class_order asc) {
@@ -54,6 +59,7 @@ const CHECKLIST_GROQ = `*[
   class,
   class_order,
   link_tab,
+  "i18n": select($lang != "en" => *[_type == "translation.metadata" && references(^._id)][0].translations[_key == $lang][0].value->{ title, description, longer_description }, null),
   "module": module->{_id},
   "submodule": submodule->{_id, "moduleId": module._ref}
 }`;
@@ -93,13 +99,15 @@ function resolveLearnHowHref(item: SanityChecklistItem): string | undefined {
 async function getChecklistByPersonaAndStage(
   persona: Persona,
   stageSlug: string,
+  language: SupportedLanguage = "en",
 ): Promise<SanityChecklistItem[]> {
   try {
-    const result = await sanityClient.fetch<SanityChecklistItem[]>(
+    const result = await sanityClient.fetch<WithI18n<SanityChecklistItem>[]>(
       CHECKLIST_GROQ,
-      { persona, stage: stageSlug },
+      { persona, stage: stageSlug, lang: language },
     );
-    return Array.isArray(result) ? result : [];
+    if (!Array.isArray(result)) return [];
+    return result.map((row): SanityChecklistItem => mergeI18nOverlay(row));
   } catch (error) {
     console.error("Sanity checklist fetch failed", error);
     return [];
@@ -141,7 +149,9 @@ function applySavedOrder(
   return result;
 }
 
-export async function getTasks(): Promise<ChecklistTask[]> {
+export async function getTasks(
+  language: SupportedLanguage = "en",
+): Promise<ChecklistTask[]> {
   if (!isSupabaseConfigured()) return mockTasks;
 
   const supabase = createClient();
@@ -164,7 +174,7 @@ export async function getTasks(): Promise<ChecklistTask[]> {
   const stageSlug = STAGE_TO_SLUG[Number(onboarding.stage) as Stage];
 
   const [items, userTasksRes, customRes, orderRes] = await Promise.all([
-    getChecklistByPersonaAndStage(persona, stageSlug),
+    getChecklistByPersonaAndStage(persona, stageSlug, language),
     supabase
       .from("user_tasks")
       .select("sanity_checklist_id, completed, completed_at")

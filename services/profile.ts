@@ -1,5 +1,9 @@
 import type { FollowListUser, Persona, Stage, UserProfile } from "@/types";
-import { DEFAULT_LANGUAGE, isSupportedLanguage } from "@/lib/i18n/config";
+import {
+  DEFAULT_LANGUAGE,
+  isSupportedLanguage,
+  type SupportedLanguage,
+} from "@/lib/i18n/config";
 import {
   createClient,
   getAuthUserId,
@@ -364,12 +368,24 @@ export async function removeAvatar(): Promise<void> {
   if (error) throw error;
 }
 
-/** Slice of the Sanity module tree we need to title a highlight. */
+/** Slice of the Sanity module tree we need to title a highlight. Each node may
+ * carry a translated-title overlay (see lib/sanity.ts). */
 interface HighlightModuleRow {
   _id: string;
   title: string;
+  i18n?: { title?: string | null } | null;
   submodules:
-    | { _id: string; title: string; lessons: { _id: string; title: string }[] | null }[]
+    | {
+        _id: string;
+        title: string;
+        lessons:
+          | {
+              _id: string;
+              title: string;
+              i18n?: { title?: string | null } | null;
+            }[]
+          | null;
+      }[]
     | null;
 }
 
@@ -379,7 +395,9 @@ interface HighlightModuleRow {
  * each lesson_id to its lesson + module title from the Sanity module tree.
  * Falls back to mock highlights when Supabase/Sanity aren't configured.
  */
-export async function getLessonHighlights(): Promise<LessonHighlight[]> {
+export async function getLessonHighlights(
+  language: SupportedLanguage = "en",
+): Promise<LessonHighlight[]> {
   if (!isSupabaseConfigured()) return lessonHighlights;
 
   const userId = await getAuthUserId();
@@ -418,14 +436,16 @@ export async function getLessonHighlights(): Promise<LessonHighlight[]> {
     }
   >();
   if (isSanityConfigured()) {
-    const modules =
-      await sanityClient.fetch<HighlightModuleRow[]>(MODULES_LIST_QUERY);
+    const modules = await sanityClient.fetch<HighlightModuleRow[]>(
+      MODULES_LIST_QUERY,
+      { lang: language },
+    );
     for (const mod of modules ?? []) {
       for (const sub of mod.submodules ?? []) {
         for (const lesson of sub.lessons ?? []) {
           infoByLessonId.set(lesson._id, {
-            lessonTitle: lesson.title,
-            moduleTitle: mod.title,
+            lessonTitle: lesson.i18n?.title ?? lesson.title,
+            moduleTitle: mod.i18n?.title ?? mod.title,
             moduleId: mod._id,
             submoduleId: sub._id,
           });

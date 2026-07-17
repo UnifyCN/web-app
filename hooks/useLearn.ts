@@ -6,8 +6,16 @@ import type {
   UpsertPracticeProgressInput,
 } from "@/services/learn";
 import type { LearnModuleView, ModuleStatus } from "@/types";
+import { useLanguage } from "@/hooks/useLanguage";
 
-/** React Query hooks for Learn (Sanity content + Supabase progress). */
+/**
+ * React Query hooks for Learn (Sanity content + Supabase progress).
+ *
+ * Sanity-content keys carry the current UI language right after the prefix
+ * (e.g. `["modules", lang]`, `["modules", lang, id]`) so a language switch
+ * refetches localized content while prefix invalidations keep working.
+ * Supabase progress keys are language-agnostic (progress is per-`_id`).
+ */
 
 const MODULES_KEY = ["modules"] as const;
 const LESSON_PROGRESSES_KEY = ["lesson-progresses"] as const;
@@ -18,21 +26,27 @@ const LESSON_QUIZ_KEY = ["lesson-quiz"] as const;
 const LESSON_QUIZ_PROGRESS_KEY = ["lesson-quiz-progress"] as const;
 
 export function useModules() {
-  return useQuery({ queryKey: MODULES_KEY, queryFn: learn.getModules });
+  const { currentLanguage } = useLanguage();
+  return useQuery({
+    queryKey: [...MODULES_KEY, currentLanguage],
+    queryFn: () => learn.getModules(currentLanguage),
+  });
 }
 
 export function useModule(id: string) {
+  const { currentLanguage } = useLanguage();
   return useQuery({
-    queryKey: [...MODULES_KEY, id],
-    queryFn: () => learn.getModule(id),
+    queryKey: [...MODULES_KEY, currentLanguage, id],
+    queryFn: () => learn.getModule(id, currentLanguage),
     enabled: !!id,
   });
 }
 
 export function useLesson(id: string) {
+  const { currentLanguage } = useLanguage();
   return useQuery({
-    queryKey: ["lessons", id],
-    queryFn: () => learn.getLesson(id),
+    queryKey: ["lessons", currentLanguage, id],
+    queryFn: () => learn.getLesson(id, currentLanguage),
     enabled: !!id,
   });
 }
@@ -49,9 +63,10 @@ export function useAllLessonProgresses() {
 }
 
 export function useLearningProgressSummary() {
+  const { currentLanguage } = useLanguage();
   return useQuery({
-    queryKey: LEARNING_PROGRESS_KEY,
-    queryFn: learn.getLearningProgressSummary,
+    queryKey: [...LEARNING_PROGRESS_KEY, currentLanguage],
+    queryFn: () => learn.getLearningProgressSummary(currentLanguage),
   });
 }
 
@@ -153,6 +168,7 @@ interface ToggleFavouriteInput {
  */
 export function useToggleFavouriteModule() {
   const queryClient = useQueryClient();
+  const { currentLanguage } = useLanguage();
   return useMutation<
     void,
     Error,
@@ -160,23 +176,29 @@ export function useToggleFavouriteModule() {
     {
       previousList: LearnModuleView[] | undefined;
       previousDetail: LearnModuleView | undefined;
+      listKey: readonly unknown[];
       moduleKey: readonly unknown[];
     }
   >({
     mutationFn: ({ moduleId, isFavourite }) =>
       learn.toggleFavouriteModule(moduleId, isFavourite),
     onMutate: async ({ moduleId, isFavourite }) => {
-      const moduleKey = [...MODULES_KEY, moduleId];
-      // Cancelling MODULES_KEY prefix-matches the detail query too.
+      // Exact (language-aware) keys — setQueryData/getQueryData don't prefix-match.
+      // Captured at mutation time and returned in context: onError must roll
+      // back the SAME cache slot even if the user switches language mid-flight
+      // (RQ v5 rebinds callbacks on re-render, so closures see the new language).
+      const listKey = [...MODULES_KEY, currentLanguage];
+      const moduleKey = [...MODULES_KEY, currentLanguage, moduleId];
+      // Cancelling MODULES_KEY prefix-matches every language + the detail query.
       await queryClient.cancelQueries({ queryKey: MODULES_KEY });
       const previousList =
-        queryClient.getQueryData<LearnModuleView[]>(MODULES_KEY);
+        queryClient.getQueryData<LearnModuleView[]>(listKey);
       const previousDetail =
         queryClient.getQueryData<LearnModuleView>(moduleKey);
-      queryClient.setQueryData<LearnModuleView[]>(MODULES_KEY, (prev) =>
-        (prev ?? []).map((m) =>
-          m._id === moduleId ? { ...m, isFavourite } : m,
-        ),
+      queryClient.setQueryData<LearnModuleView[]>(listKey, (prev) =>
+        prev
+          ? prev.map((m) => (m._id === moduleId ? { ...m, isFavourite } : m))
+          : prev,
       );
       if (previousDetail) {
         queryClient.setQueryData<LearnModuleView>(moduleKey, {
@@ -184,12 +206,12 @@ export function useToggleFavouriteModule() {
           isFavourite,
         });
       }
-      return { previousList, previousDetail, moduleKey };
+      return { previousList, previousDetail, listKey, moduleKey };
     },
     onError: (_err, _vars, context) => {
       if (!context) return;
       if (context.previousList) {
-        queryClient.setQueryData(MODULES_KEY, context.previousList);
+        queryClient.setQueryData(context.listKey, context.previousList);
       }
       if (context.previousDetail) {
         queryClient.setQueryData(context.moduleKey, context.previousDetail);
@@ -211,9 +233,10 @@ export function useSetModuleStatus() {
   return useMutation({
     mutationFn: ({ moduleId, status }: SetModuleStatusInput) =>
       learn.setModuleStatus(moduleId, status),
-    onSuccess: (_data, { moduleId }) => {
+    onSuccess: () => {
+      // MODULES_KEY prefix-matches every language's list AND detail queries
+      // (keys are ["modules", lang] / ["modules", lang, id]).
       queryClient.invalidateQueries({ queryKey: MODULES_KEY });
-      queryClient.invalidateQueries({ queryKey: [...MODULES_KEY, moduleId] });
       queryClient.invalidateQueries({ queryKey: LEARNING_PROGRESS_KEY });
     },
   });
@@ -246,15 +269,11 @@ export function useSetLessonProgress() {
         progressPercent,
         isCompleted,
       ),
-    onSuccess: (_data, { moduleId }) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: LESSON_PROGRESSES_KEY });
+      // Prefix-matches every language's list + detail queries.
       queryClient.invalidateQueries({ queryKey: MODULES_KEY });
       queryClient.invalidateQueries({ queryKey: LEARNING_PROGRESS_KEY });
-      if (moduleId) {
-        queryClient.invalidateQueries({
-          queryKey: [...MODULES_KEY, moduleId],
-        });
-      }
     },
   });
 }
