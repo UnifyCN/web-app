@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Noto_Sans_Devanagari } from "next/font/google";
+import { Inter, Noto_Sans_Devanagari, Noto_Sans_Arabic } from "next/font/google";
 import { cookies, headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -8,6 +8,7 @@ import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_COOKIE,
+  dirForLanguage,
   isSupportedLanguage,
   negotiateLanguage,
   type SupportedLanguage,
@@ -24,6 +25,14 @@ const inter = Inter({
 const notoDevanagari = Noto_Sans_Devanagari({
   variable: "--font-noto-devanagari",
   subsets: ["devanagari"],
+  weight: ["400", "500", "600", "700"],
+});
+
+// Arabic glyph coverage — Inter/Noto Devanagari have none. Fall-through behind
+// them in the --font-sans chain; only rendered when Arabic (RTL) is active.
+const notoArabic = Noto_Sans_Arabic({
+  variable: "--font-noto-arabic",
+  subsets: ["arabic"],
   weight: ["400", "500", "600", "700"],
 });
 
@@ -92,7 +101,8 @@ export default async function RootLayout({
   return (
     <html
       lang={initialLocale}
-      className={`${inter.variable} ${notoDevanagari.variable} h-full antialiased`}
+      dir={dirForLanguage(initialLocale)}
+      className={`${inter.variable} ${notoDevanagari.variable} ${notoArabic.variable} h-full antialiased`}
     >
       <body
         className="min-h-full flex flex-col font-sans"

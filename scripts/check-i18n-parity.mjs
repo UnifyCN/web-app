@@ -15,7 +15,7 @@ import { dirname, join } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const localesDir = join(__dirname, "..", "lib", "i18n", "locales");
-const LOCALES = ["en", "vi", "es", "hi"];
+const LOCALES = ["en", "vi", "es", "hi", "ar"];
 const BASELINE = "en";
 
 function flatten(obj, prefix = "") {
