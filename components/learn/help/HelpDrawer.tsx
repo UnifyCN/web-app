@@ -323,7 +323,7 @@ export function HelpDrawer({
           onPointerDown={onHandlePointerDown}
           onKeyDown={onHandleKeyDown}
           className={cn(
-            "group absolute inset-y-0 start-0 z-10 hidden w-1.5 cursor-col-resize touch-none items-center justify-center hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:flex",
+            "group absolute inset-y-0 start-0 z-10 hidden w-1.5 cursor-col-resize touch-none items-center justify-center hover:bg-primary/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:flex",
             dragging && "bg-primary/10",
           )}
         >
@@ -343,7 +343,7 @@ export function HelpDrawer({
               type="button"
               onClick={() => setView("chooser")}
               aria-label={t("learnWeb.help.backToOptionsAria")}
-              className="-ms-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="-ms-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
             >
               <ArrowLeft className={cn("h-5 w-5", RTL_FLIP)} aria-hidden />
             </button>
@@ -364,7 +364,7 @@ export function HelpDrawer({
             type="button"
             onClick={onClose}
             aria-label={t("learnWeb.help.closeAria")}
-            className="-me-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="-me-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary"
           >
             <X className="h-5 w-5" aria-hidden />
           </button>

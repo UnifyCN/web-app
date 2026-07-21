@@ -42,7 +42,7 @@ export function HelpChooser({
         <button
           type="button"
           onClick={() => onSelect("ai")}
-          className="flex w-full cursor-pointer items-center gap-3 rounded-card border border-border-card bg-surface p-4 text-left transition-colors hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+          className="flex w-full cursor-pointer items-center gap-3 rounded-card border border-border-card bg-surface p-4 text-left transition-colors hover:bg-teal-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-600"
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white">
             <Sparkles className="h-5 w-5" aria-hidden />
@@ -66,7 +66,7 @@ export function HelpChooser({
         <button
           type="button"
           onClick={() => onSelect("community")}
-          className="flex w-full cursor-pointer items-center gap-3 rounded-card border border-border-card bg-surface p-4 text-left transition-colors hover:bg-purple-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600"
+          className="flex w-full cursor-pointer items-center gap-3 rounded-card border border-border-card bg-surface p-4 text-left transition-colors hover:bg-purple-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-purple-600"
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white">
             <Users className="h-5 w-5" aria-hidden />

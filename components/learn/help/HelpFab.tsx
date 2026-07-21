@@ -48,7 +48,7 @@ export function HelpFab({ onOpen }: { onOpen: () => void }) {
         "fixed end-4 z-40 flex h-14 w-14 cursor-pointer items-center justify-center",
         "rounded-2xl bg-gradient-to-br from-teal-600 to-purple-600 text-white shadow-xl",
         "transition-transform hover:scale-105 active:scale-95",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+        "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         // Clear the fixed BottomNav (+ safe area) on mobile; sit lower on md+
         // where the sidebar layout has no bottom bar.
         "bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-6 md:end-6",
