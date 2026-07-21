@@ -11,7 +11,8 @@ import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
 import { useLessonQuizProgress } from "@/hooks/useLearn";
 import { HelpFab } from "@/components/learn/help/HelpFab";
 import { HelpDrawer } from "@/components/learn/help/HelpDrawer";
-import { escapeRegExp, portableTextToPlain } from "@/lib/utils";
+import { useIsRtl } from "@/hooks/useDirection";
+import { cn, escapeRegExp, portableTextToPlain, RTL_FLIP } from "@/lib/utils";
 import { trackHelpOpened, trackLessonPageViewed } from "@/lib/analytics";
 import type {
   LessonContext,
@@ -73,6 +74,7 @@ export function LessonPager({
 }: LessonPagerProps) {
   const { t } = useTranslation();
   const router = useRouter();
+  const isRtl = useIsRtl();
   // The Quick Check is its own trailing screen after the content pages.
   const hasQuiz = quizQuestions.length > 0;
   // Saved Quick Check progress — fetched at lesson mount so it's ready by the time
@@ -134,8 +136,17 @@ export function LessonPager({
   }
 
   // Left/right arrows page through the lesson. Ignored while typing (quiz
-  // free-text) or on the Quick Check screen (which has its own controls).
+  // free-text) or on the Quick Check screen (which has its own controls). Under
+  // RTL the arrows mirror (Left advances, Right goes back) — same swap pattern as
+  // ImageLightbox — so paging always tracks the visual layout.
   useEffect(() => {
+    function goPrev() {
+      if (index > 0) setPageIndex(index - 1);
+      else router.push(sectionHref);
+    }
+    function goNext() {
+      if (!isLastScreen) setPageIndex(index + 1);
+    }
     function onKey(e: KeyboardEvent) {
       if (isQuizPage || askTerm || helpOpen) return;
       const el = document.activeElement as HTMLElement | null;
@@ -149,16 +160,24 @@ export function LessonPager({
       }
       if (e.key === "ArrowLeft") {
         e.preventDefault();
-        if (index > 0) setPageIndex(index - 1);
-        else router.push(sectionHref);
-      } else if (e.key === "ArrowRight" && !isLastScreen) {
+        (isRtl ? goNext : goPrev)();
+      } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        setPageIndex(index + 1);
+        (isRtl ? goPrev : goNext)();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [index, isQuizPage, isLastScreen, sectionHref, router, askTerm, helpOpen]);
+  }, [
+    index,
+    isQuizPage,
+    isLastScreen,
+    sectionHref,
+    router,
+    askTerm,
+    helpOpen,
+    isRtl,
+  ]);
 
   // `lesson_page_viewed` per content page (the quiz screen is not a content page;
   // it fires `quiz_completed` instead). Keyed on the screen index — the pager
@@ -283,7 +302,7 @@ export function LessonPager({
             onClick={handleBack}
             className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-md bg-surface-gray text-sm font-semibold text-ink-tertiary transition-colors hover:bg-surface-input"
           >
-            <ArrowLeft className="h-4 w-4" aria-hidden />
+            <ArrowLeft className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
             {t("common.back")}
           </button>
           {isLastScreen ? (
@@ -294,7 +313,7 @@ export function LessonPager({
               style={{ backgroundColor: colorHex }}
             >
               {t("learnWeb.pager.backToSection")}
-              <ArrowRight className="h-4 w-4" aria-hidden />
+              <ArrowRight className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
             </Link>
           ) : (
             <button
@@ -304,7 +323,7 @@ export function LessonPager({
               style={{ backgroundColor: colorHex }}
             >
               {t("common.next")}
-              <ArrowRight className="h-4 w-4" aria-hidden />
+              <ArrowRight className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
             </button>
           )}
         </nav>
@@ -320,7 +339,7 @@ export function LessonPager({
         >
           {t("learnWeb.pager.nextUp")}{" "}
           <span className="font-semibold">{nextLesson.title}</span>
-          <ArrowRight className="h-4 w-4" aria-hidden />
+          <ArrowRight className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
         </Link>
       )}
 

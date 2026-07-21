@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Check, ChevronDown, HelpCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import { Collapse } from "@/components/ui/Collapse";
 import { LessonListRow } from "./LessonListRow";
 import { lessonReadMinutes } from "@/lib/learn/readTime";
@@ -84,7 +84,7 @@ export function SubmoduleTimelineRow({
         <span
           aria-hidden
           className={cn(
-            "h-7 w-0.5 border-l-2",
+            "h-7 w-0.5 border-s-2",
             isFirst && "invisible",
             lineDashed ? "border-dashed" : "border-solid",
           )}
@@ -107,7 +107,7 @@ export function SubmoduleTimelineRow({
         <span
           aria-hidden
           className={cn(
-            "w-0.5 grow border-l-2",
+            "w-0.5 grow border-s-2",
             isLast && "invisible",
             lineDashed ? "border-dashed" : "border-solid",
           )}
@@ -155,7 +155,7 @@ export function SubmoduleTimelineRow({
                 style={{ color: colorHex }}
               >
                 {t("common.continue")}
-                <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                <ArrowRight className={cn("h-3.5 w-3.5", RTL_FLIP)} aria-hidden />
               </span>
             )}
           </Link>

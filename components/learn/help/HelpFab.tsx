@@ -10,7 +10,8 @@ const PULSE_VIEW_LIMIT = 3;
 const VIEWS_STORAGE_KEY = "unify.helpFabViews";
 
 /**
- * Floating In-Lesson Help bubble (PRD R1). Fixed bottom-right of the viewport,
+ * Floating In-Lesson Help bubble (PRD R1). Fixed to the viewport's bottom
+ * inline-end corner (right in LTR, left in RTL — matching the drawer's edge),
  * offset above the mobile BottomNav (and the iOS home indicator) so it never
  * covers the Back/Next bar's tap targets. The AI→Community teal→purple gradient
  * mark reads as "help" at a glance; a subtle pulse ring runs for the first few
@@ -44,13 +45,13 @@ export function HelpFab({ onOpen }: { onOpen: () => void }) {
       onClick={onOpen}
       aria-label={t("learnWeb.help.fabAria")}
       className={cn(
-        "fixed right-4 z-40 flex h-14 w-14 cursor-pointer items-center justify-center",
+        "fixed end-4 z-40 flex h-14 w-14 cursor-pointer items-center justify-center",
         "rounded-2xl bg-gradient-to-br from-teal-600 to-purple-600 text-white shadow-xl",
         "transition-transform hover:scale-105 active:scale-95",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         // Clear the fixed BottomNav (+ safe area) on mobile; sit lower on md+
         // where the sidebar layout has no bottom bar.
-        "bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-6 md:right-6",
+        "bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-6 md:end-6",
       )}
     >
       {pulse && (

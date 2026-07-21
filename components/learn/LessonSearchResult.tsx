@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, FileText } from "lucide-react";
+import { cn, RTL_FLIP } from "@/lib/utils";
 
 interface LessonSearchResultProps {
   href: string;
@@ -41,7 +42,10 @@ export function LessonSearchResult({
         </p>
       </div>
       <ChevronRight
-        className="h-4 w-4 shrink-0 text-ink-placeholder transition-transform group-hover:translate-x-0.5"
+        className={cn(
+          "h-4 w-4 shrink-0 text-ink-placeholder transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5",
+          RTL_FLIP,
+        )}
         aria-hidden
       />
     </Link>

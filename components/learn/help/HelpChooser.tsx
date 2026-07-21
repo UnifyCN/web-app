@@ -3,6 +3,7 @@
 import { BookOpen, ChevronRight, Sparkles, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useModuleDiscussionStats } from "@/hooks/useDiscussions";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import type { LessonContext } from "@/types";
 
 /**
@@ -59,7 +60,7 @@ export function HelpChooser({
               {t("learnWeb.help.aiDesc")}
             </span>
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-ink-inactive" aria-hidden />
+          <ChevronRight className={cn("h-4 w-4 shrink-0 text-ink-inactive", RTL_FLIP)} aria-hidden />
         </button>
 
         <button
@@ -85,7 +86,7 @@ export function HelpChooser({
                 : t("learnWeb.help.beFirstModule")}
             </span>
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-ink-inactive" aria-hidden />
+          <ChevronRight className={cn("h-4 w-4 shrink-0 text-ink-inactive", RTL_FLIP)} aria-hidden />
         </button>
       </div>
     </div>

@@ -486,7 +486,7 @@ export function SelectableLessonContent({
         return (
           <blockquote
             key={blockKey}
-            className="border-l-2 border-border-card pl-4 text-sm italic text-ink-muted"
+            className="border-s-2 border-border-card ps-4 text-sm italic text-ink-muted"
           >
             {children}
           </blockquote>

@@ -151,7 +151,7 @@ export function DiscussionThreadCard({
             <span className="shrink-0 text-xs text-ink-placeholder">
               {formatRelativeTime(discussion.createdAt)}
             </span>
-            <div className="ml-auto shrink-0">
+            <div className="ms-auto shrink-0">
               <DropdownMenu
                 ariaLabel={t("learnWeb.discussion.questionOptionsAria")}
                 items={
@@ -212,7 +212,7 @@ export function DiscussionThreadCard({
           </button>
 
           {expanded && (
-            <div className="mt-3 space-y-3 border-l-2 border-purple-100 pl-3">
+            <div className="mt-3 space-y-3 border-s-2 border-purple-100 ps-3">
               {repliesQuery.isLoading ? (
                 <p className="text-xs text-ink-placeholder">
                   {t("learnWeb.discussion.loadingReplies")}

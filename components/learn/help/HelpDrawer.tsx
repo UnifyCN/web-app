@@ -4,7 +4,8 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { ArrowLeft, Sparkles, Users, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { trackHelpPathSelected } from "@/lib/analytics";
-import { cn } from "@/lib/utils";
+import { useIsRtl } from "@/hooks/useDirection";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import { HelpChooser } from "./HelpChooser";
 import { InLessonChat } from "./InLessonChat";
 import { DiscussionBoard } from "./DiscussionBoard";
@@ -64,8 +65,9 @@ function persistDrawerWidth(px: number): void {
 }
 
 /**
- * In-Lesson Help drawer (PRD R2) — a right-side slide-in panel over the lesson
- * reader hosting the chooser and both help paths. Stays mounted while hidden
+ * In-Lesson Help drawer (PRD R2) — an inline-end slide-in panel over the lesson
+ * reader (right in LTR, left in RTL) hosting the chooser and both help paths.
+ * Stays mounted while hidden
  * so the AI conversation and board filters survive close/reopen within a
  * lesson; closing never navigates, so the reader position is untouched.
  * Back arrows return to the chooser; Esc/backdrop close the drawer.
@@ -80,6 +82,7 @@ export function HelpDrawer({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const isRtl = useIsRtl();
   const [view, setView] = useState<HelpView>("chooser");
   // Owned here (not in InLessonChat) so revisiting the AI path continues the
   // same conversation instead of spawning a new row per visit.
@@ -179,7 +182,13 @@ export function HelpDrawer({
   useIsomorphicLayoutEffect(() => {
     if (!dragging) return;
     function onMove(event: PointerEvent) {
-      const clamped = clampDrawerWidth(window.innerWidth - event.clientX);
+      // The panel is anchored to the inline-end edge and the handle sits on its
+      // inline-start edge, so width = distance from the pointer to that anchored
+      // edge: the right edge in LTR (`innerWidth - clientX`), the left edge (i.e.
+      // `clientX`) in RTL.
+      const clamped = clampDrawerWidth(
+        isRtl ? event.clientX : window.innerWidth - event.clientX,
+      );
       widthRef.current = clamped;
       panelRef.current?.style.setProperty("--drawer-w", `${clamped}px`);
     }
@@ -200,7 +209,7 @@ export function HelpDrawer({
       document.body.style.cursor = "";
       persistDrawerWidth(widthRef.current);
     };
-  }, [dragging]);
+  }, [dragging, isRtl]);
 
   // While dragging, React `width` is intentionally stale — onMove writes the DOM
   // directly to avoid re-rendering the chat/board children every frame. If an
@@ -219,10 +228,14 @@ export function HelpDrawer({
   }
 
   function onHandleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    // Drawer grows leftward, so Left = wider, Right = narrower.
+    // The drawer grows toward the inline-start edge: leftward in LTR (Left =
+    // wider), rightward in RTL (Right = wider). Keep the DOM key names fixed and
+    // pick which one widens by direction (mirrors ImageLightbox's arrow swap).
+    const widerKey = isRtl ? "ArrowRight" : "ArrowLeft";
+    const narrowerKey = isRtl ? "ArrowLeft" : "ArrowRight";
     let next: number | null = null;
-    if (event.key === "ArrowLeft") next = widthRef.current + DRAWER_WIDTH_STEP;
-    else if (event.key === "ArrowRight")
+    if (event.key === widerKey) next = widthRef.current + DRAWER_WIDTH_STEP;
+    else if (event.key === narrowerKey)
       next = widthRef.current - DRAWER_WIDTH_STEP;
     else if (event.key === "Home") next = MIN_DRAWER_WIDTH;
     else if (event.key === "End") next = effectiveMaxDrawerWidth();
@@ -292,12 +305,12 @@ export function HelpDrawer({
         aria-label={t("learnWeb.help.chooserTitle")}
         style={{ "--drawer-w": `${width}px` } as React.CSSProperties}
         className={cn(
-          "absolute inset-y-0 right-0 flex w-full flex-col bg-surface shadow-xl sm:w-[var(--drawer-w)] sm:max-w-[92vw] sm:border-l sm:border-border-card",
+          "absolute inset-y-0 end-0 flex w-full flex-col bg-surface shadow-xl sm:w-[var(--drawer-w)] sm:max-w-[92vw] sm:border-s sm:border-border-card",
           "transition-transform duration-200 motion-reduce:transition-none",
-          open ? "translate-x-0" : "translate-x-full",
+          open ? "translate-x-0" : "translate-x-full rtl:-translate-x-full",
         )}
       >
-        {/* Resize handle — desktop only; drag the left edge to set the width */}
+        {/* Resize handle — desktop only; drag the inner (inline-start) edge to set the width */}
         <div
           role="separator"
           aria-orientation="vertical"
@@ -310,7 +323,7 @@ export function HelpDrawer({
           onPointerDown={onHandlePointerDown}
           onKeyDown={onHandleKeyDown}
           className={cn(
-            "group absolute inset-y-0 left-0 z-10 hidden w-1.5 cursor-col-resize touch-none items-center justify-center hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:flex",
+            "group absolute inset-y-0 start-0 z-10 hidden w-1.5 cursor-col-resize touch-none items-center justify-center hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:flex",
             dragging && "bg-primary/10",
           )}
         >
@@ -330,9 +343,9 @@ export function HelpDrawer({
               type="button"
               onClick={() => setView("chooser")}
               aria-label={t("learnWeb.help.backToOptionsAria")}
-              className="-ml-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="-ms-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <ArrowLeft className="h-5 w-5" aria-hidden />
+              <ArrowLeft className={cn("h-5 w-5", RTL_FLIP)} aria-hidden />
             </button>
           )}
           {header[view].icon}
@@ -351,7 +364,7 @@ export function HelpDrawer({
             type="button"
             onClick={onClose}
             aria-label={t("learnWeb.help.closeAria")}
-            className="-mr-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="-me-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <X className="h-5 w-5" aria-hidden />
           </button>

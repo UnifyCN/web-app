@@ -10,7 +10,7 @@ import {
   useUpsertPracticeProgress,
 } from "@/hooks/useLearn";
 import type { PracticeFeedbackState } from "@/services/learn";
-import { cn, portableTextToPlain } from "@/lib/utils";
+import { cn, portableTextToPlain, RTL_FLIP } from "@/lib/utils";
 import type { PracticeProgress, SanityQuizQuestion } from "@/types";
 import { QuizProgressBar } from "./QuizProgressBar";
 import { QuizQuestion } from "./QuizQuestion";
@@ -301,7 +301,7 @@ export function PracticeQuiz({
           >
             {primaryLabel}
             {primaryAction === "next" && (
-              <ArrowRight className="h-4 w-4" aria-hidden />
+              <ArrowRight className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
             )}
           </button>
         </div>

@@ -95,7 +95,7 @@ export function MatchingQuestion({
 
       {submitted && question.answer_box?.showAfterSubmit !== false &&
         question.answer_box?.content && (
-          <div className="mt-5 border-l-4 border-ink-tertiary pl-4">
+          <div className="mt-5 border-s-4 border-ink-tertiary ps-4">
             <PortableTextRenderer value={question.answer_box.content} />
           </div>
         )}
