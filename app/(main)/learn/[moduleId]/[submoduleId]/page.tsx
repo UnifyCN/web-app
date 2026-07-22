@@ -4,6 +4,7 @@ import { use } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, Target } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { LessonListRow } from "@/components/learn/LessonListRow";
 import { PracticeQuestionList } from "@/components/learn/practice/PracticeQuestionList";
@@ -108,7 +109,7 @@ export default function SubmoduleLandingPage({
           href={`/learn/${moduleId}`}
           className="inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
         >
-          <ArrowLeft className="h-4 w-4" aria-hidden />
+          <ArrowLeft className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
           {t("learnWeb.section.backTo", { title: mod.title })}
         </Link>
       </div>
@@ -162,7 +163,7 @@ export default function SubmoduleLandingPage({
                     : t("learnWeb.section.continueWhereLeft")}
                 </p>
               </div>
-              <ArrowRight className="h-5 w-5 shrink-0" aria-hidden />
+              <ArrowRight className={cn("h-5 w-5 shrink-0", RTL_FLIP)} aria-hidden />
             </Link>
           )}
 
@@ -218,7 +219,7 @@ export default function SubmoduleLandingPage({
               style={{ color: colorHex }}
             >
               {practiceLabel}
-              <ArrowRight className="h-4 w-4" aria-hidden />
+              <ArrowRight className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
             </span>
           </Link>
 
