@@ -245,6 +245,10 @@ input:-webkit-autofill:active {
   clip-path: inset(0px 100% 0px 0px);
   transition: clip-path 200ms ease-out !important;
 }
+/* Reveal from the reading-start edge (right) under RTL — clip from the left. */
+[dir="rtl"] .hold-delete-btn .hold-overlay {
+  clip-path: inset(0px 0px 0px 100%);
+}
 .hold-delete-btn:active .hold-overlay {
   clip-path: inset(0px 0px 0px 0px);
   transition: clip-path 3s linear !important;
@@ -257,7 +261,7 @@ input:-webkit-autofill:active {
 .task-strike::after {
   content: "";
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   top: 55%;
   height: 1.5px;
   width: 100%;
@@ -265,6 +269,10 @@ input:-webkit-autofill:active {
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 200ms ease-out;
+}
+/* Grow the strike from the reading-start edge (right) under RTL. */
+[dir="rtl"] .task-strike::after {
+  transform-origin: right;
 }
 .task-strike-done::after {
   transform: scaleX(1);

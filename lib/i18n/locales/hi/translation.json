@@ -1242,7 +1242,9 @@
     }
   },
   "nav": {
-    "signOut": "साइन आउट करें"
+    "signOut": "साइन आउट करें",
+    "primaryNavLabel": "मुख्य",
+    "homeLinkLabel": "यूनिफ़ाई होम"
   },
   "welcomeCarousel": {
     "slide1Title": "अपनापन यहीं से शुरू होता है",
@@ -1252,7 +1254,42 @@
     "slide3Title": "भरोसेमंद जवाब पाएं",
     "slide3Body": "जब चाहें सवाल पूछें और भरोसेमंद कनाडाई स्रोतों पर आधारित व्यक्तिगत, व्यावहारिक मार्गदर्शन पाएं।",
     "slide4Title": "आत्मविश्वास के साथ बसें",
-    "slide4Body": "इमिग्रेशन, आवास, वित्त, काम और कनाडा में रोज़मर्रा की ज़िंदगी पर Unify के सरल पाठ और भरोसेमंद संसाधन देखें।"
+    "slide4Body": "इमिग्रेशन, आवास, वित्त, काम और कनाडा में रोज़मर्रा की ज़िंदगी पर Unify के सरल पाठ और भरोसेमंद संसाधन देखें।",
+    "mockup": {
+      "circlesTitle": "Unify Circles",
+      "circlesBody": "2 सप्ताह के ग्रुप चैट अनुभव के लिए अपने जैसे रास्ते पर चल रहे 3 नए आगंतुकों से जुड़ें!",
+      "circlesCta": "अपने Circle में शामिल हों",
+      "eventTitle": "नए आगंतुकों का मिलन समारोह",
+      "eventLocation": "Metrotown Public Library",
+      "groupName": "SFU अंतर्राष्ट्रीय छा…",
+      "groupMembers": "{{n}} सदस्य",
+      "doNowTitle": "अभी करें",
+      "progressComplete": "{{done}}/{{total}} पूर्ण",
+      "taskSin": "अपना SIN प्राप्त करें",
+      "taskBank": "बैंक खाता खोलें",
+      "taskPhone": "फ़ोन प्लान लें",
+      "taskHealth": "प्रांतीय स्वास्थ्य कवरेज (MSP/समकक्ष) के लिए आवेदन करें",
+      "taskSubtitle": "काम करने और सेवाओं तक पहुँच के लिए आवश्यक",
+      "sinDetailTitle": "अपना SIN प्राप्त करें",
+      "sinDetailBody": "रोज़गार, करों, सरकारी लाभों और अन्य आवश्यक प्रक्रियाओं के लिए आपका SIN आवश्यक है।",
+      "learnHow": "कैसे करें जानें",
+      "markComplete": "पूर्ण के रूप में चिह्नित करें",
+      "chatQuestion": "मैं एक अंतर्राष्ट्रीय छात्र हूँ जो अभी कनाडा आया है। क्या आप मुझे BC की ट्रांज़िट प्रणाली समझा सकते हैं?",
+      "atAGlance": "एक नज़र में",
+      "transitSummary": "BC की ट्रांज़िट प्रणाली में बसें, SkyTrain, SeaBus और West Coast Express शामिल हैं, जिन्हें मुख्य रूप से Metro Vancouver में TransLink द्वारा संचालित किया जाता है।",
+      "whatToKnow": "आपको क्या जानना चाहिए",
+      "translinkLabel": "TransLink:",
+      "translinkDesc": "Metro Vancouver में अधिकांश सार्वजनिक परिवहन संचालित करता है, जिसमें बसें, SkyTrain और SeaBus शामिल हैं।",
+      "askAnything": "कुछ भी पूछें",
+      "askAnythingDesc": "किसी भी आप्रवासन प्रश्न का उत्तर पाएँ",
+      "formHelp": "फ़ॉर्म सहायता",
+      "formHelpDesc": "किसी भी फ़ॉर्म पर चरण-दर-चरण मार्गदर्शन प्राप्त करें",
+      "catFinance": "वित्त",
+      "catEmployment": "रोज़गार",
+      "catHousing": "आवास",
+      "catDocumentation": "दस्तावेज़",
+      "sections": "{{n}} खंड"
+    }
   },
   "settingsWeb": {
     "editProfile": "प्रोफ़ाइल संपादित करें",

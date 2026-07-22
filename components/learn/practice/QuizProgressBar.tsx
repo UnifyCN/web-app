@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useIsRtl } from "@/hooks/useDirection";
 
 interface QuizProgressBarProps {
   sectionNumber: number;
@@ -13,10 +14,11 @@ interface QuizProgressBarProps {
 }
 
 /** Six-digit hex → an `rgba()`-equivalent gradient stop; otherwise the color
- * as-is (e.g. a CSS var fallback). */
-function fillStyle(colorHex: string): string {
+ * as-is (e.g. a CSS var fallback). The ramp follows reading direction so the
+ * light stop stays on the fill's start edge (right in RTL). */
+function fillStyle(colorHex: string, isRtl: boolean): string {
   return /^#[0-9a-fA-F]{6}$/.test(colorHex)
-    ? `linear-gradient(90deg, ${colorHex}8C, ${colorHex})`
+    ? `linear-gradient(${isRtl ? 270 : 90}deg, ${colorHex}8C, ${colorHex})`
     : colorHex;
 }
 
@@ -28,6 +30,7 @@ export function QuizProgressBar({
   onClose,
 }: QuizProgressBarProps) {
   const { t } = useTranslation();
+  const isRtl = useIsRtl();
   const clamped = Math.max(0, Math.min(100, percent));
   return (
     <div className="mb-7">
@@ -57,7 +60,7 @@ export function QuizProgressBar({
       >
         <div
           className="h-full rounded-full transition-all duration-300 ease-out"
-          style={{ width: `${clamped}%`, background: fillStyle(colorHex) }}
+          style={{ width: `${clamped}%`, background: fillStyle(colorHex, isRtl) }}
         />
       </div>
     </div>

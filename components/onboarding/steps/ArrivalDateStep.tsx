@@ -5,11 +5,11 @@ import { StepHeading } from "../StepHeading";
 import type { OnboardingStepProps } from "../types";
 
 const SELECT_CLASS =
-  "h-11 w-full appearance-none rounded-lg border border-border-card bg-surface px-3 pr-10 text-sm text-ink-muted " +
+  "h-11 w-full appearance-none rounded-lg border border-border-card bg-surface px-3 pe-10 text-sm text-ink-muted " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50";
 
 const CHEVRON_CLASS =
-  "pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder";
+  "pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder";
 
 export function ArrivalDateStep({ draft, update }: OnboardingStepProps) {
   const { t, i18n } = useTranslation();
@@ -86,7 +86,7 @@ export function ArrivalDateStep({ draft, update }: OnboardingStepProps) {
           })
         }
         className={cn(
-          "mt-4 flex w-full items-center gap-2.5 rounded-lg border p-3 text-left text-sm",
+          "mt-4 flex w-full items-center gap-2.5 rounded-lg border p-3 text-start text-sm",
           "cursor-pointer transition-colors duration-150",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
           draft.notArrived

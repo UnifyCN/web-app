@@ -1242,7 +1242,9 @@
     }
   },
   "nav": {
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "primaryNavLabel": "Primary",
+    "homeLinkLabel": "Unify home"
   },
   "welcomeCarousel": {
     "slide1Title": "Belonging Starts Here",
@@ -1252,7 +1254,42 @@
     "slide3Title": "Get Answers You Can Trust",
     "slide3Body": "Ask questions in the moment and get personalized, practical guidance grounded in trusted Canadian sources.",
     "slide4Title": "Settle In With Confidence",
-    "slide4Body": "Explore Unify's simple lessons and trusted resources on immigration, housing, finances, work, and everyday life in Canada."
+    "slide4Body": "Explore Unify's simple lessons and trusted resources on immigration, housing, finances, work, and everyday life in Canada.",
+    "mockup": {
+      "circlesTitle": "Unify Circles",
+      "circlesBody": "Get matched with 3 newcomers on a similar path to you for a 2-week group chat experience!",
+      "circlesCta": "Join your Circle",
+      "eventTitle": "Newcomer Meet & Greet",
+      "eventLocation": "Metrotown Public Library",
+      "groupName": "SFU International Stu…",
+      "groupMembers": "{{n}} members",
+      "doNowTitle": "Do Now",
+      "progressComplete": "{{done}}/{{total}} complete",
+      "taskSin": "Get your SIN",
+      "taskBank": "Open a bank account",
+      "taskPhone": "Get a phone plan",
+      "taskHealth": "Apply for provincial health coverage (MSP/equivalent)",
+      "taskSubtitle": "Required for working and accessing services",
+      "sinDetailTitle": "Get Your SIN",
+      "sinDetailBody": "Your SIN is required for employment, taxes, government benefits, and other essential processes.",
+      "learnHow": "Learn how",
+      "markComplete": "Mark as complete",
+      "chatQuestion": "I'm an international student who just arrived to Canada. Can you explain the BC transit system to me?",
+      "atAGlance": "At a Glance",
+      "transitSummary": "BC's transit system includes buses, SkyTrain, SeaBus, and West Coast Express, primarily managed by TransLink in Metro Vancouver.",
+      "whatToKnow": "What You Need to Know",
+      "translinkLabel": "TransLink:",
+      "translinkDesc": "Operates most public transit in Metro Vancouver including buses, SkyTrain, and SeaBus.",
+      "askAnything": "Ask Anything",
+      "askAnythingDesc": "Get answers to any immigration question",
+      "formHelp": "Form Help",
+      "formHelpDesc": "Receive step-by-step guidance on any form",
+      "catFinance": "Finance",
+      "catEmployment": "Employment",
+      "catHousing": "Housing",
+      "catDocumentation": "Documentation",
+      "sections": "{{n}} Sections"
+    }
   },
   "settingsWeb": {
     "editProfile": "Edit profile",

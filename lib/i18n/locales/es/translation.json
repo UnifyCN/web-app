@@ -1242,7 +1242,9 @@
     }
   },
   "nav": {
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "primaryNavLabel": "Principal",
+    "homeLinkLabel": "Inicio de Unify"
   },
   "welcomeCarousel": {
     "slide1Title": "La pertenencia empieza aquí",
@@ -1252,7 +1254,42 @@
     "slide3Title": "Obtén respuestas confiables",
     "slide3Body": "Haz preguntas en el momento y recibe orientación práctica y personalizada, basada en fuentes canadienses confiables.",
     "slide4Title": "Establécete con confianza",
-    "slide4Body": "Explora las lecciones sencillas y los recursos confiables de Unify sobre inmigración, vivienda, finanzas, trabajo y la vida diaria en Canadá."
+    "slide4Body": "Explora las lecciones sencillas y los recursos confiables de Unify sobre inmigración, vivienda, finanzas, trabajo y la vida diaria en Canadá.",
+    "mockup": {
+      "circlesTitle": "Unify Circles",
+      "circlesBody": "¡Conéctate con 3 recién llegados en un camino similar al tuyo para una experiencia de chat grupal de 2 semanas!",
+      "circlesCta": "Únete a tu Circle",
+      "eventTitle": "Encuentro para recién llegados",
+      "eventLocation": "Metrotown Public Library",
+      "groupName": "SFU Estudiantes Interna…",
+      "groupMembers": "{{n}} miembros",
+      "doNowTitle": "Hazlo ahora",
+      "progressComplete": "{{done}}/{{total}} completado",
+      "taskSin": "Obtén tu SIN",
+      "taskBank": "Abre una cuenta bancaria",
+      "taskPhone": "Consigue un plan de teléfono",
+      "taskHealth": "Solicita la cobertura de salud provincial (MSP/equivalente)",
+      "taskSubtitle": "Necesario para trabajar y acceder a servicios",
+      "sinDetailTitle": "Obtén tu SIN",
+      "sinDetailBody": "Tu SIN es obligatorio para el empleo, los impuestos, los beneficios del gobierno y otros trámites esenciales.",
+      "learnHow": "Aprende cómo",
+      "markComplete": "Marcar como completado",
+      "chatQuestion": "Soy un estudiante internacional que acaba de llegar a Canadá. ¿Puedes explicarme el sistema de transporte de BC?",
+      "atAGlance": "De un vistazo",
+      "transitSummary": "El sistema de transporte de BC incluye autobuses, SkyTrain, SeaBus y West Coast Express, gestionados principalmente por TransLink en Metro Vancouver.",
+      "whatToKnow": "Lo que necesitas saber",
+      "translinkLabel": "TransLink:",
+      "translinkDesc": "Opera la mayor parte del transporte público en Metro Vancouver, incluidos autobuses, SkyTrain y SeaBus.",
+      "askAnything": "Pregunta lo que sea",
+      "askAnythingDesc": "Obtén respuestas a cualquier pregunta sobre inmigración",
+      "formHelp": "Ayuda con formularios",
+      "formHelpDesc": "Recibe orientación paso a paso sobre cualquier formulario",
+      "catFinance": "Finanzas",
+      "catEmployment": "Empleo",
+      "catHousing": "Vivienda",
+      "catDocumentation": "Documentación",
+      "sections": "{{n}} secciones"
+    }
   },
   "settingsWeb": {
     "editProfile": "Editar perfil",

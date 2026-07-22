@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { useSaveOnboarding } from "@/hooks/useOnboarding";
 import {
@@ -171,7 +172,7 @@ export function OnboardingFlow({
         ) : (
           <Button
             variant="ghost"
-            leftIcon={<ChevronLeft className="h-4 w-4" />}
+            leftIcon={<ChevronLeft className={cn("h-4 w-4", RTL_FLIP)} />}
             onClick={goBack}
             disabled={save.isPending}
           >
@@ -189,7 +190,7 @@ export function OnboardingFlow({
           <Button
             onClick={goNext}
             disabled={!canAdvance}
-            rightIcon={<ChevronRight className="h-4 w-4" />}
+            rightIcon={<ChevronRight className={cn("h-4 w-4", RTL_FLIP)} />}
           >
             {t("common.continue")}
           </Button>

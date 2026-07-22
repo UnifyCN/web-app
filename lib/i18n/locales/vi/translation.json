@@ -1242,7 +1242,9 @@
     }
   },
   "nav": {
-    "signOut": "Đăng xuất"
+    "signOut": "Đăng xuất",
+    "primaryNavLabel": "Điều hướng chính",
+    "homeLinkLabel": "Trang chủ Unify"
   },
   "welcomeCarousel": {
     "slide1Title": "Sự gắn kết bắt đầu từ đây",
@@ -1252,7 +1254,42 @@
     "slide3Title": "Nhận câu trả lời đáng tin cậy",
     "slide3Body": "Đặt câu hỏi bất cứ lúc nào và nhận hướng dẫn thực tế, được cá nhân hóa, dựa trên các nguồn đáng tin cậy của Canada.",
     "slide4Title": "An cư với sự tự tin",
-    "slide4Body": "Khám phá các bài học đơn giản và tài nguyên đáng tin cậy của Unify về nhập cư, nhà ở, tài chính, việc làm và cuộc sống hằng ngày ở Canada."
+    "slide4Body": "Khám phá các bài học đơn giản và tài nguyên đáng tin cậy của Unify về nhập cư, nhà ở, tài chính, việc làm và cuộc sống hằng ngày ở Canada.",
+    "mockup": {
+      "circlesTitle": "Unify Circles",
+      "circlesBody": "Được ghép với 3 người mới đến có hành trình tương tự bạn cho trải nghiệm trò chuyện nhóm trong 2 tuần!",
+      "circlesCta": "Tham gia Circle của bạn",
+      "eventTitle": "Gặp gỡ & giao lưu người mới đến",
+      "eventLocation": "Metrotown Public Library",
+      "groupName": "SFU Sinh viên Quốc t…",
+      "groupMembers": "{{n}} thành viên",
+      "doNowTitle": "Làm ngay",
+      "progressComplete": "Hoàn thành {{done}}/{{total}}",
+      "taskSin": "Lấy SIN của bạn",
+      "taskBank": "Mở tài khoản ngân hàng",
+      "taskPhone": "Đăng ký gói điện thoại",
+      "taskHealth": "Đăng ký bảo hiểm y tế của tỉnh bang (MSP/tương đương)",
+      "taskSubtitle": "Cần thiết để làm việc và tiếp cận dịch vụ",
+      "sinDetailTitle": "Lấy SIN của bạn",
+      "sinDetailBody": "SIN của bạn là bắt buộc để làm việc, đóng thuế, nhận trợ cấp chính phủ và các thủ tục thiết yếu khác.",
+      "learnHow": "Tìm hiểu cách",
+      "markComplete": "Đánh dấu hoàn thành",
+      "chatQuestion": "Tôi là du học sinh vừa mới đến Canada. Bạn có thể giải thích hệ thống giao thông công cộng ở BC cho tôi không?",
+      "atAGlance": "Tổng quan",
+      "transitSummary": "Hệ thống giao thông của BC gồm xe buýt, SkyTrain, SeaBus và West Coast Express, chủ yếu do TransLink quản lý ở Metro Vancouver.",
+      "whatToKnow": "Những điều bạn cần biết",
+      "translinkLabel": "TransLink:",
+      "translinkDesc": "Vận hành hầu hết giao thông công cộng ở Metro Vancouver gồm xe buýt, SkyTrain và SeaBus.",
+      "askAnything": "Hỏi bất cứ điều gì",
+      "askAnythingDesc": "Nhận câu trả lời cho mọi câu hỏi về nhập cư",
+      "formHelp": "Trợ giúp biểu mẫu",
+      "formHelpDesc": "Nhận hướng dẫn từng bước cho mọi biểu mẫu",
+      "catFinance": "Tài chính",
+      "catEmployment": "Việc làm",
+      "catHousing": "Nhà ở",
+      "catDocumentation": "Giấy tờ",
+      "sections": "{{n}} Phần"
+    }
   },
   "settingsWeb": {
     "editProfile": "Chỉnh sửa hồ sơ",

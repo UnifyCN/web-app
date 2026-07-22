@@ -1242,7 +1242,9 @@
     }
   },
   "nav": {
-    "signOut": "تسجيل الخروج"
+    "signOut": "تسجيل الخروج",
+    "primaryNavLabel": "الرئيسية",
+    "homeLinkLabel": "الصفحة الرئيسية ليونيفاي"
   },
   "welcomeCarousel": {
     "slide1Title": "الانتماء يبدأ من هنا",
@@ -1252,7 +1254,42 @@
     "slide3Title": "احصل على إجابات موثوقة",
     "slide3Body": "اطرح أسئلتك في اللحظة واحصل على إرشادات عملية مخصصة مستندة إلى مصادر كندية موثوقة.",
     "slide4Title": "استقر بثقة",
-    "slide4Body": "استكشف دروس Unify البسيطة ومواردها الموثوقة حول الهجرة والسكن والمالية والعمل والحياة اليومية في كندا."
+    "slide4Body": "استكشف دروس Unify البسيطة ومواردها الموثوقة حول الهجرة والسكن والمالية والعمل والحياة اليومية في كندا.",
+    "mockup": {
+      "circlesTitle": "Unify Circles",
+      "circlesBody": "تواصل مع 3 وافدين جدد يسلكون مساراً مشابهاً لمسارك في تجربة دردشة جماعية لمدة أسبوعين!",
+      "circlesCta": "انضم إلى دائرتك",
+      "eventTitle": "لقاء ترحيبي للوافدين الجدد",
+      "eventLocation": "Metrotown Public Library",
+      "groupName": "SFU الطلاب الدولي…",
+      "groupMembers": "{{n}} عضواً",
+      "doNowTitle": "افعل الآن",
+      "progressComplete": "{{done}}/{{total}} مكتمل",
+      "taskSin": "احصل على رقم SIN",
+      "taskBank": "افتح حساباً مصرفياً",
+      "taskPhone": "احصل على خطة هاتف",
+      "taskHealth": "تقدّم بطلب للتغطية الصحية الإقليمية (MSP/ما يعادلها)",
+      "taskSubtitle": "ضروري للعمل والوصول إلى الخدمات",
+      "sinDetailTitle": "احصل على رقم SIN",
+      "sinDetailBody": "رقم SIN مطلوب للعمل والضرائب والمزايا الحكومية وغيرها من الإجراءات الأساسية.",
+      "learnHow": "تعرّف على الطريقة",
+      "markComplete": "وضع علامة كمكتمل",
+      "chatQuestion": "أنا طالب دولي وصلت للتو إلى كندا. هل يمكنك أن تشرح لي نظام النقل في مقاطعة BC؟",
+      "atAGlance": "لمحة سريعة",
+      "transitSummary": "يشمل نظام النقل في BC الحافلات وSkyTrain وSeaBus وWest Coast Express، ويديره بشكل رئيسي TransLink في Metro Vancouver.",
+      "whatToKnow": "ما تحتاج إلى معرفته",
+      "translinkLabel": "TransLink:",
+      "translinkDesc": "يشغّل معظم وسائل النقل العام في Metro Vancouver بما في ذلك الحافلات وSkyTrain وSeaBus.",
+      "askAnything": "اسأل أي شيء",
+      "askAnythingDesc": "احصل على إجابات لأي سؤال عن الهجرة",
+      "formHelp": "مساعدة في النماذج",
+      "formHelpDesc": "احصل على إرشادات خطوة بخطوة لأي نموذج",
+      "catFinance": "المالية",
+      "catEmployment": "التوظيف",
+      "catHousing": "السكن",
+      "catDocumentation": "الوثائق",
+      "sections": "{{n}} أقسام"
+    }
   },
   "settingsWeb": {
     "editProfile": "تعديل الملف الشخصي",

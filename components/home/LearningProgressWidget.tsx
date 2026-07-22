@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/Card";
+import { useIsRtl } from "@/hooks/useDirection";
 import { cn } from "@/lib/utils";
 import { useModules } from "@/hooks/useLearn";
 import { ModuleGridCard } from "@/components/learn/ModuleGridCard";
@@ -20,6 +21,7 @@ import { ModuleGridCard } from "@/components/learn/ModuleGridCard";
  */
 export function LearningProgressWidget() {
   const { t } = useTranslation();
+  const isRtl = useIsRtl();
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const { data } = useModules();
@@ -28,13 +30,16 @@ export function LearningProgressWidget() {
   function handleScroll() {
     const track = trackRef.current;
     if (!track) return;
-    setActiveIndex(Math.round(track.scrollLeft / track.clientWidth));
+    // In RTL, scrollLeft starts at 0 on the (right) start edge and goes negative
+    // toward the end, so abs() yields the slide offset regardless of direction.
+    setActiveIndex(Math.round(Math.abs(track.scrollLeft) / track.clientWidth));
   }
 
   function goToSlide(index: number) {
     const track = trackRef.current;
     if (!track) return;
-    track.scrollTo({ left: index * track.clientWidth, behavior: "smooth" });
+    const offset = index * track.clientWidth;
+    track.scrollTo({ left: isRtl ? -offset : offset, behavior: "smooth" });
   }
 
   if (items.length === 0) return null;

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn, RTL_FLIP } from "@/lib/utils";
 
 /**
  * Full-screen scaffold for the auth screens (sign in / sign up / verify / reset /
@@ -25,9 +26,9 @@ export function AuthShell({
             <Link
               href={backHref}
               aria-label={t("common.goBack")}
-              className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-ink-secondary transition-all hover:-translate-x-0.5 hover:bg-surface-gray motion-reduce:transition-none motion-reduce:hover:translate-x-0"
+              className="-ms-2 flex h-10 w-10 items-center justify-center rounded-full text-ink-secondary transition-all hover:bg-surface-gray motion-reduce:transition-none motion-safe:ltr:hover:-translate-x-0.5 motion-safe:rtl:hover:translate-x-0.5"
             >
-              <ChevronLeft className="h-6 w-6" aria-hidden />
+              <ChevronLeft className={cn("h-6 w-6", RTL_FLIP)} aria-hidden />
             </Link>
           )}
         </div>

@@ -20,7 +20,7 @@ const FIELD_CLASS =
   "placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
 // Selects: hide the inconsistent native arrow; we draw one ChevronDown instead.
-const SELECT_CLASS = cn(FIELD_CLASS, "appearance-none pr-10");
+const SELECT_CLASS = cn(FIELD_CLASS, "appearance-none pe-10");
 
 export function LocationStep({ draft, update }: OnboardingStepProps) {
   const { t } = useTranslation();
@@ -82,7 +82,7 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
             <option value={OTHER}>{t("onboardingWeb.location.otherCity")}</option>
           </select>
           <ChevronDown
-            className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder"
+            className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder"
             aria-hidden
           />
         </div>
@@ -105,7 +105,7 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
             className={cn(
               SELECT_CLASS,
               autoFilled &&
-                "border-mention-blue bg-mention-blue/10 pr-24 text-mention-blue",
+                "border-mention-blue bg-mention-blue/10 pe-24 text-mention-blue",
             )}
             value={draft.province}
             onChange={(e) => onProvinceChange(e.target.value)}
@@ -120,12 +120,12 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
             ))}
           </select>
           {autoFilled ? (
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-mention-blue">
+            <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs font-medium text-mention-blue">
               {t("onboarding.autoFilled")}
             </span>
           ) : (
             <ChevronDown
-              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder"
+              className="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder"
               aria-hidden
             />
           )}

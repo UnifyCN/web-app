@@ -33,7 +33,10 @@ export function HelpChooser({
         <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         <span className="min-w-0">
           <span className="font-medium">{t("learnWeb.help.contextLabel")} </span>
-          {lessonContext.moduleTitle} › {lessonContext.submoduleTitle} ›{" "}
+          {lessonContext.moduleTitle}{" "}
+          <span className={cn("inline-block", RTL_FLIP)}>›</span>{" "}
+          {lessonContext.submoduleTitle}{" "}
+          <span className={cn("inline-block", RTL_FLIP)}>›</span>{" "}
           {lessonContext.lessonTitle}
         </span>
       </div>
