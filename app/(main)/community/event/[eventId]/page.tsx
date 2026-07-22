@@ -11,6 +11,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { getEventById } from "@/lib/mock/events";
 import type { EventType } from "@/types";
@@ -78,7 +79,7 @@ export default function EventDetailPage({
         href="/community"
         className="mb-4 inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
       >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
+        <ArrowLeft className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
         {t("tabs.community")}
       </Link>
 

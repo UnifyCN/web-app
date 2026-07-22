@@ -32,7 +32,7 @@ export function GroupMemberAvatarStack({
             style={{ zIndex: MAX_VISIBLE - index }}
             className={cn(
               "rounded-full ring-2 ring-surface",
-              index > 0 && "-ml-2.5",
+              index > 0 && "-ms-2.5",
             )}
           >
             <Avatar
@@ -43,7 +43,7 @@ export function GroupMemberAvatarStack({
           </div>
         ))}
       </div>
-      <span className="ml-2.5 text-sm text-ink-muted">
+      <span className="ms-2.5 text-sm text-ink-muted">
         {t("groups.plusMembers", { count: totalCount })}
       </span>
     </div>

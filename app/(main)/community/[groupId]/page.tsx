@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { GroupCover } from "@/components/community/GroupCover";
 import { GroupMemberAvatarStack } from "@/components/community/GroupMemberAvatarStack";
@@ -88,7 +89,7 @@ export default function GroupDetailPage({
         href="/community"
         className="mb-4 inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
       >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
+        <ArrowLeft className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
         {t("tabs.community")}
       </Link>
 
