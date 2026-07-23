@@ -92,7 +92,11 @@ export function Sidebar() {
     >
       {/* Logo — full "unify" wordmark lockup, centred in the rail. */}
       <div className="flex h-16 items-center justify-center">
-        <Link href="/home" aria-label="Unify home" className="flex items-center">
+        <Link
+          href="/home"
+          aria-label={t("nav.homeLinkLabel")}
+          className="flex items-center"
+        >
           <UnifyLogo variant="lockup" size={38} priority />
         </Link>
       </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import { Blob } from "./Blob";
 
 interface SubmoduleContinueCardProps {
@@ -48,7 +49,7 @@ export function SubmoduleContinueCard({
           style={{ color: colorHex }}
         >
           {label}
-          <ArrowRight className="h-4 w-4" aria-hidden />
+          <ArrowRight className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
         </Link>
       </div>
     </div>

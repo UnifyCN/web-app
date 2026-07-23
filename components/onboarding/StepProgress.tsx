@@ -21,7 +21,7 @@ export function StepProgress({
           />
         ))}
       </div>
-      <span className="shrink-0 text-xs font-medium text-ink-placeholder">
+      <span dir="ltr" className="shrink-0 text-xs font-medium text-ink-placeholder">
         {current + 1}/{total}
       </span>
     </div>

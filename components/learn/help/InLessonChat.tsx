@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BookOpen } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import { MessageBubble } from "@/components/companion/MessageBubble";
 import { ChatInput } from "@/components/companion/ChatInput";
 import { FreeTierIndicator } from "@/components/companion/FreeTierIndicator";
@@ -128,7 +129,10 @@ export function InLessonChat({
             <span className="font-medium">
               {t("learnWeb.help.contextLabel")}{" "}
             </span>
-            {lessonContext.moduleTitle} › {lessonContext.submoduleTitle} ›{" "}
+            {lessonContext.moduleTitle}{" "}
+            <span dir="ltr" className={cn("inline-block", RTL_FLIP)}>›</span>{" "}
+            {lessonContext.submoduleTitle}{" "}
+            <span dir="ltr" className={cn("inline-block", RTL_FLIP)}>›</span>{" "}
             {lessonContext.lessonTitle}
           </span>
         </div>
@@ -157,7 +161,7 @@ export function InLessonChat({
                 type="button"
                 onClick={() => handleSend(prompt)}
                 disabled={createConversation.isPending}
-                className="block w-full cursor-pointer rounded-full border border-teal-600/40 px-4 py-2 text-left text-sm text-teal-700 transition-colors hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="block w-full cursor-pointer rounded-full border border-teal-600/40 px-4 py-2 text-start text-sm text-teal-700 transition-colors hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {prompt}
               </button>

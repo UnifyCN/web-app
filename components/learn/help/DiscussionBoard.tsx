@@ -102,7 +102,7 @@ export function DiscussionBoard({
         </div>
         {/* Sort toggle */}
         <div
-          className="ml-auto flex shrink-0 rounded-full bg-surface-gray p-0.5"
+          className="ms-auto flex shrink-0 rounded-full bg-surface-gray p-0.5"
           role="group"
           aria-label={t("learnWeb.discussion.sortAria")}
         >

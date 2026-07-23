@@ -2,7 +2,7 @@
 
 import { ArrowRight, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import type { CircleStatus } from "@/types";
 
 /**
@@ -57,11 +57,11 @@ export function CirclesEntryCard({
     <div className="relative overflow-hidden rounded-card bg-primary p-6 shadow-sm">
       {/* Decorative ellipses */}
       <div
-        className="pointer-events-none absolute -right-7 -top-9 h-28 w-28 rounded-full bg-primary-light"
+        className="pointer-events-none absolute -right-7 -top-9 h-28 w-28 rounded-full bg-primary-light rtl:right-auto rtl:-left-7"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute -bottom-10 -left-8 h-28 w-28 rounded-full"
+        className="pointer-events-none absolute -bottom-10 -left-8 h-28 w-28 rounded-full rtl:left-auto rtl:-right-8"
         style={{ backgroundColor: ELLIPSE_WARM }}
         aria-hidden
       />
@@ -88,7 +88,9 @@ export function CirclesEntryCard({
           )}
         >
           {isDefault && isPending ? t("circles.starting") : t(content.ctaKey)}
-          {isDefault && !isPending && <ArrowRight className="h-4 w-4" aria-hidden />}
+          {isDefault && !isPending && (
+            <ArrowRight className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
+          )}
         </button>
 
         {isWaiting && onCancel && (

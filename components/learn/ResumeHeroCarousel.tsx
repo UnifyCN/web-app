@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import { Blob } from "./Blob";
 import { CarouselDots } from "./CarouselDots";
 import { FavouriteButton } from "./FavouriteButton";
@@ -126,7 +127,7 @@ function ResumeCard({ entry }: { entry: ResumeEntry }) {
             style={{ backgroundColor: entry.colorHex }}
           >
             {t("common.continue")}
-            <ArrowRight className="h-4 w-4" aria-hidden />
+            <ArrowRight className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
           </Link>
         </div>
         <div>

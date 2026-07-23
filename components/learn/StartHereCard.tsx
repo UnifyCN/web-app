@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import { Blob } from "./Blob";
 
 interface StartHereCardProps {
@@ -50,7 +51,7 @@ export function StartHereCard({
           style={{ color: colorHex }}
         >
           {t("learnWeb.home.startLearning")}
-          <ArrowRight className="h-4 w-4" aria-hidden />
+          <ArrowRight className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
         </span>
       </div>
     </Link>

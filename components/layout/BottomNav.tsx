@@ -23,7 +23,7 @@ export function BottomNav() {
 
   return (
     <nav
-      aria-label="Primary"
+      aria-label={t("nav.primaryNavLabel")}
       className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border-card bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {TABS.map((item) => {

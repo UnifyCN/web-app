@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Check, Lock, type LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, RTL_FLIP } from "@/lib/utils";
 
 export type SectionCardDot = "completed" | "active" | "todo" | "locked";
 
@@ -99,7 +99,7 @@ export function SectionTimelineCard({
           style={colored ? { color: colorHex } : undefined}
         >
           {buttonLabel}
-          <ArrowRight className="h-4 w-4" aria-hidden />
+          <ArrowRight className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
         </span>
       )}
     </>
@@ -112,7 +112,7 @@ export function SectionTimelineCard({
         <span
           aria-hidden
           className={cn(
-            "w-0.5 grow border-l-2",
+            "w-0.5 grow border-s-2",
             isFirst && "invisible",
             railDashed ? "border-dashed" : "border-solid",
           )}
@@ -135,7 +135,7 @@ export function SectionTimelineCard({
         <span
           aria-hidden
           className={cn(
-            "w-0.5 grow border-l-2",
+            "w-0.5 grow border-s-2",
             isLast && "invisible",
             railDashed ? "border-dashed" : "border-solid",
           )}

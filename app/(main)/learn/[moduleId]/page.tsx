@@ -4,6 +4,7 @@ import { use, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import { Blob } from "@/components/learn/Blob";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { FavouriteButton } from "@/components/learn/FavouriteButton";
@@ -112,7 +113,7 @@ export default function ModuleDetailPage({
               href="/learn"
               className="inline-flex items-center gap-1 text-sm text-white/90 transition-colors hover:text-white"
             >
-              <ArrowLeft className="h-4 w-4" aria-hidden />
+              <ArrowLeft className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
               {t("learnWeb.module.backToLearn")}
             </Link>
             <div className="flex items-center gap-2">

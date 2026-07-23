@@ -69,7 +69,7 @@ export function DiscussionReplyItem({
           <span className="shrink-0 text-xs text-ink-placeholder">
             {formatRelativeTime(reply.createdAt)}
           </span>
-          <div className="ml-auto shrink-0">
+          <div className="ms-auto shrink-0">
             <DropdownMenu
               ariaLabel={t("learnWeb.discussion.replyOptionsAria")}
               items={

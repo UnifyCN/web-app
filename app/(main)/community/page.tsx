@@ -146,7 +146,7 @@ export default function CommunityPage() {
           <div className="space-y-6">
             <div className="relative">
               <Search
-                className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder"
+                className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder"
                 aria-hidden
               />
               <input
@@ -155,7 +155,7 @@ export default function CommunityPage() {
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={t("groups.searchGroups")}
                 aria-label={t("groups.searchGroups")}
-                className="h-10 w-full rounded-lg border border-border-card bg-surface pl-9 pr-3 text-base text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="h-10 w-full rounded-lg border border-border-card bg-surface ps-9 pe-3 text-base text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
             </div>
 

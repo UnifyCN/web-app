@@ -49,7 +49,7 @@ export function EventCard({ event }: { event: CommunityEvent }) {
             sizes="(max-width: 768px) 100vw, 340px"
           />
         )}
-        <div className="absolute left-3 top-3 flex flex-col items-center rounded-lg bg-surface px-2.5 py-1 shadow-sm">
+        <div className="absolute start-3 top-3 flex flex-col items-center rounded-lg bg-surface px-2.5 py-1 shadow-sm">
           <span className="text-base font-bold leading-none text-primary">
             {day}
           </span>

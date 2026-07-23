@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn, RTL_FLIP } from "@/lib/utils";
 
 interface Crumb {
   label: string;
@@ -19,7 +20,7 @@ export function Breadcrumb({ items }: { items: Crumb[] }) {
         <span key={item.label} className="flex items-center gap-1">
           {index > 0 && (
             <ChevronRight
-              className="h-3.5 w-3.5 text-ink-placeholder"
+              className={cn("h-3.5 w-3.5 text-ink-placeholder", RTL_FLIP)}
               aria-hidden
             />
           )}

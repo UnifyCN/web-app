@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PanelLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import { StarterPromptChips } from "./StarterPromptChips";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
@@ -90,9 +90,9 @@ export function ChatPanel({
           type="button"
           onClick={onOpenList}
           aria-label={t("companion.conversationsAria")}
-          className="-ml-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
+          className="-ms-1 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
         >
-          <PanelLeft className="h-5 w-5" aria-hidden />
+          <PanelLeft className={cn("h-5 w-5", RTL_FLIP)} aria-hidden />
         </button>
         <h1 className="truncate text-sm font-semibold text-ink-secondary">
           {conversation?.title ?? t("companion.newConversation")}

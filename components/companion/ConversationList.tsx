@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { MoreHorizontal, Search, SquarePen, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import { useIsRtl } from "@/hooks/useDirection";
 import { useRelativeTime } from "@/hooks/useRelativeTime";
 import type { Conversation } from "@/types";
 import { DeleteConversationModal } from "./DeleteConversationModal";
@@ -35,7 +36,12 @@ function RowMenu({
   onDelete: () => void;
 }) {
   const { t } = useTranslation();
-  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+  const isRtl = useIsRtl();
+  // The menu pins to the button's end edge — right in LTR, left in RTL. We
+  // always position via a `left` coordinate (mirroring DropdownMenu) and shift
+  // the panel back by its own width with a transform when end == right.
+  const rightAlign = !isRtl;
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
   useLayoutEffect(() => {
     function update() {
@@ -43,8 +49,7 @@ function RowMenu({
       if (!rect) return;
       setPos({
         top: rect.bottom + 4,
-        // distance from the right edge of the viewport
-        right: window.innerWidth - rect.right,
+        left: rightAlign ? rect.right : rect.left,
       });
     }
     update();
@@ -56,21 +61,26 @@ function RowMenu({
       window.removeEventListener("scroll", update, true);
       window.removeEventListener("resize", update);
     };
-  }, [anchorRef]);
+  }, [anchorRef, rightAlign]);
 
   if (!pos) return null;
   return createPortal(
     <div
       ref={portalRef}
       role="menu"
-      style={{ position: "fixed", top: pos.top, right: pos.right }}
+      style={{
+        position: "fixed",
+        top: pos.top,
+        left: pos.left,
+        transform: rightAlign ? "translateX(-100%)" : undefined,
+      }}
       className="z-50 w-32 overflow-hidden rounded-lg border border-border-card bg-surface py-1 shadow-lg"
     >
       <button
         type="button"
         role="menuitem"
         onClick={onDelete}
-        className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-sm text-destructive hover:bg-surface-gray"
+        className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-start text-sm text-destructive hover:bg-surface-gray"
       >
         <Trash2 className="h-4 w-4" aria-hidden />
         {t("common.delete")}
@@ -154,7 +164,7 @@ export function ConversationList({
       <aside
         className={cn(
           // Full-width on mobile (master/detail); a 240px rail at md+.
-          "w-full shrink-0 flex-col border-r border-border-card bg-surface md:flex md:w-[240px]",
+          "w-full shrink-0 flex-col border-e border-border-card bg-surface md:flex md:w-[240px]",
           mobileActive ? "flex" : "hidden",
         )}
       >
@@ -169,7 +179,7 @@ export function ConversationList({
           </button>
           <div className="relative">
             <Search
-              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder"
+              className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-placeholder"
               aria-hidden
             />
             <input
@@ -178,7 +188,7 @@ export function ConversationList({
               onChange={(event) => setSearch(event.target.value)}
               placeholder={t("companion.searchChats")}
               aria-label={t("companion.searchChats")}
-              className="h-9 w-full rounded-lg border border-border-card bg-surface pl-9 pr-3 text-base text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="h-9 w-full rounded-lg border border-border-card bg-surface ps-9 pe-3 text-base text-ink-muted placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             />
           </div>
         </div>
@@ -194,7 +204,7 @@ export function ConversationList({
                     type="button"
                     onClick={() => onSelect(conversation.id)}
                     className={cn(
-                      "flex w-full cursor-pointer flex-col items-start rounded-lg py-2 pl-3 pr-11 text-left transition-colors",
+                      "flex w-full cursor-pointer flex-col items-start rounded-lg py-2 ps-3 pe-11 text-start transition-colors",
                       active ? "bg-primary-bg" : "hover:bg-surface-gray",
                     )}
                   >
@@ -220,7 +230,7 @@ export function ConversationList({
                     aria-haspopup="menu"
                     aria-expanded={menuOpen}
                     className={cn(
-                      "absolute right-1 top-1.5 flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-ink-muted transition-opacity",
+                      "absolute end-1 top-1.5 flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-ink-muted transition-opacity",
                       "hover:bg-surface focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                       // Always visible on touch (no hover); hover-reveal at md+.
                       menuOpen

@@ -28,7 +28,7 @@ export function CommentCard({ comment }: { comment: UserComment }) {
       <p className="mt-0.5 text-xs text-ink-placeholder">
         {t("profile.commentByAuthor", { username: comment.postAuthorUsername })}
       </p>
-      <p className="mt-2 line-clamp-3 border-l-2 border-primary pl-3 text-sm leading-relaxed text-ink">
+      <p className="mt-2 line-clamp-3 border-s-2 border-primary ps-3 text-sm leading-relaxed text-ink">
         {stripHtml(comment.content)}
       </p>
     </Link>

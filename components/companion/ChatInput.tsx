@@ -2,7 +2,7 @@
 
 import { Send } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
+import { cn, RTL_FLIP } from "@/lib/utils";
 
 interface ChatInputProps {
   value: string;
@@ -57,7 +57,7 @@ export function ChatInput({
             : "cursor-not-allowed bg-surface-input text-ink-placeholder",
         )}
       >
-        <Send className="h-4 w-4" aria-hidden />
+        <Send className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
       </button>
     </div>
   );

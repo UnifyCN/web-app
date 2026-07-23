@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useStagger } from "@/components/auth/motion";
+import { useIsRtl } from "@/hooks/useDirection";
 import { cn } from "@/lib/utils";
 
 interface OtpInputProps {
@@ -34,6 +35,7 @@ export function OtpInput({
   const refs = useRef<Array<HTMLInputElement | null>>([]);
   const { container, item } = useStagger();
   const { t } = useTranslation();
+  const isRtl = useIsRtl();
 
   const setDigit = (index: number, digit: string) => {
     const chars = value.split("");
@@ -63,10 +65,14 @@ export function OtpInput({
         setDigit(index - 1, "");
         refs.current[index - 1]?.focus();
       }
-    } else if (event.key === "ArrowLeft" && index > 0) {
-      refs.current[index - 1]?.focus();
-    } else if (event.key === "ArrowRight" && index < length - 1) {
-      refs.current[index + 1]?.focus();
+    } else if (event.key === "ArrowLeft") {
+      // Under RTL the boxes render right-to-left, so ArrowLeft advances (higher
+      // index) and ArrowRight steps back — mirror of LessonPager/ImageLightbox.
+      const target = isRtl ? index + 1 : index - 1;
+      if (target >= 0 && target < length) refs.current[target]?.focus();
+    } else if (event.key === "ArrowRight") {
+      const target = isRtl ? index - 1 : index + 1;
+      if (target >= 0 && target < length) refs.current[target]?.focus();
     }
   };
 

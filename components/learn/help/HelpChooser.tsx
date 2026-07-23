@@ -3,6 +3,7 @@
 import { BookOpen, ChevronRight, Sparkles, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useModuleDiscussionStats } from "@/hooks/useDiscussions";
+import { cn, RTL_FLIP } from "@/lib/utils";
 import type { LessonContext } from "@/types";
 
 /**
@@ -32,7 +33,10 @@ export function HelpChooser({
         <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         <span className="min-w-0">
           <span className="font-medium">{t("learnWeb.help.contextLabel")} </span>
-          {lessonContext.moduleTitle} › {lessonContext.submoduleTitle} ›{" "}
+          {lessonContext.moduleTitle}{" "}
+          <span dir="ltr" className={cn("inline-block", RTL_FLIP)}>›</span>{" "}
+          {lessonContext.submoduleTitle}{" "}
+          <span dir="ltr" className={cn("inline-block", RTL_FLIP)}>›</span>{" "}
           {lessonContext.lessonTitle}
         </span>
       </div>
@@ -41,7 +45,7 @@ export function HelpChooser({
         <button
           type="button"
           onClick={() => onSelect("ai")}
-          className="flex w-full cursor-pointer items-center gap-3 rounded-card border border-border-card bg-surface p-4 text-left transition-colors hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+          className="flex w-full cursor-pointer items-center gap-3 rounded-card border border-border-card bg-surface p-4 text-left transition-colors hover:bg-teal-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-600"
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white">
             <Sparkles className="h-5 w-5" aria-hidden />
@@ -59,13 +63,13 @@ export function HelpChooser({
               {t("learnWeb.help.aiDesc")}
             </span>
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-ink-inactive" aria-hidden />
+          <ChevronRight className={cn("h-4 w-4 shrink-0 text-ink-inactive", RTL_FLIP)} aria-hidden />
         </button>
 
         <button
           type="button"
           onClick={() => onSelect("community")}
-          className="flex w-full cursor-pointer items-center gap-3 rounded-card border border-border-card bg-surface p-4 text-left transition-colors hover:bg-purple-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-600"
+          className="flex w-full cursor-pointer items-center gap-3 rounded-card border border-border-card bg-surface p-4 text-left transition-colors hover:bg-purple-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-purple-600"
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-600 text-white">
             <Users className="h-5 w-5" aria-hidden />
@@ -85,7 +89,7 @@ export function HelpChooser({
                 : t("learnWeb.help.beFirstModule")}
             </span>
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-ink-inactive" aria-hidden />
+          <ChevronRight className={cn("h-4 w-4 shrink-0 text-ink-inactive", RTL_FLIP)} aria-hidden />
         </button>
       </div>
     </div>

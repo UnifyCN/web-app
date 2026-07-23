@@ -137,7 +137,7 @@ export function ProfileHeader({
                 onClick={() => fileInputRef.current?.click()}
                 disabled={avatarBusy}
                 aria-label={t("profile.changePhotoAria")}
-                className="absolute -right-1 -bottom-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-surface bg-primary text-white shadow-sm transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+                className="absolute -end-1 -bottom-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-2 border-surface bg-primary text-white shadow-sm transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {avatarBusy ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
@@ -164,7 +164,7 @@ export function ProfileHeader({
               <p className="text-sm text-ink-muted">
                 @{profile.username}
                 {profile.pronouns && (
-                  <span className="ml-2 text-ink-placeholder">
+                  <span className="ms-2 text-ink-placeholder">
                     {profile.pronouns}
                   </span>
                 )}
@@ -178,7 +178,7 @@ export function ProfileHeader({
               <h2 className="truncate text-lg font-bold text-ink-secondary">
                 {profile.username}
                 {profile.pronouns && (
-                  <span className="ml-2 text-sm font-normal text-ink-placeholder">
+                  <span className="ms-2 text-sm font-normal text-ink-placeholder">
                     {profile.pronouns}
                   </span>
                 )}

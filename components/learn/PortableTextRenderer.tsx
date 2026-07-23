@@ -73,17 +73,17 @@ const components: PortableTextComponents = {
       </h3>
     ),
     blockquote: ({ children }) => (
-      <blockquote className="border-l-2 border-border-card pl-4 text-sm italic text-ink-muted">
+      <blockquote className="border-s-2 border-border-card ps-4 text-sm italic text-ink-muted">
         {children}
       </blockquote>
     ),
   },
   list: {
     bullet: ({ children }) => (
-      <ul className="ml-5 list-disc space-y-1">{children}</ul>
+      <ul className="ms-5 list-disc space-y-1">{children}</ul>
     ),
     number: ({ children }) => (
-      <ol className="ml-5 list-decimal space-y-1">{children}</ol>
+      <ol className="ms-5 list-decimal space-y-1">{children}</ol>
     ),
   },
   listItem: {

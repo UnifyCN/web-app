@@ -108,7 +108,7 @@ function AssistantMessage({
           type="button"
           onClick={copy}
           aria-label={copied ? t("companion.copied") : t("companion.copyMessage")}
-          className="absolute right-2.5 top-2.5 flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink-muted"
+          className="absolute end-2.5 top-2.5 flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink-muted"
         >
           {copied ? (
             <Check className="h-4 w-4" aria-hidden />
@@ -117,7 +117,7 @@ function AssistantMessage({
           )}
         </button>
 
-        <p className="whitespace-pre-wrap pr-8 text-[15px] leading-relaxed text-ink-secondary">
+        <p className="whitespace-pre-wrap pe-8 text-[15px] leading-relaxed text-ink-secondary">
           {message.content}
         </p>
 
@@ -138,7 +138,7 @@ function AssistantMessage({
                     key={question}
                     type="button"
                     onClick={() => onSuggestionClick?.(question)}
-                    className="cursor-pointer rounded-full border border-mention-blue/50 px-3 py-1.5 text-left text-xs text-mention-blue transition-colors hover:bg-mention-blue/5"
+                    className="cursor-pointer rounded-full border border-mention-blue/50 px-3 py-1.5 text-start text-xs text-mention-blue transition-colors hover:bg-mention-blue/5"
                   >
                     {question}
                   </button>
@@ -167,8 +167,8 @@ function UserMessage({
       <div
         className={cn(
           "max-w-[80%] rounded-2xl bg-primary-light px-4 py-2.5 text-sm leading-relaxed text-white",
-          groupedWithPrev && "rounded-tr-md",
-          groupedWithNext && "rounded-br-md",
+          groupedWithPrev && "rounded-tr-md rtl:rounded-tl-md rtl:rounded-tr-2xl",
+          groupedWithNext && "rounded-br-md rtl:rounded-bl-md rtl:rounded-br-2xl",
         )}
       >
         <p className="whitespace-pre-wrap">{message.content}</p>
