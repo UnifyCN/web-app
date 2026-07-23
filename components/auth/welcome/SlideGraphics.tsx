@@ -79,7 +79,9 @@ export function CommunityGraphic() {
           />
           <div className="absolute top-2 start-2 flex flex-col items-center rounded-xl bg-onb-date-chip px-2 py-1 leading-none">
             <span className="text-sm font-bold text-ink">15</span>
-            <span className="text-[10px] text-ink-muted">Jun</span>
+            <span className="text-[10px] text-ink-muted">
+              {t("welcomeCarousel.mockup.eventMonth")}
+            </span>
           </div>
         </div>
         <div className="px-3 py-2">
@@ -87,7 +89,8 @@ export function CommunityGraphic() {
             {t("welcomeCarousel.mockup.eventTitle")}
           </p>
           <p className="mt-1 flex items-center gap-1 text-[11px] text-ink-placeholder">
-            <Calendar className="h-3 w-3" /> 4:30-6:30 pm
+            <Calendar className="h-3 w-3" />{" "}
+            {t("welcomeCarousel.mockup.eventTime")}
           </p>
           <p className="flex items-center gap-1 text-[11px] text-ink-placeholder">
             <MapPin className="h-3 w-3" />{" "}

@@ -34,9 +34,9 @@ export function HelpChooser({
         <span className="min-w-0">
           <span className="font-medium">{t("learnWeb.help.contextLabel")} </span>
           {lessonContext.moduleTitle}{" "}
-          <span className={cn("inline-block", RTL_FLIP)}>›</span>{" "}
+          <span dir="ltr" className={cn("inline-block", RTL_FLIP)}>›</span>{" "}
           {lessonContext.submoduleTitle}{" "}
-          <span className={cn("inline-block", RTL_FLIP)}>›</span>{" "}
+          <span dir="ltr" className={cn("inline-block", RTL_FLIP)}>›</span>{" "}
           {lessonContext.lessonTitle}
         </span>
       </div>
