@@ -13,7 +13,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
-import { getEventById } from "@/lib/mock/events";
+import { useEvent } from "@/hooks/useCommunity";
 import type { EventType } from "@/types";
 
 const EVENT_TYPE_LABEL_KEY: Record<EventType, string> = {
@@ -30,9 +30,18 @@ export default function EventDetailPage({
   const { t, i18n } = useTranslation();
   const { eventId } = use(params);
   const parsedId = Number(eventId);
-  const event = Number.isFinite(parsedId) && parsedId > 0
-    ? getEventById(parsedId)
-    : undefined;
+  const { data: event, isLoading } = useEvent(parsedId);
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-[680px] px-6 py-6">
+        <div className="h-4 w-24 animate-pulse rounded bg-surface-gray" />
+        <div className="mt-4 h-7 w-3/4 animate-pulse rounded bg-surface-gray" />
+        <div className="mt-4 aspect-[16/9] w-full animate-pulse rounded-card bg-surface-gray" />
+        <div className="mt-4 h-5 w-28 animate-pulse rounded bg-surface-gray" />
+      </div>
+    );
+  }
 
   if (!event) {
     return (

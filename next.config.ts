@@ -28,6 +28,16 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "mosaicbc.org" },
       { protocol: "https", hostname: "issbc.org" },
       { protocol: "https", hostname: "www.eventbrite.ca" },
+      // events-crawler source orgs (The Events Calendar covers). mosaicbc.org is
+      // already listed above; add the remaining Phase-1 hosts (apex + www).
+      { protocol: "https", hostname: "successbc.ca" },
+      { protocol: "https", hostname: "www.successbc.ca" },
+      { protocol: "https", hostname: "burnabynh.ca" },
+      { protocol: "https", hostname: "www.burnabynh.ca" },
+      { protocol: "https", hostname: "centrecanada.org" },
+      { protocol: "https", hostname: "www.centrecanada.org" },
+      { protocol: "https", hostname: "pirs.bc.ca" },
+      { protocol: "https", hostname: "www.pirs.bc.ca" },
       // News article images
       { protocol: "https", hostname: "media.canadianunderwriter.ca" },
       { protocol: "https", hostname: "www.bankrate.com" },

@@ -204,22 +204,83 @@ export async function leaveGroup(groupId: number): Promise<void> {
 
 /* ---- Events ----------------------------------------------------------- */
 
-// Events are hard-coded (no events-management surface on web) — the canonical
-// list lives in lib/mock/events.ts and is returned in every environment;
-// Supabase is not consulted. Past events are filtered out (only upcoming show),
-// then ordered newest-first to mirror the old query.
+// Events are read from the shared `events` table (manual rows entered by the team
+// plus rows auto-populated by the events-crawler edge function). Falls back to the
+// lib/mock/events.ts snapshot when Supabase isn't configured or the user isn't
+// signed in (mirrors getNews). Only upcoming events show, ordered newest-first.
 
-export async function getEvents(): Promise<CommunityEvent[]> {
+interface EventRow {
+  id: number;
+  title: string;
+  description: string | null;
+  event_datetime: string;
+  event_end_datetime: string | null;
+  location: string;
+  event_type: string;
+  cover_photo_url: string | null;
+  external_link: string | null;
+  hosted_by: string | null;
+}
+
+const EVENT_COLUMNS =
+  "id, title, description, event_datetime, event_end_datetime, location, event_type, cover_photo_url, external_link, hosted_by";
+
+function rowToEvent(row: EventRow): CommunityEvent {
+  return {
+    id: row.id,
+    title: row.title,
+    eventDatetime: row.event_datetime,
+    eventEndDatetime: row.event_end_datetime ?? undefined,
+    location: row.location,
+    eventType: row.event_type as CommunityEvent["eventType"],
+    coverPhotoUrl: row.cover_photo_url,
+    externalLink: row.external_link,
+    description: row.description ?? "",
+    hostedBy: row.hosted_by,
+  };
+}
+
+function upcomingSortedDesc(list: CommunityEvent[]): CommunityEvent[] {
   const now = new Date();
-  return [...communityEvents]
+  return list
     .filter((event) => new Date(event.eventDatetime) > now)
     .sort((a, b) => b.eventDatetime.localeCompare(a.eventDatetime));
+}
+
+export async function getEvents(): Promise<CommunityEvent[]> {
+  if (!isSupabaseConfigured()) return upcomingSortedDesc([...communityEvents]);
+
+  const userId = await getAuthUserId();
+  if (!userId) return upcomingSortedDesc([...communityEvents]);
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("events")
+    .select(EVENT_COLUMNS)
+    .gt("event_datetime", new Date().toISOString())
+    .order("event_datetime", { ascending: false });
+  if (error) throw error;
+
+  return (data as EventRow[]).map(rowToEvent);
 }
 
 export async function getEventById(
   id: number,
 ): Promise<CommunityEvent | undefined> {
-  return findCommunityEvent(id);
+  if (!isSupabaseConfigured()) return findCommunityEvent(id);
+
+  const userId = await getAuthUserId();
+  if (!userId) return findCommunityEvent(id);
+
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("events")
+    .select(EVENT_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+
+  return data ? rowToEvent(data as EventRow) : undefined;
 }
 
 /* ---- News ------------------------------------------------------------- */
