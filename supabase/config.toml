@@ -32,7 +32,7 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.events-crawler]
-# Cron-only (pg_cron → net.http_post; see 20260722120000_events_crawler.sql). Same
+# Cron-only (pg_cron → net.http_post; see 20260724120000_events_crawler_cron.sql). Same
 # rationale as news-crawler: cron-only, no browser/CORS preflight surface, so the
 # gateway can verify the service-role bearer and the function trusts its `role` claim.
 verify_jwt = true

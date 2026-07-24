@@ -1,6 +1,7 @@
 // @ts-nocheck Deno runtime — Supabase Edge Functions (not part of the Next build)
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { isPublicHttpUrl } from '../_shared/ssrf.ts';
 
 // ============================================================================
 // news-crawler — weekly Canada/immigration news → public.news_details
@@ -256,35 +257,6 @@ const ICON_URL_RE =
 // 2) Anything under MIN_IMAGE_BYTES is almost certainly a logo/icon, not a photo.
 const MIN_IMAGE_BYTES = 10 * 1024;
 const IMAGE_HEAD_TIMEOUT_MS = 3000;
-
-// SSRF guard: only HEAD public http(s) URLs. Rejects non-http(s) schemes and hosts
-// in localhost / loopback / private / link-local ranges — the crawler runs
-// server-side with the service role, so a crafted feed image URL must never reach
-// an internal host.
-function isPublicHttpUrl(raw: string): boolean {
-  let u: URL;
-  try {
-    u = new URL(raw);
-  } catch {
-    return false;
-  }
-  if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
-  const host = u.hostname.toLowerCase();
-  if (host === 'localhost' || host.endsWith('.localhost')) return false;
-  if (host === '::1' || host === '[::1]') return false; // IPv6 loopback
-  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.\d{1,3}$/);
-  if (m) {
-    const a = Number(m[1]);
-    const b = Number(m[2]);
-    if (a === 127) return false; // loopback 127.0.0.0/8
-    if (a === 10) return false; // private 10.0.0.0/8
-    if (a === 172 && b >= 16 && b <= 31) return false; // private 172.16.0.0/12
-    if (a === 192 && b === 168) return false; // private 192.168.0.0/16
-    if (a === 169 && b === 254) return false; // link-local 169.254.0.0/16
-    if (a === 0) return false; // 0.0.0.0/8 (loopback-equivalent bypass)
-  }
-  return true;
-}
 
 /**
  * Extract the feed item's image and keep it only if it looks like a real photo:

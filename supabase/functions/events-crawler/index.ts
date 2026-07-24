@@ -1,6 +1,7 @@
 // @ts-nocheck Deno runtime — Supabase Edge Functions (not part of the Next build)
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { isPublicHttpUrl } from '../_shared/ssrf.ts';
 
 // ============================================================================
 // events-crawler — BC settlement-org events → public.events
@@ -161,35 +162,6 @@ const ICON_URL_RE =
   /logo|icon|brand|favicon|placeholder|avatar|trademark|\/tm(?:[\/?#._-]|$)|spinner|badge|wp-content\/uploads.*logo/i;
 const MIN_IMAGE_BYTES = 10 * 1024;
 const IMAGE_HEAD_TIMEOUT_MS = 3000;
-
-// SSRF guard: only HEAD public http(s) URLs. Rejects non-http(s) schemes and hosts
-// in localhost / loopback / private / link-local ranges — the crawler runs
-// server-side with the service role, so a crafted image URL must never reach an
-// internal host.
-function isPublicHttpUrl(raw: string): boolean {
-  let u: URL;
-  try {
-    u = new URL(raw);
-  } catch {
-    return false;
-  }
-  if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
-  const host = u.hostname.toLowerCase();
-  if (host === 'localhost' || host.endsWith('.localhost')) return false;
-  if (host === '::1' || host === '[::1]') return false; // IPv6 loopback
-  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.\d{1,3}$/);
-  if (m) {
-    const a = Number(m[1]);
-    const b = Number(m[2]);
-    if (a === 127) return false; // loopback 127.0.0.0/8
-    if (a === 10) return false; // private 10.0.0.0/8
-    if (a === 172 && b >= 16 && b <= 31) return false; // private 172.16.0.0/12
-    if (a === 192 && b === 168) return false; // private 192.168.0.0/16
-    if (a === 169 && b === 254) return false; // link-local 169.254.0.0/16
-    if (a === 0) return false; // 0.0.0.0/8
-  }
-  return true;
-}
 
 /**
  * Keep a source image only if it looks like a real photo: reject icon-ish URLs,
@@ -425,13 +397,17 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ ok: true, perOrg, fetched: 0, inserted: 0 });
   }
 
-  // Dedupe against the DB by external_link. No unique index is created on the shared
-  // events table (keeps Savar's manual inserts unconstrained); we filter in-function
-  // and plain-insert the remainder. Scoped to THIS batch's links rather than selecting
-  // the whole column, so the lookup can never be silently truncated by the API row cap
-  // as the table grows. Scoping by link (not by source) keeps the manual-row
-  // protection: a link Savar entered by hand still blocks a crawler re-insert. Tiny
-  // race window is fine for a weekly cron.
+  // Dedupe against the DB by external_link. The real guarantee is the unique index
+  // events_external_link_key (20260724130000_events_external_link_unique.sql) paired
+  // with the ignoreDuplicates upsert below — a read-then-insert alone would race, since
+  // a manual trigger overlapping the cron could have both runs pass this check. This
+  // filter is defence-in-depth: it keeps the common case from shipping rows the DB
+  // would only discard, and it keeps `inserted` meaningful.
+  //
+  // Scoped to THIS batch's links rather than selecting the whole column, so the lookup
+  // can never be silently truncated by the API row cap as the table grows. Scoping by
+  // link (not by source) keeps the manual-row protection: a link Savar entered by hand
+  // still blocks a crawler re-insert.
   //
   // Chunked because the filter travels in a GET query string: links run ~140 chars
   // (~200 URL-encoded), so 25 per request keeps it near 5KB, well under the gateway's
@@ -458,7 +434,13 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ ok: true, perOrg, fetched: batch.length, inserted: 0 });
   }
 
-  const { data, error } = await supabase.from('events').insert(toInsert).select('id');
+  // ON CONFLICT (external_link) DO NOTHING via the UNIQUE index, so a run that loses
+  // the race to a concurrent invocation is a silent no-op instead of a 23505. .select()
+  // returns only the rows actually inserted, so its length is the true insert count.
+  const { data, error } = await supabase
+    .from('events')
+    .upsert(toInsert, { onConflict: 'external_link', ignoreDuplicates: true })
+    .select('id');
   if (error) {
     console.error('events-crawler: insert failed:', error);
     return jsonResponse({ error: 'Insert failed', detail: error.message }, 500);
