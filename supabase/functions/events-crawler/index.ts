@@ -36,6 +36,14 @@ interface Org {
 // Phase 1: the five highest-relevance orgs, all on The Events Calendar (Tribe).
 // Add an org here (test /wp-json/tribe/events/v1/events first) to broaden coverage;
 // remember to allowlist its image host in next.config.ts.
+//
+// NOTE on virtual events: none of these orgs sets Tribe's `is_virtual` flag (it ships
+// with the paid Virtual Events add-on) — it is false or absent on every event. They mark
+// online events by registering a venue named "Online" / "Webinar" instead, which is why
+// isOnlineVenueName drives event_type. Don't rely on `is_virtual` alone.
+//
+// centrecanada.org is healthy but currently returns total:0 (empty upcoming calendar) —
+// a zero count from it is expected, not a fetch failure.
 const ORGS: Org[] = [
   { slug: 'mosaic', name: 'MOSAIC', host: 'mosaicbc.org' },
   { slug: 'burnaby-nh', name: 'Burnaby Neighbourhood House', host: 'burnabynh.ca' },
@@ -146,6 +154,37 @@ function htmlToParagraphs(html: string | null | undefined): string {
     .slice(0, MAX_DESCRIPTION_CHARS);
 }
 
+// Venue names that denote a virtual room rather than a physical place. These orgs
+// register a venue literally named "Online" or "Webinar" and never set Tribe's
+// `is_virtual` (it needs the paid Virtual Events add-on), so the venue NAME is the only
+// signal that an event is online — without this every webinar types as in-person.
+const VIRTUAL_STRONG = new Set([
+  'online', 'virtual', 'webinar', 'zoom', 'remote', 'teleconference', 'livestream',
+  'webex', 'teams', 'meet',
+]);
+const VIRTUAL_FILLER = new Set([
+  'event', 'events', 'meeting', 'session', 'workshop', 'only', 'platform', 'via', 'web',
+  'google', 'ms', 'microsoft', 'stream', 'live',
+]);
+
+/**
+ * True when the whole venue name is virtual vocabulary ("Online", "Webinar",
+ * "Online (Zoom)", "Virtual Event"). Matches the ENTIRE name rather than searching for a
+ * substring, so a physical venue that merely contains one of these words — "Online
+ * Learning Centre, 123 Main St" — is not misread as virtual.
+ */
+function isOnlineVenueName(name: string): boolean {
+  const tokens = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (tokens.length === 0) return false;
+  if (!tokens.every((t) => VIRTUAL_STRONG.has(t) || VIRTUAL_FILLER.has(t))) return false;
+  return tokens.some((t) => VIRTUAL_STRONG.has(t));
+}
+
 /** Tribe `utc_start_date`/`utc_end_date` ("YYYY-MM-DD HH:MM:SS", UTC) → ISO Z. */
 function toIsoUtc(value: string | null | undefined): string | null {
   if (!value || typeof value !== 'string') return null;
@@ -233,16 +272,21 @@ async function tribeEventToRow(ev: any, org: Org): Promise<EventRow | null> {
   const eventDatetime = toIsoUtc(ev.utc_start_date);
   if (!title || !externalLink || !eventDatetime) return null; // NOT NULL columns
 
-  // location + event_type from venue presence and the virtual flag.
+  // location + event_type from the venue NAME first, then venue presence, then the
+  // virtual flag — see isOnlineVenueName for why the name has to win.
   const venue = ev.venue;
   const hasVenue =
     venue && typeof venue === 'object' && !Array.isArray(venue) && !!clean(venue.venue);
   const isVirtual = ev.is_virtual === true;
+  const venueName = hasVenue ? clean(venue.venue) : '';
 
   let location: string;
   let eventType: EventRow['event_type'];
-  if (hasVenue) {
-    location = clean(venue.venue);
+  if (hasVenue && isOnlineVenueName(venueName)) {
+    location = venueName; // keep the source wording ('Online' / 'Webinar')
+    eventType = 'online';
+  } else if (hasVenue) {
+    location = venueName;
     eventType = isVirtual ? 'hybrid' : 'in-person';
   } else if (isVirtual) {
     location = 'Online';
