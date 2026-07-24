@@ -5,7 +5,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 // ============================================================================
 // events-crawler — BC settlement-org events → public.events
 // ----------------------------------------------------------------------------
-// Cron-triggered (see 20260701120000_events_crawler.sql): pg_cron POSTs here
+// Cron-triggered (see 20260722120000_events_crawler.sql for the source column and
+// 20260724120000_events_crawler_cron.sql for the schedule): pg_cron POSTs here
 // with the service-role key as the Bearer token. The function pulls upcoming
 // events from WordPress "The Events Calendar" (Tribe) JSON REST APIs and inserts
 // new rows into public.events, shaped IDENTICALLY to the events Savar enters by
@@ -196,6 +197,14 @@ function isPublicHttpUrl(raw: string): boolean {
  * Content-Length below the threshold — a missing header, non-OK status, or a
  * thrown/timed-out request all keep the image (benefit of the doubt). Returns null
  * when there's no usable photo, so the caller applies the fallback pool.
+ *
+ * `redirect: 'manual'` completes the SSRF guard: without it an allowed public host
+ * could 302 the probe to an internal address, which isPublicHttpUrl only ever saw
+ * the ORIGINAL URL for. A 3xx now surfaces as a non-OK response, so we keep the
+ * original (already-validated) URL and never fetch or store the redirect target.
+ * Cost: a redirected image skips the size check — the same benefit-of-the-doubt
+ * the non-OK path already takes, and cheaper than dropping the many legitimate
+ * http→https / CDN redirects these WordPress hosts serve.
  */
 async function resolveImageUrl(url: string | null): Promise<string | null> {
   if (!url || typeof url !== 'string') return null;
@@ -208,6 +217,7 @@ async function resolveImageUrl(url: string | null): Promise<string | null> {
     const res = await fetch(url, {
       method: 'HEAD',
       signal: controller.signal,
+      redirect: 'manual', // never follow a redirect off the validated host
       headers: { 'User-Agent': 'UnifyEventsBot/1.0 (+https://unifysocial.ca)' },
     });
     if (!res.ok) return url; // non-OK ⇒ keep (benefit of the doubt)
@@ -417,19 +427,31 @@ Deno.serve(async (req: Request) => {
 
   // Dedupe against the DB by external_link. No unique index is created on the shared
   // events table (keeps Savar's manual inserts unconstrained); we filter in-function
-  // and plain-insert the remainder. Check ALL rows so we never duplicate a link that
-  // was entered manually either. Small table → cheap. Tiny race window is fine for a
-  // weekly cron.
-  const { data: existing, error: existingError } = await supabase
-    .from('events')
-    .select('external_link');
-  if (existingError) {
-    console.error('events-crawler: existing-link select failed:', existingError);
-    return jsonResponse({ error: 'Select failed', detail: existingError.message }, 500);
+  // and plain-insert the remainder. Scoped to THIS batch's links rather than selecting
+  // the whole column, so the lookup can never be silently truncated by the API row cap
+  // as the table grows. Scoping by link (not by source) keeps the manual-row
+  // protection: a link Savar entered by hand still blocks a crawler re-insert. Tiny
+  // race window is fine for a weekly cron.
+  //
+  // Chunked because the filter travels in a GET query string: links run ~140 chars
+  // (~200 URL-encoded), so 25 per request keeps it near 5KB, well under the gateway's
+  // ~8KB request-line cap. Batch max is ORGS.length * MAX_PER_ORG = 125 → ≤5 calls.
+  const EXISTING_LOOKUP_CHUNK = 25;
+  const existingLinks = new Set<string>();
+  for (let i = 0; i < batch.length; i += EXISTING_LOOKUP_CHUNK) {
+    const chunk = batch.slice(i, i + EXISTING_LOOKUP_CHUNK).map((row) => row.external_link);
+    const { data: existing, error: existingError } = await supabase
+      .from('events')
+      .select('external_link')
+      .in('external_link', chunk);
+    if (existingError) {
+      console.error('events-crawler: existing-link select failed:', existingError);
+      return jsonResponse({ error: 'Select failed', detail: existingError.message }, 500);
+    }
+    for (const row of (existing ?? []) as { external_link: string | null }[]) {
+      if (row.external_link) existingLinks.add(row.external_link);
+    }
   }
-  const existingLinks = new Set(
-    (existing ?? []).map((r: { external_link: string | null }) => r.external_link).filter(Boolean),
-  );
   const toInsert = batch.filter((row) => !existingLinks.has(row.external_link));
 
   if (toInsert.length === 0) {

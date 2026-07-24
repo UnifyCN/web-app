@@ -884,6 +884,7 @@
     "aboutEvent": "حول الفعالية",
     "noEventDescription": "لا يوجد وصف متاح لهذه الفعالية.",
     "eventNotFound": "تعذّر العثور على هذه الفعالية.",
+    "loadEventError": "تعذّر تحميل هذه الفعالية.",
     "failedLoad": "تعذّر تحميل الفعاليات.",
     "noUpcoming": "لا توجد فعاليات قادمة.",
     "typeHybrid": "مختلط",

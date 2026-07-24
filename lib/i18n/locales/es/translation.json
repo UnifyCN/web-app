@@ -884,6 +884,7 @@
     "aboutEvent": "Sobre el evento",
     "noEventDescription": "No hay descripción disponible para este evento.",
     "eventNotFound": "No se pudo encontrar este evento.",
+    "loadEventError": "No se pudo cargar este evento.",
     "failedLoad": "No se pudieron cargar los eventos.",
     "noUpcoming": "No hay próximos eventos.",
     "typeHybrid": "Híbrido",

@@ -292,6 +292,13 @@ function isPublicHttpUrl(raw: string): boolean {
  * positive Content-Length below the threshold — a missing header, a non-OK status,
  * or a thrown/timed-out request all keep the image (benefit of the doubt). Returns
  * null when there's no usable photo, so the caller applies the category fallback.
+ *
+ * `redirect: 'manual'` completes the SSRF guard: without it an allowed public host
+ * could 302 the probe to an internal address, which isPublicHttpUrl only ever saw
+ * the ORIGINAL URL for. A 3xx now surfaces as a non-OK response, so we keep the
+ * original (already-validated) URL and never fetch or store the redirect target.
+ * Cost: a redirected image skips the size check — the same benefit-of-the-doubt
+ * the non-OK path already takes.
  */
 async function resolveImage(block: string): Promise<string | null> {
   const url = extractImageCandidate(block);
@@ -305,6 +312,7 @@ async function resolveImage(block: string): Promise<string | null> {
     const res = await fetch(url, {
       method: 'HEAD',
       signal: controller.signal,
+      redirect: 'manual', // never follow a redirect off the validated host
       headers: { 'User-Agent': 'UnifyNewsBot/1.0 (+https://unifysocial.ca)' },
     });
     if (!res.ok) return url; // non-OK ⇒ keep (benefit of the doubt)

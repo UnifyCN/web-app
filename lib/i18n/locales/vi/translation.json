@@ -884,6 +884,7 @@
     "aboutEvent": "Về sự kiện",
     "noEventDescription": "Chưa có mô tả cho sự kiện này.",
     "eventNotFound": "Không tìm thấy sự kiện này.",
+    "loadEventError": "Không thể tải sự kiện này.",
     "failedLoad": "Không thể tải sự kiện.",
     "noUpcoming": "Không có sự kiện sắp tới.",
     "typeHybrid": "Kết hợp",
