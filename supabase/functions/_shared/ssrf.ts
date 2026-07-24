@@ -78,8 +78,10 @@ export function parseIpv6Groups(host: string): number[] | null {
 
 /** Non-global IPv6, including the prefixes that carry an IPv4 address inside. */
 export function isBlockedIpv6(g: number[]): boolean {
-  const embeddedIpv4 = () =>
-    isBlockedIpv4(g[6] >> 8, g[6] & 0xff, g[7] >> 8, g[7] & 0xff);
+  // The embedded address does not always sit in the last two groups (6to4 carries it
+  // at bits 16-47), so take the pair of groups to read it from.
+  const embeddedIpv4 = (hi: number, lo: number) =>
+    isBlockedIpv4(hi >> 8, hi & 0xff, lo >> 8, lo & 0xff);
 
   const topFiveZero = g[0] === 0 && g[1] === 0 && g[2] === 0 && g[3] === 0 && g[4] === 0;
 
@@ -89,10 +91,16 @@ export function isBlockedIpv6(g: number[]): boolean {
     // ::a.b.c.d     deprecated IPv4-compatible — judge the embedded address
     if (g[6] === 0 && g[7] === 0) return true;
     if (g[6] === 0 && g[7] === 1) return true;
-    return embeddedIpv4();
+    return embeddedIpv4(g[6], g[7]);
   }
-  if (topFiveZero && g[5] === 0xffff) return embeddedIpv4(); // ::ffff:0:0/96 v4-mapped
-  if (g[0] === 0x64 && g[1] === 0xff9b) return embeddedIpv4(); // 64:ff9b::/96 NAT64
+  if (topFiveZero && g[5] === 0xffff) return embeddedIpv4(g[6], g[7]); // v4-mapped ::ffff:0:0/96
+  if (g[0] === 0x64 && g[1] === 0xff9b) return embeddedIpv4(g[6], g[7]); // NAT64 64:ff9b::/96
+  // Teredo 2001::/32 — deprecated, and the embedded IPv4 is obfuscated (XOR'd with
+  // all-ones), so reject the prefix outright rather than judge the address it hides.
+  // Must be the /32, NOT 2001::/16: 2001:4860::/32 is Google, 2001:db8::/32 is docs.
+  if (g[0] === 0x2001 && g[1] === 0x0000) return true;
+  // 6to4 2002::/16 — V4ADDR is bits 16-47 (RFC 3056), i.e. groups 1 and 2.
+  if (g[0] === 0x2002) return embeddedIpv4(g[1], g[2]);
 
   if ((g[0] & 0xfe00) === 0xfc00) return true; // unique-local fc00::/7 (incl. fd00::/8)
   if ((g[0] & 0xffc0) === 0xfe80) return true; // link-local fe80::/10
