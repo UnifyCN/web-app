@@ -38,6 +38,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "www.centrecanada.org" },
       { protocol: "https", hostname: "pirs.bc.ca" },
       { protocol: "https", hostname: "www.pirs.bc.ca" },
+      // events-crawler tier-2 covers (Pexels stock photos for events with no source image)
+      { protocol: "https", hostname: "images.pexels.com" },
       // News article images
       { protocol: "https", hostname: "media.canadianunderwriter.ca" },
       { protocol: "https", hostname: "www.bankrate.com" },

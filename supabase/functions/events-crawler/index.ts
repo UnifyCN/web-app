@@ -2,6 +2,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { isPublicHttpUrl } from '../_shared/ssrf.ts';
+import { fetchPexelsCandidates } from '../_shared/pexels.ts';
 
 // ============================================================================
 // events-crawler — BC settlement-org events → public.events
@@ -57,6 +58,13 @@ const MAX_DESCRIPTION_CHARS = 2000;
 const MAX_TITLE_CHARS = 300;
 const FETCH_TIMEOUT_MS = 20000;
 
+// Cover images are chosen in three tiers (see tribeEventToRow):
+//   1. the event's own featured image (resolveImageUrl — icon-filtered, SSRF-guarded,
+//      size-checked),
+//   2. a Pexels stock photo matching the event's topic (pexelsImage) — INERT unless the
+//      PEXELS_API_KEY edge-function secret is set,
+//   3. this deterministic Unsplash pool, the always-available last resort.
+//
 // Topic-appropriate Unsplash fallback pool (images.unsplash.com is allowlisted in
 // next.config.ts) for events whose source ships no usable cover. All ids are reused
 // from the production news-crawler pools (already verified 200 image/jpeg) so none
@@ -90,6 +98,53 @@ function hashStr(s: string): number {
 
 function fallbackImage(link: string): string {
   return EVENTS_FALLBACK_POOL[hashStr(link) % EVENTS_FALLBACK_POOL.length];
+}
+
+// Raw event titles ("Tai Chi – 48 Advanced", "QUEST+") are poor image-search terms, so map
+// them to a topic query. Ordered: first matching keyword wins, generic settlement default
+// otherwise. Keep the keywords lowercase — matched against the lowercased title.
+const PEXELS_QUERY_RULES: Array<[RegExp, string]> = [
+  [/english|conversation|language|esl/, 'english conversation class'],
+  [/job|career|employ|resume|hiring|worksafe|interview/, 'job fair career workshop'],
+  [/senior|55\+|elder|memory/, 'seniors community group'],
+  [/family|kids|child|parent|youth/, 'family community centre'],
+  [/tai chi|qi gong|dance|yoga|exercise|walk|fitness/, 'community exercise class'],
+  [/health|cancer|screening|wellness|clinic|mental/, 'community health workshop'],
+  [/housing|rental|tenant|co-op|home/, 'apartment housing keys'],
+  [/digital|computer|tech|online skill/, 'computer skills class'],
+  [/food|cook|cafe|meal|kitchen|dinner/, 'community kitchen cooking'],
+];
+const PEXELS_QUERY_DEFAULT = 'community centre newcomers canada';
+
+function pexelsQueryForEvent(title: string): string {
+  const t = title.toLowerCase();
+  for (const [re, query] of PEXELS_QUERY_RULES) {
+    if (re.test(t)) return query;
+  }
+  return PEXELS_QUERY_DEFAULT;
+}
+
+/**
+ * Tier-2 cover: a Pexels photo for the event's topic, or null if none (missing key / no
+ * results). `pexelsCache` memoises the candidate LIST per query for one crawler run, so the
+ * ~28 image-less events cost a handful of API calls; the per-event `seed` (hashStr of the
+ * link) then picks a stable photo from that list, keeping same-topic covers varied and
+ * unchanged across re-crawls. Caching the in-flight promise also dedupes concurrent calls.
+ */
+async function pexelsImage(
+  title: string,
+  seed: number,
+  cache: Map<string, Promise<string[]>>,
+): Promise<string | null> {
+  const query = pexelsQueryForEvent(title);
+  let candidates = cache.get(query);
+  if (!candidates) {
+    candidates = fetchPexelsCandidates(query);
+    cache.set(query, candidates);
+  }
+  const urls = await candidates;
+  if (urls.length === 0) return null;
+  return urls[seed % urls.length];
 }
 
 interface EventRow {
@@ -260,9 +315,14 @@ function organizerName(organizer: unknown): string | null {
 /**
  * Map one Tribe REST event object to an EventRow, or null when it can't be shaped
  * into a valid row (missing NOT-NULL data, undeterminable location, past, hidden).
- * Image resolution is async (HEAD check), so this is async.
+ * Image resolution is async (HEAD check + optional Pexels search), so this is async.
+ * `pexelsCache` is the run-scoped per-query memo threaded down from the handler.
  */
-async function tribeEventToRow(ev: any, org: Org): Promise<EventRow | null> {
+async function tribeEventToRow(
+  ev: any,
+  org: Org,
+  pexelsCache: Map<string, Promise<string[]>>,
+): Promise<EventRow | null> {
   if (!ev || typeof ev !== 'object') return null;
   if (ev.status && ev.status !== 'publish') return null;
   if (ev.hide_from_listings === true) return null;
@@ -312,7 +372,12 @@ async function tribeEventToRow(ev: any, org: Org): Promise<EventRow | null> {
     ev.image && typeof ev.image === 'object' && typeof ev.image.url === 'string'
       ? ev.image.url
       : null;
-  const coverPhotoUrl = (await resolveImageUrl(imageUrl)) ?? fallbackImage(externalLink);
+  // Three tiers: source image → Pexels topic photo → deterministic Unsplash pool.
+  const seed = hashStr(externalLink);
+  const coverPhotoUrl =
+    (await resolveImageUrl(imageUrl)) ??
+    (await pexelsImage(title, seed, pexelsCache)) ??
+    fallbackImage(externalLink);
 
   return {
     title,
@@ -329,7 +394,10 @@ async function tribeEventToRow(ev: any, org: Org): Promise<EventRow | null> {
   };
 }
 
-async function fetchOrgEvents(org: Org): Promise<EventRow[]> {
+async function fetchOrgEvents(
+  org: Org,
+  pexelsCache: Map<string, Promise<string[]>>,
+): Promise<EventRow[]> {
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
   const url =
     `https://${org.host}/wp-json/tribe/events/v1/events` +
@@ -352,7 +420,7 @@ async function fetchOrgEvents(org: Org): Promise<EventRow[]> {
     const data = await res.json();
     const events = Array.isArray(data?.events) ? data.events : [];
     const rows = await Promise.all(
-      events.slice(0, MAX_PER_ORG).map((ev: unknown) => tribeEventToRow(ev, org)),
+      events.slice(0, MAX_PER_ORG).map((ev: unknown) => tribeEventToRow(ev, org, pexelsCache)),
     );
     return rows.filter((r): r is EventRow => r !== null);
   } catch (error) {
@@ -417,9 +485,11 @@ Deno.serve(async (req: Request) => {
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // Fetch every org concurrently.
+  // Fetch every org concurrently. One Pexels candidate-list cache per run, shared across
+  // all orgs, so identical topic queries hit the API once.
+  const pexelsCache = new Map<string, Promise<string[]>>();
   const perOrgResults = await Promise.all(
-    ORGS.map(async (org) => ({ slug: org.slug, rows: await fetchOrgEvents(org) })),
+    ORGS.map(async (org) => ({ slug: org.slug, rows: await fetchOrgEvents(org, pexelsCache) })),
   );
 
   const collected: EventRow[] = [];

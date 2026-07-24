@@ -175,14 +175,18 @@ export default function EventDetailPage({
         );
       })()}
 
-      <h2 className="mt-7 text-base font-semibold text-ink-secondary">
-        {t("events.aboutEvent")}
-      </h2>
-      <div className="mt-2 space-y-2 text-sm leading-relaxed text-ink-muted">
-        {paragraphs.map((para, i) => (
-          <p key={i}>{para}</p>
-        ))}
-      </div>
+      {paragraphs.length > 0 && (
+        <>
+          <h2 className="mt-7 text-base font-semibold text-ink-secondary">
+            {t("events.aboutEvent")}
+          </h2>
+          <div className="mt-2 space-y-2 text-sm leading-relaxed text-ink-muted">
+            {paragraphs.map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

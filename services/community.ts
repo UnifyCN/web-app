@@ -240,25 +240,25 @@ function rowToEvent(row: EventRow): CommunityEvent {
   };
 }
 
-function upcomingSortedDesc(list: CommunityEvent[]): CommunityEvent[] {
+function upcomingSortedAsc(list: CommunityEvent[]): CommunityEvent[] {
   const now = new Date();
   return list
     .filter((event) => new Date(event.eventDatetime) > now)
-    .sort((a, b) => b.eventDatetime.localeCompare(a.eventDatetime));
+    .sort((a, b) => a.eventDatetime.localeCompare(b.eventDatetime));
 }
 
 export async function getEvents(): Promise<CommunityEvent[]> {
-  if (!isSupabaseConfigured()) return upcomingSortedDesc([...communityEvents]);
+  if (!isSupabaseConfigured()) return upcomingSortedAsc([...communityEvents]);
 
   const userId = await getAuthUserId();
-  if (!userId) return upcomingSortedDesc([...communityEvents]);
+  if (!userId) return upcomingSortedAsc([...communityEvents]);
 
   const supabase = createClient();
   const { data, error } = await supabase
     .from("events")
     .select(EVENT_COLUMNS)
     .gt("event_datetime", new Date().toISOString())
-    .order("event_datetime", { ascending: false });
+    .order("event_datetime", { ascending: true });
   if (error) throw error;
 
   return (data as EventRow[]).map(rowToEvent);
