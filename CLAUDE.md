@@ -145,6 +145,30 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   `rag-query` answers carry a citation link. **PR #34** ported the PR #25 RPC/`search_path`
   hardening to the legacy **mobile** Supabase project (recorded under
   `supabase/mobile-migrations/`; mobile function signatures — do not run against web).
+- **Internationalization + on-demand translation (i18n Phases 1–6).** The UI is localized
+  with **`i18next` / `react-i18next`** (not `next-intl`). `lib/i18n/` holds the config,
+  provider, label helpers, and per-locale `translation.json` bundles for **English,
+  Tiếng Việt, Español, हिन्दी, and العربية**; `en`/`vi`/`es`/`hi` mirror the mobile language
+  set, while **Arabic is web-first and RTL but gated** out of the public picker behind
+  `NEXT_PUBLIC_ENABLE_ARABIC` until its machine translation is native-reviewed (a stored
+  `ar` cookie/DB value still renders). Language is chosen in `components/LanguagePicker.tsx`
+  and persisted to the `unify_lang` cookie, so the SSR root layout renders the correct
+  `<html lang>` / `dir` with no flash of English (falling back to `Accept-Language`
+  negotiation for first-time visitors); it syncs cross-device through the **shared**
+  `user_onboarding_profiles.preferred_language` column (`lib/i18n/useLanguageSync.ts`).
+  RTL mirroring runs through `hooks/useDirection.ts`. Locale-key parity is enforced in CI by
+  `npm run check-i18n` (`scripts/check-i18n-parity.mjs`) — **run it after touching any
+  locale file.**
+  **User-generated content** translates on demand: `components/home/TranslateButton.tsx` →
+  `hooks/useTranslations.ts` → `services/translations.ts` → the same-origin
+  `/api/translate` proxy → the **web-owned `translate-content` edge function**, covering
+  posts, comments, and In-Lesson Help discussions/replies. Results cache server-side
+  (`post_translations` / `comment_translations` / `discussion_translations` /
+  `discussion_reply_translations`, keyed by source row + target lang with a SHA-256
+  `source_hash` so an edited body invalidates stale rows) under a **20 translations/day**
+  per-user quota (`translation_usage` + check/refund RPCs mirroring the chatbot quota
+  pair); cache hits are free. Migrations:
+  `20260709120000_content_translations.sql`, `20260711120000_discussion_translations.sql`.
 
 ---
 
@@ -154,14 +178,15 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   layer.** The login page (`app/(auth)/login/page.tsx`) and sidebar
   (`components/layout/Sidebar.tsx`) call `createClient()` directly. Flagged by
   CodeRabbit on PR #1 — do as a separate PR after PR #1 merges.
-- **Internationalization / multi-language is not started on web** (mobile shipped it
-  in `multi-lang-support`). No `next-intl`/`i18next`, no `messages/` or `locales/`,
-  no language switcher. Fully feasible without the DB sandbox — tracked in
-  `BACKLOG.md` under "Feasible mobile-parity gaps".
+- **Arabic (`ar`) is built but gated.** The locale ships complete (RTL layout, full
+  `translation.json`) yet stays out of the public picker behind
+  `NEXT_PUBLIC_ENABLE_ARABIC` until a native speaker reviews the machine translation.
+  Flip the flag only after that review.
 
 *(Done: "Wire `rag-query` to the Companion UI" — shipped in PR #20; see Build Status.
 Both embeddings and answering now run through OpenRouter, so the OpenAI-key blocker
-is resolved.)*
+is resolved. "Internationalization / multi-language" — shipped across i18n Phases 1–6;
+see the i18n bullet in Build Status.)*
 
 ---
 
