@@ -622,6 +622,46 @@ From Phase 16. The submodule section page shows a Learn → Practice activity ti
 **"Documentation → Identification" Quick Check missing from Sanity**
 From Phase 16. The Documentation module's "Identification" True/False Quick Check shown in a mobile screenshot does not exist in any Sanity project/dataset — it's a content gap, not a code bug. Content team to author the missing quiz doc.
 
+**Register `practice` + `quiz` with document-internationalization — BLOCKS the Practice/Quiz translations**
+The 2026-07-27 translation run wrote **228 draft translations** (39 practice + 18 quiz
+sources × vi/es/hi/ar) plus **57 `translation.metadata` docs** into `fercgabp/production`.
+They are complete and verified but **not yet usable**, because `practice` and `quiz` are not
+registered with the `documentInternationalization` plugin — the deployed
+`translation.metadata.schemaTypes` enum is still `module | submodule | lesson | checklist`.
+
+Fix is a config change in the **Sanity Studio source** (add `'practice'` and `'quiz'` to the
+`documentInternationalization` types array) followed by `sanity deploy`. The Studio repo for
+`fercgabp` is **not cloned on the dev machine** used for the run — only the unrelated
+landing-page Studio (`j4gu2dbr`) is present — so this must be done from a machine that has
+it. The Sanity MCP cannot do it: `deploy_schema` explicitly refuses Studio-deployed
+workspaces, and the plugin registration is Studio runtime config rather than schema.
+
+Two follow-ons once it lands:
+- The 57 metadata docs were created as **drafts** (the MCP only creates drafts), whereas the
+  existing 378 lesson/checklist metadata docs are live. Publish the 57 for parity.
+- Heads-up to Savar: `sanity deploy` republishes the Studio for everyone, so mobile's content
+  editors will start seeing a Translations tab on practice/quiz documents.
+
+**Practice/Quiz GROQ queries are not language-aware — MUST land before publishing translations**
+`PRACTICES_BY_SUBMODULE_QUERY` and `LESSON_QUIZ_QUERY` in `lib/sanity.ts` have neither the
+`BASE_LANG` guard nor the `i18nOverlay` used by the lesson/checklist/module queries, and
+their callers in `services/learn.ts` never pass `$lang`. Once `language`-tagged docs are
+published, both queries would match translations *and* English and return **4× duplicates**;
+`MODULE_DETAIL_QUERY`'s `practice_count` subquery would inflate the same way. Harmless today
+(everything is an unpublished draft and the client reads `perspective: "published"`).
+Add `BASE_LANG` + `i18nOverlay` + `$lang` to both queries and the `practice_count` subquery,
+and thread `lang` through the `services/learn.ts` callers and their React Query keys.
+
+**English source content defects in Practice/Quiz — see `docs/sanity-content-issues.md`**
+Ten defects found in **published** English content during the translation run, none fixed
+(the run left all 57 source docs untouched by design). Includes a **wrong answer key** in
+`2fe61c79` "Looking for Rental Housing" that inverts safety advice in a scam-awareness lesson
+— the feedback tells newcomers a written RTB tenancy agreement is a red flag and omits the
+deposit-before-viewing scam — and unfinished **`"bla bla"` placeholder copy** in `ecca3ca9`
+where the PR residency obligation belongs. Full list, exact strings, and fix guidance in the
+doc. Note the constraint recorded there: fixes must not alter any `_key` or
+`options[].value`, or the 228 translation drafts desync and saved learner progress mis-grades.
+
 ---
 
 ## Navigation
