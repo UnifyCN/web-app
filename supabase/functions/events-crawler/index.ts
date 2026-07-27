@@ -58,6 +58,11 @@ const MAX_DESCRIPTION_CHARS = 2000;
 const MAX_TITLE_CHARS = 300;
 const FETCH_TIMEOUT_MS = 20000;
 
+// Tribe reads ?start_date on the SITE's calendar, not UTC — see todayInTimezone.
+// Every Phase-1 org is in BC, so one constant covers them all. When an org outside
+// Pacific time is added to ORGS, give Org an optional `timezone` and fall back here.
+const ORG_TIMEZONE = 'America/Vancouver';
+
 // Cover images are chosen in three tiers (see tribeEventToRow):
 //   1. the event's own featured image (resolveImageUrl — icon-filtered, SSRF-guarded,
 //      size-checked),
@@ -163,6 +168,18 @@ interface EventRow {
 
 // ---- text helpers (dependency-free) ---------------------------------------
 
+/**
+ * `String.fromCodePoint` throws RangeError for anything outside 0…0x10FFFF — a feed
+ * carrying `&#99999999;` or `&#x7FFFFFFF;` is enough. That throw would escape
+ * decodeEntities() through clean()/htmlToParagraphs() and tribeEventToRow into
+ * fetchOrgEvents' catch, which returns [] — so ONE malformed entity in ONE item would
+ * discard that org's whole batch. Out-of-range values therefore keep their literal
+ * source text (`raw`) rather than throwing or being silently dropped.
+ */
+function codePointOr(raw: string, n: number): string {
+  return Number.isInteger(n) && n >= 0 && n <= 0x10ffff ? String.fromCodePoint(n) : raw;
+}
+
 function decodeEntities(input: string): string {
   return input
     .replace(/&amp;/g, '&')
@@ -178,8 +195,8 @@ function decodeEntities(input: string): string {
     .replace(/&#8212;/g, '—')
     .replace(/&#8216;|&#8217;/g, "'")
     .replace(/&#8220;|&#8221;/g, '"')
-    .replace(/&#(\d+);/g, (_m, n) => String.fromCodePoint(Number(n)))
-    .replace(/&#x([0-9a-f]+);/gi, (_m, n) => String.fromCodePoint(parseInt(n, 16)));
+    .replace(/&#(\d+);/g, (m, n) => codePointOr(m, Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (m, n) => codePointOr(m, parseInt(n, 16)));
 }
 
 /** Decode entities, collapse whitespace, trim. For single-line fields (title, venue). */
@@ -394,11 +411,30 @@ async function tribeEventToRow(
   };
 }
 
+/**
+ * Today's date as YYYY-MM-DD on `timeZone`'s calendar, NOT UTC's.
+ *
+ * Tribe interprets ?start_date in the site's own timezone, so using the UTC date
+ * would silently drop events happening later the same local day for any run between
+ * 00:00Z and 08:00Z — the window where UTC has already rolled over to tomorrow but
+ * Vancouver has not. The scheduled Monday 14:00 UTC run is outside that window, but a
+ * manual or rescheduled run lands in it easily. 'en-CA' already formats as YYYY-MM-DD,
+ * so no manual part assembly is needed.
+ */
+function todayInTimezone(timeZone: string, now: Date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+}
+
 async function fetchOrgEvents(
   org: Org,
   pexelsCache: Map<string, Promise<string[]>>,
 ): Promise<EventRow[]> {
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+  const today = todayInTimezone(ORG_TIMEZONE); // YYYY-MM-DD on the org's calendar
   const url =
     `https://${org.host}/wp-json/tribe/events/v1/events` +
     `?per_page=${MAX_PER_ORG}&start_date=${today}%2000:00:00`;
