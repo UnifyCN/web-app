@@ -337,15 +337,16 @@ export async function getLesson(
  */
 export async function getPractices(
   submoduleId: string,
+  language: SupportedLanguage = "en",
 ): Promise<SanityPractice[]> {
   if (!isSanityConfigured()) return getMockPracticesBySubmodule(submoduleId);
 
-  const practices = await sanityClient.fetch<SanityPractice[]>(
+  const practices = await sanityClient.fetch<WithI18n<SanityPractice>[]>(
     PRACTICES_BY_SUBMODULE_QUERY,
-    { submoduleId },
+    { submoduleId, lang: language },
   );
   return (practices ?? [])
-    .slice()
+    .map((row): SanityPractice => mergeI18nOverlay(row))
     .sort((a, b) => a.order_number - b.order_number);
 }
 
@@ -354,15 +355,16 @@ export async function getPractices(
 /** The lesson's "Quick Check" quizzes (`_type == "quiz"`, ordered). */
 export async function getLessonQuiz(
   lessonId: string,
+  language: SupportedLanguage = "en",
 ): Promise<SanityLessonQuiz[]> {
   if (!isSanityConfigured()) return getMockLessonQuiz(lessonId);
 
-  const quizzes = await sanityClient.fetch<SanityLessonQuiz[]>(
+  const quizzes = await sanityClient.fetch<WithI18n<SanityLessonQuiz>[]>(
     LESSON_QUIZ_QUERY,
-    { lessonId },
+    { lessonId, lang: language },
   );
   return (quizzes ?? [])
-    .slice()
+    .map((row): SanityLessonQuiz => mergeI18nOverlay(row))
     .sort((a, b) => a.order_number - b.order_number);
 }
 

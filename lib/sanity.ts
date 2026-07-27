@@ -163,7 +163,7 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $moduleId][0] 
     title,
     description,
     order,
-    "practice_count": count(*[_type == "practice" && submodule._ref == ^._id]),
+    "practice_count": count(*[_type == "practice" && submodule._ref == ^._id && ${BASE_LANG}]),
     ${i18nOverlay("title, description")},
     "lessons": *[_type == "lesson" && references(^._id) && ${BASE_LANG}] | order(order) {
       _id,
@@ -195,17 +195,12 @@ export const LESSON_DETAIL_QUERY = `*[_type == "lesson" && _id == $lessonId][0] 
   ${i18nOverlay("title, description, pages, activity_pages, ending_pages")}
 }`;
 
-/** All practices for a submodule (quiz + activity), ordered. The caller
- * filters to quiz-type. Mirrors the mobile practices query. */
-export const PRACTICES_BY_SUBMODULE_QUERY = `*[_type == "practice" && submodule._ref == $submoduleId] | order(order_number asc) {
-  _id,
-  _type,
-  title,
-  description,
-  practice_type,
-  order_number,
-  "submodule": submodule-> { _id, title },
-  questions[] | order(order_number asc) {
+/** Projection for a quiz-shaped `questions[]` array. `practice` and `quiz`
+ * documents share the question object, so the same renderers apply — and both
+ * the base projection and the `i18nOverlay` reuse this, so a translated variant
+ * comes back with the same fields AND the same ordering. (`flattenPractices`
+ * relies on the GROQ order for questions.) */
+const QUIZ_QUESTION_FIELDS = `questions[] | order(order_number asc) {
     _key,
     question_type,
     question_text,
@@ -214,8 +209,11 @@ export const PRACTICES_BY_SUBMODULE_QUERY = `*[_type == "practice" && submodule.
     correct_answer { value, explanation, points },
     order_number,
     answer_box { content, showAfterSubmit }
-  },
-  pages[] | order(order asc) {
+  }`;
+
+/** Projection for an activity practice's `pages[]`. Same reuse rationale as
+ * `QUIZ_QUESTION_FIELDS`. */
+const PRACTICE_PAGE_FIELDS = `pages[] | order(order asc) {
     _key,
     title,
     order,
@@ -225,25 +223,35 @@ export const PRACTICES_BY_SUBMODULE_QUERY = `*[_type == "practice" && submodule.
       options[] { _key, text, value, is_correct, explanation },
       matching_pairs[] { _key, left_item, right_item, explanation }
     }
-  }
+  }`;
+
+/** All practices for a submodule (quiz + activity), ordered. The caller
+ * filters to quiz-type. Mirrors the mobile practices query. Params:
+ * `$submoduleId`, `$lang`. A translated practice carries its own `submodule`
+ * ref pointing at the same (English) submodule, so without `BASE_LANG` this
+ * listing would return one row per language. */
+export const PRACTICES_BY_SUBMODULE_QUERY = `*[_type == "practice" && submodule._ref == $submoduleId && ${BASE_LANG}] | order(order_number asc) {
+  _id,
+  _type,
+  title,
+  description,
+  practice_type,
+  order_number,
+  "submodule": submodule-> { _id, title },
+  ${QUIZ_QUESTION_FIELDS},
+  ${PRACTICE_PAGE_FIELDS},
+  ${i18nOverlay(`title, description, ${QUIZ_QUESTION_FIELDS}, ${PRACTICE_PAGE_FIELDS}`)}
 }`;
 
 /** Lesson-level "Quick Check" quizzes for a lesson, ordered. Questions share
- * the practice question shape, so the same renderers apply. */
-export const LESSON_QUIZ_QUERY = `*[_type == "quiz" && lesson._ref == $lessonId] | order(order_number asc) {
+ * the practice question shape, so the same renderers apply. Params:
+ * `$lessonId`, `$lang` (see PRACTICES_BY_SUBMODULE_QUERY on `BASE_LANG`). */
+export const LESSON_QUIZ_QUERY = `*[_type == "quiz" && lesson._ref == $lessonId && ${BASE_LANG}] | order(order_number asc) {
   _id,
   _type,
   title,
   description,
   order_number,
-  questions[] | order(order_number asc) {
-    _key,
-    question_type,
-    question_text,
-    options[] { _key, text, value, is_correct, explanation },
-    matching_pairs[] { _key, left_item, right_item, explanation },
-    correct_answer { value, explanation, points },
-    order_number,
-    answer_box { content, showAfterSubmit }
-  }
+  ${QUIZ_QUESTION_FIELDS},
+  ${i18nOverlay(`title, description, ${QUIZ_QUESTION_FIELDS}`)}
 }`;
