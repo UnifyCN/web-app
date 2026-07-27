@@ -60,7 +60,14 @@ select cron.schedule(
         -- 'Bearer <key>\n' and 401 every run. (The function also trims.)
         'Authorization', 'Bearer ' || btrim(v_secret, E' \t\n\r')
       ),
-      body := '{}'::jsonb
+      body := '{}'::jsonb,
+      -- pg_net defaults to a 2s timeout, which this job cannot possibly meet: the
+      -- crawler fetches 5 org feeds concurrently at FETCH_TIMEOUT_MS = 20s each, then
+      -- runs per-event image HEAD probes and Pexels lookups before its insert/upsert
+      -- work. At the default, net.http_post would record a timeout on every run while
+      -- the function was still going, making the cron history useless for spotting
+      -- real failures. 120s clears the observed worst case with headroom.
+      timeout_milliseconds := 120000
     );
   end
   $cron$;
