@@ -632,6 +632,35 @@ NEXT_PUBLIC_SANITY_DATASET=production
 
 **Learn section** — Wired in Phase 7. Content comes from Sanity (modules, submodules, lessons, full lesson body rendered via `@portabletext/react`); per-user state comes from Supabase (`learn_progress`, `user_lesson_progress`, `learn_favourites`). The lesson detail page renders real Sanity `pages` + `ending_pages` portable text — no placeholder objectives/key terms (those fields don't exist in the Sanity schema).
 
+### Decision Authority — what needs Savar's sign-off
+
+The web app is our ownership area. Default to deciding and shipping. Do not stall a
+web-app task to "check with Savar" when the change lives entirely in this repo — that
+caution belongs to the shared surface only, listed below.
+
+**Requires Savar's explicit sign-off before proceeding:**
+
+- **Changes to shared / mobile-owned infrastructure** — the `rag-query` edge function
+  (and any other edge function mobile also calls), shared Supabase RPCs, and any schema
+  change on the shared DB `wrbauxutkysljmsqojts`.
+- **Publishing content to production that mobile also reads** — translations, events,
+  KB documents — before mobile has corresponding support for it.
+- **Activating anything that writes to shared production tables automatically** — cron
+  jobs, scheduled crawlers, any unattended write path.
+
+**Does not require asking — our own call:**
+
+- Web-app-only code changes, UI/UX decisions, and component architecture.
+- Anything scoped entirely within the web-app repo that doesn't touch shared
+  infrastructure.
+- Bug fixes, refactors, and feature work inside our own ownership area.
+- Technical implementation choices — library selection, code patterns, file structure —
+  unless they touch shared systems.
+
+The instinct to loop Savar in on the first list is correct and stays. This guideline
+exists to stop that same caution being applied to the second list, where it only blocks
+work that is ours to decide.
+
 ---
 
 ## What NOT to build yet
