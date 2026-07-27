@@ -1,6 +1,7 @@
 // @ts-nocheck Deno runtime — Supabase Edge Functions (not part of the Next build)
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { isPublicHttpUrl } from '../_shared/ssrf.ts';
 
 // ============================================================================
 // news-crawler — weekly Canada/immigration news → public.news_details
@@ -257,41 +258,19 @@ const ICON_URL_RE =
 const MIN_IMAGE_BYTES = 10 * 1024;
 const IMAGE_HEAD_TIMEOUT_MS = 3000;
 
-// SSRF guard: only HEAD public http(s) URLs. Rejects non-http(s) schemes and hosts
-// in localhost / loopback / private / link-local ranges — the crawler runs
-// server-side with the service role, so a crafted feed image URL must never reach
-// an internal host.
-function isPublicHttpUrl(raw: string): boolean {
-  let u: URL;
-  try {
-    u = new URL(raw);
-  } catch {
-    return false;
-  }
-  if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
-  const host = u.hostname.toLowerCase();
-  if (host === 'localhost' || host.endsWith('.localhost')) return false;
-  if (host === '::1' || host === '[::1]') return false; // IPv6 loopback
-  const m = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.\d{1,3}$/);
-  if (m) {
-    const a = Number(m[1]);
-    const b = Number(m[2]);
-    if (a === 127) return false; // loopback 127.0.0.0/8
-    if (a === 10) return false; // private 10.0.0.0/8
-    if (a === 172 && b >= 16 && b <= 31) return false; // private 172.16.0.0/12
-    if (a === 192 && b === 168) return false; // private 192.168.0.0/16
-    if (a === 169 && b === 254) return false; // link-local 169.254.0.0/16
-    if (a === 0) return false; // 0.0.0.0/8 (loopback-equivalent bypass)
-  }
-  return true;
-}
-
 /**
  * Extract the feed item's image and keep it only if it looks like a real photo:
  * reject icon-ish URLs, then HEAD-check the byte size (3s cap). Reject only on a
  * positive Content-Length below the threshold — a missing header, a non-OK status,
  * or a thrown/timed-out request all keep the image (benefit of the doubt). Returns
  * null when there's no usable photo, so the caller applies the category fallback.
+ *
+ * `redirect: 'manual'` completes the SSRF guard: without it an allowed public host
+ * could 302 the probe to an internal address, which isPublicHttpUrl only ever saw
+ * the ORIGINAL URL for. A 3xx now surfaces as a non-OK response, so we keep the
+ * original (already-validated) URL and never fetch or store the redirect target.
+ * Cost: a redirected image skips the size check — the same benefit-of-the-doubt
+ * the non-OK path already takes.
  */
 async function resolveImage(block: string): Promise<string | null> {
   const url = extractImageCandidate(block);
@@ -305,6 +284,7 @@ async function resolveImage(block: string): Promise<string | null> {
     const res = await fetch(url, {
       method: 'HEAD',
       signal: controller.signal,
+      redirect: 'manual', // never follow a redirect off the validated host
       headers: { 'User-Agent': 'UnifyNewsBot/1.0 (+https://unifysocial.ca)' },
     });
     if (!res.ok) return url; // non-OK ⇒ keep (benefit of the doubt)

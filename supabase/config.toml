@@ -30,3 +30,9 @@ verify_jwt = false
 # browser/CORS preflight surface (the reason practice-feedback keeps it off). The cron
 # sends the project service-role key (a valid JWT) as the Bearer token.
 verify_jwt = true
+
+[functions.events-crawler]
+# Cron-only (pg_cron → net.http_post; see 20260724120000_events_crawler_cron.sql). Same
+# rationale as news-crawler: cron-only, no browser/CORS preflight surface, so the
+# gateway can verify the service-role bearer and the function trusts its `role` claim.
+verify_jwt = true
