@@ -1,5 +1,5 @@
 -- ############################################################################
--- ##  DO NOT APPLY YET — this file ACTIVATES the events crawler.            ##
+-- ##  APPLIED 2026-07-28 — the events crawler is LIVE (cron jobid 18).      ##
 -- ############################################################################
 --
 -- events-crawler support, PART 2 of 2: the weekly pg_cron schedule that POSTs the
@@ -7,14 +7,25 @@
 -- (PART 1, the source column) precisely so PART 1 could be applied without this.
 --
 -- Running this starts auto-publishing scraped events into the SHARED public.events
--- table, which the live mobile app reads. Apply ONLY after ALL of:
---   1. the first crawler run has been triggered MANUALLY (invoke the function with
---      the service-role Bearer token),
---   2. the inserted rows (source like 'crawler:%') have been inspected + approved,
---   3. Savar has signed off — this writes into shared mobile-facing data.
+-- table, which the live mobile app reads. That gate has now been cleared — all
+-- three preconditions were met before it was applied:
+--   1. the first crawler run WAS triggered manually (service-role Bearer POST,
+--      2026-07-28: 17 rows inserted, 0 beyond the 4-month window),
+--   2. the inserted rows (source like 'crawler:%') were inspected + approved,
+--   3. Savar signed off — this writes into shared mobile-facing data.
 --
--- APPLY BY HAND in the Dashboard SQL editor (the MCP is read-only and `db push`
+-- Scraped rows also carry a `genre` as of the same date (GENRE_RULES in the edge
+-- function), so what this schedule publishes is tagged, not 'Uncategorized'.
+--
+-- APPLIED BY HAND in the Dashboard SQL editor (the MCP is read-only and `db push`
 -- is unsafe against the drifted history). This file is version-control / reference.
+-- Re-running is harmless: the DO block below unschedules the same-named job first.
+--
+-- Verified after applying:
+--   cron.job → jobid 18, 'events-crawler-weekly', '0 14 * * 1', active = true
+--
+-- TO STOP auto-publishing:
+--   select cron.unschedule('events-crawler-weekly');
 --
 -- Mirrors 20260619130000_news_details_crawler.sql. Requires pg_cron + pg_net and
 -- the Vault secret holding the service-role key (already stored for news-crawler —

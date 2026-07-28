@@ -35,11 +35,12 @@
 -- TO REVERT:
 --   update public.events set genre = 'Uncategorized' where source like 'crawler:%';
 --
--- STATUS: NOT YET APPLIED as of 2026-07-28. Dry-run against prod on that date
--- classified all 70 in-scope rows with none left over:
---   Employment 17 · Socials 17 · Language 13 · Health 11 · Family 5
---   Education 3 · Housing 2 · Finance 1 · Documentation 1
--- Expect `UPDATE 70`. Update this line once it has run.
+-- STATUS: APPLIED 2026-07-28 to the shared prod DB wrbauxutkysljmsqojts.
+-- `UPDATE 70`, matching the dry-run prediction exactly. Post-run state of the 86
+-- crawler rows (70 backfilled here + 16 already tagged by the crawler itself):
+--   Socials 20 · Employment 17 · Health 17 · Language 16 · Family 8
+--   Education 4 · Housing 2 · Documentation 1 · Finance 1
+-- Uncategorized crawler rows: 0. Hand-entered rows modified: 0 (of 17).
 
 
 -- ---------------------------------------------------------------------------
