@@ -656,15 +656,32 @@ see `docs/sanity-content-issues.md`. `getPractices` / `getLessonQuiz` take the t
 `language` param and merge the overlay; `usePractices` / `useLessonQuiz` carry the language
 in their React Query keys right after the prefix.
 
-**English source content defects in Practice/Quiz — see `docs/sanity-content-issues.md`**
-Ten defects found in **published** English content during the translation run, none fixed
-(the run left all 57 source docs untouched by design). Includes a **wrong answer key** in
-`2fe61c79` "Looking for Rental Housing" that inverts safety advice in a scam-awareness lesson
-— the feedback tells newcomers a written RTB tenancy agreement is a red flag and omits the
-deposit-before-viewing scam — and unfinished **`"bla bla"` placeholder copy** in `ecca3ca9`
-where the PR residency obligation belongs. Full list, exact strings, and fix guidance in the
-doc. Note the constraint recorded there: fixes must not alter any `_key` or
-`options[].value`, or the 228 translation drafts desync and saved learner progress mis-grades.
+**`ecca3ca9` "bla bla" placeholder — needs IRCC-sourced text + re-translation ×4**
+The only P0 content defect still live. `ecca3ca9-7b4a-4d22-a88d-2efc10f7d843`
+("Activity: Mina's Story") has an answer box reading **`"Permanent residents must stay
+bla bla"`** — unfinished placeholder copy where the PR residency obligation belongs
+(730 days of physical presence in every 5-year period, *to be confirmed against current
+IRCC wording, not written from memory*).
+
+Deliberately **not** auto-fixed: it is immigration guidance shown to newcomers, so the
+replacement must be authored and verified by a person. It is also **the only defect
+requiring re-translation** — the translator carried `bla bla` through verbatim in all four
+languages rather than inventing immigration text, so once the English lands, the vi/es/hi/ar
+variants of that field must be re-translated.
+
+*Blocked on:* someone sourcing the clause from IRCC. Then patch English → re-translate ×4.
+
+**Other Practice/Quiz content defects — 4 of 10 resolved (2026-07-28)**
+Fixed and **published**: `2fe61c79` (answer box said "A,B, D" while the grader marked
+A, B, C — it told newcomers a written RTB tenancy agreement was a red flag, in a
+scam-awareness lesson), `ad1aa163` (two options missing the `C) ` prefix their answer box
+cites), `b29a34f2` (truncated `"= $25,"` → `"= $25,000"`). Fixed but **held as an
+unpublished draft**: `051870f8` (`TSFA` → `TFSA`) — publish the draft to take it live.
+Remaining P2 typos / P3 editorial items are open; see `docs/sanity-content-issues.md`.
+
+The constraint holds for any future fix: never alter a `_key` or `options[].value`, or the
+228 translation drafts desync and saved learner progress mis-grades. All four fixes above
+were verified `_key`-identical between published and draft before publishing.
 
 ---
 
