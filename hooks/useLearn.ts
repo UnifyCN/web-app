@@ -72,9 +72,10 @@ export function useLearningProgressSummary() {
 
 /** Quiz-type practices for a section (Sanity content). */
 export function usePractices(submoduleId: string) {
+  const { currentLanguage } = useLanguage();
   return useQuery({
-    queryKey: [...PRACTICES_KEY, submoduleId],
-    queryFn: () => learn.getPractices(submoduleId),
+    queryKey: [...PRACTICES_KEY, currentLanguage, submoduleId],
+    queryFn: () => learn.getPractices(submoduleId, currentLanguage),
     enabled: !!submoduleId,
   });
 }
@@ -125,9 +126,10 @@ export function usePracticeFeedback() {
 
 /** A lesson's "Quick Check" quizzes (Sanity content). */
 export function useLessonQuiz(lessonId: string) {
+  const { currentLanguage } = useLanguage();
   return useQuery({
-    queryKey: [...LESSON_QUIZ_KEY, lessonId],
-    queryFn: () => learn.getLessonQuiz(lessonId),
+    queryKey: [...LESSON_QUIZ_KEY, currentLanguage, lessonId],
+    queryFn: () => learn.getLessonQuiz(lessonId, currentLanguage),
     enabled: !!lessonId,
   });
 }

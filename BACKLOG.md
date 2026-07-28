@@ -622,35 +622,39 @@ From Phase 16. The submodule section page shows a Learn → Practice activity ti
 **"Documentation → Identification" Quick Check missing from Sanity**
 From Phase 16. The Documentation module's "Identification" True/False Quick Check shown in a mobile screenshot does not exist in any Sanity project/dataset — it's a content gap, not a code bug. Content team to author the missing quiz doc.
 
-**Register `practice` + `quiz` with document-internationalization — BLOCKS the Practice/Quiz translations**
+**Register `practice` + `quiz` with document-internationalization — ✅ DONE (unify-sanity PR, 2026-07-27)**
 The 2026-07-27 translation run wrote **228 draft translations** (39 practice + 18 quiz
 sources × vi/es/hi/ar) plus **57 `translation.metadata` docs** into `fercgabp/production`.
-They are complete and verified but **not yet usable**, because `practice` and `quiz` are not
-registered with the `documentInternationalization` plugin — the deployed
-`translation.metadata.schemaTypes` enum is still `module | submodule | lesson | checklist`.
+Both types are now registered with the `documentInternationalization` plugin in the Studio
+source (`sanity.config.ts` `schemaTypes`, `structure.ts` `I18N_TYPES`, and a hidden read-only
+`language` field on `schemaTypes/practice.ts` + `quiz.ts`), and the Studio is redeployed.
+The 57 metadata docs are **published** for parity with the 378 lesson/checklist ones.
 
-Fix is a config change in the **Sanity Studio source** (add `'practice'` and `'quiz'` to the
-`documentInternationalization` types array) followed by `sanity deploy`. The Studio repo for
-`fercgabp` is **not cloned on the dev machine** used for the run — only the unrelated
-landing-page Studio (`j4gu2dbr`) is present — so this must be done from a machine that has
-it. The Sanity MCP cannot do it: `deploy_schema` explicitly refuses Studio-deployed
-workspaces, and the plugin registration is Studio runtime config rather than schema.
+Also landed with it: the 39 + 18 published base docs had **no `language` field at all**
+(unlike the other four types, backfilled by unify-sanity PR #12), so
+`migrations/backfill-language-en` gained `practice` + `quiz` and was re-run — idempotent
+(`!defined(language)` + `setIfMissing`), so it touched only those 57 docs.
 
-Two follow-ons once it lands:
-- The 57 metadata docs were created as **drafts** (the MCP only creates drafts), whereas the
-  existing 378 lesson/checklist metadata docs are live. Publish the 57 for parity.
-- Heads-up to Savar: `sanity deploy` republishes the Studio for everyone, so mobile's content
-  editors will start seeing a Translations tab on practice/quiz documents.
+**The 228 translated content docs remain unpublished drafts.** Publishing them is a separate,
+deliberate decision — and it needs a native review of the machine translations plus a Savar
+heads-up first (mobile reads the same dataset). Until then the overlay's weak-reference deref
+returns null under `perspective: "published"` and English renders.
 
-**Practice/Quiz GROQ queries are not language-aware — MUST land before publishing translations**
-`PRACTICES_BY_SUBMODULE_QUERY` and `LESSON_QUIZ_QUERY` in `lib/sanity.ts` have neither the
-`BASE_LANG` guard nor the `i18nOverlay` used by the lesson/checklist/module queries, and
-their callers in `services/learn.ts` never pass `$lang`. Once `language`-tagged docs are
-published, both queries would match translations *and* English and return **4× duplicates**;
-`MODULE_DETAIL_QUERY`'s `practice_count` subquery would inflate the same way. Harmless today
-(everything is an unpublished draft and the client reads `perspective: "published"`).
-Add `BASE_LANG` + `i18nOverlay` + `$lang` to both queries and the `practice_count` subquery,
-and thread `lang` through the `services/learn.ts` callers and their React Query keys.
+Still open: mobile's content editors now see a Translations tab on practice/quiz documents —
+send Savar the heads-up.
+
+**Practice/Quiz GROQ queries are not language-aware — ✅ DONE (`feat/practice-quiz-groq-i18n`)**
+`PRACTICES_BY_SUBMODULE_QUERY` and `LESSON_QUIZ_QUERY` in `lib/sanity.ts` now carry the
+`BASE_LANG` guard on the outer filter plus an `i18nOverlay`, and `MODULE_DETAIL_QUERY`'s
+`practice_count` subquery is guarded too — without them, published translations (which keep
+their English `submodule`/`lesson` ref) would have returned **5× duplicates**. The overlay
+projects the full `questions[]` / `pages[]` bodies via the shared `QUIZ_QUESTION_FIELDS` /
+`PRACTICE_PAGE_FIELDS` consts, so a translated variant comes back with the same field
+selection *and* the same ordering as the base (`flattenPractices` depends on GROQ order).
+Whole-array overlay is safe because the translations preserve `_key`s byte-identically —
+see `docs/sanity-content-issues.md`. `getPractices` / `getLessonQuiz` take the trailing
+`language` param and merge the overlay; `usePractices` / `useLessonQuiz` carry the language
+in their React Query keys right after the prefix.
 
 **English source content defects in Practice/Quiz — see `docs/sanity-content-issues.md`**
 Ten defects found in **published** English content during the translation run, none fixed
