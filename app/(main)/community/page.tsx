@@ -135,8 +135,18 @@ export default function CommunityPage() {
     group.groupName.toLowerCase().includes(search.trim().toLowerCase()),
   );
 
-  const filteredEvents = genreFilter
-    ? events.filter((event) => event.genre === genreFilter)
+  // A refetch can drop the genre the user had selected — an event passes its start
+  // time, or the crawler re-runs. Fall back to "All" at render time rather than
+  // resetting in an effect: EventGenreFilter hides itself below two genres, so an
+  // effect would leave one frame where the grid is empty and the reset chip is
+  // already gone. The stale state value is simply never read.
+  const activeGenre =
+    genreFilter && events.some((event) => event.genre === genreFilter)
+      ? genreFilter
+      : null;
+
+  const filteredEvents = activeGenre
+    ? events.filter((event) => event.genre === activeGenre)
     : events;
 
   // The shared Tabs primitive compares labels by string equality, so pass the
@@ -249,7 +259,7 @@ export default function CommunityPage() {
             <>
               <EventGenreFilter
                 events={events}
-                value={genreFilter}
+                value={activeGenre}
                 onChange={setGenreFilter}
               />
               {filteredEvents.length > 0 ? (

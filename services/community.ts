@@ -300,6 +300,14 @@ export async function getEvents(): Promise<CommunityEvent[]> {
   return (data as EventRow[]).map(rowToEvent);
 }
 
+/**
+ * Deliberately NOT window-filtered, unlike getEvents. The 4-month window is a
+ * discovery bound on the list, not access control: this is a lookup by an id the
+ * caller already holds (a shared link, or a card that was in-window when it
+ * rendered). Applying the window here would turn a valid link into a spurious
+ * "event not found". The list is the only surface that can grow unbounded, and it
+ * is bounded.
+ */
 export async function getEventById(
   id: number,
 ): Promise<CommunityEvent | undefined> {

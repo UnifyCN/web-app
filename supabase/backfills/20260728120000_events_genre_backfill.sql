@@ -83,4 +83,9 @@ update public.events e
    set genre = c.genre
   from classified c
  where e.id = c.id
+   -- Repeat the CTE's pre-fix guard at write time. `ev` snapshots the
+   -- 'Uncategorized' rows, but without this a row retagged between that snapshot
+   -- and the write would be clobbered. It is also what makes the SAFE TO RE-RUN
+   -- claim above actually hold.
+   and e.genre = 'Uncategorized'
    and c.genre <> 'Uncategorized';
