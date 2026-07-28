@@ -2,12 +2,14 @@ import type {
   CircleStatus,
   CommunityCircle,
   CommunityEvent,
+  EventGenre,
   Group,
   GroupMemberAvatar,
   NewsItem,
   Persona,
   Stage,
 } from "@/types";
+import { EVENT_GENRES } from "@/types";
 import {
   createClient,
   getAuthUserId,
@@ -207,7 +209,23 @@ export async function leaveGroup(groupId: number): Promise<void> {
 // Events are read from the shared `events` table (manual rows entered by the team
 // plus rows auto-populated by the events-crawler edge function). Falls back to the
 // lib/mock/events.ts snapshot when Supabase isn't configured or the user isn't
-// signed in (mirrors getNews). Only upcoming events show, ordered newest-first.
+// signed in (mirrors getNews). Only events inside the rolling window show, soonest
+// first.
+
+/**
+ * How far ahead the Events tab looks. Events further out than this are hidden rather
+ * than deleted — the crawler already declines to ingest them (WINDOW_MONTHS in
+ * supabase/functions/events-crawler/index.ts, keep the two in step), and the shared
+ * table is also read by mobile, which has no date filter and a Past tab. So rows that
+ * fall out of the window simply stop matching here.
+ */
+export const EVENTS_WINDOW_MONTHS = 4;
+
+function windowEnd(from: Date = new Date()): Date {
+  const end = new Date(from);
+  end.setMonth(end.getMonth() + EVENTS_WINDOW_MONTHS);
+  return end;
+}
 
 interface EventRow {
   id: number;
@@ -220,10 +238,11 @@ interface EventRow {
   cover_photo_url: string | null;
   external_link: string | null;
   hosted_by: string | null;
+  genre: string | null;
 }
 
 const EVENT_COLUMNS =
-  "id, title, description, event_datetime, event_end_datetime, location, event_type, cover_photo_url, external_link, hosted_by";
+  "id, title, description, event_datetime, event_end_datetime, location, event_type, cover_photo_url, external_link, hosted_by, genre";
 
 function rowToEvent(row: EventRow): CommunityEvent {
   return {
@@ -237,27 +256,44 @@ function rowToEvent(row: EventRow): CommunityEvent {
     externalLink: row.external_link,
     description: row.description ?? "",
     hostedBy: row.hosted_by,
+    genre: normalizeGenre(row.genre),
   };
 }
 
-function upcomingSortedAsc(list: CommunityEvent[]): CommunityEvent[] {
+/**
+ * `genre` is free text on the shared table, so an unrecognised value (a hand-entered
+ * row, or a tag mobile adds later) must not become a filter chip the UI can't label.
+ * Anything off the known list reads as Uncategorized.
+ */
+function normalizeGenre(value: string | null): EventGenre {
+  return EVENT_GENRES.includes(value as EventGenre)
+    ? (value as EventGenre)
+    : "Uncategorized";
+}
+
+function inWindowSortedAsc(list: CommunityEvent[]): CommunityEvent[] {
   const now = new Date();
+  const end = windowEnd(now);
   return list
-    .filter((event) => new Date(event.eventDatetime) > now)
+    .filter((event) => {
+      const at = new Date(event.eventDatetime);
+      return at > now && at < end;
+    })
     .sort((a, b) => a.eventDatetime.localeCompare(b.eventDatetime));
 }
 
 export async function getEvents(): Promise<CommunityEvent[]> {
-  if (!isSupabaseConfigured()) return upcomingSortedAsc([...communityEvents]);
+  if (!isSupabaseConfigured()) return inWindowSortedAsc([...communityEvents]);
 
   const userId = await getAuthUserId();
-  if (!userId) return upcomingSortedAsc([...communityEvents]);
+  if (!userId) return inWindowSortedAsc([...communityEvents]);
 
   const supabase = createClient();
   const { data, error } = await supabase
     .from("events")
     .select(EVENT_COLUMNS)
     .gt("event_datetime", new Date().toISOString())
+    .lt("event_datetime", windowEnd().toISOString())
     .order("event_datetime", { ascending: true });
   if (error) throw error;
 

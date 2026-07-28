@@ -889,7 +889,21 @@
     "noUpcoming": "لا توجد فعاليات قادمة.",
     "typeHybrid": "مختلط",
     "typeInPerson": "حضوري",
-    "typeOnline": "عبر الإنترنت"
+    "typeOnline": "عبر الإنترنت",
+    "genre": {
+      "employment": "التوظيف",
+      "language": "اللغة",
+      "housing": "السكن",
+      "finance": "المالية",
+      "documentation": "المستندات",
+      "health": "الصحة",
+      "family": "العائلة",
+      "education": "التعليم",
+      "socials": "اجتماعي",
+      "uncategorized": "أخرى"
+    },
+    "filterByCategory": "تصفية الفعاليات حسب الفئة",
+    "noMatchingFilter": "لا توجد فعاليات في هذه الفئة."
   },
   "resetPassword": {
     "title": "إعادة تعيين كلمة المرور",

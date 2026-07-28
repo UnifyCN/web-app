@@ -889,7 +889,21 @@
     "noUpcoming": "No upcoming events.",
     "typeHybrid": "Hybrid",
     "typeInPerson": "In person",
-    "typeOnline": "Online"
+    "typeOnline": "Online",
+    "genre": {
+      "employment": "Employment",
+      "language": "Language",
+      "housing": "Housing",
+      "finance": "Finance",
+      "documentation": "Documents",
+      "health": "Health",
+      "family": "Family",
+      "education": "Education",
+      "socials": "Social",
+      "uncategorized": "Other"
+    },
+    "filterByCategory": "Filter events by category",
+    "noMatchingFilter": "No events in this category."
   },
   "resetPassword": {
     "title": "Reset Password",

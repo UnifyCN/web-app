@@ -62,10 +62,16 @@ export function EventCard({ event }: { event: CommunityEvent }) {
         <h3 className="text-sm font-semibold text-ink-secondary">
           {event.title}
         </h3>
-        <div className="mt-1.5">
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           <Badge variant="primary">
             {t(EVENT_TYPE_LABEL_KEY[event.eventType])}
           </Badge>
+          {/* Uncategorized is the untagged fallback, not a topic — nothing to show. */}
+          {event.genre !== "Uncategorized" && (
+            <Badge variant="neutral">
+              {t(`events.genre.${event.genre.toLowerCase()}`)}
+            </Badge>
+          )}
         </div>
         <div className="mt-2.5 space-y-1.5">
           <p className="flex items-center gap-2 text-xs text-ink-muted">
