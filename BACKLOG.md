@@ -713,3 +713,24 @@ add `http://localhost:3000` to the **Redirect URLs** allowlist for local dev. Be
 a single value, change-email links resolve against whatever it's set to (so for local browser
 testing of email change, temporarily point Site URL at `http://localhost:3000`). Coordinate with
 the mobile app, which shares this Supabase project.
+
+---
+
+## CI / Tooling
+
+**Edge functions are `@ts-nocheck`'d — `deno check` only validates the import graph**
+`.github/workflows/edge-functions.yml` now type-checks *every* function entrypoint plus
+`_shared/*.ts` (it used to check `rag-query` alone), but every
+`supabase/functions/*/index.ts` and 4 of the 5 `_shared/*.ts` files open with
+`// @ts-nocheck`, so real type errors inside them stay invisible. Verified: an injected
+`const x: number = "str"` in a nocheck'd entrypoint still exits 0. Only module-resolution
+errors (TS2307) and `_shared/posthogCapture.ts` — the one file without the pragma — are
+actually caught. Removing the pragmas surfaces **13 errors**: 4 in `rag-query` (helpers
+annotated `supabase: ReturnType<typeof createClient>` — the un-instantiated generic —
+reject the real `createClient(url, key)` instance, and that same annotation types the
+`increment_chatbot_usage` RPC arg object as `undefined`) and 9 in
+`translate-content` (PostgREST `ParserError` on a `.select()` string, `.catch` on
+`PromiseLike<void>`, implicit `any` params). None are live bugs — all are
+`@supabase/supabase-js@2` generic friction. Fix one function per PR, redeploying each as
+it is un-nocheck'd so the type fix and the deployed source stay in sync.
+**`rag-query` is shared mobile infra → needs Savar's sign-off.**
