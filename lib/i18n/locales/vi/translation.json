@@ -889,7 +889,21 @@
     "noUpcoming": "Không có sự kiện sắp tới.",
     "typeHybrid": "Kết hợp",
     "typeInPerson": "Trực tiếp",
-    "typeOnline": "Trực tuyến"
+    "typeOnline": "Trực tuyến",
+    "genre": {
+      "employment": "Việc làm",
+      "language": "Ngôn ngữ",
+      "housing": "Nhà ở",
+      "finance": "Tài chính",
+      "documentation": "Giấy tờ",
+      "health": "Sức khỏe",
+      "family": "Gia đình",
+      "education": "Giáo dục",
+      "socials": "Giao lưu",
+      "uncategorized": "Khác"
+    },
+    "filterByCategory": "Lọc sự kiện theo danh mục",
+    "noMatchingFilter": "Không có sự kiện nào trong danh mục này."
   },
   "resetPassword": {
     "title": "Đặt lại mật khẩu",

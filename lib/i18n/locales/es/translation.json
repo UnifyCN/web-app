@@ -889,7 +889,21 @@
     "noUpcoming": "No hay próximos eventos.",
     "typeHybrid": "Híbrido",
     "typeInPerson": "Presencial",
-    "typeOnline": "En línea"
+    "typeOnline": "En línea",
+    "genre": {
+      "employment": "Empleo",
+      "language": "Idioma",
+      "housing": "Vivienda",
+      "finance": "Finanzas",
+      "documentation": "Documentos",
+      "health": "Salud",
+      "family": "Familia",
+      "education": "Educación",
+      "socials": "Social",
+      "uncategorized": "Otros"
+    },
+    "filterByCategory": "Filtrar eventos por categoría",
+    "noMatchingFilter": "No hay eventos en esta categoría."
   },
   "resetPassword": {
     "title": "Restablecer contraseña",

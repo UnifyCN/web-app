@@ -152,6 +152,29 @@ export interface GroupMemberAvatar {
 
 export type EventType = "in-person" | "online" | "hybrid";
 
+/**
+ * Topic tags on `events.genre`, a shared column the events-crawler fills in (see
+ * GENRE_RULES in supabase/functions/events-crawler/index.ts). The first five mirror
+ * the mobile app's own EventGenre enum exactly, so the two stay interchangeable.
+ *
+ * Order is the display order of the filter chips; Uncategorized is last because it's
+ * the fallback, not a topic.
+ */
+export const EVENT_GENRES = [
+  "Employment",
+  "Language",
+  "Housing",
+  "Finance",
+  "Documentation",
+  "Health",
+  "Family",
+  "Education",
+  "Socials",
+  "Uncategorized",
+] as const;
+
+export type EventGenre = (typeof EVENT_GENRES)[number];
+
 export interface CommunityEvent {
   id: number;
   title: string;
@@ -163,6 +186,7 @@ export interface CommunityEvent {
   externalLink: string | null;
   description: string;
   hostedBy: string | null;
+  genre: EventGenre;
 }
 
 export interface NewsItem {

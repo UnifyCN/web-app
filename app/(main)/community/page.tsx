@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { GroupCard } from "@/components/community/GroupCard";
 import { MyGroupsStrip } from "@/components/community/MyGroupsStrip";
 import { EventCard } from "@/components/community/EventCard";
+import { EventGenreFilter } from "@/components/community/EventGenreFilter";
 import { NewsArticleItem } from "@/components/community/NewsArticleItem";
 import { DailyTipCard } from "@/components/community/DailyTipCard";
 import { CirclesEntryCard } from "@/components/community/CirclesEntryCard";
@@ -21,6 +22,7 @@ import {
   useNews,
   useStartCircleMatching,
 } from "@/hooks/useCommunity";
+import type { EventGenre } from "@/types";
 
 const TAB_GROUPS = "groups";
 const TAB_EVENTS = "events";
@@ -53,28 +55,39 @@ const CIRCLE_FEATURES = [
   },
 ];
 
-/** Loading placeholder for the Events grid (mirrors EventCard). */
+/** Loading placeholder for the genre chip row + Events grid (mirrors EventCard). */
 function EventsSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div
-          key={i}
-          className="animate-pulse overflow-hidden rounded-card border border-border-card bg-surface"
-          aria-hidden
-        >
-          <div className="aspect-[16/9] w-full bg-surface-gray" />
-          <div className="p-4">
-            <div className="h-4 w-2/3 rounded bg-surface-gray" />
-            <div className="mt-1.5 h-5 w-20 rounded-full bg-surface-gray" />
-            <div className="mt-2.5 space-y-1.5">
-              <div className="h-3 w-5/6 rounded bg-surface-gray" />
-              <div className="h-3 w-1/2 rounded bg-surface-gray" />
+    <>
+      <div className="mb-4 flex gap-2 pb-1" aria-hidden>
+        {[14, 20, 16, 18, 15].map((w, i) => (
+          <div
+            key={i}
+            className="h-6 animate-pulse rounded-full bg-surface-gray"
+            style={{ width: `${w * 4}px` }}
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="animate-pulse overflow-hidden rounded-card border border-border-card bg-surface"
+            aria-hidden
+          >
+            <div className="aspect-[16/9] w-full bg-surface-gray" />
+            <div className="p-4">
+              <div className="h-4 w-2/3 rounded bg-surface-gray" />
+              <div className="mt-1.5 h-5 w-20 rounded-full bg-surface-gray" />
+              <div className="mt-2.5 space-y-1.5">
+                <div className="h-3 w-5/6 rounded bg-surface-gray" />
+                <div className="h-3 w-1/2 rounded bg-surface-gray" />
+              </div>
             </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -102,6 +115,7 @@ export default function CommunityPage() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState(TAB_DEFS[0].key);
   const [search, setSearch] = useState("");
+  const [genreFilter, setGenreFilter] = useState<EventGenre | null>(null);
   const [requestOpen, setRequestOpen] = useState(false);
 
   const groupsQuery = useGroups();
@@ -120,6 +134,20 @@ export default function CommunityPage() {
   const filteredGroups = groups.filter((group) =>
     group.groupName.toLowerCase().includes(search.trim().toLowerCase()),
   );
+
+  // A refetch can drop the genre the user had selected — an event passes its start
+  // time, or the crawler re-runs. Fall back to "All" at render time rather than
+  // resetting in an effect: EventGenreFilter hides itself below two genres, so an
+  // effect would leave one frame where the grid is empty and the reset chip is
+  // already gone. The stale state value is simply never read.
+  const activeGenre =
+    genreFilter && events.some((event) => event.genre === genreFilter)
+      ? genreFilter
+      : null;
+
+  const filteredEvents = activeGenre
+    ? events.filter((event) => event.genre === activeGenre)
+    : events;
 
   // The shared Tabs primitive compares labels by string equality, so pass the
   // translated labels and map the change back to the stable key via the index
@@ -228,11 +256,24 @@ export default function CommunityPage() {
               {t("events.failedLoad")}
             </p>
           ) : events.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {events.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
+            <>
+              <EventGenreFilter
+                events={events}
+                value={activeGenre}
+                onChange={setGenreFilter}
+              />
+              {filteredEvents.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredEvents.map((event) => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
+                </div>
+              ) : (
+                <p className="py-12 text-center text-sm text-ink-placeholder">
+                  {t("events.noMatchingFilter")}
+                </p>
+              )}
+            </>
           ) : (
             <p className="py-12 text-center text-sm text-ink-placeholder">
               {t("events.noUpcoming")}

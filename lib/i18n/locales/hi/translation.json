@@ -889,7 +889,21 @@
     "noUpcoming": "कोई आगामी कार्यक्रम नहीं।",
     "typeHybrid": "हाइब्रिड",
     "typeInPerson": "आमने-सामने",
-    "typeOnline": "ऑनलाइन"
+    "typeOnline": "ऑनलाइन",
+    "genre": {
+      "employment": "रोज़गार",
+      "language": "भाषा",
+      "housing": "आवास",
+      "finance": "वित्त",
+      "documentation": "दस्तावेज़",
+      "health": "स्वास्थ्य",
+      "family": "परिवार",
+      "education": "शिक्षा",
+      "socials": "सामाजिक",
+      "uncategorized": "अन्य"
+    },
+    "filterByCategory": "श्रेणी के अनुसार कार्यक्रम फ़िल्टर करें",
+    "noMatchingFilter": "इस श्रेणी में कोई कार्यक्रम नहीं है।"
   },
   "resetPassword": {
     "title": "पासवर्ड रीसेट करें",

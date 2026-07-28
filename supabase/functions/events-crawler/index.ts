@@ -19,8 +19,13 @@ import { fetchPexelsCandidates } from '../_shared/pexels.ts';
 // Mirrors supabase/functions/news-crawler/index.ts: same service-role Bearer
 // auth (verify_jwt=true, no CORS — server-to-server only), the same image-quality
 // trio (icon-URL reject + SSRF guard + HEAD size check), and the same
-// deterministic Unsplash fallback pool. INSERT-only: no delete/prune (past events
-// fall out of the web reader's `event_datetime > now` filter naturally).
+// deterministic Unsplash fallback pool. INSERT-only: no delete/prune. Rows outside
+// the WINDOW_MONTHS rolling window are never ingested, and ones that age out of it
+// simply stop matching the web reader's window filter — they are not removed,
+// because mobile reads this same table with no date filter and a Past tab.
+//
+// Each row is tagged with a `genre` (see GENRE_RULES) so both apps can filter the
+// tab by topic.
 //
 // Shared prod DB (web + mobile) — inserted events appear in BOTH apps immediately.
 // ============================================================================
@@ -57,6 +62,19 @@ const MAX_PER_ORG = 25; // soonest-first cap so MOSAIC's ~254 events don't flood
 const MAX_DESCRIPTION_CHARS = 2000;
 const MAX_TITLE_CHARS = 300;
 const FETCH_TIMEOUT_MS = 20000;
+
+// Rolling window: only events starting between today and today + 4 months are ingested,
+// so the tab neither fills with far-future placeholders nor grows without bound. Enforced
+// twice — as Tribe's ?end_date (server side) and again per row in tribeEventToRow, since
+// an org's API ignoring the param would otherwise slip rows past the bound.
+// The web reader (services/community.ts) applies the same 4-month window on read; keep the
+// two in step. Nothing is ever deleted: mobile reads this shared table with no date filter
+// at all and has a Past tab, so aged-out rows must stay.
+const WINDOW_MONTHS = 4;
+
+// How much of the description the genre tiebreaker scans. Long enough for the lede that
+// actually describes the event, short enough to skip the registration/contact boilerplate.
+const GENRE_DESCRIPTION_SCAN_CHARS = 400;
 
 // Tribe reads ?start_date on the SITE's calendar, not UTC — see todayInTimezone.
 // Every Phase-1 org is in BC, so one constant covers them all. When an org outside
@@ -152,6 +170,86 @@ async function pexelsImage(
   return urls[seed % urls.length];
 }
 
+// ---- genre tagging --------------------------------------------------------
+
+// public.events.genre is a pre-existing shared column (default 'Uncategorized'). The
+// mobile app types it as EventGenre and ships a genre chip filter that is currently
+// commented out; the first five values below are exactly its enum, so nothing renames
+// when Savar uncomments it — Language/Health/Family/Education are purely additive.
+type EventGenre =
+  | 'Employment'
+  | 'Language'
+  | 'Housing'
+  | 'Finance'
+  | 'Documentation'
+  | 'Health'
+  | 'Family'
+  | 'Education'
+  | 'Socials'
+  | 'Uncategorized';
+
+// Same shape as PEXELS_QUERY_RULES: ordered, first match wins, lowercase keywords.
+// ORDER IS LOAD-BEARING:
+//   - Employment precedes Language because S.U.C.C.E.S.S. titles all carry
+//     "(English, Multilingual Translation Captions Available)" — matching Language
+//     first would file every employment workshop under Language.
+//   - Housing matches `housing`, never a bare `hous`, or "Belkin House" lands there.
+//   - Employment precedes Family so "Foreign Credential Recognition … Family Medicine
+//     Licensing" reads as a career event, not a family one.
+// Verified against the 69 rows already crawled into prod: 69/69 classified, 0 fallthrough.
+const GENRE_RULES: Array<[RegExp, EventGenre]> = [
+  [
+    /job|career|employ|resume|hiring|worksafe|workplace|interview|credential|licens|internationally (educated|trained)|profession|nurse|physician|labour market/,
+    'Employment',
+  ],
+  [/english|\besl\b|\blinc\b|language|conversation circle|french|francais/, 'Language'],
+  [/housing|rental|renting|tenant|landlord|lease|shelter|homeless/, 'Housing'],
+  [
+    /tax|bank|budget|financ|money|credit|benefit|insurance|pension|income|subsid|rrsp|tfsa|debt|saving/,
+    'Finance',
+  ],
+  [
+    /immigration|citizenship|permanent resident|pr card|work permit|study permit|sin card|legal|lawyer|notary|settlement|orientation|document|visa/,
+    'Documentation',
+  ],
+  [
+    /health|clinic|wellness|mental|counsel|cancer|screening|nutrition|dental|emotion|stress|mindful|yoga|tai chi|qi gong|exercise|fitness|walkathon|memory|dementia|therapy|doctor|medical|wellbeing/,
+    'Health',
+  ],
+  [/famil|child|kid|parent|youth|toddler|baby|preschool|caregiver|prenatal|daycare/, 'Family'],
+  [/digital|computer|tech|literacy|skill|training|course|tutor|school|scholarship/, 'Education'],
+  // Last rule, so these keywords only ever catch events no earlier rule claimed. That's
+  // why the loose recreational-outing terms (explore, market, tour) are safe here and
+  // would not be higher up: "explore available pathways" and "labour market" already
+  // belong to Employment by the time this runs.
+  [
+    /social|communit|cafe|café|club|dance|mahjong|party|celebrat|potluck|festival|connect|meetup|drop-?in|peer|volunteer|friend|game|craft|garden|coffee|lunch|dinner|cook|meal|kitchen|immigrant|refugee|newcomer|explore|tour\b|trip\b|outing|excursion|museum|farm|winery|orchard|hike|picnic|market|sightsee/,
+    'Socials',
+  ],
+];
+
+function matchGenre(text: string): EventGenre | null {
+  for (const [re, genre] of GENRE_RULES) {
+    if (re.test(text)) return genre;
+  }
+  return null;
+}
+
+/**
+ * Two passes: the title first, then the description as a tiebreaker. Title-only leaves
+ * opaque names ("QUEST+", "Seniors First BC", "Senior Farsi & Dari Program") uncategorized;
+ * matching both at once lets description boilerplate outvote a clear title signal. Running
+ * the description only when the title says nothing gets both — on the 69 rows already in
+ * prod just 5 fall through to the second pass.
+ */
+function genreForEvent(title: string, description: string | null): EventGenre {
+  return (
+    matchGenre(title.toLowerCase()) ??
+    matchGenre((description ?? '').slice(0, GENRE_DESCRIPTION_SCAN_CHARS).toLowerCase()) ??
+    'Uncategorized'
+  );
+}
+
 interface EventRow {
   title: string;
   description: string | null;
@@ -163,6 +261,7 @@ interface EventRow {
   external_link: string;
   hosted_by: string | null;
   address: string | null;
+  genre: EventGenre;
   source: string;
 }
 
@@ -331,7 +430,8 @@ function organizerName(organizer: unknown): string | null {
 
 /**
  * Map one Tribe REST event object to an EventRow, or null when it can't be shaped
- * into a valid row (missing NOT-NULL data, undeterminable location, past, hidden).
+ * into a valid row (missing NOT-NULL data, undeterminable location, past, hidden,
+ * or starting beyond the rolling window).
  * Image resolution is async (HEAD check + optional Pexels search), so this is async.
  * `pexelsCache` is the run-scoped per-query memo threaded down from the handler.
  */
@@ -339,6 +439,7 @@ async function tribeEventToRow(
   ev: any,
   org: Org,
   pexelsCache: Map<string, Promise<string[]>>,
+  windowEndMs: number,
 ): Promise<EventRow | null> {
   if (!ev || typeof ev !== 'object') return null;
   if (ev.status && ev.status !== 'publish') return null;
@@ -348,6 +449,10 @@ async function tribeEventToRow(
   const externalLink = typeof ev.url === 'string' ? ev.url.trim() : '';
   const eventDatetime = toIsoUtc(ev.utc_start_date);
   if (!title || !externalLink || !eventDatetime) return null; // NOT NULL columns
+
+  // Backstop for ?end_date — see fetchOrgEvents. Runs before the image work below so a
+  // far-future event costs no HEAD probe or Pexels lookup.
+  if (Date.parse(eventDatetime) > windowEndMs) return null;
 
   // location + event_type from the venue NAME first, then venue presence, then the
   // virtual flag — see isOnlineVenueName for why the name has to win.
@@ -407,6 +512,7 @@ async function tribeEventToRow(
     external_link: externalLink,
     hosted_by: organizerName(ev.organizer) ?? org.name,
     address,
+    genre: genreForEvent(title, description),
     source: `crawler:${org.slug}`,
   };
 }
@@ -430,14 +536,36 @@ function todayInTimezone(timeZone: string, now: Date = new Date()): string {
   }).format(now);
 }
 
+/**
+ * The far edge of the rolling window as YYYY-MM-DD, `months` after today on `timeZone`'s
+ * calendar — the ?end_date counterpart to todayInTimezone's ?start_date.
+ *
+ * Date.UTC normalises overflow, so a short target month rolls forward rather than throwing
+ * (Oct 31 + 4 months → Feb 31 → Mar 3). A couple of days of slack on the far edge of a
+ * four-month bound doesn't matter; being off by a whole month would.
+ */
+function windowEndInTimezone(
+  timeZone: string,
+  months: number,
+  now: Date = new Date(),
+): string {
+  const [year, month, day] = todayInTimezone(timeZone, now).split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1 + months, day)).toISOString().slice(0, 10);
+}
+
 async function fetchOrgEvents(
   org: Org,
   pexelsCache: Map<string, Promise<string[]>>,
 ): Promise<EventRow[]> {
   const today = todayInTimezone(ORG_TIMEZONE); // YYYY-MM-DD on the org's calendar
+  const windowEnd = windowEndInTimezone(ORG_TIMEZONE, WINDOW_MONTHS);
+  // Deliberately loose: parsed as UTC while the date itself is on the org's calendar, so
+  // the per-row guard trails ?end_date by a few hours. It exists to catch an org whose API
+  // ignores end_date outright (events years out), not to police the boundary hour.
+  const windowEndMs = Date.parse(`${windowEnd}T23:59:59Z`);
   const url =
     `https://${org.host}/wp-json/tribe/events/v1/events` +
-    `?per_page=${MAX_PER_ORG}&start_date=${today}%2000:00:00`;
+    `?per_page=${MAX_PER_ORG}&start_date=${today}%2000:00:00&end_date=${windowEnd}%2023:59:59`;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -456,7 +584,9 @@ async function fetchOrgEvents(
     const data = await res.json();
     const events = Array.isArray(data?.events) ? data.events : [];
     const rows = await Promise.all(
-      events.slice(0, MAX_PER_ORG).map((ev: unknown) => tribeEventToRow(ev, org, pexelsCache)),
+      events
+        .slice(0, MAX_PER_ORG)
+        .map((ev: unknown) => tribeEventToRow(ev, org, pexelsCache, windowEndMs)),
     );
     return rows.filter((r): r is EventRow => r !== null);
   } catch (error) {
