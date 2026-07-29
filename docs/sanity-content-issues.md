@@ -86,11 +86,14 @@ grader was correct, but the feedback explaining *why* was placeholder text.
 **New English text:**
 
 > Permanent residents must be in Canada for at least 730 days (2 years) in every 5-year
-> period. The days do not need to be in a row, and some time abroad can count, such as
-> accompanying a Canadian-citizen spouse or common-law partner, or working full-time for a
-> Canadian business, organization, or government. Mina spent only 1 year in Canada, and time
-> spent caring for family abroad does not count, so she does not meet the 730-day rule and
-> can lose her PR status.
+> period. The days do not need to be in a row, and some time abroad still counts: days you
+> work full-time outside Canada for a Canadian business or organization, or for the Canadian
+> federal, provincial, or territorial government; and days you spend outside Canada
+> accompanying a spouse or common-law partner (or, if you are a child, a parent) who is
+> either a Canadian citizen, or a permanent resident working full-time abroad for a Canadian
+> business or for one of those governments. Mina spent only 1 year in Canada, and time spent
+> caring for family abroad does not count, so she does not meet the 730-day rule and can lose
+> her PR status.
 
 **Sourced against IRCC**, not written from memory — verified 2026-07-28:
 
@@ -100,21 +103,42 @@ grader was correct, but the feedback explaining *why* was placeholder text.
 - [Can I lose my permanent resident status?](https://ircc.canada.ca/english/helpcentre/answer.asp?qnum=1468&top=10)
   (date modified 2026-04-17) — same 730-day threshold.
 - [Can I count time spent outside Canada towards my residency obligation?](https://ircc.canada.ca/english/helpcentre/answer.asp?qnum=1466&top=10)
-  — the qualifying conditions: you "need to work **full-time** for: a Canadian business or
-  organization, or the Canadian federal, provincial or territorial government", or you are
-  accompanying a **spouse or common-law partner** who is a Canadian citizen (or a PR working
-  full-time abroad for a Canadian business or government).
+  — read in full 2026-07-29. It lists **three** conditions:
+  1. You work outside Canada **full-time** for "a Canadian business **or organization**, or
+     the Canadian **federal, provincial or territorial** government".
+  2. You accompany your **spouse or common-law partner**, who is *either* "a Canadian citizen"
+     (**no employment requirement**) *or* "a permanent resident working outside Canada,
+     full-time for: a Canadian business, or the Canadian federal, provincial or territorial
+     government".
+  3. A **dependent child accompanying a parent** — same two branches as (2).
+
+  **Note the asymmetry:** condition 1's employer list includes **"organization"**; conditions
+  2 and 3 say **"business"** only. Don't collapse them into "one of those employers".
+- Cross-checked against [IRPA s. 28(2)(a)](https://laws-lois.justice.gc.ca/eng/acts/I-2.5/section-28.html),
+  whose subparagraphs (i)-(v) confirm the help page omits nothing learner-facing: (ii) is the
+  Canadian-citizen branch, (iii) the own-employment branch, (iv) the **PR-spouse** branch, and
+  (v) a regulations catch-all IRCC itself does not surface.
 - Searched for a 2026 change to the rule: none. 730 days in each five-year period
   (IRPA s. 28) is current.
 
-> **Reworded twice after the first publish (CodeRabbit, PR #81).** The initial text said
-> "living with a Canadian citizen spouse or working abroad for a Canadian business", which
-> dropped IRCC's **full-time** condition on the employment branch and implied plain
-> cohabitation qualifies while omitting common-law partners. The follow-up still named only
-> "a Canadian business" as the employer, implying the other two qualifying employer types do
-> not count — qnum=1466 lists **a Canadian business, a Canadian organization, and the
-> Canadian federal, provincial or territorial government**. Both corrected and republished;
-> the 4 translation drafts were re-patched to match each time. `.text` only, as before.
+> **Rewritten three times after the first publish (CodeRabbit, PR #81) — the first two were
+> too narrow.** Round 1 said "living with a Canadian citizen spouse or working abroad for a
+> Canadian business": it dropped IRCC's **full-time** condition, implied plain cohabitation
+> qualifies, and omitted common-law partners. Round 2 fixed those but named only "a Canadian
+> business" as the employer. Round 3 added "organization, or government" — still wrong, since
+> bare "government" reads as including **municipal** employment, which does not qualify.
+>
+> Each round patched whichever clause was flagged and left the adjacent one under-specified.
+> Round 4 therefore read qnum=1466 **in full** and rewrote the sentence in one pass, which
+> surfaced a gap **no review had flagged**: the **PR-spouse branch** (IRPA s. 28(2)(a)(iv))
+> was missing entirely — accompanying a *permanent-resident* spouse who works full-time
+> abroad also counts. The current text covers conditions 1 and 2 including both branches,
+> keeps "organization" only where IRCC puts it, and names the three government levels.
+>
+> **Lesson for the next edit:** re-read the whole source condition list before touching this
+> sentence. Patching only the flagged clause has produced a wrong sentence three times.
+> Every round was `.text` only; English republished, the 4 translation drafts re-patched to
+> match and left unpublished.
 
 The wording deliberately reuses Lesson 2.1's (`b6faf6d6`) own phrasing — "730 days
 (2 years) in every 5-year period", "do not need to be in a row" — in **all five
