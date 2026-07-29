@@ -88,8 +88,9 @@ grader was correct, but the feedback explaining *why* was placeholder text.
 > Permanent residents must be in Canada for at least 730 days (2 years) in every 5-year
 > period. The days do not need to be in a row, and some time abroad can count, such as
 > accompanying a Canadian-citizen spouse or common-law partner, or working full-time for a
-> Canadian business. Mina spent only 1 year in Canada, and time spent caring for family
-> abroad does not count, so she does not meet the 730-day rule and can lose her PR status.
+> Canadian business, organization, or government. Mina spent only 1 year in Canada, and time
+> spent caring for family abroad does not count, so she does not meet the 730-day rule and
+> can lose her PR status.
 
 **Sourced against IRCC**, not written from memory — verified 2026-07-28:
 
@@ -106,11 +107,14 @@ grader was correct, but the feedback explaining *why* was placeholder text.
 - Searched for a 2026 change to the rule: none. 730 days in each five-year period
   (IRPA s. 28) is current.
 
-> **Reworded after the first publish (CodeRabbit, PR #81).** The initial text said "living
-> with a Canadian citizen spouse or working abroad for a Canadian business", which dropped
-> IRCC's **full-time** condition on the employment branch and implied plain cohabitation
-> qualifies while omitting common-law partners. Corrected per qnum=1466 above and republished;
-> the 4 translation drafts were re-patched to match. `.text` only, as before.
+> **Reworded twice after the first publish (CodeRabbit, PR #81).** The initial text said
+> "living with a Canadian citizen spouse or working abroad for a Canadian business", which
+> dropped IRCC's **full-time** condition on the employment branch and implied plain
+> cohabitation qualifies while omitting common-law partners. The follow-up still named only
+> "a Canadian business" as the employer, implying the other two qualifying employer types do
+> not count — qnum=1466 lists **a Canadian business, a Canadian organization, and the
+> Canadian federal, provincial or territorial government**. Both corrected and republished;
+> the 4 translation drafts were re-patched to match each time. `.text` only, as before.
 
 The wording deliberately reuses Lesson 2.1's (`b6faf6d6`) own phrasing — "730 days
 (2 years) in every 5-year period", "do not need to be in a row" — in **all five
