@@ -662,9 +662,10 @@ in their React Query keys right after the prefix.
 residency obligation belongs. The sourcing blocker is resolved: the requirement was verified
 against IRCC on 2026-07-28 (730 days in every rolling 5-year period, IRPA s. 28 — see the two
 Help Centre URLs in `docs/sanity-content-issues.md` P0 #2), English plus all four
-translations were rewritten, and the **English is published and live**. `_key`s /
-`options[].value` / `is_correct` verified byte-identical across all five, so grading and
-saved progress are untouched.
+translations were rewritten, and the **English is published and live**. Every edit touched
+only `.text`, so no grading input changed and saved progress is untouched; `_key`s,
+`options[].value` and `is_correct` were additionally verified byte-identical across all five,
+keeping the translation drafts aligned.
 
 The four translation drafts (`drafts.ecca3ca9-…-{vi,es,hi,ar}`) stay unpublished with the
 other 224 until native review + a Savar heads-up, per the paragraph above. `051870f8`'s
@@ -680,14 +681,30 @@ cites, space included), `b29a34f2` (truncated `"= $25,"` → `"= $25,000"`), `05
 (`TSFA` → `TFSA`).
 Remaining P2 typos / P3 editorial items are open; see `docs/sanity-content-issues.md`.
 
-The constraint holds for any future fix: never alter a `_key` or `options[].value`, or the
-228 translation drafts desync and saved learner progress mis-grades. All four fixes above
-were verified `_key`-identical between published and draft before publishing. **Add
-`matching_pairs[].right_item` to that list** — `grade.ts` encodes matching answers as
-`` `${pairKey}::${rightItem}` `` and re-grades saved answers against the current string, so
-it is a grading value, not display text. `051870f8`'s `TSFA`→`TFSA` draft was checked against
-the shared DB: 1 affected row, already scored 0/1 on a different pair, so publishing it
-changes no stored score.
+The constraint holds for any future fix, but the protected fields split into two kinds and
+they are **not** the same list.
+
+**Grading inputs.** `components/learn/practice/grade.ts:61-96` reads exactly these, so changing
+one re-grades saved answers:
+
+- **option `_key` + `is_correct`** — choice and true/false (`:70-73`); saved answers store the
+  selected option `_key`s.
+- **`matching_pairs[]._key` + `right_item`** — matching (`:79`); saved answers are encoded
+  `` `${pairKey}::${rightItem}` ``, so a renamed `right_item` invalidates them.
+- **`correct_answer.value`** — `short_answer` / `fill_blank` (`:87`); the learner's typed
+  answer is compared against it, so editing it flips grades on re-grade.
+- (`long_answer` passes on any non-empty response, `:84` — nothing to break.)
+
+**Identity / translation-alignment fields.** Not read by `grade.ts`, but they must still stay
+stable: every `_key` in the document, plus **`options[].value`**. The 228 translation drafts
+were written `_key`-identical to their English source and the GROQ overlay replaces whole
+arrays, so drift desyncs the translations even where it would not mis-grade on its own;
+`options[].value` is what identifies an option across languages.
+
+All four fixes above were verified `_key`-identical between published and draft before
+publishing. `051870f8`'s `TSFA`→`TFSA` is the worked example of touching a real grading input
+(`right_item`), so it was checked against the shared DB first: 1 affected row, already scored
+0/1 on a different pair, so publishing it changed no stored score.
 
 ---
 
