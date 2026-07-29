@@ -707,6 +707,36 @@ publishing. `051870f8`'s `TSFA`→`TFSA` is the worked example of touching a rea
 (`right_item`), so it was checked against the shared DB first: 1 affected row, already scored
 0/1 on a different pair, so publishing it changed no stored score.
 
+### Open follow-ups from the `ecca3ca9` round (PR #81, merged 2026-07-29)
+
+**`ecca3ca9` residency text — "child" should be "dependent child"** — *low priority, content
+owner, not urgent.*
+The published answer box reads "…(or, if you are a child, a parent)…". IRCC
+[qnum=1466](https://ircc.canada.ca/english/helpcentre/answer.asp?qnum=1466&top=10) scopes
+condition 3 to a **dependent child** travelling with a parent, so the current wording
+overstates the exception — an independent adult child does not qualify. Flagged by CodeRabbit
+on PR #81 and deliberately deferred: the sentence is accurate on every other IRCC condition,
+and quiz-content accuracy was out of scope for that session. Fixing it is the usual
+five-document pass (patch + republish English, re-patch the 4 unpublished translation drafts),
+so batch it into the next content-owner review rather than doing it alone.
+
+**`encodeMatch` stores a display string, not a stable id — matching answers break on any
+content edit** — *real fragility, tracked, not fixed.*
+`components/learn/practice/grade.ts:13` encodes matching answers as
+`` `${pairKey}::${rightItem}` `` and `:79` re-grades them with
+`map.get(p._key) === p.right_item`, so renaming a pair's **display text** silently invalidates
+every stored answer for that pair. `051870f8`'s `TSFA`→`TFSA` rename hit exactly this: one
+saved row still encodes the old string and now renders that pair red on review — score-neutral
+only because that learner had already mismatched a different pair. CodeRabbit raised it on
+PR #81 (Major / "heavy lift"); both remedies it proposed were declined as disproportionate to
+one row — teaching `grade.ts` to accept legacy content strings would push CMS history into a
+pure grading module and grow with every future edit, and migrating persisted answers is a write
+to the **shared** production DB needing Savar's sign-off. **The durable fix is to encode the
+pair's target `_key` rather than its `right_item` text**, removing the coupling outright; that
+needs a migration for existing `answers` payloads in `user_lesson_quiz_progress` and
+`user_submodule_practice_progress`. Until then, treat any `right_item` edit as a breaking
+change and run the shared-DB impact query first.
+
 ---
 
 ## Navigation
