@@ -51,4 +51,4 @@ next-env.d.ts
 # deno — running the edge-function type-check locally (see
 # .github/workflows/edge-functions.yml) drops a lockfile at the repo root that
 # also resolves package.json, so it is build noise rather than a real lock.
-deno.lock
+/deno.lock

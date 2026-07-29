@@ -725,12 +725,33 @@ the mobile app, which shares this Supabase project.
 `// @ts-nocheck`, so real type errors inside them stay invisible. Verified: an injected
 `const x: number = "str"` in a nocheck'd entrypoint still exits 0. Only module-resolution
 errors (TS2307) and `_shared/posthogCapture.ts` — the one file without the pragma — are
-actually caught. Removing the pragmas surfaces **13 errors**: 4 in `rag-query` (helpers
-annotated `supabase: ReturnType<typeof createClient>` — the un-instantiated generic —
-reject the real `createClient(url, key)` instance, and that same annotation types the
-`increment_chatbot_usage` RPC arg object as `undefined`) and 9 in
-`translate-content` (PostgREST `ParserError` on a `.select()` string, `.catch` on
-`PromiseLike<void>`, implicit `any` params). None are live bugs — all are
-`@supabase/supabase-js@2` generic friction. Fix one function per PR, redeploying each as
-it is un-nocheck'd so the type fix and the deployed source stay in sync.
+actually caught. Removing the pragmas surfaces **13 errors** in four classes, triaged
+separately rather than waved through as one category:
+
+- **`rag-query` — client generics (4 errors, TS2345).** `fetchUserProfileContext` and
+  `persistChatbotUsage` annotate `supabase: ReturnType<typeof createClient>` (the
+  un-instantiated generic), which rejects the real `createClient(url, key)` instance; the
+  same annotation types the `increment_chatbot_usage` RPC arg object as `undefined`.
+  Compile-time only — one concrete client flows through every call site at runtime.
+- **`translate-content` — PostgREST `ParserError` (4 errors, TS2339, ~lines 297-303).**
+  Compile-time only, *verified*: `table` and `cacheColumns` are both unions of string
+  literals, which defeats postgrest-js's literal-type select parser (hence the union-shaped
+  `ParserError<"Unexpected input: " | "Unexpected input: , source_hash">`). Checked against
+  the shared DB — every selected column exists on all four `*_translations` tables, with
+  `translated_title` only on `post_translations`, exactly as the ternary encodes. The
+  runtime query is valid.
+- **`translate-content` — `.catch` on `PromiseLike<void>` (3 errors, TS2339, lines 354,
+  372, 421). Latent, not cosmetic — fix this one on its own merit.** The three
+  `.rpc('refund_translation_request', …).then(…).catch(…)` refund chains work today only
+  because `PostgrestBuilder.then()` (postgrest-js 2.110.9) *declares*
+  `PromiseLike<TResult1 | TResult2>` while *returning* `(res as Promise<…>).then(…)` — a
+  native promise that happens to carry `.catch`. The declared contract does not guarantee
+  it, so a postgrest-js move to a true thenable would throw on the refund path, where the
+  failure is already silent. Safe form: `await Promise.resolve(builder).catch(…)`, or
+  `try/catch` around the awaited chain — not a cast.
+- **`translate-content` — implicit `any` params (2 errors, TS7006).** Cosmetic; Deno
+  type-checks strict by default.
+
+Fix one function per PR, redeploying each as it is un-nocheck'd so the type fix and the
+deployed source stay in sync.
 **`rag-query` is shared mobile infra → needs Savar's sign-off.**
