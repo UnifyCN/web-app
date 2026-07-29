@@ -684,8 +684,9 @@ Remaining P2 typos / P3 editorial items are open; see `docs/sanity-content-issue
 The constraint holds for any future fix, but the protected fields split into two kinds and
 they are **not** the same list.
 
-**Grading inputs.** `components/learn/practice/grade.ts:61-96` reads exactly these, so changing
-one re-grades saved answers:
+**Grading inputs.** `components/learn/practice/grade.ts:61-96` switches on `q.question_type`
+(`:66`) to choose a branch, then reads the answer-bearing fields below. Changing the question
+type, or any field read inside its branch, re-grades saved answers:
 
 - **option `_key` + `is_correct`** — choice and true/false (`:70-73`); saved answers store the
   selected option `_key`s.

@@ -162,13 +162,17 @@ in a TSFA/RRSP"` — the account is **TFSA**. Translations already use `TFSA/RRS
 four languages, so no re-translation is needed. Re-verified 2026-07-28: the draft differs
 from published in that one string and nothing else; all `_key`s identical.
 
-**Saved-progress impact — checked before publishing, and it is nil.** Per the `right_item`
-caveat above, a rename can invalidate stored matching answers. Querying the shared DB:
-`user_lesson_quiz_progress` has exactly **1 row** carrying the stale `TSFA` string (0 in
+**Stored-score impact — checked before publishing; no persisted score changed.** Per the
+`right_item` caveat above, a rename invalidates stored matching answers. Querying the shared
+DB: `user_lesson_quiz_progress` has exactly **1 row** carrying the stale `TSFA` string (0 in
 `user_submodule_practice_progress`). That row is already `is_completed: true` with
 `score: 0/1` — the learner mismatched a different pair (`e924d3f0a245`), so the question
-grades false before and after. **No stored score changes.** The only visible effect is that
-on review, one previously-green pair renders red inside an answer already marked wrong.
+grades false before and after and the persisted score is untouched.
+
+**Saved-answer behaviour did change, though.** The stored answer still encodes
+`` `…::Mix of stocks and bonds in a TSFA/RRSP` ``, and `grade.ts` re-evaluates it against the
+renamed `TFSA` value, so on review one previously-green pair now renders red inside an answer
+already marked wrong. Score-neutral, but a real behaviour change — not nil.
 
 ---
 
