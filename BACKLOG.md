@@ -656,32 +656,37 @@ see `docs/sanity-content-issues.md`. `getPractices` / `getLessonQuiz` take the t
 `language` param and merge the overlay; `usePractices` / `useLessonQuiz` carry the language
 in their React Query keys right after the prefix.
 
-**`ecca3ca9` "bla bla" placeholder — needs IRCC-sourced text + re-translation ×4**
-The only P0 content defect still live. `ecca3ca9-7b4a-4d22-a88d-2efc10f7d843`
-("Activity: Mina's Story") has an answer box reading **`"Permanent residents must stay
-bla bla"`** — unfinished placeholder copy where the PR residency obligation belongs
-(730 days of physical presence in every 5-year period, *to be confirmed against current
-IRCC wording, not written from memory*).
+**`ecca3ca9` "bla bla" placeholder — ✅ DONE, English published**
+`ecca3ca9-7b4a-4d22-a88d-2efc10f7d843` ("Activity: Mina's Story") had an answer box reading
+**`"Permanent residents must stay bla bla"`** — unfinished placeholder copy where the PR
+residency obligation belongs. The sourcing blocker is resolved: the requirement was verified
+against IRCC on 2026-07-28 (730 days in every rolling 5-year period, IRPA s. 28 — see the two
+Help Centre URLs in `docs/sanity-content-issues.md` P0 #2), English plus all four
+translations were rewritten, and the **English is published and live**. `_key`s /
+`options[].value` / `is_correct` verified byte-identical across all five, so grading and
+saved progress are untouched.
 
-Deliberately **not** auto-fixed: it is immigration guidance shown to newcomers, so the
-replacement must be authored and verified by a person. It is also **the only defect
-requiring re-translation** — the translator carried `bla bla` through verbatim in all four
-languages rather than inventing immigration text, so once the English lands, the vi/es/hi/ar
-variants of that field must be re-translated.
+The four translation drafts (`drafts.ecca3ca9-…-{vi,es,hi,ar}`) stay unpublished with the
+other 224 until native review + a Savar heads-up, per the paragraph above. `051870f8`'s
+`TSFA`→`TFSA` fix was published in the same pass. **No P0/P1 content defect from the
+translation run remains open**; the P2 typos and P3 editorial items in
+`docs/sanity-content-issues.md` are still there.
 
-*Blocked on:* someone sourcing the clause from IRCC. Then patch English → re-translate ×4.
-
-**Other Practice/Quiz content defects — 4 of 10 resolved (2026-07-28)**
+**Other Practice/Quiz content defects — all 5 P0/P1 items resolved (2026-07-28)**
 Fixed and **published**: `2fe61c79` (answer box said "A,B, D" while the grader marked
 A, B, C — it told newcomers a written RTB tenancy agreement was a red flag, in a
 scam-awareness lesson), `ad1aa163` (two options missing the `C) ` prefix their answer box
-cites), `b29a34f2` (truncated `"= $25,"` → `"= $25,000"`). Fixed but **held as an
-unpublished draft**: `051870f8` (`TSFA` → `TFSA`) — publish the draft to take it live.
+cites), `b29a34f2` (truncated `"= $25,"` → `"= $25,000"`), `051870f8` (`TSFA` → `TFSA`).
 Remaining P2 typos / P3 editorial items are open; see `docs/sanity-content-issues.md`.
 
 The constraint holds for any future fix: never alter a `_key` or `options[].value`, or the
 228 translation drafts desync and saved learner progress mis-grades. All four fixes above
-were verified `_key`-identical between published and draft before publishing.
+were verified `_key`-identical between published and draft before publishing. **Add
+`matching_pairs[].right_item` to that list** — `grade.ts` encodes matching answers as
+`` `${pairKey}::${rightItem}` `` and re-grades saved answers against the current string, so
+it is a grading value, not display text. `051870f8`'s `TSFA`→`TFSA` draft was checked against
+the shared DB: 1 affected row, already scored 0/1 on a different pair, so publishing it
+changes no stored score.
 
 ---
 
