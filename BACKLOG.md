@@ -675,8 +675,9 @@ translation run remains open**; the P2 typos and P3 editorial items in
 **Other Practice/Quiz content defects — all 5 P0/P1 items resolved (2026-07-28)**
 Fixed and **published**: `2fe61c79` (answer box said "A,B, D" while the grader marked
 A, B, C — it told newcomers a written RTB tenancy agreement was a red flag, in a
-scam-awareness lesson), `ad1aa163` (two options missing the `C) ` prefix their answer box
-cites), `b29a34f2` (truncated `"= $25,"` → `"= $25,000"`), `051870f8` (`TSFA` → `TFSA`).
+scam-awareness lesson), `ad1aa163` (two options missing the `C)` prefix their answer box
+cites, space included), `b29a34f2` (truncated `"= $25,"` → `"= $25,000"`), `051870f8`
+(`TSFA` → `TFSA`).
 Remaining P2 typos / P3 editorial items are open; see `docs/sanity-content-issues.md`.
 
 The constraint holds for any future fix: never alter a `_key` or `options[].value`, or the

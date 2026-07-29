@@ -87,9 +87,9 @@ grader was correct, but the feedback explaining *why* was placeholder text.
 
 > Permanent residents must be in Canada for at least 730 days (2 years) in every 5-year
 > period. The days do not need to be in a row, and some time abroad can count, such as
-> living with a Canadian citizen spouse or working abroad for a Canadian business. Mina
-> spent only 1 year in Canada, and time spent caring for family abroad does not count, so
-> she does not meet the 730-day rule and can lose her PR status.
+> accompanying a Canadian-citizen spouse or common-law partner, or working full-time for a
+> Canadian business. Mina spent only 1 year in Canada, and time spent caring for family
+> abroad does not count, so she does not meet the 730-day rule and can lose her PR status.
 
 **Sourced against IRCC**, not written from memory — verified 2026-07-28:
 
@@ -98,7 +98,19 @@ grader was correct, but the feedback explaining *why* was placeholder text.
   These 730 days don't need to be continuous. Some of your time abroad may count."
 - [Can I lose my permanent resident status?](https://ircc.canada.ca/english/helpcentre/answer.asp?qnum=1468&top=10)
   (date modified 2026-04-17) — same 730-day threshold.
-- Searched for a 2026 change to the rule: none. 730-of-1,825 (IRPA s. 28) is current.
+- [Can I count time spent outside Canada towards my residency obligation?](https://ircc.canada.ca/english/helpcentre/answer.asp?qnum=1466&top=10)
+  — the qualifying conditions: you "need to work **full-time** for: a Canadian business or
+  organization, or the Canadian federal, provincial or territorial government", or you are
+  accompanying a **spouse or common-law partner** who is a Canadian citizen (or a PR working
+  full-time abroad for a Canadian business or government).
+- Searched for a 2026 change to the rule: none. 730 days in each five-year period
+  (IRPA s. 28) is current.
+
+> **Reworded after the first publish (CodeRabbit, PR #81).** The initial text said "living
+> with a Canadian citizen spouse or working abroad for a Canadian business", which dropped
+> IRCC's **full-time** condition on the employment branch and implied plain cohabitation
+> qualifies while omitting common-law partners. Corrected per qnum=1466 above and republished;
+> the 4 translation drafts were re-patched to match. `.text` only, as before.
 
 The wording deliberately reuses Lesson 2.1's (`b6faf6d6`) own phrasing — "730 days
 (2 years) in every 5-year period", "do not need to be in a row" — in **all five
@@ -109,7 +121,8 @@ Structure untouched: one block, one span, `.text` only. `_key`s, `options[].valu
 
 ### 3. ✅ FIXED + PUBLISHED (2026-07-28) — `ad1aa163-9193-4cbc-86dd-b214dbacf66b` — "Rental Quiz"
 
-> Both options now carry the `C) ` prefix. `value` (`c`) and `is_correct` untouched. Live.
+> Both options now carry the `C)` prefix, including the space after it. `value` (`c`) and
+> `is_correct` untouched. Live.
 
 Two options are missing the letter prefix every sibling has, while the answer box cites
 that letter — so the feedback references an option the learner cannot identify:
@@ -117,8 +130,8 @@ that letter — so the feedback references an option the learner cannot identify
 - Q2 option `8e1d52223035` = `"It becomes a month-to-month tenancy"` (answer box says "C) …")
 - Q3 option `0a5f10619cac` = `"Participatory Hearing"` (siblings are "A)" / "B)" / "D)")
 
-**Fix:** add the `C) ` prefix to the option **text**. Leave `value` (`c`) and `is_correct`
-untouched. Translations already include the prefix.
+**Fix:** add the `C)` prefix (including the space after it) to the option **text**. Leave
+`value` (`c`) and `is_correct` untouched. Translations already include the prefix.
 
 ### 4. ✅ FIXED + PUBLISHED (2026-07-28) — `b29a34f2-cb58-41bd-b220-c426ff466202` — "Home Buying Quiz"
 
