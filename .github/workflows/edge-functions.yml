@@ -2,7 +2,7 @@ name: Edge Functions
 
 # The Supabase Edge Functions are Deno, not part of the Next.js toolchain, so
 # tsconfig.json and eslint.config.mjs exclude supabase/functions/**. This gate
-# type-checks them with Deno instead. `deno check` on the entrypoint pulls in
+# type-checks them with Deno instead. `deno check` on each entrypoint pulls in
 # the _shared/*.ts files via its import graph and resolves the jsr:/npm: imports.
 # No Docker required (the Supabase CLI has no `functions lint` subcommand).
 
@@ -36,8 +36,40 @@ jobs:
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
           deno-version: v2.x
-      - name: Type-check edge functions
+      - name: Type-check every edge function
+        # Every entrypoint under supabase/functions/*/ plus _shared/*.ts, in a
+        # single `deno check` — a new function is covered the moment it lands,
+        # and one run reports every failure instead of stopping at the first.
+        # _shared is listed explicitly so a shared module stays checked even when
+        # nothing imports it yet (this gate used to check rag-query alone, which
+        # never reaches ssrf.ts or pexels.ts — the crawlers' helpers).
         # --node-modules-dir=auto installs npm deps pulled in transitively by
         # the Supabase edge-runtime types (functions-js' edge-runtime.d.ts type-
         # references npm:openai), which `deno check` must resolve to type-check.
-        run: deno check --node-modules-dir=auto supabase/functions/rag-query/index.ts
+        run: |
+          shopt -s nullglob
+          entrypoints=(supabase/functions/*/index.ts)
+          shared=(supabase/functions/_shared/*.ts)
+
+          # A function directory with no index.ts would be silently skipped by
+          # the glob — exactly the kind of gap this step exists to close.
+          missing=()
+          for dir in supabase/functions/*/; do
+            name=${dir#supabase/functions/}
+            name=${name%/}
+            if [ "$name" != "_shared" ] && [ ! -f "${dir}index.ts" ]; then
+              missing+=("$name")
+            fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Edge function(s) with no index.ts entrypoint: ${missing[*]}"
+            exit 1
+          fi
+          if [ ${#entrypoints[@]} -eq 0 ]; then
+            echo "::error::No edge function entrypoints found under supabase/functions/"
+            exit 1
+          fi
+
+          printf 'Type-checking %s file(s):\n' "$(( ${#entrypoints[@]} + ${#shared[@]} ))"
+          printf '  %s\n' "${entrypoints[@]}" "${shared[@]}"
+          deno check --node-modules-dir=auto "${entrypoints[@]}" "${shared[@]}"
