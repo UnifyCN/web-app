@@ -5,14 +5,24 @@ Found during the Practice/Quiz translation run on **2026-07-27** against Sanity
 verified by direct GROQ query, not inferred.
 
 **Status as of 2026-07-28.** The translation run itself left all English source documents
-untouched. Since then, four defects have been corrected — **P0 #1, #3, #4 published**, and
-**P1 #5 corrected but held as an unpublished draft** pending sign-off. Each is marked
-inline below. Everything else here is still open, and **P0 #2 (`ecca3ca9`) is deliberately
-untouched** — it needs IRCC-sourced wording plus re-translation in all 4 languages.
+untouched. Since then, **all five P0/P1 defects have been corrected and published** — the
+English source is now clean of every P0/P1 issue found in the run. Each is marked inline
+below. The P2 typos and P3 editorial items are still open.
 
-Every fix so far changed `.text` / `.right_item` only. Published-vs-draft comparison
-confirmed that all `_key`s, all `options[].value`s, and all `is_correct` flags stayed
-byte-identical, so saved learner progress and the 228 translations are unaffected.
+The **228 translation drafts stay unpublished**, including `ecca3ca9`'s four — publishing
+those remains a separate decision needing native review plus a Savar heads-up (mobile reads
+the same dataset). Only English source documents were published.
+
+Every fix changed `.text` / `.right_item` only. Published-vs-draft comparison confirmed that
+all `_key`s, all `options[].value`s, and all `is_correct` flags stayed byte-identical, so the
+228 translations are unaffected.
+
+> **`.right_item` is not display-only — it is a grading value.** Unlike a `children[].text`
+> edit, changing a matching pair's `right_item` *can* desync saved learner progress:
+> `grade.ts` stores matching answers as `` `${pairKey}::${rightItem}` `` (`encodeMatch`) and
+> re-grades them with `map.get(p._key) === p.right_item`, so a saved answer carrying the old
+> string re-grades as wrong. Treat `right_item` like `options[].value`: check the saved-answer
+> impact on the shared DB before publishing. (For #5 that check was run — see below.)
 
 ## Rules for anyone fixing these
 
@@ -63,26 +73,84 @@ contradicting their correct answer.
 > English is fixed, English learners see wrong feedback and translated learners see
 > correct feedback.
 
-### 2. ⛔ STILL OPEN — BLOCKED ON SOURCED WORDING — `ecca3ca9-7b4a-4d22-a88d-2efc10f7d843` — "Activity: Mina's Story"
+### 2. ✅ FIXED + PUBLISHED (2026-07-28) — `ecca3ca9-7b4a-4d22-a88d-2efc10f7d843` — "Activity: Mina's Story"
 
-> Deliberately not auto-fixed. This is immigration guidance shown to newcomers, so the
-> replacement must be authored against current IRCC wording by a person, not inferred.
-> It is also the only item requiring re-translation. Tracked in `BACKLOG.md`.
+> English rewritten and **live**. The 4 translations were re-translated to match and stay
+> as unpublished drafts (`drafts.ecca3ca9-…-{vi,es,hi,ar}`) with the other 224.
 
-Answer box reads: **`"Permanent residents must stay bla bla"`** — unfinished placeholder
-copy in published content, where the PR residency obligation belongs.
+Answer box read: **`"Permanent residents must stay bla bla"`** — unfinished placeholder
+copy in published content, where the PR residency obligation belongs. The activity asks
+whether Mina (1 year in Canada, 4 years abroad over a 5-year period) keeps her PR; the
+grader was correct, but the feedback explaining *why* was placeholder text.
 
-**Fix:** author the real clause (the obligation is 730 days of physical presence in Canada
-in every 5-year period — confirm against current IRCC wording before publishing).
+**New English text:**
 
-> The translator deliberately did **not** invent this text — it is immigration guidance —
-> and carried `bla bla` through verbatim in all four languages. **After the English is
-> fixed, re-translate this field in all 4 languages.** This is the only item requiring
-> re-translation.
+> Permanent residents must be in Canada for at least 730 days (2 years) in every 5-year
+> period. The days do not need to be in a row, and some time abroad still counts: days you
+> work full-time outside Canada for a Canadian business or organization, or for the Canadian
+> federal, provincial, or territorial government; and days you spend outside Canada
+> accompanying a spouse or common-law partner (or, if you are a child, a parent) who is
+> either a Canadian citizen, or a permanent resident working full-time abroad for a Canadian
+> business or for one of those governments. Mina spent only 1 year in Canada, and time spent
+> caring for family abroad does not count, so she does not meet the 730-day rule and can lose
+> her PR status.
+
+**Sourced against IRCC**, not written from memory — verified 2026-07-28:
+
+- [How long must I stay in Canada to keep my permanent resident status?](https://ircc.canada.ca/english/helpcentre/answer.asp?qnum=727&top=4)
+  — "you must have been in Canada for at least **730 days** during the last five years.
+  These 730 days don't need to be continuous. Some of your time abroad may count."
+- [Can I lose my permanent resident status?](https://ircc.canada.ca/english/helpcentre/answer.asp?qnum=1468&top=10)
+  (date modified 2026-04-17) — same 730-day threshold.
+- [Can I count time spent outside Canada towards my residency obligation?](https://ircc.canada.ca/english/helpcentre/answer.asp?qnum=1466&top=10)
+  — read in full 2026-07-29. It lists **three** conditions:
+  1. You work outside Canada **full-time** for "a Canadian business **or organization**, or
+     the Canadian **federal, provincial or territorial** government".
+  2. You accompany your **spouse or common-law partner**, who is *either* "a Canadian citizen"
+     (**no employment requirement**) *or* "a permanent resident working outside Canada,
+     full-time for: a Canadian business, or the Canadian federal, provincial or territorial
+     government".
+  3. A **dependent child accompanying a parent** — same two branches as (2).
+
+  **Note the asymmetry:** condition 1's employer list includes **"organization"**; conditions
+  2 and 3 say **"business"** only. Don't collapse them into "one of those employers".
+- Cross-checked against [IRPA s. 28(2)(a)](https://laws-lois.justice.gc.ca/eng/acts/I-2.5/section-28.html),
+  whose subparagraphs (i)-(v) confirm the help page omits nothing learner-facing: (ii) is the
+  Canadian-citizen branch, (iii) the own-employment branch, (iv) the **PR-spouse** branch, and
+  (v) a regulations catch-all IRCC itself does not surface.
+- Searched for a 2026 change to the rule: none. 730 days in each five-year period
+  (IRPA s. 28) is current.
+
+> **Rewritten three times after the first publish (CodeRabbit, PR #81) — the first two were
+> too narrow.** Round 1 said "living with a Canadian citizen spouse or working abroad for a
+> Canadian business": it dropped IRCC's **full-time** condition, implied plain cohabitation
+> qualifies, and omitted common-law partners. Round 2 fixed those but named only "a Canadian
+> business" as the employer. Round 3 added "organization, or government" — still wrong, since
+> bare "government" reads as including **municipal** employment, which does not qualify.
+>
+> Each round patched whichever clause was flagged and left the adjacent one under-specified.
+> Round 4 therefore read qnum=1466 **in full** and rewrote the sentence in one pass, which
+> surfaced a gap **no review had flagged**: the **PR-spouse branch** (IRPA s. 28(2)(a)(iv))
+> was missing entirely — accompanying a *permanent-resident* spouse who works full-time
+> abroad also counts. The current text covers conditions 1 and 2 including both branches,
+> keeps "organization" only where IRCC puts it, and names the three government levels.
+>
+> **Lesson for the next edit:** re-read the whole source condition list before touching this
+> sentence. Patching only the flagged clause has produced a wrong sentence three times.
+> Every round was `.text` only; English republished, the 4 translation drafts re-patched to
+> match and left unpublished.
+
+The wording deliberately reuses Lesson 2.1's (`b6faf6d6`) own phrasing — "730 days
+(2 years) in every 5-year period", "do not need to be in a row" — in **all five
+languages**, so the answer box reads as a callback to the lesson rather than new copy.
+
+Structure untouched: one block, one span, `.text` only. `_key`s, `options[].value`
+(`yes` / `no`) and `is_correct` verified byte-identical across all five documents.
 
 ### 3. ✅ FIXED + PUBLISHED (2026-07-28) — `ad1aa163-9193-4cbc-86dd-b214dbacf66b` — "Rental Quiz"
 
-> Both options now carry the `C) ` prefix. `value` (`c`) and `is_correct` untouched. Live.
+> Both options now carry the `C)` prefix, including the space after it. `value` (`c`) and
+> `is_correct` untouched. Live.
 
 Two options are missing the letter prefix every sibling has, while the answer box cites
 that letter — so the feedback references an option the learner cannot identify:
@@ -90,8 +158,8 @@ that letter — so the feedback references an option the learner cannot identify
 - Q2 option `8e1d52223035` = `"It becomes a month-to-month tenancy"` (answer box says "C) …")
 - Q3 option `0a5f10619cac` = `"Participatory Hearing"` (siblings are "A)" / "B)" / "D)")
 
-**Fix:** add the `C) ` prefix to the option **text**. Leave `value` (`c`) and `is_correct`
-untouched. Translations already include the prefix.
+**Fix:** add the `C)` prefix (including the space after it) to the option **text**. Leave
+`value` (`c`) and `is_correct` untouched. Translations already include the prefix.
 
 ### 4. ✅ FIXED + PUBLISHED (2026-07-28) — `b29a34f2-cb58-41bd-b220-c426ff466202` — "Home Buying Quiz"
 
@@ -107,14 +175,28 @@ should be `$25,000`.
 
 ## P1 — Factual error
 
-### 5. ⏸️ CORRECTED, HELD AS DRAFT (2026-07-28) — `051870f8-3cab-4933-8130-0dcc31f61538`
+### 5. ✅ FIXED + PUBLISHED (2026-07-28) — `051870f8-3cab-4933-8130-0dcc31f61538` — "Match the Goal to the Investment"
 
-> `drafts.051870f8-…` already reads `"Mix of stocks and bonds in a TFSA/RRSP"`. Not
-> published — the publish request named only the three P0 docs. Publish the draft to
-> take it live.
+> Now reads `"Mix of stocks and bonds in a TFSA/RRSP"`. Live. (Corrected as a draft
+> earlier the same day, then published once the saved-progress impact below was checked.)
 
-Matching pair `6c6e4189da1c` right_item reads `"Mix of stocks and bonds in a TSFA/RRSP"` —
-the account is **TFSA**. Translations already use `TFSA/RRSP`.
+A `quiz` doc (lesson `5d6a2fa5`) with one `matching` question: three goals matched to
+investment types. Matching pair `6c6e4189da1c` right_item reads `"Mix of stocks and bonds
+in a TSFA/RRSP"` — the account is **TFSA**. Translations already use `TFSA/RRSP` in all
+four languages, so no re-translation is needed. Re-verified 2026-07-28: the draft differs
+from published in that one string and nothing else; all `_key`s identical.
+
+**Stored-score impact — checked before publishing; no persisted score changed.** Per the
+`right_item` caveat above, a rename invalidates stored matching answers. Querying the shared
+DB: `user_lesson_quiz_progress` has exactly **1 row** carrying the stale `TSFA` string (0 in
+`user_submodule_practice_progress`). That row is already `is_completed: true` with
+`score: 0/1` — the learner mismatched a different pair (`e924d3f0a245`), so the question
+grades false before and after and the persisted score is untouched.
+
+**Saved-answer behaviour did change, though.** The stored answer still encodes
+`` `…::Mix of stocks and bonds in a TSFA/RRSP` ``, and `grade.ts` re-evaluates it against the
+renamed `TFSA` value, so on review one previously-green pair now renders red inside an answer
+already marked wrong. Score-neutral, but a real behaviour change — not nil.
 
 ---
 
@@ -155,11 +237,18 @@ the account is **TFSA**. Translations already use `TFSA/RRSP`.
 
 ## Translation-side notes (not source issues)
 
-- **Standalone "Canada" in hi/ar — fixed during the run.** The existing 378
-  lesson/checklist translations use native script (कनाडा / كندا) for a standalone country
-  reference and Latin only for compound official names ("Service Canada", "Canada Child
-  Benefit"). One batch diverged on `c56bfc62`; both drafts were patched and `_key` sets
-  re-verified byte-identical.
+- **Standalone "Canada" in hi/ar — needs a corpus-wide ruling, not per-doc patching.**
+  This note previously read that the 378 lesson/checklist translations use native script
+  (कनाडा / كندا) for a standalone country reference and Latin only for compound official
+  names ("Service Canada", "Canada Child Benefit"), and that `c56bfc62` was patched to match.
+  **That generalization does not hold.** Spot-checking the PR submodule (`8d642532`): Lesson
+  2.1 (`b6faf6d6`) uses Latin `Canada` standalone in all four languages ("आपको Canada में
+  रहना होगा", "يجب أن تعيش في Canada"), as does Lesson 2.2 (`a46b96d0`) and `ecca3ca9`'s own
+  spans — while `c56bfc62`'s patched answer box and scattered lines in the same documents use
+  कनाडा / كندا. The corpus is genuinely mixed, including *within single documents*.
+  The `ecca3ca9` rewrite (P0 #2) therefore kept **Latin `Canada`**, matching the document it
+  sits in and the lesson it paraphrases, rather than re-litigating the convention one doc at a
+  time. Pick one rule and sweep it across all 606 translation drafts in a single pass.
 - **Personal names in hi/ar — needs a ruling.** Four of five practice batches transliterate
   names (Sofia → सोफिया / صوفيا, Ali → अली / علي); one kept **"Abdul"** in Latin in
   `be556dbe`. Left as-is deliberately — the Arabic form of a bare "Abdul" is ambiguous and
