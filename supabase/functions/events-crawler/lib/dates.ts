@@ -26,6 +26,55 @@ export function offsetIsoToUtc(value: string | null | undefined): string | null 
 }
 
 /**
+ * The UTC offset of `timeZone` at a given instant, in ms. Derived from Intl rather than
+ * hardcoded, so DST is handled for free.
+ */
+function zoneOffsetMs(timeZone: string, at: Date): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    timeZoneName: 'longOffset',
+  }).formatToParts(at);
+  const name = parts.find((p) => p.type === 'timeZoneName')?.value ?? '';
+  // 'longOffset' renders as GMT-07:00 / GMT+05:30, and bare "GMT" exactly on zero.
+  const m = name.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+  if (!m) return 0;
+  const sign = m[1] === '-' ? -1 : 1;
+  return sign * (Number(m[2]) * 60 + Number(m[3] ?? 0)) * 60_000;
+}
+
+/**
+ * A wall-clock local time in `timeZone` → ISO Z.
+ *
+ * Needed by feeds that publish a human-readable local time with no offset ("Thu, 30 Jul
+ * 2026, 10:00am"), where assuming UTC would shift every event by 7-8 hours and assuming a
+ * fixed -07:00 would be an hour out for half the year.
+ *
+ * Two passes: guess by reading the wall clock as if it were UTC, correct by the zone's
+ * offset at that guess, then re-read the offset at the corrected instant and redo the
+ * correction if it changed. The second pass only matters within a DST transition, where
+ * the offset before and after the shift differ. Times inside a spring-forward gap don't
+ * exist locally; they land on the post-transition instant, which is the conventional
+ * resolution and good enough for an events feed.
+ */
+export function zonedWallClockToUtc(
+  timeZone: string,
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+): string | null {
+  const guess = Date.UTC(year, month - 1, day, hour, minute);
+  if (!Number.isFinite(guess)) return null;
+  const firstOffset = zoneOffsetMs(timeZone, new Date(guess));
+  let ms = guess - firstOffset;
+  const secondOffset = zoneOffsetMs(timeZone, new Date(ms));
+  if (secondOffset !== firstOffset) ms = guess - secondOffset;
+  const d = new Date(ms);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/**
  * Today's date as YYYY-MM-DD on `timeZone`'s calendar, NOT UTC's.
  *
  * Sources interpret a date bound on their own calendar, so using the UTC date would
