@@ -7,6 +7,7 @@
 import * as bibliocommons from '../adapters/bibliocommons.ts';
 import * as communico from '../adapters/communico.ts';
 import * as livewhale from '../adapters/livewhale.ts';
+import * as surrey from '../adapters/surrey.ts';
 import * as tribe from '../adapters/tribe.ts';
 import { ORG_TIMEZONE, WINDOW_MONTHS } from './constants.ts';
 import { todayInTimezone, windowEndInTimezone } from './dates.ts';
@@ -93,6 +94,14 @@ export const SOURCES: Source[] = [
     // The feed carries no location field of any kind — see adapters/communico.ts.
     defaultLocation: 'North Vancouver District Public Library',
   },
+  {
+    slug: 'surrey-libraries',
+    name: 'Surrey Libraries',
+    kind: 'surrey-drupal',
+    host: 'surreylibraries.ca',
+    enabled: false,
+    relevanceFilter: true,
+  },
 ];
 
 /**
@@ -108,6 +117,7 @@ export const ADAPTERS: Record<SourceKind, Adapter> = {
   bibliocommons: bibliocommons.fetchEvents,
   livewhale: livewhale.fetchEvents,
   communico: communico.fetchEvents,
+  'surrey-drupal': surrey.fetchEvents,
 };
 
 /**
