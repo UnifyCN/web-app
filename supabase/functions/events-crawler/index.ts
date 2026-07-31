@@ -37,11 +37,24 @@ interface Org {
   name: string;
   /** WordPress host serving /wp-json/tribe/events/v1/events. */
   host: string;
+  /**
+   * Whether a run actually crawls this org. New orgs land as `false`.
+   *
+   * The weekly cron is LIVE (20260724120000_events_crawler_cron.sql — pg_cron jobid 18,
+   * 'events-crawler-weekly', Mondays 14:00 UTC), so deploying this function is what puts a
+   * new org into production: the next run would auto-publish it into the shared events
+   * table the mobile app reads. Landing new orgs disabled decouples the two, leaving
+   * activation as its own one-line, reviewable change — which needs Savar's sign-off,
+   * since it writes into shared mobile-facing data (CLAUDE.md, "Decision Authority").
+   */
+  enabled: boolean;
 }
 
-// Phase 1: the five highest-relevance orgs, all on The Events Calendar (Tribe).
+// Phase 1 (enabled): the five highest-relevance orgs, all on The Events Calendar (Tribe).
+// Phase 2 (staged, disabled): further sources from the 2026-07-29 scoping round.
+//
 // Add an org here (test /wp-json/tribe/events/v1/events first) to broaden coverage;
-// remember to allowlist its image host in next.config.ts.
+// remember to allowlist its image host in next.config.ts, and to land it `enabled: false`.
 //
 // NOTE on virtual events: none of these orgs sets Tribe's `is_virtual` flag (it ships
 // with the paid Virtual Events add-on) — it is false or absent on every event. They mark
@@ -51,12 +64,30 @@ interface Org {
 // centrecanada.org is healthy but currently returns total:0 (empty upcoming calendar) —
 // a zero count from it is expected, not a fetch failure.
 const ORGS: Org[] = [
-  { slug: 'mosaic', name: 'MOSAIC', host: 'mosaicbc.org' },
-  { slug: 'burnaby-nh', name: 'Burnaby Neighbourhood House', host: 'burnabynh.ca' },
-  { slug: 'success', name: 'S.U.C.C.E.S.S.', host: 'successbc.ca' },
-  { slug: 'centre-canada', name: 'CentreCanada', host: 'centrecanada.org' },
-  { slug: 'pirs', name: 'Pacific Immigrant Resources Society', host: 'pirs.bc.ca' },
+  { slug: 'mosaic', name: 'MOSAIC', host: 'mosaicbc.org', enabled: true },
+  { slug: 'burnaby-nh', name: 'Burnaby Neighbourhood House', host: 'burnabynh.ca', enabled: true },
+  { slug: 'success', name: 'S.U.C.C.E.S.S.', host: 'successbc.ca', enabled: true },
+  { slug: 'centre-canada', name: 'CentreCanada', host: 'centrecanada.org', enabled: true },
+  { slug: 'pirs', name: 'Pacific Immigrant Resources Society', host: 'pirs.bc.ca', enabled: true },
+  // --- Phase 2, staged and NOT crawled until `enabled` flips (see Org.enabled) ---
+  // A public library rather than a settlement agency, so its calendar mixes genuinely
+  // relevant programming (English conversation, newcomer sessions) with toddler
+  // storytimes. A relevance filter for library sources lands with the Phase-2 adapter
+  // work; this org stays disabled until then, so nothing unfiltered can reach the tab.
+  {
+    slug: 'westvan-library',
+    name: 'West Vancouver Memorial Library',
+    host: 'westvanlibrary.ca',
+    enabled: false,
+  },
 ];
+
+/**
+ * The orgs a run actually crawls. Everything downstream — the fetch fan-out and the
+ * per-org counts in the response — is scoped to this, so a disabled org is inert rather
+ * than merely unreported.
+ */
+const ACTIVE_ORGS = ORGS.filter((org) => org.enabled);
 
 const MAX_PER_ORG = 25; // soonest-first cap so MOSAIC's ~254 events don't flood the tab
 const MAX_DESCRIPTION_CHARS = 2000;
@@ -655,7 +686,10 @@ Deno.serve(async (req: Request) => {
   // all orgs, so identical topic queries hit the API once.
   const pexelsCache = new Map<string, Promise<string[]>>();
   const perOrgResults = await Promise.all(
-    ORGS.map(async (org) => ({ slug: org.slug, rows: await fetchOrgEvents(org, pexelsCache) })),
+    ACTIVE_ORGS.map(async (org) => ({
+      slug: org.slug,
+      rows: await fetchOrgEvents(org, pexelsCache),
+    })),
   );
 
   const collected: EventRow[] = [];
