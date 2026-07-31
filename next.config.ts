@@ -38,10 +38,12 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "www.centrecanada.org" },
       { protocol: "https", hostname: "pirs.bc.ca" },
       { protocol: "https", hostname: "www.pirs.bc.ca" },
-      // Phase-2 crawler source, staged disabled in events-crawler/index.ts. Allowlisted
+      // Phase-2 crawler sources, staged disabled in events-crawler/index.ts. Allowlisted
       // ahead of activation so flipping `enabled` needs no web-side change.
       { protocol: "https", hostname: "westvanlibrary.ca" },
       { protocol: "https", hostname: "www.westvanlibrary.ca" },
+      // BiblioCommons serves each library's event covers off its own tenant subdomain.
+      { protocol: "https", hostname: "vpl.bibliocommons.com" },
       // events-crawler tier-2 covers (Pexels stock photos for events with no source image)
       { protocol: "https", hostname: "images.pexels.com" },
       // News article images
