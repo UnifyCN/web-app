@@ -44,6 +44,14 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "www.westvanlibrary.ca" },
       // BiblioCommons serves each library's event covers off its own tenant subdomain.
       { protocol: "https", hostname: "vpl.bibliocommons.com" },
+      // SFU's LiveWhale calendar serves thumbnails off the calendar host itself.
+      { protocol: "https", hostname: "events.sfu.ca" },
+      // Communico (NVDPL) hosts event images in a public S3 bucket. Pinned to the exact
+      // bucket host — never an *.amazonaws.com wildcard, which would allowlist all of S3.
+      {
+        protocol: "https",
+        hostname: "events-calendar-public-us-east-2.s3.us-east-2.amazonaws.com",
+      },
       // events-crawler tier-2 covers (Pexels stock photos for events with no source image)
       { protocol: "https", hostname: "images.pexels.com" },
       // News article images

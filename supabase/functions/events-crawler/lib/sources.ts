@@ -5,6 +5,8 @@
 // here. Keeping one definition means the preview and a real run cannot drift.
 
 import * as bibliocommons from '../adapters/bibliocommons.ts';
+import * as communico from '../adapters/communico.ts';
+import * as livewhale from '../adapters/livewhale.ts';
 import * as tribe from '../adapters/tribe.ts';
 import { ORG_TIMEZONE, WINDOW_MONTHS } from './constants.ts';
 import { todayInTimezone, windowEndInTimezone } from './dates.ts';
@@ -71,6 +73,26 @@ export const SOURCES: Source[] = [
   // answers "The Events feature is not available", and bpl.bc.ca/events is a client-
   // rendered SPA with nothing server-side to read. Note `bpl` on BiblioCommons is BOSTON
   // Public Library — a healthy but entirely wrong feed. See adapters/bibliocommons.ts.
+  {
+    slug: 'sfu',
+    name: 'Simon Fraser University',
+    kind: 'livewhale',
+    host: 'events.sfu.ca',
+    enabled: false,
+    relevanceFilter: true,
+  },
+  {
+    // NVDPL-wide, not Lynn Valley alone: the RSS endpoint ignores the `?l=<branch>`
+    // filter its own UI uses and returns the identical system-wide set regardless.
+    slug: 'nvdpl',
+    name: 'North Vancouver District Public Library',
+    kind: 'communico',
+    host: 'nvdpl.events.mylibrary.digital',
+    enabled: false,
+    relevanceFilter: true,
+    // The feed carries no location field of any kind — see adapters/communico.ts.
+    defaultLocation: 'North Vancouver District Public Library',
+  },
 ];
 
 /**
@@ -84,6 +106,8 @@ export const ACTIVE_SOURCES = SOURCES.filter((source) => source.enabled);
 export const ADAPTERS: Record<SourceKind, Adapter> = {
   tribe: tribe.fetchEvents,
   bibliocommons: bibliocommons.fetchEvents,
+  livewhale: livewhale.fetchEvents,
+  communico: communico.fetchEvents,
 };
 
 /**
