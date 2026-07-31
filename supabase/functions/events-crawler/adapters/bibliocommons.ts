@@ -131,9 +131,12 @@ function candidatesFromPage(page: BiblioPage, source: Source, ctx: AdapterContex
     const def = ev?.definition;
     if (!def || def.isCancelled === true) continue;
 
-    const title = clean(def.title).slice(0, MAX_TITLE_CHARS);
-    if (!title) continue;
-    if (source.relevanceFilter && !isSettlementRelevant(title)) continue;
+    // Filter on the FULL cleaned title, then truncate for storage — a relevant keyword
+    // past MAX_TITLE_CHARS would otherwise be invisible to the filter.
+    const fullTitle = clean(def.title);
+    if (!fullTitle) continue;
+    if (source.relevanceFilter && !isSettlementRelevant(fullTitle)) continue;
+    const title = fullTitle.slice(0, MAX_TITLE_CHARS);
 
     const startIso = offsetIsoToUtc(ev.indexStart);
     if (!startIso) continue;
@@ -198,26 +201,49 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
   // Bounded concurrency: a simple sliding window over the remaining page numbers.
   const remaining: number[] = [];
   for (let p = 2; p <= totalPages; p++) remaining.push(p);
+  let failedPages = 0;
   for (let i = 0; i < remaining.length; i += PAGE_CONCURRENCY) {
     const batch = remaining.slice(i, i + PAGE_CONCURRENCY);
     const pages = await Promise.all(batch.map((p) => fetchPage(source, p)));
     for (const page of pages) {
-      if (page) candidates.push(...candidatesFromPage(page, source, ctx));
+      if (page) {
+        candidates.push(...candidatesFromPage(page, source, ctx));
+      } else {
+        failedPages++;
+      }
     }
   }
+  // A failed page silently shrinks the candidate pool, which would otherwise be
+  // indistinguishable from a complete crawl in the summary below — same reasoning as the
+  // MAX_PAGES warning.
+  if (failedPages > 0) {
+    console.warn(
+      `events-crawler: ${source.slug} had ${failedPages} failed page fetch(es) of ` +
+        `${totalPages} — results are a partial view of the catalog.`,
+    );
+  }
+
+  // Dedupe by event id before sorting: the catalog has no stable order and is read over
+  // many round trips, so a catalog shift mid-pagination can surface the same event on two
+  // pages. A duplicate would otherwise consume one of the MAX_PER_ORG slots and pay for a
+  // second, redundant cover probe.
+  const uniqueById = new Map<string, Candidate>();
+  for (const c of candidates) uniqueById.set(c.id, c);
+  const deduped = [...uniqueById.values()];
 
   // Sort ascending and cap only after the whole catalog is in hand — the API's arbitrary
   // order means any earlier cut would be an arbitrary subset, not the soonest events.
-  candidates.sort((a, b) => a.startIso.localeCompare(b.startIso));
-  const selected = candidates.slice(0, MAX_PER_ORG);
+  deduped.sort((a, b) => a.startIso.localeCompare(b.startIso));
+  const selected = deduped.slice(0, MAX_PER_ORG);
 
   console.log(
     `events-crawler: ${source.slug} scanned ${totalPages} page(s), ` +
-      `${candidates.length} in-window${source.relevanceFilter ? ' + relevant' : ''}, ` +
-      `taking soonest ${selected.length}`,
+      `${candidates.length} in-window${source.relevanceFilter ? ' + relevant' : ''} ` +
+      `(${deduped.length} unique), taking soonest ${selected.length}`,
   );
 
-  return await Promise.all(
+  // allSettled so one failed cover lookup can't reject the batch and discard the source.
+  const settled = await Promise.allSettled(
     selected.map(async (c): Promise<EventRow> => {
       const externalLink = `https://${source.host}.bibliocommons.com/events/${c.id}`;
       return {
@@ -236,4 +262,10 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
       };
     }),
   );
+  const rows: EventRow[] = [];
+  for (const result of settled) {
+    if (result.status === 'fulfilled') rows.push(result.value);
+    else console.error(`events-crawler: ${source.slug} row failed:`, result.reason);
+  }
+  return rows;
 }

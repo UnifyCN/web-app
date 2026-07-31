@@ -6,8 +6,8 @@
 // it does not go near the cron. That is the whole point: the deployed function is
 // INSERT-only with no dry-run mode, so invoking it to "test" a change writes to prod.
 //
-// It imports the real adapter modules rather than copying their logic, so what you see
-// here is what a run would produce — the two cannot drift.
+// It imports the real registry, adapter map and context factory from lib/sources.ts —
+// the exact wiring index.ts uses — so the preview cannot drift from a real run.
 //
 // RUN (from web-app/):
 //   deno run --allow-net --allow-env=PEXELS_API_KEY \
@@ -23,63 +23,8 @@
 // Disabled sources can be previewed here — that is what makes it possible to review a
 // staged source before anyone flips `enabled`.
 
-import * as bibliocommons from './adapters/bibliocommons.ts';
-import * as tribe from './adapters/tribe.ts';
-import { ORG_TIMEZONE, WINDOW_MONTHS } from './lib/constants.ts';
-import { todayInTimezone, windowEndInTimezone } from './lib/dates.ts';
-import type { Adapter, AdapterContext, EventRow, Source, SourceKind } from './lib/types.ts';
-
-const ADAPTERS: Record<SourceKind, Adapter> = {
-  tribe: tribe.fetchEvents,
-  bibliocommons: bibliocommons.fetchEvents,
-};
-
-/**
- * Mirrors the registry in index.ts. Kept as a literal rather than imported because
- * index.ts calls Deno.serve at module scope — importing it would start a server.
- * Adding a source to index.ts means adding it here too.
- */
-const SOURCES: Source[] = [
-  { slug: 'mosaic', name: 'MOSAIC', kind: 'tribe', host: 'mosaicbc.org', enabled: true },
-  {
-    slug: 'burnaby-nh',
-    name: 'Burnaby Neighbourhood House',
-    kind: 'tribe',
-    host: 'burnabynh.ca',
-    enabled: true,
-  },
-  { slug: 'success', name: 'S.U.C.C.E.S.S.', kind: 'tribe', host: 'successbc.ca', enabled: true },
-  {
-    slug: 'centre-canada',
-    name: 'CentreCanada',
-    kind: 'tribe',
-    host: 'centrecanada.org',
-    enabled: true,
-  },
-  {
-    slug: 'pirs',
-    name: 'Pacific Immigrant Resources Society',
-    kind: 'tribe',
-    host: 'pirs.bc.ca',
-    enabled: true,
-  },
-  {
-    slug: 'westvan-library',
-    name: 'West Vancouver Memorial Library',
-    kind: 'tribe',
-    host: 'westvanlibrary.ca',
-    enabled: false,
-    relevanceFilter: true,
-  },
-  {
-    slug: 'vpl',
-    name: 'Vancouver Public Library',
-    kind: 'bibliocommons',
-    host: 'vpl',
-    enabled: false,
-    relevanceFilter: true,
-  },
-];
+import { ADAPTERS, makeContext, SOURCES } from './lib/sources.ts';
+import type { EventRow } from './lib/types.ts';
 
 function arg(name: string): string | undefined {
   const i = Deno.args.indexOf(`--${name}`);
@@ -123,14 +68,7 @@ if (!source) {
   Deno.exit(1);
 }
 
-const now = new Date();
-const ctx: AdapterContext = {
-  pexelsCache: new Map(),
-  windowEndMs: Date.parse(`${windowEndInTimezone(ORG_TIMEZONE, WINDOW_MONTHS, now)}T23:59:59Z`),
-  nowMs: now.getTime(),
-  today: todayInTimezone(ORG_TIMEZONE, now),
-  windowEnd: windowEndInTimezone(ORG_TIMEZONE, WINDOW_MONTHS, now),
-};
+const ctx = makeContext();
 
 console.log(
   `DRY RUN — ${source.slug} (${source.kind}), window ${ctx.today} → ${ctx.windowEnd}, ` +

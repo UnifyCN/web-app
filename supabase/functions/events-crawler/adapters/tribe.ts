@@ -67,14 +67,18 @@ async function tribeEventToRow(
   if (ev.status && ev.status !== 'publish') return null;
   if (ev.hide_from_listings === true) return null;
 
-  const title = clean(ev.title).slice(0, MAX_TITLE_CHARS);
+  // Filter on the FULL cleaned title, then truncate for storage — a relevant keyword
+  // sitting past MAX_TITLE_CHARS would otherwise be invisible to the filter and the event
+  // silently dropped.
+  const fullTitle = clean(ev.title);
+  const title = fullTitle.slice(0, MAX_TITLE_CHARS);
   const externalLink = typeof ev.url === 'string' ? ev.url.trim() : '';
   const eventDatetime = toIsoUtc(ev.utc_start_date);
   if (!title || !externalLink || !eventDatetime) return null; // NOT NULL columns
 
   // Cheap rejections first, so a filtered or far-future event costs no HEAD probe or
   // Pexels lookup. Backstop for the server-side ?end_date — see fetchEvents.
-  if (source.relevanceFilter && !isSettlementRelevant(title)) return null;
+  if (source.relevanceFilter && !isSettlementRelevant(fullTitle)) return null;
   if (Date.parse(eventDatetime) > ctx.windowEndMs) return null;
 
   // location + event_type from the venue NAME first, then venue presence, then the
@@ -159,10 +163,21 @@ export async function fetchEvents(
       data && typeof data === 'object' && Array.isArray((data as { events?: unknown }).events)
         ? ((data as { events: TribeEvent[] }).events)
         : [];
-    const rows = await Promise.all(
+    // allSettled, not all: tribeEventToRow awaits network work (the cover HEAD probe and
+    // the Pexels lookup). With Promise.all a single rejection would reject the whole
+    // batch, hit the outer catch and return [] — one transient image failure discarding
+    // every event of this source for the entire weekly run.
+    const settled = await Promise.allSettled(
       events.slice(0, MAX_PER_ORG).map((ev) => tribeEventToRow(ev, source, ctx)),
     );
-    const kept = rows.filter((r): r is EventRow => r !== null);
+    const kept: EventRow[] = [];
+    for (const result of settled) {
+      if (result.status === 'fulfilled') {
+        if (result.value) kept.push(result.value);
+      } else {
+        console.error(`events-crawler: ${source.slug} row failed:`, result.reason);
+      }
+    }
     if (source.relevanceFilter) {
       console.log(
         `events-crawler: ${source.slug} relevance filter kept ${kept.length} of ${events.length} fetched`,
