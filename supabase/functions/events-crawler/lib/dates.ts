@@ -26,6 +26,120 @@ export function offsetIsoToUtc(value: string | null | undefined): string | null 
 }
 
 /**
+ * The UTC offset of `timeZone` at a given instant, in ms. Derived from Intl rather than
+ * hardcoded, so DST is handled for free.
+ */
+function zoneOffsetMs(timeZone: string, at: Date): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    timeZoneName: 'longOffset',
+  }).formatToParts(at);
+  const name = parts.find((p) => p.type === 'timeZoneName')?.value ?? '';
+  // 'longOffset' renders as GMT-07:00 / GMT+05:30, and bare "GMT" exactly on zero.
+  const m = name.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
+  if (!m) return 0;
+  const sign = m[1] === '-' ? -1 : 1;
+  return sign * (Number(m[2]) * 60 + Number(m[3] ?? 0)) * 60_000;
+}
+
+/** The local wall clock in `timeZone` at an instant, as numeric parts. */
+function wallClockParts(
+  timeZone: string,
+  at: Date,
+): { year: number; month: number; day: number; hour: number; minute: number } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(at);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? NaN);
+  // en-CA renders midnight as 24 rather than 00 in some runtimes; normalise it.
+  const hour = get('hour') % 24;
+  return { year: get('year'), month: get('month'), day: get('day'), hour, minute: get('minute') };
+}
+
+/**
+ * A wall-clock local time in `timeZone` → ISO Z.
+ *
+ * Needed by feeds that publish a human-readable local time with no offset ("Thu, 30 Jul
+ * 2026, 10:00am"), where assuming UTC would shift every event by 7-8 hours and assuming a
+ * fixed -07:00 would be an hour out for half the year.
+ *
+ * Returns null on a date that does not exist on the calendar. That matters because
+ * Date.UTC silently normalises overflow — April 31 becomes May 1, February 30 becomes
+ * March 2 — so without the check a malformed feed date would be stored as a real event on
+ * the wrong day rather than skipped.
+ *
+ * DST handling. Two candidate instants are derived (the zone's offset before and after
+ * the guess), then each is round-tripped back to local time:
+ *   - exactly one matches → that is the answer;
+ *   - both match → the time is AMBIGUOUS (it occurs twice, on fall-back), and the earlier
+ *     instant is chosen, i.e. the first occurrence;
+ *   - neither matches → the time does NOT EXIST (it falls in the spring-forward gap, e.g.
+ *     02:30 on 2026-03-08 in America/Vancouver), and the LATER instant is chosen, which is
+ *     the first instant after the transition. Moving forward out of a gap is the
+ *     conventional resolution; the earlier candidate would silently move the event
+ *     backwards, before the time the feed actually published.
+ */
+export function zonedWallClockToUtc(
+  timeZone: string,
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+): string | null {
+  if (
+    !Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day) ||
+    !Number.isInteger(hour) || !Number.isInteger(minute) ||
+    month < 1 || month > 12 || day < 1 || day > 31 ||
+    hour < 0 || hour > 23 || minute < 0 || minute > 59
+  ) {
+    return null;
+  }
+
+  const guess = Date.UTC(year, month - 1, day, hour, minute);
+  if (!Number.isFinite(guess)) return null;
+  // Date.UTC normalises overflow silently, so reject any date it had to move.
+  const asUtc = new Date(guess);
+  if (
+    asUtc.getUTCFullYear() !== year ||
+    asUtc.getUTCMonth() !== month - 1 ||
+    asUtc.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  const firstOffset = zoneOffsetMs(timeZone, asUtc);
+  const candidateA = guess - firstOffset;
+  const secondOffset = zoneOffsetMs(timeZone, new Date(candidateA));
+  const candidateB = guess - secondOffset;
+
+  const roundTrips = (ms: number): boolean => {
+    const w = wallClockParts(timeZone, new Date(ms));
+    return (
+      w.year === year && w.month === month && w.day === day &&
+      w.hour === hour && w.minute === minute
+    );
+  };
+  const aOk = roundTrips(candidateA);
+  const bOk = roundTrips(candidateB);
+
+  let ms: number;
+  if (aOk && bOk) ms = Math.min(candidateA, candidateB); // ambiguous → first occurrence
+  else if (aOk) ms = candidateA;
+  else if (bOk) ms = candidateB;
+  else ms = Math.max(candidateA, candidateB); // gap → first instant after the transition
+
+  const d = new Date(ms);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/**
  * Today's date as YYYY-MM-DD on `timeZone`'s calendar, NOT UTC's.
  *
  * Sources interpret a date bound on their own calendar, so using the UTC date would

@@ -233,7 +233,7 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
 
   // Sort ascending and cap only after the whole catalog is in hand — the API's arbitrary
   // order means any earlier cut would be an arbitrary subset, not the soonest events.
-  deduped.sort((a, b) => a.startIso.localeCompare(b.startIso));
+  deduped.sort((a, b) => (a.startIso < b.startIso ? -1 : a.startIso > b.startIso ? 1 : 0));
   const selected = deduped.slice(0, MAX_PER_ORG);
 
   console.log(

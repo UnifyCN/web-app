@@ -5,7 +5,7 @@
  * ADAPTERS map in index.ts — the map is exhaustive over this union, so a missing
  * implementation is a type error rather than a runtime surprise.
  */
-export type SourceKind = 'tribe' | 'bibliocommons';
+export type SourceKind = 'tribe' | 'bibliocommons' | 'livewhale' | 'communico';
 
 export interface Source {
   /** Stored into `events.source` as `crawler:<slug>`. */
