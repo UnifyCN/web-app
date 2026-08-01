@@ -37,6 +37,28 @@ function isTruthy(value: unknown): boolean {
   return value === true || value === 1 || value === '1';
 }
 
+/**
+ * LiveWhale documents relative `url` values (`/event/123-title`) even though SFU's feed
+ * currently ships absolute ones. `external_link` is the canonical key and is rendered as a
+ * link, so a relative value would be a broken row; take only absolute http(s) URLs.
+ *
+ * Note this is NOT an SSRF guard for the image path — `isPublicHttpUrl` already rejects a
+ * relative string outright (verified: `isPublicHttpUrl('/events/12345') === false`), so a
+ * relative thumbnail is dropped by resolveImageUrl and falls through to the stock tiers
+ * rather than being fetched against the crawler's own origin.
+ */
+function absoluteHttpUrl(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  try {
+    const u = new URL(trimmed);
+    return u.protocol === 'http:' || u.protocol === 'https:' ? trimmed : null;
+  } catch {
+    return null;
+  }
+}
+
 interface LiveWhaleEvent {
   title?: string;
   url?: string;
@@ -77,7 +99,7 @@ function toCandidate(
   // MAX_TITLE_CHARS would otherwise be invisible to the filter.
   const fullTitle = clean(ev.title);
   const title = fullTitle.slice(0, MAX_TITLE_CHARS);
-  const url = typeof ev.url === 'string' ? ev.url.trim() : '';
+  const url = absoluteHttpUrl(ev.url);
   const startIso = toIsoUtc(ev.date_utc);
   if (!title || !url || !startIso) return null; // NOT NULL columns
 
@@ -100,11 +122,15 @@ function toCandidate(
       ? 'hybrid'
       : 'in-person';
 
+  // An end at or before the start would store an inverted interval; drop it instead.
+  const rawEndIso = toIsoUtc(ev.date2_utc);
+  const endIso = rawEndIso && Date.parse(rawEndIso) > startMs ? rawEndIso : null;
+
   return {
     title,
     url,
     startIso,
-    endIso: toIsoUtc(ev.date2_utc),
+    endIso,
     description: htmlToParagraphs(ev.description) || null,
     location,
     eventType,
@@ -137,7 +163,7 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
 
     // Sort BEFORE deduping so "first seen per url" is the soonest occurrence, not an
     // arbitrary one — see the recurring-events note in the module header.
-    candidates.sort((a, b) => a.startIso.localeCompare(b.startIso));
+    candidates.sort((a, b) => (a.startIso < b.startIso ? -1 : a.startIso > b.startIso ? 1 : 0));
     const byUrl = new Map<string, Candidate>();
     for (const c of candidates) {
       if (!byUrl.has(c.url)) byUrl.set(c.url, c);

@@ -168,7 +168,7 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
       });
     }
 
-    candidates.sort((a, b) => a.startIso.localeCompare(b.startIso));
+    candidates.sort((a, b) => (a.startIso < b.startIso ? -1 : a.startIso > b.startIso ? 1 : 0));
     // Recurring programs repeat as separate items with distinct per-occurrence links, so
     // dedupe by link only guards against the feed listing one twice.
     const byLink = new Map<string, Candidate>();
