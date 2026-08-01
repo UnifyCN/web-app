@@ -146,7 +146,19 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
       if (html === null) continue;
       const parsed = parsePage(html, source, ctx);
       if (parsed.blocks === 0) {
-        exhausted = true; // listing ran out
+        // No block marker on the page. Either the listing ran out, or the markup changed
+        // under us — a Drupal theme update renaming the wrapper class, a soft-404, or an
+        // interstitial served with HTTP 200. Page 0 is never legitimately empty for a live
+        // listing, so that case is a parse failure and is logged as one; without this the
+        // walk breaks, `stoppedEarly` suppresses the cap warning, and the source returns
+        // zero rows logged exactly like a genuinely empty calendar.
+        if (pagesWalked === 1) {
+          console.error(
+            `events-crawler: ${source.slug} found no "${BLOCK_MARKER}" blocks on page 0 — ` +
+              `the listing markup has probably changed`,
+          );
+        }
+        exhausted = true;
         continue;
       }
       candidates.push(...parsed.candidates);
