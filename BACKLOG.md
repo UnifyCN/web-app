@@ -480,6 +480,32 @@ at the title / `startIso` / `location` guards) from **intentional** relevance + 
 filtering, rather than one regex per review round. No production exposure while the source is
 `enabled: false` — best done in the same pass that enables it.
 
+**events-crawler — `relevance.ts` misses digital-skills-for-employment content (evidence only)**
+Recording observations for a future relevance-filter pass. **Not scoped and not proposed** — the
+filter is shared by all 10 live sources, so any change needs its own PR and a full regression
+dry-run across every source, not a fix bolted onto an adapter PR.
+
+The digital-literacy group currently matches `digital literacy`, `computer (basics|skills|help)`,
+`tech (cafe|help|support)`, `device clinic`, `online safety`, `internet basics`. That vocabulary
+misses adjacent content that is plainly on-mission:
+- **NVCL (PR #92):** `MS Office learn and practice: Intro to Excel` and `… Intro to Word` — named
+  by product, not by the category words the filter knows. Both are digital-skills-for-employment
+  sessions of exactly the kind newcomers are pointed at.
+- **NVDPL:** `Open Door Community Hub Drop-In` — already documented as a known drop in
+  `lib/relevance.ts`'s own header, and NVCL runs an identically-named program.
+
+Scale of the effect, measured on NVCL's live feed 2026-08-02: its whole 4-month window is 27
+distinct titles, the filter matches **none**, and the source therefore yields **0 rows** with
+`relevanceFilter: true` versus 25 with it off. Most of those 27 (storytimes, teen gaming,
+knitting, Book Bike) are correctly excluded — the point is that the two MS Office sessions are
+not.
+
+Cautions for whoever picks this up: `relevance.ts` matches **titles only**, deliberately — its
+header records that matching descriptions was measured and rejected because library blurbs close
+with "newcomer families welcome" and pull in every storytime. And a naive term like `\bword\b`
+would catch "Crossword" and "Wordplay". Add terms narrowly, and re-run every source's dry-run to
+see what else they let in.
+
 **Client-only tab state elsewhere — same back-navigation bug Community just fixed**
 Found while fixing Community (this PR): tab state held in `useState` never reaches the URL,
 so browser history has nothing to restore and Back from a detail page resets to the first
