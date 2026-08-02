@@ -69,7 +69,7 @@ export default function EventDetailPage({
           {t("events.eventNotFound")}
         </p>
         <Link
-          href="/community"
+          href="/community?tab=events"
           className="mt-3 inline-block text-sm font-semibold text-primary"
         >
           {t("circles.backToCommunity")}
@@ -103,8 +103,12 @@ export default function EventDetailPage({
 
   return (
     <div className="mx-auto max-w-[680px] px-6 py-6">
+      {/* Carries ?tab=events so the in-app back link returns to the tab the user came
+          from. The browser Back button is handled by the URL-backed tab state on
+          /community; this link needs the tab spelled out because it's a fresh navigation,
+          not a history pop. */}
       <Link
-        href="/community"
+        href="/community?tab=events"
         className="mb-4 inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
       >
         <ArrowLeft className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />

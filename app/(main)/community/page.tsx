@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, Users, CalendarDays, MessageCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Tabs } from "@/components/ui/Tabs";
@@ -111,9 +112,32 @@ function MyGroupsStripSkeleton() {
   );
 }
 
-export default function CommunityPage() {
+function CommunityPageContent() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState(TAB_DEFS[0].key);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // The tab lives in the URL, not in state, so browser history can restore it: returning
+  // from an event detail page used to land on Groups because there was nothing to restore.
+  // Derived on every render rather than seeded once into useState — seeding only the
+  // initial value lets the two drift apart the moment the user switches tabs.
+  const tabParam = searchParams.get("tab");
+  const activeTab =
+    TAB_DEFS.find((tab) => tab.key === tabParam)?.key ?? TAB_DEFS[0].key;
+
+  const setActiveTab = (key: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    // Keep the default tab's URL clean at /community rather than /community?tab=groups.
+    if (key === TAB_DEFS[0].key) params.delete("tab");
+    else params.set("tab", key);
+    const query = params.toString();
+    // replace, not push: a tab switch is view state, so it shouldn't cost a history entry
+    // the user has to press Back through to leave the page. scroll: false stops the
+    // viewport jumping to the top on every switch.
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
+
   const [search, setSearch] = useState("");
   const [genreFilter, setGenreFilter] = useState<EventGenre | null>(null);
   const [requestOpen, setRequestOpen] = useState(false);
@@ -383,5 +407,15 @@ export default function CommunityPage() {
         onClose={() => setRequestOpen(false)}
       />
     </div>
+  );
+}
+
+// useSearchParams() forces a client-side-rendering bailout, which Next requires
+// be wrapped in a Suspense boundary or `next build` fails prerendering /community.
+export default function CommunityPage() {
+  return (
+    <Suspense>
+      <CommunityPageContent />
+    </Suspense>
   );
 }

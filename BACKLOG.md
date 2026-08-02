@@ -463,6 +463,26 @@ Deferred from Phase 5. Mobile has sendGroupRequestEmail.ts that POSTs to an edge
 **Group member avatar real list**
 Deferred from Phase 5. Group.memberAvatars is a UI-only convenience seeded from picsum (per group id). The database has no per-row member-avatar surface; mobile uses a separate signed-URL flow against S3. Replace with real member avatars when group detail pages need them.
 
+**Client-only tab state elsewhere — same back-navigation bug Community just fixed**
+Found while fixing Community (this PR): tab state held in `useState` never reaches the URL,
+so browser history has nothing to restore and Back from a detail page resets to the first
+tab. Community now derives its tab from `?tab=` and writes it with
+`router.replace(…, { scroll: false })` behind a `<Suspense>` boundary — that page is the
+reference implementation. Not fixed here, deliberately: each is a separate surface with its
+own detail-page return paths to check.
+- `app/(main)/home/page.tsx` — For You / Following / Groups. Highest impact, since the feed
+  is the most likely place to open a post and come back to.
+- `app/(main)/profile/page.tsx` and `app/(main)/profile/[userId]/page.tsx` — profile tabs.
+- `app/(main)/profile/[userId]/followers/page.tsx` — **the misleading one.** It reads
+  `?tab=` into `useState` as an *initial* value only, so it looks URL-driven but the two
+  desync the moment the user switches tabs. Deriving on every render is the fix.
+
+Also worth doing alongside: any in-app back `<Link>` into a tabbed page needs the tab in its
+href. Community's event detail hardcoded `/community` and so returned to Groups even once
+the tab state was URL-backed — the URL fix alone was not sufficient.
+*(Not affected: `app/(main)/learn/page.tsx` reads `useSearchParams` only for a `?startHere=1`
+dev override; its filter/sort state is local and not a tab.)*
+
 ---
 
 ## Profile / Social

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Calendar, MapPin } from "lucide-react";
+import { Building2, Calendar, MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/Badge";
 import type { CommunityEvent, EventType } from "@/types";
@@ -33,6 +33,16 @@ export function EventCard({ event }: { event: CommunityEvent }) {
     minute: "2-digit",
     timeZone: TZ,
   });
+
+  // Show the host only when the location doesn't already name it — "MOSAIC" against
+  // "MOSAIC - Boundary" is noise, not information. A plain case-insensitive substring
+  // test on purpose: token-level matching would be the fragile kind of clever, and this
+  // is a cosmetic de-duplication, not a correctness guarantee. It therefore misses the
+  // near-miss ("MOSAIC BC" is not a substring of "MOSAIC Head Office"), which shows the
+  // line rather than hiding it — the safe direction to fail in.
+  const host = event.hostedBy?.trim();
+  const showHost =
+    !!host && !event.location.toLowerCase().includes(host.toLowerCase());
 
   return (
     <Link
@@ -74,6 +84,18 @@ export function EventCard({ event }: { event: CommunityEvent }) {
           )}
         </div>
         <div className="mt-2.5 space-y-1.5">
+          {showHost && (
+            <p className="flex items-center gap-2 text-xs text-ink-muted">
+              <Building2
+                className="h-4 w-4 shrink-0 text-ink-placeholder"
+                aria-hidden
+              />
+              {/* The icon is decorative, so name the field for screen readers —
+                  otherwise the org reads as a bare, contextless string. */}
+              <span className="sr-only">{t("events.hostedBy")}{" "}</span>
+              <span className="truncate">{host}</span>
+            </p>
+          )}
           <p className="flex items-center gap-2 text-xs text-ink-muted">
             <Calendar className="h-4 w-4 shrink-0 text-ink-placeholder" aria-hidden />
             {month} {day} · {time}
