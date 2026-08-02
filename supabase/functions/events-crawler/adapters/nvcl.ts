@@ -167,14 +167,28 @@ interface PageParse {
   blocks: number;
   /** Blocks whose title link did not match, out of `blocks`. */
   titleMisses: number;
-  /** Latest start on the page, to decide whether the window has been walked past. */
-  maxStartMs: number;
+  /**
+   * Start of the LAST block on the page, in document order — the stop signal.
+   *
+   * Deliberately not the maximum. Each page is "five featured rows, then the chronological
+   * section", and the featured rows are curated, so one of them can sit arbitrarily far
+   * out (a save-the-date). A page maximum would then exceed the window on page 0 and
+   * truncate the walk after the first batch, silently dropping in-window listings — and
+   * because the featured block repeats on EVERY page, requiring a whole batch to agree
+   * wouldn't help either; every page would report the same distant maximum.
+   *
+   * The last block always belongs to the chronological section, so its start is the
+   * furthest-out entry the paginated list has actually reached. That is the thing the walk
+   * wants to compare against the window, and it needs no guess about how many featured
+   * rows there are.
+   */
+  lastStartMs: number;
 }
 
 function parsePage(html: string, source: Source, ctx: AdapterContext): PageParse {
   const chunks = html.split(BLOCK_MARKER).slice(1);
   const candidates: Candidate[] = [];
-  let maxStartMs = 0;
+  let lastStartMs = 0;
   let titleMisses = 0;
 
   for (const chunk of chunks) {
@@ -194,7 +208,7 @@ function parsePage(html: string, source: Source, ctx: AdapterContext): PageParse
     if (!parsed) continue;
 
     const startMs = Date.parse(parsed.startIso);
-    if (startMs > maxStartMs) maxStartMs = startMs;
+    lastStartMs = startMs;
 
     // Track the window before relevance, so the walk can stop on dates even when a page
     // happens to contain nothing relevant.
@@ -209,7 +223,7 @@ function parsePage(html: string, source: Source, ctx: AdapterContext): PageParse
     });
   }
 
-  return { candidates, blocks: chunks.length, titleMisses, maxStartMs };
+  return { candidates, blocks: chunks.length, titleMisses, lastStartMs };
 }
 
 export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<EventRow[]> {
@@ -262,7 +276,7 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
         );
       }
       candidates.push(...parsed.candidates);
-      if (parsed.maxStartMs > ctx.windowEndMs) pastWindow = true;
+      if (parsed.lastStartMs > ctx.windowEndMs) pastWindow = true;
     }
 
     if (exhausted || pastWindow || candidates.length >= MAX_PER_ORG) {
