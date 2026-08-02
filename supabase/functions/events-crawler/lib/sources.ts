@@ -54,7 +54,11 @@ export const SOURCES: Source[] = [
     enabled: true,
   },
 
-  // --- Phase 2, live since 2026-08-02 ---
+  // --- Phase 2, enabled in this registry 2026-08-02 ---
+  // Enabled here is not the same as live: ACTIVE_SOURCES only widens for a run once this
+  // function is *deployed*, and the deploy is a separate, separately-approved step. Until
+  // it happens production keeps running the previously deployed bundle and crawls Phase 1
+  // alone, however this file reads.
   // All are libraries, so `relevanceFilter` is on: their calendars are mostly storytimes
   // and drop-in clubs, with settlement content a small minority. See lib/relevance.ts.
   {
