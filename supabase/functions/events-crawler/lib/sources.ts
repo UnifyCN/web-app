@@ -13,11 +13,14 @@ import { ORG_TIMEZONE, WINDOW_MONTHS } from './constants.ts';
 import { todayInTimezone, windowEndInTimezone } from './dates.ts';
 import type { Adapter, AdapterContext, Source, SourceKind } from './types.ts';
 
-// Phase 1 (enabled): the five highest-relevance orgs, all on The Events Calendar (Tribe).
-// Phase 2 (staged, disabled): further sources from the 2026-07-29 scoping round.
+// Phase 1: the five highest-relevance orgs, all on The Events Calendar (Tribe).
+// Phase 2: five further sources from the 2026-07-29 scoping round — enabled 2026-08-02 on
+// Savar's sign-off, after landing staged and disabled across PRs #83/#84/#86/#87.
 //
 // Adding a source: pick the `kind` whose adapter fits (test the feed first), allowlist its
-// image host in next.config.ts, and land it `enabled: false`.
+// image host in next.config.ts, and land it `enabled: false`. Staging a source disabled is
+// still the rule for anything new — it lets dryrun.ts preview a real feed before a single
+// row can reach the shared events table.
 //
 // NOTE on virtual events: none of the Tribe orgs sets Tribe's `is_virtual` flag (it ships
 // with the paid Virtual Events add-on) — it is false or absent on every event. They mark
@@ -51,7 +54,11 @@ export const SOURCES: Source[] = [
     enabled: true,
   },
 
-  // --- Phase 2, staged and NOT crawled until `enabled` flips (see Source.enabled) ---
+  // --- Phase 2, enabled in this registry 2026-08-02 ---
+  // Enabled here is not the same as live: ACTIVE_SOURCES only widens for a run once this
+  // function is *deployed*, and the deploy is a separate, separately-approved step. Until
+  // it happens production keeps running the previously deployed bundle and crawls Phase 1
+  // alone, however this file reads.
   // All are libraries, so `relevanceFilter` is on: their calendars are mostly storytimes
   // and drop-in clubs, with settlement content a small minority. See lib/relevance.ts.
   {
@@ -59,7 +66,7 @@ export const SOURCES: Source[] = [
     name: 'West Vancouver Memorial Library',
     kind: 'tribe',
     host: 'westvanlibrary.ca',
-    enabled: false,
+    enabled: true,
     relevanceFilter: true,
   },
   {
@@ -67,7 +74,7 @@ export const SOURCES: Source[] = [
     name: 'Vancouver Public Library',
     kind: 'bibliocommons',
     host: 'vpl', // BiblioCommons tenant slug, not a hostname — see the adapter's caution
-    enabled: false,
+    enabled: true,
     relevanceFilter: true,
   },
   // Burnaby Public Library is deliberately absent: its BiblioCommons tenant (`burnaby`)
@@ -79,7 +86,7 @@ export const SOURCES: Source[] = [
     name: 'Simon Fraser University',
     kind: 'livewhale',
     host: 'events.sfu.ca',
-    enabled: false,
+    enabled: true,
     relevanceFilter: true,
   },
   {
@@ -89,7 +96,7 @@ export const SOURCES: Source[] = [
     name: 'North Vancouver District Public Library',
     kind: 'communico',
     host: 'nvdpl.events.mylibrary.digital',
-    enabled: false,
+    enabled: true,
     relevanceFilter: true,
     // The feed carries no location field of any kind — see adapters/communico.ts.
     defaultLocation: 'North Vancouver District Public Library',
@@ -99,7 +106,7 @@ export const SOURCES: Source[] = [
     name: 'Surrey Libraries',
     kind: 'surrey-drupal',
     host: 'surreylibraries.ca',
-    enabled: false,
+    enabled: true,
     relevanceFilter: true,
   },
 ];
