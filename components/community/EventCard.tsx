@@ -93,7 +93,7 @@ export function EventCard({ event }: { event: CommunityEvent }) {
               {/* The icon is decorative, so name the field for screen readers —
                   otherwise the org reads as a bare, contextless string. */}
               <span className="sr-only">{t("events.hostedBy")}{" "}</span>
-              <span className="truncate">{host}</span>
+              <span className="min-w-0 truncate">{host}</span>
             </p>
           )}
           <p className="flex items-center gap-2 text-xs text-ink-muted">
@@ -102,7 +102,7 @@ export function EventCard({ event }: { event: CommunityEvent }) {
           </p>
           <p className="flex items-center gap-2 text-xs text-ink-muted">
             <MapPin className="h-4 w-4 shrink-0 text-ink-placeholder" aria-hidden />
-            <span className="truncate">{event.location}</span>
+            <span className="min-w-0 truncate">{event.location}</span>
           </p>
         </div>
       </div>
