@@ -463,6 +463,23 @@ Deferred from Phase 5. Mobile has sendGroupRequestEmail.ts that POSTs to an edge
 **Group member avatar real list**
 Deferred from Phase 5. Group.memberAvatars is a UI-only convenience seeded from picsum (per group id). The database has no per-row member-avatar surface; mobile uses a separate signed-URL flow against S3. Replace with real member avatars when group detail pages need them.
 
+**events-crawler (Surrey) — generalize the parse-failure diagnostic beyond `BLOCK_MARKER`**
+Deferred from PR #86 (CodeRabbit, 🔵 Trivial). `adapters/surrey.ts` is the only HTML-scraping
+adapter, so a Drupal theme rename is its expected failure mode. `533d79e` closed the worst
+case: `BLOCK_MARKER` no longer matching sets `blocks === 0` → `exhausted` → the walk breaks and
+`stoppedEarly` suppresses the cap warning, so the source returned zero rows behind an
+info-level log identical to a genuinely empty calendar. Page 0 now logs an error instead.
+**Still open:** the regexes *downstream* of that marker fail the same way. If `TITLE_LINK_RE`
+(and equally `TIME_RE` or `LOCATION_RE`) stops matching, every chunk is skipped, `candidates`
+stays empty while `blocks` stays non-zero — so `exhausted` never trips, `maxStartMs` stays `0`
+so `pastWindow` never trips, and the walk burns all `MAX_PAGES` (20 requests) before exiting.
+Verified this case is *misattributed* rather than silent: `stoppedEarly === false` means the
+cap warning does fire, but it reads as "listings beyond the cap" rather than "the markup
+moved". Durable fix is one counter separating **structural** extraction misses (the `continue`s
+at the title / `startIso` / `location` guards) from **intentional** relevance + window
+filtering, rather than one regex per review round. No production exposure while the source is
+`enabled: false` — best done in the same pass that enables it.
+
 ---
 
 ## Profile / Social
