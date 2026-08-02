@@ -3,6 +3,7 @@
 import { use } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Calendar,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn, RTL_FLIP } from "@/lib/utils";
+import { getPreviousPathname } from "@/lib/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { useEvent } from "@/hooks/useCommunity";
 import type { EventType } from "@/types";
@@ -28,6 +30,7 @@ export default function EventDetailPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const { eventId } = use(params);
   const parsedId = Number(eventId);
   const { data: event, isLoading, isError, refetch } = useEvent(parsedId);
@@ -103,12 +106,26 @@ export default function EventDetailPage({
 
   return (
     <div className="mx-auto max-w-[680px] px-6 py-6">
-      {/* Carries ?tab=events so the in-app back link returns to the tab the user came
-          from. The browser Back button is handled by the URL-backed tab state on
-          /community; this link needs the tab spelled out because it's a fresh navigation,
-          not a history pop. */}
+      {/* Pops history when the user actually came from /community, so this inherits the
+          browser's native scroll restoration and returns them to where they were in the
+          list. A plain <Link> is a forward navigation — it pushes an entry, so the list
+          reloads at the top, which is the bug this fixes.
+
+          The href stays real and is the fallback: on a deep link, a shared URL or a hard
+          refresh there is no in-app entry to pop, and `?tab=events` still lands on the
+          right tab. Keeping it an anchor also means no hydration branch on client-only
+          state, and middle-click / ctrl-click keep working. The previous route must be
+          exactly /community — coming from another event would otherwise pop sideways to
+          that event rather than to the list this link names. */}
       <Link
         href="/community?tab=events"
+        onClick={(e) => {
+          // Let the browser own modified clicks (new tab/window, download).
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+          if (getPreviousPathname() !== "/community") return;
+          e.preventDefault();
+          router.back();
+        }}
         className="mb-4 inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
       >
         <ArrowLeft className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
