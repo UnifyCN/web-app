@@ -10,7 +10,8 @@ export type SourceKind =
   | 'bibliocommons'
   | 'livewhale'
   | 'communico'
-  | 'surrey-drupal';
+  | 'surrey-drupal'
+  | 'nvcl-drupal';
 
 export interface Source {
   /** Stored into `events.source` as `crawler:<slug>`. */

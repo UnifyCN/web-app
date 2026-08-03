@@ -7,6 +7,7 @@
 import * as bibliocommons from '../adapters/bibliocommons.ts';
 import * as communico from '../adapters/communico.ts';
 import * as livewhale from '../adapters/livewhale.ts';
+import * as nvcl from '../adapters/nvcl.ts';
 import * as surrey from '../adapters/surrey.ts';
 import * as tribe from '../adapters/tribe.ts';
 import { ORG_TIMEZONE, WINDOW_MONTHS } from './constants.ts';
@@ -109,6 +110,24 @@ export const SOURCES: Source[] = [
     enabled: true,
     relevanceFilter: true,
   },
+
+  // --- Phase 3, staged and NOT crawled until `enabled` flips (see Source.enabled) ---
+  // Deferred from the 2026-07-29 round on the belief that their listings carried no dates
+  // and would need a per-event fetch. Re-checked 2026-08-02: not so — the date is in the
+  // listing, so no N+1. See each adapter's header for what the re-check actually found.
+  {
+    // NVCL, not NVDPL: different library system, different feed. Its BiblioCommons tenant
+    // is correctly named but answers 403 "The Events feature is not available", the same
+    // dead end as Burnaby — hence a Drupal scraper rather than the bibliocommons adapter.
+    slug: 'nvcl',
+    name: 'North Vancouver City Library',
+    kind: 'nvcl-drupal',
+    host: 'www.nvcl.ca',
+    enabled: false,
+    relevanceFilter: true,
+    // The listing's venue slot is present but empty on every row — see adapters/nvcl.ts.
+    defaultLocation: 'North Vancouver City Library',
+  },
 ];
 
 /**
@@ -125,6 +144,7 @@ export const ADAPTERS: Record<SourceKind, Adapter> = {
   livewhale: livewhale.fetchEvents,
   communico: communico.fetchEvents,
   'surrey-drupal': surrey.fetchEvents,
+  'nvcl-drupal': nvcl.fetchEvents,
 };
 
 /**
