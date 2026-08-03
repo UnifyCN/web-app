@@ -239,7 +239,15 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
     return [];
   }
 
-  const candidates: Candidate[] = [];
+  // Deduped as the walk goes, not afterwards, because the early-stop counts against it.
+  // Every page repeats the same five featured rows above its paginated section, so a raw
+  // running total counts those once per page: with the relevance filter on — the shipped
+  // configuration — a source whose only relevant rows are featured ones would reach
+  // MAX_PER_ORG in raw count while holding a handful of distinct events, stop, and return
+  // that handful while in-window listings remained unread. Counting distinct links makes
+  // the stop condition mean what it says.
+  const byLink = new Map<string, Candidate>();
+  let seenCandidates = 0;
   let pagesWalked = 0;
   let stoppedEarly = false;
   let exhausted = false;
@@ -275,11 +283,17 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
             `extracted no title from any of them — the row markup has probably changed`,
         );
       }
-      candidates.push(...parsed.candidates);
+      for (const c of parsed.candidates) {
+        seenCandidates++;
+        // First occurrence wins: the featured copy and the chronological copy of the same
+        // event carry the same date, so either is correct and keeping the earlier one is
+        // stable across runs.
+        if (!byLink.has(c.link)) byLink.set(c.link, c);
+      }
       if (parsed.lastStartMs > ctx.windowEndMs) pastWindow = true;
     }
 
-    if (exhausted || pastWindow || candidates.length >= MAX_PER_ORG) {
+    if (exhausted || pastWindow || byLink.size >= MAX_PER_ORG) {
       stoppedEarly = true;
       break;
     }
@@ -288,26 +302,20 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
   if (!stoppedEarly && pagesWalked >= MAX_PAGES) {
     console.warn(
       `events-crawler: ${source.slug} stopped at the ${MAX_PAGES}-page cap with ` +
-        `${candidates.length} candidate(s) — listings beyond it are the furthest out and ` +
+        `${byLink.size} unique candidate(s) — listings beyond it are the furthest out and ` +
         `will be picked up on a later run.`,
     );
   }
 
-  // Dedupe by link. Not defensive: every page repeats the same five featured rows above its
-  // paginated section, so without this a multi-page walk returns them once per page.
-  // Verified safe as an identity — across 45 sampled rows no slug appeared with two
-  // different dates, so the slug identifies the occurrence and matches the
-  // events_external_link_key unique index.
-  const byLink = new Map<string, Candidate>();
-  for (const c of candidates) {
-    if (!byLink.has(c.link)) byLink.set(c.link, c);
-  }
+  // Already deduped by link during the walk (see byLink above). Link is safe as the
+  // identity: across 45 sampled rows no slug appeared with two different dates, so the slug
+  // identifies the occurrence and matches the events_external_link_key unique index.
   const deduped = [...byLink.values()];
   deduped.sort((a, b) => a.startIso.localeCompare(b.startIso));
   const selected = deduped.slice(0, MAX_PER_ORG);
 
   console.log(
-    `events-crawler: ${source.slug} walked ${pagesWalked} page(s), ${candidates.length} ` +
+    `events-crawler: ${source.slug} walked ${pagesWalked} page(s), ${seenCandidates} ` +
       `in-window + relevant (${deduped.length} unique), taking soonest ${selected.length}`,
   );
 
