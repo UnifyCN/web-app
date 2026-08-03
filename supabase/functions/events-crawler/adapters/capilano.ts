@@ -87,6 +87,8 @@ interface StructuralMisses {
   title: number;
   /** Title found, but no start date stamp, or an unknown month name. */
   stamp: number;
+  /** Title and stamp found, but no venue text — and events.location is NOT NULL. */
+  venue: number;
 }
 
 interface Candidate {
@@ -136,7 +138,7 @@ async function fetchListing(source: Source): Promise<string | null> {
 function parseListing(html: string, source: Source, ctx: AdapterContext): PageParse {
   const chunks = html.split(BLOCK_MARKER).slice(1);
   const candidates: Candidate[] = [];
-  const misses: StructuralMisses = { title: 0, stamp: 0 };
+  const misses: StructuralMisses = { title: 0, stamp: 0, venue: 0 };
 
   // Year carried forward across the chronological listing — see the header.
   let year = Number(
@@ -189,6 +191,21 @@ function parseListing(html: string, source: Source, ctx: AdapterContext): PagePa
     }
     const startMs = Date.parse(startIso);
 
+    // Venue is read here, BEFORE the filters, even though it is only needed for rows that
+    // survive them. Reading it after would put a structural failure downstream of a
+    // merit-based one: if VENUE_RE stopped matching, every row would drop at a `continue`
+    // that no counter reaches, and the source would go silently to zero. Keeping the whole
+    // extraction chain — title, stamp, venue — ahead of the filters means one comparison
+    // (`structural === blocks`) covers all of it. The cost is a regex on rows about to be
+    // discarded, over roughly ten blocks.
+    const venueMatch = chunk.match(VENUE_RE);
+    const location = clean(venueMatch?.[1]).replace(VENUE_PREFIX_RE, '').trim();
+    if (!location) {
+      // events.location is NOT NULL, so a row without one cannot be stored at all.
+      misses.venue++;
+      continue;
+    }
+
     // Window before relevance, so both filters see every parsed row.
     if (source.relevanceFilter && !isSettlementRelevant(fullTitle)) continue;
     if (startMs < ctx.nowMs || startMs > ctx.windowEndMs) continue;
@@ -215,10 +232,6 @@ function parseListing(html: string, source: Source, ctx: AdapterContext): PagePa
     }
     // Never store an inverted range; the listing gives no signal for a past-midnight end.
     if (endIso && Date.parse(endIso) <= startMs) endIso = null;
-
-    const venueMatch = chunk.match(VENUE_RE);
-    const location = clean(venueMatch?.[1]).replace(VENUE_PREFIX_RE, '').trim();
-    if (!location) continue; // events.location is NOT NULL
 
     const imageMatch = chunk.match(IMAGE_RE);
     const rawImage = imageMatch?.[1];
@@ -251,14 +264,15 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
     );
     return [];
   }
-  // Blocks present but none survived extraction: the marker still matches while the title
-  // anchor or the date stamp moved. A source that returns nothing because its markup shifted
-  // otherwise looks exactly like a university with nothing on.
-  const structural = parsed.misses.title + parsed.misses.stamp;
-  if (structural === parsed.blocks) {
+  // Blocks present but none survived extraction: the marker still matches while something
+  // inside it moved — the title anchor, the date stamp, or the venue. A source that returns
+  // nothing because its markup shifted otherwise looks exactly like a university with
+  // nothing on.
+  const m = parsed.misses;
+  if (m.title + m.stamp + m.venue === parsed.blocks) {
     console.error(
-      `events-crawler: ${source.slug} matched ${parsed.blocks} block(s) but extracted none of ` +
-        `them (title ${parsed.misses.title}, date stamp ${parsed.misses.stamp}) — the row ` +
+      `events-crawler: ${source.slug} matched ${parsed.blocks} block(s) but extracted none ` +
+        `of them (title ${m.title}, date stamp ${m.stamp}, venue ${m.venue}) — the row ` +
         `markup has probably changed`,
     );
   }
