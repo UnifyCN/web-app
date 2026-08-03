@@ -161,12 +161,32 @@ interface Candidate {
   endIso: string | null;
 }
 
+/** Per-layer tally of blocks the parse could not read at all. */
+interface StructuralMisses {
+  /** No `/events/` anchor, or an anchor with an empty title. */
+  title: number;
+  /** Anchor found, but no bold when-line paragraph in the block. */
+  when: number;
+  /** When-line found, but it did not parse as a date (format or weekday change). */
+  date: number;
+}
+
 interface PageParse {
   candidates: Candidate[];
   /** Blocks seen, before any filtering — 0 means the listing has run out. */
   blocks: number;
-  /** Blocks whose title link did not match, out of `blocks`. */
-  titleMisses: number;
+  /**
+   * Blocks rejected for STRUCTURAL reasons — the markup or the date format moved — as
+   * opposed to the relevance and window filters, which reject on merit and are expected to
+   * reject most of a library calendar.
+   *
+   * Split by layer because each fails independently and the fix differs: the block marker
+   * can still match while the anchor moves, the anchor can match while the bold-paragraph
+   * when-line is renamed, and both can match while the date string changes shape (dropping
+   * the weekday would defeat the parse on its own). Counting only the first layer would
+   * leave the other two silent, which is the failure mode this whole set exists to prevent.
+   */
+  misses: StructuralMisses;
   /**
    * Start of the LAST block on the page, in document order — the stop signal.
    *
@@ -189,23 +209,32 @@ function parsePage(html: string, source: Source, ctx: AdapterContext): PageParse
   const chunks = html.split(BLOCK_MARKER).slice(1);
   const candidates: Candidate[] = [];
   let lastStartMs = 0;
-  let titleMisses = 0;
+  const misses: StructuralMisses = { title: 0, when: 0, date: 0 };
 
   for (const chunk of chunks) {
     const titleMatch = chunk.match(TITLE_LINK_RE);
     if (!titleMatch) {
-      titleMisses++;
+      misses.title++;
       continue;
     }
     const href = titleMatch[1];
     // Filter on the FULL cleaned title, then truncate for storage.
     const fullTitle = clean(titleMatch[2]);
-    if (!fullTitle) continue;
+    if (!fullTitle) {
+      misses.title++;
+      continue;
+    }
 
     const whenMatch = chunk.match(WHEN_RE);
-    if (!whenMatch) continue;
+    if (!whenMatch) {
+      misses.when++;
+      continue;
+    }
     const parsed = parseWhen(clean(whenMatch[1]), ORG_TIMEZONE, ctx.nowMs);
-    if (!parsed) continue;
+    if (!parsed) {
+      misses.date++;
+      continue;
+    }
 
     const startMs = Date.parse(parsed.startIso);
     lastStartMs = startMs;
@@ -223,7 +252,7 @@ function parsePage(html: string, source: Source, ctx: AdapterContext): PageParse
     });
   }
 
-  return { candidates, blocks: chunks.length, titleMisses, lastStartMs };
+  return { candidates, blocks: chunks.length, misses, lastStartMs };
 }
 
 export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<EventRow[]> {
@@ -275,12 +304,20 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
         exhausted = true;
         continue;
       }
-      // Blocks present but every title missed: the marker still matches while the anchor
-      // markup moved. Same failure mode one layer down, and just as silent without this.
-      if (pagesWalked === 1 && parsed.titleMisses === parsed.blocks) {
+      // Blocks present, but not one of them survived extraction. The marker still matches
+      // while something inside it moved — the anchor, the when-line, or the date format.
+      // Checked across all three layers rather than the title alone: each fails
+      // independently, and a source that returns zero rows because its date strings changed
+      // shape looks exactly like a library with nothing on. The relevance and window filters
+      // are deliberately NOT counted here — they reject on merit, and rejecting most of a
+      // library calendar is their job, so folding them in would make this fire constantly.
+      const structural = parsed.misses.title + parsed.misses.when + parsed.misses.date;
+      if (pagesWalked === 1 && structural === parsed.blocks) {
         console.error(
           `events-crawler: ${source.slug} matched ${parsed.blocks} block(s) on page 0 but ` +
-            `extracted no title from any of them — the row markup has probably changed`,
+            `extracted none of them (title ${parsed.misses.title}, when-line ` +
+            `${parsed.misses.when}, date ${parsed.misses.date}) — the row markup or the ` +
+            `date format has probably changed`,
         );
       }
       for (const c of parsed.candidates) {
