@@ -26,6 +26,14 @@ export function decodeEntities(input: string): string {
     .replace(/&#x0*27;/gi, "'")
     .replace(/&#0*160;/g, ' ')
     .replace(/&nbsp;/g, ' ')
+    // Named forms of the punctuation already handled numerically below. Capilano publishes
+    // "Last Day of Classes for Summer 2026 &ndash; Session II", which without these lands in
+    // a title verbatim; the numeric branches never see it because it isn't numeric.
+    .replace(/&ndash;/g, '–')
+    .replace(/&mdash;/g, '—')
+    .replace(/&lsquo;|&rsquo;/g, "'")
+    .replace(/&ldquo;|&rdquo;/g, '"')
+    .replace(/&hellip;/g, '…')
     .replace(/&#8211;/g, '–')
     .replace(/&#8212;/g, '—')
     .replace(/&#8216;|&#8217;/g, "'")
