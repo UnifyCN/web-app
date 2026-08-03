@@ -5,6 +5,7 @@
 // here. Keeping one definition means the preview and a real run cannot drift.
 
 import * as bibliocommons from '../adapters/bibliocommons.ts';
+import * as capilano from '../adapters/capilano.ts';
 import * as communico from '../adapters/communico.ts';
 import * as livewhale from '../adapters/livewhale.ts';
 import * as nvcl from '../adapters/nvcl.ts';
@@ -128,6 +129,19 @@ export const SOURCES: Source[] = [
     // The listing's venue slot is present but empty on every row — see adapters/nvcl.ts.
     defaultLocation: 'North Vancouver City Library',
   },
+  {
+    // Capped at ~10 items by robots.txt, which disallows the `?…search=…` URLs every
+    // calendar-navigation link uses — so a low count here is the ceiling, not a failure.
+    // Its calendar is largely academic administrivia (fee deadlines, closures), so expect
+    // roughly one on-mission event: measured 1 of 10 on 2026-08-02, the Fall New
+    // International Student Orientation. See adapters/capilano.ts.
+    slug: 'capilano',
+    name: 'Capilano University',
+    kind: 'capilano',
+    host: 'www.capilanou.ca',
+    enabled: false,
+    relevanceFilter: true,
+  },
 ];
 
 /**
@@ -145,6 +159,7 @@ export const ADAPTERS: Record<SourceKind, Adapter> = {
   communico: communico.fetchEvents,
   'surrey-drupal': surrey.fetchEvents,
   'nvcl-drupal': nvcl.fetchEvents,
+  capilano: capilano.fetchEvents,
 };
 
 /**

@@ -11,7 +11,8 @@ export type SourceKind =
   | 'livewhale'
   | 'communico'
   | 'surrey-drupal'
-  | 'nvcl-drupal';
+  | 'nvcl-drupal'
+  | 'capilano';
 
 export interface Source {
   /** Stored into `events.source` as `crawler:<slug>`. */
