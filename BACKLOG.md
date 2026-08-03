@@ -480,6 +480,27 @@ at the title / `startIso` / `location` guards) from **intentional** relevance + 
 filtering, rather than one regex per review round. No production exposure while the source is
 `enabled: false` — best done in the same pass that enables it.
 
+**events-crawler — United Way BC is not crawlable; dropped from scope**
+Deferred in the 2026-07-29 round on the belief its listing lacked dates and would need a fetch
+per event. Re-checked 2026-08-02 and the reality is **worse than that**: there is no event date
+anywhere server-side, so a second fetch would not help either. Same disposition as Burnaby
+Public Library in #84 — a documented dead end rather than an open task. Evidence, so nobody
+re-scopes it:
+- WordPress, with an `event` post type exposed at `/wp-json/wp/v2/event` (19 events, 7 pages).
+  It carries **no event-date field**: `acf` is `[]`, and the only dates are `date` / `date_gmt` /
+  `modified`, i.e. WordPress *post* timestamps.
+- The detail page is no better — 100 KB of HTML with no date, no time, no `Date`/`When` label.
+  Its only JSON-LD is Yoast `WebPage` schema (`datePublished` / `dateModified`), not `Event`.
+- A **browser User-Agent returns byte-identical HTML**, so this is genuine client-side
+  rendering, not UA gating. Only a headless browser would recover the dates, which this crawler
+  deliberately does not do (see `dryrun.ts`'s header on why the fetch path stays simple).
+- `uwbc.ca/robots.txt` allows `User-agent: *` but explicitly disallows `ClaudeBot`, `GPTBot`,
+  `anthropic-ai`, `Google-Extended` and `CCBot`. `UnifyEventsBot/1.0` is not covered by those
+  rules, but the opt-out signals intent — an independent reason not to pursue it.
+
+Revisit only if United Way BC publishes a real feed (ICS/RSS/JSON) or server-renders its dates.
+Both are cheap to re-test: `curl https://uwbc.ca/wp-json/wp/v2/event` and check for a date field.
+
 **events-crawler — `relevance.ts` misses digital-skills-for-employment content (evidence only)**
 Recording observations for a future relevance-filter pass. **Not scoped and not proposed** — the
 filter is shared by all 10 live sources, so any change needs its own PR and a full regression
@@ -493,6 +514,14 @@ misses adjacent content that is plainly on-mission:
   sessions of exactly the kind newcomers are pointed at.
 - **NVDPL:** `Open Door Community Hub Drop-In` — already documented as a known drop in
   `lib/relevance.ts`'s own header, and NVCL runs an identically-named program.
+- **Capilano (PR #94), marginal — recorded as a weak case, not evidence:**
+  `Fall 2026 Term Commences / New Student Orientation`. Arguably useful to an arriving
+  international student, but `relevance.ts` deliberately avoids a bare `orientation` term (its
+  header notes it would catch West Van's "Recording Studio Orientation"), and this title gives
+  nothing else to match on. Capilano's genuinely relevant item — `Fall 2026 New International
+  Student Orientation` — **is** caught, via `international student`. So the filter is working
+  here; this is listed only so the eventual pass sees the borderline shape, not as a second
+  example of the MS Office problem.
 
 Scale of the effect, measured on NVCL's live feed 2026-08-02: its whole 4-month window is 27
 distinct titles, the filter matches **none**, and the source therefore yields **0 rows** with
