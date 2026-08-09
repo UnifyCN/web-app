@@ -463,22 +463,40 @@ Deferred from Phase 5. Mobile has sendGroupRequestEmail.ts that POSTs to an edge
 **Group member avatar real list**
 Deferred from Phase 5. Group.memberAvatars is a UI-only convenience seeded from picsum (per group id). The database has no per-row member-avatar surface; mobile uses a separate signed-URL flow against S3. Replace with real member avatars when group detail pages need them.
 
-**events-crawler (Surrey) — generalize the parse-failure diagnostic beyond `BLOCK_MARKER`**
-Deferred from PR #86 (CodeRabbit, 🔵 Trivial). `adapters/surrey.ts` is the only HTML-scraping
-adapter, so a Drupal theme rename is its expected failure mode. `533d79e` closed the worst
-case: `BLOCK_MARKER` no longer matching sets `blocks === 0` → `exhausted` → the walk breaks and
-`stoppedEarly` suppresses the cap warning, so the source returned zero rows behind an
-info-level log identical to a genuinely empty calendar. Page 0 now logs an error instead.
-**Still open:** the regexes *downstream* of that marker fail the same way. If `TITLE_LINK_RE`
-(and equally `TIME_RE` or `LOCATION_RE`) stops matching, every chunk is skipped, `candidates`
-stays empty while `blocks` stays non-zero — so `exhausted` never trips, `maxStartMs` stays `0`
-so `pastWindow` never trips, and the walk burns all `MAX_PAGES` (20 requests) before exiting.
-Verified this case is *misattributed* rather than silent: `stoppedEarly === false` means the
-cap warning does fire, but it reads as "listings beyond the cap" rather than "the markup
-moved". Durable fix is one counter separating **structural** extraction misses (the `continue`s
-at the title / `startIso` / `location` guards) from **intentional** relevance + window
-filtering, rather than one regex per review round. No production exposure while the source is
-`enabled: false` — best done in the same pass that enables it.
+**events-crawler — parse-failure diagnostics: HTML scrapers done, feed parsers still open**
+The Surrey follow-up deferred from PR #86 is **closed**. `adapters/surrey.ts` now carries
+per-layer `StructuralMisses` (`title` / `time` / `location`) and a page-0 diagnostic that fires
+when `title + time + location === blocks`, naming each layer and its count. That completes the
+pattern across all three `BLOCK_MARKER` adapters — `nvcl.ts` (`ada14d1`), `capilano.ts`
+(`1f62068`), `surrey.ts`.
+
+Surrey needed one change the other two did not. Its address extraction sat **after** the
+relevance and window filters, so `structural === blocks` could never reach equality to detect a
+`LOCATION_RE` failure — relevance had already rejected ~80% of the page on merit. The fix was to
+move the extraction ahead of the filters, the same call `capilano.ts` made for its venue, so the
+whole chain (title → time → location) precedes merit-based rejection and one comparison covers
+it. No output change: a block failing location was dropped either way, and `maxStartMs` is still
+updated before location, so walk-stop behaviour is untouched.
+
+Verified empirically against the live feed by breaking each regex in turn:
+
+| broken | diagnostic |
+|---|---|
+| `TITLE_LINK_RE` | `matched 10 block(s) on page 0 but extracted none of them (title 10, time 0, location 0)` |
+| `TIME_RE` | `… (title 0, time 10, location 0)` |
+| `LOCATION_RE` | `… (title 0, time 0, location 10)` |
+
+And the exclusion property, which is the assertion that actually earns its keep: with
+`isSettlementRelevant` temporarily forced to reject everything, the source returns 0 rows and
+logs **zero** structural errors — so a legitimately filtered-empty result stays distinguishable
+from a markup change. Happy path unchanged at 12 pages / 27 in-window + relevant / 25 taken.
+
+**Still open, lower priority:** `bibliocommons.ts` (6 untracked `continue`s) and `communico.ts`
+(4, with partial `unparsedDates` tracking) have the same shape but a weaker case — they parse a
+JSON gateway and an RSS feed, where the failure mode is a field rename rather than a theme
+update, and a renamed field usually breaks parsing loudly rather than quietly. `livewhale.ts`
+and `tribe.ts` have no skip-`continue`s at all. Worth doing if either source ever returns an
+unexplained zero.
 
 **events-crawler — United Way BC is not crawlable; dropped from scope**
 Deferred in the 2026-07-29 round on the belief its listing lacked dates and would need a fetch
