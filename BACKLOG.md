@@ -501,39 +501,41 @@ re-scopes it:
 Revisit only if United Way BC publishes a real feed (ICS/RSS/JSON) or server-renders its dates.
 Both are cheap to re-test: `curl https://uwbc.ca/wp-json/wp/v2/event` and check for a date field.
 
-**events-crawler — `relevance.ts` misses digital-skills-for-employment content (evidence only)**
-Recording observations for a future relevance-filter pass. **Not scoped and not proposed** — the
-filter is shared by all 10 live sources, so any change needs its own PR and a full regression
-dry-run across every source, not a fix bolted onto an adapter PR.
+**events-crawler — `relevance.ts` near-misses still open after the 2026-08-08 pass**
+The digital-skills gap recorded here is **closed**: `dryrun.ts` gained `--no-filter --titles`,
+and the filter gained qualified office-suite terms, `tech(nology)? (cafe|help|support)`,
+`laptop help`, and `open door (community|drop)`. Measured over all 845 rows / 395 distinct
+titles of the seven filtered sources' 4-month windows, 9 distinct titles (56 rows) flipped
+DROP → KEEP and nothing else moved. `lib/relevance_test.ts` now locks in the trap set.
 
-The digital-literacy group currently matches `digital literacy`, `computer (basics|skills|help)`,
-`tech (cafe|help|support)`, `device clinic`, `online safety`, `internet basics`. That vocabulary
-misses adjacent content that is plainly on-mission:
-- **NVCL (PR #92):** `MS Office learn and practice: Intro to Excel` and `… Intro to Word` — named
-  by product, not by the category words the filter knows. Both are digital-skills-for-employment
-  sessions of exactly the kind newcomers are pointed at.
-- **NVDPL:** `Open Door Community Hub Drop-In` — already documented as a known drop in
-  `lib/relevance.ts`'s own header, and NVCL runs an identically-named program.
-- **Capilano (PR #94), marginal — recorded as a weak case, not evidence:**
-  `Fall 2026 Term Commences / New Student Orientation`. Arguably useful to an arriving
-  international student, but `relevance.ts` deliberately avoids a bare `orientation` term (its
-  header notes it would catch West Van's "Recording Studio Orientation"), and this title gives
-  nothing else to match on. Capilano's genuinely relevant item — `Fall 2026 New International
-  Student Orientation` — **is** caught, via `international student`. So the filter is working
-  here; this is listed only so the eventual pass sees the borderline shape, not as a second
-  example of the MS Office problem.
+**Correction to the NVCL measurement this entry used to carry.** It claimed NVCL's whole
+4-month window was 27 distinct titles matching **none** of the filter, for 0 rows. Re-measured
+2026-08-08 with the walk untruncated: the window is **61 distinct titles**, and the filter
+already kept **10** of them before this pass (an `English Corner` series, via `english corner`).
+The old figure was taken with `MAX_PER_ORG` at 25, which stops the unfiltered walk after about
+two pages — so it only ever saw August's storytimes, not September's settlement programming.
+Anyone re-measuring a source's whole window must raise the cap locally first.
 
-Scale of the effect, measured on NVCL's live feed 2026-08-02: its whole 4-month window is 27
-distinct titles, the filter matches **none**, and the source therefore yields **0 rows** with
-`relevanceFilter: true` versus 25 with it off. Most of those 27 (storytimes, teen gaming,
-knitting, Book Bike) are correctly excluded — the point is that the two MS Office sessions are
-not.
+Still open, recorded as evidence rather than scoped work:
+- **`Protect Yourself Online: 2FA Made Simple` / `… Your Digital Footprint` (SFU, 3 rows).**
+  Substantively the `online safety` term's own category, but titled as a program name with no
+  generalizable vocabulary to match on. Three rows did not clear the bar that `open door`
+  cleared at 29 rows across two libraries. Revisit if another source runs a similar series.
+- **`Connect with Confidence: iPhones and iPads` (2 rows), `Introduction to iPad` (1).** Device
+  classes, adjacent to the `device clinic` / `laptop help` family, but library-catalogue and
+  seniors framing rather than newcomer framing. Judgement call, deliberately left out.
+- **Capilano, marginal — a weak case, not evidence.** `Fall 2026 Term Commences / New Student
+  Orientation`. `relevance.ts` deliberately avoids a bare `orientation` (it would catch West
+  Van's "Recording Studio Orientation"), and this title gives nothing else to match on.
+  Capilano's genuinely relevant item — `Fall 2026 New International Student Orientation` — **is**
+  caught, via `international student`. The filter is working here.
 
 Cautions for whoever picks this up: `relevance.ts` matches **titles only**, deliberately — its
 header records that matching descriptions was measured and rejected because library blurbs close
-with "newcomer families welcome" and pull in every storytime. And a naive term like `\bword\b`
-would catch "Crossword" and "Wordplay". Add terms narrowly, and re-run every source's dry-run to
-see what else they let in.
+with "newcomer families welcome" and pull in every storytime. Bare office words are traps: the
+live feeds contain "Excel in Your Studies", "Crossword Club", "Wordplay for Toddlers" and
+"PowerPoint Karaoke Night". Add terms narrowly, add each one's target **and** its near-misses to
+`lib/relevance_test.ts`, and re-capture every source with `--no-filter --titles` to see the flips.
 
 **Client-only tab state elsewhere — same back-navigation bug Community just fixed**
 Found while fixing Community (this PR): tab state held in `useState` never reaches the URL,
