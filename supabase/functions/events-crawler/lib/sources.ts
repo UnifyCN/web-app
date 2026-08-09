@@ -112,10 +112,13 @@ export const SOURCES: Source[] = [
     relevanceFilter: true,
   },
 
-  // --- Phase 3, staged and NOT crawled until `enabled` flips (see Source.enabled) ---
+  // --- Phase 3, enabled in this registry 2026-08-09 on Savar's sign-off ---
   // Deferred from the 2026-07-29 round on the belief that their listings carried no dates
   // and would need a per-event fetch. Re-checked 2026-08-02: not so — the date is in the
   // listing, so no N+1. See each adapter's header for what the re-check actually found.
+  //
+  // Same caveat as Phase 2 above: enabled here is not the same as live. ACTIVE_SOURCES only
+  // widens for a run once this function is *deployed*.
   {
     // NVCL, not NVDPL: different library system, different feed. Its BiblioCommons tenant
     // is correctly named but answers 403 "The Events feature is not available", the same
@@ -124,7 +127,7 @@ export const SOURCES: Source[] = [
     name: 'North Vancouver City Library',
     kind: 'nvcl-drupal',
     host: 'www.nvcl.ca',
-    enabled: false,
+    enabled: true,
     relevanceFilter: true,
     // The listing's venue slot is present but empty on every row — see adapters/nvcl.ts.
     defaultLocation: 'North Vancouver City Library',
@@ -133,13 +136,13 @@ export const SOURCES: Source[] = [
     // Capped at ~10 items by robots.txt, which disallows the `?…search=…` URLs every
     // calendar-navigation link uses — so a low count here is the ceiling, not a failure.
     // Its calendar is largely academic administrivia (fee deadlines, closures), so expect
-    // roughly one on-mission event: measured 1 of 10 on 2026-08-02, the Fall New
+    // roughly one on-mission event: measured 1 of 10 on 2026-08-09, the Fall 2026 New
     // International Student Orientation. See adapters/capilano.ts.
     slug: 'capilano',
     name: 'Capilano University',
     kind: 'capilano',
     host: 'www.capilanou.ca',
-    enabled: false,
+    enabled: true,
     relevanceFilter: true,
   },
 ];
