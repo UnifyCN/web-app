@@ -47,6 +47,16 @@ const PAGE_CONCURRENCY = 4;
  */
 const MAX_PAGES = 20;
 
+/** Per-layer tally of blocks the parse could not read at all. */
+interface StructuralMisses {
+  /** No title anchor, or an anchor with an empty <h3>. */
+  title: number;
+  /** Title found, but no <time datetime> attribute, or one that would not parse. */
+  time: number;
+  /** Title and time found, but no address text — and events.location is NOT NULL. */
+  location: number;
+}
+
 interface Candidate {
   title: string;
   link: string;
@@ -81,6 +91,18 @@ interface PageParse {
   candidates: Candidate[];
   /** Blocks seen, before any filtering — 0 means the listing has run out. */
   blocks: number;
+  /**
+   * Blocks rejected for STRUCTURAL reasons — the markup moved — as opposed to the relevance
+   * and window filters, which reject on merit and are expected to reject most of a library
+   * calendar. Folding those in would make the page-level diagnostic fire on every healthy run.
+   *
+   * Split by layer because each fails independently and the fix differs: the block marker can
+   * still match while the title anchor moves, the anchor can match while the <time> element is
+   * renamed, and both can match while the address field's wrapper class changes. Counting only
+   * the first layer would leave the other two silent, which is the failure mode this exists to
+   * prevent.
+   */
+  misses: StructuralMisses;
   /** Latest start on the page, to decide whether the window has been walked past. */
   maxStartMs: number;
 }
@@ -88,31 +110,53 @@ interface PageParse {
 function parsePage(html: string, source: Source, ctx: AdapterContext): PageParse {
   const chunks = html.split(BLOCK_MARKER).slice(1);
   const candidates: Candidate[] = [];
+  const misses: StructuralMisses = { title: 0, time: 0, location: 0 };
   let maxStartMs = 0;
 
   for (const chunk of chunks) {
     const titleMatch = chunk.match(TITLE_LINK_RE);
-    if (!titleMatch) continue;
+    if (!titleMatch) {
+      misses.title++;
+      continue;
+    }
     const href = titleMatch[1];
     // Filter on the FULL cleaned title, then truncate for storage.
     const fullTitle = clean(titleMatch[2]);
-    if (!fullTitle) continue;
+    if (!fullTitle) {
+      misses.title++;
+      continue;
+    }
 
     TIME_RE.lastIndex = 0;
     const times = [...chunk.matchAll(TIME_RE)].map((m) => m[1]);
     const startIso = offsetIsoToUtc(times[0]);
-    if (!startIso) continue;
+    if (!startIso) {
+      misses.time++;
+      continue;
+    }
     const startMs = Date.parse(startIso);
     if (startMs > maxStartMs) maxStartMs = startMs;
+
+    // Address is read here, BEFORE the filters, even though it is only needed for rows that
+    // survive them. Reading it after would put a structural failure downstream of a
+    // merit-based one: if LOCATION_RE stopped matching, the blocks that cleared relevance
+    // would drop at a `continue` no counter reaches, and because relevance already rejected
+    // most of the page on merit, `structural === blocks` could never reach equality to
+    // detect it. Keeping the whole extraction chain — title, time, location — ahead of the
+    // filters means one comparison covers all of it. Same call adapters/capilano.ts made for
+    // its venue. The cost is a regex on rows about to be discarded, over ten blocks a page.
+    const locationMatch = chunk.match(LOCATION_RE);
+    const location = clean(locationMatch?.[1]);
+    if (!location) {
+      // events.location is NOT NULL, so a row without one cannot be stored at all.
+      misses.location++;
+      continue;
+    }
 
     // Track the window before relevance, so the walk can stop on dates even when a page
     // happens to contain nothing relevant.
     if (source.relevanceFilter && !isSettlementRelevant(fullTitle)) continue;
     if (startMs < ctx.nowMs || startMs > ctx.windowEndMs) continue;
-
-    const locationMatch = chunk.match(LOCATION_RE);
-    const location = clean(locationMatch?.[1]);
-    if (!location) continue; // events.location is NOT NULL
 
     let endIso = offsetIsoToUtc(times[1]);
     if (endIso && Date.parse(endIso) <= startMs) endIso = null;
@@ -126,7 +170,7 @@ function parsePage(html: string, source: Source, ctx: AdapterContext): PageParse
     });
   }
 
-  return { candidates, blocks: chunks.length, maxStartMs };
+  return { candidates, blocks: chunks.length, misses, maxStartMs };
 }
 
 export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<EventRow[]> {
@@ -160,6 +204,22 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
         }
         exhausted = true;
         continue;
+      }
+      // Blocks present, but not one of them survived extraction. The marker still matches
+      // while something inside it moved — the title anchor, the <time> element, or the
+      // address field. Checked across all three layers rather than the title alone: each
+      // fails independently, and a source returning zero because its <time> markup changed
+      // looks exactly like a library with nothing on. Without this the walk burns all
+      // MAX_PAGES and exits through the cap warning below, which reads "listings beyond the
+      // cap" when the truth is "the markup moved" — misattributed rather than silent, but
+      // just as useless. The relevance and window filters are deliberately NOT counted here.
+      const m = parsed.misses;
+      if (pagesWalked === 1 && m.title + m.time + m.location === parsed.blocks) {
+        console.error(
+          `events-crawler: ${source.slug} matched ${parsed.blocks} block(s) on page 0 but ` +
+            `extracted none of them (title ${m.title}, time ${m.time}, location ` +
+            `${m.location}) — the row markup has probably changed`,
+        );
       }
       candidates.push(...parsed.candidates);
       if (parsed.maxStartMs > ctx.windowEndMs) pastWindow = true;
