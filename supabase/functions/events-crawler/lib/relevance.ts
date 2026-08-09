@@ -18,6 +18,14 @@
 //
 // Measured keep-rates on the live feeds when this landed (2026-07-31):
 //   West Van 8/50 · VPL 6/100 · SFU 5/200 · NVDPL 16/100 · Surrey 2/10 (page 1)
+//
+// Re-measured 2026-08-08 over each source's WHOLE 4-month window, before → after the
+// office-suite / technology-help / Open Door terms below (`dryrun.ts --no-filter
+// --titles`, with MAX_PER_ORG raised locally so the walk isn't truncated):
+//   West Van 6/50 → 6 · VPL 22/200 → 22 · SFU 3/111 → 3 · NVDPL 11/82 → 20
+//   Surrey 31/192 → 46 · NVCL 10/200 → 42 · Capilano 1/10 → 1
+// Across all 395 distinct titles, 9 flipped DROP → KEEP and nothing else moved — a term
+// added here is a union alternative, so it can only add keeps, never drop an existing one.
 
 /**
  * Accents are stripped before matching (NFD, then drop combining marks), so a single
@@ -54,8 +62,25 @@ const RELEVANCE_RE = new RegExp(
     // Housing
     'housing|tenant|tenancy|rental|renting|landlord|lease\\b',
     // Digital literacy
-    'digital\\s+literacy|computer\\s+(basics|skills|help)|tech\\s+(cafe|help|support)',
-    'device\\s+clinic|online\\s+safety|internet\\s+basics',
+    'digital\\s+literacy|computer\\s+(basics|skills|help)|tech(nology)?\\s+(cafe|help|support)',
+    'device\\s+clinic|laptop\\s+help|online\\s+safety|internet\\s+basics',
+    // Digital literacy — office suite. Libraries title these by product, not by the
+    // category words above, so the group missed them entirely: NVCL's "MS Office learn
+    // and practice: Intro to Word" and Surrey's office sessions are settlement-adjacent
+    // employment content by any reading. Every office word is QUALIFIED — behind `ms`,
+    // `microsoft`, or `intro to` — because the bare forms are traps: `\bexcel\b` catches
+    // "Excel in Your Studies", `\bword\b` catches "Crossword Club" and "Wordplay for
+    // Toddlers", and `\bpowerpoint\b` catches "PowerPoint Karaoke Night". All four are
+    // real titles from the live feeds. See lib/relevance_test.ts.
+    '\\bms\\s+(office|word|excel|powerpoint|outlook)\\b',
+    'microsoft\\s+(office|word|excel|powerpoint|outlook|365)\\b',
+    'intro(duction)?\\s+to\\s+(excel|word|powerpoint|outlook)\\b|\\bspreadsheet',
+    // Named settlement programs. Kept to programs run under the same name by more than
+    // one source, so this doesn't become a list of one-off event names: the Open Door
+    // community hub is NVCL's and NVDPL's shared newcomer drop-in, 29 occurrences across
+    // the two 4-month windows, and was the single largest miss in the corpus. Qualified
+    // so it cannot catch "Open Door Poetry Reading" or "Open Doors Heritage Tour".
+    'open\\s+door\\s+(community|drop)',
     // Health-system navigation
     'health\\s+card|family\\s+doctor|\\bmsp\\b|medical\\s+insurance',
   ].join('|'),

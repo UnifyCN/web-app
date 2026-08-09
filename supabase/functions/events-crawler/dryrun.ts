@@ -13,6 +13,8 @@
 //   deno run --allow-net --allow-env=PEXELS_API_KEY \
 //     supabase/functions/events-crawler/dryrun.ts --source vpl
 //   …--source vpl --json     # full rows as JSON
+//   …--source vpl --titles   # one KEEP/DROP line per row, no detail
+//   …--source vpl --no-filter --titles   # the source's WHOLE calendar, with verdicts
 //   …--list                  # the registry, with enabled / filtered flags
 //
 // The env grant is scoped to PEXELS_API_KEY because the tier-2 cover lookup reads it.
@@ -22,8 +24,20 @@
 //
 // Disabled sources can be previewed here — that is what makes it possible to review a
 // staged source before anyone flips `enabled`.
+//
+// WHY --no-filter EXISTS. lib/relevance.ts is shared by every filtered source, so a term
+// added for one library changes what all of them ingest. A normal dry run cannot measure
+// that: it shows only the titles that already PASSED, while the whole question is which
+// currently-rejected titles a new term would let in. --no-filter runs the adapter against
+// a copy of the Source with relevanceFilter off, so the output is the source's entire
+// calendar; --titles then prints each one with the verdict the real filter gives it. Diff
+// that before and after a relevance change and every flip is visible.
+//
+// It stays write-free: the override is a local object spread, the registry itself is not
+// mutated, and there is still no Supabase import anywhere in this file.
 
 import { ADAPTERS, makeContext, SOURCES } from './lib/sources.ts';
+import { isSettlementRelevant } from './lib/relevance.ts';
 import type { EventRow } from './lib/types.ts';
 
 function arg(name: string): string | undefined {
@@ -45,6 +59,18 @@ function printRow(row: EventRow, i: number): void {
   console.log(`    desc     ${desc.slice(0, 100)}${desc.length > 100 ? '…' : ''}`);
 }
 
+/**
+ * One line per row: the verdict lib/relevance.ts gives the title, then the date and title.
+ *
+ * `filtered` is the source's REGISTRY setting, not the setting this run used. A settlement
+ * agency is never relevance-filtered, so printing KEEP/DROP beside its events would invite
+ * exactly the wrong conclusion — those rows are ingested either way. Hence `n/a`.
+ */
+function printTitle(row: EventRow, filtered: boolean): void {
+  const verdict = !filtered ? 'n/a ' : isSettlementRelevant(row.title) ? 'KEEP' : 'DROP';
+  console.log(`${verdict}  ${row.event_datetime.slice(0, 10)}  ${row.title}`);
+}
+
 if (Deno.args.includes('--list')) {
   console.log('Sources:');
   for (const s of SOURCES) {
@@ -58,29 +84,39 @@ if (Deno.args.includes('--list')) {
 
 const slug = arg('source');
 if (!slug) {
-  console.error('Usage: dryrun.ts --source <slug> [--json] | --list');
+  console.error('Usage: dryrun.ts --source <slug> [--json|--titles] [--no-filter] | --list');
   Deno.exit(1);
 }
 
-const source = SOURCES.find((s) => s.slug === slug);
-if (!source) {
+const registered = SOURCES.find((s) => s.slug === slug);
+if (!registered) {
   console.error(`Unknown source '${slug}'. Run with --list to see the registry.`);
   Deno.exit(1);
 }
+
+// Copy rather than mutate: SOURCES is the shared registry every other import sees.
+const noFilter = Deno.args.includes('--no-filter');
+const source = noFilter ? { ...registered, relevanceFilter: false } : registered;
 
 const ctx = makeContext();
 
 console.log(
   `DRY RUN — ${source.slug} (${source.kind}), window ${ctx.today} → ${ctx.windowEnd}, ` +
-    `${source.enabled ? 'enabled' : 'DISABLED in production'}. No writes.\n`,
+    `${registered.enabled ? 'enabled' : 'DISABLED in production'}` +
+    `${noFilter ? ', RELEVANCE FILTER OFF for this run' : ''}. No writes.\n`,
 );
 
 const rows = await ADAPTERS[source.kind](source, ctx);
 
 if (Deno.args.includes('--json')) {
   console.log(JSON.stringify(rows, null, 2));
+} else if (Deno.args.includes('--titles')) {
+  rows.forEach((row) => printTitle(row, Boolean(registered.relevanceFilter)));
 } else {
   rows.forEach(printRow);
 }
 
-console.log(`\n${rows.length} row(s) would be inserted. Nothing was written.`);
+// With --no-filter the count is what the source PUBLISHES, not what the crawler would take:
+// production still applies the filter. Say so, so a capture can't be misread as a forecast.
+const verb = noFilter ? 'row(s) in the source calendar (filter off)' : 'row(s) would be inserted';
+console.log(`\n${rows.length} ${verb}. Nothing was written.`);
