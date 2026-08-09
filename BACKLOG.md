@@ -555,6 +555,37 @@ live feeds contain "Excel in Your Studies", "Crossword Club", "Wordplay for Todd
 "PowerPoint Karaoke Night". Add terms narrowly, add each one's target **and** its near-misses to
 `lib/relevance_test.ts`, and re-capture every source with `--no-filter --titles` to see the flips.
 
+**events-crawler — `relevance.ts` terms without a left word boundary (latent false positives)**
+Found 2026-08-09 during a manual review of PRs #96/#97, which merged under an explicit
+no-CodeRabbit-review exception (the free-tier review quota was exhausted; CodeRabbit will not
+review a merged PR — `@coderabbitai review` answers "Already reviewed" on #96 and "Pull request is
+closed" on #97, so a retroactive review of those diffs is not obtainable). This is the finding
+that manual pass produced. It is the **opposite failure direction** to the near-misses above:
+those are terms the filter wrongly *drops*, these are titles it wrongly *keeps*.
+
+Same bug class CodeRabbit caught on #96 with `tech` → `\btech` ("Biotech Help"), but in terms that
+predate that PR. A sweep of all 67 terms found **60 lack a leading `\b`**. Most are harmless — no
+English word ends in "newcomer" — but four are substrings of common words:
+
+| term | swallowed by | real-looking title that wrongly passes |
+|---|---|---|
+| `lease\b` | P·**lease** | `Please Note: Library Closed Monday` |
+| `rental` | Pa·**rental** | `Parental Controls: Keeping Kids Safe Online` |
+| `tenant` | Lieu·**tenant** | `Lieutenant Governor Reading Award Ceremony` |
+| `resume` | P·**resume**·d | `Presumed Innocent: Film Screening` |
+
+**Status: latent, zero live incidence.** `please`, `parental`, `lieutenant`, `presum` and
+`resumed` each return **0 matches** across both the 395-title captured corpus (all seven filtered
+sources' full 4-month windows) and all 206 rows currently in `public.events`. Nothing is being
+wrongly ingested today. `Parental …` is the one most likely to fire eventually — it is ordinary
+library programming — so this is worth fixing before it does, not urgent.
+
+Fix is mechanical (`\blease\b`, `\brental`, `\btenant`, `\bresume`) but **adding `\b` NARROWS the
+regex**, so the monotonicity argument that covers term *additions* does not apply — it can drop an
+existing keep. Re-run the corpus comparison the way the `\btech` fix was verified, and add each
+swallow example to `lib/relevance_test.ts` as a DROP fixture. Best folded into whichever PR next
+touches `relevance.ts` (e.g. the near-misses above) rather than done as its own change.
+
 **Client-only tab state elsewhere — same back-navigation bug Community just fixed**
 Found while fixing Community (this PR): tab state held in `useState` never reaches the URL,
 so browser history has nothing to restore and Back from a detail page resets to the first
