@@ -90,6 +90,11 @@ const DROP: Record<string, string[]> = {
     'Tech Club',
     'SFU Burnaby Science Alive High School Camps: A Byte of Tech',
     'Repair Café',
+    // `tech` inside a longer word — the reason the alternative carries a leading `\b`.
+    // Constructed rather than captured: plausible SFU titles, not yet seen in a feed.
+    'Biotech Help',
+    'Fintech Support',
+    'Edtech Café',
   ],
   'near-misses for open door': [
     'Open Door Poetry Reading',

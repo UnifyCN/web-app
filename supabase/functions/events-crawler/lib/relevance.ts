@@ -62,7 +62,10 @@ const RELEVANCE_RE = new RegExp(
     // Housing
     'housing|tenant|tenancy|rental|renting|landlord|lease\\b',
     // Digital literacy
-    'digital\\s+literacy|computer\\s+(basics|skills|help)|tech(nology)?\\s+(cafe|help|support)',
+    // `\b` before tech: without it the alternative matches the tail of "Biotech Help" or
+    // "Fintech Support", both plausible at SFU. It was already missing on the narrower
+    // `tech` this widened.
+    'digital\\s+literacy|computer\\s+(basics|skills|help)|\\btech(nology)?\\s+(cafe|help|support)',
     'device\\s+clinic|laptop\\s+help|online\\s+safety|internet\\s+basics',
     // Digital literacy — office suite. Libraries title these by product, not by the
     // category words above, so the group missed them entirely: NVCL's "MS Office learn
