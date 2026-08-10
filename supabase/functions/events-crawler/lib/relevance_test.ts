@@ -172,6 +172,10 @@ const STRICT_FLIP: string[] = [
   'Mac laptop help',
   'Windows laptop help',
   'MS Office learn and practice: Intro to Word',
+  // Constructed, not captured. The bare `literacy` core term (kept for Family/Adult
+  // Literacy) would re-admit this under strict without the `(?<!digital\s)` guard — the
+  // default keeps it via the `digital literacy` term. Locks that guard in.
+  'Digital Literacy Basics',
 ];
 
 /** Kept by BOTH filters — settlement content strict must never drop. */
@@ -181,6 +185,9 @@ const STRICT_KEEP: string[] = [
   'English Corner (virtual) — September 2026', // language
   'Circletime success: Welcoming newcomer children at circletime', // newcomer
   'Résumé Clinic with S.U.C.C.E.S.S.', // employment
+  // The `digital`-guard on `literacy` must not cost genuine reading-literacy titles: this
+  // matches bare `literacy` (no "digital" before it), so strict keeps it.
+  'Adult Literacy Program',
 ];
 
 Deno.test('strict mode drops the digital-literacy group the default filter keeps', () => {

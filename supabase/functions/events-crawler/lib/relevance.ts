@@ -73,7 +73,12 @@ const CORE_TERMS = [
   'social\\s+insurance|sin\\s+clinic|legal\\s+clinic|notary',
   // Language
   '\\besl\\b|\\blinc\\b|english\\s+(conversation|class|corner|practice|language)',
-  'conversation\\s+(circle|club|cafe)|language\\s+(exchange|cafe)|speaking\\s+english|literacy',
+  // `literacy` here means reading/language literacy (Family/Adult Literacy). The
+  // `(?<!digital\s)` guard stops it swallowing "Digital Literacy" — which is the digital
+  // group's own term (below), so strict mode must drop it, not re-admit it through this
+  // core term. The default filter still keeps "Digital Literacy" via that group, so this
+  // guard leaves default verdicts unchanged. `financial literacy` is its own finance term.
+  'conversation\\s+(circle|club|cafe)|language\\s+(exchange|cafe)|speaking\\s+english|(?<!digital\\s)literacy',
   // Employment
   'job\\s+(search|fair|club|help)|\\bresume|cover\\s+letter|interview\\s+skills|career',
   'employment|workbc|hiring|credential|foreign[-\\s]trained|workplace',
@@ -117,8 +122,10 @@ const DIGITAL_LITERACY_TERMS = [
 ];
 
 // Default: settlement terms + digital literacy. Strict: settlement terms only. Alternation
-// order does not affect a .test(), so the default union is byte-equivalent to the single
-// array this replaced, apart from the intended `\b` additions above.
+// order does not affect a .test(), so the default union is functionally equivalent to the
+// single array this replaced, apart from the intended `\b` additions above and the
+// `digital`-guard on `literacy` — both leave every default verdict unchanged (re-verified
+// against the captured corpus: zero flips on the non-strict sources).
 const RELEVANCE_RE = new RegExp([...CORE_TERMS, ...DIGITAL_LITERACY_TERMS].join('|'), 'i');
 const STRICT_RELEVANCE_RE = new RegExp(CORE_TERMS.join('|'), 'i');
 
