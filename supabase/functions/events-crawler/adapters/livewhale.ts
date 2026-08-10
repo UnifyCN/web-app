@@ -103,7 +103,7 @@ function toCandidate(
   const startIso = toIsoUtc(ev.date_utc);
   if (!title || !url || !startIso) return null; // NOT NULL columns
 
-  if (source.relevanceFilter && !isSettlementRelevant(fullTitle)) return null;
+  if (source.relevanceFilter && !isSettlementRelevant(fullTitle, { strict: source.strictRelevance })) return null;
 
   const startMs = Date.parse(startIso);
   // The feed only ever looks forward, but bound both edges anyway — an all-day event

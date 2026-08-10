@@ -207,7 +207,7 @@ function parseListing(html: string, source: Source, ctx: AdapterContext): PagePa
     }
 
     // Window before relevance, so both filters see every parsed row.
-    if (source.relevanceFilter && !isSettlementRelevant(fullTitle)) continue;
+    if (source.relevanceFilter && !isSettlementRelevant(fullTitle, { strict: source.strictRelevance })) continue;
     if (startMs < ctx.nowMs || startMs > ctx.windowEndMs) continue;
 
     // End date and end time are independent: a multi-day item has date-stamp2 but often no

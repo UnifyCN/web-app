@@ -129,6 +129,10 @@ export const SOURCES: Source[] = [
     host: 'www.nvcl.ca',
     enabled: true,
     relevanceFilter: true,
+    // Strict: its digital programming is generic device help ("Drop-in technology help",
+    // "Windows/Mac laptop help", "MS Office: Intro to Word"), which Savar's 2026-08-09 review
+    // flagged as too broad for the audience. See lib/relevance.ts.
+    strictRelevance: true,
     // The listing's venue slot is present but empty on every row — see adapters/nvcl.ts.
     defaultLocation: 'North Vancouver City Library',
   },
@@ -144,6 +148,10 @@ export const SOURCES: Source[] = [
     host: 'www.capilanou.ca',
     enabled: true,
     relevanceFilter: true,
+    // Strict, same as NVCL (Savar's 2026-08-09 review). No effect on the current 10-item
+    // window — the one on-mission item, the International Student Orientation, matches a
+    // core settlement term — but guards against future generic tech-help workshops.
+    strictRelevance: true,
   },
 ];
 

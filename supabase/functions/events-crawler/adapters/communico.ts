@@ -140,7 +140,7 @@ export async function fetchEvents(source: Source, ctx: AdapterContext): Promise<
       const title = fullTitle.slice(0, MAX_TITLE_CHARS);
       const link = clean(firstGroup(block, LINK_RE));
       if (!title || !link) continue;
-      if (source.relevanceFilter && !isSettlementRelevant(fullTitle)) continue;
+      if (source.relevanceFilter && !isSettlementRelevant(fullTitle, { strict: source.strictRelevance })) continue;
 
       // Two entity layers: the XML escaping around <description>, then the HTML inside it.
       const descriptionHtml = decodeEntities(firstGroup(block, DESCRIPTION_RE));

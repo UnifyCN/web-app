@@ -241,7 +241,7 @@ function parsePage(html: string, source: Source, ctx: AdapterContext): PageParse
 
     // Track the window before relevance, so the walk can stop on dates even when a page
     // happens to contain nothing relevant.
-    if (source.relevanceFilter && !isSettlementRelevant(fullTitle)) continue;
+    if (source.relevanceFilter && !isSettlementRelevant(fullTitle, { strict: source.strictRelevance })) continue;
     if (startMs < ctx.nowMs || startMs > ctx.windowEndMs) continue;
 
     candidates.push({

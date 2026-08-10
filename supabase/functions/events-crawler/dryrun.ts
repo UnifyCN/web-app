@@ -64,17 +64,22 @@ function printRow(row: EventRow, i: number): void {
  *
  * `filtered` is the source's REGISTRY setting, not the setting this run used. A settlement
  * agency is never relevance-filtered, so printing KEEP/DROP beside its events would invite
- * exactly the wrong conclusion — those rows are ingested either way. Hence `n/a`.
+ * exactly the wrong conclusion — those rows are ingested either way. Hence `n/a`. `strict`
+ * is likewise the registry setting, so the verdict matches what production would give a
+ * strict source (NVCL/Capilano) even under --no-filter.
  */
-function printTitle(row: EventRow, filtered: boolean): void {
-  const verdict = !filtered ? 'n/a ' : isSettlementRelevant(row.title) ? 'KEEP' : 'DROP';
+function printTitle(row: EventRow, filtered: boolean, strict: boolean): void {
+  const verdict = !filtered ? 'n/a ' : isSettlementRelevant(row.title, { strict }) ? 'KEEP' : 'DROP';
   console.log(`${verdict}  ${row.event_datetime.slice(0, 10)}  ${row.title}`);
 }
 
 if (Deno.args.includes('--list')) {
   console.log('Sources:');
   for (const s of SOURCES) {
-    const flags = [s.enabled ? 'enabled' : 'DISABLED', s.relevanceFilter ? 'relevance-filtered' : '']
+    const flags = [
+      s.enabled ? 'enabled' : 'DISABLED',
+      s.relevanceFilter ? (s.strictRelevance ? 'relevance-filtered (strict)' : 'relevance-filtered') : '',
+    ]
       .filter(Boolean)
       .join(', ');
     console.log(`  ${s.slug.padEnd(18)} ${s.kind.padEnd(15)} ${flags}`);
@@ -111,7 +116,7 @@ const rows = await ADAPTERS[source.kind](source, ctx);
 if (Deno.args.includes('--json')) {
   console.log(JSON.stringify(rows, null, 2));
 } else if (Deno.args.includes('--titles')) {
-  rows.forEach((row) => printTitle(row, Boolean(registered.relevanceFilter)));
+  rows.forEach((row) => printTitle(row, Boolean(registered.relevanceFilter), Boolean(registered.strictRelevance)));
 } else {
   rows.forEach(printRow);
 }

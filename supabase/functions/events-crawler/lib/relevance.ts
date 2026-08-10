@@ -16,6 +16,18 @@
 // irrelevant ones is actively harmful. Revisit by adding terms, not by widening to
 // descriptions.
 //
+// TWO STRENGTHS. The default filter (CORE_TERMS + DIGITAL_LITERACY_TERMS) treats generic
+// digital-literacy / tech-help content as on-mission. A STRICT filter (CORE_TERMS only)
+// drops that whole group. It exists because most tech-help programming — "Drop-in
+// technology help", "Windows laptop help", "MS Office: Intro to Word" — teaches skills the
+// app's users already have; it is not settlement-specific the way immigration/legal/
+// language content is. Sources opt into strict via `Source.strictRelevance` (lib/types.ts).
+// Set on NVCL and Capilano after Savar's 2026-08-09 review of the live output flagged their
+// tech-help sessions as too broad — CONFIRMED with him directly, including dropping the
+// MS Office / spreadsheet suite, not an assumption. Kept per-source deliberately: the same
+// `technology help` term is genuine, wanted content at Surrey, so the fix could not be a
+// global revert without regressing a source no one flagged.
+//
 // Measured keep-rates on the live feeds when this landed (2026-07-31):
 //   West Van 8/50 · VPL 6/100 · SFU 5/200 · NVDPL 16/100 · Surrey 2/10 (page 1)
 //
@@ -24,8 +36,9 @@
 // --titles`, with MAX_PER_ORG raised locally so the walk isn't truncated):
 //   West Van 6/50 → 6 · VPL 22/200 → 22 · SFU 3/111 → 3 · NVDPL 11/82 → 20
 //   Surrey 31/192 → 46 · NVCL 10/200 → 42 · Capilano 1/10 → 1
-// Across all 395 distinct titles, 9 flipped DROP → KEEP and nothing else moved — a term
-// added here is a union alternative, so it can only add keeps, never drop an existing one.
+// Adding a default term is a union alternative, so it can only add keeps, never drop an
+// existing one. Adding a `\b` (below) is the opposite — it NARROWS — so those edits are
+// re-verified against the captured corpus, not assumed safe.
 
 /**
  * Accents are stripped before matching (NFD, then drop combining marks), so a single
@@ -40,64 +53,86 @@ function foldAccents(value: string): string {
 }
 
 /**
- * Grouped for reviewability — the groups are purely documentation, the union is what
- * runs. Terms are matched case-insensitively against the accent-folded title.
+ * The settlement-specific terms, always in force. Grouped for reviewability — the groups
+ * are purely documentation, the union is what runs. Terms are matched case-insensitively
+ * against the accent-folded title.
+ *
+ * A leading `\b` on `tenant`, `rental`, `renting`, `lease` and `resume`: each is a
+ * substring of a common unrelated word — Lieu·tenant, Pa·rental, Pa·renting, P·lease,
+ * P·resume·d — so without it the filter wrongly KEEPS "Lieutenant Governor Reading Award",
+ * "Parental Controls", "Parenting Support Circle", "Please Note: Library Closed" and
+ * "Presumed Innocent: Film Screening". Zero live incidence in the captured corpus today,
+ * but latent; see lib/relevance_test.ts for the swallow examples and the real-word keeps
+ * that prove the boundary doesn't cost a genuine hit.
  */
-const RELEVANCE_RE = new RegExp(
-  [
-    // Status & settlement
-    'newcomer|immigrant|immigration|refugee|asylum|settlement|migrant|international\\s+student',
-    // Legal & documents
-    'citizenship|permanent\\s+resident|pr\\s+card|work\\s+permit|study\\s+permit|visa\\b',
-    'social\\s+insurance|sin\\s+clinic|legal\\s+clinic|notary',
-    // Language
-    '\\besl\\b|\\blinc\\b|english\\s+(conversation|class|corner|practice|language)',
-    'conversation\\s+(circle|club|cafe)|language\\s+(exchange|cafe)|speaking\\s+english|literacy',
-    // Employment
-    'job\\s+(search|fair|club|help)|resume|cover\\s+letter|interview\\s+skills|career',
-    'employment|workbc|hiring|credential|foreign[-\\s]trained|workplace',
-    // Finance
-    'tax\\s+clinic|income\\s+tax|banking|bank\\s+account|budgeting|financial\\s+literacy',
-    'credit\\s+score',
-    // Housing
-    'housing|tenant|tenancy|rental|renting|landlord|lease\\b',
-    // Digital literacy
-    // `\b` before tech: without it the alternative matches the tail of "Biotech Help" or
-    // "Fintech Support", both plausible at SFU. It was already missing on the narrower
-    // `tech` this widened.
-    'digital\\s+literacy|computer\\s+(basics|skills|help)|\\btech(nology)?\\s+(cafe|help|support)',
-    'device\\s+clinic|laptop\\s+help|online\\s+safety|internet\\s+basics',
-    // Digital literacy — office suite. Libraries title these by product, not by the
-    // category words above, so the group missed them entirely: NVCL's "MS Office learn
-    // and practice: Intro to Word" and Surrey's office sessions are settlement-adjacent
-    // employment content by any reading. Every office word is QUALIFIED — behind `ms`,
-    // `microsoft`, or `intro to` — because the bare forms are traps: `\bexcel\b` catches
-    // "Excel in Your Studies", `\bword\b` catches "Crossword Club" and "Wordplay for
-    // Toddlers", and `\bpowerpoint\b` catches "PowerPoint Karaoke Night". All four are
-    // real titles from the live feeds. See lib/relevance_test.ts.
-    '\\bms\\s+(office|word|excel|powerpoint|outlook)\\b',
-    'microsoft\\s+(office|word|excel|powerpoint|outlook|365)\\b',
-    'intro(duction)?\\s+to\\s+(excel|word|powerpoint|outlook)\\b|\\bspreadsheet',
-    // Named settlement programs. Kept to programs run under the same name by more than
-    // one source, so this doesn't become a list of one-off event names: the Open Door
-    // community hub is NVCL's and NVDPL's shared newcomer drop-in, 29 occurrences across
-    // the two 4-month windows, and was the single largest miss in the corpus. Qualified
-    // so it cannot catch "Open Door Poetry Reading" or "Open Doors Heritage Tour".
-    'open\\s+door\\s+(community|drop)',
-    // Health-system navigation
-    'health\\s+card|family\\s+doctor|\\bmsp\\b|medical\\s+insurance',
-  ].join('|'),
-  'i',
-);
+const CORE_TERMS = [
+  // Status & settlement
+  'newcomer|immigrant|immigration|refugee|asylum|settlement|migrant|international\\s+student',
+  // Legal & documents
+  'citizenship|permanent\\s+resident|pr\\s+card|work\\s+permit|study\\s+permit|visa\\b',
+  'social\\s+insurance|sin\\s+clinic|legal\\s+clinic|notary',
+  // Language
+  '\\besl\\b|\\blinc\\b|english\\s+(conversation|class|corner|practice|language)',
+  'conversation\\s+(circle|club|cafe)|language\\s+(exchange|cafe)|speaking\\s+english|literacy',
+  // Employment
+  'job\\s+(search|fair|club|help)|\\bresume|cover\\s+letter|interview\\s+skills|career',
+  'employment|workbc|hiring|credential|foreign[-\\s]trained|workplace',
+  // Finance
+  'tax\\s+clinic|income\\s+tax|banking|bank\\s+account|budgeting|financial\\s+literacy',
+  'credit\\s+score',
+  // Housing
+  'housing|\\btenant|tenancy|\\brental|\\brenting|landlord|\\blease\\b',
+  // Named settlement programs. Kept to programs run under the same name by more than
+  // one source, so this doesn't become a list of one-off event names: the Open Door
+  // community hub is NVCL's and NVDPL's shared newcomer drop-in, 29 occurrences across
+  // the two 4-month windows, and was the single largest miss in the corpus. Qualified
+  // so it cannot catch "Open Door Poetry Reading" or "Open Doors Heritage Tour".
+  'open\\s+door\\s+(community|drop)',
+  // Health-system navigation
+  'health\\s+card|family\\s+doctor|\\bmsp\\b|medical\\s+insurance',
+];
 
 /**
- * Whether a library/university event's title indicates settlement-relevant content.
- *
- * Note what is deliberately absent: a bare `orientation` would catch West Van's
- * "Recording Studio Orientation", so SFU's flagship "International Student Orientation"
- * is caught by `international student` instead. Likewise bare `health`, `family` and
- * `community` are excluded as far too broad for a library calendar.
+ * Digital-literacy / tech-help terms. In force under the default filter, dropped under the
+ * strict filter (see the header). Split out as its own group precisely so a source can opt
+ * out of it without losing the settlement terms above.
  */
-export function isSettlementRelevant(title: string): boolean {
-  return RELEVANCE_RE.test(foldAccents(title));
+const DIGITAL_LITERACY_TERMS = [
+  // Digital literacy
+  // `\b` before tech: without it the alternative matches the tail of "Biotech Help" or
+  // "Fintech Support", both plausible at SFU. It was already missing on the narrower
+  // `tech` this widened.
+  'digital\\s+literacy|computer\\s+(basics|skills|help)|\\btech(nology)?\\s+(cafe|help|support)',
+  'device\\s+clinic|laptop\\s+help|online\\s+safety|internet\\s+basics',
+  // Office suite. Libraries title these by product, not by the category words above, so the
+  // group missed them entirely: NVCL's "MS Office learn and practice: Intro to Word" and
+  // Surrey's office sessions. Every office word is QUALIFIED — behind `ms`, `microsoft`, or
+  // `intro to` — because the bare forms are traps: `\bexcel\b` catches "Excel in Your
+  // Studies", `\bword\b` catches "Crossword Club" and "Wordplay for Toddlers", and
+  // `\bpowerpoint\b` catches "PowerPoint Karaoke Night". All four are real titles from the
+  // live feeds. See lib/relevance_test.ts.
+  '\\bms\\s+(office|word|excel|powerpoint|outlook)\\b',
+  'microsoft\\s+(office|word|excel|powerpoint|outlook|365)\\b',
+  'intro(duction)?\\s+to\\s+(excel|word|powerpoint|outlook)\\b|\\bspreadsheet',
+];
+
+// Default: settlement terms + digital literacy. Strict: settlement terms only. Alternation
+// order does not affect a .test(), so the default union is byte-equivalent to the single
+// array this replaced, apart from the intended `\b` additions above.
+const RELEVANCE_RE = new RegExp([...CORE_TERMS, ...DIGITAL_LITERACY_TERMS].join('|'), 'i');
+const STRICT_RELEVANCE_RE = new RegExp(CORE_TERMS.join('|'), 'i');
+
+/**
+ * Whether a library/university event's title indicates settlement-relevant content. Pass
+ * `{ strict: true }` (wired from `Source.strictRelevance`) to also drop generic
+ * digital-literacy / tech-help content — see the header for why that is per-source.
+ *
+ * Note what is deliberately absent from CORE_TERMS: a bare `orientation` would catch West
+ * Van's "Recording Studio Orientation", so SFU's flagship "International Student
+ * Orientation" is caught by `international student` instead. Likewise bare `health`,
+ * `family` and `community` are excluded as far too broad for a library calendar.
+ */
+export function isSettlementRelevant(title: string, opts?: { strict?: boolean }): boolean {
+  const re = opts?.strict ? STRICT_RELEVANCE_RE : RELEVANCE_RE;
+  return re.test(foldAccents(title));
 }

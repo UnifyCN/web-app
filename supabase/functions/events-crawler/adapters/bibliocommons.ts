@@ -135,7 +135,7 @@ function candidatesFromPage(page: BiblioPage, source: Source, ctx: AdapterContex
     // past MAX_TITLE_CHARS would otherwise be invisible to the filter.
     const fullTitle = clean(def.title);
     if (!fullTitle) continue;
-    if (source.relevanceFilter && !isSettlementRelevant(fullTitle)) continue;
+    if (source.relevanceFilter && !isSettlementRelevant(fullTitle, { strict: source.strictRelevance })) continue;
     const title = fullTitle.slice(0, MAX_TITLE_CHARS);
 
     const startIso = offsetIsoToUtc(ev.indexStart);
