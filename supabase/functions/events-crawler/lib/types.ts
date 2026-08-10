@@ -44,6 +44,14 @@ export interface Source {
    */
   relevanceFilter?: boolean;
   /**
+   * Use the STRICT relevance filter (settlement terms only, no generic digital-literacy /
+   * tech-help) instead of the default. Only meaningful alongside `relevanceFilter`. Set on
+   * sources whose tech programming is generic device help rather than newcomer-specific —
+   * NVCL and Capilano, per Savar's 2026-08-09 review. See lib/relevance.ts for the rationale
+   * and why this is scoped per-source rather than a global change.
+   */
+  strictRelevance?: boolean;
+  /**
    * Location to use when the source's feed carries no location data at all. Only for
    * feeds where the field genuinely does not exist — never to paper over a parse miss,
    * since `events.location` is NOT NULL and a wrong location is worse than a dropped row.

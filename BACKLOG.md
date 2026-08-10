@@ -526,6 +526,19 @@ and the filter gained qualified office-suite terms, `tech(nology)? (cafe|help|su
 titles of the seven filtered sources' 4-month windows, 9 distinct titles (56 rows) flipped
 DROP → KEEP and nothing else moved. `lib/relevance_test.ts` now locks in the trap set.
 
+**Follow-up 2026-08-09 — per-source strict filter for NVCL + Capilano.** Savar reviewed the widened
+output and flagged that generic tech-help ("Drop-in technology help", "Windows/Mac laptop help",
+"MS Office: Intro to Word/Excel") is too broad for NVCL and Capilano specifically — it teaches skills
+the audience already has, unlike the immigration/settlement content. **Confirmed with him directly,
+including dropping the MS Office / spreadsheet suite — not an assumption.** Rather than revert the
+loosening globally (the `technology help` term is genuine, wanted content at Surrey, which no one
+flagged), `relevance.ts` now has a STRICT variant — CORE_TERMS only, no digital-literacy group — gated
+per-source by `Source.strictRelevance`, set on `nvcl` + `capilano`. Re-captured all seven filtered
+sources with `--no-filter --titles` (cap raised locally): NVCL drops 6 distinct digital titles (13
+rows) and keeps its 5 genuine ones (English Corner ×3, newcomer circletime, Open door community hub);
+Capilano unchanged (its one on-mission item, the International Student Orientation, matches a core
+term); the other five sources have **zero flips**.
+
 **Correction to the NVCL measurement this entry used to carry.** It claimed NVCL's whole
 4-month window was 27 distinct titles matching **none** of the filter, for 0 rows. Re-measured
 2026-08-08 with the walk untruncated: the window is **61 distinct titles**, and the filter
@@ -555,7 +568,17 @@ live feeds contain "Excel in Your Studies", "Crossword Club", "Wordplay for Todd
 "PowerPoint Karaoke Night". Add terms narrowly, add each one's target **and** its near-misses to
 `lib/relevance_test.ts`, and re-capture every source with `--no-filter --titles` to see the flips.
 
-**events-crawler — `relevance.ts` terms without a left word boundary (latent false positives)**
+**events-crawler — `relevance.ts` terms without a left word boundary (latent false positives) — RESOLVED 2026-08-09**
+Fixed in the NVCL/Capilano strict-relevance PR (folded in per the recommendation below, on Savar's
+sign-off): `lease`→`\blease\b`, `rental`→`\brental`, `tenant`→`\btenant`, `resume`→`\bresume`, **plus a
+fifth the original sweep missed — `renting`→`\brenting`** (swallowed by "pa**renting**", e.g.
+"Parenting Support Circle"). Each swallow example is now a DROP fixture in `lib/relevance_test.ts`,
+each paired with a real-word KEEP (`Rental Housing`, `Tenant Rights`, `Renting 101`, `Lease
+Agreement`, `Résumé Clinic`) so the narrowing is proven not to cost a genuine hit. Re-captured all
+seven filtered sources with `--no-filter --titles` (cap raised locally): **zero flips from the `\b`
+edits on any source** — the false-keeps still have zero live incidence, so nothing currently ingested
+moved. The original finding, kept for the record:
+
 Found 2026-08-09 during a manual review of PRs #96/#97, which merged under an explicit
 no-CodeRabbit-review exception (the free-tier review quota was exhausted; CodeRabbit will not
 review a merged PR — `@coderabbitai review` answers "Already reviewed" on #96 and "Pull request is
@@ -571,6 +594,7 @@ English word ends in "newcomer" — but four are substrings of common words:
 |---|---|---|
 | `lease\b` | P·**lease** | `Please Note: Library Closed Monday` |
 | `rental` | Pa·**rental** | `Parental Controls: Keeping Kids Safe Online` |
+| `renting` | Pa·**renting** | `Parenting Support Circle` (missed by the original sweep) |
 | `tenant` | Lieu·**tenant** | `Lieutenant Governor Reading Award Ceremony` |
 | `resume` | P·**resume**·d | `Presumed Innocent: Film Screening` |
 
@@ -584,7 +608,8 @@ Fix is mechanical (`\blease\b`, `\brental`, `\btenant`, `\bresume`) but **adding
 regex**, so the monotonicity argument that covers term *additions* does not apply — it can drop an
 existing keep. Re-run the corpus comparison the way the `\btech` fix was verified, and add each
 swallow example to `lib/relevance_test.ts` as a DROP fixture. Best folded into whichever PR next
-touches `relevance.ts` (e.g. the near-misses above) rather than done as its own change.
+touches `relevance.ts` (e.g. the near-misses above) rather than done as its own change. — Done exactly
+that; see the RESOLVED note at the top of this entry.
 
 **Client-only tab state elsewhere — same back-navigation bug Community just fixed**
 Found while fixing Community (this PR): tab state held in `useState` never reaches the URL,

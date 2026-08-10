@@ -78,7 +78,7 @@ async function tribeEventToRow(
 
   // Cheap rejections first, so a filtered or far-future event costs no HEAD probe or
   // Pexels lookup. Backstop for the server-side ?end_date — see fetchEvents.
-  if (source.relevanceFilter && !isSettlementRelevant(fullTitle)) return null;
+  if (source.relevanceFilter && !isSettlementRelevant(fullTitle, { strict: source.strictRelevance })) return null;
   if (Date.parse(eventDatetime) > ctx.windowEndMs) return null;
 
   // location + event_type from the venue NAME first, then venue presence, then the

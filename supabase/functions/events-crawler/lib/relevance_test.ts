@@ -37,8 +37,20 @@ const KEEP: Record<string, string[]> = {
   employment: [
     'Canadian Job Search Workshop',
     'Ask a Career Counsellor: Resume Workshop',
-    // Accent folding is load-bearing here — a plain `resume` term misses "Résumé".
+    // Accent folding is load-bearing here — a plain `resume` term misses "Résumé". The
+    // leading `\b` on `resume` must not cost these: "Resume"/"Résumé" start a word.
     'Résumé Clinic with S.U.C.C.E.S.S.',
+    'Resume Writing Workshop',
+  ],
+  // Housing terms carry a leading `\b` (tenant, rental, renting, lease) so they don't fire
+  // on Lieu·tenant / Pa·rental / Pa·renting / P·lease. These prove the boundary still keeps
+  // the genuine article, where the word starts the match — the DROP block below proves it
+  // rejects the swallowing words.
+  housing: [
+    'Rental Housing Info Session',
+    'Tenant Rights Workshop',
+    'Renting 101: Know Your Rights',
+    'Lease Agreement Basics for Newcomers',
   ],
   'digital literacy': [
     'Tech Help',
@@ -106,6 +118,17 @@ const DROP: Record<string, string[]> = {
     // Why `orientation` is deliberately absent — see isSettlementRelevant's doc comment.
     'Recording Studio Orientation',
   ],
+  // Left-word-boundary swallows: each housing/employment term is a substring of a common
+  // unrelated word, so before the leading `\b` these titles were wrongly KEPT. Constructed,
+  // not captured (zero live incidence in the corpus today) — but latent, and the `\b` fix
+  // that added this group NARROWS the regex, so these lock it in. See BACKLOG.md.
+  'left-word-boundary swallows (lease/rental/renting/tenant/resume)': [
+    'Please Note: Library Closed Monday', // P·lease  → lease
+    'Parental Controls: Keeping Kids Safe Online', // Pa·rental → rental
+    'Parenting Support Circle', // Pa·renting → renting
+    'Lieutenant Governor Reading Award Ceremony', // Lieu·tenant → tenant
+    'Presumed Innocent: Film Screening', // P·resume·d → resume
+  ],
   'ordinary library programming': [
     'Babytime',
     'Family Storytime',
@@ -134,5 +157,48 @@ Deno.test('isSettlementRelevant rejects near-misses and general programming', ()
     for (const title of titles) {
       assert(!isSettlementRelevant(title), `[${group}] should DROP: ${title}`);
     }
+  }
+});
+
+// STRICT MODE (Source.strictRelevance, set on NVCL + Capilano — see relevance.ts). Strict
+// drops the whole digital-literacy / tech-help group while keeping every settlement term.
+// All STRICT_FLIP titles are REAL, captured from NVCL's live window on 2026-08-09; they are
+// exactly the rows Savar's review flagged as too broad.
+
+/** Kept by the DEFAULT filter, dropped by STRICT — the digital-literacy group. */
+const STRICT_FLIP: string[] = [
+  'Drop-in technology help',
+  'Drop-in technology help in Farsi کمک به رفع اشکال تکنولوژی به زبان فارسی',
+  'Mac laptop help',
+  'Windows laptop help',
+  'MS Office learn and practice: Intro to Word',
+  // Constructed, not captured. The bare `literacy` core term (kept for Family/Adult
+  // Literacy) would re-admit this under strict without the `(?<!digital\s)` guard — the
+  // default keeps it via the `digital literacy` term. Locks that guard in.
+  'Digital Literacy Basics',
+];
+
+/** Kept by BOTH filters — settlement content strict must never drop. */
+const STRICT_KEEP: string[] = [
+  'Open door community hub', // named program
+  'Fall 2026 New International Student Orientation', // international student
+  'English Corner (virtual) — September 2026', // language
+  'Circletime success: Welcoming newcomer children at circletime', // newcomer
+  'Résumé Clinic with S.U.C.C.E.S.S.', // employment
+  // The `digital`-guard on `literacy` must not cost genuine reading-literacy titles: this
+  // matches bare `literacy` (no "digital" before it), so strict keeps it.
+  'Adult Literacy Program',
+];
+
+Deno.test('strict mode drops the digital-literacy group the default filter keeps', () => {
+  for (const title of STRICT_FLIP) {
+    assert(isSettlementRelevant(title), `default filter should KEEP: ${title}`);
+    assert(!isSettlementRelevant(title, { strict: true }), `strict filter should DROP: ${title}`);
+  }
+});
+
+Deno.test('strict mode keeps genuine settlement content', () => {
+  for (const title of STRICT_KEEP) {
+    assert(isSettlementRelevant(title, { strict: true }), `strict filter should KEEP: ${title}`);
   }
 });
