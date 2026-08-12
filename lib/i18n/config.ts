@@ -97,8 +97,9 @@ export function negotiateLanguage(
     if (!code) continue;
     const base = code.split("-")[0];
     if (isSupportedLanguage(base)) return base;
-    // French ships only as Canadian French, so any fr* (fr, fr-FR, fr-CA) maps to it.
-    if (base === "fr") return "fr-CA";
+    // French ships only as Canadian French, so any fr* (fr, fr-FR, fr-CA) maps to it —
+    // but only while the gate is on, so a disabled catalog can't get auto-selected.
+    if (base === "fr" && isLanguageEnabled("fr-CA")) return "fr-CA";
   }
   return undefined;
 }
