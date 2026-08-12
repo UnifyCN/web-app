@@ -17,6 +17,7 @@ export const SUPPORTED_LANGUAGES = {
   es: "Español",
   hi: "हिन्दी",
   ar: "العربية",
+  "fr-CA": "Français (canadien)",
 } as const;
 
 export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
@@ -40,14 +41,16 @@ export function isRtlLanguage(value: unknown): boolean {
 
 /**
  * Languages built + testable but hidden from the public picker until their
- * translation is reviewed. They stay valid SupportedLanguages — a stored cookie
- * / DB value still renders (and mirrors RTL) — they're just not user-selectable
- * unless explicitly enabled via NEXT_PUBLIC_ENABLE_ARABIC.
+ * machine translation is native-reviewed. They stay valid SupportedLanguages — a
+ * stored cookie / DB value still renders (and mirrors RTL) — they're just not
+ * user-selectable unless explicitly enabled via their flag: Arabic behind
+ * NEXT_PUBLIC_ENABLE_ARABIC, Canadian French behind NEXT_PUBLIC_ENABLE_FRENCH.
  */
-const GATED_LANGUAGES = new Set<SupportedLanguage>(["ar"]);
+const GATED_LANGUAGES = new Set<SupportedLanguage>(["ar", "fr-CA"]);
 
 function isLanguageEnabled(lang: SupportedLanguage): boolean {
   if (!GATED_LANGUAGES.has(lang)) return true;
+  if (lang === "fr-CA") return process.env.NEXT_PUBLIC_ENABLE_FRENCH === "true";
   return process.env.NEXT_PUBLIC_ENABLE_ARABIC === "true";
 }
 
@@ -94,6 +97,8 @@ export function negotiateLanguage(
     if (!code) continue;
     const base = code.split("-")[0];
     if (isSupportedLanguage(base)) return base;
+    // French ships only as Canadian French, so any fr* (fr, fr-FR, fr-CA) maps to it.
+    if (base === "fr") return "fr-CA";
   }
   return undefined;
 }

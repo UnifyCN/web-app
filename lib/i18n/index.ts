@@ -13,6 +13,7 @@ import vi from "./locales/vi/translation.json";
 import es from "./locales/es/translation.json";
 import hi from "./locales/hi/translation.json";
 import ar from "./locales/ar/translation.json";
+import frCA from "./locales/fr-CA/translation.json";
 
 const resources = {
   en: { translation: en },
@@ -20,6 +21,7 @@ const resources = {
   es: { translation: es },
   hi: { translation: hi },
   ar: { translation: ar },
+  "fr-CA": { translation: frCA },
 } as const;
 
 /**
