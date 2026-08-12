@@ -17,6 +17,7 @@ export const SUPPORTED_LANGUAGES = {
   es: "Español",
   hi: "हिन्दी",
   ar: "العربية",
+  "fr-CA": "Français (canadien)",
 } as const;
 
 export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
@@ -40,14 +41,22 @@ export function isRtlLanguage(value: unknown): boolean {
 
 /**
  * Languages built + testable but hidden from the public picker until their
- * translation is reviewed. They stay valid SupportedLanguages — a stored cookie
- * / DB value still renders (and mirrors RTL) — they're just not user-selectable
- * unless explicitly enabled via NEXT_PUBLIC_ENABLE_ARABIC.
+ * machine translation is native-reviewed, gated behind a flag: Arabic behind
+ * NEXT_PUBLIC_ENABLE_ARABIC, Canadian French behind NEXT_PUBLIC_ENABLE_FRENCH.
+ * They stay valid `SupportedLanguage`s (still typecheck, still resolve a
+ * direction for RTL mirroring) but every path that could apply one as the
+ * *active* render locale — SSR cookie resolution, the client localStorage
+ * self-heal, Accept-Language negotiation, and restoring a DB-synced
+ * `preferred_language` — checks `isLanguageEnabled` too, not just
+ * `isSupportedLanguage`. A value can be a real `SupportedLanguage` yet
+ * currently gated (e.g. synced from a build/device where the flag was on), so
+ * validity alone isn't enough to apply it.
  */
-const GATED_LANGUAGES = new Set<SupportedLanguage>(["ar"]);
+const GATED_LANGUAGES = new Set<SupportedLanguage>(["ar", "fr-CA"]);
 
-function isLanguageEnabled(lang: SupportedLanguage): boolean {
+export function isLanguageEnabled(lang: SupportedLanguage): boolean {
   if (!GATED_LANGUAGES.has(lang)) return true;
+  if (lang === "fr-CA") return process.env.NEXT_PUBLIC_ENABLE_FRENCH === "true";
   return process.env.NEXT_PUBLIC_ENABLE_ARABIC === "true";
 }
 
@@ -94,6 +103,9 @@ export function negotiateLanguage(
     if (!code) continue;
     const base = code.split("-")[0];
     if (isSupportedLanguage(base)) return base;
+    // French ships only as Canadian French, so any fr* (fr, fr-FR, fr-CA) maps to it —
+    // but only while the gate is on, so a disabled catalog can't get auto-selected.
+    if (base === "fr" && isLanguageEnabled("fr-CA")) return "fr-CA";
   }
   return undefined;
 }

@@ -9,6 +9,7 @@ import {
   DEFAULT_LANGUAGE,
   LANGUAGE_COOKIE,
   dirForLanguage,
+  isLanguageEnabled,
   isSupportedLanguage,
   negotiateLanguage,
   type SupportedLanguage,
@@ -84,7 +85,9 @@ export const viewport: Viewport = {
  */
 async function resolveInitialLocale(): Promise<SupportedLanguage> {
   const cookieLang = (await cookies()).get(LANGUAGE_COOKIE)?.value;
-  if (isSupportedLanguage(cookieLang)) return cookieLang;
+  if (isSupportedLanguage(cookieLang) && isLanguageEnabled(cookieLang)) {
+    return cookieLang;
+  }
   return (
     negotiateLanguage((await headers()).get("accept-language")) ??
     DEFAULT_LANGUAGE
