@@ -5,6 +5,7 @@ import {
   LANGUAGE_COOKIE,
   LANGUAGE_STORAGE_KEY,
   dirForLanguage,
+  isLanguageEnabled,
   isSupportedLanguage,
   type SupportedLanguage,
 } from "./config";
@@ -99,13 +100,16 @@ export function persistLocale(lang: SupportedLanguage) {
 /**
  * Best-guess client locale from localStorage — used once after mount to self-heal
  * a cookie/localStorage mismatch (e.g. a returning user whose stored choice
- * predates the cookie). Returns undefined when nothing valid is stored.
+ * predates the cookie). Returns undefined when nothing valid is stored, or when
+ * the stored choice is a currently-gated language — I18nProvider would otherwise
+ * apply it AND rewrite the cookie with it, re-enabling a hidden/unreviewed
+ * catalog client-side regardless of its feature flag.
  */
 export function readStoredLocale(): SupportedLanguage | undefined {
   if (typeof window === "undefined") return undefined;
   try {
     const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    if (isSupportedLanguage(stored)) return stored;
+    if (isSupportedLanguage(stored) && isLanguageEnabled(stored)) return stored;
   } catch {
     // ignore
   }

@@ -5,7 +5,11 @@ import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "@/hooks/useProfile";
 import { updatePreferredLanguage } from "@/services/language";
 import { hasUserPickedThisSession, persistLocale } from "./index";
-import { isSupportedLanguage, type SupportedLanguage } from "./config";
+import {
+  isLanguageEnabled,
+  isSupportedLanguage,
+  type SupportedLanguage,
+} from "./config";
 
 /**
  * On first authed load, reconcile the local UI language with the user's
@@ -37,7 +41,15 @@ function useLanguageSync() {
       if (isSupportedLanguage(local) && local !== remote) {
         void updatePreferredLanguage(local);
       }
-    } else if (isSupportedLanguage(remote) && remote !== local) {
+      // Restoring a DB-stored preference onto this device: gate it too, not just
+      // validity. A value can be a real SupportedLanguage yet currently gated —
+      // e.g. set on a build/device where the flag was on — and applying it here
+      // would re-enable a hidden/unreviewed catalog regardless of this build's flag.
+    } else if (
+      isSupportedLanguage(remote) &&
+      isLanguageEnabled(remote) &&
+      remote !== local
+    ) {
       persistLocale(remote);
       void i18n.changeLanguage(remote);
     }
