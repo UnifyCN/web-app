@@ -977,3 +977,22 @@ separately rather than waved through as one category:
 Fix one function per PR, redeploying each as it is un-nocheck'd so the type fix and the
 deployed source stay in sync.
 **`rag-query` is shared mobile infra → needs Savar's sign-off.**
+
+---
+
+## i18n / skills
+
+**`i18n-add-language` skill — add revision-guarded concurrent-write handling (non-urgent).**
+Source: CodeRabbit round-5 review of `unify-sanity` PR #15 (the
+`.claude/skills/i18n-add-language/SKILL.md` skill, merged 2026-08-16 as squash `f4dbe0b`).
+The two concrete data-integrity bugs the review flagged are fixed and confirmed resolved
+(published-vs-draft metadata group; empty `translations` array that left a new group
+undiscoverable by `references("SRC")`). The one residual item behind CodeRabbit's
+"Merge Risk: 🟡 Moderate" rating — **session exhaustion / lost updates under *persistent*
+concurrent writes to the same `translation.metadata` document** — was classified by
+CodeRabbit itself as a follow-up-issue candidate (*"does not require a change in this
+documentation-only PR"*) and accepted by the owner at merge. Future improvement: document
+(and, where the skill drives `translate-lesson.ts`, implement) **revision-guarded metadata
+patches** (`ifRevisionID` / optimistic concurrency) plus a **reread-remerge retry** on
+conflict, so two language rollouts converge instead of clobbering each other's entries.
+**Not urgent** — real rollouts are run one language at a time by a single operator.
