@@ -598,3 +598,89 @@ export interface LearningProgressSummary {
   progressPercent: number;
   colorHex: string | null;
 }
+
+/* ----- Resources (Trusted Services directory) --------------------- *
+ * Ported from the mobile app's Resources tab
+ * (UnifyCN/mobile-app feat/resources-tab @ b7b5134 — types/partner.ts).
+ * Hardcoded, no backend — see lib/resources/partners.ts.
+ * ------------------------------------------------------------------ */
+
+export type PartnerCategory =
+  | "gettingSettled"
+  | "findWork"
+  | "immigrationHelp"
+  | "librariesLearning"
+  | "communityBelonging"
+  | "networksPlanning"
+  | "internationalStudents"
+  | "insurance"
+  | "money";
+
+/** 'resource' = informational; 'referral' = future commercial relationship. */
+export type PartnershipType = "resource" | "referral";
+
+/** What a service costs the person using it. */
+export type Cost = "free" | "paid" | "mixed";
+
+/** A program a partner runs — a first-class record, not free text. Every field
+ *  beyond `name`/`description` is optional; an absent value means "not published"
+ *  and must never be inferred. */
+export interface PartnerProgram {
+  name: string;
+  description: string;
+  eligibility?: string;
+  cost?: Cost;
+  category?: PartnerCategory;
+  url?: string;
+  /** ISO date; set only after human phone/email confirmation. Not surfaced yet. */
+  lastVerified?: string;
+}
+
+export interface Partner {
+  /** Stable kebab-case id (also used in routes + analytics). */
+  slug: string;
+  name: string;
+  category: PartnerCategory;
+  partnershipType: PartnershipType;
+  /** One-line value prop shown in the list row. */
+  tagline: string;
+  /** Long-form "About" copy for the detail screen. */
+  description: string;
+  /** 2–4 "how they help newcomers" bullets. */
+  highlights: string[];
+  /** Area served, e.g. "Greater Vancouver". */
+  serviceArea: string;
+
+  // "How to get help" — every field optional; render only when populated. An
+  // absent value means the partner does not publish it, never "free"/"open to all".
+  cost?: Cost;
+  eligibility?: string;
+  howToStart?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  hours?: string;
+  languages?: string[];
+  /** Public website; opened in a new tab. Button hidden if absent. */
+  website?: string;
+  /** i18n key for the primary button when "Visit website" understates it.
+   *  Defaults to `resources.visitWebsite`. Resolve with `t()`. */
+  ctaLabelKey?: string;
+  /** Optional brand logo URL; falls back to a monogram when absent. */
+  logo?: string;
+  /** Optional hero photo URL; falls back to a category-tinted gradient. */
+  heroImage?: string;
+  programs?: PartnerProgram[];
+  /** ISO date; set only after human confirmation. Not surfaced yet. */
+  lastVerified?: string;
+  /** Lower numbers render first within a category. */
+  displayOrder: number;
+  /** Inactive partners are filtered out of all UI. */
+  active: boolean;
+}
+
+/** A category paired with its active-partner count, for the grid. */
+export interface CategoryWithCount {
+  category: PartnerCategory;
+  partnerCount: number;
+}

@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Settings } from "lucide-react";
+import { User, Settings, Handshake } from "lucide-react";
 import { LearnIcon } from "@/components/icons/LearnIcon";
 import { ChecklistIcon } from "@/components/icons/ChecklistIcon";
 import { CompanionIcon } from "@/components/icons/CompanionIcon";
@@ -18,11 +18,15 @@ export interface NavItem {
 // (BottomNav.tsx) so the two stay in sync. Order + icons mirror the mobile
 // app's bottom-tab nav (Learn → Checklist → Companion → Community → Social);
 // mobile has no Home tab — its Social tab is the post feed, served at /home.
+// Resources is a web addition (mobile nests it inside Learn); it sits next to
+// Community as an outbound trusted-services directory. This makes the mobile
+// BottomNav 7 items (6 primary + Settings) — verified acceptable at 375px.
 export const MAIN_NAV: NavItem[] = [
   { labelKey: "tabs.learn", href: "/learn", icon: LearnIcon },
   { labelKey: "tabs.checklist", href: "/checklist", icon: ChecklistIcon },
   { labelKey: "tabs.companion", href: "/companion", icon: CompanionIcon },
   { labelKey: "tabs.community", href: "/community", icon: CommunityIcon },
+  { labelKey: "tabs.resources", href: "/resources", icon: Handshake },
   { labelKey: "tabs.social", href: "/home", icon: SocialIcon },
 ];
 

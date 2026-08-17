@@ -1,4 +1,5 @@
 import { isPostHogConfigured, posthog } from "@/lib/posthog";
+import type { PartnerCategory, PartnershipType } from "@/types";
 
 /**
  * Typed PostHog product-event helpers for the web app. Each function mirrors the
@@ -242,4 +243,42 @@ export const trackTranslationCacheMiss = (p: {
   capture("translation_cache_miss", {
     type: p.type,
     target_language: p.targetLanguage,
+  });
+
+/* ---- Resources (Trusted Services directory) --------------------------- */
+// Mirrors the mobile app's `resources_*` events so web + mobile line up.
+
+export const trackResourcesViewed = () => capture("resources_viewed");
+
+export const trackResourcesCategoryOpened = (p: {
+  category: PartnerCategory;
+}) => capture("resources_category_opened", { category: p.category });
+
+export const trackResourcesPartnerOpened = (p: {
+  slug: string;
+  category: PartnerCategory;
+  partnershipType: PartnershipType;
+}) =>
+  capture("resources_partner_opened", {
+    slug: p.slug,
+    category: p.category,
+    partnership_type: p.partnershipType,
+  });
+
+export const trackResourcesPartnerWebsiteOpened = (p: {
+  slug: string;
+  partnershipType: PartnershipType;
+}) =>
+  capture("resources_partner_website_opened", {
+    slug: p.slug,
+    partnership_type: p.partnershipType,
+  });
+
+export const trackResourcesProgramOpened = (p: {
+  slug: string;
+  programName: string;
+}) =>
+  capture("resources_program_opened", {
+    slug: p.slug,
+    program_name: p.programName,
   });

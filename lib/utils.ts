@@ -24,6 +24,19 @@ export function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** First letter of up to the first two words, uppercased — for avatar/monogram
+ *  fallbacks (users and organizations). */
+export function getInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((word) => word[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
 /**
  * Strip HTML tags from a string and decode the common entities, returning clean
  * plain text. Some older mobile posts/comments stored raw HTML in their body
