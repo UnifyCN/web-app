@@ -619,6 +619,16 @@ export type PartnerCategory =
 /** 'resource' = informational; 'referral' = future commercial relationship. */
 export type PartnershipType = "resource" | "referral";
 
+/** i18n keys usable for a partner's primary CTA button — constrained to the
+ *  `resources.cta.*` set so a typo can't slip a raw key into the UI. */
+export type PartnerCtaKey =
+  | "resources.cta.getQuote"
+  | "resources.cta.bookAssessment"
+  | "resources.cta.bookAdvising"
+  | "resources.cta.applyOnline"
+  | "resources.cta.joinLibrary"
+  | "resources.cta.visitWelcomeCentre";
+
 /** What a service costs the person using it. */
 export type Cost = "free" | "paid" | "mixed";
 
@@ -665,7 +675,7 @@ export interface Partner {
   website?: string;
   /** i18n key for the primary button when "Visit website" understates it.
    *  Defaults to `resources.visitWebsite`. Resolve with `t()`. */
-  ctaLabelKey?: string;
+  ctaLabelKey?: PartnerCtaKey;
   /** Optional brand logo URL; falls back to a monogram when absent. */
   logo?: string;
   /** Optional hero photo URL; falls back to a category-tinted gradient. */

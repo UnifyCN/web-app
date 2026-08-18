@@ -25,9 +25,9 @@ export function PartnerRow({ partner }: { partner: Partner }) {
         size={44}
       />
       <div className="min-w-0 flex-1">
-        <h3 className="truncate text-sm font-semibold text-ink-secondary transition-colors group-hover:text-primary">
+        <h2 className="truncate text-sm font-semibold text-ink-secondary transition-colors group-hover:text-primary">
           {partner.name}
-        </h3>
+        </h2>
         <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-ink-muted">
           {partner.tagline}
         </p>

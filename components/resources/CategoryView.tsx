@@ -40,9 +40,9 @@ export function CategoryView({ category, onBack }: CategoryViewProps) {
           style={{ backgroundColor: color }}
           aria-hidden
         />
-        <h2 className="text-lg font-bold text-ink-secondary">
+        <h1 className="text-lg font-bold text-ink-secondary">
           {t(PARTNER_CATEGORY_LABEL_KEYS[category])}
-        </h2>
+        </h1>
       </div>
       <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
         {t(PARTNER_CATEGORY_DESCRIPTION_KEYS[category])}

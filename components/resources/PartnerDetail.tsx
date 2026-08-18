@@ -8,14 +8,15 @@ import {
   Check,
   Clock,
   ExternalLink,
-  Globe,
+  Info,
   Languages,
   Mail,
   MapPin,
   Phone,
   Wallet,
+  type LucideIcon,
 } from "lucide-react";
-import { cn, RTL_FLIP, externalHref } from "@/lib/utils";
+import { cn, RTL_FLIP, externalHref, telHref } from "@/lib/utils";
 import { OrgMonogram } from "./OrgMonogram";
 import {
   PARTNER_CATEGORY_COLORS,
@@ -131,6 +132,15 @@ export function PartnerDetail({ partner }: { partner: Partner }) {
             : t("resources.visitWebsite")}
           <ExternalLink className="h-4 w-4" aria-hidden />
         </a>
+      )}
+
+      {/* Affiliate/commercial disclosure — shown for every `referral` partner
+          (field-driven, so future referral partners get it automatically). */}
+      {partner.partnershipType === "referral" && (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-placeholder">
+          <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          <span>{t("resources.referralDisclosure")}</span>
+        </p>
       )}
 
       {/* About */}
@@ -297,7 +307,7 @@ function HowToGetHelp({
           {partner.phone && (
             <ContactRow icon={Phone} label={t("resources.phone")}>
               <a
-                href={`tel:${partner.phone.replace(/\s+/g, "")}`}
+                href={telHref(partner.phone)}
                 className="text-primary hover:underline"
               >
                 {partner.phone}
@@ -351,7 +361,7 @@ function ContactRow({
   label,
   children,
 }: {
-  icon: typeof Globe;
+  icon: LucideIcon;
   label: string;
   children: React.ReactNode;
 }) {

@@ -105,6 +105,17 @@ export function externalHref(link: string | null | undefined): string | null {
 }
 
 /**
+ * Build a `tel:` URI from a human-formatted phone number: keep a single leading
+ * "+" (country code) and strip every other non-digit — spaces, dots, dashes,
+ * parens. e.g. `"(604) 431-0400"` → `tel:6044310400`, `"+1 672-867-6886"` →
+ * `tel:+16728676886`. Dialers reject the punctuation the raw strings carry.
+ */
+export function telHref(phone: string): string {
+  const trimmed = phone.trim();
+  return `tel:${trimmed.startsWith("+") ? "+" : ""}${trimmed.replace(/\D/g, "")}`;
+}
+
+/**
  * True when a citation URL points at an internal knowledge-base file rather than
  * a public source. `rag-query` resolves each source URL as `source_url || s3Url`,
  * so docs without a backfilled `source_url` fall back to a raw S3 link
