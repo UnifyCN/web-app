@@ -24,6 +24,19 @@ export function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** First letter of up to the first two words, uppercased — for avatar/monogram
+ *  fallbacks (users and organizations). */
+export function getInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((word) => word[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
 /**
  * Strip HTML tags from a string and decode the common entities, returning clean
  * plain text. Some older mobile posts/comments stored raw HTML in their body
@@ -89,6 +102,17 @@ export function externalHref(link: string | null | undefined): string | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Build a `tel:` URI from a human-formatted phone number: keep a single leading
+ * "+" (country code) and strip every other non-digit — spaces, dots, dashes,
+ * parens. e.g. `"(604) 431-0400"` → `tel:6044310400`, `"+1 672-867-6886"` →
+ * `tel:+16728676886`. Dialers reject the punctuation the raw strings carry.
+ */
+export function telHref(phone: string): string {
+  const trimmed = phone.trim();
+  return `tel:${trimmed.startsWith("+") ? "+" : ""}${trimmed.replace(/\D/g, "")}`;
 }
 
 /**

@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { useResolvedImageUrl } from "@/hooks/useResolvedImageUrl";
 
 interface AvatarProps {
@@ -9,18 +9,6 @@ interface AvatarProps {
   /** Pixel diameter. Default 36. */
   size?: number;
   className?: string;
-}
-
-/** First letter of up to the first two words, uppercased. */
-function getInitials(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .map((word) => word[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 }
 
 /**
