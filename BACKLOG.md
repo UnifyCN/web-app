@@ -930,6 +930,33 @@ stay: shorten "Companion"/"Community", or nest a tab.
 
 ---
 
+## Resources
+
+**Real org logos + hero/background photos — content-sourcing task (not built)**
+From PR #102 (Trusted Services directory). Every org currently renders with a **monogram
+(category-tinted initials) + a category-gradient hero** — there is **no real imagery**. This is not a
+porting gap: verified that Savar's mobile draft (PR #256, `feat/resources-tab` @ `b7b5134`) also ships
+**zero** image assets — no image files in its diff, and **0** `logo:`/`heroImage:` values in
+`constants/Partners.ts` (its own PR body says "placeholder logos/photos — monogram + gradient
+fallback"). Our web port matches: **0** `logo`/`heroImage` values in `lib/resources/partners.ts`. So
+imagery was never sourced on either side; nothing live is blocked.
+
+To add it, this needs **per-organization content sourcing** (a content task, not code):
+- **Logos** — most of the 20 orgs have downloadable brand assets or a usable logo on their own site.
+- **Hero/background photos** — trickier: a real photo from the org, or a relevant **stock fallback** in
+  the same spirit as the events crawler's Pexels/Unsplash fallback for image-less events.
+- **Caution:** using an org's own logo to represent it is generally fine (factual representation of
+  their branding), but keep a beat of care for anything that could imply **endorsement** — especially
+  the 4 `referral` partners (Canada-Shaw, Global Connect, TuGo, Desjardins), whose referral disclosure
+  is currently hidden pending Savar's confirmation (PR #104).
+
+Wiring is already in place — this is drop-in once assets exist: set `logo` / `heroImage` (image URLs)
+on the partner records in `lib/resources/partners.ts`; `components/resources/OrgMonogram.tsx` swaps to
+the logo when `logo` is present, and `components/resources/PartnerDetail.tsx` renders `heroImage` over
+the gradient when set. Add any new image hosts to `next.config.ts`.
+
+---
+
 ## Email & Branding
 
 **BIMI (Brand Indicators for Message Identification)**
