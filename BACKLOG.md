@@ -915,6 +915,19 @@ Reorder the sidebar nav to `Learn → Checklist → Companion → Community → 
 **Remove the Unify Circles tab**
 PR #14 only *hides* the Circles tab. Once the product decision is final, remove it (and its route/components) outright rather than leaving it hidden.
 
+**Bottom nav — switch to icon-only labels if the 7 items ever need more room**
+From PR #102 (Resources tab). Adding Resources made `MAIN_NAV` 6 primary items, so the mobile
+`BottomNav` (`[...MAIN_NAV, SETTINGS_ITEM]`) now renders **7** items. Verified at **375px** (iPhone
+SE, the narrowest common iPhone): all 7 labels render **in full with no truncation and no overlap** —
+flex columns size to their labels (`min-width: auto`) and sum to exactly the 375px width. So it's
+**fine as shipped**, just **tight**: the two longest labels ("Companion"/"Community") leave only
+~1.75px of gutter each side, i.e. essentially zero headroom. Not urgent — just documented so it's
+easy to pick up if it ever gets squeezed: a **~360px Android**, an **8th nav item**, or **larger
+OS-level text** would start to shrink/clip. The fix when that happens is to **drop the bottom-nav
+labels to icon-only at ≥7 items** (in `components/layout/BottomNav.tsx`) — the desktop `Sidebar`
+(icon-above-label at a fixed 100px rail) is unaffected and stays as-is. Alternatives if labels must
+stay: shorten "Companion"/"Community", or nest a tab.
+
 ---
 
 ## Email & Branding
