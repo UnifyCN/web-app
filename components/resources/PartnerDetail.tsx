@@ -52,7 +52,7 @@ export function PartnerDetail({ partner }: { partner: Partner }) {
   }, [partner.slug, partner.category, partner.partnershipType]);
 
   return (
-    <div className="mx-auto max-w-[680px] px-6 py-6">
+    <div className="mx-auto max-w-[680px] animate-fade-in px-6 py-6">
       <Link
         href="/resources"
         className="mb-4 inline-flex items-center gap-1 text-sm text-ink-muted transition-colors hover:text-ink"
@@ -61,54 +61,56 @@ export function PartnerDetail({ partner }: { partner: Partner }) {
         {t("resources.title")}
       </Link>
 
-      {/* Hero — heroImage or a category-tinted gradient fallback. */}
-      <div className="overflow-hidden rounded-card border border-border-card">
+      {/* Hero card — banner + identity in one clipped card (mirrors the Group
+          detail header). No overlap: the monogram sits in-flow below the
+          banner, so there's no seam. */}
+      <div className="overflow-hidden rounded-card border border-border-card bg-surface">
         {partner.heroImage ? (
           // eslint-disable-next-line @next/next/no-img-element -- partner hero URLs are arbitrary public hosts
           <img
             src={partner.heroImage}
             alt=""
-            className="h-36 w-full object-cover"
+            className="h-28 w-full object-cover"
           />
         ) : (
           <div
-            className="h-36 w-full"
+            className="h-28 w-full"
             style={{
               backgroundImage: `linear-gradient(135deg, ${color}, ${tint})`,
             }}
             aria-hidden
           />
         )}
-      </div>
 
-      {/* Identity — monogram pulled up over the hero. */}
-      <div className="px-1">
-        <div className="-mt-10 flex items-end gap-4">
-          <OrgMonogram
-            name={partner.name}
-            color={color}
-            logo={partner.logo}
-            size={72}
-            className="border-4 border-surface shadow-sm"
-          />
-          <span
-            className="mb-1 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
-            style={{ backgroundColor: `${color}1A`, color }}
-          >
-            {t(PARTNER_CATEGORY_LABEL_KEYS[partner.category])}
-          </span>
+        <div className="p-5">
+          <div className="flex items-start gap-4">
+            <OrgMonogram
+              name={partner.name}
+              color={color}
+              logo={partner.logo}
+              size={56}
+              className="shadow-sm"
+            />
+            <div className="min-w-0 flex-1">
+              <span
+                className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                style={{ backgroundColor: `${color}1A`, color }}
+              >
+                {t(PARTNER_CATEGORY_LABEL_KEYS[partner.category])}
+              </span>
+              <h1 className="mt-1.5 text-xl font-bold text-ink-secondary">
+                {partner.name}
+              </h1>
+            </div>
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-ink-muted">
+            {partner.tagline}
+          </p>
+          <p className="mt-2 flex items-center gap-2 text-xs text-ink-placeholder">
+            <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+            <span>{partner.serviceArea}</span>
+          </p>
         </div>
-
-        <h1 className="mt-3 text-xl font-bold text-ink-secondary">
-          {partner.name}
-        </h1>
-        <p className="mt-1 text-sm leading-relaxed text-ink-muted">
-          {partner.tagline}
-        </p>
-        <p className="mt-2 flex items-center gap-2 text-xs text-ink-placeholder">
-          <MapPin className="h-4 w-4 shrink-0" aria-hidden />
-          <span>{partner.serviceArea}</span>
-        </p>
       </div>
 
       {website && (

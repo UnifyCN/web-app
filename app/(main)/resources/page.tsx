@@ -31,7 +31,7 @@ export default function ResourcesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-6 md:py-8">
+    <div className="mx-auto max-w-3xl animate-fade-in px-6 py-6 md:py-8">
       {active ? (
         <CategoryView category={active} onBack={() => setActive(null)} />
       ) : (
