@@ -31,6 +31,15 @@ import {
 } from "@/lib/analytics";
 import type { Partner } from "@/types";
 
+/**
+ * Referral-partnership disclosure — temporarily hidden pending Savar's confirmation
+ * that the `referral` partners (Canada-Shaw, Global Connect, TuGo, Desjardins) are
+ * actual live partnerships and not categorization placeholders ported from his draft.
+ * Flip to `true` to re-enable; the `partnershipType` data + the
+ * `resources.referralDisclosure` i18n string are left intact so this is a one-line reversal.
+ */
+const SHOW_REFERRAL_DISCLOSURE = false;
+
 /** Full partner profile: hero, About, highlights, how-to-get-help, programs. */
 export function PartnerDetail({ partner }: { partner: Partner }) {
   const { t } = useTranslation();
@@ -135,8 +144,9 @@ export function PartnerDetail({ partner }: { partner: Partner }) {
       )}
 
       {/* Affiliate/commercial disclosure — shown for every `referral` partner
-          (field-driven, so future referral partners get it automatically). */}
-      {partner.partnershipType === "referral" && (
+          (field-driven, so future referral partners get it automatically).
+          Gated off via SHOW_REFERRAL_DISCLOSURE pending Savar's confirmation. */}
+      {SHOW_REFERRAL_DISCLOSURE && partner.partnershipType === "referral" && (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-placeholder">
           <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />
           <span>{t("resources.referralDisclosure")}</span>
@@ -218,7 +228,7 @@ export function PartnerDetail({ partner }: { partner: Partner }) {
                     {program.description}
                   </p>
                   {program.eligibility && (
-                    <p className="mt-1.5 text-xs leading-relaxed text-ink-placeholder">
+                    <p className="mt-1.5 text-xs leading-relaxed text-ink-muted">
                       <span className="font-medium">
                         {t("resources.whoItsFor")}:
                       </span>{" "}
