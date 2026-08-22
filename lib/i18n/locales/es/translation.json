@@ -71,7 +71,8 @@
     "companion": "Asistente",
     "checklist": "Lista",
     "learn": "Aprender",
-    "resources": "Recursos"
+    "resources": "Recursos",
+    "resume": "Currículum"
   },
   "auth": {
     "signIn": "Iniciar sesión",
@@ -1875,5 +1876,43 @@
       "visitWelcomeCentre": "Visita el Centro de Bienvenida"
     },
     "referralDisclosure": "Socio de referidos: Unify puede recibir una comisión cuando usas este enlace."
+  },
+  "resume": {
+    "title": "Creador de currículum",
+    "templateName": "Plantilla Jake's Resume",
+    "newResume": "Nuevo currículum",
+    "noDrafts": "Aún no hay currículums",
+    "deleteDraft": "Eliminar currículum",
+    "viewResume": "Ver currículum",
+    "backToChat": "Volver al chat",
+    "downloadPdf": "Descargar PDF",
+    "ready": "Listo",
+    "untitled": "Currículum sin título",
+    "draftTitleNamed": "Currículum de {{name}}",
+    "inputPlaceholder": "Escribe tu respuesta...",
+    "suggestionsHint": "Toca para usar y luego edítalo si quieres",
+    "messagesRemaining": "{{count}} mensajes restantes hoy",
+    "limitReached": "Has alcanzado el límite del creador de currículum de hoy. Vuelve mañana para continuar.",
+    "limitReachedToast": "Has alcanzado el límite de hoy. Vuelve mañana para continuar.",
+    "busy": "El asistente de currículum está ocupado. Inténtalo de nuevo.",
+    "sendFailed": "Algo salió mal. Inténtalo de nuevo.",
+    "buildingHint": "Tu currículum se construye aquí mientras respondes. El asistente lo completa por ti.",
+    "paper": {
+      "yourName": "Tu nombre"
+    },
+    "sections": {
+      "summary": "Resumen",
+      "education": "Educación",
+      "experience": "Experiencia",
+      "projects": "Proyectos",
+      "skills": "Habilidades"
+    },
+    "opener": {
+      "greetingNamed": "¡Hola {{name}}! Soy tu asesor de currículum de Unify. Te haré algunas preguntas sencillas y convertiré tus respuestas en un currículum profesional y claro. Para empezar: ¿qué tipo de trabajo has hecho? Cuenta cualquier empleo, trabajo de medio tiempo o voluntariado, incluso de tu país de origen.",
+      "greeting": "¡Hola! Soy tu asesor de currículum de Unify. Te haré algunas preguntas sencillas y convertiré tus respuestas en un currículum profesional y claro. Para empezar: ¿qué tipo de trabajo has hecho? Cuenta cualquier empleo, trabajo de medio tiempo o voluntariado, incluso de tu país de origen.",
+      "suggestion1": "Trabajé como cajero en una tienda",
+      "suggestion2": "Todavía no he trabajado en Canadá, vine a estudiar",
+      "suggestion3": "Hice trabajo voluntario en mi país de origen"
+    }
   }
 }

@@ -10,7 +10,9 @@ import { MAIN_NAV, SETTINGS_ITEM, isNavItemActive } from "./navItems";
 // The 5 primary tabs + Settings (6 total) — 7 was cramped on 375px. Profile is
 // reached from within Settings (the "View your profile" row), and sign-out also
 // lives in Settings, so the profile / settings / sign-out chain stays reachable.
-const TABS = [...MAIN_NAV, SETTINGS_ITEM];
+// `desktopOnly` items (the width-hungry Resume Builder) are excluded here so the
+// bottom bar stays within its item ceiling.
+const TABS = [...MAIN_NAV.filter((item) => !item.desktopOnly), SETTINGS_ITEM];
 
 /**
  * Fixed bottom navigation shown only below the `md` breakpoint. Pads itself with
