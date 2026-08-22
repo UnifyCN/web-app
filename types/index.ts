@@ -678,6 +678,9 @@ export interface Partner {
   ctaLabelKey?: PartnerCtaKey;
   /** Optional brand logo URL; falls back to a monogram when absent. */
   logo?: string;
+  /** How the logo fills its square slot. Defaults to "cover" (edge-to-edge, for
+   *  square marks); "contain" letterboxes a horizontal wordmark instead of cropping. */
+  logoFit?: "cover" | "contain";
   /** Optional hero photo URL; falls back to a category-tinted gradient. */
   heroImage?: string;
   programs?: PartnerProgram[];

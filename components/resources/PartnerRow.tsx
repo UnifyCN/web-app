@@ -22,6 +22,7 @@ export function PartnerRow({ partner }: { partner: Partner }) {
         name={partner.name}
         color={color}
         logo={partner.logo}
+        fit={partner.logoFit}
         size={44}
       />
       <div className="min-w-0 flex-1">

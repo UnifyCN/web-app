@@ -7,21 +7,25 @@ interface OrgMonogramProps {
   color: string;
   /** Optional logo URL; when absent, a tinted initials monogram renders. */
   logo?: string;
+  /** Fit for the logo in its square slot: "cover" (default, edge-to-edge, for
+   *  square marks) or "contain" (letterbox a horizontal wordmark, no crop). */
+  fit?: "cover" | "contain";
   /** Pixel size (square). Default 44. */
   size?: number;
   className?: string;
 }
 
 /**
- * Square org avatar for the Resources directory. Renders the logo when present,
- * otherwise a category-tinted initials monogram — the mobile app ships no logo
- * assets, so in practice every org uses the monogram fallback. Distinct from the
- * user `Avatar` (which resolves signed S3 URLs); orgs have plain public URLs.
+ * Square org avatar for the Resources directory. Renders the org's logo when one
+ * is set (`object-cover` for square marks, `object-contain` for wordmarks via
+ * `fit`), otherwise a category-tinted initials monogram. Distinct from the user
+ * `Avatar` (which resolves signed S3 URLs); org logos are plain public URLs.
  */
 export function OrgMonogram({
   name,
   color,
   logo,
+  fit = "cover",
   size = 44,
   className,
 }: OrgMonogramProps) {
@@ -34,7 +38,13 @@ export function OrgMonogram({
         src={logo}
         alt={name}
         style={dimensions}
-        className={cn("shrink-0 rounded-xl object-cover", className)}
+        className={cn(
+          "shrink-0 rounded-xl",
+          // Contain letterboxes a wordmark; a small inset keeps it clear of the
+          // rounded corners (some wordmarks bleed to their own canvas edge).
+          fit === "contain" ? "object-contain p-1" : "object-cover",
+          className,
+        )}
       />
     );
   }
