@@ -98,6 +98,7 @@ export function PartnerDetail({ partner }: { partner: Partner }) {
               name={partner.name}
               color={color}
               logo={partner.logo}
+              fit={partner.logoFit}
               size={56}
               className="shadow-sm"
             />

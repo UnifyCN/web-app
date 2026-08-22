@@ -20,6 +20,8 @@ export const PARTNERS: Partner[] = [
   // ── Getting Settled ─────────────────────────────────────────────────────
   {
     slug: "diversecity",
+    logo: "/resources/logos/diversecity.svg",
+    logoFit: "contain",
     heroImage: "https://images.unsplash.com/photo-1531545514256-b1400bc00f31?w=1200&q=80&auto=format&fit=crop",
     name: "DIVERSEcity",
     category: "gettingSettled",
@@ -633,6 +635,8 @@ export const PARTNERS: Partner[] = [
   // ── Networks & Planning Tables ──────────────────────────────────────────
   {
     slug: "amssa",
+    logo: "/resources/logos/amssa.png",
+    logoFit: "contain",
     heroImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&q=80&auto=format&fit=crop",
     name: "AMSSA",
     category: "networksPlanning",
@@ -718,6 +722,8 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "delta-lip",
+    logo: "/resources/logos/delta-lip.webp",
+    logoFit: "contain",
     heroImage: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1200&q=80&auto=format&fit=crop",
     name: "Delta Local Immigration Partnership",
     category: "networksPlanning",
@@ -937,6 +943,8 @@ export const PARTNERS: Partner[] = [
   // ── Money & Banking ─────────────────────────────────────────────────────
   {
     slug: "desjardins",
+    logo: "/resources/logos/desjardins.svg",
+    logoFit: "contain",
     heroImage: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&q=80&auto=format&fit=crop",
     name: "Desjardins",
     category: "money",
