@@ -20,6 +20,7 @@ export const PARTNERS: Partner[] = [
   // ── Getting Settled ─────────────────────────────────────────────────────
   {
     slug: "diversecity",
+    heroImage: "https://images.unsplash.com/photo-1531545514256-b1400bc00f31?w=1200&q=80&auto=format&fit=crop",
     name: "DIVERSEcity",
     category: "gettingSettled",
     partnershipType: "resource",
@@ -77,6 +78,8 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "burnaby-neighbourhood-house",
+    logo: "/resources/logos/burnaby-neighbourhood-house.webp",
+    heroImage: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1200&q=80&auto=format&fit=crop",
     name: "Burnaby Neighbourhood House",
     category: "gettingSettled",
     partnershipType: "resource",
@@ -122,6 +125,8 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "ymca-bc",
+    logo: "/resources/logos/ymca-bc.png",
+    heroImage: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=1200&q=80&auto=format&fit=crop",
     name: "YMCA BC",
     category: "gettingSettled",
     partnershipType: "resource",
@@ -176,6 +181,8 @@ export const PARTNERS: Partner[] = [
   // ── Find Work ───────────────────────────────────────────────────────────
   {
     slug: "iec-bc",
+    logo: "/resources/logos/iec-bc.png",
+    heroImage: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&q=80&auto=format&fit=crop",
     name: "Immigrant Employment Council of BC",
     category: "findWork",
     partnershipType: "resource",
@@ -233,6 +240,8 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "newcomer-jobs-canada",
+    logo: "/resources/logos/newcomer-jobs-canada.png",
+    heroImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80&auto=format&fit=crop",
     name: "Newcomer Jobs Canada",
     category: "findWork",
     partnershipType: "resource",
@@ -257,6 +266,8 @@ export const PARTNERS: Partner[] = [
   // ── Immigration Help ────────────────────────────────────────────────────
   {
     slug: "canada-shaw-immigration",
+    logo: "/resources/logos/canada-shaw-immigration.png",
+    heroImage: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&q=80&auto=format&fit=crop",
     name: "Canada Shaw Immigration Consultancy",
     category: "immigrationHelp",
     partnershipType: "referral",
@@ -293,6 +304,8 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "global-connect-immigration",
+    logo: "/resources/logos/global-connect-immigration.png",
+    heroImage: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200&q=80&auto=format&fit=crop",
     name: "Global Connect Immigration",
     category: "immigrationHelp",
     partnershipType: "referral",
@@ -324,6 +337,8 @@ export const PARTNERS: Partner[] = [
   // ── Libraries & Learning ────────────────────────────────────────────────
   {
     slug: "burnaby-public-library",
+    logo: "/resources/logos/burnaby-public-library.svg",
+    heroImage: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1200&q=80&auto=format&fit=crop",
     name: "Burnaby Public Library",
     category: "librariesLearning",
     partnershipType: "resource",
@@ -364,6 +379,8 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "surrey-libraries",
+    logo: "/resources/logos/surrey-libraries.png",
+    heroImage: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200&q=80&auto=format&fit=crop",
     name: "Surrey Libraries",
     category: "librariesLearning",
     partnershipType: "resource",
@@ -433,6 +450,8 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "vancouver-public-library",
+    logo: "/resources/logos/vancouver-public-library.svg",
+    heroImage: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&q=80&auto=format&fit=crop",
     name: "Vancouver Public Library",
     category: "librariesLearning",
     partnershipType: "resource",
@@ -452,6 +471,8 @@ export const PARTNERS: Partner[] = [
   // ── Community & Belonging ───────────────────────────────────────────────
   {
     slug: "big-brothers-big-sisters",
+    logo: "/resources/logos/big-brothers-big-sisters.png",
+    heroImage: "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&q=80&auto=format&fit=crop",
     name: "Big Brothers Big Sisters",
     category: "communityBelonging",
     partnershipType: "resource",
@@ -501,6 +522,8 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "united-way-bc",
+    logo: "/resources/logos/united-way-bc.svg",
+    heroImage: "https://images.unsplash.com/photo-1593113630400-ea4288922497?w=1200&q=80&auto=format&fit=crop",
     name: "United Way BC",
     category: "communityBelonging",
     partnershipType: "resource",
@@ -554,6 +577,8 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "trout-lake-community-centre",
+    logo: "/resources/logos/trout-lake-community-centre.png",
+    heroImage: "https://images.unsplash.com/photo-1526976668912-1a811878dd37?w=1200&q=80&auto=format&fit=crop",
     name: "Trout Lake Community Centre",
     category: "communityBelonging",
     partnershipType: "resource",
@@ -608,6 +633,7 @@ export const PARTNERS: Partner[] = [
   // ── Networks & Planning Tables ──────────────────────────────────────────
   {
     slug: "amssa",
+    heroImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&q=80&auto=format&fit=crop",
     name: "AMSSA",
     category: "networksPlanning",
     partnershipType: "resource",
@@ -659,6 +685,8 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "surrey-lip",
+    logo: "/resources/logos/surrey-lip.png",
+    heroImage: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1200&q=80&auto=format&fit=crop",
     name: "Surrey Local Immigration Partnership",
     category: "networksPlanning",
     partnershipType: "resource",
@@ -690,6 +718,7 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "delta-lip",
+    heroImage: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1200&q=80&auto=format&fit=crop",
     name: "Delta Local Immigration Partnership",
     category: "networksPlanning",
     partnershipType: "resource",
@@ -732,6 +761,8 @@ export const PARTNERS: Partner[] = [
   // ── International Students ──────────────────────────────────────────────
   {
     slug: "sfu-international",
+    logo: "/resources/logos/sfu-international.png",
+    heroImage: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1200&q=80&auto=format&fit=crop",
     name: "SFU International Services for Students",
     category: "internationalStudents",
     partnershipType: "resource",
@@ -790,6 +821,8 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "fraser-international-college",
+    logo: "/resources/logos/fraser-international-college.png",
+    heroImage: "https://images.unsplash.com/photo-1562774053-701939374585?w=1200&q=80&auto=format&fit=crop",
     name: "Fraser International College",
     category: "internationalStudents",
     partnershipType: "resource",
@@ -844,6 +877,8 @@ export const PARTNERS: Partner[] = [
   // ── Insurance ───────────────────────────────────────────────────────────
   {
     slug: "tugo",
+    logo: "/resources/logos/tugo.png",
+    heroImage: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&q=80&auto=format&fit=crop",
     name: "TuGo",
     category: "insurance",
     partnershipType: "referral",
@@ -902,6 +937,7 @@ export const PARTNERS: Partner[] = [
   // ── Money & Banking ─────────────────────────────────────────────────────
   {
     slug: "desjardins",
+    heroImage: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&q=80&auto=format&fit=crop",
     name: "Desjardins",
     category: "money",
     partnershipType: "referral",
