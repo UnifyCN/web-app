@@ -63,11 +63,10 @@ function readDrafts(): ResumeDraft[] {
 
 function writeDrafts(drafts: ResumeDraft[]): void {
   if (!hasStorage()) return;
-  try {
-    window.localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
-  } catch {
-    // Quota / private-mode failures are non-fatal for a prototype.
-  }
+  // Let quota / private-mode failures propagate: saveDraft/deleteDraft run
+  // inside React Query mutations whose error path reconciles the cache back to
+  // the persisted state, so a failed write must not look like a success.
+  window.localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
 }
 
 /** Newest-first list of lightweight draft rows for the sidebar. */
@@ -129,7 +128,13 @@ interface UsageRecord {
 }
 
 function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  // Local calendar date (not UTC) so "messages left today" resets at the user's
+  // local midnight, not several hours early for Canadian time zones.
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function readUsage(): UsageRecord {
@@ -193,6 +198,9 @@ export async function generateResumeTurn(args: {
   });
 
   if (!res.ok) {
+    // 429 = server-side daily cap hit (e.g. localStorage was cleared) — surface
+    // the same limit error the client-side check throws.
+    if (res.status === 429) throw new ResumeLimitError();
     // 503 = upstream busy/timeout (retryable); surface a distinct busy error so
     // the UI can say "try again" rather than a generic failure.
     if (res.status === 503) throw new ResumeBusyError();

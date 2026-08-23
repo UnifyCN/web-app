@@ -136,7 +136,7 @@ function DraftsMenu({
                   type="button"
                   onClick={() => onDelete(d.id)}
                   aria-label={t("resume.deleteDraft")}
-                  className="me-1 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-ink-placeholder opacity-0 transition-opacity hover:bg-surface-gray hover:text-destructive group-hover:opacity-100"
+                  className="me-1 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-ink-placeholder opacity-0 transition-opacity hover:bg-surface-gray hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
                   <Trash2 className="h-4 w-4" aria-hidden />
                 </button>
@@ -193,6 +193,9 @@ export function ResumeChatColumn({
   }, [messages.length, isTyping]);
 
   function handleSend(text: string) {
+    // Block a second send while a turn is in flight — concurrent turns would
+    // read the same persisted draft and clobber each other's messages.
+    if (isTyping) return;
     onSend(text);
     setInput("");
   }
@@ -268,6 +271,7 @@ export function ResumeChatColumn({
             onSend={handleSend}
             inputRef={inputRef}
             placeholder={t("resume.inputPlaceholder")}
+            disabled={isTyping}
           />
         )}
         <p className="text-center text-[11px] text-ink-placeholder">

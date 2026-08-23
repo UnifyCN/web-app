@@ -69,6 +69,9 @@ export default function ResumePage() {
 
   async function handleSend(text: string) {
     if (!effectiveActiveId) return;
+    // Serialize turns: ignore a new send while one is still in flight so two
+    // mutations can't read the same draft and overwrite each other.
+    if (sendMessage.isPending) return;
     setSendError(null);
     try {
       await sendMessage.mutateAsync({ draftId: effectiveActiveId, text });

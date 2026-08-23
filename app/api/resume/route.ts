@@ -1,7 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateResumeTurn, ResumeUpstreamError } from "@/lib/resume/generateTurn";
-import { normalizeResumeData, MAX_RESUME_MESSAGE_LEN } from "@/lib/resume/schema";
+import { checkAndIncrementResumeUsage } from "@/lib/resume/serverRateLimit";
+import {
+  normalizeResumeData,
+  MAX_RESUME_MESSAGE_LEN,
+  RESUME_HISTORY_TURNS,
+} from "@/lib/resume/schema";
 import { isSupportedLanguage, DEFAULT_LANGUAGE } from "@/lib/i18n/config";
 import type {
   ResumeChatRole,
@@ -72,9 +77,10 @@ function clampHistory(
     const content =
       typeof r.content === "string" ? r.content.slice(0, 4000) : "";
     if (content) out.push({ role, content });
-    if (out.length >= 30) break;
   }
-  return out;
+  // Keep the NEWEST turns (drop the oldest) and bound to the shared history
+  // window, matching services/resume.ts and the resume-chat edge function.
+  return out.slice(-RESUME_HISTORY_TURNS);
 }
 
 export async function POST(req: NextRequest) {
@@ -104,6 +110,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Server-side daily cap keyed by user (the client localStorage cap is
+  // bypassable). Checked before spending an OpenRouter call.
+  if (!checkAndIncrementResumeUsage(user.id)) {
+    return NextResponse.json(
+      { error: "Daily resume-builder limit reached.", code: "daily_limit_reached" },
+      { status: 429 },
+    );
+  }
+
   const turn: ResumeTurnRequest = {
     message,
     history: clampHistory(body.history),
@@ -116,8 +131,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof ResumeUpstreamError) {
-      // 503 for retryable upstream trouble (429 / 5xx / timeout), else 502.
-      const status = error.retryable ? 503 : 502;
+      console.error("Resume: upstream failure", {
+        status: error.status,
+        retryable: error.retryable,
+        message: error.message,
+      });
+      // 503 for retryable upstream trouble (429 / 5xx / timeout); preserve a
+      // non-retryable 500 (e.g. missing key) instead of masking it as 502.
+      const status = error.retryable ? 503 : error.status === 500 ? 500 : 502;
       return NextResponse.json(
         { error: "The resume assistant is busy. Please try again.", retryable: error.retryable },
         { status },

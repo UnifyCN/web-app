@@ -64,12 +64,14 @@ const SCHEMA_BLOCK = `Return ONLY a single JSON object (no markdown, no code fen
   "resume": {
     "contact": { "name": "", "email": "", "phone": "", "location": "", "linkedin": "", "website": "" },
     "summary": "",
-    "education":  [ { "institution": "", "location": "", "degree": "", "dates": "" } ],
-    "experience": [ { "title": "", "organization": "", "location": "", "dates": "", "bullets": ["", ""] } ],
-    "projects":   [ { "name": "", "tech": "", "dates": "", "bullets": ["", ""] } ],
-    "skills":     [ { "category": "", "items": ["", ""] } ]
+    "education":  [ { "id": "", "institution": "", "location": "", "degree": "", "dates": "" } ],
+    "experience": [ { "id": "", "title": "", "organization": "", "location": "", "dates": "", "bullets": ["", ""] } ],
+    "projects":   [ { "id": "", "name": "", "tech": "", "dates": "", "bullets": ["", ""] } ],
+    "skills":     [ { "id": "", "category": "", "items": ["", ""] } ]
   }
-}`;
+}
+
+Copy the "id" of every entry that already exists in CURRENT_RESUME_JSON so it stays stable across turns. Use "" for a brand-new entry.`;
 
 export function buildSystemPrompt(profile: ResumeProfileContext): string {
   const langName = LANGUAGE_NAMES[profile.responseLanguage] ?? "English";

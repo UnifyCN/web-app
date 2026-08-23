@@ -77,12 +77,14 @@ const SCHEMA_BLOCK = `Return ONLY a single JSON object (no markdown, no code fen
   "resume": {
     "contact": { "name": "", "email": "", "phone": "", "location": "", "linkedin": "", "website": "" },
     "summary": "",
-    "education":  [ { "institution": "", "location": "", "degree": "", "dates": "" } ],
-    "experience": [ { "title": "", "organization": "", "location": "", "dates": "", "bullets": ["", ""] } ],
-    "projects":   [ { "name": "", "tech": "", "dates": "", "bullets": ["", ""] } ],
-    "skills":     [ { "category": "", "items": ["", ""] } ]
+    "education":  [ { "id": "", "institution": "", "location": "", "degree": "", "dates": "" } ],
+    "experience": [ { "id": "", "title": "", "organization": "", "location": "", "dates": "", "bullets": ["", ""] } ],
+    "projects":   [ { "id": "", "name": "", "tech": "", "dates": "", "bullets": ["", ""] } ],
+    "skills":     [ { "id": "", "category": "", "items": ["", ""] } ]
   }
-}`;
+}
+
+Copy the "id" of every entry that already exists in CURRENT_RESUME_JSON so it stays stable across turns. Use "" for a brand-new entry.`;
 
 function buildSystemPrompt(profile): string {
   const langName = LANGUAGE_NAMES[profile.responseLanguage] ?? 'English';
@@ -219,6 +221,45 @@ function nid(): string {
   return crypto.randomUUID();
 }
 
+const VALID_PERSONAS = [
+  'international_student',
+  'skilled_worker',
+  'refugee',
+  'other',
+];
+
+/**
+ * Validate + bound the client-supplied profile before it is interpolated into
+ * the system prompt. Without this, an authenticated caller could inject arbitrary
+ * text into the system role or inflate the prompt without limit. Mirrors
+ * clampProfile in app/api/resume/route.ts.
+ */
+function clampProfile(raw) {
+  const p = raw ?? {};
+  const asString = (v: unknown, max: number) =>
+    typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null;
+  const stageNum = Number(p.stage);
+  return {
+    firstName: asString(p.firstName, 80),
+    persona:
+      typeof p.persona === 'string' && VALID_PERSONAS.includes(p.persona)
+        ? p.persona
+        : null,
+    stage:
+      Number.isInteger(stageNum) && stageNum >= 0 && stageNum <= 4
+        ? stageNum
+        : null,
+    city: asString(p.city, 80),
+    province: asString(p.province, 40),
+    email: asString(p.email, 160),
+    responseLanguage:
+      typeof p.responseLanguage === 'string' &&
+      p.responseLanguage in LANGUAGE_NAMES
+        ? p.responseLanguage
+        : 'en',
+  };
+}
+
 function normalizeResume(v) {
   const r = v ?? {};
   const c = r.contact ?? {};
@@ -321,7 +362,7 @@ Deno.serve(async req => {
           }))
       : [];
     const currentResume = normalizeResume(body.currentResume);
-    const profile = body.profile ?? {};
+    const profile = clampProfile(body.profile);
 
     const messages = buildTurnMessages(
       profile,

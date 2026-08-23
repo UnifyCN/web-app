@@ -331,9 +331,11 @@ input:-webkit-autofill:active {
     margin: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
+    /* Physical page margins for print — absolute units (inches) are paper
+       geometry, intentionally not part of the screen brand-spacing scale. */
     padding: 0.5in 0.55in !important;
-    box-shadow: none !important;
-    --tw-ring-shadow: 0 0 #0000 !important;
+    box-shadow: none !important; /* also clears the Tailwind ring (ring == box-shadow) */
+
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
