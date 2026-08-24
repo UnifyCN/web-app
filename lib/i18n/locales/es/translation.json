@@ -1913,6 +1913,10 @@
       "suggestion1": "Trabajé como cajero en una tienda",
       "suggestion2": "Todavía no he trabajado en Canadá, vine a estudiar",
       "suggestion3": "Hice trabajo voluntario en mi país de origen"
-    }
+    },
+    "download": "Descargar",
+    "downloadDocx": "Descargar Word (.docx)",
+    "exporting": "Exportando…",
+    "exportFailed": "No se pudo exportar el archivo. Inténtalo de nuevo."
   }
 }

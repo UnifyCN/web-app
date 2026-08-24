@@ -168,6 +168,22 @@ export function formatRelativeTime(iso: string): string {
 }
 
 /**
+ * Trigger a browser download of a Blob as `filename`. Client-only (touches
+ * `document`): creates an object URL, clicks a transient `<a download>`, then
+ * revokes the URL. Used for in-app file exports (e.g. the resume .docx).
+ */
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/**
  * Move the text caret to the end of a field on focus. iOS Safari (and some
  * desktop cases) drop the caret at the START of a pre-filled input, so editing an
  * existing value means manually moving to the end first. Use as an `onFocus`

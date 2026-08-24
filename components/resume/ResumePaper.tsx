@@ -93,7 +93,7 @@ function Bullets({ items }: { items: string[] }) {
   return (
     <ul className="mt-[3px] list-disc space-y-[2px] ps-[18px]">
       {bullets.map((b, i) => (
-        <li key={i} className="text-[11.5px] leading-[1.35] text-black">
+        <li key={i} className="break-inside-avoid text-[11.5px] leading-[1.35] text-black">
           {b}
         </li>
       ))}
@@ -103,7 +103,7 @@ function Bullets({ items }: { items: string[] }) {
 
 function ExperienceEntry({ item }: { item: ResumeExperience }) {
   return (
-    <div>
+    <div className="break-inside-avoid">
       <EntryHeader
         primaryLeft={item.title || item.organization || "—"}
         primaryRight={item.dates}
@@ -117,19 +117,21 @@ function ExperienceEntry({ item }: { item: ResumeExperience }) {
 
 function EducationEntry({ item }: { item: ResumeEducation }) {
   return (
-    <EntryHeader
-      primaryLeft={item.institution || item.degree || "—"}
-      primaryRight={item.location}
-      secondaryLeft={item.institution ? item.degree : ""}
-      secondaryRight={item.dates}
-    />
+    <div className="break-inside-avoid">
+      <EntryHeader
+        primaryLeft={item.institution || item.degree || "—"}
+        primaryRight={item.location}
+        secondaryLeft={item.institution ? item.degree : ""}
+        secondaryRight={item.dates}
+      />
+    </div>
   );
 }
 
 function ProjectEntry({ item }: { item: ResumeProject }) {
   const heading = [item.name, item.tech].filter((s) => s.trim()).join("  |  ");
   return (
-    <div>
+    <div className="break-inside-avoid">
       <EntryHeader primaryLeft={heading || "—"} primaryRight={item.dates} />
       <Bullets items={item.bullets} />
     </div>
