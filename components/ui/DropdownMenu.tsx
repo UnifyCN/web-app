@@ -33,12 +33,18 @@ export function DropdownMenu({
   ariaLabel,
   align = "end",
   className,
+  triggerClassName,
+  triggerContent,
 }: {
   items: DropdownMenuItem[];
   ariaLabel?: string;
   /** Which trigger edge the menu aligns to. */
   align?: "start" | "end";
   className?: string;
+  /** Replace the default kebab trigger styling entirely (e.g. a labelled pill). */
+  triggerClassName?: string;
+  /** Replace the default "…" icon content of the trigger. */
+  triggerContent?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -112,12 +118,14 @@ export function DropdownMenu({
         aria-controls={open ? menuId : undefined}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink",
-          open && "bg-surface-gray text-ink",
+          triggerClassName ??
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-placeholder transition-colors hover:bg-surface-gray hover:text-ink",
+          // The default kebab's active tint only applies when using default styling.
+          !triggerClassName && open && "bg-surface-gray text-ink",
           className,
         )}
       >
-        <MoreHorizontal className="h-4 w-4" aria-hidden />
+        {triggerContent ?? <MoreHorizontal className="h-4 w-4" aria-hidden />}
       </button>
 
       {open &&

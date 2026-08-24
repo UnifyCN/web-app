@@ -311,36 +311,37 @@ input:-webkit-autofill:active {
 }
 
 /*
- * Resume Builder — "Download PDF" prints ONLY the rendered resume, not the app
- * shell or the chat. Classic single-element isolation: hide everything, re-show
- * the .resume-paper subtree, and float it to the page origin. Text stays real +
- * selectable (ATS-friendly) — no rasterization. The user picks "Save as PDF".
+ * Resume Builder — PDF export (window.print). We print a DEDICATED copy of the
+ * resume that ResumePanel portals to <body> (`.resume-print-root`), not the
+ * on-screen node. That copy renders in normal document flow, so the app shell's
+ * full-height layout (min-h-dvh / md:h-dvh) can never emit trailing blank pages
+ * and entries paginate cleanly — no absolute-positioning / visibility tricks.
+ * Text stays real + selectable (ATS-friendly). The user picks "Save as PDF".
  */
-@media print {
-  body * {
-    visibility: hidden !important;
-  }
-  .resume-paper,
-  .resume-paper * {
-    visibility: visible !important;
-  }
-  .resume-paper {
-    position: absolute !important;
-    inset-inline-start: 0 !important;
-    top: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    /* Physical page margins for print — absolute units (inches) are paper
-       geometry, intentionally not part of the screen brand-spacing scale. */
-    padding: 0.5in 0.55in !important;
-    box-shadow: none !important; /* also clears the Tailwind ring (ring == box-shadow) */
+.resume-print-root {
+  display: none;
+}
 
+@media print {
+  /* Print only the portaled resume copy; hide the app shell and every other
+     body child (toasts, portaled menus, dev overlays). */
+  body > *:not(.resume-print-root) {
+    display: none !important;
+  }
+  .resume-print-root {
+    display: block !important;
+  }
+  .resume-print-root .resume-paper {
+    margin: 0 !important;
+    max-width: 100% !important;
+    padding: 0 !important; /* @page supplies the page margins */
+    box-shadow: none !important; /* also clears the Tailwind ring (ring == box-shadow) */
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
   @page {
     size: letter;
-    margin: 0;
+    /* Physical page margins — absolute (inches) paper geometry. */
+    margin: 0.5in 0.55in;
   }
 }

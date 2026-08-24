@@ -1914,6 +1914,10 @@
       "suggestion2": "I have not worked in Canada yet, I came to study",
       "suggestion3": "I did volunteer work in my home country"
     },
+    "download": "Download",
+    "downloadDocx": "Download Word (.docx)",
+    "exporting": "Exporting…",
+    "exportFailed": "Couldn't export the file. Please try again.",
     "announcement": {
       "title": "Meet your AI Resume Builder",
       "body": "Build a clean, professional resume just by chatting. Answer a few simple questions and download it to send to employers. No writing from scratch.",
