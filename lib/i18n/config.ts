@@ -86,7 +86,12 @@ export const LANGUAGE_STORAGE_KEY = "user_preferred_language";
 export const LANGUAGE_COOKIE = "unify_lang";
 
 export function isSupportedLanguage(value: unknown): value is SupportedLanguage {
-  return typeof value === "string" && value in SUPPORTED_LANGUAGES;
+  // hasOwnProperty, not `in`: `in` walks the prototype chain, so "toString",
+  // "constructor", "__proto__", etc. would wrongly pass as supported codes.
+  return (
+    typeof value === "string" &&
+    Object.prototype.hasOwnProperty.call(SUPPORTED_LANGUAGES, value)
+  );
 }
 
 /**

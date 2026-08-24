@@ -40,15 +40,21 @@ const VALID_PERSONAS: Persona[] = [
 ];
 
 function clampProfile(raw: unknown): ResumeProfileContext {
-  const p = (raw ?? {}) as Record<string, unknown>;
+  const p = (
+    raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {}
+  ) as Record<string, unknown>;
   const persona =
     typeof p.persona === "string" && VALID_PERSONAS.includes(p.persona as Persona)
       ? (p.persona as Persona)
       : null;
-  const stageNum = Number(p.stage);
+  // Require an actual integer — Number("0")/Number(false)/Number("") all coerce
+  // to 0 and would otherwise sneak through as a valid stage.
   const stage: Stage | null =
-    Number.isInteger(stageNum) && stageNum >= 0 && stageNum <= 4
-      ? (stageNum as Stage)
+    typeof p.stage === "number" &&
+    Number.isInteger(p.stage) &&
+    p.stage >= 0 &&
+    p.stage <= 4
+      ? (p.stage as Stage)
       : null;
   const responseLanguage = isSupportedLanguage(p.responseLanguage)
     ? p.responseLanguage

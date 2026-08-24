@@ -235,26 +235,33 @@ const VALID_PERSONAS = [
  * clampProfile in app/api/resume/route.ts.
  */
 function clampProfile(raw) {
-  const p = raw ?? {};
+  const p =
+    raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
   const asString = (v: unknown, max: number) =>
     typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null;
-  const stageNum = Number(p.stage);
   return {
     firstName: asString(p.firstName, 80),
     persona:
       typeof p.persona === 'string' && VALID_PERSONAS.includes(p.persona)
         ? p.persona
         : null,
+    // Require an actual integer — Number("0")/Number(false)/Number("") coerce to
+    // 0 and would otherwise pass as a valid stage.
     stage:
-      Number.isInteger(stageNum) && stageNum >= 0 && stageNum <= 4
-        ? stageNum
+      typeof p.stage === 'number' &&
+      Number.isInteger(p.stage) &&
+      p.stage >= 0 &&
+      p.stage <= 4
+        ? p.stage
         : null,
     city: asString(p.city, 80),
     province: asString(p.province, 40),
     email: asString(p.email, 160),
+    // hasOwnProperty, not `in`: `in` walks the prototype chain, so "toString" /
+    // "__proto__" would wrongly pass.
     responseLanguage:
       typeof p.responseLanguage === 'string' &&
-      p.responseLanguage in LANGUAGE_NAMES
+      Object.prototype.hasOwnProperty.call(LANGUAGE_NAMES, p.responseLanguage)
         ? p.responseLanguage
         : 'en',
   };
