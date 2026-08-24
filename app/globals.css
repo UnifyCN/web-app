@@ -317,6 +317,13 @@ input:-webkit-autofill:active {
  * selectable (ATS-friendly) — no rasterization. The user picks "Save as PDF".
  */
 @media print {
+  /* Let the page collapse to the resume's height so the app shell's full-height
+     flex layout (h-dvh) doesn't emit trailing blank pages after the resume. */
+  html,
+  body {
+    height: auto !important;
+    min-height: 0 !important;
+  }
   body * {
     visibility: hidden !important;
   }

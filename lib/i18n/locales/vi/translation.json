@@ -1913,6 +1913,10 @@
       "suggestion1": "Tôi từng làm thu ngân ở một cửa hàng",
       "suggestion2": "Tôi chưa đi làm ở Canada, tôi đến để học",
       "suggestion3": "Tôi từng làm tình nguyện ở quê nhà"
-    }
+    },
+    "download": "Tải xuống",
+    "downloadDocx": "Tải xuống Word (.docx)",
+    "exporting": "Đang xuất…",
+    "exportFailed": "Không thể xuất tệp. Vui lòng thử lại."
   }
 }
