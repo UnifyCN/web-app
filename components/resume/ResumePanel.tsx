@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -36,6 +37,14 @@ export function ResumePanel({
   const { t } = useTranslation();
   const toast = useToast();
   const [exporting, setExporting] = useState(false);
+  // Client-only gate for the print portal: hydration-safe (server + first client
+  // render agree it's not mounted, then it flips to true after hydration) and
+  // avoids a setState-in-effect.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   // PDF: isolated by the @media print block (globals.css) to the .resume-paper
   // node, so it exports selectable, ATS-friendly text via the browser print dialog.
@@ -131,6 +140,17 @@ export function ResumePanel({
         )}
         <ResumePaper data={data} />
       </div>
+
+      {/* Print-only copy: portaled to <body> so PDF export (window.print)
+          prints just the resume in normal flow, not the app shell. Hidden on
+          screen via `.resume-print-root`; shown only under @media print. */}
+      {mounted &&
+        createPortal(
+          <div className="resume-print-root" aria-hidden>
+            <ResumePaper data={data} />
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
