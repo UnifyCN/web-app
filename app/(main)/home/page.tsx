@@ -19,6 +19,7 @@ import {
   useForYouFeed,
   useGroupsFeed,
 } from "@/hooks/useFeed";
+import { ResumeAnnouncementModal } from "@/components/resume/ResumeAnnouncementModal";
 
 /** Empty-state copy per feed tab — i18n keys, translated at render. */
 const FEED_EMPTY: Record<FeedTab, { titleKey: string; subKey: string }> = {
@@ -185,6 +186,10 @@ export default function HomePage() {
       </div>
 
       <ComposeButton />
+
+      {/* First-visit announcement for the resume builder (self-contained:
+          shows once per browser, CTA navigates to /resume). */}
+      <ResumeAnnouncementModal />
     </div>
   );
 }

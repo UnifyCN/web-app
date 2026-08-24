@@ -1913,6 +1913,12 @@
       "suggestion1": "Trabajé como cajero en una tienda",
       "suggestion2": "Todavía no he trabajado en Canadá, vine a estudiar",
       "suggestion3": "Hice trabajo voluntario en mi país de origen"
+    },
+    "announcement": {
+      "title": "Descubre el Creador de currículum con IA",
+      "body": "Crea un currículum profesional y claro solo conversando. Responde algunas preguntas sencillas y descárgalo en PDF o Word. Sin escribir desde cero.",
+      "cta": "Llévame ahí",
+      "dismiss": "Quizás luego"
     }
   }
 }

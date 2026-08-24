@@ -1913,6 +1913,12 @@
       "suggestion1": "Tôi từng làm thu ngân ở một cửa hàng",
       "suggestion2": "Tôi chưa đi làm ở Canada, tôi đến để học",
       "suggestion3": "Tôi từng làm tình nguyện ở quê nhà"
+    },
+    "announcement": {
+      "title": "Khám phá Trình tạo hồ sơ AI",
+      "body": "Tạo một hồ sơ chuyên nghiệp, gọn gàng chỉ bằng cách trò chuyện. Trả lời vài câu hỏi đơn giản và tải về dưới dạng PDF hoặc Word. Không cần viết từ đầu.",
+      "cta": "Đưa tôi đến đó",
+      "dismiss": "Để sau"
     }
   }
 }
