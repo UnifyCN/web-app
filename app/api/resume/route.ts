@@ -87,8 +87,10 @@ function clampHistory(
   ) {
     const r = (raw[i] ?? {}) as Record<string, unknown>;
     const role: ResumeChatRole = r.role === "assistant" ? "assistant" : "user";
+    // Trim before the truthiness check so whitespace-only entries don't count
+    // toward RESUME_HISTORY_TURNS and displace real history.
     const content =
-      typeof r.content === "string" ? r.content.slice(0, 4000) : "";
+      typeof r.content === "string" ? r.content.trim().slice(0, 4000) : "";
     if (content) out.unshift({ role, content });
   }
   return out;
