@@ -76,17 +76,22 @@ function clampHistory(
   raw: unknown,
 ): { role: ResumeChatRole; content: string }[] {
   if (!Array.isArray(raw)) return [];
+  // Walk newest-first and keep only the last RESUME_HISTORY_TURNS valid entries
+  // (in chronological order), so a huge client history isn't fully allocated
+  // just to be sliced away. Matches services/resume.ts + the edge function.
   const out: { role: ResumeChatRole; content: string }[] = [];
-  for (const item of raw) {
-    const r = (item ?? {}) as Record<string, unknown>;
-    const role = r.role === "assistant" ? "assistant" : "user";
+  for (
+    let i = raw.length - 1;
+    i >= 0 && out.length < RESUME_HISTORY_TURNS;
+    i -= 1
+  ) {
+    const r = (raw[i] ?? {}) as Record<string, unknown>;
+    const role: ResumeChatRole = r.role === "assistant" ? "assistant" : "user";
     const content =
       typeof r.content === "string" ? r.content.slice(0, 4000) : "";
-    if (content) out.push({ role, content });
+    if (content) out.unshift({ role, content });
   }
-  // Keep the NEWEST turns (drop the oldest) and bound to the shared history
-  // window, matching services/resume.ts and the resume-chat edge function.
-  return out.slice(-RESUME_HISTORY_TURNS);
+  return out;
 }
 
 export async function POST(req: NextRequest) {
@@ -100,7 +105,13 @@ export async function POST(req: NextRequest) {
 
   let body: Record<string, unknown>;
   try {
-    body = (await req.json()) as Record<string, unknown>;
+    const parsed = await req.json();
+    // `null`, arrays, and primitives parse as valid JSON but aren't request
+    // objects — reject them with a 400 instead of throwing a 500 on field access.
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    body = parsed as Record<string, unknown>;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
