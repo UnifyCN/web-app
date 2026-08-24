@@ -10,6 +10,8 @@ interface ChatInputProps {
   onSend: (text: string) => void;
   placeholder?: string;
   inputRef?: React.Ref<HTMLTextAreaElement>;
+  /** Blocks input + send while a turn is in flight (prevents concurrent sends). */
+  disabled?: boolean;
 }
 
 /** Companion message input — controlled; Enter sends, Shift+Enter inserts a newline. */
@@ -19,9 +21,10 @@ export function ChatInput({
   onSend,
   placeholder,
   inputRef,
+  disabled = false,
 }: ChatInputProps) {
   const { t } = useTranslation();
-  const canSend = value.trim().length > 0;
+  const canSend = !disabled && value.trim().length > 0;
 
   function send() {
     if (!canSend) return;
@@ -33,6 +36,7 @@ export function ChatInput({
       <textarea
         ref={inputRef}
         value={value}
+        disabled={disabled}
         onChange={(event) => onValueChange(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey) {

@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Settings, Handshake } from "lucide-react";
+import { User, Settings, Handshake, FileText } from "lucide-react";
 import { LearnIcon } from "@/components/icons/LearnIcon";
 import { ChecklistIcon } from "@/components/icons/ChecklistIcon";
 import { CompanionIcon } from "@/components/icons/CompanionIcon";
@@ -12,6 +12,10 @@ export interface NavItem {
   labelKey: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  /** Shown in the desktop sidebar only, hidden from the mobile bottom nav
+   *  (which is already at its 375px item ceiling). Used for web-first,
+   *  width-hungry features like the split-screen Resume Builder. */
+  desktopOnly?: boolean;
 }
 
 // Shared by the desktop left sidebar (Sidebar.tsx) and the mobile bottom nav
@@ -25,6 +29,12 @@ export const MAIN_NAV: NavItem[] = [
   { labelKey: "tabs.learn", href: "/learn", icon: LearnIcon },
   { labelKey: "tabs.checklist", href: "/checklist", icon: ChecklistIcon },
   { labelKey: "tabs.companion", href: "/companion", icon: CompanionIcon },
+  {
+    labelKey: "tabs.resume",
+    href: "/resume",
+    icon: FileText,
+    desktopOnly: true,
+  },
   { labelKey: "tabs.community", href: "/community", icon: CommunityIcon },
   { labelKey: "tabs.resources", href: "/resources", icon: Handshake },
   { labelKey: "tabs.social", href: "/home", icon: SocialIcon },

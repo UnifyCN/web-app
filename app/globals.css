@@ -309,3 +309,38 @@ input:-webkit-autofill:active {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * Resume Builder — "Download PDF" prints ONLY the rendered resume, not the app
+ * shell or the chat. Classic single-element isolation: hide everything, re-show
+ * the .resume-paper subtree, and float it to the page origin. Text stays real +
+ * selectable (ATS-friendly) — no rasterization. The user picks "Save as PDF".
+ */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .resume-paper,
+  .resume-paper * {
+    visibility: visible !important;
+  }
+  .resume-paper {
+    position: absolute !important;
+    inset-inline-start: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    /* Physical page margins for print — absolute units (inches) are paper
+       geometry, intentionally not part of the screen brand-spacing scale. */
+    padding: 0.5in 0.55in !important;
+    box-shadow: none !important; /* also clears the Tailwind ring (ring == box-shadow) */
+
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page {
+    size: letter;
+    margin: 0;
+  }
+}
