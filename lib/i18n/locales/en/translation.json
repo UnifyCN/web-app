@@ -1923,6 +1923,33 @@
       "body": "Build a clean, professional resume just by chatting. Answer a few simple questions and download it to send to employers. No writing from scratch.",
       "cta": "Take me to it",
       "dismiss": "Maybe later"
+    },
+    "edit": {
+      "phone": "Phone",
+      "email": "Email",
+      "location": "City, Province",
+      "linkedin": "LinkedIn",
+      "website": "Website",
+      "summary": "Add a short professional summary (optional)",
+      "institution": "School or institution",
+      "degree": "Degree or program",
+      "dates": "Dates",
+      "title": "Job title",
+      "organization": "Company",
+      "projectName": "Project name",
+      "tech": "Tools / tech",
+      "bullet": "Describe what you did",
+      "addBullet": "Add point",
+      "removeBullet": "Remove point",
+      "removeEntry": "Remove",
+      "skillCategory": "Category",
+      "skillItems": "Skills (comma-separated)",
+      "addToResume": "Add to resume",
+      "addExperience": "Add experience",
+      "addEducation": "Add education",
+      "addProject": "Add project",
+      "addSkill": "Add skill",
+      "hint": "Click any text to edit it, or use \"Add to resume\" below."
     }
   }
 }

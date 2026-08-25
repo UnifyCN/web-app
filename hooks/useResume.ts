@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import * as resume from "@/services/resume";
+import type { ResumeUpdater } from "@/lib/resume/editOps";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
 import {
   DEFAULT_LANGUAGE,
@@ -215,6 +216,84 @@ export function useSendResumeMessage() {
       },
     },
   );
+}
+
+interface UpdateResumeInput {
+  draftId: string;
+  /** A functional update, applied to the FRESHEST resume at commit time. */
+  update: ResumeUpdater;
+}
+
+/**
+ * Serializes inline-edit persistence across all mutation instances. Rapid
+ * per-field commits fire one mutation each; without a barrier their async
+ * localStorage read-modify-writes race and a late writer resurrects a stale
+ * snapshot (wiping a just-added entry). Chaining the writes means each persists
+ * the LIVE cache resume in order, so the final commit wins deterministically.
+ */
+let editWriteChain: Promise<unknown> = Promise.resolve();
+
+/**
+ * Persist a manual inline edit to the draft's resume. Writes the SAME
+ * `draft.resume` the AI turn reads/writes (localStorage + cache), so chat-driven
+ * and manual edits stay in sync — a manual edit persisted here is what the next
+ * AI turn receives as `currentResume` and is instructed to preserve.
+ *
+ * Correctness rests on two things: `onMutate` applies the updater to the cache
+ * synchronously in call order (so the cache is always the fully-accumulated,
+ * correct state), and the persistence is serialized + reads that live cache at
+ * write time (so the last write commits the final state regardless of the order
+ * the async mutations happen to resolve in).
+ */
+export function useUpdateResumeData() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    ResumeDraft,
+    Error,
+    UpdateResumeInput,
+    { key: ReturnType<typeof draftKey> }
+  >({
+    mutationFn: ({ draftId }) => {
+      const user = queryClient.getQueryData<UserProfile>(CURRENT_USER_KEY);
+      const run = editWriteChain.then(() => {
+        // Read the live cache at WRITE time (not a captured snapshot): onMutate
+        // has already folded every prior edit into it in order.
+        const cached = queryClient.getQueryData<ResumeDraft>(draftKey(draftId));
+        if (!cached) throw new Error("Draft not found");
+        return resume.saveDraftResume(draftId, cached.resume, (data, fallback) =>
+          deriveTitle(data, user, fallback),
+        );
+      });
+      // Keep the chain alive but isolated from this write's failure.
+      editWriteChain = run.catch(() => {});
+      return run;
+    },
+    onMutate: async ({ draftId, update }) => {
+      const key = draftKey(draftId);
+      await queryClient.cancelQueries({ queryKey: key });
+      queryClient.setQueryData<ResumeDraft>(key, (prev) =>
+        prev ? { ...prev, resume: update(prev.resume) } : prev,
+      );
+      return { key };
+    },
+    onError: (_err, _vars, context) => {
+      // Re-sync from what actually persisted rather than rolling back to a
+      // pre-edit snapshot, which could drop a concurrent successful edit.
+      if (context?.key) {
+        queryClient.invalidateQueries({ queryKey: context.key });
+      }
+    },
+    onSuccess: (finalDraft) => {
+      // Merge the derived title/timestamp but KEEP the cache's resume — it may
+      // already hold a newer optimistic edit than this write's snapshot.
+      queryClient.setQueryData<ResumeDraft>(draftKey(finalDraft.id), (prev) =>
+        prev
+          ? { ...prev, title: finalDraft.title, updatedAt: finalDraft.updatedAt }
+          : finalDraft,
+      );
+      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
+    },
+  });
 }
 
 export function useDeleteResumeDraft() {

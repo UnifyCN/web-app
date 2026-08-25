@@ -16,12 +16,19 @@ import { DropdownMenu } from "@/components/ui/DropdownMenu";
 import { useToast } from "@/components/ui/ToastProvider";
 import { buildResumeDocx, resumeDocxFilename } from "@/lib/resume/exportDocx";
 import { ResumePaper } from "./ResumePaper";
+import type { ResumeUpdater } from "@/lib/resume/editOps";
 import type { ResumeData } from "@/types/resume";
 
 interface ResumePanelProps {
   data: ResumeData;
   isEmpty: boolean;
   complete: boolean;
+  /** True when a draft is active — the on-screen resume becomes inline-editable. */
+  editable: boolean;
+  /** True while an AI turn is in flight — blocks edits without flipping layout. */
+  editDisabled: boolean;
+  /** Commit a manual inline edit (a functional update on the resume). */
+  onEditResume: (update: ResumeUpdater) => void;
   /** Mobile master/detail: is the resume the visible pane (vs the chat)? */
   mobileActive: boolean;
   onBackToChat: () => void;
@@ -31,6 +38,9 @@ export function ResumePanel({
   data,
   isEmpty,
   complete,
+  editable,
+  editDisabled,
+  onEditResume,
   mobileActive,
   onBackToChat,
 }: ResumePanelProps) {
@@ -131,14 +141,23 @@ export function ResumePanel({
         />
       </header>
 
-      {/* Scrollable paper */}
+      {/* Scrollable paper — on-screen copy is inline-editable. */}
       <div className="scrollbar-thin flex-1 overflow-y-auto px-3 py-5 sm:px-6 sm:py-8">
-        {isEmpty && (
+        {editable ? (
+          <p className="mx-auto mb-3 max-w-[816px] text-center text-xs text-ink-placeholder">
+            {t("resume.edit.hint")}
+          </p>
+        ) : isEmpty ? (
           <p className="mx-auto mb-4 max-w-[816px] text-center text-xs text-ink-placeholder">
             {t("resume.buildingHint")}
           </p>
-        )}
-        <ResumePaper data={data} />
+        ) : null}
+        <ResumePaper
+          data={data}
+          editable={editable}
+          disabled={editDisabled}
+          onChange={onEditResume}
+        />
       </div>
 
       {/* Print-only copy: portaled to <body> so PDF export (window.print)

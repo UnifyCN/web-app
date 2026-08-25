@@ -16,6 +16,7 @@ import {
   RESUME_DAILY_MESSAGE_LIMIT,
   RESUME_HISTORY_TURNS,
   emptyResume,
+  normalizeResumeData,
 } from "@/lib/resume/schema";
 import type {
   ResumeChatMessage,
@@ -99,6 +100,34 @@ export async function saveDraft(draft: ResumeDraft): Promise<ResumeDraft> {
 
 export async function deleteDraft(id: string): Promise<void> {
   writeDrafts(readDrafts().filter((d) => d.id !== id));
+}
+
+/**
+ * Persist only the resume body + derived title of an existing draft, leaving the
+ * chat transcript and other fields as they are on disk. The whole body runs
+ * synchronously (no await), so it is an atomic read-modify-write: concurrent
+ * inline-edit commits can't interleave and lose each other's changes. Callers
+ * (useUpdateResumeData) additionally serialize these so the final commit wins.
+ */
+export async function saveDraftResume(
+  id: string,
+  nextResume: ResumeData,
+  deriveTitle: (data: ResumeData, fallback: string) => string,
+): Promise<ResumeDraft> {
+  const drafts = readDrafts();
+  const idx = drafts.findIndex((d) => d.id === id);
+  if (idx === -1) throw new Error("Draft not found");
+  const current = drafts[idx];
+  const normalized = normalizeResumeData(nextResume);
+  const finalDraft: ResumeDraft = {
+    ...current,
+    resume: normalized,
+    title: deriveTitle(normalized, current.title),
+    updatedAt: new Date().toISOString(),
+  };
+  drafts[idx] = finalDraft;
+  writeDrafts(drafts);
+  return finalDraft;
 }
 
 /** Build a brand-new draft. The opener message + prefilled contact are composed

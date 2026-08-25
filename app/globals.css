@@ -345,3 +345,26 @@ input:-webkit-autofill:active {
     margin: 0.5in 0.55in;
   }
 }
+
+/*
+ * Resume Builder — inline-editing affordances (on-screen only; the portaled
+ * print copy is read-only and never gets these). A subtle warm tint on hover/
+ * focus signals a field is editable without any edit-mode toggle, and empty
+ * fields show their placeholder.
+ */
+.resume-paper-editable .resume-editable {
+  cursor: text;
+  transition: background-color 120ms ease;
+}
+.resume-paper-editable .resume-editable:hover {
+  background-color: var(--color-primary-bg);
+}
+.resume-paper-editable .resume-editable:focus {
+  background-color: var(--color-primary-bg);
+  box-shadow: 0 0 0 2px var(--color-primary-subtle);
+}
+.resume-editable:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-ink-placeholder);
+  pointer-events: none;
+}
