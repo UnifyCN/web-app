@@ -6,14 +6,14 @@
  * far, returns strict JSON { reply, suggestions, resume, complete } from
  * DeepSeek (pinned deepseek/deepseek-v4-flash) via the shared OpenRouter helper.
  *
- * DEPLOY STATUS: NOT deployed to the shared project yet. The web prototype runs
- * the identical logic in-process at app/api/resume/route.ts (Node) so it works
- * with no Docker / functions-serve. This function is the production form, ready
- * to deploy once Savar signs off on adding a web-only function to shared infra
- * (and a real per-user quota RPC replaces the prototype's local rate limit).
+ * This is the production path: the web app reaches it through the same-origin
+ * /api/resume proxy (a server→server invoke that forwards the user's JWT),
+ * mirroring /api/companion → rag-query. Auth is re-validated in-function; the
+ * daily per-user quota is enforced via the check_and_increment_resume_usage /
+ * refund_resume_message RPCs (mirroring rag-query / translate-content).
  *
- * The prompt text + JSON contract + normalization here MIRROR
- * lib/resume/prompt.ts and lib/resume/schema.ts — keep the two in sync.
+ * The prompt text + JSON contract + the contact guard (preserveContact) are
+ * canonical here; normalization mirrors lib/resume/schema.ts — keep in sync.
  */
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -131,6 +131,7 @@ Interview the user about their background and turn their answers into a polished
 - Write ALL resume content in English, because this resume is for Canadian employers — even when you are talking to the user in ${langName}. Translate job titles ("asistente administrativa" → "Administrative Assistant"), degrees ("licenciatura en administración" → "Bachelor of Business Administration"), skill names, categories, and every bullet point into natural English. Keep real proper names (a specific company or school) as the user gave them. ONLY the "reply" and "suggestions" fields stay in ${langName}.
 - Preserve everything captured so far. Each turn, return the COMPLETE resume with all prior fields intact plus any updates from the latest answer.
 - Prefill: some contact fields may already be filled in the current resume — keep them; don't re-ask for what's already there. It's fine to ask once, near the end, for a phone number (and optionally LinkedIn) if still blank — but don't push if the user skips it.
+- Contact info is data, not prose to rewrite. Copy every filled contact field (name, email, phone, location, linkedin, website) from CURRENT_RESUME_JSON VERBATIM unless the user explicitly asks to change that field. Apply an explicitly requested value, never a bracketed placeholder like "[EMAIL]" or "[PHONE]", and leave unavailable values as "".
 
 # Suggestions (tappable example answers)
 - Provide 2–3 short example answers to the QUESTION YOU JUST ASKED — realistic things THIS user might tap and lightly edit, so users who struggle to type still make progress.
@@ -320,6 +321,25 @@ function normalizeResume(v) {
 
 // ---------------------------------------------------------------------------
 
+const CONTACT_PLACEHOLDER = /^\s*\[[^\]]*\]\s*$/;
+
+/**
+ * Contact identifiers are facts, not prose to "improve". If the model swaps a
+ * value for a "[EMAIL]"-style placeholder, drop it: restore the prior REAL value
+ * or blank the field — a placeholder must never survive. Genuine changes/clears
+ * pass through.
+ */
+function preserveContact(current, next) {
+  const prev = current.contact ?? {};
+  const contact = { ...next.contact };
+  for (const key of Object.keys(contact)) {
+    if (!CONTACT_PLACEHOLDER.test(contact[key] ?? '')) continue;
+    const prior = prev[key] ?? '';
+    contact[key] = CONTACT_PLACEHOLDER.test(prior) ? '' : prior;
+  }
+  return { ...next, contact };
+}
+
 Deno.serve(async req => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -335,6 +355,22 @@ Deno.serve(async req => {
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+  // Set once we've charged the daily quota; refundQuota() is a no-op until then,
+  // and gives the message back on any failure after the charge.
+  let incrementedUserId = null;
+  const refundQuota = async () => {
+    if (!incrementedUserId) return;
+    try {
+      // supabase-js resolves (doesn't reject) on a PostgREST error — inspect it.
+      const { error } = await supabase.rpc('refund_resume_message', {
+        p_user_id: incrementedUserId,
+      });
+      if (error) console.error('resume-chat refund failed:', error);
+    } catch (e) {
+      console.error('resume-chat refund threw:', e);
+    }
+  };
 
   try {
     const token = req.headers.get('Authorization')?.replace('Bearer ', '');
@@ -358,6 +394,24 @@ Deno.serve(async req => {
     if (message.length > 2000) {
       return jsonResponse({ error: 'Message is too long' }, 413);
     }
+
+    // Daily per-user quota (mirrors rag-query / translate-content): charge before
+    // generating, refund below if the turn fails. Fail closed on an RPC error.
+    const { data: quotaOk, error: quotaError } = await supabase.rpc(
+      'check_and_increment_resume_usage',
+      { p_user_id: authData.user.id, p_daily_limit: 60 },
+    );
+    if (quotaError) {
+      console.error('resume-chat quota RPC failed:', quotaError);
+      return jsonResponse({ error: 'Could not verify usage' }, 500);
+    }
+    if (!quotaOk) {
+      return jsonResponse(
+        { error: 'Daily resume-builder limit reached.', code: 'daily_limit_reached' },
+        429,
+      );
+    }
+    incrementedUserId = authData.user.id;
 
     const history = Array.isArray(body.history)
       ? body.history
@@ -392,6 +446,7 @@ Deno.serve(async req => {
 
     if (!llmResult.ok) {
       console.error('resume-chat OpenRouter call failed:', llmResult.message);
+      await refundQuota();
       let status = 502;
       if (llmResult.status === 504) status = 504;
       else if (llmResult.retryable) status = 503;
@@ -423,16 +478,18 @@ Deno.serve(async req => {
           complete: false,
         });
       }
+      await refundQuota();
       return jsonResponse({ error: 'Unexpected model response' }, 502);
     }
 
     return jsonResponse({
       reply: parsed.reply,
       suggestions: parsed.suggestions,
-      resume: normalizeResume(parsed.resume),
+      resume: preserveContact(currentResume, normalizeResume(parsed.resume)),
       complete: parsed.complete,
     });
   } catch (error) {
+    await refundQuota();
     if (error instanceof Error && error.name === 'AbortError') {
       return jsonResponse({ error: 'Request timed out' }, 504);
     }

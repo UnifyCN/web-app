@@ -266,8 +266,10 @@ export function useUpdateResumeData() {
         // has already folded every prior edit into it in order.
         const cached = queryClient.getQueryData<ResumeDraft>(draftKey(draftId));
         if (!cached) throw new Error("Draft not found");
-        return resume.saveDraftResume(draftId, cached.resume, (data, fallback) =>
-          deriveTitle(data, user, fallback),
+        return resume.saveDraftResume(
+          draftId,
+          cached.resume,
+          deriveTitle(cached.resume, user, cached.title),
         );
       });
       // Keep the chain alive but isolated from this write's failure.
