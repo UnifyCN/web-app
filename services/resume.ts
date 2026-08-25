@@ -96,8 +96,6 @@ export async function listDrafts(): Promise<ResumeDraftSummary[]> {
   const ctx = await authed();
   if (!ctx) return localListDrafts();
 
-  await importLocalDraftsOnce(ctx);
-
   const { data, error } = await ctx.supabase
     .from("resume_drafts")
     .select("id, title, updated_at, complete")
@@ -241,82 +239,13 @@ export async function getResumeUsage(): Promise<{
 }
 
 /* ================================================================== *
- * One-time localStorage → DB import (run once per browser).
- * ================================================================== */
-
-const IMPORT_FLAG_PREFIX = "unify_resume_imported_v1";
-/** Records which account claimed this browser's legacy local drafts. */
-const IMPORT_OWNER_KEY = "unify_resume_owner_v1";
-
-function importFlagKey(userId: string): string {
-  return `${IMPORT_FLAG_PREFIX}:${userId}`;
-}
-
-/**
- * When a user who built drafts in the localStorage prototype first loads the
- * DB-backed version, upload those drafts once (only if they have none on the
- * server yet), so the cutover doesn't hide in-progress work.
- *
- * The legacy local drafts carry no owner, so on a SHARED browser they must not
- * leak between accounts: the first account to load *claims* them
- * (`IMPORT_OWNER_KEY`) and consumes the blob (delete after import), and every
- * other account skips them entirely. The flag is also keyed per-user so one
- * account can't suppress another's import. Idempotent (upsert by id), flag-gated
- * so it never re-imports (e.g. resurrecting a deleted draft), and non-fatal.
- */
-async function importLocalDraftsOnce(ctx: {
-  supabase: ReturnType<typeof createClient>;
-  userId: string;
-}): Promise<void> {
-  if (!hasStorage()) return;
-  const flagKey = importFlagKey(ctx.userId);
-  try {
-    if (window.localStorage.getItem(flagKey)) return;
-
-    const owner = window.localStorage.getItem(IMPORT_OWNER_KEY);
-    // Someone else already claimed this browser's local drafts — never touch them.
-    if (owner && owner !== ctx.userId) {
-      window.localStorage.setItem(flagKey, new Date().toISOString());
-      return;
-    }
-
-    const local = readLocalDrafts();
-    if (local.length > 0) {
-      const { count, error: countError } = await ctx.supabase
-        .from("resume_drafts")
-        .select("id", { count: "exact", head: true });
-      if (countError) throw countError;
-
-      if ((count ?? 0) === 0) {
-        const { error } = await ctx.supabase.from("resume_drafts").upsert(
-          local.map((d) => ({
-            id: d.id,
-            user_id: ctx.userId,
-            title: d.title,
-            resume: normalizeResumeData(d.resume),
-            messages: d.messages ?? [],
-            complete: d.complete ?? false,
-            created_at: d.createdAt,
-            updated_at: d.updatedAt,
-          })),
-          { onConflict: "id" },
-        );
-        if (error) throw error;
-        // Consume the blob so no other account on this browser imports it later.
-        window.localStorage.removeItem(DRAFTS_KEY);
-      }
-      // Claim ownership either way, so a second account can't grab these drafts.
-      window.localStorage.setItem(IMPORT_OWNER_KEY, ctx.userId);
-    }
-    window.localStorage.setItem(flagKey, new Date().toISOString());
-  } catch (err) {
-    // Leave the flag unset so it retries next load; don't block the list.
-    console.error("Resume: one-time localStorage import failed", err);
-  }
-}
-
-/* ================================================================== *
  * localStorage fallback (env-not-configured / local dev without Supabase).
+ *
+ * NB: prototype-era drafts that live only in a browser's localStorage are NOT
+ * migrated to the DB — a one-time import was considered and dropped because the
+ * legacy drafts carry no owner, so on a shared/public device (common for this
+ * app's users) it could expose one person's resume to the next. New users on the
+ * persisted version simply start fresh.
  * ================================================================== */
 
 const DRAFTS_KEY = "unify_resume_drafts_v1";
