@@ -11,6 +11,7 @@ import {
   useResumeDrafts,
   useResumeUsage,
   useSendResumeMessage,
+  useUpdateResumeData,
 } from "@/hooks/useResume";
 import { useCurrentUser } from "@/hooks/useProfile";
 import {
@@ -22,6 +23,7 @@ import {
   emptyResume,
   isResumeEmpty,
 } from "@/lib/resume/schema";
+import type { ResumeUpdater } from "@/lib/resume/editOps";
 
 /**
  * AI Resume Builder — split screen: conversation (left) + live-rendering resume
@@ -49,6 +51,7 @@ export default function ResumePage() {
   const createDraft = useCreateResumeDraft();
   const sendMessage = useSendResumeMessage();
   const deleteDraft = useDeleteResumeDraft();
+  const updateResume = useUpdateResumeData();
 
   const remaining = usageQuery.data?.remaining ?? RESUME_DAILY_MESSAGE_LIMIT;
   const limitReached = remaining <= 0;
@@ -120,6 +123,14 @@ export default function ResumePage() {
     }
   }
 
+  // Manual inline edit → persist to the SAME draft.resume the AI reads/writes.
+  // Threaded as a functional updater (applied to the freshest resume at commit
+  // time). Guarded against an in-flight turn (which overwrites with its snapshot).
+  function handleEditResume(update: ResumeUpdater) {
+    if (!effectiveActiveId || sendMessage.isPending) return;
+    updateResume.mutate({ draftId: effectiveActiveId, update });
+  }
+
   const resumeData = draft?.resume ?? emptyResume();
 
   return (
@@ -143,6 +154,9 @@ export default function ResumePage() {
         data={resumeData}
         isEmpty={isResumeEmpty(resumeData)}
         complete={draft?.complete ?? false}
+        editable={Boolean(draft)}
+        editDisabled={sendMessage.isPending}
+        onEditResume={handleEditResume}
         mobileActive={mobileShowResume}
         onBackToChat={() => setMobileShowResume(false)}
       />

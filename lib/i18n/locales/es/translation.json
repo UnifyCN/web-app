@@ -1923,6 +1923,33 @@
       "body": "Crea un currículum profesional y claro solo conversando. Responde algunas preguntas sencillas y descárgalo para enviarlo a los empleadores. Sin escribir desde cero.",
       "cta": "Llévame ahí",
       "dismiss": "Quizás luego"
+    },
+    "edit": {
+      "phone": "Teléfono",
+      "email": "Correo electrónico",
+      "location": "Ciudad, Provincia",
+      "linkedin": "LinkedIn",
+      "website": "Sitio web",
+      "summary": "Agrega un resumen profesional breve (opcional)",
+      "institution": "Escuela o institución",
+      "degree": "Título o programa",
+      "dates": "Fechas",
+      "title": "Puesto",
+      "organization": "Empresa",
+      "projectName": "Nombre del proyecto",
+      "tech": "Herramientas / tecnología",
+      "bullet": "Describe lo que hiciste",
+      "addBullet": "Agregar punto",
+      "removeBullet": "Quitar punto",
+      "removeEntry": "Quitar",
+      "skillCategory": "Categoría",
+      "skillItems": "Habilidades (separadas por comas)",
+      "addToResume": "Agregar al currículum",
+      "addExperience": "Agregar experiencia",
+      "addEducation": "Agregar educación",
+      "addProject": "Agregar proyecto",
+      "addSkill": "Agregar habilidad",
+      "hint": "Haz clic en cualquier texto para editarlo, o usa \"Agregar al currículum\" abajo."
     }
   }
 }

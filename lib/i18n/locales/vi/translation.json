@@ -1923,6 +1923,33 @@
       "body": "Tạo một hồ sơ chuyên nghiệp, gọn gàng chỉ bằng cách trò chuyện. Trả lời vài câu hỏi đơn giản và tải về để gửi cho nhà tuyển dụng. Không cần viết từ đầu.",
       "cta": "Đưa tôi đến đó",
       "dismiss": "Để sau"
+    },
+    "edit": {
+      "phone": "Số điện thoại",
+      "email": "Email",
+      "location": "Thành phố, Tỉnh",
+      "linkedin": "LinkedIn",
+      "website": "Trang web",
+      "summary": "Thêm một tóm tắt nghề nghiệp ngắn (tùy chọn)",
+      "institution": "Trường hoặc tổ chức",
+      "degree": "Bằng cấp hoặc chương trình",
+      "dates": "Thời gian",
+      "title": "Chức danh",
+      "organization": "Công ty",
+      "projectName": "Tên dự án",
+      "tech": "Công cụ / công nghệ",
+      "bullet": "Mô tả những gì bạn đã làm",
+      "addBullet": "Thêm ý",
+      "removeBullet": "Xóa ý",
+      "removeEntry": "Xóa",
+      "skillCategory": "Danh mục",
+      "skillItems": "Kỹ năng (phân tách bằng dấu phẩy)",
+      "addToResume": "Thêm vào hồ sơ",
+      "addExperience": "Thêm kinh nghiệm",
+      "addEducation": "Thêm học vấn",
+      "addProject": "Thêm dự án",
+      "addSkill": "Thêm kỹ năng",
+      "hint": "Nhấp vào bất kỳ văn bản nào để chỉnh sửa, hoặc dùng \"Thêm vào hồ sơ\" bên dưới."
     }
   }
 }

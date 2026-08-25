@@ -12,7 +12,35 @@
 
 import { buildTurnMessages, parseTurnResponse } from "./prompt";
 import { normalizeResumeData } from "./schema";
-import type { ResumeTurnRequest, ResumeTurnResponse } from "@/types/resume";
+import type {
+  ResumeData,
+  ResumeTurnRequest,
+  ResumeTurnResponse,
+} from "@/types/resume";
+
+/** A bracketed stand-in the model sometimes invents for contact info, e.g. "[EMAIL]". */
+const CONTACT_PLACEHOLDER = /^\s*\[[^\]]*\]\s*$/;
+
+/**
+ * Contact identifiers (email/phone/etc.) are facts, not prose to "improve". A
+ * turn occasionally swaps a real value for a "[EMAIL]"-style placeholder even
+ * though the prompt says to preserve it — which would silently wipe a value the
+ * user typed inline moments earlier. Whenever the model returns a bracketed
+ * placeholder, drop it: restore the prior REAL value if there is one, else blank
+ * the field — a placeholder must never survive into the resume. Genuine changes
+ * and genuine clears (any non-placeholder value, including "") pass through, so
+ * this never blocks a contact edit the user actually asked for.
+ */
+function preserveContact(current: ResumeData, next: ResumeData): ResumeData {
+  const prevContact = normalizeResumeData(current).contact;
+  const contact = { ...next.contact };
+  (Object.keys(contact) as (keyof typeof contact)[]).forEach((key) => {
+    if (!CONTACT_PLACEHOLDER.test(contact[key])) return;
+    const prev = prevContact[key];
+    contact[key] = CONTACT_PLACEHOLDER.test(prev) ? "" : prev;
+  });
+  return { ...next, contact };
+}
 
 const ENDPOINT = "https://openrouter.ai/api/v1/chat/completions";
 /** Savar's explicit model choice for the resume builder. */
@@ -123,7 +151,10 @@ export async function generateResumeTurn(
   return {
     reply: parsed.reply,
     suggestions: parsed.suggestions,
-    resume: normalizeResumeData(parsed.resume),
+    resume: preserveContact(
+      req.currentResume,
+      normalizeResumeData(parsed.resume),
+    ),
     complete: parsed.complete,
   };
 }
