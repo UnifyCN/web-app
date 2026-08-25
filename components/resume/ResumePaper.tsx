@@ -252,7 +252,7 @@ function EntryShell({
         type="button"
         onClick={onRemove}
         aria-label={removeLabel}
-        className="absolute -end-8 top-0 flex h-6 w-6 items-center justify-center rounded text-ink-placeholder opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary group-hover:opacity-100"
+        className="resume-remove-control absolute -end-8 top-0 flex h-6 w-6 items-center justify-center rounded text-ink-placeholder opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary group-hover:opacity-100"
       >
         <Trash2 className="h-3.5 w-3.5" aria-hidden />
       </button>
@@ -290,7 +290,7 @@ function EditBullets({
             type="button"
             onClick={() => onChange((prev) => removeBullet(prev, section, id, i))}
             aria-label={t("resume.edit.removeBullet")}
-            className="ms-1 inline-flex h-4 w-4 items-center justify-center rounded align-middle text-ink-placeholder opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover/b:opacity-100"
+            className="resume-remove-control ms-1 inline-flex h-4 w-4 items-center justify-center rounded align-middle text-ink-placeholder opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover/b:opacity-100"
           >
             <X className="h-3 w-3" aria-hidden />
           </button>

@@ -22,22 +22,22 @@ import type {
 const CONTACT_PLACEHOLDER = /^\s*\[[^\]]*\]\s*$/;
 
 /**
- * Contact identifiers (email/phone/etc.) are facts, not prose to "improve". Some
- * turns come back with a filled field blanked or swapped for a "[EMAIL]"-style
- * placeholder even though the prompt says to preserve it — which would silently
- * wipe a value the user typed inline moments earlier. Restore any prior non-empty
- * contact field the model dropped or placeholdered; genuine chat-driven changes
- * (a real new value) still pass through.
+ * Contact identifiers (email/phone/etc.) are facts, not prose to "improve". A
+ * turn occasionally swaps a real value for a "[EMAIL]"-style placeholder even
+ * though the prompt says to preserve it — which would silently wipe a value the
+ * user typed inline moments earlier. Whenever the model returns a bracketed
+ * placeholder, drop it: restore the prior REAL value if there is one, else blank
+ * the field — a placeholder must never survive into the resume. Genuine changes
+ * and genuine clears (any non-placeholder value, including "") pass through, so
+ * this never blocks a contact edit the user actually asked for.
  */
 function preserveContact(current: ResumeData, next: ResumeData): ResumeData {
   const prevContact = normalizeResumeData(current).contact;
   const contact = { ...next.contact };
   (Object.keys(contact) as (keyof typeof contact)[]).forEach((key) => {
+    if (!CONTACT_PLACEHOLDER.test(contact[key])) return;
     const prev = prevContact[key];
-    const val = contact[key].trim();
-    if (prev.trim() && (!val || CONTACT_PLACEHOLDER.test(val))) {
-      contact[key] = prev;
-    }
+    contact[key] = CONTACT_PLACEHOLDER.test(prev) ? "" : prev;
   });
   return { ...next, contact };
 }

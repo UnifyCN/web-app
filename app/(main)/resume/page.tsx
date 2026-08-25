@@ -154,7 +154,7 @@ export default function ResumePage() {
         data={resumeData}
         isEmpty={isResumeEmpty(resumeData)}
         complete={draft?.complete ?? false}
-        editable={!!effectiveActiveId}
+        editable={Boolean(draft)}
         editDisabled={sendMessage.isPending}
         onEditResume={handleEditResume}
         mobileActive={mobileShowResume}

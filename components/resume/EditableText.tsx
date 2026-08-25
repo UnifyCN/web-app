@@ -67,6 +67,9 @@ export function EditableText({
         if (text !== value) onCommit(text);
       }}
       onKeyDown={(e) => {
+        // Don't treat Enter/Escape as commit/cancel mid-IME-composition (CJK and
+        // other input methods use them to pick/clear a candidate).
+        if (e.nativeEvent.isComposing) return;
         if (e.key === "Enter") {
           e.preventDefault();
           e.currentTarget.blur();

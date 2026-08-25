@@ -127,6 +127,17 @@ function deriveTitle(
   return fallback;
 }
 
+/**
+ * Serializes inline-edit persistence across all mutation instances. Rapid
+ * per-field commits fire one mutation each; without a barrier their async
+ * localStorage read-modify-writes race and a late writer resurrects a stale
+ * snapshot (wiping a just-added entry). Chaining the writes means each persists
+ * the LIVE cache resume in order, so the final commit wins deterministically.
+ * A send also awaits this chain so a manual edit made moments earlier is flushed
+ * to storage before the AI turn reads `currentResume`.
+ */
+let editWriteChain: Promise<unknown> = Promise.resolve();
+
 interface SendInput {
   draftId: string;
   text: string;
@@ -144,6 +155,10 @@ export function useSendResumeMessage() {
   return useMutation<ResumeDraft, Error, SendInput, { key: ReturnType<typeof draftKey> }>(
     {
       mutationFn: async ({ draftId, text }) => {
+        // Flush any in-flight inline-edit writes first, so a manual edit made
+        // moments before hitting send is already in storage — otherwise this
+        // turn would read a stale `currentResume` and overwrite that edit.
+        await editWriteChain;
         // Read from the persisted store, NOT the query cache: onMutate has
         // already appended an optimistic user bubble to the cache, so reading
         // the cache here would double-count it into the saved draft.
@@ -223,15 +238,6 @@ interface UpdateResumeInput {
   /** A functional update, applied to the FRESHEST resume at commit time. */
   update: ResumeUpdater;
 }
-
-/**
- * Serializes inline-edit persistence across all mutation instances. Rapid
- * per-field commits fire one mutation each; without a barrier their async
- * localStorage read-modify-writes race and a late writer resurrects a stale
- * snapshot (wiping a just-added entry). Chaining the writes means each persists
- * the LIVE cache resume in order, so the final commit wins deterministically.
- */
-let editWriteChain: Promise<unknown> = Promise.resolve();
 
 /**
  * Persist a manual inline edit to the draft's resume. Writes the SAME
