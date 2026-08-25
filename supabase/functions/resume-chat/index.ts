@@ -362,9 +362,13 @@ Deno.serve(async req => {
   const refundQuota = async () => {
     if (!incrementedUserId) return;
     try {
-      await supabase.rpc('refund_resume_message', { p_user_id: incrementedUserId });
+      // supabase-js resolves (doesn't reject) on a PostgREST error — inspect it.
+      const { error } = await supabase.rpc('refund_resume_message', {
+        p_user_id: incrementedUserId,
+      });
+      if (error) console.error('resume-chat refund failed:', error);
     } catch (e) {
-      console.error('resume-chat refund failed:', e);
+      console.error('resume-chat refund threw:', e);
     }
   };
 

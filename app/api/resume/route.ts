@@ -64,21 +64,25 @@ export async function POST(req: NextRequest) {
     // its status (429 daily-limit, 503/504 busy) and JSON error body so the
     // client can distinguish "limit reached" / "busy" from a hard failure.
     let status = 502;
-    let errMessage =
-      error.message || "The resume assistant is busy. Please try again.";
+    let errorBody: Record<string, unknown> = {
+      error: error.message || "The resume assistant is busy. Please try again.",
+    };
     const ctx = (error as { context?: Response }).context;
     if (ctx && typeof ctx.status === "number") {
       status = ctx.status;
       if (typeof ctx.json === "function") {
         try {
-          const j = (await ctx.json()) as { error?: string };
-          if (j?.error) errMessage = j.error;
+          const j: unknown = await ctx.json();
+          // Preserve the edge fn's full error contract (e.g. `code`).
+          if (j && typeof j === "object" && !Array.isArray(j)) {
+            errorBody = j as Record<string, unknown>;
+          }
         } catch {
           // non-JSON error body — keep the generic message
         }
       }
     }
-    return NextResponse.json({ error: errMessage }, { status });
+    return NextResponse.json(errorBody, { status });
   }
 
   // resume-chat returns a non-streaming application/json body, so supabase-js

@@ -60,8 +60,9 @@ create policy "resume_usage_select_own" on public.resume_usage
 grant all on public.resume_usage to service_role;
 grant select on public.resume_usage to authenticated;
 
--- Atomic check + increment with day rollover (UTC, via current_date); returns
--- false (and undoes the increment) once the caller is over the daily limit.
+-- Atomic check + increment with day rollover pinned to UTC (so the reset never
+-- disagrees with the client's UTC "messages left" read under a stray session
+-- timezone); returns false (and undoes the increment) once over the daily limit.
 create or replace function public.check_and_increment_resume_usage(
   p_user_id uuid,
   p_daily_limit integer default 60
@@ -77,7 +78,8 @@ begin
   values (p_user_id, 1, now())
   on conflict (user_id) do update set
     message_count = case
-      when resume_usage.last_message_at::date = current_date
+      when (resume_usage.last_message_at at time zone 'UTC')::date
+             = (now() at time zone 'UTC')::date
         then resume_usage.message_count + 1
       else 1
     end,
@@ -107,7 +109,7 @@ begin
   update public.resume_usage
     set message_count = greatest(message_count - 1, 0)
     where user_id = p_user_id
-      and last_message_at::date = current_date;
+      and (last_message_at at time zone 'UTC')::date = (now() at time zone 'UTC')::date;
 end;
 $$;
 
