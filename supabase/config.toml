@@ -36,3 +36,11 @@ verify_jwt = true
 # rationale as news-crawler: cron-only, no browser/CORS preflight surface, so the
 # gateway can verify the service-role bearer and the function trusts its `role` claim.
 verify_jwt = true
+
+[functions.resume-chat]
+# AI resume-builder turn generator. Same rationale as rag-query: the web app calls it
+# through the same-origin /api/resume proxy (a server→server invoke that forwards the
+# user's JWT), and the function re-validates the JWT in-function (supabase.auth.getUser)
+# as defense-in-depth. verify_jwt stays ON — no unauthenticated browser preflight needs
+# to reach it.
+verify_jwt = true
