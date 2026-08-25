@@ -187,6 +187,49 @@ export async function saveDraftResume(
   return rowToDraft(data as unknown as ResumeDraftRow);
 }
 
+/** Rename a draft (title only), leaving the resume body + transcript untouched. */
+export async function renameDraft(
+  id: string,
+  title: string,
+): Promise<ResumeDraft> {
+  const ctx = await authed();
+  if (!ctx) return localRenameDraft(id, title);
+
+  const { data, error } = await ctx.supabase
+    .from("resume_drafts")
+    .update({ title, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select(DRAFT_COLS)
+    .single();
+  if (error) throw error;
+  return rowToDraft(data as unknown as ResumeDraftRow);
+}
+
+/**
+ * Duplicate a draft into a brand-new, fully independent row: a fresh id, a deep
+ * copy of the resume + transcript (regenerated message ids), and the given title
+ * (the caller composes the localized "Copy of …"). Built on getDraft + saveDraft,
+ * so it inherits both the Supabase and localStorage paths without a twin.
+ */
+export async function duplicateDraft(
+  id: string,
+  title: string,
+): Promise<ResumeDraft> {
+  const source = await getDraft(id);
+  if (!source) throw new Error("Draft not found");
+  const now = new Date().toISOString();
+  const clone: ResumeDraft = {
+    id: crypto.randomUUID(),
+    title,
+    createdAt: now,
+    updatedAt: now,
+    resume: structuredClone(source.resume),
+    messages: source.messages.map((m) => ({ ...m, id: crypto.randomUUID() })),
+    complete: false,
+  };
+  return saveDraft(clone);
+}
+
 /** Build a brand-new draft. The opener message + prefilled contact are composed
  *  by the caller (the hook) so localization stays in the component layer. */
 export function newDraft(args: {
@@ -312,6 +355,23 @@ async function localSaveDraftResume(
   const finalDraft: ResumeDraft = {
     ...drafts[idx],
     resume: normalizeResumeData(nextResume),
+    title,
+    updatedAt: new Date().toISOString(),
+  };
+  drafts[idx] = finalDraft;
+  writeLocalDrafts(drafts);
+  return finalDraft;
+}
+
+async function localRenameDraft(
+  id: string,
+  title: string,
+): Promise<ResumeDraft> {
+  const drafts = readLocalDrafts();
+  const idx = drafts.findIndex((d) => d.id === id);
+  if (idx === -1) throw new Error("Draft not found");
+  const finalDraft: ResumeDraft = {
+    ...drafts[idx],
     title,
     updatedAt: new Date().toISOString(),
   };

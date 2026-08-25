@@ -128,6 +128,22 @@ function deriveTitle(
 }
 
 /**
+ * True while a draft's title is still auto-managed (not manually renamed). It's
+ * compared against the auto-title computed with the CREATION-DEFAULT placeholder
+ * as the fallback — NOT the current title. That matters for a draft renamed
+ * before it has any job: deriveTitle would otherwise fall back to the current
+ * title and make every no-job title look "auto", clobbering the rename on the
+ * next turn. Against the placeholder, a custom title diverges and is preserved.
+ */
+function isAutoTitle(
+  draft: ResumeDraft,
+  user: UserProfile | undefined,
+  placeholder: string,
+): boolean {
+  return draft.title === deriveTitle(draft.resume, user, placeholder);
+}
+
+/**
  * Serializes inline-edit persistence across all mutation instances. Rapid
  * per-field commits fire one mutation each; without a barrier their async
  * localStorage read-modify-writes race and a late writer resurrects a stale
@@ -151,7 +167,7 @@ interface SendInput {
  */
 export function useSendResumeMessage() {
   const queryClient = useQueryClient();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   return useMutation<ResumeDraft, Error, SendInput, { key: ReturnType<typeof draftKey> }>(
     {
       mutationFn: async ({ draftId, text }) => {
@@ -196,12 +212,21 @@ export function useSendResumeMessage() {
           suggestions: response.suggestions,
           createdAt: nowIso(),
         };
+        // The creation-default title (mirrors useCreateResumeDraft), used to tell
+        // an auto-managed title from a manual rename.
+        const name = user?.onboarding?.firstName?.trim();
+        const placeholder = name
+          ? t("resume.draftTitleNamed", { name })
+          : t("resume.untitled");
         const finalDraft: ResumeDraft = {
           ...withUser,
           messages: [...withUser.messages, assistantMessage],
           resume: response.resume,
           complete: response.complete,
-          title: deriveTitle(response.resume, user, draft.title),
+          // Only auto-retitle if the user hasn't renamed this draft.
+          title: isAutoTitle(draft, user, placeholder)
+            ? deriveTitle(response.resume, user, draft.title)
+            : draft.title,
         };
         return resume.saveDraft(finalDraft);
       },
@@ -260,17 +285,14 @@ export function useUpdateResumeData() {
     { key: ReturnType<typeof draftKey> }
   >({
     mutationFn: ({ draftId }) => {
-      const user = queryClient.getQueryData<UserProfile>(CURRENT_USER_KEY);
       const run = editWriteChain.then(() => {
         // Read the live cache at WRITE time (not a captured snapshot): onMutate
         // has already folded every prior edit into it in order.
         const cached = queryClient.getQueryData<ResumeDraft>(draftKey(draftId));
         if (!cached) throw new Error("Draft not found");
-        return resume.saveDraftResume(
-          draftId,
-          cached.resume,
-          deriveTitle(cached.resume, user, cached.title),
-        );
+        // Inline edits don't retitle the draft — auto-titling is a coaching-turn
+        // behavior, and explicit rename lives in the My Resumes list.
+        return resume.saveDraftResume(draftId, cached.resume, cached.title);
       });
       // Keep the chain alive but isolated from this write's failure.
       editWriteChain = run.catch(() => {});
@@ -310,6 +332,45 @@ export function useDeleteResumeDraft() {
     mutationFn: (id) => resume.deleteDraft(id),
     onSuccess: (_data, id) => {
       queryClient.removeQueries({ queryKey: draftKey(id) });
+      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
+    },
+  });
+}
+
+interface RenameInput {
+  id: string;
+  title: string;
+}
+
+/** Rename a draft (title only). Doesn't touch the resume body, so it stays out
+ *  of the inline-edit `editWriteChain`. */
+export function useRenameDraft() {
+  const queryClient = useQueryClient();
+  return useMutation<ResumeDraft, Error, RenameInput>({
+    mutationFn: ({ id, title }) => resume.renameDraft(id, title),
+    onSuccess: (draft) => {
+      queryClient.setQueryData<ResumeDraft>(draftKey(draft.id), (prev) =>
+        prev ? { ...prev, title: draft.title, updatedAt: draft.updatedAt } : draft,
+      );
+      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
+    },
+  });
+}
+
+interface DuplicateInput {
+  id: string;
+  /** The localized "Copy of …" title, composed by the caller. */
+  title: string;
+}
+
+/** Duplicate a draft into a new independent row; returns the new draft so the
+ *  caller can navigate to it. */
+export function useDuplicateDraft() {
+  const queryClient = useQueryClient();
+  return useMutation<ResumeDraft, Error, DuplicateInput>({
+    mutationFn: ({ id, title }) => resume.duplicateDraft(id, title),
+    onSuccess: (draft) => {
+      queryClient.setQueryData(draftKey(draft.id), draft);
       queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
     },
   });

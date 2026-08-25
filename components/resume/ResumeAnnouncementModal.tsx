@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { motion, useReducedMotion } from "framer-motion";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { cn, RTL_FLIP } from "@/lib/utils";
+import { useCreateResumeDraft, useResumeDrafts } from "@/hooks/useResume";
 
 /**
  * First-visit announcement for the AI Resume Builder (Savar's big-feature launch
@@ -105,6 +106,8 @@ export function ResumeAnnouncementModal() {
   const { t } = useTranslation();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const draftsQuery = useResumeDrafts();
+  const createDraft = useCreateResumeDraft();
 
   // Post-mount localStorage read (hydration-safe: server + first client render
   // both render nothing, matching the HelpFab pattern).
@@ -132,10 +135,28 @@ export function ResumeAnnouncementModal() {
     setOpen(false);
   }
 
-  function goToResume() {
+  // Drop the user straight into an editor: reopen their most recent resume, or
+  // create a fresh one (the common first-visit case). If the list hasn't loaded
+  // yet, fall back to /resume so we never spawn a spurious empty draft.
+  async function goToResume() {
     markSeen();
     setOpen(false);
-    router.push("/resume");
+    const drafts = draftsQuery.data;
+    if (drafts === undefined) {
+      router.push("/resume");
+      return;
+    }
+    if (drafts.length > 0) {
+      router.push(`/resume/${drafts[0].id}`);
+      return;
+    }
+    try {
+      const created = await createDraft.mutateAsync();
+      router.push(`/resume/${created.id}`);
+    } catch (err) {
+      console.error("Resume: announcement CTA failed", err);
+      router.push("/resume");
+    }
   }
 
   return (
