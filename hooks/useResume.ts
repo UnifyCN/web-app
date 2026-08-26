@@ -136,11 +136,12 @@ function deriveTitle(
  * next turn. Against the placeholder, a custom title diverges and is preserved.
  */
 function isAutoTitle(
-  draft: ResumeDraft,
+  title: string,
+  resume: ResumeData,
   user: UserProfile | undefined,
   placeholder: string,
 ): boolean {
-  return draft.title === deriveTitle(draft.resume, user, placeholder);
+  return title === deriveTitle(resume, user, placeholder);
 }
 
 /**
@@ -218,15 +219,21 @@ export function useSendResumeMessage() {
         const placeholder = name
           ? t("resume.draftTitleNamed", { name })
           : t("resume.untitled");
+        // Use the LATEST known title, not the pre-turn snapshot's: a rename may
+        // have landed (via the My Resumes list) while this turn was generating,
+        // and we must not overwrite it.
+        const latestTitle =
+          queryClient.getQueryData<ResumeDraft>(draftKey(draftId))?.title ??
+          draft.title;
         const finalDraft: ResumeDraft = {
           ...withUser,
           messages: [...withUser.messages, assistantMessage],
           resume: response.resume,
           complete: response.complete,
           // Only auto-retitle if the user hasn't renamed this draft.
-          title: isAutoTitle(draft, user, placeholder)
-            ? deriveTitle(response.resume, user, draft.title)
-            : draft.title,
+          title: isAutoTitle(latestTitle, draft.resume, user, placeholder)
+            ? deriveTitle(response.resume, user, latestTitle)
+            : latestTitle,
         };
         return resume.saveDraft(finalDraft);
       },
