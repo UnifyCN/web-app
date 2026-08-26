@@ -5,6 +5,7 @@ import type { ResumeUpdater } from "@/lib/resume/editOps";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
 import {
   DEFAULT_LANGUAGE,
+  SUPPORTED_LANGUAGES,
   isSupportedLanguage,
   type SupportedLanguage,
 } from "@/lib/i18n/config";
@@ -134,14 +135,22 @@ function deriveTitle(
  * before it has any job: deriveTitle would otherwise fall back to the current
  * title and make every no-job title look "auto", clobbering the rename on the
  * next turn. Against the placeholder, a custom title diverges and is preserved.
+ *
+ * `placeholders` is EVERY supported locale's default (not just the current one):
+ * a job-less draft stores its default in whatever locale was active at creation,
+ * so if the user later switches language the current-locale placeholder wouldn't
+ * match — and an auto title would be misread as a manual rename, permanently
+ * stuck on the generic default instead of upgrading to the job title. Matching
+ * any locale's default keeps the detection locale-robust. (Only the job-less
+ * fallback is locale-dependent; a job-based title is derived from resume data.)
  */
 function isAutoTitle(
   title: string,
   resume: ResumeData,
   user: UserProfile | undefined,
-  placeholder: string,
+  placeholders: string[],
 ): boolean {
-  return title === deriveTitle(resume, user, placeholder);
+  return placeholders.some((p) => title === deriveTitle(resume, user, p));
 }
 
 /**
@@ -213,12 +222,16 @@ export function useSendResumeMessage() {
           suggestions: response.suggestions,
           createdAt: nowIso(),
         };
-        // The creation-default title (mirrors useCreateResumeDraft), used to tell
-        // an auto-managed title from a manual rename.
+        // The creation-default titles (mirror useCreateResumeDraft) used to tell
+        // an auto-managed title from a manual rename — computed for EVERY supported
+        // locale, since a job-less draft's default is stored in whatever locale was
+        // active at creation and the user may have switched language since.
         const name = user?.onboarding?.firstName?.trim();
-        const placeholder = name
-          ? t("resume.draftTitleNamed", { name })
-          : t("resume.untitled");
+        const placeholders = Object.keys(SUPPORTED_LANGUAGES).map((lng) =>
+          name
+            ? t("resume.draftTitleNamed", { name, lng })
+            : t("resume.untitled", { lng }),
+        );
         // Use the LATEST known title, not the pre-turn snapshot's: a rename may
         // have landed (via the My Resumes list) while this turn was generating,
         // and we must not overwrite it.
@@ -231,7 +244,7 @@ export function useSendResumeMessage() {
           resume: response.resume,
           complete: response.complete,
           // Only auto-retitle if the user hasn't renamed this draft.
-          title: isAutoTitle(latestTitle, draft.resume, user, placeholder)
+          title: isAutoTitle(latestTitle, draft.resume, user, placeholders)
             ? deriveTitle(response.resume, user, latestTitle)
             : latestTitle,
         };
