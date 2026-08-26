@@ -1950,6 +1950,26 @@
       "addProject": "Add project",
       "addSkill": "Add skill",
       "hint": "Click any text to edit it, or use \"Add to resume\" below."
+    },
+    "list": {
+      "title": "My Resumes",
+      "backToList": "Back to my resumes",
+      "copyOf": "Copy of {{title}}",
+      "updated": "Updated {{time}}",
+      "ready": "Ready",
+      "actions": "Resume actions",
+      "rename": "Rename",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "deleteTitle": "Delete resume?",
+      "deleteConfirm": "Permanently delete “{{title}}”? This can’t be undone.",
+      "emptyTitle": "No resumes yet",
+      "emptyBody": "Create your first resume by chatting with the AI coach.",
+      "createFirst": "Create your first resume",
+      "renameTitle": "Rename resume",
+      "renameLabel": "Resume name",
+      "cancel": "Cancel",
+      "save": "Save"
     }
   }
 }

@@ -5,6 +5,7 @@ import type { ResumeUpdater } from "@/lib/resume/editOps";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
 import {
   DEFAULT_LANGUAGE,
+  SUPPORTED_LANGUAGES,
   isSupportedLanguage,
   type SupportedLanguage,
 } from "@/lib/i18n/config";
@@ -128,6 +129,31 @@ function deriveTitle(
 }
 
 /**
+ * True while a draft's title is still auto-managed (not manually renamed). It's
+ * compared against the auto-title computed with the CREATION-DEFAULT placeholder
+ * as the fallback — NOT the current title. That matters for a draft renamed
+ * before it has any job: deriveTitle would otherwise fall back to the current
+ * title and make every no-job title look "auto", clobbering the rename on the
+ * next turn. Against the placeholder, a custom title diverges and is preserved.
+ *
+ * `placeholders` is EVERY supported locale's default (not just the current one):
+ * a job-less draft stores its default in whatever locale was active at creation,
+ * so if the user later switches language the current-locale placeholder wouldn't
+ * match — and an auto title would be misread as a manual rename, permanently
+ * stuck on the generic default instead of upgrading to the job title. Matching
+ * any locale's default keeps the detection locale-robust. (Only the job-less
+ * fallback is locale-dependent; a job-based title is derived from resume data.)
+ */
+function isAutoTitle(
+  title: string,
+  resume: ResumeData,
+  user: UserProfile | undefined,
+  placeholders: string[],
+): boolean {
+  return placeholders.some((p) => title === deriveTitle(resume, user, p));
+}
+
+/**
  * Serializes inline-edit persistence across all mutation instances. Rapid
  * per-field commits fire one mutation each; without a barrier their async
  * localStorage read-modify-writes race and a late writer resurrects a stale
@@ -151,7 +177,7 @@ interface SendInput {
  */
 export function useSendResumeMessage() {
   const queryClient = useQueryClient();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   return useMutation<ResumeDraft, Error, SendInput, { key: ReturnType<typeof draftKey> }>(
     {
       mutationFn: async ({ draftId, text }) => {
@@ -196,12 +222,31 @@ export function useSendResumeMessage() {
           suggestions: response.suggestions,
           createdAt: nowIso(),
         };
+        // The creation-default titles (mirror useCreateResumeDraft) used to tell
+        // an auto-managed title from a manual rename — computed for EVERY supported
+        // locale, since a job-less draft's default is stored in whatever locale was
+        // active at creation and the user may have switched language since.
+        const name = user?.onboarding?.firstName?.trim();
+        const placeholders = Object.keys(SUPPORTED_LANGUAGES).map((lng) =>
+          name
+            ? t("resume.draftTitleNamed", { name, lng })
+            : t("resume.untitled", { lng }),
+        );
+        // Use the LATEST known title, not the pre-turn snapshot's: a rename may
+        // have landed (via the My Resumes list) while this turn was generating,
+        // and we must not overwrite it.
+        const latestTitle =
+          queryClient.getQueryData<ResumeDraft>(draftKey(draftId))?.title ??
+          draft.title;
         const finalDraft: ResumeDraft = {
           ...withUser,
           messages: [...withUser.messages, assistantMessage],
           resume: response.resume,
           complete: response.complete,
-          title: deriveTitle(response.resume, user, draft.title),
+          // Only auto-retitle if the user hasn't renamed this draft.
+          title: isAutoTitle(latestTitle, draft.resume, user, placeholders)
+            ? deriveTitle(response.resume, user, latestTitle)
+            : latestTitle,
         };
         return resume.saveDraft(finalDraft);
       },
@@ -260,17 +305,14 @@ export function useUpdateResumeData() {
     { key: ReturnType<typeof draftKey> }
   >({
     mutationFn: ({ draftId }) => {
-      const user = queryClient.getQueryData<UserProfile>(CURRENT_USER_KEY);
       const run = editWriteChain.then(() => {
         // Read the live cache at WRITE time (not a captured snapshot): onMutate
         // has already folded every prior edit into it in order.
         const cached = queryClient.getQueryData<ResumeDraft>(draftKey(draftId));
         if (!cached) throw new Error("Draft not found");
-        return resume.saveDraftResume(
-          draftId,
-          cached.resume,
-          deriveTitle(cached.resume, user, cached.title),
-        );
+        // Inline edits don't retitle the draft — auto-titling is a coaching-turn
+        // behavior, and explicit rename lives in the My Resumes list.
+        return resume.saveDraftResume(draftId, cached.resume, cached.title);
       });
       // Keep the chain alive but isolated from this write's failure.
       editWriteChain = run.catch(() => {});
@@ -310,6 +352,45 @@ export function useDeleteResumeDraft() {
     mutationFn: (id) => resume.deleteDraft(id),
     onSuccess: (_data, id) => {
       queryClient.removeQueries({ queryKey: draftKey(id) });
+      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
+    },
+  });
+}
+
+interface RenameInput {
+  id: string;
+  title: string;
+}
+
+/** Rename a draft (title only). Doesn't touch the resume body, so it stays out
+ *  of the inline-edit `editWriteChain`. */
+export function useRenameDraft() {
+  const queryClient = useQueryClient();
+  return useMutation<ResumeDraft, Error, RenameInput>({
+    mutationFn: ({ id, title }) => resume.renameDraft(id, title),
+    onSuccess: (draft) => {
+      queryClient.setQueryData<ResumeDraft>(draftKey(draft.id), (prev) =>
+        prev ? { ...prev, title: draft.title, updatedAt: draft.updatedAt } : draft,
+      );
+      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
+    },
+  });
+}
+
+interface DuplicateInput {
+  id: string;
+  /** The localized "Copy of …" title, composed by the caller. */
+  title: string;
+}
+
+/** Duplicate a draft into a new independent row; returns the new draft so the
+ *  caller can navigate to it. */
+export function useDuplicateDraft() {
+  const queryClient = useQueryClient();
+  return useMutation<ResumeDraft, Error, DuplicateInput>({
+    mutationFn: ({ id, title }) => resume.duplicateDraft(id, title),
+    onSuccess: (draft) => {
+      queryClient.setQueryData(draftKey(draft.id), draft);
       queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
     },
   });

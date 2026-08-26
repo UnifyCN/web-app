@@ -1,18 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  ChevronDown,
-  FileText,
-  Plus,
-  Trash2,
-  PanelRight,
-} from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, FileText, PanelRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { ChatInput } from "@/components/companion/ChatInput";
 import { ResumeSuggestionChips } from "./ResumeSuggestionChips";
-import type { ResumeChatMessage, ResumeDraft, ResumeDraftSummary } from "@/types/resume";
+import type { ResumeChatMessage, ResumeDraft } from "@/types/resume";
 
 function TypingIndicator() {
   return (
@@ -51,116 +46,13 @@ function Bubble({ message }: { message: ResumeChatMessage }) {
   );
 }
 
-/** Compact drafts switcher in the chat header (avoids a third column). */
-function DraftsMenu({
-  drafts,
-  activeId,
-  onSelect,
-  onNew,
-  onDelete,
-}: {
-  drafts: ResumeDraftSummary[];
-  activeId: string | null;
-  onSelect: (id: string) => void;
-  onNew: () => void;
-  onDelete: (id: string) => void;
-}) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const active = drafts.find((d) => d.id === activeId);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDocClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [open]);
-
-  return (
-    <div ref={menuRef} className="relative min-w-0 flex-1">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex w-full min-w-0 cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1.5 text-start transition-colors hover:bg-surface-gray"
-      >
-        <FileText className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-        <span className="truncate text-sm font-semibold text-ink-secondary">
-          {active?.title ?? t("resume.title")}
-        </span>
-        <ChevronDown className="h-4 w-4 shrink-0 text-ink-placeholder" aria-hidden />
-      </button>
-
-      {open && (
-        <div className="absolute start-0 top-full z-20 mt-1 w-72 max-w-[85vw] overflow-hidden rounded-xl border border-border-card bg-surface shadow-lg">
-          <button
-            type="button"
-            onClick={() => {
-              onNew();
-              setOpen(false);
-            }}
-            className="flex w-full cursor-pointer items-center gap-2 border-b border-border-card px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary-bg"
-          >
-            <Plus className="h-4 w-4" aria-hidden />
-            {t("resume.newResume")}
-          </button>
-          <ul className="max-h-72 overflow-y-auto py-1">
-            {drafts.length === 0 && (
-              <li className="px-3 py-2 text-xs text-ink-placeholder">
-                {t("resume.noDrafts")}
-              </li>
-            )}
-            {drafts.map((d) => (
-              <li key={d.id} className="group flex items-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onSelect(d.id);
-                    setOpen(false);
-                  }}
-                  className={cn(
-                    "min-w-0 flex-1 cursor-pointer truncate px-3 py-2 text-start text-sm transition-colors hover:bg-surface-gray",
-                    d.id === activeId
-                      ? "font-semibold text-primary"
-                      : "text-ink-secondary",
-                  )}
-                >
-                  {d.title}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDelete(d.id)}
-                  aria-label={t("resume.deleteDraft")}
-                  className="me-1 flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-ink-placeholder opacity-0 transition-opacity hover:bg-surface-gray hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                >
-                  <Trash2 className="h-4 w-4" aria-hidden />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
 interface ResumeChatColumnProps {
   draft: ResumeDraft | null;
-  drafts: ResumeDraftSummary[];
-  activeId: string | null;
   isTyping: boolean;
   errorMessage: string | null;
   remaining: number;
   limitReached: boolean;
   onSend: (text: string) => void;
-  onSelectDraft: (id: string) => void;
-  onNewDraft: () => void;
-  onDeleteDraft: (id: string) => void;
   /** Mobile master/detail: is the chat the visible pane (vs the resume)? */
   mobileActive: boolean;
   /** Mobile master/detail: reveal the resume pane. */
@@ -169,16 +61,11 @@ interface ResumeChatColumnProps {
 
 export function ResumeChatColumn({
   draft,
-  drafts,
-  activeId,
   isTyping,
   errorMessage,
   remaining,
   limitReached,
   onSend,
-  onSelectDraft,
-  onNewDraft,
-  onDeleteDraft,
   mobileActive,
   onShowResume,
 }: ResumeChatColumnProps) {
@@ -221,13 +108,19 @@ export function ResumeChatColumn({
       )}
     >
       <header className="flex h-14 shrink-0 items-center gap-1 border-b border-border-card px-3">
-        <DraftsMenu
-          drafts={drafts}
-          activeId={activeId}
-          onSelect={onSelectDraft}
-          onNew={onNewDraft}
-          onDelete={onDeleteDraft}
-        />
+        <Link
+          href="/resume"
+          aria-label={t("resume.list.backToList")}
+          className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink"
+        >
+          <ArrowLeft className={cn("h-5 w-5", RTL_FLIP)} aria-hidden />
+        </Link>
+        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+          <FileText className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+          <span className="truncate text-sm font-semibold text-ink-secondary">
+            {draft?.title ?? t("resume.title")}
+          </span>
+        </div>
         <button
           type="button"
           onClick={onShowResume}

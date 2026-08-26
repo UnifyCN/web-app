@@ -187,6 +187,75 @@ export async function saveDraftResume(
   return rowToDraft(data as unknown as ResumeDraftRow);
 }
 
+/** Rename a draft (title only), leaving the resume body + transcript untouched. */
+export async function renameDraft(
+  id: string,
+  title: string,
+): Promise<ResumeDraft> {
+  const ctx = await authed();
+  if (!ctx) return localRenameDraft(id, title);
+
+  const { data, error } = await ctx.supabase
+    .from("resume_drafts")
+    .update({ title, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select(DRAFT_COLS)
+    .single();
+  if (error) throw error;
+  return rowToDraft(data as unknown as ResumeDraftRow);
+}
+
+/**
+ * Duplicate a draft into a brand-new, fully independent row: a fresh id, a deep
+ * copy of the resume + transcript (regenerated message ids), and the given title
+ * (the caller composes the localized "Copy of …").
+ *
+ * Ownership integrity: the read + write run in a SINGLE captured auth context,
+ * and the clone's `user_id` is PINNED to the reader (`ctx.userId`) rather than
+ * re-derived at write time. Two invariants close the cross-user hole:
+ *   1. The source read is RLS-scoped, so a draft the caller doesn't own reads as
+ *      null and is never copied.
+ *   2. The write is a single `insert` (atomic — no partial row) whose `user_id`
+ *      is the reader's. If the session flips between read and write, RLS's
+ *      with-check (`user_id = auth.uid()`) rejects it — so a mid-op auth change
+ *      fails closed instead of copying one account's resume into another. `insert`
+ *      (not upsert) also makes a fresh-id collision error rather than overwrite.
+ */
+export async function duplicateDraft(
+  id: string,
+  title: string,
+): Promise<ResumeDraft> {
+  const ctx = await authed();
+  if (!ctx) return localDuplicateDraft(id, title);
+
+  const { data: src, error: readError } = await ctx.supabase
+    .from("resume_drafts")
+    .select(DRAFT_COLS)
+    .eq("id", id)
+    .maybeSingle();
+  if (readError) throw readError;
+  if (!src) throw new Error("Draft not found");
+  const source = rowToDraft(src as unknown as ResumeDraftRow);
+
+  const now = new Date().toISOString();
+  const { data, error } = await ctx.supabase
+    .from("resume_drafts")
+    .insert({
+      id: crypto.randomUUID(),
+      user_id: ctx.userId,
+      title,
+      resume: normalizeResumeData(source.resume),
+      messages: source.messages.map((m) => ({ ...m, id: crypto.randomUUID() })),
+      complete: false,
+      created_at: now,
+      updated_at: now,
+    })
+    .select(DRAFT_COLS)
+    .single();
+  if (error) throw error;
+  return rowToDraft(data as unknown as ResumeDraftRow);
+}
+
 /** Build a brand-new draft. The opener message + prefilled contact are composed
  *  by the caller (the hook) so localization stays in the component layer. */
 export function newDraft(args: {
@@ -318,6 +387,45 @@ async function localSaveDraftResume(
   drafts[idx] = finalDraft;
   writeLocalDrafts(drafts);
   return finalDraft;
+}
+
+async function localRenameDraft(
+  id: string,
+  title: string,
+): Promise<ResumeDraft> {
+  const drafts = readLocalDrafts();
+  const idx = drafts.findIndex((d) => d.id === id);
+  if (idx === -1) throw new Error("Draft not found");
+  const finalDraft: ResumeDraft = {
+    ...drafts[idx],
+    title,
+    updatedAt: new Date().toISOString(),
+  };
+  drafts[idx] = finalDraft;
+  writeLocalDrafts(drafts);
+  return finalDraft;
+}
+
+async function localDuplicateDraft(
+  id: string,
+  title: string,
+): Promise<ResumeDraft> {
+  const drafts = readLocalDrafts();
+  const source = drafts.find((d) => d.id === id);
+  if (!source) throw new Error("Draft not found");
+  const now = new Date().toISOString();
+  const clone: ResumeDraft = {
+    id: crypto.randomUUID(),
+    title,
+    createdAt: now,
+    updatedAt: now,
+    resume: structuredClone(source.resume),
+    messages: source.messages.map((m) => ({ ...m, id: crypto.randomUUID() })),
+    complete: false,
+  };
+  drafts.push(clone);
+  writeLocalDrafts(drafts);
+  return clone;
 }
 
 /* ================================================================== *

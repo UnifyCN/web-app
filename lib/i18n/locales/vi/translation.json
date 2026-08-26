@@ -1950,6 +1950,26 @@
       "addProject": "Thêm dự án",
       "addSkill": "Thêm kỹ năng",
       "hint": "Nhấp vào bất kỳ văn bản nào để chỉnh sửa, hoặc dùng \"Thêm vào hồ sơ\" bên dưới."
+    },
+    "list": {
+      "title": "Hồ sơ của tôi",
+      "backToList": "Quay lại hồ sơ của tôi",
+      "copyOf": "Bản sao của {{title}}",
+      "updated": "Đã cập nhật {{time}}",
+      "ready": "Sẵn sàng",
+      "actions": "Tùy chọn hồ sơ",
+      "rename": "Đổi tên",
+      "duplicate": "Nhân bản",
+      "delete": "Xóa",
+      "deleteTitle": "Xóa hồ sơ?",
+      "deleteConfirm": "Xóa vĩnh viễn “{{title}}”? Không thể hoàn tác.",
+      "emptyTitle": "Chưa có hồ sơ nào",
+      "emptyBody": "Tạo hồ sơ đầu tiên bằng cách trò chuyện với trợ lý AI.",
+      "createFirst": "Tạo hồ sơ đầu tiên",
+      "renameTitle": "Đổi tên hồ sơ",
+      "renameLabel": "Tên hồ sơ",
+      "cancel": "Hủy",
+      "save": "Lưu"
     }
   }
 }

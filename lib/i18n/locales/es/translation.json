@@ -1950,6 +1950,26 @@
       "addProject": "Agregar proyecto",
       "addSkill": "Agregar habilidad",
       "hint": "Haz clic en cualquier texto para editarlo, o usa \"Agregar al currículum\" abajo."
+    },
+    "list": {
+      "title": "Mis currículums",
+      "backToList": "Volver a mis currículums",
+      "copyOf": "Copia de {{title}}",
+      "updated": "Actualizado {{time}}",
+      "ready": "Listo",
+      "actions": "Acciones del currículum",
+      "rename": "Cambiar nombre",
+      "duplicate": "Duplicar",
+      "delete": "Eliminar",
+      "deleteTitle": "¿Eliminar currículum?",
+      "deleteConfirm": "¿Eliminar permanentemente «{{title}}»? Esta acción no se puede deshacer.",
+      "emptyTitle": "Aún no hay currículums",
+      "emptyBody": "Crea tu primer currículum conversando con el asistente de IA.",
+      "createFirst": "Crea tu primer currículum",
+      "renameTitle": "Cambiar nombre del currículum",
+      "renameLabel": "Nombre del currículum",
+      "cancel": "Cancelar",
+      "save": "Guardar"
     }
   }
 }
