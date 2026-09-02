@@ -1957,6 +1957,8 @@
       "chipWithCompany": "Tailoring for {{title}} · {{company}}",
       "chipPasted": "Tailoring for a pasted job",
       "urlPlaceholder": "Paste a job posting link…",
+      "urlLabel": "Job posting URL",
+      "pasteLabel": "Job posting description",
       "fetch": "Fetch",
       "use": "Use this",
       "pasteToggle": "Paste the description instead",
@@ -1974,6 +1976,8 @@
         "too_large": "That page is too large to read. Try pasting the job description text instead.",
         "extraction_failed": "Couldn't find a job posting on that page. It may need a login or load with JavaScript — paste the description text instead.",
         "daily_limit_reached": "You've reached today's resume-builder limit. Please come back tomorrow.",
+        "rate_limited": "You're doing that too quickly. Please wait a moment and try again.",
+        "unauthorized": "Your session expired. Please sign in again.",
         "generic": "Couldn't read that job posting. Try pasting the description text instead."
       }
     },

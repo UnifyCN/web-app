@@ -11,8 +11,13 @@ import type { ResumeJobPosting } from "@/types/resume";
 interface JobTargetBarProps {
   draftId: string | null;
   jobPosting?: ResumeJobPosting;
-  /** True while an AI turn is in flight or the daily limit is reached. */
+  /** True while an AI turn is in flight or the daily limit is reached. Gates the
+   *  actions that start work (fetch, tailor) — but NOT target removal. */
   disabled: boolean;
+  /** True only while an AI turn is in flight. Gates removal (which consumes no
+   *  quota) so it stays available at the daily limit, yet can't race a turn's
+   *  jobPosting re-merge. */
+  busy: boolean;
   /** Fire a tailoring turn against the current target (owned by the editor page). */
   onTailor: () => void;
 }
@@ -28,6 +33,7 @@ export function JobTargetBar({
   draftId,
   jobPosting,
   disabled,
+  busy: turnInFlight,
   onTailor,
 }: JobTargetBarProps) {
   const { t } = useTranslation();
@@ -95,7 +101,7 @@ export function JobTargetBar({
           <button
             type="button"
             onClick={handleRemove}
-            disabled={clearMut.isPending || disabled}
+            disabled={clearMut.isPending || turnInFlight}
             aria-label={t("resume.jobTarget.remove")}
             className="ms-0.5 flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full text-primary/70 transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
           >
@@ -149,9 +155,10 @@ export function JobTargetBar({
               if (e.key === "Enter" && urlValue.trim()) submit({ url: urlValue.trim() });
             }}
             placeholder={t("resume.jobTarget.urlPlaceholder")}
+            aria-label={t("resume.jobTarget.urlLabel")}
             disabled={busy}
             autoFocus
-            className="min-w-0 flex-1 rounded-lg border border-border-card bg-surface px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-primary disabled:opacity-60"
+            className="min-w-0 flex-1 rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink outline-none transition-colors focus:border-primary disabled:opacity-60 md:text-sm"
           />
           <button
             type="button"
@@ -169,10 +176,11 @@ export function JobTargetBar({
             value={textValue}
             onChange={(e) => setTextValue(e.target.value)}
             placeholder={t("resume.jobTarget.pastePlaceholder")}
+            aria-label={t("resume.jobTarget.pasteLabel")}
             disabled={busy}
             rows={4}
             autoFocus
-            className="scrollbar-thin w-full resize-none rounded-lg border border-border-card bg-surface px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-primary disabled:opacity-60"
+            className="scrollbar-thin w-full resize-y rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink outline-none transition-colors focus:border-primary disabled:opacity-60 md:text-sm"
           />
           <div className="flex justify-end">
             <button

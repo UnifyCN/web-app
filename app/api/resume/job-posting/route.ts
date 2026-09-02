@@ -27,11 +27,43 @@ const MAX_URL_LEN = 2048;
 const MAX_PASTE_LEN = 20_000; // raw paste cap before normalization/truncation
 const MIN_TEXT_LEN = 40; // below this there's nothing to tailor against
 
-type JobPostingErrorCode = FetchPostingErrorCode | "daily_limit_reached";
+// Lightweight in-memory per-user rate limit for outbound fetches. Fluid Compute
+// reuses instances, so this throttles burst abuse cheaply. It is NOT durable
+// across instances — a fully durable per-fetch quota would need a dedicated
+// table/RPC (a schema change, deliberately deferred). The soft daily gate below
+// and the SSRF/size/timeout caps in fetchJobPosting bound the rest.
+const FETCH_WINDOW_MS = 60_000;
+const FETCH_MAX_PER_WINDOW = 12;
+const fetchHits = new Map<string, number[]>();
+
+function rateLimited(userId: string): boolean {
+  const now = Date.now();
+  const cutoff = now - FETCH_WINDOW_MS;
+  const hits = (fetchHits.get(userId) ?? []).filter((t) => t > cutoff);
+  if (hits.length >= FETCH_MAX_PER_WINDOW) {
+    fetchHits.set(userId, hits);
+    return true;
+  }
+  hits.push(now);
+  fetchHits.set(userId, hits);
+  // Bound the map so a churn of users can't grow it without limit.
+  if (fetchHits.size > 5000) {
+    for (const [k, v] of fetchHits) {
+      if (v.every((t) => t <= cutoff)) fetchHits.delete(k);
+    }
+  }
+  return false;
+}
+
+type JobPostingErrorCode =
+  | FetchPostingErrorCode
+  | "daily_limit_reached"
+  | "rate_limited";
 
 function statusFor(code: JobPostingErrorCode): number {
   switch (code) {
     case "daily_limit_reached":
+    case "rate_limited":
       return 429;
     case "too_large":
       return 413;
@@ -50,6 +82,8 @@ function messageFor(code: JobPostingErrorCode): string {
   switch (code) {
     case "daily_limit_reached":
       return "Daily resume-builder limit reached.";
+    case "rate_limited":
+      return "You're doing that too quickly. Please wait a moment and try again.";
     case "too_large":
       return "That page is too large to read.";
     case "invalid_url":
@@ -133,6 +167,9 @@ export async function POST(req: NextRequest) {
 
   if (!url) return fail("invalid_url");
   if (url.length > MAX_URL_LEN) return fail("invalid_url");
+
+  // Burst throttle before making an outbound request.
+  if (rateLimited(user.id)) return fail("rate_limited");
 
   const result = await fetchJobPosting(url);
   if (!result.ok) return fail(result.error);

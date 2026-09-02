@@ -142,6 +142,7 @@ export function ResumeChatColumn({
         draftId={draftId}
         jobPosting={draft?.resume.jobPosting}
         disabled={isTyping || limitReached}
+        busy={isTyping}
         onTailor={onTailor}
       />
 

@@ -350,7 +350,9 @@ export async function fetchJobPosting(
     } catch {
       // keep the generic code
     }
-    if (res.status === 429 || code === "daily_limit_reached") throw new ResumeLimitError();
+    // Only the daily-cap 429 is a ResumeLimitError; a rate-limit 429 (and every
+    // other failure) carries its own code so the UI shows the right message.
+    if (code === "daily_limit_reached") throw new ResumeLimitError();
     throw new JobPostingError(code);
   }
 

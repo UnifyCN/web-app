@@ -5,13 +5,21 @@
  * every guard the events crawler uses plus the response-size cap the crawler
  * lacks:
  *   - `isPublicHttpUrl` before every hop (rejects non-http(s) + private/internal).
+ *   - DNS resolution check: a hostname is resolved and EVERY resolved address is
+ *     re-validated, so a public-looking name that maps to an internal/metadata
+ *     address is rejected before we connect (the hostname-only guard in
+ *     `_shared/ssrf.ts` — a Deno constraint — can't do this; Node can). A narrow
+ *     active-rebinding TOCTOU window remains (undici re-resolves at connect); fully
+ *     closing it needs a pinned-address dispatcher, a deliberate follow-up.
  *   - `redirect: 'manual'` with each redirect target RE-VALIDATED (a validated host
- *     can't 3xx us onto an internal one), capped at MAX_REDIRECTS hops.
+ *     can't 3xx us onto an internal one), capped at MAX_REDIRECTS hops; the redirect
+ *     response body is cancelled before the next hop (undici connection hygiene).
  *   - `AbortController` timeout, and a streaming byte cap that aborts an oversized
  *     body mid-read instead of buffering it all.
- * Node runtime only (uses the Web Streams reader on `res.body`).
+ * Node runtime only (uses `node:dns/promises` + the Web Streams reader on `res.body`).
  */
 
+import { lookup } from "node:dns/promises";
 import { isPublicHttpUrl } from "@/lib/net/ssrf";
 import { extractJobPosting, type ExtractedJobPosting } from "@/lib/jobPosting/extract";
 
@@ -32,6 +40,30 @@ const MAX_REDIRECTS = 3;
 const USER_AGENT = "UnifyResumeBot/1.0 (+https://unifysocial.ca)";
 
 class TooLargeError extends Error {}
+
+/** True for an IP-literal host (already fully validated by isPublicHttpUrl). */
+function isIpLiteral(hostname: string): boolean {
+  return hostname.startsWith("[") || /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname);
+}
+
+/**
+ * Resolve a DNS hostname and confirm EVERY answer is a public address — closes
+ * the "public name → internal/metadata IP" hole the hostname-only guard leaves.
+ * Reuses isPublicHttpUrl by probing each resolved literal. Fails closed on a
+ * resolution error / empty answer.
+ */
+async function resolvesToPublic(hostname: string): Promise<boolean> {
+  let addrs: { address: string; family: number }[];
+  try {
+    addrs = await lookup(hostname, { all: true, verbatim: true });
+  } catch {
+    return false;
+  }
+  if (!addrs.length) return false;
+  return addrs.every(({ address, family }) =>
+    isPublicHttpUrl(family === 6 ? `http://[${address}]/` : `http://${address}/`),
+  );
+}
 
 /** Read a response body with a hard byte cap, aborting an oversized stream. */
 async function readCapped(res: Response, maxBytes: number): Promise<string> {
@@ -87,6 +119,12 @@ export async function fetchJobPosting(rawUrl: string): Promise<FetchPostingResul
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     // Re-validate on every hop — a validated host must not 3xx us internal.
     if (!isPublicHttpUrl(current)) return { ok: false, error: "blocked_url" };
+    // Resolve DNS names and re-validate every answer (IP literals are already
+    // validated above), so a public name pointing at an internal IP is rejected.
+    const host = new URL(current).hostname;
+    if (!isIpLiteral(host) && !(await resolvesToPublic(host))) {
+      return { ok: false, error: "blocked_url" };
+    }
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -105,6 +143,13 @@ export async function fetchJobPosting(rawUrl: string): Promise<FetchPostingResul
 
     // Manual redirect handling with re-validation on the next loop iteration.
     if (res.status >= 300 && res.status < 400) {
+      // Cancel the unread body so undici returns the connection to the pool
+      // before the next hop starts.
+      try {
+        await res.body?.cancel();
+      } catch {
+        /* already closing */
+      }
       clearTimeout(timer);
       const loc = res.headers.get("location");
       if (!loc) return { ok: false, error: "fetch_failed" };
@@ -117,6 +162,11 @@ export async function fetchJobPosting(rawUrl: string): Promise<FetchPostingResul
     }
 
     if (!res.ok) {
+      try {
+        await res.body?.cancel();
+      } catch {
+        /* already closing */
+      }
       clearTimeout(timer);
       return { ok: false, error: "fetch_failed" };
     }

@@ -46,6 +46,7 @@ const HOSTILE = [
   "http://192.168.0.1/",
   "http://172.16.5.4/",
   "http://100.64.0.1/", // CGNAT
+  "http://100.100.100.200/", // Alibaba Cloud metadata (inside CGNAT 100.64/10)
   "http://2130706433/", // decimal 127.0.0.1
   "http://0x7f000001/", // hex 127.0.0.1
   "http://0/", // 0.0.0.0
