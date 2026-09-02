@@ -14,6 +14,7 @@ import {
 import { ResumeBusyError, ResumeLimitError } from "@/services/resume";
 import {
   RESUME_DAILY_MESSAGE_LIMIT,
+  buildTailoringMessage,
   emptyResume,
   isResumeEmpty,
 } from "@/lib/resume/schema";
@@ -51,12 +52,12 @@ export default function ResumeEditorPage() {
     }
   }, [draftQuery.isSuccess, draftQuery.data, router]);
 
-  async function handleSend(text: string) {
+  async function handleSend(text: string, modelPrompt?: string) {
     // Serialize turns: ignore a new send while one is still in flight.
     if (sendMessage.isPending) return;
     setSendError(null);
     try {
-      await sendMessage.mutateAsync({ draftId, text });
+      await sendMessage.mutateAsync({ draftId, text, modelPrompt });
     } catch (err) {
       if (err instanceof ResumeLimitError) {
         setSendError(t("resume.limitReachedToast"));
@@ -67,6 +68,17 @@ export default function ResumeEditorPage() {
         setSendError(t("resume.sendFailed"));
       }
     }
+  }
+
+  // Tailor the resume to the attached job posting: a friendly user bubble, but the
+  // model receives the full framed posting text (buildTailoringMessage).
+  function handleTailor() {
+    const job = draft?.resume.jobPosting;
+    if (!job) return;
+    void handleSend(
+      t("resume.jobTarget.tailorUserBubble"),
+      buildTailoringMessage(job),
+    );
   }
 
   // Manual inline edit → persist to the SAME draft.resume the AI reads/writes.
@@ -82,11 +94,13 @@ export default function ResumeEditorPage() {
     <div className="flex h-[calc(100dvh_-_3.5rem_-_env(safe-area-inset-bottom))] animate-fade-in md:h-dvh">
       <ResumeChatColumn
         draft={draft}
+        draftId={draftId}
         isTyping={sendMessage.isPending}
         errorMessage={sendError}
         remaining={remaining}
         limitReached={limitReached}
         onSend={handleSend}
+        onTailor={handleTailor}
         mobileActive={!mobileShowResume}
         onShowResume={() => setMobileShowResume(true)}
       />

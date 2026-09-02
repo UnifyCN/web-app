@@ -14,6 +14,7 @@ import type {
   ResumeChatMessage,
   ResumeData,
   ResumeDraft,
+  ResumeJobPosting,
   ResumeProfileContext,
 } from "@/types/resume";
 
@@ -69,6 +70,44 @@ export function useResumeDraft(id: string | null) {
 
 export function useResumeUsage() {
   return useQuery({ queryKey: USAGE_KEY, queryFn: resume.getResumeUsage });
+}
+
+interface FetchJobPostingInput {
+  draftId: string;
+  /** A URL to fetch + extract server-side, or pasted description text. */
+  source: { url: string } | { text: string };
+}
+
+/**
+ * Fetch + extract a target job posting (or accept pasted text) and attach it to
+ * the draft. The returned draft carries `resume.jobPosting`; the editor then
+ * offers a "Tailor my resume" action. Errors (JobPostingError / ResumeLimitError)
+ * propagate to the caller for a specific, localized message.
+ */
+export function useFetchJobPosting() {
+  const queryClient = useQueryClient();
+  return useMutation<ResumeDraft, Error, FetchJobPostingInput>({
+    mutationFn: async ({ draftId, source }) => {
+      const jobPosting: ResumeJobPosting = await resume.fetchJobPosting(source);
+      return resume.setDraftJobPosting(draftId, jobPosting);
+    },
+    onSuccess: (draft) => {
+      queryClient.setQueryData(draftKey(draft.id), draft);
+      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
+    },
+  });
+}
+
+/** Remove the target job posting from a draft (leaves the resume + transcript). */
+export function useClearJobPosting() {
+  const queryClient = useQueryClient();
+  return useMutation<ResumeDraft, Error, string>({
+    mutationFn: (draftId) => resume.setDraftJobPosting(draftId, null),
+    onSuccess: (draft) => {
+      queryClient.setQueryData(draftKey(draft.id), draft);
+      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
+    },
+  });
 }
 
 /**
@@ -166,7 +205,14 @@ let editWriteChain: Promise<unknown> = Promise.resolve();
 
 interface SendInput {
   draftId: string;
+  /** Shown as the user's chat bubble. */
   text: string;
+  /**
+   * What's actually sent to the model (defaults to `text`). Used by the "Tailor
+   * my resume" action so the chat shows a short friendly bubble while the model
+   * receives the full framed job-posting prompt.
+   */
+  modelPrompt?: string;
 }
 
 /**
@@ -180,7 +226,7 @@ export function useSendResumeMessage() {
   const { t, i18n } = useTranslation();
   return useMutation<ResumeDraft, Error, SendInput, { key: ReturnType<typeof draftKey> }>(
     {
-      mutationFn: async ({ draftId, text }) => {
+      mutationFn: async ({ draftId, text, modelPrompt }) => {
         // Flush any in-flight inline-edit writes first, so a manual edit made
         // moments before hitting send is already in storage — otherwise this
         // turn would read a stale `currentResume` and overwrite that edit.
@@ -210,7 +256,7 @@ export function useSendResumeMessage() {
 
         const response = await resume.generateResumeTurn({
           history: draft.messages,
-          message: text,
+          message: modelPrompt ?? text,
           currentResume: draft.resume,
           profile,
         });
@@ -241,7 +287,11 @@ export function useSendResumeMessage() {
         const finalDraft: ResumeDraft = {
           ...withUser,
           messages: [...withUser.messages, assistantMessage],
-          resume: response.resume,
+          // The model never authors the job-posting target and the edge fn strips
+          // unknown fields, so re-merge the persisted target back onto its snapshot.
+          resume: draft.resume.jobPosting
+            ? { ...response.resume, jobPosting: draft.resume.jobPosting }
+            : response.resume,
           complete: response.complete,
           // Only auto-retitle if the user hasn't renamed this draft.
           title: isAutoTitle(latestTitle, draft.resume, user, placeholders)
