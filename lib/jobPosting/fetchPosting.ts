@@ -126,21 +126,26 @@ function requestPinned(
         method: "GET",
         signal: controller.signal,
         headers: { "User-Agent": USER_AGENT, Accept: "text/html,application/xhtml+xml" },
-        // Pin the socket to the validated address; keep SNI = real hostname.
+        // Pin the socket to the validated address; SNI + the Host header are
+        // derived from the URL hostname automatically (and SNI is suppressed for
+        // IP literals per RFC 6066), so certificate validation stays against the
+        // real hostname. Setting servername manually would wrongly send a
+        // bracketed IPv6 literal as SNI, so leave it to node:http(s).
         lookup: pinnedLookup as never,
-        ...(isHttps && isIP(u.hostname) === 0 ? { servername: u.hostname } : {}),
       },
       (res) => {
         const status = res.statusCode ?? 0;
+        // We don't need these bodies — DESTROY (not drain): draining an
+        // unbounded/slow body after clearing the timeout could hold the socket +
+        // bandwidth open indefinitely.
         if (status >= 300 && status < 400) {
-          res.resume(); // drain so the socket frees
-          done(() =>
-            resolve({ status, location: res.headers.location ?? null, body: null, tooLarge: false }),
-          );
+          const location = res.headers.location ?? null;
+          res.destroy();
+          done(() => resolve({ status, location, body: null, tooLarge: false }));
           return;
         }
         if (status < 200 || status >= 300) {
-          res.resume();
+          res.destroy();
           done(() => resolve({ status, location: null, body: null, tooLarge: false }));
           return;
         }
