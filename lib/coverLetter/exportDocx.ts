@@ -164,8 +164,11 @@ export async function buildCoverLetterDocx(
  *  letters/numbers (many newcomers have non-ASCII names) and drops only
  *  punctuation/symbols that are unsafe in filenames. */
 export function coverLetterDocxFilename(data: CoverLetterData): string {
+  // NFC-normalize first (collapses decomposed sequences where a precomposed form
+  // exists) and keep combining marks (\p{M}) for scripts that have none, so a
+  // diacritic like the "ä" in "Äna" survives regardless of input normalization.
   const clean = (s: string) =>
-    s.replace(/[^\p{L}\p{N}\s-]/gu, "").replace(/\s+/g, " ").trim();
+    s.normalize("NFC").replace(/[^\p{L}\p{N}\p{M}\s-]/gu, "").replace(/\s+/g, " ").trim();
   const name = clean(data.contact.name || data.signature);
   const company = clean(data.jobPosting?.company || data.recipient.company);
   const base = [name, company, "cover letter"].filter(Boolean).join(" - ");

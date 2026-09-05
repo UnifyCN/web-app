@@ -45,6 +45,10 @@ const coverSchemaCode = transpile("lib/coverLetter/schema.ts").replace(
 );
 const schema = await import(toDataUrl(coverSchemaCode));
 const editOps = await import(toDataUrl(transpile("lib/coverLetter/editOps.ts")));
+// exportDocx: only `coverLetterDocxFilename` is exercised here — it's pure; the
+// `docx` dynamic import lives inside buildCoverLetterDocx (not called), so the
+// module loads without resolving the bare `docx` specifier.
+const exportDocx = await import(toDataUrl(transpile("lib/coverLetter/exportDocx.ts")));
 
 let failures = 0;
 function check(name, cond) {
@@ -149,6 +153,26 @@ console.log("editOps:");
   const before = schema.emptyCoverLetter();
   const after = editOps.setSignature(before, "changed");
   check("edit ops are immutable", before.signature === "" && after.signature === "changed");
+}
+
+// ---- coverLetterDocxFilename (Unicode-safe) --------------------------------
+console.log("coverLetterDocxFilename:");
+{
+  // "Äna García" written with DECOMPOSED diacritics (A + U+0308, i + U+0301).
+  const decomposed = schema.emptyCoverLetter({
+    contact: { name: "Äna García" },
+  });
+  const fn = exportDocx.coverLetterDocxFilename(decomposed);
+  check("preserves diacritics from decomposed names", fn.normalize("NFD").includes("̈"));
+  check("ends with .docx", fn.endsWith(".docx"));
+  check("strips filesystem-unsafe characters", !/[/\\:*?"<>|]/.test(fn));
+
+  // A Devanagari name (combining vowel signs are \p{M} with no precomposed form).
+  const hindi = schema.emptyCoverLetter({ contact: { name: "नितिन" } });
+  check("keeps Devanagari combining marks", exportDocx.coverLetterDocxFilename(hindi).includes("नितिन"));
+
+  const empty = exportDocx.coverLetterDocxFilename(schema.emptyCoverLetter());
+  check("falls back to a sensible name when empty", empty === "cover letter.docx");
 }
 
 console.log("");
