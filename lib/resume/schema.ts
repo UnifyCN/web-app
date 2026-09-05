@@ -144,7 +144,7 @@ function normalizeSkills(value: unknown): ResumeSkillCategory[] {
  * preserved verbatim (bounded) rather than model-authored — see the re-merge in
  * useSendResumeMessage.
  */
-function normalizeJobPosting(value: unknown): ResumeJobPosting | undefined {
+export function normalizeJobPosting(value: unknown): ResumeJobPosting | undefined {
   if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
   const r = value as Record<string, unknown>;
   const text = str(r.text, MAX_JOB_POSTING_LEN);

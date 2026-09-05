@@ -318,17 +318,21 @@ input:-webkit-autofill:active {
  * and entries paginate cleanly — no absolute-positioning / visibility tricks.
  * Text stays real + selectable (ATS-friendly). The user picks "Save as PDF".
  */
-.resume-print-root {
+.resume-print-root,
+.cover-letter-print-root {
   display: none;
 }
 
 @media print {
-  /* Print only the portaled resume copy; hide the app shell and every other
-     body child (toasts, portaled menus, dev overlays). */
-  body > *:not(.resume-print-root) {
+  /* Print only the portaled resume/letter copy; hide the app shell and every
+     other body child (toasts, portaled menus, dev overlays). Only one of the two
+     print roots is ever mounted at a time (separate routes), so exempting both is
+     safe — whichever is present prints. */
+  body > *:not(.resume-print-root):not(.cover-letter-print-root) {
     display: none !important;
   }
-  .resume-print-root {
+  .resume-print-root,
+  .cover-letter-print-root {
     display: block !important;
   }
   .resume-print-root .resume-paper {
@@ -336,6 +340,16 @@ input:-webkit-autofill:active {
     max-width: 100% !important;
     padding: 0 !important; /* @page supplies the page margins */
     box-shadow: none !important; /* also clears the Tailwind ring (ring == box-shadow) */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* The letter keeps a little internal padding on top of the shared @page margin
+     so it prints with standard letter margins (the resume zeroes its padding). */
+  .cover-letter-print-root .cover-letter-paper {
+    margin: 0 !important;
+    max-width: 100% !important;
+    padding: 0.5in 0.45in !important;
+    box-shadow: none !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -352,14 +366,18 @@ input:-webkit-autofill:active {
  * focus signals a field is editable without any edit-mode toggle, and empty
  * fields show their placeholder.
  */
-.resume-paper-editable .resume-editable {
+/* Shared with the cover-letter paper (same EditableText primitive → `.resume-editable`). */
+.resume-paper-editable .resume-editable,
+.cover-letter-paper-editable .resume-editable {
   cursor: text;
   transition: background-color 120ms ease;
 }
-.resume-paper-editable .resume-editable:hover {
+.resume-paper-editable .resume-editable:hover,
+.cover-letter-paper-editable .resume-editable:hover {
   background-color: var(--color-primary-bg);
 }
-.resume-paper-editable .resume-editable:focus {
+.resume-paper-editable .resume-editable:focus,
+.cover-letter-paper-editable .resume-editable:focus {
   background-color: var(--color-primary-bg);
   box-shadow: 0 0 0 2px var(--color-primary-subtle);
 }
@@ -371,7 +389,8 @@ input:-webkit-autofill:active {
 /* Remove (trash / ×) controls reveal on hover, which never fires on touch —
  * keep them visible on coarse/hoverless pointers so they stay reachable there. */
 @media (hover: none) {
-  .resume-remove-control {
+  .resume-remove-control,
+  .cover-letter-remove-control {
     opacity: 1;
   }
 }

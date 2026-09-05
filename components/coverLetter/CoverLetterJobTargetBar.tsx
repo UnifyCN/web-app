@@ -1,0 +1,237 @@
+"use client";
+
+import { useState } from "react";
+import { Briefcase, Loader2, Sparkles, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
+import { useClearJobPosting, useFetchJobPosting } from "@/hooks/useCoverLetter";
+import { CoverLetterLimitError, JobPostingError } from "@/services/coverLetter";
+import type { ResumeJobPosting } from "@/types/resume";
+
+interface CoverLetterJobTargetBarProps {
+  draftId: string | null;
+  jobPosting?: ResumeJobPosting;
+  /** True while an AI turn is in flight or the daily limit is reached. Gates the
+   *  actions that start work (fetch, generate) — but NOT target removal. */
+  disabled: boolean;
+  /** True only while an AI turn is in flight. Gates removal (which consumes no
+   *  quota) so it stays available at the daily limit, yet can't race a turn's
+   *  jobPosting re-merge. */
+  busy: boolean;
+  /** Fire a generation turn against the current target (owned by the editor). */
+  onGenerate: () => void;
+}
+
+/**
+ * Job-posting target affordance in the cover-letter chat column. Mirrors the
+ * resume JobTargetBar (URL fetch / paste fallback), but the primary action is
+ * "Generate cover letter" (writes/refreshes the full letter tailored to the
+ * posting). Self-contained: it owns the fetch/clear mutations.
+ */
+export function CoverLetterJobTargetBar({
+  draftId,
+  jobPosting,
+  disabled,
+  busy: turnInFlight,
+  onGenerate,
+}: CoverLetterJobTargetBarProps) {
+  const { t } = useTranslation();
+  const fetchMut = useFetchJobPosting();
+  const clearMut = useClearJobPosting();
+
+  const [expanded, setExpanded] = useState(false);
+  const [mode, setMode] = useState<"url" | "text">("url");
+  const [urlValue, setUrlValue] = useState("");
+  const [textValue, setTextValue] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  if (!draftId) return null;
+
+  const busy = fetchMut.isPending;
+
+  function messageForError(err: unknown): string {
+    if (err instanceof CoverLetterLimitError) {
+      return t("coverLetter.jobTarget.errors.daily_limit_reached");
+    }
+    const code = err instanceof JobPostingError ? err.code : "generic";
+    const key = `coverLetter.jobTarget.errors.${code}`;
+    const msg = t(key);
+    return msg === key ? t("coverLetter.jobTarget.errors.generic") : msg;
+  }
+
+  async function submit(source: { url: string } | { text: string }) {
+    if (!draftId || busy || disabled) return;
+    setError(null);
+    try {
+      await fetchMut.mutateAsync({ draftId, source });
+      setExpanded(false);
+      setUrlValue("");
+      setTextValue("");
+    } catch (err) {
+      setError(messageForError(err));
+    }
+  }
+
+  async function handleRemove() {
+    if (!draftId) return;
+    setError(null);
+    try {
+      await clearMut.mutateAsync(draftId);
+    } catch {
+      // Non-fatal: leave the chip; the user can retry.
+    }
+  }
+
+  // ---- Target set: chip + generate action ------------------------------
+  if (jobPosting) {
+    const label = jobPosting.title
+      ? jobPosting.company
+        ? t("coverLetter.jobTarget.chipWithCompany", {
+            title: jobPosting.title,
+            company: jobPosting.company,
+          })
+        : t("coverLetter.jobTarget.chip", { title: jobPosting.title })
+      : t("coverLetter.jobTarget.chipPasted");
+    return (
+      <div className="flex shrink-0 items-center gap-2 border-b border-border-card px-3 py-2">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full bg-primary-bg px-3 py-1.5">
+          <Briefcase className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+          <span className="truncate text-xs font-medium text-primary">{label}</span>
+          <button
+            type="button"
+            onClick={handleRemove}
+            disabled={clearMut.isPending || turnInFlight}
+            aria-label={t("coverLetter.jobTarget.remove")}
+            className="ms-0.5 flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full text-primary/70 transition-colors hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+          >
+            <X className="h-3 w-3" aria-hidden />
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={onGenerate}
+          disabled={disabled}
+          className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Sparkles className="h-3.5 w-3.5" aria-hidden />
+          {t("coverLetter.jobTarget.generate")}
+        </button>
+      </div>
+    );
+  }
+
+  // ---- Collapsed trigger ------------------------------------------------
+  if (!expanded) {
+    return (
+      <div className="shrink-0 border-b border-border-card px-3 py-2">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            setError(null);
+            setExpanded(true);
+          }}
+          className="flex cursor-pointer items-center gap-1.5 rounded-full border border-border-card bg-surface px-3 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Briefcase className="h-3.5 w-3.5" aria-hidden />
+          {t("coverLetter.jobTarget.button")}
+        </button>
+      </div>
+    );
+  }
+
+  // ---- Expanded input ---------------------------------------------------
+  return (
+    <div className="shrink-0 space-y-2 border-b border-border-card px-3 py-2.5">
+      {mode === "url" ? (
+        <div className="flex items-center gap-2">
+          <input
+            type="url"
+            inputMode="url"
+            value={urlValue}
+            onChange={(e) => setUrlValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && urlValue.trim()) submit({ url: urlValue.trim() });
+            }}
+            placeholder={t("coverLetter.jobTarget.urlPlaceholder")}
+            aria-label={t("coverLetter.jobTarget.urlLabel")}
+            disabled={busy}
+            autoFocus
+            className="min-w-0 flex-1 rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink outline-none transition-colors focus:border-primary disabled:opacity-60 md:text-sm"
+          />
+          <button
+            type="button"
+            onClick={() => urlValue.trim() && submit({ url: urlValue.trim() })}
+            disabled={busy || disabled || !urlValue.trim()}
+            className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />}
+            {t("coverLetter.jobTarget.fetch")}
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <textarea
+            value={textValue}
+            onChange={(e) => setTextValue(e.target.value)}
+            placeholder={t("coverLetter.jobTarget.pastePlaceholder")}
+            aria-label={t("coverLetter.jobTarget.pasteLabel")}
+            disabled={busy}
+            rows={4}
+            autoFocus
+            className="scrollbar-thin w-full resize-y rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink outline-none transition-colors focus:border-primary disabled:opacity-60 md:text-sm"
+          />
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => textValue.trim() && submit({ text: textValue })}
+              disabled={busy || disabled || !textValue.trim()}
+              className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />}
+              {t("coverLetter.jobTarget.use")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between text-[11px]">
+        <button
+          type="button"
+          onClick={() => {
+            setError(null);
+            setMode((m) => (m === "url" ? "text" : "url"));
+          }}
+          disabled={busy}
+          className="cursor-pointer font-medium text-primary transition-opacity hover:opacity-80 disabled:opacity-50"
+        >
+          {mode === "url"
+            ? t("coverLetter.jobTarget.pasteToggle")
+            : t("coverLetter.jobTarget.urlToggle")}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setExpanded(false);
+            setError(null);
+          }}
+          disabled={busy}
+          className="cursor-pointer text-ink-muted transition-colors hover:text-ink disabled:opacity-50"
+        >
+          {t("coverLetter.jobTarget.cancel")}
+        </button>
+      </div>
+
+      {busy && (
+        <p className={cn("text-[11px] text-ink-muted")}>
+          {t("coverLetter.jobTarget.fetching")}
+        </p>
+      )}
+      {error && (
+        <p role="alert" className="text-[11px] font-medium text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
