@@ -1951,6 +1951,36 @@
       "addSkill": "Add skill",
       "hint": "Click any text to edit it, or use \"Add to resume\" below."
     },
+    "jobTarget": {
+      "button": "Target a job",
+      "chip": "Tailoring for {{title}}",
+      "chipWithCompany": "Tailoring for {{title}} · {{company}}",
+      "chipPasted": "Tailoring for a pasted job",
+      "urlPlaceholder": "Paste a job posting link…",
+      "urlLabel": "Job posting URL",
+      "pasteLabel": "Job posting description",
+      "fetch": "Fetch",
+      "use": "Use this",
+      "pasteToggle": "Paste the description instead",
+      "urlToggle": "Use a link instead",
+      "pastePlaceholder": "Paste the job title, requirements, and responsibilities here…",
+      "cancel": "Cancel",
+      "remove": "Remove target job",
+      "tailor": "Tailor my resume",
+      "tailorUserBubble": "Please tailor my resume to this job posting.",
+      "fetching": "Reading the job posting…",
+      "errors": {
+        "invalid_url": "That doesn't look like a valid web link. Check it and try again.",
+        "blocked_url": "That link can't be opened for security reasons. Paste a public job posting link.",
+        "fetch_failed": "Couldn't open that job posting. Many sites block automated access — try pasting the description text instead.",
+        "too_large": "That page is too large to read. Try pasting the job description text instead.",
+        "extraction_failed": "Couldn't find a job posting on that page. It may need a login or load with JavaScript — paste the description text instead.",
+        "daily_limit_reached": "You've reached today's resume-builder limit. Please come back tomorrow.",
+        "rate_limited": "You're doing that too quickly. Please wait a moment and try again.",
+        "unauthorized": "Your session expired. Please sign in again.",
+        "generic": "Couldn't read that job posting. Try pasting the description text instead."
+      }
+    },
     "list": {
       "title": "My Resumes",
       "backToList": "Back to my resumes",

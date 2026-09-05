@@ -28,6 +28,7 @@ import type {
   ResumeData,
   ResumeDraft,
   ResumeDraftSummary,
+  ResumeJobPosting,
   ResumeProfileContext,
   ResumeTurnResponse,
 } from "@/types/resume";
@@ -45,6 +46,21 @@ export class ResumeBusyError extends Error {
   constructor() {
     super("The resume assistant is busy");
     this.name = "ResumeBusyError";
+  }
+}
+
+/**
+ * Raised when fetching/extracting a job posting fails. `code` mirrors the route's
+ * error contract (`invalid_url` | `blocked_url` | `fetch_failed` | `too_large` |
+ * `extraction_failed` | `generic`) so the UI can show a specific, localized
+ * message and steer the user to the paste-text fallback.
+ */
+export class JobPostingError extends Error {
+  code: string;
+  constructor(code: string) {
+    super(`Job posting fetch failed: ${code}`);
+    this.name = "JobPostingError";
+    this.code = code;
   }
 }
 
@@ -305,6 +321,73 @@ export async function getResumeUsage(): Promise<{
       ? (data.message_count as number)
       : 0;
   return { count, remaining: Math.max(0, RESUME_DAILY_MESSAGE_LIMIT - count) };
+}
+
+/* ================================================================== *
+ * Job-posting target (tailoring).
+ * ================================================================== */
+
+/**
+ * Fetch + extract a job posting server-side (from a URL) or normalize pasted
+ * text. Proxies /api/resume/job-posting so the fetch is SSRF-guarded, size-capped,
+ * and never exposes the user's IP. Throws ResumeLimitError when the daily budget
+ * is gone, or JobPostingError(code) with a specific reason otherwise.
+ */
+export async function fetchJobPosting(
+  input: { url: string } | { text: string },
+): Promise<ResumeJobPosting> {
+  const res = await fetch("/api/resume/job-posting", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  if (!res.ok) {
+    let code = "generic";
+    try {
+      const errBody = (await res.json()) as { code?: string };
+      if (errBody?.code) code = errBody.code;
+    } catch {
+      // keep the generic code
+    }
+    // Only the daily-cap 429 is a ResumeLimitError; a rate-limit 429 (and every
+    // other failure) carries its own code so the UI shows the right message.
+    if (code === "daily_limit_reached") throw new ResumeLimitError();
+    throw new JobPostingError(code);
+  }
+
+  const data = (await res.json()) as {
+    url?: string;
+    title?: string;
+    company?: string;
+    location?: string;
+    text?: string;
+  };
+  return {
+    url: data.url ?? "",
+    title: data.title ?? "",
+    company: data.company ?? "",
+    location: data.location ?? "",
+    text: data.text ?? "",
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Attach (or, with null, clear) the target job posting on a draft. Stored inside
+ * the draft's `resume` JSONB (no schema change); saveDraftResume normalizes and
+ * preserves it. Leaves the transcript untouched.
+ */
+export async function setDraftJobPosting(
+  id: string,
+  jobPosting: ResumeJobPosting | null,
+): Promise<ResumeDraft> {
+  const current = await getDraft(id);
+  if (!current) throw new Error("Draft not found");
+  const nextResume: ResumeData = { ...current.resume };
+  if (jobPosting) nextResume.jobPosting = jobPosting;
+  else delete nextResume.jobPosting;
+  return saveDraftResume(id, nextResume, current.title);
 }
 
 /* ================================================================== *

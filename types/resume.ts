@@ -67,6 +67,28 @@ export interface ResumeSkillCategory {
   items: string[];
 }
 
+/**
+ * A target job posting the user is tailoring the resume toward.
+ *
+ * Client-owned metadata that rides INSIDE the `resume` JSONB (so this needs no
+ * DB schema change) but is NEVER authored by the model — the resume-chat edge fn
+ * strips unknown fields from the resume it returns, so the send flow re-merges
+ * this back onto each returned snapshot. Captured either by a server-side fetch +
+ * extraction of a URL (app/api/resume/job-posting) or by the user pasting the
+ * description text directly.
+ */
+export interface ResumeJobPosting {
+  /** Source URL, or "" when the user pasted the description text directly. */
+  url: string;
+  title: string;
+  company: string;
+  location: string;
+  /** Extracted posting text (requirements/responsibilities), capped. */
+  text: string;
+  /** ISO timestamp the posting was captured. */
+  fetchedAt: string;
+}
+
 export interface ResumeData {
   contact: ResumeContact;
   /** Optional 1–2 sentence professional summary shown under the header. */
@@ -75,6 +97,11 @@ export interface ResumeData {
   experience: ResumeExperience[];
   projects: ResumeProject[];
   skills: ResumeSkillCategory[];
+  /**
+   * Optional target job the resume is being tailored toward (client-owned; see
+   * ResumeJobPosting). Absent when no job has been attached.
+   */
+  jobPosting?: ResumeJobPosting;
 }
 
 /** Chat roles for the resume conversation. */

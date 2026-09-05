@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { ChatInput } from "@/components/companion/ChatInput";
 import { ResumeSuggestionChips } from "./ResumeSuggestionChips";
+import { JobTargetBar } from "./JobTargetBar";
 import type { ResumeChatMessage, ResumeDraft } from "@/types/resume";
 
 function TypingIndicator() {
@@ -48,11 +49,15 @@ function Bubble({ message }: { message: ResumeChatMessage }) {
 
 interface ResumeChatColumnProps {
   draft: ResumeDraft | null;
+  /** The active draft's id (for the job-posting target actions). */
+  draftId: string | null;
   isTyping: boolean;
   errorMessage: string | null;
   remaining: number;
   limitReached: boolean;
   onSend: (text: string) => void;
+  /** Fire a tailoring turn against the current job-posting target. */
+  onTailor: () => void;
   /** Mobile master/detail: is the chat the visible pane (vs the resume)? */
   mobileActive: boolean;
   /** Mobile master/detail: reveal the resume pane. */
@@ -61,11 +66,13 @@ interface ResumeChatColumnProps {
 
 export function ResumeChatColumn({
   draft,
+  draftId,
   isTyping,
   errorMessage,
   remaining,
   limitReached,
   onSend,
+  onTailor,
   mobileActive,
   onShowResume,
 }: ResumeChatColumnProps) {
@@ -130,6 +137,14 @@ export function ResumeChatColumn({
           <PanelRight className={cn("h-5 w-5", RTL_FLIP)} aria-hidden />
         </button>
       </header>
+
+      <JobTargetBar
+        draftId={draftId}
+        jobPosting={draft?.resume.jobPosting}
+        disabled={isTyping || limitReached}
+        busy={isTyping}
+        onTailor={onTailor}
+      />
 
       <div className="scrollbar-thin flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-2xl px-4 py-5">
