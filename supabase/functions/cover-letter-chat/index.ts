@@ -388,6 +388,9 @@ Deno.serve(async req => {
 
     const history = Array.isArray(body.history)
       ? body.history
+          // Cap the raw array before filtering so a direct caller (bypassing the
+          // proxy) can't force traversal of an unbounded history.
+          .slice(-100)
           .filter(m => m && typeof m.content === 'string' && m.content.trim())
           .slice(-12)
           .map(m => ({
@@ -453,7 +456,10 @@ Deno.serve(async req => {
       $ai_total_tokens: llmResult.usage.totalTokens,
       $ai_total_cost_usd: llmResult.usage.costUsd,
       feature: 'cover_letter',
-      source: typeof body.source === 'string' ? body.source : 'web',
+      // Web-only function — hardcode the source so a direct caller can't spoof
+      // the $ai_generation source metric (the /api/cover-letter proxy is the
+      // only legitimate caller and already tags source:"web").
+      source: 'web',
       message_length: message.length,
     });
 

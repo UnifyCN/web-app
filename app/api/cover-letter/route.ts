@@ -49,10 +49,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Message is too long" }, { status: 413 });
   }
 
+  // Bound the forwarded envelope: cap history to a small window before the
+  // server→server invoke so an oversized `history` can't force the edge fn to
+  // parse/traverse a huge array (the fn itself keeps only the last 12).
+  const history = Array.isArray(body.history) ? body.history.slice(-24) : [];
+
   const { data, error } = await supabase.functions.invoke("cover-letter-chat", {
     body: {
       message,
-      history: body.history ?? [],
+      history,
       currentCoverLetter: body.currentCoverLetter ?? {},
       resumeContext: body.resumeContext ?? "",
       jobPosting: body.jobPosting ?? null,

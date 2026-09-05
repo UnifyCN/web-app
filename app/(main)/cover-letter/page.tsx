@@ -60,6 +60,7 @@ export default function MyCoverLettersPage() {
   }
 
   async function handleDuplicate(d: CoverLetterDraftSummary) {
+    if (duplicateDraft.isPending) return;
     try {
       const copy = await duplicateDraft.mutateAsync({
         id: d.id,
@@ -309,7 +310,7 @@ function RenameDialog({
           onChange={(e) => setValue(e.target.value)}
           maxLength={120}
           aria-label={t("coverLetter.list.renameLabel")}
-          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-primary"
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-base text-ink outline-none focus:border-primary md:text-sm"
         />
         <div className="mt-4 flex justify-end gap-2">
           <button

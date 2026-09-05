@@ -25,9 +25,9 @@ export function CoverLetterSuggestionChips({
         {t("coverLetter.suggestionsHint")}
       </p>
       <div className="flex flex-wrap gap-2">
-        {items.map((s) => (
+        {items.map((s, i) => (
           <button
-            key={s}
+            key={`${i}-${s}`}
             type="button"
             onClick={() => onPick(s)}
             className="cursor-pointer rounded-full border border-primary/40 bg-primary-bg px-3 py-1.5 text-start text-xs text-primary-dark transition-colors hover:bg-primary/10"

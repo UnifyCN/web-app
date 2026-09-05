@@ -148,7 +148,12 @@ export function CoverLetterChatColumn({
       />
 
       <div className="scrollbar-thin flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-2xl px-4 py-5">
+        <div
+          className="mx-auto w-full max-w-2xl px-4 py-5"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+        >
           {messages.map((m) => (
             <Bubble key={m.id} message={m} />
           ))}

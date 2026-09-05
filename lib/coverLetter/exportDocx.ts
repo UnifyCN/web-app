@@ -160,10 +160,12 @@ export async function buildCoverLetterDocx(
   return Packer.toBlob(doc);
 }
 
-/** Safe .docx filename from the sender's name + target company. */
+/** Safe .docx filename from the sender's name + target company. Keeps Unicode
+ *  letters/numbers (many newcomers have non-ASCII names) and drops only
+ *  punctuation/symbols that are unsafe in filenames. */
 export function coverLetterDocxFilename(data: CoverLetterData): string {
   const clean = (s: string) =>
-    s.replace(/[^\w\s-]/g, "").replace(/\s+/g, " ").trim();
+    s.replace(/[^\p{L}\p{N}\s-]/gu, "").replace(/\s+/g, " ").trim();
   const name = clean(data.contact.name || data.signature);
   const company = clean(data.jobPosting?.company || data.recipient.company);
   const base = [name, company, "cover letter"].filter(Boolean).join(" - ");
