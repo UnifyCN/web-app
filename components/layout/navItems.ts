@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Settings, Handshake, FileText } from "lucide-react";
+import { User, Settings, Handshake, FileText, Mail } from "lucide-react";
 import { LearnIcon } from "@/components/icons/LearnIcon";
 import { ChecklistIcon } from "@/components/icons/ChecklistIcon";
 import { CompanionIcon } from "@/components/icons/CompanionIcon";
@@ -33,6 +33,12 @@ export const MAIN_NAV: NavItem[] = [
     labelKey: "tabs.resume",
     href: "/resume",
     icon: FileText,
+    desktopOnly: true,
+  },
+  {
+    labelKey: "tabs.coverLetter",
+    href: "/cover-letter",
+    icon: Mail,
     desktopOnly: true,
   },
   { labelKey: "tabs.community", href: "/community", icon: CommunityIcon },
