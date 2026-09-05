@@ -11,10 +11,12 @@
 -- Draft/message ids are client-assigned UUIDs (crypto.randomUUID) so optimistic
 -- create works; `id` is the PK and the client supplies it on upsert.
 --
--- SHARED-DB CHANGE — NOT YET APPLIED TO PROD. Apply by hand via the dashboard SQL
--- editor (db push is unsafe on the drifted shared history), and only after
--- Savar's sign-off (shared infra). This file is the committed record; it has been
--- verified against a LOCAL supabase stack only.
+-- SHARED-DB CHANGE. Apply by hand via the dashboard SQL editor (db push is unsafe on
+-- the drifted shared history). This file is the committed record. It is a 1:1
+-- STRUCTURAL CLONE of the live, working 20260825120000_resume_persistence.sql (same
+-- table/policy/RPC shape, renamed for cover letters + 30/day cap) — reviewed, but the
+-- SQL itself was not executed anywhere before apply (no local stack was available).
+-- Applied to shared prod on 2026-09-05 after Luis's review + explicit go-ahead.
 
 create table public.cover_letters (
   id uuid primary key default gen_random_uuid(),

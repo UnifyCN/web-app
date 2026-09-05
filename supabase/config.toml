@@ -44,3 +44,11 @@ verify_jwt = true
 # as defense-in-depth. verify_jwt stays ON — no unauthenticated browser preflight needs
 # to reach it.
 verify_jwt = true
+
+[functions.cover-letter-chat]
+# AI cover-letter generator turn generator. Same rationale as resume-chat: the web app
+# calls it through the same-origin /api/cover-letter proxy (a server→server invoke that
+# forwards the user's JWT), and the function re-validates the JWT in-function
+# (supabase.auth.getUser) as defense-in-depth. verify_jwt stays ON — no unauthenticated
+# browser preflight needs to reach it.
+verify_jwt = true
