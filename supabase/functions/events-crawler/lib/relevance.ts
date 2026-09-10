@@ -57,13 +57,16 @@ function foldAccents(value: string): string {
  * are purely documentation, the union is what runs. Terms are matched case-insensitively
  * against the accent-folded title.
  *
- * A leading `\b` on `tenant`, `rental`, `renting`, `lease` and `resume`: each is a
- * substring of a common unrelated word — Lieu·tenant, Pa·rental, Pa·renting, P·lease,
- * P·resume·d — so without it the filter wrongly KEEPS "Lieutenant Governor Reading Award",
- * "Parental Controls", "Parenting Support Circle", "Please Note: Library Closed" and
- * "Presumed Innocent: Film Screening". Zero live incidence in the captured corpus today,
- * but latent; see lib/relevance_test.ts for the swallow examples and the real-word keeps
- * that prove the boundary doesn't cost a genuine hit.
+ * A leading `\b` on `housing`, `tenant`, `tenancy`, `rental`, `renting`, `lease` and
+ * `resume`: each is a substring of a common unrelated word — ware·housing, Lieu·tenant,
+ * Lieu·tenancy, Pa·rental, Pa·renting, P·lease, P·resume·d — so without it the filter
+ * wrongly KEEPS "Warehousing & Distribution Certificate", "Lieutenant Governor Reading
+ * Award", "Lieutenancy Awards Ceremony", "Parental Controls", "Parenting Support Circle",
+ * "Please Note: Library Closed" and "Presumed Innocent: Film Screening". `housing` and
+ * `tenancy` were missed by the 2026-08-09 boundary sweep (which fixed the other five) and
+ * are folded in here. Zero live incidence in the captured corpus today, but latent; see
+ * lib/relevance_test.ts for the swallow examples and the real-word keeps that prove the
+ * boundary doesn't cost a genuine hit.
  */
 const CORE_TERMS = [
   // Status & settlement
@@ -86,7 +89,7 @@ const CORE_TERMS = [
   'tax\\s+clinic|income\\s+tax|banking|bank\\s+account|budgeting|financial\\s+literacy',
   'credit\\s+score',
   // Housing
-  'housing|\\btenant|tenancy|\\brental|\\brenting|landlord|\\blease\\b',
+  '\\bhousing|\\btenant|\\btenancy|\\brental|\\brenting|landlord|\\blease\\b',
   // Named settlement programs. Kept to programs run under the same name by more than
   // one source, so this doesn't become a list of one-off event names: the Open Door
   // community hub is NVCL's and NVDPL's shared newcomer drop-in, 29 occurrences across

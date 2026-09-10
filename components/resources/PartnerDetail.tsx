@@ -103,10 +103,19 @@ export function PartnerDetail({ partner }: { partner: Partner }) {
               className="shadow-sm"
             />
             <div className="min-w-0 flex-1">
+              {/* Dark ink on the pale category tint with a colored dot for identity.
+                  The old saturated-color-on-10%-tint pill failed WCAG contrast for the
+                  lighter category colors (e.g. orange #F68B26, gold #C8941F). Mirrors the
+                  readable CategoryTile treatment. */}
               <span
-                className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
-                style={{ backgroundColor: `${color}1A`, color }}
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-ink-secondary"
+                style={{ backgroundColor: tint }}
               >
+                <span
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: color }}
+                  aria-hidden
+                />
                 {t(PARTNER_CATEGORY_LABEL_KEYS[partner.category])}
               </span>
               <h1 className="mt-1.5 text-xl font-bold text-ink-secondary">
