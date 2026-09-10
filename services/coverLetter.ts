@@ -104,9 +104,13 @@ export async function listDrafts(): Promise<CoverLetterDraftSummary[]> {
   const ctx = await authed();
   if (!ctx) return localListDrafts();
 
+  // Own-row RLS (cover_letters_select_own) is the real boundary here; the
+  // explicit user_id predicate is defense-in-depth so the intended scope is
+  // legible at the call site and doesn't depend solely on the policy.
   const { data, error } = await ctx.supabase
     .from("cover_letters")
     .select("id, title, updated_at, complete")
+    .eq("user_id", ctx.userId)
     .order("updated_at", { ascending: false });
   if (error) throw error;
   return (data ?? []).map((r) => ({
@@ -121,10 +125,13 @@ export async function getDraft(id: string): Promise<CoverLetterDraft | null> {
   const ctx = await authed();
   if (!ctx) return localGetDraft(id);
 
+  // Defense-in-depth: own-row RLS already scopes this; the explicit user_id
+  // predicate keeps the read consistent with listDrafts and legible at the call site.
   const { data, error } = await ctx.supabase
     .from("cover_letters")
     .select(DRAFT_COLS)
     .eq("id", id)
+    .eq("user_id", ctx.userId)
     .maybeSingle();
   if (error) throw error;
   return data ? rowToDraft(data as unknown as CoverLetterRow) : null;
