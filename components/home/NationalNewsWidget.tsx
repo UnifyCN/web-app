@@ -22,20 +22,25 @@ export function NationalNewsWidget() {
   const formatRelativeTime = useRelativeTime();
   const { data, isLoading, error } = useNews();
 
-  // Show one article per category — the most recent from each of up to 5 distinct
-  // categories — so the widget stays varied no matter what's publishing today
-  // (instead of e.g. 5 Immigration items). `data` is already date-desc (getNews
-  // orders by date), so the first row seen for a category is its most recent; a null
-  // category (the mock fallback) never collapses into one bucket.
+  // Recency-first: walk the date-desc feed (getNews orders by date) and take the 5
+  // newest items overall, capping each category at 2. This keeps the freshest stories
+  // at the top while still mixing topics. The previous one-per-category rule let slow
+  // categories (Health/Finance/Housing) pin weeks-old dates into 4 of 5 slots whenever
+  // only Immigration had published recently, making the widget look stale. A null
+  // category (mock fallback) is keyed per item so it never collapses or hits the cap.
   const items = useMemo(() => {
-    const seen = new Map<string, NewsItem>();
+    const MAX_PER_CATEGORY = 2;
+    const perCategory = new Map<string, number>();
+    const picked: NewsItem[] = [];
     for (const it of data ?? []) {
+      if (picked.length >= 5) break;
       const key = it.category ?? `__uncat_${it.id}`;
-      if (!seen.has(key)) seen.set(key, it);
+      const count = perCategory.get(key) ?? 0;
+      if (count >= MAX_PER_CATEGORY) continue;
+      perCategory.set(key, count + 1);
+      picked.push(it);
     }
-    return [...seen.values()]
-      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
-      .slice(0, 5);
+    return picked;
   }, [data]);
 
   return (
