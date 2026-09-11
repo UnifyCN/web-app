@@ -251,10 +251,13 @@ export async function duplicateDraft(
   const ctx = await authed();
   if (!ctx) return localDuplicateDraft(id, title);
 
+  // Defense-in-depth: own-row RLS already scopes this read; the explicit user_id
+  // predicate keeps it consistent with listDrafts/getDraft and legible at the call site.
   const { data: src, error: readError } = await ctx.supabase
     .from("resume_drafts")
     .select(DRAFT_COLS)
     .eq("id", id)
+    .eq("user_id", ctx.userId)
     .maybeSingle();
   if (readError) throw readError;
   if (!src) throw new Error("Draft not found");
