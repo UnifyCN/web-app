@@ -7,6 +7,7 @@ import {
   PARTNER_CATEGORY_TINTS,
   PARTNER_CATEGORY_ICONS,
   PARTNER_CATEGORY_LABEL_KEYS,
+  PARTNER_CATEGORY_DESCRIPTION_KEYS,
 } from "@/lib/resources/categories";
 
 interface CategoryTileProps {
@@ -43,7 +44,10 @@ export function CategoryTile({
         <span className="block text-sm font-semibold leading-snug text-ink-secondary">
           {t(PARTNER_CATEGORY_LABEL_KEYS[category])}
         </span>
-        <span className="mt-0.5 block text-xs text-ink-muted">
+        <span className="mt-1 line-clamp-2 block text-xs leading-snug text-ink-muted">
+          {t(PARTNER_CATEGORY_DESCRIPTION_KEYS[category])}
+        </span>
+        <span className="mt-1.5 block text-[11px] font-medium text-ink-tertiary">
           {t("resources.orgCount", { count: partnerCount })}
         </span>
       </span>

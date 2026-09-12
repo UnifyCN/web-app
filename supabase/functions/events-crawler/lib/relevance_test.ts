@@ -42,13 +42,15 @@ const KEEP: Record<string, string[]> = {
     'Résumé Clinic with S.U.C.C.E.S.S.',
     'Resume Writing Workshop',
   ],
-  // Housing terms carry a leading `\b` (tenant, rental, renting, lease) so they don't fire
-  // on Lieu·tenant / Pa·rental / Pa·renting / P·lease. These prove the boundary still keeps
-  // the genuine article, where the word starts the match — the DROP block below proves it
-  // rejects the swallowing words.
+  // Housing terms carry a leading `\b` (housing, tenant, tenancy, rental, renting, lease) so
+  // they don't fire on ware·housing / Lieu·tenant / Lieu·tenancy / Pa·rental / Pa·renting /
+  // P·lease. These prove the boundary still keeps the genuine article, where the word starts
+  // the match — the DROP block below proves it rejects the swallowing words.
   housing: [
     'Rental Housing Info Session',
+    'Affordable Housing Forum', // `\bhousing`, boundary before "Housing"
     'Tenant Rights Workshop',
+    'Tenancy Rights Q&A', // `\btenancy`, boundary before "Tenancy"
     'Renting 101: Know Your Rights',
     'Lease Agreement Basics for Newcomers',
   ],
@@ -122,11 +124,13 @@ const DROP: Record<string, string[]> = {
   // unrelated word, so before the leading `\b` these titles were wrongly KEPT. Constructed,
   // not captured (zero live incidence in the corpus today) — but latent, and the `\b` fix
   // that added this group NARROWS the regex, so these lock it in. See BACKLOG.md.
-  'left-word-boundary swallows (lease/rental/renting/tenant/resume)': [
+  'left-word-boundary swallows (housing/lease/rental/renting/tenant/tenancy/resume)': [
+    'Warehousing & Distribution Certificate', // ware·housing → housing
     'Please Note: Library Closed Monday', // P·lease  → lease
     'Parental Controls: Keeping Kids Safe Online', // Pa·rental → rental
     'Parenting Support Circle', // Pa·renting → renting
     'Lieutenant Governor Reading Award Ceremony', // Lieu·tenant → tenant
+    'Lieutenancy Awards Ceremony', // Lieu·tenancy → tenancy
     'Presumed Innocent: Film Screening', // P·resume·d → resume
   ],
   'ordinary library programming': [

@@ -611,6 +611,14 @@ swallow example to `lib/relevance_test.ts` as a DROP fixture. Best folded into w
 touches `relevance.ts` (e.g. the near-misses above) rather than done as its own change. — Done exactly
 that; see the RESOLVED note at the top of this entry.
 
+**Follow-up 2026-09-10 — two the sweep missed, now bounded.** The "four substrings" tally above
+undercounted: `housing` (swallowed by ware·**housing**, e.g. "Warehousing & Distribution Certificate")
+and `tenancy` (swallowed by Lieu·**tenancy**, the same root as the `\btenant` fix right beside it) also
+lacked a left boundary. Both are now `\bhousing` / `\btenancy`, each with a DROP fixture + a real-word
+KEEP (`Affordable Housing Forum`, `Tenancy Rights Q&A`) in `lib/relevance_test.ts`. Zero live incidence
+confirmed against the live shared DB: **0** rows in `public.events` match `warehousing|lieutenancy`,
+while the 5 genuine `\bhousing`/`\btenancy` titles already ingested still match. `deno test` green.
+
 **Client-only tab state elsewhere — same back-navigation bug Community just fixed**
 Found while fixing Community (this PR): tab state held in `useState` never reaches the URL,
 so browser history has nothing to restore and Back from a detail page resets to the first
