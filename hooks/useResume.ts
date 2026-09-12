@@ -1,25 +1,23 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import * as resume from "@/services/resume";
+import { createDraftHooks } from "@/lib/drafts/createDraftHooks";
+import { buildProfile, nowIso } from "@/lib/drafts/profile";
 import type { ResumeUpdater } from "@/lib/resume/editOps";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
-import {
-  DEFAULT_LANGUAGE,
-  SUPPORTED_LANGUAGES,
-  isSupportedLanguage,
-  type SupportedLanguage,
-} from "@/lib/i18n/config";
+import { SUPPORTED_LANGUAGES } from "@/lib/i18n/config";
 import type { UserProfile } from "@/types";
 import type {
   ResumeChatMessage,
   ResumeData,
   ResumeDraft,
-  ResumeJobPosting,
-  ResumeProfileContext,
+  ResumeDraftSummary,
 } from "@/types/resume";
 
 /** React Query hooks for the AI Resume Builder (local persistence). Mirrors the
- *  Companion hook shape: stable keys, optimistic send, onSuccess invalidation. */
+ *  Companion hook shape: stable keys, optimistic send, onSuccess invalidation.
+ *  The self-contained plumbing hooks come from the shared `createDraftHooks`
+ *  factory; the chat-send, create, inline-edit, and title logic stay here. */
 
 const DRAFTS_KEY = ["resume-drafts"] as const;
 const USAGE_KEY = ["resume-usage"] as const;
@@ -28,87 +26,34 @@ export function draftKey(id: string) {
   return ["resume-draft", id] as const;
 }
 
-function resolveLanguage(lang: string): SupportedLanguage {
-  return isSupportedLanguage(lang) ? lang : DEFAULT_LANGUAGE;
-}
+/* ---- Shared plumbing hooks (see lib/drafts/createDraftHooks). ---- */
+const hooks = createDraftHooks<ResumeDraft, ResumeDraftSummary>({
+  service: {
+    listDrafts: resume.listDrafts,
+    getDraft: resume.getDraft,
+    getUsage: resume.getResumeUsage,
+    fetchJobPosting: resume.fetchJobPosting,
+    setDraftJobPosting: resume.setDraftJobPosting,
+    deleteDraft: resume.deleteDraft,
+    renameDraft: resume.renameDraft,
+    duplicateDraft: resume.duplicateDraft,
+  },
+  keys: { drafts: DRAFTS_KEY, usage: USAGE_KEY, draftKey },
+});
 
-/** Build the per-turn personalization context from the cached current user. */
-function buildProfile(
-  user: UserProfile | undefined,
-  language: string,
-): ResumeProfileContext {
-  const onb = user?.onboarding ?? null;
-  return {
-    firstName: onb?.firstName ?? null,
-    persona: onb?.persona ?? null,
-    stage: onb?.stage ?? null,
-    city: onb?.city ?? null,
-    province: onb?.province ?? null,
-    email: null,
-    responseLanguage: resolveLanguage(language),
-  };
-}
+export const useResumeDrafts = hooks.useDrafts;
+export const useResumeDraft = hooks.useDraft;
+export const useResumeUsage = hooks.useUsage;
+/** Fetch + attach a target job posting (the editor then offers "Tailor my resume"). */
+export const useFetchJobPosting = hooks.useFetchJobPosting;
+export const useClearJobPosting = hooks.useClearJobPosting;
+export const useDeleteResumeDraft = hooks.useDelete;
+export const useRenameDraft = hooks.useRename;
+export const useDuplicateDraft = hooks.useDuplicate;
 
-function nowIso() {
-  return new Date().toISOString();
-}
-
-export function useResumeDrafts() {
-  return useQuery({ queryKey: DRAFTS_KEY, queryFn: resume.listDrafts });
-}
-
-export function useResumeDraft(id: string | null) {
-  return useQuery({
-    queryKey: draftKey(id ?? ""),
-    queryFn: () => resume.getDraft(id as string),
-    enabled: !!id,
-    // Guard the optimistic user bubble from an immediate refetch (mirrors
-    // Companion's useConversationMessages staleTime).
-    staleTime: 30_000,
-  });
-}
-
-export function useResumeUsage() {
-  return useQuery({ queryKey: USAGE_KEY, queryFn: resume.getResumeUsage });
-}
-
-interface FetchJobPostingInput {
-  draftId: string;
-  /** A URL to fetch + extract server-side, or pasted description text. */
-  source: { url: string } | { text: string };
-}
-
-/**
- * Fetch + extract a target job posting (or accept pasted text) and attach it to
- * the draft. The returned draft carries `resume.jobPosting`; the editor then
- * offers a "Tailor my resume" action. Errors (JobPostingError / ResumeLimitError)
- * propagate to the caller for a specific, localized message.
- */
-export function useFetchJobPosting() {
-  const queryClient = useQueryClient();
-  return useMutation<ResumeDraft, Error, FetchJobPostingInput>({
-    mutationFn: async ({ draftId, source }) => {
-      const jobPosting: ResumeJobPosting = await resume.fetchJobPosting(source);
-      return resume.setDraftJobPosting(draftId, jobPosting);
-    },
-    onSuccess: (draft) => {
-      queryClient.setQueryData(draftKey(draft.id), draft);
-      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
-    },
-  });
-}
-
-/** Remove the target job posting from a draft (leaves the resume + transcript). */
-export function useClearJobPosting() {
-  const queryClient = useQueryClient();
-  return useMutation<ResumeDraft, Error, string>({
-    mutationFn: (draftId) => resume.setDraftJobPosting(draftId, null),
-    onSuccess: (draft) => {
-      queryClient.setQueryData(draftKey(draft.id), draft);
-      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
-    },
-  });
-}
+/* ================================================================== *
+ * Feature-specific hooks (create, send, inline-edit, title derivation).
+ * ================================================================== */
 
 /**
  * Create a new draft: prefill contact from the onboarding profile (name +
@@ -185,11 +130,11 @@ function deriveTitle(
  */
 function isAutoTitle(
   title: string,
-  resume: ResumeData,
+  resumeData: ResumeData,
   user: UserProfile | undefined,
   placeholders: string[],
 ): boolean {
-  return placeholders.some((p) => title === deriveTitle(resume, user, p));
+  return placeholders.some((p) => title === deriveTitle(resumeData, user, p));
 }
 
 /**
@@ -391,56 +336,6 @@ export function useUpdateResumeData() {
           ? { ...prev, title: finalDraft.title, updatedAt: finalDraft.updatedAt }
           : finalDraft,
       );
-      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
-    },
-  });
-}
-
-export function useDeleteResumeDraft() {
-  const queryClient = useQueryClient();
-  return useMutation<void, Error, string>({
-    mutationFn: (id) => resume.deleteDraft(id),
-    onSuccess: (_data, id) => {
-      queryClient.removeQueries({ queryKey: draftKey(id) });
-      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
-    },
-  });
-}
-
-interface RenameInput {
-  id: string;
-  title: string;
-}
-
-/** Rename a draft (title only). Doesn't touch the resume body, so it stays out
- *  of the inline-edit `editWriteChain`. */
-export function useRenameDraft() {
-  const queryClient = useQueryClient();
-  return useMutation<ResumeDraft, Error, RenameInput>({
-    mutationFn: ({ id, title }) => resume.renameDraft(id, title),
-    onSuccess: (draft) => {
-      queryClient.setQueryData<ResumeDraft>(draftKey(draft.id), (prev) =>
-        prev ? { ...prev, title: draft.title, updatedAt: draft.updatedAt } : draft,
-      );
-      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
-    },
-  });
-}
-
-interface DuplicateInput {
-  id: string;
-  /** The localized "Copy of …" title, composed by the caller. */
-  title: string;
-}
-
-/** Duplicate a draft into a new independent row; returns the new draft so the
- *  caller can navigate to it. */
-export function useDuplicateDraft() {
-  const queryClient = useQueryClient();
-  return useMutation<ResumeDraft, Error, DuplicateInput>({
-    mutationFn: ({ id, title }) => resume.duplicateDraft(id, title),
-    onSuccess: (draft) => {
-      queryClient.setQueryData(draftKey(draft.id), draft);
       queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
     },
   });
