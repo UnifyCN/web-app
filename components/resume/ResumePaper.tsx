@@ -11,8 +11,8 @@ import {
   X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
+import { PaperSheet, SERIF } from "@/components/documents/PaperSheet";
 import { EditableText } from "./EditableText";
 import {
   addBullet,
@@ -50,7 +50,6 @@ import type {
  * both automatically reflect manual edits — no export changes needed.
  */
 
-const SERIF = "Georgia, 'Times New Roman', 'Nimbus Roman', serif";
 /** Mirrors normalizeResumeData's MAX_ENTRIES (schema.ts) so "add" stops at the cap. */
 const MAX_ENTRIES = 12;
 
@@ -502,21 +501,18 @@ export function ResumePaper({
 }) {
   const isEditable = editable && !!onChange;
   return (
-    <div
-      className={cn(
-        "resume-paper mx-auto w-full max-w-[816px] bg-white px-[52px] py-[44px] text-black shadow-sm ring-1 ring-black/5",
-        isEditable && "resume-paper-editable",
-        // While an AI turn runs, keep the editable layout but block interaction
-        // so a concurrent manual edit can't race the turn's full-resume overwrite.
-        isEditable && disabled && "pointer-events-none",
-      )}
-      style={{ fontFamily: SERIF }}
+    <PaperSheet
+      paperClassName="resume-paper"
+      className="px-[52px] py-[44px]"
+      editable={editable}
+      disabled={disabled}
+      onChange={onChange}
     >
       {isEditable ? (
         <EditableResume data={data} onChange={onChange} />
       ) : (
         <ReadOnlyResume data={data} />
       )}
-    </div>
+    </PaperSheet>
   );
 }
