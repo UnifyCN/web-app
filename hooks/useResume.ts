@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import * as resume from "@/services/resume";
-import { createDraftHooks } from "@/lib/drafts/createDraftHooks";
+import { createDraftHooks } from "@/hooks/drafts/createDraftHooks";
 import { buildProfile, nowIso } from "@/lib/drafts/profile";
 import type { ResumeUpdater } from "@/lib/resume/editOps";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
@@ -26,7 +26,7 @@ export function draftKey(id: string) {
   return ["resume-draft", id] as const;
 }
 
-/* ---- Shared plumbing hooks (see lib/drafts/createDraftHooks). ---- */
+/* ---- Shared plumbing hooks (see hooks/drafts/createDraftHooks). ---- */
 const hooks = createDraftHooks<ResumeDraft, ResumeDraftSummary>({
   service: {
     listDrafts: resume.listDrafts,

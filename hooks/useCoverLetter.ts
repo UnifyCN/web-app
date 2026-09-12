@@ -6,7 +6,7 @@ import {
   listDrafts as listResumeDrafts,
 } from "@/services/resume";
 import { buildResumeContext } from "@/lib/coverLetter/schema";
-import { createDraftHooks } from "@/lib/drafts/createDraftHooks";
+import { createDraftHooks } from "@/hooks/drafts/createDraftHooks";
 import { buildProfile, nowIso } from "@/lib/drafts/profile";
 import type { CoverLetterUpdater } from "@/lib/coverLetter/editOps";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
@@ -41,7 +41,7 @@ function formatToday(): string {
   });
 }
 
-/* ---- Shared plumbing hooks (see lib/drafts/createDraftHooks). ---- */
+/* ---- Shared plumbing hooks (see hooks/drafts/createDraftHooks). ---- */
 const hooks = createDraftHooks<CoverLetterDraft, CoverLetterDraftSummary>({
   service: {
     listDrafts: coverLetter.listDrafts,
