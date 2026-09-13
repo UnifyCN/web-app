@@ -162,6 +162,9 @@ function EditableLetter({ data, onChange }: { data: CoverLetterData; onChange: C
               the whole name/title line is empty, keeping each field discoverable. */}
           <EditableText
             editable
+            // Keep a constant accessible name even when the visual placeholder is
+            // suppressed (placeholder="" would otherwise leave the field unlabeled).
+            ariaLabel={t("coverLetter.edit.recipientName")}
             value={data.recipient.name}
             onCommit={(v) => onChange((prev) => setRecipientField(prev, "name", v))}
             placeholder={
@@ -176,6 +179,7 @@ function EditableLetter({ data, onChange }: { data: CoverLetterData; onChange: C
           ) : null}
           <EditableText
             editable
+            ariaLabel={t("coverLetter.edit.recipientTitle")}
             value={data.recipient.title}
             onCommit={(v) => onChange((prev) => setRecipientField(prev, "title", v))}
             placeholder={
