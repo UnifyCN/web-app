@@ -161,6 +161,74 @@ function buildTurnMessages(profile, history, currentResume, message) {
   return messages;
 }
 
+// ---------------------------------------------------------------------------
+// Import mapping (one-shot: extracted resume text -> structured ResumeData).
+// The user uploaded an existing resume; instead of the interview, map the whole
+// document at once. Same JSON contract as a normal turn, so parse/normalize/
+// preserveContact downstream are shared.
+// ---------------------------------------------------------------------------
+
+function buildImportSystemPrompt(profile): string {
+  const langName = LANGUAGE_NAMES[profile.responseLanguage] ?? 'English';
+  const persona = profile.persona
+    ? PERSONA_HINT[profile.persona] ?? PERSONA_HINT.other
+    : PERSONA_HINT.other;
+  const name = profile.firstName ? String(profile.firstName).trim() : '';
+  const place = [profile.city, profile.province].filter(Boolean).join(', ');
+
+  const contextLines = [
+    name ? `The user's first name is ${name}.` : '',
+    `They are ${persona}`,
+    stageHint(profile.stage ?? null),
+    place ? `They are settling in ${place}, Canada.` : '',
+  ]
+    .filter(Boolean)
+    .map(l => `- ${l}`)
+    .join('\n');
+
+  return `You are Unify's Resume Coach, importing a resume a newcomer to Canada already wrote. The user uploaded their existing resume; its full extracted text is the user message.
+
+# Who you're helping
+${contextLines}
+
+# Your task (ONE-SHOT IMPORT — do not interview)
+Read the uploaded resume text and map ALL of its real content into the structured resume JSON. Do NOT ask questions; do NOT start a conversation.
+- Extract every job, education entry, project, and skill present. Preserve the person's real facts exactly as written: employer and school names, job titles, dates, and locations.
+- Convert duties/achievements into clean, concise bullet points (start each with a past-tense action verb). Keep any real numbers the text gives; NEVER invent employers, titles, dates, metrics, schools, or skills. If a field isn't in the text, leave it "" (or []). Empty is always better than made-up.
+- Translate any non-English content into natural English (titles, degrees, skill names, bullets), because this resume is for Canadian employers. Keep real proper names (a specific company or school) as written.
+- Fill contact fields (name, email, phone, location, linkedin, website) from the resume text when present; leave "" otherwise. Never output a bracketed placeholder like "[EMAIL]".
+- Group skills into sensible categories.
+- If the uploaded text is clearly NOT a resume (an invoice, an article, a random document), return the "resume" object with ALL fields empty ("" / []) — do not fabricate a resume. The app will tell the user.
+
+# reply + suggestions
+- "reply": 1–2 short sentences in ${langName} telling the user their resume has been imported and inviting them to review each section or ask you to refine anything.
+- "suggestions": 2–3 short ${langName} example follow-ups they might tap (e.g. "Improve my summary", "Strengthen my bullet points", "Add more skills").
+- "complete": false.
+
+# Output format
+${SCHEMA_BLOCK}
+
+Reply to the user in ${langName}. Output ONLY the JSON object.`;
+}
+
+function buildImportMessages(profile, importText) {
+  return [
+    { role: 'system', content: buildImportSystemPrompt(profile) },
+    { role: 'user', content: `UPLOADED RESUME TEXT:\n\n${importText}` },
+  ];
+}
+
+/** Mirrors isResumeEmpty in lib/resume/schema.ts: no substantive content yet. */
+function isResumeEmptyEdge(r): boolean {
+  return (
+    (!r.experience || r.experience.length === 0) &&
+    (!r.education || r.education.length === 0) &&
+    (!r.projects || r.projects.length === 0) &&
+    (!r.skills || r.skills.length === 0) &&
+    !(r.summary && String(r.summary).trim())
+  );
+}
+
 function extractJsonObject(raw: string) {
   const trimmed = raw.trim();
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -389,14 +457,28 @@ Deno.serve(async req => {
       return jsonResponse({ error: 'Invalid JSON body' }, 400);
     }
 
+    // Import mode: the client sends the full extracted text of an uploaded
+    // resume as `importText` (much larger than a chat message). Absent it, this
+    // is an ordinary conversational turn. Backward-compatible: existing callers
+    // send no `importText` and take the unchanged chat path.
+    const importText =
+      typeof body.importText === 'string' ? body.importText.trim() : '';
+    const isImport = importText.length > 0;
+
     const message = typeof body.message === 'string' ? body.message.trim() : '';
-    if (!message) return jsonResponse({ error: 'Message is required' }, 400);
-    if (message.length > 2000) {
-      return jsonResponse({ error: 'Message is too long' }, 413);
+    if (isImport) {
+      if (importText.length > 20000) {
+        return jsonResponse({ error: 'Import text is too long' }, 413);
+      }
+    } else {
+      if (!message) return jsonResponse({ error: 'Message is required' }, 400);
+      if (message.length > 2000) {
+        return jsonResponse({ error: 'Message is too long' }, 413);
+      }
     }
 
     // Daily per-user quota (mirrors rag-query / translate-content): charge before
-    // generating, refund below if the turn fails. Fail closed on an RPC error.
+    // generating, refund below if the turn fails. An import counts as one message.
     const { data: quotaOk, error: quotaError } = await supabase.rpc(
       'check_and_increment_resume_usage',
       { p_user_id: authData.user.id, p_daily_limit: 60 },
@@ -413,31 +495,34 @@ Deno.serve(async req => {
     }
     incrementedUserId = authData.user.id;
 
-    const history = Array.isArray(body.history)
-      ? body.history
-          .filter(m => m && typeof m.content === 'string' && m.content.trim())
-          .slice(-12)
-          .map(m => ({
-            role: m.role === 'assistant' ? 'assistant' : 'user',
-            content: String(m.content).slice(0, 4000),
-          }))
-      : [];
     const currentResume = normalizeResume(body.currentResume);
     const profile = clampProfile(body.profile);
 
-    const messages = buildTurnMessages(
-      profile,
-      history,
-      currentResume,
-      message
-    );
+    const messages = isImport
+      ? buildImportMessages(profile, importText)
+      : buildTurnMessages(
+          profile,
+          Array.isArray(body.history)
+            ? body.history
+                .filter(m => m && typeof m.content === 'string' && m.content.trim())
+                .slice(-12)
+                .map(m => ({
+                  role: m.role === 'assistant' ? 'assistant' : 'user',
+                  content: String(m.content).slice(0, 4000),
+                }))
+            : [],
+          currentResume,
+          message,
+        );
 
     const llmResult = await callOpenRouter({
       model: 'deepseek/deepseek-v4-flash',
       messages,
       jsonMode: true,
-      maxTokens: 2400,
-      temperature: 0.5,
+      // An import maps a whole document at once: more output room, and a lower
+      // temperature for faithful extraction over creative coaching.
+      maxTokens: isImport ? 3500 : 2400,
+      temperature: isImport ? 0.3 : 0.5,
       timeoutMs: 45000,
       retries: 1,
       retryDelayMs: 500,
@@ -461,16 +546,18 @@ Deno.serve(async req => {
       $ai_total_tokens: llmResult.usage.totalTokens,
       $ai_total_cost_usd: llmResult.usage.costUsd,
       feature: 'resume_builder',
+      mode: isImport ? 'import' : 'chat',
       source: typeof body.source === 'string' ? body.source : 'web',
-      message_length: message.length,
+      message_length: isImport ? importText.length : message.length,
     });
 
     const parsed = parseTurnResponse(llmResult.content);
     if (!parsed || !parsed.reply) {
-      // Prose fallback: a turn occasionally returns a plain sentence despite
-      // json mode. Show it and leave the resume unchanged this turn.
+      // Prose fallback: a chat turn occasionally returns a plain sentence despite
+      // json mode — show it and leave the resume unchanged. An import with no
+      // parseable resume is a failed import: refund and fail.
       const prose = llmResult.content.trim();
-      if (prose && prose.length <= 1500 && !prose.includes('{')) {
+      if (!isImport && prose && prose.length <= 1500 && !prose.includes('{')) {
         return jsonResponse({
           reply: prose,
           suggestions: [],
@@ -482,10 +569,22 @@ Deno.serve(async req => {
       return jsonResponse({ error: 'Unexpected model response' }, 502);
     }
 
+    const resume = preserveContact(currentResume, normalizeResume(parsed.resume));
+
+    // The import prompt returns an all-empty resume when the upload isn't a
+    // resume. Don't charge the user for that — refund and tell the client.
+    if (isImport && isResumeEmptyEdge(resume)) {
+      await refundQuota();
+      return jsonResponse(
+        { error: 'That does not look like a resume.', code: 'not_a_resume' },
+        422,
+      );
+    }
+
     return jsonResponse({
       reply: parsed.reply,
       suggestions: parsed.suggestions,
-      resume: preserveContact(currentResume, normalizeResume(parsed.resume)),
+      resume,
       complete: parsed.complete,
     });
   } catch (error) {

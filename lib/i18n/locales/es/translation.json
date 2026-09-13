@@ -1971,6 +1971,30 @@
       "renameLabel": "Nombre del currículum",
       "cancel": "Cancelar",
       "save": "Guardar"
+    },
+    "import": {
+      "button": "Subir currículum",
+      "title": "Importando tu currículum",
+      "reading": "Leyendo tu currículum…",
+      "structuring": "Estructurando con IA…",
+      "errorTitle": "Error al importar",
+      "errorDismiss": "Aceptar",
+      "errors": {
+        "unsupported_type": "Tipo de archivo no admitido. Sube un PDF o DOCX.",
+        "too_large": "El archivo es demasiado grande. El tamaño máximo es 4 MB.",
+        "unreadable": "No pudimos leer el texto de este archivo. Las imágenes escaneadas no son compatibles; prueba con un PDF o DOCX con texto.",
+        "not_a_resume": "Esto no parece un currículum. Sube un archivo de currículum o empieza desde cero.",
+        "daily_limit_reached": "Has alcanzado el límite diario del creador de currículums. Inténtalo de nuevo mañana.",
+        "busy": "El asistente de currículums está ocupado. Inténtalo de nuevo en un momento.",
+        "unauthorized": "Inicia sesión e inténtalo de nuevo.",
+        "generic": "Algo salió mal al importar ese archivo. Inténtalo de nuevo."
+      },
+      "next": {
+        "title": "Tu currículum se ha importado",
+        "body": "Revisa cada sección y ajusta lo que quieras, o adáptalo a un empleo específico ahora mismo.",
+        "tailor": "Generar una versión adaptada",
+        "chat": "Chatear y perfeccionar"
+      }
     }
   },
   "coverLetter": {

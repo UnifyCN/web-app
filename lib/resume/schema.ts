@@ -29,6 +29,12 @@ export const RESUME_DAILY_MESSAGE_LIMIT = 60;
 /** Max characters accepted for a single user message (bounds prompt cost). */
 export const MAX_RESUME_MESSAGE_LEN = 2000;
 
+/** Max characters of extracted resume text accepted by the import mapping turn.
+ *  Far larger than a normal message (a full resume is several KB); kept in
+ *  lockstep with MAX_EXTRACTED_TEXT_CHARS (lib/documents/importValidation.ts)
+ *  and mirrored as a literal in the resume-chat edge function. */
+export const MAX_RESUME_IMPORT_LEN = 20000;
+
 /** How many prior turns to send back to the model (bounds prompt size). */
 export const RESUME_HISTORY_TURNS = 12;
 

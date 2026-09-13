@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
   CheckCircle2,
   Copy,
   FileText,
+  Loader2,
   Pencil,
   Plus,
   Trash2,
+  Upload,
 } from "lucide-react";
 import { formatRelativeTime } from "@/lib/utils";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
@@ -19,12 +21,23 @@ import {
   useCreateResumeDraft,
   useDeleteResumeDraft,
   useDuplicateDraft,
+  useImportResumeDraft,
   useRenameDraft,
   useResumeDrafts,
   useResumeUsage,
+  type ImportPhase,
 } from "@/hooks/useResume";
 import { RESUME_DAILY_MESSAGE_LIMIT } from "@/lib/resume/schema";
+import {
+  validateDocumentFile,
+  DocumentValidationError,
+  PDF_MIME,
+  DOCX_MIME,
+} from "@/lib/documents/importValidation";
+import { DocumentImportError } from "@/lib/documents/errors";
 import type { ResumeDraftSummary } from "@/types/resume";
+
+const DOCUMENT_ACCEPT = `.pdf,.docx,${PDF_MIME},${DOCX_MIME}`;
 
 /**
  * "My Resumes" — the management home for the resume builder. Lists the user's
@@ -44,9 +57,13 @@ export default function MyResumesPage() {
   const renameDraft = useRenameDraft();
   const duplicateDraft = useDuplicateDraft();
   const deleteDraft = useDeleteResumeDraft();
+  const importDraft = useImportResumeDraft();
 
   const [renaming, setRenaming] = useState<ResumeDraftSummary | null>(null);
   const [deleting, setDeleting] = useState<ResumeDraftSummary | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importPhase, setImportPhase] = useState<ImportPhase | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   async function handleCreate() {
     if (createDraft.isPending) return;
@@ -55,6 +72,50 @@ export default function MyResumesPage() {
       router.push(`/resume/${created.id}`);
     } catch (err) {
       console.error("Resume: failed to create draft", err);
+    }
+  }
+
+  function openFilePicker() {
+    if (importDraft.isPending) return;
+    fileInputRef.current?.click();
+  }
+
+  /** Map a validation / import failure to a localized message. */
+  function importErrorMessage(err: unknown): string {
+    if (err instanceof DocumentValidationError) {
+      return err.reason === "size"
+        ? t("resume.import.errors.too_large")
+        : t("resume.import.errors.unsupported_type");
+    }
+    if (err instanceof DocumentImportError) {
+      return t(`resume.import.errors.${err.code}`);
+    }
+    return t("resume.import.errors.generic");
+  }
+
+  async function handleFileSelected(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    // Clear the value so re-selecting the same file later still fires onChange.
+    e.target.value = "";
+    if (!file || importDraft.isPending) return;
+    // Fast client-side reject (type + size) before uploading.
+    try {
+      validateDocumentFile(file);
+    } catch (err) {
+      setImportError(importErrorMessage(err));
+      return;
+    }
+    try {
+      const created = await importDraft.mutateAsync({
+        file,
+        onPhase: setImportPhase,
+      });
+      router.push(`/resume/${created.id}?imported=1`);
+    } catch (err) {
+      console.error("Resume: failed to import", err);
+      setImportError(importErrorMessage(err));
+    } finally {
+      setImportPhase(null);
     }
   }
 
@@ -111,16 +172,35 @@ export default function MyResumesPage() {
             {t("resume.messagesRemaining", { count: remaining })}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleCreate}
-          disabled={createDraft.isPending}
-          className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
-        >
-          <Plus className="h-4 w-4" aria-hidden />
-          {t("resume.newResume")}
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={openFilePicker}
+            disabled={importDraft.isPending}
+            className="flex cursor-pointer items-center gap-1.5 rounded-full border border-border-card bg-surface px-4 py-2 text-sm font-semibold text-ink-secondary transition-colors hover:bg-surface-gray disabled:opacity-60"
+          >
+            <Upload className="h-4 w-4" aria-hidden />
+            {t("resume.import.button")}
+          </button>
+          <button
+            type="button"
+            onClick={handleCreate}
+            disabled={createDraft.isPending}
+            className="flex cursor-pointer items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            {t("resume.newResume")}
+          </button>
+        </div>
       </header>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={DOCUMENT_ACCEPT}
+        onChange={handleFileSelected}
+        className="hidden"
+      />
 
       {draftsQuery.isLoading ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -132,7 +212,12 @@ export default function MyResumesPage() {
           ))}
         </div>
       ) : isEmpty ? (
-        <EmptyState onCreate={handleCreate} creating={createDraft.isPending} />
+        <EmptyState
+          onCreate={handleCreate}
+          creating={createDraft.isPending}
+          onUpload={openFilePicker}
+          importing={importDraft.isPending}
+        />
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {drafts.map((d) => (
@@ -167,6 +252,43 @@ export default function MyResumesPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleting(null)}
       />
+
+      {importPhase && (
+        <ModalShell
+          open
+          title={t("resume.import.title")}
+          busy
+          onClose={() => {}}
+        >
+          <div className="flex items-center gap-3 py-1">
+            <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary" aria-hidden />
+            <p className="text-sm text-ink-muted">
+              {importPhase === "extracting"
+                ? t("resume.import.reading")
+                : t("resume.import.structuring")}
+            </p>
+          </div>
+        </ModalShell>
+      )}
+
+      {importError && (
+        <ModalShell
+          open
+          title={t("resume.import.errorTitle")}
+          onClose={() => setImportError(null)}
+        >
+          <p className="text-sm text-ink-muted">{importError}</p>
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setImportError(null)}
+              className="cursor-pointer rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
+            >
+              {t("resume.import.errorDismiss")}
+            </button>
+          </div>
+        </ModalShell>
+      )}
     </div>
   );
 }
@@ -246,9 +368,13 @@ function ResumeCard({
 function EmptyState({
   onCreate,
   creating,
+  onUpload,
+  importing,
 }: {
   onCreate: () => void;
   creating: boolean;
+  onUpload: () => void;
+  importing: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -262,15 +388,26 @@ function EmptyState({
       <p className="mt-1 max-w-xs text-sm text-ink-muted">
         {t("resume.list.emptyBody")}
       </p>
-      <button
-        type="button"
-        onClick={onCreate}
-        disabled={creating}
-        className="mt-5 flex cursor-pointer items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
-      >
-        <Plus className="h-4 w-4" aria-hidden />
-        {t("resume.list.createFirst")}
-      </button>
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={onCreate}
+          disabled={creating}
+          className="flex cursor-pointer items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
+        >
+          <Plus className="h-4 w-4" aria-hidden />
+          {t("resume.list.createFirst")}
+        </button>
+        <button
+          type="button"
+          onClick={onUpload}
+          disabled={importing}
+          className="flex cursor-pointer items-center gap-1.5 rounded-full border border-border-card bg-surface px-4 py-2 text-sm font-semibold text-ink-secondary transition-colors hover:bg-surface-gray disabled:opacity-60"
+        >
+          <Upload className="h-4 w-4" aria-hidden />
+          {t("resume.import.button")}
+        </button>
+      </div>
     </div>
   );
 }

@@ -99,6 +99,61 @@ export function useCreateResumeDraft() {
   });
 }
 
+/** The two visible stages of an import, for a two-step progress indicator. */
+export type ImportPhase = "extracting" | "mapping";
+
+/**
+ * Import an existing resume from an uploaded PDF/DOCX: extract its text
+ * (/api/documents/extract), map it to structured `ResumeData` in one AI turn
+ * (resume-chat's import branch, which charges one message), then create a draft
+ * seeded with the mapped resume + an assistant opener = the turn's reply. The
+ * caller navigates to the new draft (with `?imported=1`) on success, mirroring
+ * `handleCreate`; `onPhase` drives the progress UI. Errors surface as
+ * `DocumentImportError` for the UI to map.
+ */
+export function useImportResumeDraft() {
+  const queryClient = useQueryClient();
+  const { t, i18n } = useTranslation();
+  return useMutation<
+    ResumeDraft,
+    Error,
+    { file: File; onPhase?: (phase: ImportPhase) => void }
+  >({
+    mutationFn: async ({ file, onPhase }) => {
+      onPhase?.("extracting");
+      const { text } = await resume.extractDocumentText(file);
+      const user = queryClient.getQueryData<UserProfile>(CURRENT_USER_KEY);
+      const profile = buildProfile(user, i18n.language);
+      onPhase?.("mapping");
+      const response = await resume.generateImportTurn({
+        importText: text,
+        profile,
+      });
+      const opener: ResumeChatMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: response.reply,
+        suggestions: response.suggestions,
+        createdAt: nowIso(),
+      };
+      const title = deriveTitle(response.resume, user, t("resume.untitled"));
+      const draft = resume.newDraft({ title, contact: {}, openerMessage: opener });
+      const imported: ResumeDraft = {
+        ...draft,
+        resume: response.resume,
+        complete: response.complete,
+      };
+      return resume.saveDraft(imported);
+    },
+    onSuccess: (draft) => {
+      queryClient.setQueryData(draftKey(draft.id), draft);
+      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
+      // The mapping turn consumed a message — refresh the quota meter.
+      queryClient.invalidateQueries({ queryKey: USAGE_KEY });
+    },
+  });
+}
+
 /** A short human title derived from the resume so the drafts list stays scannable. */
 function deriveTitle(
   data: ResumeData,

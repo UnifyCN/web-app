@@ -1971,6 +1971,30 @@
       "renameLabel": "Tên hồ sơ",
       "cancel": "Hủy",
       "save": "Lưu"
+    },
+    "import": {
+      "button": "Tải lên hồ sơ",
+      "title": "Đang nhập hồ sơ của bạn",
+      "reading": "Đang đọc hồ sơ của bạn…",
+      "structuring": "Đang sắp xếp bằng AI…",
+      "errorTitle": "Nhập không thành công",
+      "errorDismiss": "OK",
+      "errors": {
+        "unsupported_type": "Loại tệp không được hỗ trợ. Hãy tải lên tệp PDF hoặc DOCX.",
+        "too_large": "Tệp quá lớn. Kích thước tối đa là 4MB.",
+        "unreadable": "Chúng tôi không đọc được nội dung trong tệp này. Không hỗ trợ ảnh quét — hãy thử tệp PDF hoặc DOCX có chữ.",
+        "not_a_resume": "Đây có vẻ không phải là hồ sơ. Hãy tải lên tệp hồ sơ, hoặc bắt đầu từ đầu.",
+        "daily_limit_reached": "Bạn đã đạt giới hạn tạo hồ sơ trong ngày. Vui lòng thử lại vào ngày mai.",
+        "busy": "Trợ lý hồ sơ đang bận. Vui lòng thử lại sau giây lát.",
+        "unauthorized": "Vui lòng đăng nhập rồi thử lại.",
+        "generic": "Đã xảy ra lỗi khi nhập tệp đó. Vui lòng thử lại."
+      },
+      "next": {
+        "title": "Đã nhập hồ sơ của bạn",
+        "body": "Xem lại từng mục và chỉnh sửa tùy ý, hoặc điều chỉnh hồ sơ cho một công việc cụ thể ngay bây giờ.",
+        "tailor": "Tạo phiên bản điều chỉnh",
+        "chat": "Trò chuyện và chỉnh sửa"
+      }
     }
   },
   "coverLetter": {

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { ResumeChatColumn } from "@/components/resume/ResumeChatColumn";
 import { ResumePanel } from "@/components/resume/ResumePanel";
+import { ImportNextCard } from "@/components/resume/ImportNextCard";
 import {
   useResumeDraft,
   useResumeUsage,
@@ -27,14 +28,37 @@ import type { ResumeUpdater } from "@/lib/resume/editOps";
  * one active draft. On mobile it's master/detail (toggle chat vs resume).
  */
 export default function ResumeEditorPage() {
+  // useSearchParams (read in ResumeEditor) needs a Suspense boundary at prerender.
+  return (
+    <Suspense fallback={null}>
+      <ResumeEditor />
+    </Suspense>
+  );
+}
+
+function ResumeEditor() {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useParams<{ draftId: string }>();
   const draftId = params.draftId;
+  const searchParams = useSearchParams();
 
   const [sendError, setSendError] = useState<string | null>(null);
   // Mobile master/detail: false = chat visible, true = resume visible.
   const [mobileShowResume, setMobileShowResume] = useState(false);
+  // Post-import "What next?" card: shown when the import flow navigated here with
+  // `?imported=1`, until dismissed. A one-shot signal opens the job-target bar.
+  const [importDismissed, setImportDismissed] = useState(false);
+  const [expandJobBar, setExpandJobBar] = useState(false);
+  const showImportCard =
+    searchParams.get("imported") === "1" && !importDismissed;
+
+  // Stop showing the card: remember the dismissal and strip the query param so a
+  // refresh won't reopen it.
+  function dismissImportCard() {
+    setImportDismissed(true);
+    router.replace(`/resume/${draftId}`);
+  }
 
   const draftQuery = useResumeDraft(draftId);
   const draft = draftQuery.data ?? null;
@@ -81,6 +105,15 @@ export default function ResumeEditorPage() {
     );
   }
 
+  // Post-import "Generate tailored version": if a posting is already attached,
+  // fire the tailoring turn; otherwise open the job-target bar so the user can
+  // add one (then the bar's own "Tailor my resume" runs handleTailor).
+  function handleImportTailor() {
+    dismissImportCard();
+    if (draft?.resume.jobPosting) handleTailor();
+    else setExpandJobBar(true);
+  }
+
   // Manual inline edit → persist to the SAME draft.resume the AI reads/writes.
   // Guarded against an in-flight turn (which overwrites with its snapshot).
   function handleEditResume(update: ResumeUpdater) {
@@ -103,6 +136,7 @@ export default function ResumeEditorPage() {
         onTailor={handleTailor}
         mobileActive={!mobileShowResume}
         onShowResume={() => setMobileShowResume(true)}
+        autoExpandJobBar={expandJobBar}
       />
       <ResumePanel
         data={resumeData}
@@ -113,6 +147,12 @@ export default function ResumeEditorPage() {
         onEditResume={handleEditResume}
         mobileActive={mobileShowResume}
         onBackToChat={() => setMobileShowResume(false)}
+      />
+
+      <ImportNextCard
+        open={showImportCard}
+        onChatRefine={dismissImportCard}
+        onTailor={handleImportTailor}
       />
     </div>
   );
