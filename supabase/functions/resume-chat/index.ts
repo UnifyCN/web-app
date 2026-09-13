@@ -218,13 +218,34 @@ function buildImportMessages(profile, importText) {
   ];
 }
 
-/** Mirrors isResumeEmpty in lib/resume/schema.ts: no substantive content yet. */
+/** An entry counts only if it has some substantive (non-id, non-blank) field. */
+function entryHasContent(e): boolean {
+  if (!e || typeof e !== 'object') return false;
+  for (const [k, v] of Object.entries(e)) {
+    if (k === 'id') continue;
+    if (typeof v === 'string') {
+      if (v.trim()) return true;
+    } else if (Array.isArray(v)) {
+      if (v.some(x => typeof x === 'string' && x.trim())) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Mirrors isResumeEmpty in lib/resume/schema.ts, but also treats arrays that
+ * contain only blank placeholder entries as empty. Otherwise a non-resume upload
+ * that makes the model echo the empty SCHEMA_BLOCK skeleton would leave non-empty
+ * arrays of blank entries — isResumeEmptyEdge would return false, the blank
+ * resume would be saved, and the quota would NOT be refunded.
+ */
 function isResumeEmptyEdge(r): boolean {
+  const hasAny = arr => Array.isArray(arr) && arr.some(entryHasContent);
   return (
-    (!r.experience || r.experience.length === 0) &&
-    (!r.education || r.education.length === 0) &&
-    (!r.projects || r.projects.length === 0) &&
-    (!r.skills || r.skills.length === 0) &&
+    !hasAny(r.experience) &&
+    !hasAny(r.education) &&
+    !hasAny(r.projects) &&
+    !hasAny(r.skills) &&
     !(r.summary && String(r.summary).trim())
   );
 }

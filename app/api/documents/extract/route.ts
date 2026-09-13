@@ -8,6 +8,7 @@ import {
   MIN_EXTRACTED_TEXT_CHARS,
   DOCUMENT_TOO_LARGE_MESSAGE,
   UNSUPPORTED_DOCUMENT_MESSAGE,
+  DocumentValidationError,
   PDF_MIME,
   DOCX_MIME,
   type DocumentKind,
@@ -117,6 +118,13 @@ export async function POST(req: NextRequest) {
   try {
     text = await extractDocumentText(bytes, kind);
   } catch (err) {
+    // A zip-bomb / oversized DOCX archive is a size rejection, not "unreadable".
+    if (err instanceof DocumentValidationError && err.reason === "size") {
+      return NextResponse.json(
+        { error: DOCUMENT_TOO_LARGE_MESSAGE, code: "too_large" },
+        { status: 413 },
+      );
+    }
     console.error("/api/documents/extract: parse failed", err);
     // A corrupt/undecodable file reads as unreadable rather than a 500.
     return NextResponse.json(
