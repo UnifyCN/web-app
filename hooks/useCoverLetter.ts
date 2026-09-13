@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import * as coverLetter from "@/services/coverLetter";
 import {
@@ -6,55 +6,29 @@ import {
   listDrafts as listResumeDrafts,
 } from "@/services/resume";
 import { buildResumeContext } from "@/lib/coverLetter/schema";
+import { createDraftHooks } from "@/hooks/drafts/createDraftHooks";
+import { buildProfile, nowIso } from "@/lib/drafts/profile";
 import type { CoverLetterUpdater } from "@/lib/coverLetter/editOps";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
-import {
-  DEFAULT_LANGUAGE,
-  SUPPORTED_LANGUAGES,
-  isSupportedLanguage,
-  type SupportedLanguage,
-} from "@/lib/i18n/config";
+import { SUPPORTED_LANGUAGES } from "@/lib/i18n/config";
 import type { UserProfile } from "@/types";
 import type {
   CoverLetterChatMessage,
   CoverLetterData,
   CoverLetterDraft,
-  CoverLetterProfileContext,
+  CoverLetterDraftSummary,
 } from "@/types/coverLetter";
-import type { ResumeJobPosting } from "@/types/resume";
 
 /** React Query hooks for the AI Cover-Letter Generator. Mirrors useResume.ts:
- *  stable keys, optimistic send, onSuccess invalidation. */
+ *  stable keys, optimistic send, onSuccess invalidation. The self-contained
+ *  plumbing hooks come from the shared `createDraftHooks` factory; the chat-send,
+ *  create, inline-edit, resume-link, and title logic stay here. */
 
 const DRAFTS_KEY = ["cover-letter-drafts"] as const;
 const USAGE_KEY = ["cover-letter-usage"] as const;
 
 export function draftKey(id: string) {
   return ["cover-letter-draft", id] as const;
-}
-
-function resolveLanguage(lang: string): SupportedLanguage {
-  return isSupportedLanguage(lang) ? lang : DEFAULT_LANGUAGE;
-}
-
-function buildProfile(
-  user: UserProfile | undefined,
-  language: string,
-): CoverLetterProfileContext {
-  const onb = user?.onboarding ?? null;
-  return {
-    firstName: onb?.firstName ?? null,
-    persona: onb?.persona ?? null,
-    stage: onb?.stage ?? null,
-    city: onb?.city ?? null,
-    province: onb?.province ?? null,
-    email: null,
-    responseLanguage: resolveLanguage(language),
-  };
-}
-
-function nowIso() {
-  return new Date().toISOString();
 }
 
 /** Today's date for the letter's date line. Always English ("September 4, 2026")
@@ -67,59 +41,33 @@ function formatToday(): string {
   });
 }
 
-export function useCoverLetterDrafts() {
-  return useQuery({ queryKey: DRAFTS_KEY, queryFn: coverLetter.listDrafts });
-}
+/* ---- Shared plumbing hooks (see hooks/drafts/createDraftHooks). ---- */
+const hooks = createDraftHooks<CoverLetterDraft, CoverLetterDraftSummary>({
+  service: {
+    listDrafts: coverLetter.listDrafts,
+    getDraft: coverLetter.getDraft,
+    getUsage: coverLetter.getCoverLetterUsage,
+    fetchJobPosting: coverLetter.fetchJobPosting,
+    setDraftJobPosting: coverLetter.setDraftJobPosting,
+    deleteDraft: coverLetter.deleteDraft,
+    renameDraft: coverLetter.renameDraft,
+    duplicateDraft: coverLetter.duplicateDraft,
+  },
+  keys: { drafts: DRAFTS_KEY, usage: USAGE_KEY, draftKey },
+});
 
-export function useCoverLetterDraft(id: string | null) {
-  return useQuery({
-    queryKey: draftKey(id ?? ""),
-    queryFn: () => coverLetter.getDraft(id as string),
-    enabled: !!id,
-    staleTime: 30_000,
-  });
-}
+export const useCoverLetterDrafts = hooks.useDrafts;
+export const useCoverLetterDraft = hooks.useDraft;
+export const useCoverLetterUsage = hooks.useUsage;
+export const useFetchJobPosting = hooks.useFetchJobPosting;
+export const useClearJobPosting = hooks.useClearJobPosting;
+export const useDeleteCoverLetterDraft = hooks.useDelete;
+export const useRenameCoverLetter = hooks.useRename;
+export const useDuplicateCoverLetter = hooks.useDuplicate;
 
-export function useCoverLetterUsage() {
-  return useQuery({
-    queryKey: USAGE_KEY,
-    queryFn: coverLetter.getCoverLetterUsage,
-  });
-}
-
-interface FetchJobPostingInput {
-  draftId: string;
-  source: { url: string } | { text: string };
-}
-
-/** Fetch + extract a target job posting (or accept pasted text) and attach it to
- *  the letter. Errors (JobPostingError / CoverLetterLimitError) propagate. */
-export function useFetchJobPosting() {
-  const queryClient = useQueryClient();
-  return useMutation<CoverLetterDraft, Error, FetchJobPostingInput>({
-    mutationFn: async ({ draftId, source }) => {
-      const jobPosting: ResumeJobPosting =
-        await coverLetter.fetchJobPosting(source);
-      return coverLetter.setDraftJobPosting(draftId, jobPosting);
-    },
-    onSuccess: (draft) => {
-      queryClient.setQueryData(draftKey(draft.id), draft);
-      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
-    },
-  });
-}
-
-/** Remove the target job posting from a letter. */
-export function useClearJobPosting() {
-  const queryClient = useQueryClient();
-  return useMutation<CoverLetterDraft, Error, string>({
-    mutationFn: (draftId) => coverLetter.setDraftJobPosting(draftId, null),
-    onSuccess: (draft) => {
-      queryClient.setQueryData(draftKey(draft.id), draft);
-      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
-    },
-  });
-}
+/* ================================================================== *
+ * Feature-specific hooks (resume link, create, send, inline-edit, title).
+ * ================================================================== */
 
 interface SetResumeLinkInput {
   draftId: string;
@@ -407,53 +355,6 @@ export function useUpdateCoverLetterData() {
             ? { ...prev, title: finalDraft.title, updatedAt: finalDraft.updatedAt }
             : finalDraft,
       );
-      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
-    },
-  });
-}
-
-export function useDeleteCoverLetterDraft() {
-  const queryClient = useQueryClient();
-  return useMutation<void, Error, string>({
-    mutationFn: (id) => coverLetter.deleteDraft(id),
-    onSuccess: (_data, id) => {
-      queryClient.removeQueries({ queryKey: draftKey(id) });
-      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
-    },
-  });
-}
-
-interface RenameInput {
-  id: string;
-  title: string;
-}
-
-export function useRenameCoverLetter() {
-  const queryClient = useQueryClient();
-  return useMutation<CoverLetterDraft, Error, RenameInput>({
-    mutationFn: ({ id, title }) => coverLetter.renameDraft(id, title),
-    onSuccess: (draft) => {
-      queryClient.setQueryData<CoverLetterDraft>(draftKey(draft.id), (prev) =>
-        prev
-          ? { ...prev, title: draft.title, updatedAt: draft.updatedAt }
-          : draft,
-      );
-      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
-    },
-  });
-}
-
-interface DuplicateInput {
-  id: string;
-  title: string;
-}
-
-export function useDuplicateCoverLetter() {
-  const queryClient = useQueryClient();
-  return useMutation<CoverLetterDraft, Error, DuplicateInput>({
-    mutationFn: ({ id, title }) => coverLetter.duplicateDraft(id, title),
-    onSuccess: (draft) => {
-      queryClient.setQueryData(draftKey(draft.id), draft);
       queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
     },
   });

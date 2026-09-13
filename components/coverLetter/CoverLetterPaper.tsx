@@ -2,7 +2,7 @@
 
 import { Plus, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
+import { PaperSheet } from "@/components/documents/PaperSheet";
 import { EditableText } from "@/components/resume/EditableText";
 import {
   addParagraph,
@@ -29,8 +29,6 @@ import type { CoverLetterData } from "@/types/coverLetter";
  * DOCX exports from CoverLetterData and the print copy from the read-only render,
  * so both automatically reflect manual edits — no export changes needed.
  */
-
-const SERIF = "Georgia, 'Times New Roman', 'Nimbus Roman', serif";
 
 const CONTACT_FIELDS: { field: keyof ResumeContact; ph: string }[] = [
   { field: "phone", ph: "coverLetter.edit.phone" },
@@ -274,19 +272,18 @@ export function CoverLetterPaper({
 }) {
   const isEditable = editable && !!onChange;
   return (
-    <div
-      className={cn(
-        "cover-letter-paper mx-auto w-full max-w-[816px] bg-white px-[64px] py-[56px] text-black shadow-sm ring-1 ring-black/5",
-        isEditable && "cover-letter-paper-editable",
-        isEditable && disabled && "pointer-events-none",
-      )}
-      style={{ fontFamily: SERIF }}
+    <PaperSheet
+      paperClassName="cover-letter-paper"
+      className="px-[64px] py-[56px]"
+      editable={editable}
+      disabled={disabled}
+      onChange={onChange}
     >
       {isEditable ? (
         <EditableLetter data={data} onChange={onChange} />
       ) : (
         <ReadOnlyLetter data={data} />
       )}
-    </div>
+    </PaperSheet>
   );
 }

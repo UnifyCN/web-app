@@ -13,65 +13,38 @@
  */
 
 import type { CoverLetterData } from "@/types/coverLetter";
+import {
+  DOCX_FONT,
+  buildDocument,
+  buildHeaderParagraphs,
+} from "@/lib/docx/shared";
 
-const FONT = "Georgia";
+const FONT = DOCX_FONT;
 // Half-point sizes: name 20pt, body 11pt, meta 10.5pt.
 const SIZE_NAME = 40;
 const SIZE_BODY = 22;
 const SIZE_META = 21;
 
-/** Contact line order matches CoverLetterPaper (empties filtered). */
-function contactLine(data: CoverLetterData): string {
-  const { contact } = data;
-  return [
-    contact.phone,
-    contact.email,
-    contact.location,
-    contact.linkedin,
-    contact.website,
-  ]
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .join("   |   ");
-}
-
 export async function buildCoverLetterDocx(
   data: CoverLetterData,
 ): Promise<Blob> {
-  const { Document, Packer, Paragraph, TextRun, AlignmentType } = await import(
-    "docx"
-  );
+  const { Paragraph, TextRun } = await import("docx");
 
   const children: InstanceType<typeof Paragraph>[] = [];
 
   const bodyRun = (text: string, opts: { bold?: boolean; italics?: boolean } = {}) =>
     new TextRun({ text, size: SIZE_BODY, font: FONT, ...opts });
 
-  // --- Header: sender name + contact line (centered) -----------------------
+  // --- Header: sender name + contact line (shared builder) -----------------
   children.push(
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 40 },
-      children: [
-        new TextRun({
-          text: data.contact.name.trim() || data.signature.trim(),
-          bold: true,
-          size: SIZE_NAME,
-          font: FONT,
-        }),
-      ],
-    }),
+    ...(await buildHeaderParagraphs({
+      name: data.contact.name.trim() || data.signature.trim(),
+      contact: data.contact,
+      nameSize: SIZE_NAME,
+      contactSize: SIZE_META,
+      contactSpacingAfter: 320,
+    })),
   );
-  const contacts = contactLine(data);
-  if (contacts) {
-    children.push(
-      new Paragraph({
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 320 },
-        children: [new TextRun({ text: contacts, size: SIZE_META, font: FONT })],
-      }),
-    );
-  }
 
   // --- Date ----------------------------------------------------------------
   if (data.date.trim()) {
@@ -143,21 +116,12 @@ export async function buildCoverLetterDocx(
     );
   }
 
-  const doc = new Document({
+  // 1in margins (twips: 1in = 1440) — standard letter margins.
+  return buildDocument({
     creator: "Unify Cover Letter Generator",
-    styles: { default: { document: { run: { font: FONT } } } },
-    sections: [
-      {
-        // 1in top/bottom, 1in sides (twips: 1in = 1440) — standard letter margins.
-        properties: {
-          page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } },
-        },
-        children,
-      },
-    ],
+    margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+    children,
   });
-
-  return Packer.toBlob(doc);
 }
 
 /** Safe .docx filename from the sender's name + target company. Keeps Unicode

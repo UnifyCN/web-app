@@ -16,6 +16,11 @@
  */
 
 import type { ResumeData } from "@/types/resume";
+import {
+  DOCX_FONT,
+  buildDocument,
+  buildHeaderParagraphs,
+} from "@/lib/docx/shared";
 
 export interface ResumeDocxLabels {
   yourName: string;
@@ -26,70 +31,32 @@ export interface ResumeDocxLabels {
   skills: string;
 }
 
-const FONT = "Georgia";
+const FONT = DOCX_FONT;
 // Half-point sizes (docx `size` unit): name 22pt, headings 11pt, body 10.5pt.
 const SIZE_NAME = 44;
 const SIZE_HEADING = 22;
 const SIZE_BODY = 21;
 const SIZE_META = 20; // italic dates/location
 
-/** Contact line order matches ResumePaper.contactLine (empties filtered). */
-function contactLine(data: ResumeData): string {
-  const { contact } = data;
-  return [
-    contact.phone,
-    contact.email,
-    contact.location,
-    contact.linkedin,
-    contact.website,
-  ]
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .join("   |   ");
-}
-
 export async function buildResumeDocx(
   data: ResumeData,
   labels: ResumeDocxLabels,
 ): Promise<Blob> {
-  const {
-    Document,
-    Packer,
-    Paragraph,
-    TextRun,
-    AlignmentType,
-    TabStopType,
-    TabStopPosition,
-    BorderStyle,
-  } = await import("docx");
+  const { Paragraph, TextRun, TabStopType, TabStopPosition, BorderStyle } =
+    await import("docx");
 
   const children: InstanceType<typeof Paragraph>[] = [];
 
-  // --- Header: name + contact line -----------------------------------------
+  // --- Header: name + contact line (shared builder) ------------------------
   children.push(
-    new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 40 },
-      children: [
-        new TextRun({
-          text: data.contact.name.trim() || labels.yourName,
-          bold: true,
-          size: SIZE_NAME,
-          font: FONT,
-        }),
-      ],
-    }),
+    ...(await buildHeaderParagraphs({
+      name: data.contact.name.trim() || labels.yourName,
+      contact: data.contact,
+      nameSize: SIZE_NAME,
+      contactSize: SIZE_META,
+      contactSpacingAfter: 120,
+    })),
   );
-  const contacts = contactLine(data);
-  if (contacts) {
-    children.push(
-      new Paragraph({
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 120 },
-        children: [new TextRun({ text: contacts, size: SIZE_META, font: FONT })],
-      }),
-    );
-  }
 
   // --- helpers -------------------------------------------------------------
   const sectionHeading = (label: string) =>
@@ -251,21 +218,12 @@ export async function buildResumeDocx(
     }
   }
 
-  const doc = new Document({
+  // 0.5in top/bottom, 0.55in sides (twips: 1in = 1440), matching the print CSS.
+  return buildDocument({
     creator: "Unify Resume Builder",
-    styles: { default: { document: { run: { font: FONT } } } },
-    sections: [
-      {
-        // 0.5in top/bottom, 0.55in sides (twips: 1in = 1440), matching the print CSS.
-        properties: {
-          page: { margin: { top: 720, right: 792, bottom: 720, left: 792 } },
-        },
-        children,
-      },
-    ],
+    margin: { top: 720, right: 792, bottom: 720, left: 792 },
+    children,
   });
-
-  return Packer.toBlob(doc);
 }
 
 /** Safe .docx filename from the resume's name (falls back to "resume"). */
