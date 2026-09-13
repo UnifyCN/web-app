@@ -155,19 +155,34 @@ function EditableLetter({ data, onChange }: { data: CoverLetterData; onChange: C
       {/* Recipient block */}
       <div className="mt-[18px] space-y-[1px]">
         <div className="flex flex-wrap items-baseline gap-x-1.5">
+          {/* Placeholders are suppressed once the sibling field is filled, and the
+              "·" only shows when both have content — so an AI-supplied title like
+              "Hiring Manager" (with an empty name) renders just the title, not
+              "Hiring manager name · Hiring Manager". Both placeholders still show when
+              the whole name/title line is empty, keeping each field discoverable. */}
           <EditableText
             editable
             value={data.recipient.name}
             onCommit={(v) => onChange((prev) => setRecipientField(prev, "name", v))}
-            placeholder={t("coverLetter.edit.recipientName")}
+            placeholder={
+              data.recipient.title.trim()
+                ? ""
+                : t("coverLetter.edit.recipientName")
+            }
             className="text-[12px] text-black"
           />
-          <span className="text-ink-placeholder" aria-hidden>·</span>
+          {data.recipient.name.trim() && data.recipient.title.trim() ? (
+            <span className="text-ink-placeholder" aria-hidden>·</span>
+          ) : null}
           <EditableText
             editable
             value={data.recipient.title}
             onCommit={(v) => onChange((prev) => setRecipientField(prev, "title", v))}
-            placeholder={t("coverLetter.edit.recipientTitle")}
+            placeholder={
+              data.recipient.name.trim()
+                ? ""
+                : t("coverLetter.edit.recipientTitle")
+            }
             className="text-[12px] text-black"
           />
         </div>
