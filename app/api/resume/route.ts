@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { MAX_RESUME_MESSAGE_LEN } from "@/lib/resume/schema";
+import { MAX_RESUME_MESSAGE_LEN, MAX_RESUME_IMPORT_LEN } from "@/lib/resume/schema";
 
 /**
  * Server-side proxy for the shared `resume-chat` edge function (AI Resume
@@ -41,22 +41,47 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  // Import mode: the client sends the full extracted text of an uploaded resume
+  // as `importText` (far larger than a chat message, so the 2000-char message cap
+  // doesn't apply). Absent it, this is an ordinary conversational turn.
+  const importText =
+    typeof body.importText === "string" ? body.importText.trim() : "";
+  const isImport = importText.length > 0;
+
   const message = typeof body.message === "string" ? body.message.trim() : "";
-  if (!message) {
-    return NextResponse.json({ error: "Message is required" }, { status: 400 });
-  }
-  if (message.length > MAX_RESUME_MESSAGE_LEN) {
-    return NextResponse.json({ error: "Message is too long" }, { status: 413 });
+  if (isImport) {
+    if (importText.length > MAX_RESUME_IMPORT_LEN) {
+      return NextResponse.json(
+        { error: "Import text is too long" },
+        { status: 413 },
+      );
+    }
+  } else {
+    if (!message) {
+      return NextResponse.json({ error: "Message is required" }, { status: 400 });
+    }
+    if (message.length > MAX_RESUME_MESSAGE_LEN) {
+      return NextResponse.json({ error: "Message is too long" }, { status: 413 });
+    }
   }
 
+  const invokeBody = isImport
+    ? {
+        importText,
+        currentResume: body.currentResume ?? {},
+        profile: body.profile ?? {},
+        source: "web",
+      }
+    : {
+        message,
+        history: body.history ?? [],
+        currentResume: body.currentResume ?? {},
+        profile: body.profile ?? {},
+        source: "web",
+      };
+
   const { data, error } = await supabase.functions.invoke("resume-chat", {
-    body: {
-      message,
-      history: body.history ?? [],
-      currentResume: body.currentResume ?? {},
-      profile: body.profile ?? {},
-      source: "web",
-    },
+    body: invokeBody,
   });
 
   if (error) {

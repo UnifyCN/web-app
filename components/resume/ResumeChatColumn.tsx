@@ -21,6 +21,8 @@ interface ResumeChatColumnProps {
   mobileActive: boolean;
   /** Mobile master/detail: reveal the resume pane. */
   onShowResume: () => void;
+  /** Auto-expand the job target bar (post-import "Generate tailored version"). */
+  autoExpandJobBar?: boolean;
 }
 
 /**
@@ -40,6 +42,7 @@ export function ResumeChatColumn({
   onTailor,
   mobileActive,
   onShowResume,
+  autoExpandJobBar,
 }: ResumeChatColumnProps) {
   const { t } = useTranslation();
 
@@ -58,6 +61,7 @@ export function ResumeChatColumn({
           disabled={isTyping || limitReached}
           busy={isTyping}
           onTailor={onTailor}
+          autoExpand={autoExpandJobBar}
         />
       }
       isTyping={isTyping}

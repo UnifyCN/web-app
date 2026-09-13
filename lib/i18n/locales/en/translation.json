@@ -2001,6 +2001,30 @@
       "renameLabel": "Resume name",
       "cancel": "Cancel",
       "save": "Save"
+    },
+    "import": {
+      "button": "Upload resume",
+      "title": "Importing your resume",
+      "reading": "Reading your resume…",
+      "structuring": "Structuring with AI…",
+      "errorTitle": "Import failed",
+      "errorDismiss": "OK",
+      "errors": {
+        "unsupported_type": "Unsupported file type. Upload a PDF or DOCX.",
+        "too_large": "That file is too large. The maximum size is 4MB.",
+        "unreadable": "We couldn't read text from this file. Scanned images aren't supported — try a text-based PDF or DOCX.",
+        "not_a_resume": "That doesn't look like a resume. Upload a resume file, or start from scratch.",
+        "daily_limit_reached": "You've reached today's resume-builder limit. Try again tomorrow.",
+        "busy": "The resume assistant is busy right now. Please try again in a moment.",
+        "unauthorized": "Please sign in and try again.",
+        "generic": "Something went wrong importing that file. Please try again."
+      },
+      "next": {
+        "title": "Your resume is imported",
+        "body": "Review each section and refine anything, or tailor it to a specific job right now.",
+        "tailor": "Generate a tailored version",
+        "chat": "Chat and refine"
+      }
     }
   },
   "coverLetter": {

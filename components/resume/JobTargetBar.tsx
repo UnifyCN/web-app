@@ -20,6 +20,9 @@ interface JobTargetBarProps {
   busy: boolean;
   /** Fire a tailoring turn against the current target (owned by the editor page). */
   onTailor: () => void;
+  /** When this becomes true (e.g. via the post-import "Generate tailored version"
+   *  choice), auto-expand the input so the user can add a posting right away. */
+  autoExpand?: boolean;
 }
 
 /**
@@ -35,6 +38,7 @@ export function JobTargetBar({
   disabled,
   busy: turnInFlight,
   onTailor,
+  autoExpand,
 }: JobTargetBarProps) {
   const { t } = useTranslation();
   const fetchMut = useFetchJobPosting();
@@ -45,6 +49,15 @@ export function JobTargetBar({
   const [urlValue, setUrlValue] = useState("");
   const [textValue, setTextValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Open the input when the editor asks (post-import "Generate tailored version").
+  // Adjusting state during render on the prop's rising edge (React's documented
+  // pattern) rather than an effect — one-shot; the user can still collapse after.
+  const [autoExpandSeen, setAutoExpandSeen] = useState(false);
+  if (autoExpand && !autoExpandSeen) {
+    setAutoExpandSeen(true);
+    setExpanded(true);
+  }
 
   if (!draftId) return null;
 
