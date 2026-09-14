@@ -12,10 +12,7 @@
  */
 
 import { createDraftService } from "@/lib/drafts/createDraftService";
-import {
-  DocumentImportError,
-  type DocumentImportErrorCode,
-} from "@/lib/documents/errors";
+import { DocumentImportError } from "@/lib/documents/errors";
 import {
   RESUME_DAILY_MESSAGE_LIMIT,
   RESUME_HISTORY_TURNS,
@@ -149,48 +146,9 @@ export async function generateResumeTurn(args: {
  * Resume import (upload a PDF/DOCX instead of building from scratch).
  * ================================================================== */
 
-/**
- * Upload a resume file and get back its extracted plain text. POSTs the file as
- * multipart/form-data to the feature-neutral /api/documents/extract route (PDF
- * via unpdf, DOCX via mammoth). Throws a `DocumentImportError` whose `code` the
- * caller maps to a localized message (unsupported_type / too_large / unreadable).
- */
-export async function extractDocumentText(file: File): Promise<{ text: string }> {
-  const form = new FormData();
-  form.append("file", file);
-
-  let res: Response;
-  try {
-    res = await fetch("/api/documents/extract", { method: "POST", body: form });
-  } catch {
-    throw new DocumentImportError(
-      "generic",
-      "Upload failed. Check your connection and try again.",
-    );
-  }
-
-  if (!res.ok) {
-    let code: DocumentImportErrorCode | undefined;
-    let message: string | undefined;
-    try {
-      const body = (await res.json()) as { code?: string; error?: string };
-      code = body.code as DocumentImportErrorCode | undefined;
-      message = body.error;
-    } catch {
-      // fall back to a status-based mapping below
-    }
-    if (!code) {
-      if (res.status === 401) code = "unauthorized";
-      else if (res.status === 413) code = "too_large";
-      else if (res.status === 415) code = "unsupported_type";
-      else if (res.status === 422) code = "unreadable";
-      else code = "generic";
-    }
-    throw new DocumentImportError(code, message);
-  }
-
-  return (await res.json()) as { text: string };
-}
+// Re-export from the shared module so existing call sites (hooks/useResume.ts)
+// continue to work without import changes.
+export { extractDocumentText } from "@/services/documents";
 
 /**
  * One-shot AI mapping of extracted resume text into structured `ResumeData`,

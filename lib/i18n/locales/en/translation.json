@@ -2126,12 +2126,36 @@
       "deleteTitle": "Delete cover letter?",
       "deleteConfirm": "Permanently delete “{{title}}”? This can’t be undone.",
       "emptyTitle": "No cover letters yet",
-      "emptyBody": "Create your first cover letter tailored to a job posting.",
+      "emptyBody": "Create a new cover letter or upload an existing one.",
       "createFirst": "Create your first cover letter",
       "renameTitle": "Rename cover letter",
       "renameLabel": "Cover letter name",
       "cancel": "Cancel",
       "save": "Save"
+    },
+    "import": {
+      "button": "Upload cover letter",
+      "title": "Importing your cover letter",
+      "reading": "Reading your cover letter…",
+      "structuring": "Structuring with AI…",
+      "errorTitle": "Import failed",
+      "errorDismiss": "OK",
+      "errors": {
+        "unsupported_type": "Unsupported file type. Upload a PDF or DOCX.",
+        "too_large": "That file is too large. The maximum size is 4MB.",
+        "unreadable": "We couldn't read text from this file. Scanned images aren't supported — try a text-based PDF or DOCX.",
+        "not_a_cover_letter": "That doesn't look like a cover letter. Upload a cover letter file, or start from scratch.",
+        "daily_limit_reached": "You've reached today's cover-letter limit. Try again tomorrow.",
+        "busy": "The cover-letter assistant is busy right now. Please try again in a moment.",
+        "unauthorized": "Please sign in and try again.",
+        "generic": "Something went wrong importing that file. Please try again."
+      },
+      "next": {
+        "title": "Your cover letter is imported",
+        "body": "Review and refine anything, or tailor it to a specific job.",
+        "tailor": "Generate a tailored version",
+        "chat": "Chat and refine"
+      }
     }
   }
 }

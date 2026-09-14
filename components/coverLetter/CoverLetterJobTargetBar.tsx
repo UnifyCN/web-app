@@ -20,6 +20,8 @@ interface CoverLetterJobTargetBarProps {
   busy: boolean;
   /** Fire a generation turn against the current target (owned by the editor). */
   onGenerate: () => void;
+  /** One-shot: auto-expand the bar (used after post-import "Generate tailored"). */
+  autoExpand?: boolean;
 }
 
 /**
@@ -34,12 +36,18 @@ export function CoverLetterJobTargetBar({
   disabled,
   busy: turnInFlight,
   onGenerate,
+  autoExpand,
 }: CoverLetterJobTargetBarProps) {
   const { t } = useTranslation();
   const fetchMut = useFetchJobPosting();
   const clearMut = useClearJobPosting();
 
   const [expanded, setExpanded] = useState(false);
+  const [autoExpandSeen, setAutoExpandSeen] = useState(false);
+  if (autoExpand && !autoExpandSeen) {
+    setAutoExpandSeen(true);
+    if (!jobPosting) setExpanded(true);
+  }
   const [mode, setMode] = useState<"url" | "text">("url");
   const [urlValue, setUrlValue] = useState("");
   const [textValue, setTextValue] = useState("");

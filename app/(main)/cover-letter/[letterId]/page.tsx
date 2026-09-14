@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { CoverLetterChatColumn } from "@/components/coverLetter/CoverLetterChatColumn";
 import { CoverLetterPanel } from "@/components/coverLetter/CoverLetterPanel";
+import { CoverLetterImportNextCard } from "@/components/coverLetter/CoverLetterImportNextCard";
 import {
   useCoverLetterDraft,
   useCoverLetterUsage,
@@ -26,14 +27,34 @@ import type { CoverLetterUpdater } from "@/lib/coverLetter/editOps";
  * the one active letter. On mobile it's master/detail (toggle chat vs letter).
  */
 export default function CoverLetterEditorPage() {
+  return (
+    <Suspense fallback={null}>
+      <CoverLetterEditor />
+    </Suspense>
+  );
+}
+
+function CoverLetterEditor() {
   const { t } = useTranslation();
   const router = useRouter();
   const params = useParams<{ letterId: string }>();
   const draftId = params.letterId;
+  const searchParams = useSearchParams();
 
   const [sendError, setSendError] = useState<string | null>(null);
   // Mobile master/detail: false = chat visible, true = letter visible.
   const [mobileShowLetter, setMobileShowLetter] = useState(false);
+  // Post-import "What next?" card: shown when the import flow navigated here with
+  // `?imported=1`, until dismissed.
+  const [importDismissed, setImportDismissed] = useState(false);
+  const [expandJobBar, setExpandJobBar] = useState(false);
+  const showImportCard =
+    searchParams.get("imported") === "1" && !importDismissed;
+
+  function dismissImportCard() {
+    setImportDismissed(true);
+    router.replace(`/cover-letter/${draftId}`);
+  }
 
   const draftQuery = useCoverLetterDraft(draftId);
   const draft = draftQuery.data ?? null;
@@ -77,6 +98,12 @@ export default function CoverLetterEditorPage() {
     void handleSend(t("coverLetter.jobTarget.generateUserBubble"));
   }
 
+  function handleImportTailor() {
+    dismissImportCard();
+    if (draft?.coverLetter.jobPosting) handleGenerate();
+    else setExpandJobBar(true);
+  }
+
   function handleEditLetter(update: CoverLetterUpdater) {
     if (sendMessage.isPending) return;
     updateLetter.mutate({ draftId, update });
@@ -95,6 +122,7 @@ export default function CoverLetterEditorPage() {
         limitReached={limitReached}
         onSend={handleSend}
         onGenerate={handleGenerate}
+        autoExpandJobBar={expandJobBar}
         mobileActive={!mobileShowLetter}
         onShowLetter={() => setMobileShowLetter(true)}
       />
@@ -107,6 +135,12 @@ export default function CoverLetterEditorPage() {
         onEditLetter={handleEditLetter}
         mobileActive={mobileShowLetter}
         onBackToChat={() => setMobileShowLetter(false)}
+      />
+
+      <CoverLetterImportNextCard
+        open={showImportCard}
+        onChatRefine={dismissImportCard}
+        onTailor={handleImportTailor}
       />
     </div>
   );

@@ -2096,12 +2096,36 @@
       "deleteTitle": "Xóa thư xin việc?",
       "deleteConfirm": "Xóa vĩnh viễn “{{title}}”? Không thể hoàn tác.",
       "emptyTitle": "Chưa có thư xin việc nào",
-      "emptyBody": "Tạo thư xin việc đầu tiên phù hợp với một tin tuyển dụng.",
+      "emptyBody": "Tạo thư xin việc mới hoặc tải lên một thư có sẵn.",
       "createFirst": "Tạo thư xin việc đầu tiên",
       "renameTitle": "Đổi tên thư xin việc",
       "renameLabel": "Tên thư xin việc",
       "cancel": "Hủy",
       "save": "Lưu"
+    },
+    "import": {
+      "button": "Tải lên thư xin việc",
+      "title": "Đang nhập thư xin việc",
+      "reading": "Đang đọc thư xin việc của bạn…",
+      "structuring": "Đang cấu trúc bằng AI…",
+      "errorTitle": "Nhập thất bại",
+      "errorDismiss": "OK",
+      "errors": {
+        "unsupported_type": "Loại tệp không được hỗ trợ. Hãy tải lên tệp PDF hoặc DOCX.",
+        "too_large": "Tệp đó quá lớn. Kích thước tối đa là 4MB.",
+        "unreadable": "Không đọc được văn bản từ tệp này. Hình ảnh quét không được hỗ trợ — hãy thử tệp PDF hoặc DOCX dạng văn bản.",
+        "not_a_cover_letter": "Đó không giống thư xin việc. Hãy tải lên tệp thư xin việc hoặc tạo mới từ đầu.",
+        "daily_limit_reached": "Bạn đã đạt giới hạn thư xin việc hôm nay. Hãy thử lại vào ngày mai.",
+        "busy": "Trợ lý thư xin việc hiện đang bận. Vui lòng thử lại sau một lát.",
+        "unauthorized": "Vui lòng đăng nhập và thử lại.",
+        "generic": "Đã xảy ra lỗi khi nhập tệp đó. Vui lòng thử lại."
+      },
+      "next": {
+        "title": "Thư xin việc đã được nhập",
+        "body": "Xem lại và chỉnh sửa bất cứ điều gì, hoặc tùy chỉnh theo một công việc cụ thể.",
+        "tailor": "Tạo phiên bản tùy chỉnh",
+        "chat": "Trò chuyện và chỉnh sửa"
+      }
     }
   }
 }

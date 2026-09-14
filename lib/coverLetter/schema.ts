@@ -24,6 +24,11 @@ export const COVER_LETTER_DAILY_MESSAGE_LIMIT = 30;
 /** Max characters accepted for a single user message (bounds prompt cost). */
 export const MAX_COVER_LETTER_MESSAGE_LEN = 2000;
 
+/** Max extracted text chars forwarded to the AI import turn -- kept in lockstep
+ *  with MAX_EXTRACTED_TEXT_CHARS (lib/documents/importValidation.ts) and mirrored
+ *  as a literal in the cover-letter-chat edge function. */
+export const MAX_COVER_LETTER_IMPORT_LEN = 20000;
+
 /** How many prior turns to send back to the model (bounds prompt size). */
 export const COVER_LETTER_HISTORY_TURNS = 12;
 

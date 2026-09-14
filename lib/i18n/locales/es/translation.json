@@ -2096,12 +2096,36 @@
       "deleteTitle": "¿Eliminar carta de presentación?",
       "deleteConfirm": "¿Eliminar permanentemente «{{title}}»? Esta acción no se puede deshacer.",
       "emptyTitle": "Aún no hay cartas",
-      "emptyBody": "Crea tu primera carta de presentación adaptada a una oferta de empleo.",
+      "emptyBody": "Crea una nueva carta de presentación o sube una existente.",
       "createFirst": "Crea tu primera carta",
       "renameTitle": "Cambiar nombre de la carta",
       "renameLabel": "Nombre de la carta",
       "cancel": "Cancelar",
       "save": "Guardar"
+    },
+    "import": {
+      "button": "Subir carta de presentación",
+      "title": "Importando tu carta de presentación",
+      "reading": "Leyendo tu carta de presentación…",
+      "structuring": "Estructurando con IA…",
+      "errorTitle": "Error en la importación",
+      "errorDismiss": "Aceptar",
+      "errors": {
+        "unsupported_type": "Tipo de archivo no compatible. Sube un PDF o DOCX.",
+        "too_large": "Ese archivo es demasiado grande. El tamaño máximo es 4MB.",
+        "unreadable": "No pudimos leer el texto de este archivo. Las imágenes escaneadas no son compatibles; prueba con un PDF o DOCX basado en texto.",
+        "not_a_cover_letter": "Eso no parece ser una carta de presentación. Sube un archivo de carta de presentación o comienza desde cero.",
+        "daily_limit_reached": "Alcanzaste el límite diario de cartas de presentación. Inténtalo de nuevo mañana.",
+        "busy": "El asistente de cartas de presentación está ocupado en este momento. Inténtalo de nuevo en un momento.",
+        "unauthorized": "Inicia sesión e inténtalo de nuevo.",
+        "generic": "Algo salió mal al importar ese archivo. Inténtalo de nuevo."
+      },
+      "next": {
+        "title": "Tu carta de presentación ha sido importada",
+        "body": "Revisa y mejora lo que quieras, o adáptala a un empleo específico.",
+        "tailor": "Generar una versión adaptada",
+        "chat": "Chatear y mejorar"
+      }
     }
   }
 }

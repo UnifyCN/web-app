@@ -56,6 +56,9 @@ const hooks = createDraftHooks<CoverLetterDraft, CoverLetterDraftSummary>({
   keys: { drafts: DRAFTS_KEY, usage: USAGE_KEY, draftKey },
 });
 
+/** The two visible stages of an import, for a two-step progress indicator. */
+export type ImportPhase = "extracting" | "mapping";
+
 export const useCoverLetterDrafts = hooks.useDrafts;
 export const useCoverLetterDraft = hooks.useDraft;
 export const useCoverLetterUsage = hooks.useUsage;
@@ -138,6 +141,63 @@ export function useCreateCoverLetterDraft() {
     onSuccess: (draft) => {
       queryClient.setQueryData(draftKey(draft.id), draft);
       queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
+    },
+  });
+}
+
+/**
+ * Import an existing cover letter from an uploaded PDF/DOCX: extract its text
+ * (/api/documents/extract), map it to structured `CoverLetterData` in one AI
+ * turn (cover-letter-chat's import branch, which charges one message), then
+ * create a draft seeded with the mapped letter + an assistant opener. The caller
+ * navigates to the new draft (with `?imported=1`) on success.
+ */
+export function useImportCoverLetterDraft() {
+  const queryClient = useQueryClient();
+  const { t, i18n } = useTranslation();
+  return useMutation<
+    CoverLetterDraft,
+    Error,
+    { file: File; onPhase?: (phase: ImportPhase) => void }
+  >({
+    mutationFn: async ({ file, onPhase }) => {
+      onPhase?.("extracting");
+      const { text } = await coverLetter.extractDocumentText(file);
+      const user = queryClient.getQueryData<UserProfile>(CURRENT_USER_KEY);
+      const profile = buildProfile(user, i18n.language);
+      onPhase?.("mapping");
+      const response = await coverLetter.generateImportTurn({
+        importText: text,
+        todayDate: formatToday(),
+        profile,
+      });
+      const opener: CoverLetterChatMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: response.reply,
+        suggestions: response.suggestions,
+        createdAt: nowIso(),
+      };
+      const imported = response.coverLetter;
+      const title = deriveTitle(imported, t("coverLetter.untitled"));
+      const draft = coverLetter.newDraft({
+        title,
+        contact: {},
+        date: imported.date || formatToday(),
+        signature: imported.signature || "",
+        openerMessage: opener,
+      });
+      const final: CoverLetterDraft = {
+        ...draft,
+        coverLetter: imported,
+        complete: response.complete,
+      };
+      return coverLetter.saveDraft(final);
+    },
+    onSuccess: (draft) => {
+      queryClient.setQueryData(draftKey(draft.id), draft);
+      queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
+      queryClient.invalidateQueries({ queryKey: USAGE_KEY });
     },
   });
 }
