@@ -170,6 +170,71 @@ function buildTurnMessages(profile, todayDate, history, contextBlock, message) {
   return messages;
 }
 
+// ---------------------------------------------------------------------------
+// Import mapping (one-shot: extracted cover letter text -> structured data).
+// The user uploaded an existing cover letter; map its content at once rather
+// than conversing. Same JSON contract as a normal turn.
+// ---------------------------------------------------------------------------
+
+function buildImportSystemPrompt(profile, todayDate: string): string {
+  const langName = LANGUAGE_NAMES[profile.responseLanguage] ?? 'English';
+  const persona = profile.persona
+    ? PERSONA_HINT[profile.persona] ?? PERSONA_HINT.other
+    : PERSONA_HINT.other;
+  const name = profile.firstName ? String(profile.firstName).trim() : '';
+  const place = [profile.city, profile.province].filter(Boolean).join(', ');
+
+  const contextLines = [
+    name ? `The user's first name is ${name}.` : '',
+    `They are ${persona}`,
+    stageHint(profile.stage ?? null),
+    place ? `They are settling in ${place}, Canada.` : '',
+  ]
+    .filter(Boolean)
+    .map(l => `- ${l}`)
+    .join('\n');
+
+  return `You are Unify's Cover Letter Coach, importing a cover letter a newcomer to Canada already wrote. The user uploaded their existing cover letter; its full extracted text is the user message.
+
+# Who you're helping
+${contextLines}
+
+# Your task (ONE-SHOT IMPORT — do not interview)
+Read the uploaded cover letter text and map ALL of its real content into the structured cover letter JSON. Do NOT ask questions; do NOT start a conversation.
+- Extract: sender contact information (name, email, phone, location, linkedin, website), the date, recipient details (name, title, company, location), greeting/salutation, body paragraphs, closing sign-off, and signature name.
+- Preserve the person's real text faithfully. Clean up formatting (remove line-break artifacts, merge split sentences) but do not rewrite or embellish the content. Keep the author's voice.
+- Translate any non-English content into natural English (for Canadian employers). Keep real proper names (companies, people) as written.
+- Fill contact fields from the letter text when present; leave "" otherwise. Never output a bracketed placeholder like "[EMAIL]" or "[PHONE]".
+- date: use the date from the letter if present, otherwise use "${todayDate}".
+- If the uploaded text is clearly NOT a cover letter (an invoice, a resume, an article, a random document), return the "coverLetter" object with ALL fields empty ("" / []) — do not fabricate a letter. The app will tell the user.
+
+# reply + suggestions
+- "reply": 1–2 short sentences in ${langName} telling the user their cover letter has been imported and inviting them to review it or ask for refinements.
+- "suggestions": 2–3 short ${langName} example follow-ups they might tap (e.g. "Make it shorter", "Sound more confident", "Emphasize my customer service experience").
+- "complete": false.
+
+# Output format
+${SCHEMA_BLOCK}
+
+Reply to the user in ${langName}. Output ONLY the JSON object.`;
+}
+
+function buildImportMessages(profile, todayDate, importText) {
+  return [
+    { role: 'system', content: buildImportSystemPrompt(profile, todayDate) },
+    { role: 'user', content: `UPLOADED COVER LETTER TEXT:\n\n${importText}` },
+  ];
+}
+
+/**
+ * A cover letter is empty when its body has no substantive paragraphs. Simpler
+ * than resume's multi-array check: the body IS the letter.
+ */
+function isCoverLetterEmptyEdge(cl): boolean {
+  if (!Array.isArray(cl.body)) return true;
+  return !cl.body.some(p => typeof p === 'string' && p.trim().length > 0);
+}
+
 function extractJsonObject(raw: string) {
   const trimmed = raw.trim();
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -362,10 +427,21 @@ Deno.serve(async req => {
       return jsonResponse({ error: 'Invalid JSON body' }, 400);
     }
 
+    // Import mode: the proxy sends extracted cover letter text as `importText`
+    // (far larger than a chat message). Absent it, this is a normal chat turn.
+    const importText = typeof body.importText === 'string' ? body.importText.trim() : '';
+    const isImport = importText.length > 0;
+
     const message = typeof body.message === 'string' ? body.message.trim() : '';
-    if (!message) return jsonResponse({ error: 'Message is required' }, 400);
-    if (message.length > 2000) {
-      return jsonResponse({ error: 'Message is too long' }, 413);
+    if (isImport) {
+      if (importText.length > 20000) {
+        return jsonResponse({ error: 'Import text is too long' }, 413);
+      }
+    } else {
+      if (!message) return jsonResponse({ error: 'Message is required' }, 400);
+      if (message.length > 2000) {
+        return jsonResponse({ error: 'Message is too long' }, 413);
+      }
     }
 
     // Daily per-user quota (its OWN RPCs): charge before generating, refund below
@@ -414,25 +490,22 @@ Deno.serve(async req => {
         : null;
     const todayDate = s(body.todayDate, 40) || '';
 
-    const contextBlock = buildContextBlock(
-      currentCoverLetter,
-      resumeContext,
-      jobPosting,
-    );
-    const messages = buildTurnMessages(
-      profile,
-      todayDate,
-      history,
-      contextBlock,
-      message,
-    );
+    const messages = isImport
+      ? buildImportMessages(profile, todayDate, importText)
+      : buildTurnMessages(
+          profile,
+          todayDate,
+          history,
+          buildContextBlock(currentCoverLetter, resumeContext, jobPosting),
+          message,
+        );
 
     const llmResult = await callOpenRouter({
       model: 'deepseek/deepseek-v4-flash',
       messages,
       jsonMode: true,
-      maxTokens: 2400,
-      temperature: 0.6,
+      maxTokens: isImport ? 3500 : 2400,
+      temperature: isImport ? 0.3 : 0.6,
       timeoutMs: 45000,
       retries: 1,
       retryDelayMs: 500,
@@ -460,11 +533,17 @@ Deno.serve(async req => {
       // the $ai_generation source metric (the /api/cover-letter proxy is the
       // only legitimate caller and already tags source:"web").
       source: 'web',
-      message_length: message.length,
+      mode: isImport ? 'import' : 'chat',
+      message_length: isImport ? importText.length : message.length,
     });
 
     const parsed = parseTurnResponse(llmResult.content);
     if (!parsed || !parsed.reply) {
+      if (isImport) {
+        // Imports must produce structured JSON; no prose fallback.
+        await refundQuota();
+        return jsonResponse({ error: 'Unexpected model response' }, 502);
+      }
       // Prose fallback: a turn occasionally returns a plain sentence despite json
       // mode. Show it and leave the letter unchanged this turn.
       const prose = llmResult.content.trim();
@@ -480,13 +559,22 @@ Deno.serve(async req => {
       return jsonResponse({ error: 'Unexpected model response' }, 502);
     }
 
+    const normalizedLetter = normalizeCoverLetter(parsed.coverLetter);
+
+    // Import: if the model returned an empty letter, the upload wasn't a cover
+    // letter. Refund the quota and tell the user.
+    if (isImport && isCoverLetterEmptyEdge(normalizedLetter)) {
+      await refundQuota();
+      return jsonResponse(
+        { error: 'That does not look like a cover letter.', code: 'not_a_cover_letter' },
+        422,
+      );
+    }
+
     return jsonResponse({
       reply: parsed.reply,
       suggestions: parsed.suggestions,
-      coverLetter: preserveContact(
-        currentCoverLetter,
-        normalizeCoverLetter(parsed.coverLetter),
-      ),
+      coverLetter: preserveContact(currentCoverLetter, normalizedLetter),
       complete: parsed.complete,
     });
   } catch (error) {

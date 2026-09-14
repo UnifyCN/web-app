@@ -1788,5 +1788,34 @@
       "reportFailed": "Impossible d'envoyer le signalement. Veuillez réessayer.",
       "postAria": "Publier"
     }
+  },
+  "coverLetter": {
+    "list": {
+      "emptyBody": "Créez une nouvelle lettre de présentation ou téléversez-en une existante."
+    },
+    "import": {
+      "button": "Téléverser une lettre de présentation",
+      "title": "Importation de votre lettre de présentation",
+      "reading": "Lecture de votre lettre de présentation…",
+      "structuring": "Structuration par l'IA…",
+      "errorTitle": "Échec de l'importation",
+      "errorDismiss": "OK",
+      "errors": {
+        "unsupported_type": "Type de fichier non pris en charge. Téléversez un PDF ou un DOCX.",
+        "too_large": "Ce fichier est trop volumineux. La taille maximale est de 4 Mo.",
+        "unreadable": "Nous n'avons pas pu lire le texte de ce fichier. Les images numérisées ne sont pas prises en charge. Essayez un PDF ou DOCX textuel.",
+        "not_a_cover_letter": "Cela ne semble pas être une lettre de présentation. Téléversez un fichier de lettre de présentation ou commencez de zéro.",
+        "daily_limit_reached": "Vous avez atteint la limite quotidienne de lettres de présentation. Réessayez demain.",
+        "busy": "L'assistant de lettre de présentation est occupé. Veuillez réessayer dans un instant.",
+        "unauthorized": "Veuillez vous connecter et réessayer.",
+        "generic": "Un problème est survenu lors de l'importation de ce fichier. Veuillez réessayer."
+      },
+      "next": {
+        "title": "Votre lettre de présentation est importée",
+        "body": "Révisez et modifiez au besoin, ou adaptez-la à un poste spécifique.",
+        "tailor": "Générer une version adaptée",
+        "chat": "Discuter et peaufiner"
+      }
+    }
   }
 }

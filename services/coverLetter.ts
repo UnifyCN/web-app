@@ -12,6 +12,7 @@
  */
 
 import { createDraftService } from "@/lib/drafts/createDraftService";
+import { DocumentImportError } from "@/lib/documents/errors";
 import {
   COVER_LETTER_DAILY_MESSAGE_LIMIT,
   COVER_LETTER_HISTORY_TURNS,
@@ -169,6 +170,57 @@ export async function generateCoverLetterTurn(args: {
       // keep the generic message
     }
     throw new Error(message);
+  }
+
+  return (await res.json()) as CoverLetterTurnResponse;
+}
+
+/* ================================================================== *
+ * Cover-letter import (upload a PDF/DOCX instead of building from scratch).
+ * ================================================================== */
+
+export { extractDocumentText } from "@/services/documents";
+
+/**
+ * One-shot AI mapping of extracted cover letter text into structured
+ * `CoverLetterData`, through the same /api/cover-letter proxy + edge fn as a
+ * chat turn (its `importText` branch). Charges one cover_letter_usage message.
+ * Throws a typed `DocumentImportError` -- notably `not_a_cover_letter` (422)
+ * when the upload mapped to nothing substantive, so the quota is refunded
+ * server-side and the UI can say so.
+ */
+export async function generateImportTurn(args: {
+  importText: string;
+  todayDate: string;
+  profile: CoverLetterProfileContext;
+}): Promise<CoverLetterTurnResponse> {
+  const res = await fetch("/api/cover-letter", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      importText: args.importText,
+      currentCoverLetter: emptyCoverLetter(),
+      todayDate: args.todayDate,
+      profile: args.profile,
+    }),
+  });
+
+  if (!res.ok) {
+    let code: string | undefined;
+    try {
+      code = ((await res.json()) as { code?: string }).code;
+    } catch {
+      // status-based mapping below
+    }
+    if (res.status === 429) throw new DocumentImportError("daily_limit_reached");
+    if (res.status === 422 || code === "not_a_cover_letter") {
+      throw new DocumentImportError("not_a_cover_letter");
+    }
+    if (res.status === 503 || res.status === 504) {
+      throw new DocumentImportError("busy");
+    }
+    if (res.status === 401) throw new DocumentImportError("unauthorized");
+    throw new DocumentImportError("generic");
   }
 
   return (await res.json()) as CoverLetterTurnResponse;

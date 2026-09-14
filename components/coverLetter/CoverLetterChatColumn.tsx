@@ -17,6 +17,8 @@ interface CoverLetterChatColumnProps {
   onSend: (text: string) => void;
   /** Fire a generation turn against the current job-posting target. */
   onGenerate: () => void;
+  /** One-shot: auto-expand the job bar (used after post-import "Generate tailored"). */
+  autoExpandJobBar?: boolean;
   /** Mobile master/detail: is the chat the visible pane (vs the letter)? */
   mobileActive: boolean;
   onShowLetter: () => void;
@@ -39,6 +41,7 @@ export function CoverLetterChatColumn({
   limitReached,
   onSend,
   onGenerate,
+  autoExpandJobBar,
   mobileActive,
   onShowLetter,
 }: CoverLetterChatColumnProps) {
@@ -59,6 +62,7 @@ export function CoverLetterChatColumn({
           disabled={isTyping || limitReached}
           busy={isTyping}
           onGenerate={onGenerate}
+          autoExpand={autoExpandJobBar}
         />
       }
       afterJobBar={

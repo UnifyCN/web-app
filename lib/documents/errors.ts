@@ -8,7 +8,8 @@
  *  - too_large         : over MAX_DOCUMENT_BYTES
  *  - unreadable        : extracted text too short (scanned/image PDF, empty file)
  *  - not_a_resume      : AI mapping produced no substantive resume content
- *  - daily_limit_reached : resume_usage quota exhausted
+ *  - not_a_cover_letter: AI mapping produced no substantive cover letter content
+ *  - daily_limit_reached : usage quota exhausted
  *  - busy              : AI service temporarily unavailable (503/504)
  *  - unauthorized      : no session
  *  - generic           : anything else
@@ -18,6 +19,7 @@ export type DocumentImportErrorCode =
   | "too_large"
   | "unreadable"
   | "not_a_resume"
+  | "not_a_cover_letter"
   | "daily_limit_reached"
   | "busy"
   | "unauthorized"
