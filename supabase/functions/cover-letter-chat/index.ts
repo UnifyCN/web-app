@@ -282,13 +282,13 @@ const MAX_PARAGRAPH_LEN = 1600;
 function s(v: unknown, max = 400): string {
   return typeof v === 'string' ? v.trim().slice(0, max) : '';
 }
-function paragraphs(v: unknown): string[] {
+function paragraphs(v: unknown, max = MAX_PARAGRAPHS): string[] {
   if (!Array.isArray(v)) return [];
   const out: string[] = [];
   for (const item of v) {
     const val = s(item, MAX_PARAGRAPH_LEN);
     if (val) out.push(val);
-    if (out.length >= MAX_PARAGRAPHS) break;
+    if (out.length >= max) break;
   }
   return out;
 }
@@ -332,7 +332,7 @@ function clampProfile(raw) {
   };
 }
 
-function normalizeCoverLetter(v) {
+function normalizeCoverLetter(v, opts?: { maxParagraphs?: number }) {
   const r = v ?? {};
   const c = r.contact ?? {};
   const rec = r.recipient ?? {};
@@ -353,7 +353,7 @@ function normalizeCoverLetter(v) {
       location: s(rec.location, 160),
     },
     greeting: s(r.greeting, 200),
-    body: paragraphs(r.body),
+    body: paragraphs(r.body, opts?.maxParagraphs),
     closing: s(r.closing, 60),
     signature: s(r.signature, 120),
   };
@@ -559,7 +559,10 @@ Deno.serve(async req => {
       return jsonResponse({ error: 'Unexpected model response' }, 502);
     }
 
-    const normalizedLetter = normalizeCoverLetter(parsed.coverLetter);
+    const normalizedLetter = normalizeCoverLetter(
+      parsed.coverLetter,
+      isImport ? { maxParagraphs: 20 } : undefined,
+    );
 
     // Import: if the model returned an empty letter, the upload wasn't a cover
     // letter. Refund the quota and tell the user.

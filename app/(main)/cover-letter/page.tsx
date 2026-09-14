@@ -66,8 +66,10 @@ export default function MyCoverLettersPage() {
   const [importPhase, setImportPhase] = useState<ImportPhase | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
 
+  const anyMutationPending = createDraft.isPending || importDraft.isPending;
+
   async function handleCreate() {
-    if (createDraft.isPending) return;
+    if (anyMutationPending) return;
     try {
       const created = await createDraft.mutateAsync();
       router.push(`/cover-letter/${created.id}`);
@@ -77,7 +79,7 @@ export default function MyCoverLettersPage() {
   }
 
   function openFilePicker() {
-    if (importDraft.isPending) return;
+    if (anyMutationPending) return;
     fileInputRef.current?.click();
   }
 
@@ -96,7 +98,7 @@ export default function MyCoverLettersPage() {
   async function handleFileSelected(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file || importDraft.isPending) return;
+    if (!file || anyMutationPending) return;
     try {
       validateDocumentFile(file);
     } catch (err) {
@@ -175,7 +177,7 @@ export default function MyCoverLettersPage() {
           <button
             type="button"
             onClick={openFilePicker}
-            disabled={importDraft.isPending}
+            disabled={anyMutationPending}
             className="flex cursor-pointer items-center gap-1.5 rounded-full border border-border-card bg-surface px-4 py-2 text-sm font-semibold text-ink-secondary transition-colors hover:bg-surface-gray disabled:opacity-60"
           >
             <Upload className="h-4 w-4" aria-hidden />
@@ -184,7 +186,7 @@ export default function MyCoverLettersPage() {
           <button
             type="button"
             onClick={handleCreate}
-            disabled={createDraft.isPending}
+            disabled={anyMutationPending}
             className="flex cursor-pointer items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
           >
             <Plus className="h-4 w-4" aria-hidden />
@@ -213,9 +215,9 @@ export default function MyCoverLettersPage() {
       ) : isEmpty ? (
         <EmptyState
           onCreate={handleCreate}
-          creating={createDraft.isPending}
+          creating={anyMutationPending}
           onUpload={openFilePicker}
-          importing={importDraft.isPending}
+          importing={anyMutationPending}
         />
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -262,7 +264,7 @@ export default function MyCoverLettersPage() {
           onClose={() => {}}
         >
           <div className="flex items-center gap-3 py-1">
-            <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary" aria-hidden />
+            <Loader2 className="h-5 w-5 shrink-0 motion-safe:animate-spin text-primary" aria-hidden />
             <p className="text-sm text-ink-muted">
               {importPhase === "extracting"
                 ? t("coverLetter.import.reading")
