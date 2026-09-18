@@ -15,6 +15,7 @@ import es from "./locales/es/translation.json";
 import hi from "./locales/hi/translation.json";
 import ar from "./locales/ar/translation.json";
 import frCA from "./locales/fr-CA/translation.json";
+import pa from "./locales/pa/translation.json";
 
 const resources = {
   en: { translation: en },
@@ -23,6 +24,7 @@ const resources = {
   hi: { translation: hi },
   ar: { translation: ar },
   "fr-CA": { translation: frCA },
+  pa: { translation: pa },
 } as const;
 
 /**

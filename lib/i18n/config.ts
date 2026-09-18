@@ -6,10 +6,12 @@
  */
 
 /**
- * Supported UI languages (code → native display label). The set mirrors the
- * mobile app's `i18n/index.ts` exactly (mobile PR #299); `ar` (Arabic) is RTL —
- * see RTL_LANGUAGES / dirForLanguage below. Each of `ar` / `fr-CA` can be
- * hidden again with its kill-switch env var (isLanguageEnabled).
+ * Supported UI languages (code → native display label). `en`/`vi`/`es`/`hi`/
+ * `ar`/`fr-CA` mirror the mobile app's `i18n/index.ts` exactly (mobile PR
+ * #299); `ar` (Arabic) is RTL — see RTL_LANGUAGES / dirForLanguage below.
+ * `pa` (Punjabi) is web-first, opt-in only, pending native review — see
+ * isLanguageEnabled. `ar`/`fr-CA` can be hidden again with their kill-switch
+ * env var (isLanguageEnabled).
  */
 export const SUPPORTED_LANGUAGES = {
   en: "English",
@@ -18,6 +20,7 @@ export const SUPPORTED_LANGUAGES = {
   hi: "हिन्दी",
   ar: "العربية",
   "fr-CA": "Français (canadien)",
+  pa: "ਪੰਜਾਬੀ",
 } as const;
 
 export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
@@ -40,26 +43,30 @@ export function isRtlLanguage(value: unknown): boolean {
 }
 
 /**
- * Kill-switch per language. Arabic and Canadian French are ON by default since
- * the mobile app ships them ungated (mobile PR #299) and a user's
- * `preferred_language` syncs across both apps; set NEXT_PUBLIC_ENABLE_ARABIC /
- * NEXT_PUBLIC_ENABLE_FRENCH to "false" to hide one again. A disabled language
- * stays a valid `SupportedLanguage` (still typechecks, still resolves a
- * direction for RTL mirroring) but every path that could apply it as the
- * *active* render locale — SSR cookie resolution, the client localStorage
- * self-heal, Accept-Language negotiation, and restoring a DB-synced
- * `preferred_language` — checks `isLanguageEnabled` too, not just
+ * Arabic and Canadian French are ON by default — the mobile app ships them
+ * ungated (mobile PR #299) and a user's `preferred_language` syncs across both
+ * apps — with a kill-switch to hide either again (NEXT_PUBLIC_ENABLE_ARABIC /
+ * NEXT_PUBLIC_ENABLE_FRENCH set to "false").
+ *
+ * Punjabi is the opposite: OFF by default, opt-in only. Its Sanity content
+ * rollout is drafts-only pending native-speaker review (unlike ar/fr-CA,
+ * which are already published on both apps), so it doesn't get the same
+ * default as those two just because the code shape looks similar — set
+ * NEXT_PUBLIC_ENABLE_PUNJABI to "true" to surface it for local testing. Do
+ * not flip this on anywhere it would go live.
+ *
+ * A disabled language stays a valid `SupportedLanguage` (still typechecks,
+ * still resolves a direction for RTL mirroring) but every path that could
+ * apply it as the *active* render locale — SSR cookie resolution, the client
+ * localStorage self-heal, Accept-Language negotiation, and restoring a
+ * DB-synced `preferred_language` — checks `isLanguageEnabled` too, not just
  * `isSupportedLanguage`.
  */
-const LANGUAGE_KILL_SWITCH: Partial<Record<SupportedLanguage, string>> = {
-  ar: "NEXT_PUBLIC_ENABLE_ARABIC",
-  "fr-CA": "NEXT_PUBLIC_ENABLE_FRENCH",
-};
-
 export function isLanguageEnabled(lang: SupportedLanguage): boolean {
   if (lang === "ar") return process.env.NEXT_PUBLIC_ENABLE_ARABIC !== "false";
   if (lang === "fr-CA") return process.env.NEXT_PUBLIC_ENABLE_FRENCH !== "false";
-  return !(lang in LANGUAGE_KILL_SWITCH);
+  if (lang === "pa") return process.env.NEXT_PUBLIC_ENABLE_PUNJABI === "true";
+  return true;
 }
 
 /**
@@ -109,7 +116,11 @@ export function negotiateLanguage(
     const code = part.trim().split(";")[0]?.trim().toLowerCase();
     if (!code) continue;
     const base = code.split("-")[0];
-    if (isSupportedLanguage(base)) return base;
+    // isLanguageEnabled here too, not just isSupportedLanguage: a gated catalog
+    // (ar/fr-CA/pa, pending native review) must not get auto-selected for a
+    // brand-new visitor just because their browser sends that Accept-Language —
+    // the cookie/localStorage gate checks elsewhere don't help on a first visit.
+    if (isSupportedLanguage(base) && isLanguageEnabled(base)) return base;
     // French ships only as Canadian French, so any fr* (fr, fr-FR, fr-CA) maps to it —
     // but only while the gate is on, so a disabled catalog can't get auto-selected.
     if (base === "fr" && isLanguageEnabled("fr-CA")) return "fr-CA";
