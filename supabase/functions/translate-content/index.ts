@@ -40,6 +40,8 @@ const LANGUAGE_NAMES: Record<string, string> = {
   vi: 'Vietnamese',
   es: 'Spanish',
   hi: 'Hindi',
+  ar: 'Arabic',
+  'fr-CA': 'Canadian French',
 };
 
 const MAX_CONTENT_LENGTH = 5000; // same bound as translate-post
