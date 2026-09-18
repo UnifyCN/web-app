@@ -448,7 +448,7 @@ Deno.serve(async req => {
     // if the turn fails. Fail closed on an RPC error.
     const { data: quotaOk, error: quotaError } = await supabase.rpc(
       'check_and_increment_cover_letter_usage',
-      { p_user_id: authData.user.id, p_daily_limit: 30 },
+      { p_user_id: authData.user.id, p_daily_limit: 20 },
     );
     if (quotaError) {
       console.error('cover-letter-chat quota RPC failed:', quotaError);
