@@ -502,7 +502,7 @@ Deno.serve(async req => {
     // generating, refund below if the turn fails. An import counts as one message.
     const { data: quotaOk, error: quotaError } = await supabase.rpc(
       'check_and_increment_resume_usage',
-      { p_user_id: authData.user.id, p_daily_limit: 60 },
+      { p_user_id: authData.user.id, p_daily_limit: 20 },
     );
     if (quotaError) {
       console.error('resume-chat quota RPC failed:', quotaError);
