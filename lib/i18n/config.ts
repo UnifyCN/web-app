@@ -109,7 +109,11 @@ export function negotiateLanguage(
     const code = part.trim().split(";")[0]?.trim().toLowerCase();
     if (!code) continue;
     const base = code.split("-")[0];
-    if (isSupportedLanguage(base)) return base;
+    // isLanguageEnabled here too, not just isSupportedLanguage: a disabled
+    // language (kill-switched ar/fr-CA) must not get auto-selected for a
+    // brand-new visitor just because their browser sends that Accept-Language —
+    // the cookie/localStorage gate checks elsewhere don't help on a first visit.
+    if (isSupportedLanguage(base) && isLanguageEnabled(base)) return base;
     // French ships only as Canadian French, so any fr* (fr, fr-FR, fr-CA) maps to it —
     // but only while the gate is on, so a disabled catalog can't get auto-selected.
     if (base === "fr" && isLanguageEnabled("fr-CA")) return "fr-CA";
