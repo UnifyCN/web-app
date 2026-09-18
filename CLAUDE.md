@@ -148,10 +148,10 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
 - **Internationalization + on-demand translation (i18n Phases 1–6).** The UI is localized
   with **`i18next` / `react-i18next`** (not `next-intl`). `lib/i18n/` holds the config,
   provider, label helpers, and per-locale `translation.json` bundles for **English,
-  Tiếng Việt, Español, हिन्दी, and العربية**; `en`/`vi`/`es`/`hi` mirror the mobile language
-  set, while **Arabic is web-first and RTL but gated** out of the public picker behind
-  `NEXT_PUBLIC_ENABLE_ARABIC` until its machine translation is native-reviewed (a stored
-  `ar` cookie/DB value still renders). Language is chosen in `components/LanguagePicker.tsx`
+  Tiếng Việt, Español, हिन्दी, العربية, and Français (canadien)**; the six-language set is
+  identical to mobile's, and **Arabic (RTL) and Canadian French are on by default** on both apps since
+  mobile PR #299; `NEXT_PUBLIC_ENABLE_ARABIC` / `NEXT_PUBLIC_ENABLE_FRENCH` set to
+  `"false"` act as kill-switches. Language is chosen in `components/LanguagePicker.tsx`
   and persisted to the `unify_lang` cookie, so the SSR root layout renders the correct
   `<html lang>` / `dir` with no flash of English (falling back to `Accept-Language`
   negotiation for first-time visitors); it syncs cross-device through the **shared**
@@ -178,10 +178,13 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   layer.** The login page (`app/(auth)/login/page.tsx`) and sidebar
   (`components/layout/Sidebar.tsx`) call `createClient()` directly. Flagged by
   CodeRabbit on PR #1 — do as a separate PR after PR #1 merges.
-- **Arabic (`ar`) is built but gated.** The locale ships complete (RTL layout, full
-  `translation.json`) yet stays out of the public picker behind
-  `NEXT_PUBLIC_ENABLE_ARABIC` until a native speaker reviews the machine translation.
-  Flip the flag only after that review.
+- **Arabic (`ar`) and Canadian French (`fr-CA`) are ungated in the UI.** Both ship complete
+  (mobile PR #299 made the language sets identical). The Translate button in either
+  language works only once `translate-content` is redeployed with `ar`/`fr-CA` in
+  `LANGUAGE_NAMES` (`supabase functions deploy translate-content`) — a pending post-merge
+  step until done. Their machine translations have not had a native review yet;
+  `NEXT_PUBLIC_ENABLE_ARABIC=false` / `NEXT_PUBLIC_ENABLE_FRENCH=false` hide one again if
+  a review turns up problems.
 
 *(Done: "Wire `rag-query` to the Companion UI" — shipped in PR #20; see Build Status.
 Both embeddings and answering now run through OpenRouter, so the OpenAI-key blocker

@@ -6,10 +6,10 @@
  */
 
 /**
- * Supported UI languages (code → native display label). en/vi/es/hi mirror the
- * mobile app; `ar` (Arabic) is web-first (mobile has no Arabic yet) and RTL —
- * see RTL_LANGUAGES / dirForLanguage below. Arabic is gated out of the public
- * picker until its machine translation is native-reviewed (GATED_LANGUAGES).
+ * Supported UI languages (code → native display label). The set mirrors the
+ * mobile app's `i18n/index.ts` exactly (mobile PR #299); `ar` (Arabic) is RTL —
+ * see RTL_LANGUAGES / dirForLanguage below. Each of `ar` / `fr-CA` can be
+ * hidden again with its kill-switch env var (isLanguageEnabled).
  */
 export const SUPPORTED_LANGUAGES = {
   en: "English",
@@ -40,24 +40,26 @@ export function isRtlLanguage(value: unknown): boolean {
 }
 
 /**
- * Languages built + testable but hidden from the public picker until their
- * machine translation is native-reviewed, gated behind a flag: Arabic behind
- * NEXT_PUBLIC_ENABLE_ARABIC, Canadian French behind NEXT_PUBLIC_ENABLE_FRENCH.
- * They stay valid `SupportedLanguage`s (still typecheck, still resolve a
- * direction for RTL mirroring) but every path that could apply one as the
+ * Kill-switch per language. Arabic and Canadian French are ON by default since
+ * the mobile app ships them ungated (mobile PR #299) and a user's
+ * `preferred_language` syncs across both apps; set NEXT_PUBLIC_ENABLE_ARABIC /
+ * NEXT_PUBLIC_ENABLE_FRENCH to "false" to hide one again. A disabled language
+ * stays a valid `SupportedLanguage` (still typechecks, still resolves a
+ * direction for RTL mirroring) but every path that could apply it as the
  * *active* render locale — SSR cookie resolution, the client localStorage
  * self-heal, Accept-Language negotiation, and restoring a DB-synced
  * `preferred_language` — checks `isLanguageEnabled` too, not just
- * `isSupportedLanguage`. A value can be a real `SupportedLanguage` yet
- * currently gated (e.g. synced from a build/device where the flag was on), so
- * validity alone isn't enough to apply it.
+ * `isSupportedLanguage`.
  */
-const GATED_LANGUAGES = new Set<SupportedLanguage>(["ar", "fr-CA"]);
+const LANGUAGE_KILL_SWITCH: Partial<Record<SupportedLanguage, string>> = {
+  ar: "NEXT_PUBLIC_ENABLE_ARABIC",
+  "fr-CA": "NEXT_PUBLIC_ENABLE_FRENCH",
+};
 
 export function isLanguageEnabled(lang: SupportedLanguage): boolean {
-  if (!GATED_LANGUAGES.has(lang)) return true;
-  if (lang === "fr-CA") return process.env.NEXT_PUBLIC_ENABLE_FRENCH === "true";
-  return process.env.NEXT_PUBLIC_ENABLE_ARABIC === "true";
+  if (lang === "ar") return process.env.NEXT_PUBLIC_ENABLE_ARABIC !== "false";
+  if (lang === "fr-CA") return process.env.NEXT_PUBLIC_ENABLE_FRENCH !== "false";
+  return !(lang in LANGUAGE_KILL_SWITCH);
 }
 
 /**
