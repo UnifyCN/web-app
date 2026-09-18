@@ -96,12 +96,13 @@
 /* Fonts wired from next/font (see app/layout.tsx). `inline` so the
  * utilities resolve the underlying CSS variable. */
 @theme inline {
-  /* Inter (Latin + Vietnamese) first, with Noto Sans Devanagari and Noto Sans
-   * Arabic as codepoint fall-throughs for glyphs Inter doesn't cover. Latin /
-   * Vietnamese resolves to Inter; Devanagari (Hindi) falls through to Noto
-   * Devanagari; Arabic falls through to Noto Arabic. */
+  /* Inter (Latin + Vietnamese) first, with Noto Sans Devanagari, Noto Sans
+   * Arabic, and Noto Sans Gurmukhi as codepoint fall-throughs for glyphs Inter
+   * doesn't cover. Latin / Vietnamese resolves to Inter; Devanagari (Hindi)
+   * falls through to Noto Devanagari; Arabic falls through to Noto Arabic;
+   * Gurmukhi (Punjabi) falls through to Noto Gurmukhi. */
   --font-sans: var(--font-inter), var(--font-noto-devanagari),
-    var(--font-noto-arabic);
+    var(--font-noto-arabic), var(--font-noto-gurmukhi);
 }
 
 /* ------------------------------------------------------------------ *

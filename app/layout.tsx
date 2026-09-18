@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Noto_Sans_Devanagari, Noto_Sans_Arabic } from "next/font/google";
+import {
+  Inter,
+  Noto_Sans_Devanagari,
+  Noto_Sans_Arabic,
+  Noto_Sans_Gurmukhi,
+} from "next/font/google";
 import { cookies, headers } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -34,6 +39,14 @@ const notoDevanagari = Noto_Sans_Devanagari({
 const notoArabic = Noto_Sans_Arabic({
   variable: "--font-noto-arabic",
   subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+});
+
+// Gurmukhi (Punjabi) glyph coverage — none of the above have it. Fall-through
+// behind them in the --font-sans chain; only rendered when Punjabi is active.
+const notoGurmukhi = Noto_Sans_Gurmukhi({
+  variable: "--font-noto-gurmukhi",
+  subsets: ["gurmukhi"],
   weight: ["400", "500", "600", "700"],
 });
 
@@ -105,7 +118,7 @@ export default async function RootLayout({
     <html
       lang={initialLocale}
       dir={dirForLanguage(initialLocale)}
-      className={`${inter.variable} ${notoDevanagari.variable} ${notoArabic.variable} h-full antialiased`}
+      className={`${inter.variable} ${notoDevanagari.variable} ${notoArabic.variable} ${notoGurmukhi.variable} h-full antialiased`}
     >
       <body
         className="min-h-full flex flex-col font-sans"
