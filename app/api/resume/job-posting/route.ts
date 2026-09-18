@@ -16,15 +16,11 @@ import { MAX_JOB_POSTING_LEN, RESUME_DAILY_MESSAGE_LIMIT } from "@/lib/resume/sc
  *      sites that block scraping or require JS/login.
  *
  * Quota: this route does NOT charge the resume quota (the service-role RPC isn't
- * callable here) — it soft-gates on the user's remaining daily budget and returns
- * 429 when they're out. The tailoring turn that follows is what actually charges
- * `check_and_increment_resume_usage` (20/day) via the resume-chat edge fn.
- *
- * NOTE: the soft-gate above still reads `RESUME_DAILY_MESSAGE_LIMIT` (lib/resume/schema.ts),
- * which is a separate, currently-unsynced constant (still 60 as of this edge-function
- * change) — so this pre-check can pass a user through at up to 60/day even though the
- * edge function will hard-reject them once they hit the real 20/day cap. Syncing that
- * display/soft-gate constant to 20 is tracked as separate follow-up work, not done here.
+ * callable here) — it soft-gates on `RESUME_DAILY_MESSAGE_LIMIT` (lib/resume/schema.ts)
+ * and returns 429 when the user's out, so they don't burn a job-posting fetch only to
+ * get hard-rejected on the tailoring turn that follows. That turn is what actually
+ * charges `check_and_increment_resume_usage` (20/day) via the resume-chat edge fn —
+ * kept in manual sync with this constant's own 20, not read from one source of truth.
  */
 export const runtime = "nodejs";
 export const maxDuration = 30;

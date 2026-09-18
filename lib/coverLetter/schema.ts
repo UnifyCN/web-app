@@ -16,10 +16,13 @@ import { normalizeJobPosting } from "@/lib/resume/schema";
 import type { CoverLetterData, CoverLetterRecipient } from "@/types/coverLetter";
 import type { ResumeData } from "@/types/resume";
 
-/** Per-day cap on cover-letter messages (server-enforced). Lower than the resume
- *  60/day: a letter is generate-then-refine (a handful of turns), not a 20+ turn
- *  interview — bounded so the new AI cost surface stays small. */
-export const COVER_LETTER_DAILY_MESSAGE_LIMIT = 30;
+/** Per-day cap on cover-letter messages, mirroring the server-enforced value
+ *  (the cover-letter-chat edge function's own `p_daily_limit`; kept in manual
+ *  sync with that separate constant, not read from one source of truth).
+ *  Same 20/day as the resume builder now — previously lower (30 vs. 60) back
+ *  when a letter's generate-then-refine flow (a handful of turns) was sized
+ *  well under the resume's 20+ turn interview; no longer differentiated. */
+export const COVER_LETTER_DAILY_MESSAGE_LIMIT = 20;
 
 /** Max characters accepted for a single user message (bounds prompt cost). */
 export const MAX_COVER_LETTER_MESSAGE_LEN = 2000;
