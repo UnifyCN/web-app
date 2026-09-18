@@ -5,7 +5,7 @@
  * One conversational turn: given the transcript so far, the letter built so far,
  * the target job posting, and (optionally) the user's resume as reference, returns
  * strict JSON { reply, suggestions, coverLetter, complete } from DeepSeek (pinned
- * deepseek/deepseek-v4-flash) via the shared OpenRouter helper.
+ * deepseek/deepseek-v4.1-flash) via the shared OpenRouter helper.
  *
  * A standalone sibling of resume-chat: same production path (the web app reaches
  * it through the same-origin /api/cover-letter proxy, a server→server invoke that
@@ -501,7 +501,7 @@ Deno.serve(async req => {
         );
 
     const llmResult = await callOpenRouter({
-      model: 'deepseek/deepseek-v4-flash',
+      model: 'deepseek/deepseek-v4.1-flash',
       messages,
       jsonMode: true,
       maxTokens: isImport ? 3500 : 2400,

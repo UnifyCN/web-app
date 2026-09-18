@@ -4,7 +4,7 @@
  *
  * One conversational turn: given the transcript so far + the resume built so
  * far, returns strict JSON { reply, suggestions, resume, complete } from
- * DeepSeek (pinned deepseek/deepseek-v4-flash) via the shared OpenRouter helper.
+ * DeepSeek (pinned deepseek/deepseek-v4.1-flash) via the shared OpenRouter helper.
  *
  * This is the production path: the web app reaches it through the same-origin
  * /api/resume proxy (a server→server invoke that forwards the user's JWT),
@@ -537,7 +537,7 @@ Deno.serve(async req => {
         );
 
     const llmResult = await callOpenRouter({
-      model: 'deepseek/deepseek-v4-flash',
+      model: 'deepseek/deepseek-v4.1-flash',
       messages,
       jsonMode: true,
       // An import maps a whole document at once: more output room, and a lower
