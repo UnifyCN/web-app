@@ -1044,3 +1044,19 @@ documentation-only PR"*) and accepted by the owner at merge. Future improvement:
 patches** (`ifRevisionID` / optimistic concurrency) plus a **reread-remerge retry** on
 conflict, so two language rollouts converge instead of clobbering each other's entries.
 **Not urgent** — real rollouts are run one language at a time by a single operator.
+
+---
+
+## Observability / analytics
+
+- **Events crawler — align `mosaic` and `burnaby-nh` logging with the other sources
+  (non-urgent).** These two sources run through a different connector path than the rest and
+  don't emit the per-source summary log line the others do (fetched → in-window/relevant →
+  after-dedupe → taking N counts). Their inserts are confirmed via DB rows, so nothing is
+  broken today. But if either source silently stops producing events, there's less log
+  detail to diagnose *why* than for the other sources. Worth emitting the same summary line
+  for them at some point. Not urgent.
+- **Events board (Community `event` pages) has zero analytics + error tracking.** No client
+  product events (no `event_viewed` / `event_opened` / link-click capture) and no server
+  telemetry. Deliberately left out of scope for the weekly-review dashboard work (PR #127).
+  Worth instrumenting if the events board becomes a priority — no current plan to build it.
