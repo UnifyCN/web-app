@@ -75,5 +75,20 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     posthog.capture("$pageview", { $current_url: window.location.href });
   }, [pathname]);
 
+  // Session recording is scoped to the resume + cover-letter features only
+  // (recording is disabled globally in initPostHog). Start it while the user is
+  // on those routes, stop it everywhere else, so we capture how those two AI
+  // generators are actually used without recording the whole app.
+  useEffect(() => {
+    if (!isPostHogConfigured() || typeof window === "undefined") return;
+    const shouldRecord =
+      pathname?.startsWith("/resume") || pathname?.startsWith("/cover-letter");
+    if (shouldRecord) {
+      posthog.startSessionRecording();
+    } else {
+      posthog.stopSessionRecording();
+    }
+  }, [pathname]);
+
   return <>{children}</>;
 }

@@ -13,6 +13,7 @@ import {
   useUpdateResumeData,
 } from "@/hooks/useResume";
 import { ResumeBusyError, ResumeLimitError } from "@/services/resume";
+import { trackResumeGenerated, trackResumeStarted } from "@/lib/analytics";
 import {
   RESUME_DAILY_MESSAGE_LIMIT,
   buildTailoringMessage,
@@ -20,6 +21,8 @@ import {
   isResumeEmpty,
 } from "@/lib/resume/schema";
 import type { ResumeUpdater } from "@/lib/resume/editOps";
+
+type GenerationSource = "job_posting" | "import";
 
 /**
  * AI Resume Builder — a single resume's editor: conversation (left) + live
@@ -76,12 +79,18 @@ function ResumeEditor() {
     }
   }, [draftQuery.isSuccess, draftQuery.data, router]);
 
-  async function handleSend(text: string, modelPrompt?: string) {
+  // Returns true when the turn was sent successfully, so callers (tailor/generate)
+  // can fire a `*_generated` analytics event only on a real completion.
+  async function handleSend(
+    text: string,
+    modelPrompt?: string,
+  ): Promise<boolean> {
     // Serialize turns: ignore a new send while one is still in flight.
-    if (sendMessage.isPending) return;
+    if (sendMessage.isPending) return false;
     setSendError(null);
     try {
       await sendMessage.mutateAsync({ draftId, text, modelPrompt });
+      return true;
     } catch (err) {
       if (err instanceof ResumeLimitError) {
         setSendError(t("resume.limitReachedToast"));
@@ -91,18 +100,25 @@ function ResumeEditor() {
         console.error("Resume: failed to send message", err);
         setSendError(t("resume.sendFailed"));
       }
+      return false;
     }
   }
 
   // Tailor the resume to the attached job posting: a friendly user bubble, but the
-  // model receives the full framed posting text (buildTailoringMessage).
-  function handleTailor() {
+  // model receives the full framed posting text (buildTailoringMessage). Emits the
+  // resume_started / resume_generated product events (source defaults to the
+  // job-target bar; the post-import entry point passes "import").
+  async function handleTailor(source: GenerationSource = "job_posting") {
     const job = draft?.resume.jobPosting;
     if (!job) return;
-    void handleSend(
+    // Defensive: if invoked as an event handler, coerce anything non-"import".
+    const src: GenerationSource = source === "import" ? "import" : "job_posting";
+    trackResumeStarted({ source: src });
+    const ok = await handleSend(
       t("resume.jobTarget.tailorUserBubble"),
       buildTailoringMessage(job),
     );
+    if (ok) trackResumeGenerated();
   }
 
   // Post-import "Generate tailored version": if a posting is already attached,
@@ -110,7 +126,7 @@ function ResumeEditor() {
   // add one (then the bar's own "Tailor my resume" runs handleTailor).
   function handleImportTailor() {
     dismissImportCard();
-    if (draft?.resume.jobPosting) handleTailor();
+    if (draft?.resume.jobPosting) void handleTailor("import");
     else setExpandJobBar(true);
   }
 
