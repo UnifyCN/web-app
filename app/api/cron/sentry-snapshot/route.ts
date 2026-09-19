@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 
 /**
  * Daily Sentry → PostHog health snapshot (Vercel Cron; see vercel.json).
@@ -26,6 +27,19 @@ const SENTRY_API = "https://sentry.io/api/0";
 const POSTHOG_HOST =
   process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
 
+// Per-request deadline for each outbound call so a stalled Sentry/PostHog can't
+// burn the whole 30s function budget (Sentry calls run in parallel, then
+// PostHog — worst case ~2× this, comfortably under maxDuration).
+const FETCH_TIMEOUT_MS = 8000;
+
+/** Constant-time bearer-token comparison (avoids CWE-208 timing leaks). */
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ab.length !== bb.length) return false;
+  return timingSafeEqual(ab, bb);
+}
+
 /** Count of currently-unresolved issues. Uses the `X-Hits` header Sentry sets on
  * the issues endpoint, falling back to the returned page length. */
 async function fetchOpenIssueCount(token: string): Promise<number> {
@@ -33,6 +47,7 @@ async function fetchOpenIssueCount(token: string): Promise<number> {
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!res.ok) {
     throw new Error(`Sentry issues ${res.status}: ${await res.text()}`);
@@ -54,6 +69,7 @@ async function fetchErrors24h(token: string): Promise<number> {
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!res.ok) {
     throw new Error(`Sentry stats ${res.status}: ${await res.text()}`);
@@ -64,17 +80,24 @@ async function fetchErrors24h(token: string): Promise<number> {
   return series.reduce((sum, point) => sum + (Number(point?.[1]) || 0), 0);
 }
 
-/** Fire-and-forget a server-side PostHog capture. No-ops if the key is unset. */
-async function captureSnapshot(properties: Record<string, unknown>) {
+/**
+ * Server-side PostHog capture. Returns "skipped" (not an error) when the project
+ * key is unset so the caller can surface a non-healthy status — a misconfigured
+ * cron must not report success while the dashboard gets no data.
+ */
+async function captureSnapshot(
+  properties: Record<string, unknown>,
+): Promise<"sent" | "skipped"> {
   const apiKey = process.env.POSTHOG_PROJECT_API_KEY;
   if (!apiKey) {
     console.warn("sentry-snapshot: POSTHOG_PROJECT_API_KEY unset — skipping capture");
-    return;
+    return "skipped";
   }
   const res = await fetch(`${POSTHOG_HOST}/capture/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     body: JSON.stringify({
       api_key: apiKey,
       event: "sentry_snapshot",
@@ -85,14 +108,18 @@ async function captureSnapshot(properties: Record<string, unknown>) {
   if (!res.ok) {
     throw new Error(`PostHog capture ${res.status}: ${await res.text()}`);
   }
+  return "sent";
 }
 
 export async function GET(req: NextRequest) {
-  // Only Vercel Cron (or a caller holding CRON_SECRET) may run this.
+  // Only Vercel Cron (or a caller holding CRON_SECRET) may run this. Compared in
+  // constant time to avoid leaking the secret via response timing.
   const cronSecret = process.env.CRON_SECRET;
+  const authHeader = req.headers.get("authorization");
   if (
     !cronSecret ||
-    req.headers.get("authorization") !== `Bearer ${cronSecret}`
+    !authHeader ||
+    !safeEqual(authHeader, `Bearer ${cronSecret}`)
   ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -110,10 +137,23 @@ export async function GET(req: NextRequest) {
       fetchOpenIssueCount(sentryToken),
       fetchErrors24h(sentryToken),
     ]);
-    await captureSnapshot({
+    const capture = await captureSnapshot({
       open_issue_count: openIssueCount,
       errors_24h: errors24h,
     });
+    if (capture === "skipped") {
+      // Metrics were fetched but no event was recorded — the cron is
+      // misconfigured, so report a non-2xx status rather than a healthy ok.
+      return NextResponse.json(
+        {
+          ok: false,
+          skipped: "POSTHOG_PROJECT_API_KEY not configured",
+          open_issue_count: openIssueCount,
+          errors_24h: errors24h,
+        },
+        { status: 503 },
+      );
+    }
     return NextResponse.json({
       ok: true,
       open_issue_count: openIssueCount,
