@@ -45,6 +45,23 @@ export const trackOnboardingCompleted = () => capture("onboarding_completed");
 export const trackCompanionMessageSent = (p: { messageLength: number }) =>
   capture("companion_message_sent", { message_length: p.messageLength });
 
+/* ---- Resume builder + Cover letter ------------------------------------- */
+// Product-usage events for the two AI generators (Savar's weekly-review ask).
+// `*_started` fires on the explicit tailor/generate action; `*_generated` fires
+// when that action's turn resolves — plain refinement chat turns don't count.
+
+type GenerationSource = "job_posting" | "import";
+
+export const trackResumeStarted = (p: { source: GenerationSource }) =>
+  capture("resume_started", { source: p.source });
+
+export const trackResumeGenerated = () => capture("resume_generated");
+
+export const trackCoverLetterStarted = (p: { source: GenerationSource }) =>
+  capture("cover_letter_started", { source: p.source });
+
+export const trackCoverLetterGenerated = () => capture("cover_letter_generated");
+
 /* ---- In-Lesson Help ---------------------------------------------------- */
 // Event names shared with mobile (PRD R5); `platform:'web'` comes from the
 // super property in lib/posthog.ts — never set it here.

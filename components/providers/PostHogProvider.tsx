@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -74,6 +74,51 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     if (!isPostHogConfigured() || typeof window === "undefined") return;
     posthog.capture("$pageview", { $current_url: window.location.href });
   }, [pathname]);
+
+  // Session recording is scoped to the resume + cover-letter features only
+  // (recording is disabled globally in initPostHog). Start it while the user is
+  // on those routes, stop it everywhere else, so we capture how those two AI
+  // generators are actually used without recording the whole app.
+  const onRecordedRoute =
+    !!pathname &&
+    (pathname.startsWith("/resume") || pathname.startsWith("/cover-letter"));
+  useEffect(() => {
+    if (!isPostHogConfigured() || typeof window === "undefined") return;
+    if (onRecordedRoute) {
+      posthog.startSessionRecording();
+    } else {
+      posthog.stopSessionRecording();
+    }
+  }, [onRecordedRoute]);
+
+  // Best-effort: stop recording on navigation *intent* (a click on an internal
+  // link) so PostHog can't capture a frame of the destination page's DOM before
+  // the pathname effect above runs — that effect only fires after the new route
+  // commits, and general (non-input) text isn't masked by default.
+  //
+  // This is best-effort, not watertight: it only catches link clicks. It won't
+  // catch programmatic `router.push()` navigations, and browser back/forward
+  // still relies on the pathname-based effect above as the fallback.
+  const onRecordedRouteRef = useRef(onRecordedRoute);
+  useEffect(() => {
+    onRecordedRouteRef.current = onRecordedRoute;
+  }, [onRecordedRoute]);
+  useEffect(() => {
+    if (!isPostHogConfigured() || typeof window === "undefined") return;
+    function handleClickCapture(e: MouseEvent) {
+      if (!onRecordedRouteRef.current) return;
+      const target = e.target as Element | null;
+      const anchor = target?.closest?.("a[href]") as HTMLAnchorElement | null;
+      // Next <Link> renders an <a href="/...">; only internal navigations count.
+      const href = anchor?.getAttribute("href");
+      if (!href || !href.startsWith("/")) return;
+      posthog.stopSessionRecording();
+    }
+    // Capture phase so we run before the router's own click handler.
+    document.addEventListener("click", handleClickCapture, true);
+    return () =>
+      document.removeEventListener("click", handleClickCapture, true);
+  }, []);
 
   return <>{children}</>;
 }

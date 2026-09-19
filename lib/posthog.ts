@@ -31,6 +31,10 @@ export function initPostHog() {
     // `$pageview` manually on route change (see PostHogProvider).
     capture_pageview: false,
     capture_pageleave: true,
+    // Session recording is off by default everywhere; it's started/stopped
+    // per-route in PostHogProvider so only the resume + cover-letter features
+    // are recorded (Savar asked to see how those two are actually used).
+    disable_session_recording: true,
   });
   posthog.register(DEFAULT_PROPERTIES);
   initialized = true;

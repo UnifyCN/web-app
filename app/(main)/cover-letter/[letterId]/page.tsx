@@ -14,11 +14,17 @@ import {
 } from "@/hooks/useCoverLetter";
 import { CoverLetterBusyError, CoverLetterLimitError } from "@/services/coverLetter";
 import {
+  trackCoverLetterGenerated,
+  trackCoverLetterStarted,
+} from "@/lib/analytics";
+import {
   COVER_LETTER_DAILY_MESSAGE_LIMIT,
   emptyCoverLetter,
   isCoverLetterEmpty,
 } from "@/lib/coverLetter/schema";
 import type { CoverLetterUpdater } from "@/lib/coverLetter/editOps";
+
+type GenerationSource = "job_posting" | "import";
 
 /**
  * AI Cover-Letter Generator — a single letter's editor: conversation (left) +
@@ -73,11 +79,14 @@ function CoverLetterEditor() {
     }
   }, [draftQuery.isSuccess, draftQuery.data, router]);
 
-  async function handleSend(text: string) {
-    if (sendMessage.isPending) return;
+  // Returns true when the turn was sent successfully, so callers (generate) can
+  // fire a `cover_letter_generated` analytics event only on a real completion.
+  async function handleSend(text: string): Promise<boolean> {
+    if (sendMessage.isPending) return false;
     setSendError(null);
     try {
       await sendMessage.mutateAsync({ draftId, text });
+      return true;
     } catch (err) {
       if (err instanceof CoverLetterLimitError) {
         setSendError(t("coverLetter.limitReachedToast"));
@@ -87,20 +96,27 @@ function CoverLetterEditor() {
         console.error("Cover letter: failed to send message", err);
         setSendError(t("coverLetter.sendFailed"));
       }
+      return false;
     }
   }
 
   // Generate/refresh the full letter from the attached job posting + linked
   // resume. The job posting + resume context ride in the turn's context block, so
-  // the bubble is just a plain instruction.
-  function handleGenerate() {
+  // the bubble is just a plain instruction. Emits the cover_letter_started /
+  // cover_letter_generated product events (source "import" from the post-import
+  // entry point, "job_posting" from the job-target bar).
+  async function handleGenerate(source: GenerationSource = "job_posting") {
     if (!draft?.coverLetter.jobPosting) return;
-    void handleSend(t("coverLetter.jobTarget.generateUserBubble"));
+    // Defensive: if invoked as an event handler, coerce anything non-"import".
+    const src: GenerationSource = source === "import" ? "import" : "job_posting";
+    trackCoverLetterStarted({ source: src });
+    const ok = await handleSend(t("coverLetter.jobTarget.generateUserBubble"));
+    if (ok) trackCoverLetterGenerated();
   }
 
   function handleImportTailor() {
     dismissImportCard();
-    if (draft?.coverLetter.jobPosting) handleGenerate();
+    if (draft?.coverLetter.jobPosting) void handleGenerate("import");
     else setExpandJobBar(true);
   }
 
