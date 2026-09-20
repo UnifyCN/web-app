@@ -4,8 +4,12 @@ import {
   translateComment,
   translateDiscussion,
   translateDiscussionReply,
+  translateEvent,
+  translateGroup,
   translatePost,
+  translateTip,
   type TranslatableType,
+  type TranslationResult,
 } from "@/services/translations";
 import type { SupportedLanguage } from "@/lib/i18n/config";
 import { DEFAULT_LANGUAGE, isSupportedLanguage } from "@/lib/i18n/config";
@@ -23,6 +27,27 @@ import {
  */
 
 const TRANSLATION_KEY = ["translation"] as const;
+
+/**
+ * One translator per content kind. A map rather than a ternary chain so adding
+ * a kind is a line here and the compiler names the gap if it is forgotten
+ * (Record over the full union).
+ *
+ * The `as number` / `as string` casts are the same ones the callers already
+ * make: the id shape is fixed per kind, and /api/translate rejects a mismatch.
+ */
+const TRANSLATORS: Record<
+  TranslatableType,
+  (id: number | string, lang: SupportedLanguage) => Promise<TranslationResult>
+> = {
+  post: (id, lang) => translatePost(id as number, lang),
+  comment: (id, lang) => translateComment(id as number, lang),
+  discussion: (id, lang) => translateDiscussion(id as string, lang),
+  discussion_reply: (id, lang) => translateDiscussionReply(id as string, lang),
+  event: (id, lang) => translateEvent(id as number, lang),
+  group: (id, lang) => translateGroup(id as number, lang),
+  tip: (id, lang) => translateTip(id as string, lang),
+};
 
 function useCurrentLanguage(): SupportedLanguage {
   const { i18n } = useTranslation();
@@ -44,14 +69,7 @@ export function useContentTranslation(
         targetLanguage: lang,
         ...(type === "post" ? { postId: id as number } : {}),
       });
-      const result =
-        type === "post"
-          ? await translatePost(id as number, lang)
-          : type === "comment"
-            ? await translateComment(id as number, lang)
-            : type === "discussion"
-              ? await translateDiscussion(id as string, lang)
-              : await translateDiscussionReply(id as string, lang);
+      const result = await TRANSLATORS[type](id, lang);
       if (result.cached) {
         trackTranslationCacheHit({ type, targetLanguage: lang });
       } else {
@@ -92,4 +110,16 @@ export function useTranslateDiscussion(discussionId: string) {
 
 export function useTranslateDiscussionReply(replyId: string) {
   return useContentTranslation("discussion_reply", replyId);
+}
+
+export function useTranslateEvent(eventId: number) {
+  return useContentTranslation("event", eventId);
+}
+
+export function useTranslateGroup(groupId: number) {
+  return useContentTranslation("group", groupId);
+}
+
+export function useTranslateTip(tipId: string) {
+  return useContentTranslation("tip", tipId);
 }

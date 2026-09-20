@@ -2,22 +2,37 @@
 //
 // translate-content — on-demand cached translation of user-generated content
 // (posts + comments in Phase 2; In-Lesson Help discussions + replies in
-// Phase 6) into the viewer's UI language.
+// Phase 6; events, groups, and daily tips in Phase 7) into the viewer's UI
+// language.
 //
 // Distinct from mobile's `translate-post` (raw text in → translation out, no
 // cache): this function is id-based — it fetches the source row itself with
-// the service role, caches the result in post_translations /
-// comment_translations / discussion_translations / discussion_reply_translations
+// the service role, caches the result in that type's `*_translations` table
 // keyed by (row, lang) with a source_hash so edits invalidate stale entries,
-// and enforces a per-user daily quota (cache hits are free). Posts carry a
-// title; comments, discussions, and replies are content-only. posts/comments
-// use integer ids; discussions/replies use UUIDs. Reuses the shared OpenRouter
-// chain (Gemini Flash → DeepSeek) and the web CORS/auth conventions (see
-// explain-term).
+// and enforces a per-user daily quota (cache hits are free). Reuses the shared
+// OpenRouter chain (Gemini Flash → DeepSeek) and the web CORS/auth conventions
+// (see explain-term).
+//
+// Every per-type difference — source table, title/body columns, id shape,
+// cache table — lives in lib/contentTypes.ts, which is unit-tested. Read that
+// file before adding a type; the one trap it encodes is that `daily_tips` rows
+// are PRIVATE (`user_id = auth.uid()` is their only select policy), so the
+// service-role fetch that is harmless for posts/events/groups would leak
+// another user's tip. Types with an `ownerColumn` get an ownership re-check
+// below, and their cache table is owner-scoped to match.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { callOpenRouter } from '../_shared/openrouter.ts';
 import { captureAiGeneration } from '../_shared/posthogCapture.ts';
+import {
+  cacheSelectColumns,
+  extractSource,
+  fetchSourceRow,
+  isForbiddenOwner,
+  resolveContentType,
+  resolveId,
+  supportedTypes,
+} from './lib/contentTypes.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -152,33 +167,20 @@ Deno.serve(async req => {
     }
     const { type, id, targetLanguage } = body ?? {};
 
-    if (
-      type !== 'post' &&
-      type !== 'comment' &&
-      type !== 'discussion' &&
-      type !== 'discussion_reply'
-    ) {
+    const config = resolveContentType(type);
+    if (!config) {
       return jsonResponse(
         {
-          error:
-            "type must be 'post', 'comment', 'discussion', or 'discussion_reply'",
+          error: `type must be one of: ${supportedTypes()
+            .map(t => `'${t}'`)
+            .join(', ')}`,
         },
         400,
       );
     }
-    // posts.id / post_comments.id are integer serials; module_discussions.id /
-    // discussion_replies.id are UUIDs. Validate per type.
-    const isDiscussionType = type === 'discussion' || type === 'discussion_reply';
-    const resolvedId: number | string | null = isDiscussionType
-      ? typeof id === 'string' &&
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
-        ? id
-        : null
-      : typeof id === 'number' && Number.isInteger(id) && id > 0
-        ? id
-        : typeof id === 'string' && /^\d+$/.test(id)
-          ? Number(id)
-          : null;
+    // posts / post_comments / events / groups use integer serials;
+    // module_discussions / discussion_replies / daily_tips use UUIDs.
+    const resolvedId = resolveId(config, id);
     if (resolvedId === null) {
       return jsonResponse({ error: 'Invalid id' }, 400);
     }
@@ -195,61 +197,26 @@ Deno.serve(async req => {
       );
     }
 
-    // Fetch the source row (service role — posts/comments are world-readable
+    // Fetch the source row (service role — the public types are world-readable
     // anyway; this also keeps the content out of the request body so it can't
     // be spoofed into the cache).
-    let title: string | null = null;
-    let content: string;
-    if (type === 'post') {
-      const { data: post, error } = await supabase
-        .from('posts')
-        .select('title, content')
-        .eq('id', resolvedId)
-        .maybeSingle();
-      if (error) {
-        console.error('translate-content post lookup failed:', error);
-        return jsonResponse({ error: 'Lookup failed' }, 500);
-      }
-      if (!post) return jsonResponse({ error: 'Post not found' }, 404);
-      title = post.title ?? null;
-      content = post.content ?? '';
-    } else if (type === 'comment') {
-      const { data: comment, error } = await supabase
-        .from('post_comments')
-        .select('content')
-        .eq('id', resolvedId)
-        .maybeSingle();
-      if (error) {
-        console.error('translate-content comment lookup failed:', error);
-        return jsonResponse({ error: 'Lookup failed' }, 500);
-      }
-      if (!comment) return jsonResponse({ error: 'Comment not found' }, 404);
-      content = comment.content ?? '';
-    } else if (type === 'discussion') {
-      const { data: discussion, error } = await supabase
-        .from('module_discussions')
-        .select('body')
-        .eq('id', resolvedId)
-        .maybeSingle();
-      if (error) {
-        console.error('translate-content discussion lookup failed:', error);
-        return jsonResponse({ error: 'Lookup failed' }, 500);
-      }
-      if (!discussion) return jsonResponse({ error: 'Discussion not found' }, 404);
-      content = discussion.body ?? '';
-    } else {
-      const { data: reply, error } = await supabase
-        .from('discussion_replies')
-        .select('body')
-        .eq('id', resolvedId)
-        .maybeSingle();
-      if (error) {
-        console.error('translate-content reply lookup failed:', error);
-        return jsonResponse({ error: 'Lookup failed' }, 500);
-      }
-      if (!reply) return jsonResponse({ error: 'Reply not found' }, 404);
-      content = reply.body ?? '';
+    const { row: sourceRow, error: sourceError } = await fetchSourceRow(
+      supabase,
+      config,
+      resolvedId,
+    );
+    if (sourceError) {
+      console.error(`translate-content ${type} lookup failed:`, sourceError);
+      return jsonResponse({ error: 'Lookup failed' }, 500);
     }
+    if (!sourceRow) return jsonResponse({ error: config.notFound }, 404);
+    // Private types only (daily_tips today): the service-role read bypassed
+    // RLS, so ownership is enforced here instead. Answer with the same 404 as a
+    // missing row — a distinct 403 would confirm the id exists.
+    if (isForbiddenOwner(config, sourceRow, userId)) {
+      return jsonResponse({ error: config.notFound }, 404);
+    }
+    const { title, content } = extractSource(config, sourceRow);
 
     if (!content.trim()) {
       return jsonResponse({ error: 'Nothing to translate' }, 400);
@@ -265,31 +232,11 @@ Deno.serve(async req => {
     const sourceHash = await sha256Hex(sourceText);
 
     // Cache lookup — a hit with a matching hash is free (no quota consumed).
-    const table =
-      type === 'post'
-        ? 'post_translations'
-        : type === 'comment'
-          ? 'comment_translations'
-          : type === 'discussion'
-            ? 'discussion_translations'
-            : 'discussion_reply_translations';
-    const idColumn =
-      type === 'post'
-        ? 'post_id'
-        : type === 'comment'
-          ? 'comment_id'
-          : type === 'discussion'
-            ? 'discussion_id'
-            : 'reply_id';
-    // Only post_translations has a translated_title column — select per type.
-    const cacheColumns =
-      type === 'post'
-        ? 'translated_title, translated_content, source_lang, source_hash'
-        : 'translated_content, source_lang, source_hash';
+    // Only the title-bearing types store a translated_title column.
     const { data: cached, error: cacheError } = await supabase
-      .from(table)
-      .select(cacheColumns)
-      .eq(idColumn, resolvedId)
+      .from(config.cacheTable)
+      .select(cacheSelectColumns(config))
+      .eq(config.cacheIdColumn, resolvedId)
       .eq('lang', targetLanguage)
       .maybeSingle();
     if (cacheError) {
@@ -299,7 +246,7 @@ Deno.serve(async req => {
     if (cached && cached.source_hash === sourceHash) {
       return jsonResponse({
         translatedContent: cached.translated_content,
-        ...(type === 'post'
+        ...(config.titleColumn
           ? { translatedTitle: cached.translated_title ?? null }
           : {}),
         sourceLang: cached.source_lang ?? undefined,
@@ -376,17 +323,19 @@ Deno.serve(async req => {
     }
 
     const row = {
-      [idColumn]: resolvedId,
+      [config.cacheIdColumn]: resolvedId,
       lang: targetLanguage,
       translated_content: parsed.translatedContent,
-      ...(type === 'post' ? { translated_title: parsed.translatedTitle } : {}),
+      ...(config.titleColumn
+        ? { translated_title: parsed.translatedTitle }
+        : {}),
       source_lang: parsed.sourceLang,
       source_hash: sourceHash,
       model: llmResult.model,
     };
     const { error: upsertError } = await supabase
-      .from(table)
-      .upsert(row, { onConflict: `${idColumn},lang` });
+      .from(config.cacheTable)
+      .upsert(row, { onConflict: `${config.cacheIdColumn},lang` });
     if (upsertError) {
       // The user still gets their translation; only the cache write failed.
       console.error('translate-content cache write failed:', upsertError);
@@ -407,7 +356,9 @@ Deno.serve(async req => {
 
     return jsonResponse({
       translatedContent: parsed.translatedContent,
-      ...(type === 'post' ? { translatedTitle: parsed.translatedTitle } : {}),
+      ...(config.titleColumn
+        ? { translatedTitle: parsed.translatedTitle }
+        : {}),
       sourceLang: parsed.sourceLang ?? undefined,
       cached: false,
     });
