@@ -162,13 +162,22 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   **User-generated content** translates on demand: `components/home/TranslateButton.tsx` →
   `hooks/useTranslations.ts` → `services/translations.ts` → the same-origin
   `/api/translate` proxy → the **web-owned `translate-content` edge function**, covering
-  posts, comments, and In-Lesson Help discussions/replies. Results cache server-side
-  (`post_translations` / `comment_translations` / `discussion_translations` /
-  `discussion_reply_translations`, keyed by source row + target lang with a SHA-256
-  `source_hash` so an edited body invalidates stale rows) under a **20 translations/day**
-  per-user quota (`translation_usage` + check/refund RPCs mirroring the chatbot quota
-  pair); cache hits are free. Migrations:
-  `20260709120000_content_translations.sql`, `20260711120000_discussion_translations.sql`.
+  posts, comments, In-Lesson Help discussions/replies, and (Phase 7) events, groups and
+  daily tips. Results cache server-side in a per-type `*_translations` table (keyed by
+  source row + target lang with a SHA-256 `source_hash` so an edited body invalidates
+  stale rows) under a **20 translations/day** per-user quota (`translation_usage` +
+  check/refund RPCs mirroring the chatbot quota pair); cache hits are free. Migrations:
+  `20260709120000_content_translations.sql`, `20260711120000_discussion_translations.sql`,
+  `20260920120000_event_group_tip_translations.sql`.
+  **Adding a translatable type** is one entry in
+  `supabase/functions/translate-content/lib/contentTypes.ts` (source table, title/body
+  columns, id shape, cache table — unit-tested in `contentTypes_test.ts`), its cache
+  table in a migration, and the client allowlist (`services/translations.ts`, which
+  `app/api/translate/route.ts`, `hooks/useTranslations.ts` and `lib/analytics.ts` all
+  derive from). **Check the source table's RLS first:** `daily_tips` is private
+  (`user_id = auth.uid()`), so the function re-checks ownership after its service-role
+  read and `tip_translations` is owner-scoped — a `using (true)` policy there would have
+  leaked other users' tips.
 
 ---
 
@@ -179,10 +188,12 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   (`components/layout/Sidebar.tsx`) call `createClient()` directly. Flagged by
   CodeRabbit on PR #1 — do as a separate PR after PR #1 merges.
 - **Arabic (`ar`) and Canadian French (`fr-CA`) are ungated in the UI.** Both ship complete
-  (mobile PR #299 made the language sets identical). The Translate button in either
-  language works only once `translate-content` is redeployed with `ar`/`fr-CA` in
-  `LANGUAGE_NAMES` (`supabase functions deploy translate-content`) — a pending post-merge
-  step until done. Their machine translations have not had a native review yet;
+  (mobile PR #299 made the language sets identical). `translate-content` already carries
+  them in `LANGUAGE_NAMES` and `rag-query` now carries them in
+  `RESPONSE_LANGUAGE_NAMES`, so the Translate button and Companion answers work in either
+  language **once both functions are redeployed**
+  (`supabase functions deploy translate-content rag-query`) — a pending post-merge step
+  until done. Their machine translations have not had a native review yet;
   `NEXT_PUBLIC_ENABLE_ARABIC=false` / `NEXT_PUBLIC_ENABLE_FRENCH=false` hide one again if
   a review turns up problems.
 

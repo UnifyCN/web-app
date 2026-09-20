@@ -1,5 +1,6 @@
 import { isPostHogConfigured, posthog } from "@/lib/posthog";
 import type { PartnerCategory, PartnershipType } from "@/types";
+import type { TranslatableType } from "@/services/translations";
 
 /**
  * Typed PostHog product-event helpers for the web app. Each function mirrors the
@@ -227,11 +228,14 @@ export const trackGroupViewed = (p: { groupId: number; groupName: string }) =>
 
 /* ---- Content translation (i18n Phase 2) -------------------------------- */
 
-type TranslatableContentType =
-  | "post"
-  | "comment"
-  | "discussion"
-  | "discussion_reply";
+
+/**
+ * Aliased rather than re-listed: this used to be its own union, and adding
+ * `event`/`group`/`tip` to the service left it behind. One source of truth now
+ * — `import type` erases at compile time, so no runtime dependency on the
+ * service layer.
+ */
+type TranslatableContentType = TranslatableType;
 
 export const trackTranslationRequested = (p: {
   type: TranslatableContentType;

@@ -3,30 +3,58 @@ import type { SupportedLanguage } from "@/lib/i18n/config";
 
 /**
  * On-demand translation of user-generated content (posts + comments in Phase 2;
- * In-Lesson Help discussions + replies in Phase 6) into the viewer's UI
- * language.
+ * In-Lesson Help discussions + replies in Phase 6; events, groups, and daily
+ * tips in Phase 7) into the viewer's UI language.
  *
  * Calls the web-owned `translate-content` edge function through the
  * same-origin `/api/translate` proxy (same CORS pattern as /api/companion and
  * /api/moderation; the proxy forwards the user's JWT from cookies). The
- * function caches translations server-side (post_translations /
- * comment_translations / discussion_translations /
- * discussion_reply_translations) and enforces a 20/day per-user quota — cache
- * hits are free and flagged with `cached: true`.
+ * function caches translations server-side in a per-type `*_translations`
+ * table and enforces a 20/day per-user quota — cache hits are free and flagged
+ * with `cached: true`.
  */
 
-/** Content kinds the translate-content function understands. Posts carry a
- *  title; the rest are content-only. Posts/comments use integer ids;
- *  discussions/replies use UUID strings. */
+/** Content kinds the translate-content function understands. */
 export type TranslatableType =
   | "post"
   | "comment"
   | "discussion"
-  | "discussion_reply";
+  | "discussion_reply"
+  | "event"
+  | "group"
+  | "tip";
+
+/**
+ * Id shape per kind, mirroring the edge function's
+ * `supabase/functions/translate-content/lib/contentTypes.ts`. `int` kinds are
+ * integer serials (posts, post_comments, events, groups); `uuid` kinds are uuid
+ * keys (module_discussions, discussion_replies, daily_tips). The /api/translate
+ * proxy validates against this, so a mismatch here is a 400 the user sees.
+ */
+export const TRANSLATABLE_ID_KIND: Record<TranslatableType, "int" | "uuid"> = {
+  post: "int",
+  comment: "int",
+  discussion: "uuid",
+  discussion_reply: "uuid",
+  event: "int",
+  group: "int",
+  tip: "uuid",
+};
+
+/** Kinds that carry a headline, so the response includes `translatedTitle`. */
+export const TRANSLATABLE_HAS_TITLE: Record<TranslatableType, boolean> = {
+  post: true,
+  comment: false,
+  discussion: false,
+  discussion_reply: false,
+  event: true,
+  group: true,
+  tip: true,
+};
 
 export interface TranslationResult {
   translatedContent: string;
-  /** Posts only — null when the model returned no title translation. */
+  /** Title-bearing kinds only — null when the model returned no title. */
   translatedTitle?: string | null;
   /** Detected ISO 639-1 source language, when the model reported one. */
   sourceLang?: string;
@@ -53,8 +81,9 @@ async function requestTranslation(
     // hard-failing so the Translate UI stays usable.
     return {
       translatedContent: `[${targetLanguage}] Mock translation of ${type} #${id}`,
-      translatedTitle:
-        type === "post" ? `[${targetLanguage}] Mock translated title` : null,
+      translatedTitle: TRANSLATABLE_HAS_TITLE[type]
+        ? `[${targetLanguage}] Mock translated title`
+        : null,
       sourceLang: "en",
       cached: false,
     };
@@ -115,4 +144,26 @@ export function translateDiscussionReply(
   targetLang: SupportedLanguage,
 ): Promise<TranslationResult> {
   return requestTranslation("discussion_reply", replyId, targetLang);
+}
+
+export function translateEvent(
+  eventId: number,
+  targetLang: SupportedLanguage,
+): Promise<TranslationResult> {
+  return requestTranslation("event", eventId, targetLang);
+}
+
+export function translateGroup(
+  groupId: number,
+  targetLang: SupportedLanguage,
+): Promise<TranslationResult> {
+  return requestTranslation("group", groupId, targetLang);
+}
+
+/** Daily tips are private to their owner — the function 404s on someone else's. */
+export function translateTip(
+  tipId: string,
+  targetLang: SupportedLanguage,
+): Promise<TranslationResult> {
+  return requestTranslation("tip", tipId, targetLang);
 }

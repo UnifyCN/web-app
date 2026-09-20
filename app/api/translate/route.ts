@@ -1,12 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isSupportedLanguage } from "@/lib/i18n/config";
-import type { TranslatableType } from "@/services/translations";
+import {
+  TRANSLATABLE_ID_KIND,
+  type TranslatableType,
+} from "@/services/translations";
 
 /**
  * Server-side proxy for the web-owned `translate-content` edge function
  * (on-demand cached translation of posts/comments — i18n Phase 2 — plus
- * In-Lesson Help discussions/replies — Phase 6).
+ * In-Lesson Help discussions/replies — Phase 6 — plus events, groups and daily
+ * tips — Phase 7).
  *
  * Same-origin POST → server→server `functions.invoke` (no CORS preflight),
  * forwarding the user's JWT from cookies so the function identifies the user
@@ -24,27 +28,31 @@ interface TranslateBody {
   targetLanguage: string;
 }
 
-// module_discussions.id / discussion_replies.id are UUIDs.
+// module_discussions.id / discussion_replies.id / daily_tips.id are UUIDs.
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const TRANSLATABLE_TYPES = Object.keys(
+  TRANSLATABLE_ID_KIND,
+) as TranslatableType[];
+
+function isTranslatableType(value: unknown): value is TranslatableType {
+  return (
+    typeof value === "string" &&
+    Object.prototype.hasOwnProperty.call(TRANSLATABLE_ID_KIND, value)
+  );
+}
 
 function parseBody(raw: unknown): TranslateBody | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const rec = raw as Record<string, unknown>;
-  if (
-    rec.type !== "post" &&
-    rec.type !== "comment" &&
-    rec.type !== "discussion" &&
-    rec.type !== "discussion_reply"
-  ) {
-    return null;
-  }
+  if (!isTranslatableType(rec.type)) return null;
   if (!isSupportedLanguage(rec.targetLanguage)) return null;
-  if (rec.type === "discussion" || rec.type === "discussion_reply") {
+  if (TRANSLATABLE_ID_KIND[rec.type] === "uuid") {
     if (typeof rec.id !== "string" || !UUID_RE.test(rec.id)) return null;
     return { type: rec.type, id: rec.id, targetLanguage: rec.targetLanguage };
   }
-  // posts.id / post_comments.id are integer serials on the shared DB.
+  // posts.id / post_comments.id / events.id / groups.id are integer serials.
   if (typeof rec.id !== "number" || !Number.isInteger(rec.id) || rec.id <= 0) {
     return null;
   }
@@ -69,8 +77,9 @@ export async function POST(req: NextRequest) {
   if (!body) {
     return NextResponse.json(
       {
-        error:
-          "Expected { type: 'post'|'comment'|'discussion'|'discussion_reply', id, targetLanguage }",
+        error: `Expected { type: ${TRANSLATABLE_TYPES.map(
+          (t) => `'${t}'`,
+        ).join("|")}, id, targetLanguage }`,
       },
       { status: 400 },
     );

@@ -73,3 +73,12 @@ jobs:
           printf 'Type-checking %s file(s):\n' "$(( ${#entrypoints[@]} + ${#shared[@]} ))"
           printf '  %s\n' "${entrypoints[@]}" "${shared[@]}"
           deno check --node-modules-dir=auto "${entrypoints[@]}" "${shared[@]}"
+
+      - name: Run edge-function unit tests
+        # The `*_test.ts` files beside the pure helpers (events-crawler's
+        # relevance filter, translate-content's per-type contract). They were
+        # documented as "run with deno test" but nothing ran them, so a broken
+        # one could land green. --no-check because `deno check` above already
+        # type-checks the modules under test.
+        # (No --allow-* flags: these tests touch no file, net or env.)
+        run: deno test --no-check supabase/functions/
