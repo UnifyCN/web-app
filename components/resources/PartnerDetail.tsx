@@ -46,7 +46,10 @@ export function PartnerDetail({ partner }: { partner: Partner }) {
   const color = PARTNER_CATEGORY_COLORS[partner.category];
   const tint = PARTNER_CATEGORY_TINTS[partner.category];
   const website = externalHref(partner.website);
-  const mapsHref = partner.address
+  // `ctaOnly` partners attribute referrals through the website CTA, so it must be
+  // the only outbound link: no directions, call, email, or program links.
+  const ctaOnly = partner.ctaOnly === true;
+  const mapsHref = partner.address && !ctaOnly
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
         partner.address,
       )}`
@@ -167,9 +170,14 @@ export function PartnerDetail({ partner }: { partner: Partner }) {
       <h2 className="mt-7 text-base font-semibold text-ink-secondary">
         {t("resources.about")}
       </h2>
-      <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-        {partner.description}
-      </p>
+      {/* Blank-line-separated paragraphs (partner-supplied copy can run long). */}
+      <div className="mt-2 space-y-3">
+        {partner.description.split(/\n\s*\n/).map((para, i) => (
+          <p key={i} className="text-sm leading-relaxed text-ink-muted">
+            {para}
+          </p>
+        ))}
+      </div>
 
       {/* How they help */}
       {partner.highlights.length > 0 && (
@@ -194,7 +202,7 @@ export function PartnerDetail({ partner }: { partner: Partner }) {
       )}
 
       {/* How to get help */}
-      <HowToGetHelp partner={partner} mapsHref={mapsHref} />
+      <HowToGetHelp partner={partner} mapsHref={mapsHref} linkContacts={!ctaOnly} />
 
       {/* Programs */}
       {partner.programs && partner.programs.length > 0 && (
@@ -204,7 +212,7 @@ export function PartnerDetail({ partner }: { partner: Partner }) {
           </h2>
           <div className="mt-3 space-y-3">
             {partner.programs.map((program) => {
-              const purl = externalHref(program.url);
+              const purl = ctaOnly ? null : externalHref(program.url);
               return (
                 <div
                   key={program.name}
@@ -267,9 +275,12 @@ export function PartnerDetail({ partner }: { partner: Partner }) {
 function HowToGetHelp({
   partner,
   mapsHref,
+  linkContacts,
 }: {
   partner: Partner;
   mapsHref: string | null;
+  /** False renders phone/email as plain text (see `Partner.ctaOnly`). */
+  linkContacts: boolean;
 }) {
   const { t } = useTranslation();
 
@@ -326,22 +337,30 @@ function HowToGetHelp({
           )}
           {partner.phone && (
             <ContactRow icon={Phone} label={t("resources.phone")}>
-              <a
-                href={telHref(partner.phone)}
-                className="text-primary hover:underline"
-              >
-                {partner.phone}
-              </a>
+              {linkContacts ? (
+                <a
+                  href={telHref(partner.phone)}
+                  className="text-primary hover:underline"
+                >
+                  {partner.phone}
+                </a>
+              ) : (
+                partner.phone
+              )}
             </ContactRow>
           )}
           {partner.email && (
             <ContactRow icon={Mail} label={t("resources.email")}>
-              <a
-                href={`mailto:${partner.email}`}
-                className="break-all text-primary hover:underline"
-              >
-                {partner.email}
-              </a>
+              {linkContacts ? (
+                <a
+                  href={`mailto:${partner.email}`}
+                  className="break-all text-primary hover:underline"
+                >
+                  {partner.email}
+                </a>
+              ) : (
+                <span className="break-all">{partner.email}</span>
+              )}
             </ContactRow>
           )}
           {partner.address && (

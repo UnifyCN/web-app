@@ -623,7 +623,7 @@ export type PartnershipType = "resource" | "referral";
  *  `resources.cta.*` set so a typo can't slip a raw key into the UI. */
 export type PartnerCtaKey =
   | "resources.cta.getQuote"
-  | "resources.cta.bookAssessment"
+  | "resources.cta.bookIntroMeeting"
   | "resources.cta.bookAdvising"
   | "resources.cta.applyOnline"
   | "resources.cta.joinLibrary"
@@ -676,6 +676,11 @@ export interface Partner {
   /** i18n key for the primary button when "Visit website" understates it.
    *  Defaults to `resources.visitWebsite`. Resolve with `t()`. */
   ctaLabelKey?: PartnerCtaKey;
+  /** When true, the primary website CTA is the only outbound link on the detail
+   *  page — program cards carry no links and phone/email/address render as plain
+   *  text with no call, email, or directions actions. For referral partners that
+   *  attribute leads through the CTA link. Mirrors mobile's `ctaOnly`. */
+  ctaOnly?: boolean;
   /** Optional brand logo URL; falls back to a monogram when absent. */
   logo?: string;
   /** How the logo fills its square slot. Defaults to "cover" (edge-to-edge, for
