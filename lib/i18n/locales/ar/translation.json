@@ -1789,6 +1789,11 @@
       "postAria": "نشر"
     }
   },
+  "resources": {
+    "cta": {
+      "bookIntroMeeting": "احجز اجتماعًا تعريفيًا مجانيًا"
+    }
+  },
   "coverLetter": {
     "import": {
       "button": "رفع خطاب تقديم",

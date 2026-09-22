@@ -1789,6 +1789,11 @@
       "postAria": "Publier"
     }
   },
+  "resources": {
+    "cta": {
+      "bookIntroMeeting": "Réserver une première rencontre gratuite"
+    }
+  },
   "coverLetter": {
     "list": {
       "emptyBody": "Créez une nouvelle lettre de présentation ou téléversez-en une existante."
