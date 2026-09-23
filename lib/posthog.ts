@@ -1,4 +1,5 @@
-import posthog from "posthog-js";
+import posthog, { type CaptureResult } from "posthog-js";
+import { scrubEmailProps } from "@/lib/pii/scrubEmail";
 
 /** True once the PostHog env vars are populated. Mirrors `isSupabaseConfigured()`. */
 export function isPostHogConfigured() {
@@ -11,6 +12,52 @@ export function isPostHogConfigured() {
 // project (web + mobile on one project) can be filtered by platform. `reset()`
 // clears super properties, so it is re-registered in `resetPostHog()`.
 const DEFAULT_PROPERTIES = { platform: "web" } as const;
+
+// Routes whose DOM is user-authored document content (resume / cover letter).
+const CONTENT_ROUTE_PREFIXES = ["/resume", "/cover-letter"];
+
+// Autocapture-family events carry `$el_text` / element chains from the DOM.
+const DOM_CAPTURE_EVENTS = new Set([
+  "$autocapture",
+  "$rageclick",
+  "$dead_click",
+  "$copy_autocapture",
+]);
+
+function isContentRoute(url: unknown): boolean {
+  if (typeof url !== "string") return false;
+  try {
+    const { pathname } = new URL(url, window.location.origin);
+    return CONTENT_ROUTE_PREFIXES.some(
+      (p) => pathname === p || pathname.startsWith(`${p}/`),
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Last-line PII scrub before any event leaves the browser:
+ * - strips `?email=` from every string property (covers `$current_url`,
+ *   `$referrer`, and the `$initial_*` / `$session_entry_*` variants), including
+ *   person properties set via `$set` / `$set_once`;
+ * - drops autocapture-family events on the resume + cover-letter routes. The
+ *   route layouts already mark the page `ph-no-capture`; this also covers UI
+ *   portaled to <body> (modals, menus), which escapes that container.
+ */
+function scrubEvent(event: CaptureResult | null): CaptureResult | null {
+  if (!event) return event;
+  if (
+    DOM_CAPTURE_EVENTS.has(event.event) &&
+    isContentRoute(event.properties?.$current_url)
+  ) {
+    return null;
+  }
+  scrubEmailProps(event.properties);
+  scrubEmailProps(event.$set);
+  scrubEmailProps(event.$set_once);
+  return event;
+}
 
 let initialized = false;
 
@@ -35,6 +82,18 @@ export function initPostHog() {
     // per-route in PostHogProvider so only the resume + cover-letter features
     // are recorded (Savar asked to see how those two are actually used).
     disable_session_recording: true,
+    session_recording: {
+      // The resume / cover-letter previews render as plain text, not inputs, so
+      // input masking alone recorded full documents. Mask every text node.
+      maskTextSelector: "*",
+      maskAllInputs: true,
+      // rrweb's default block class is `ph-no-capture`, which the feature layouts
+      // use to stop autocapture. Point blocking at a different class so those
+      // pages still record (layout + interactions, text masked) instead of
+      // rendering as one blocked box.
+      blockClass: "ph-no-record",
+    },
+    before_send: scrubEvent,
   });
   posthog.register(DEFAULT_PROPERTIES);
   initialized = true;
