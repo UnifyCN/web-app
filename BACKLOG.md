@@ -700,6 +700,17 @@ Enable leaked password protection (HaveIBeenPwned.org) in Supabase Dashboard →
 **`is_circle_member` SECURITY DEFINER (accepted)**
 `public.is_circle_member` is intentionally `SECURITY DEFINER` and executable by `authenticated` (required to break the RLS recursion between `community_circles` and `community_circle_members`); it only returns whether the caller is a member of the passed circle id — no data leak. Flagged by the `authenticated_security_definer_function_executable` advisor; accepted, not a fix.
 
+**Stop putting the email address in the URL on /verify-email and /reset-password**
+Signup/login `router.push` to `/verify-email?email=…` (`app/(auth)/signup/page.tsx`,
+`app/(auth)/login/page.tsx`) and forgot-password pushes to `/reset-password?email=…`
+(`app/(auth)/forgot-password/page.tsx`); both destination pages read it back with
+`params.get("email")`. The address therefore lands in browser history, `document.referrer`,
+server/proxy logs and any third-party script that reads the URL. PR #130 added a `before_send` /
+Sentry scrub (`lib/pii/scrubEmail.ts`) so PostHog and Sentry no longer receive it — that is a
+band-aid, not a fix. Hand the address over without the URL instead (e.g. `sessionStorage`, or
+derive it from the pending Supabase auth state) and keep a graceful fallback when it's missing
+(the pages already handle an empty email).
+
 **Storage upload MIME type enforcement — ✅ SHIPPED (PR #35)**
 `app/api/storage/route.ts` now sniffs the actual leading bytes with the `file-type` package and
 rejects uploads whose content isn't an allowed image (png/jpeg/webp) or **contradicts the
