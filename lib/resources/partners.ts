@@ -273,6 +273,8 @@ export const PARTNERS: Partner[] = [
   {
     slug: "canada-shaw-immigration",
     logo: "/resources/logos/canada-shaw-immigration.png",
+    // Non-square mark (256x220): contain, matching mobile Monogram.
+    logoFit: "contain",
     heroImage: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&q=80&auto=format&fit=crop",
     name: "Canada Shaws Consulting Inc.",
     category: "immigrationHelp",
