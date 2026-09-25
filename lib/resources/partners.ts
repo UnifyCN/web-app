@@ -1,4 +1,4 @@
-import type { Partner, PartnerCategory, CategoryWithCount } from "@/types";
+import type { Cost, Partner, PartnerCategory, CategoryWithCount } from "@/types";
 import { CATEGORY_ORDER } from "./categories";
 
 /**
@@ -502,6 +502,9 @@ export const PARTNERS: Partner[] = [
     ],
     serviceArea: "Vancouver · 21 branches",
     website: "https://www.vpl.ca/",
+    // Drafted from the highlight "Free for all residents" (web-only; see the
+    // facet table below).
+    cost: "free",
     displayOrder: 2,
     active: true,
   },
@@ -1068,3 +1071,185 @@ export const getCategoriesWithPartners = (): CategoryWithCount[] => {
     partnerCount: counts.get(category)!,
   }));
 };
+
+// ── Filter facets (web-only) ───────────────────────────────────────────────
+//
+// Structured values behind the Resources filters (service format, location,
+// eligibility). Every value is derived ONLY from the partner's own text above;
+// the quoted source is on each line. Anything the text doesn't clearly state is
+// "unknown" (or an empty list), and the filter UI excludes that partner while
+// the matching filter is active. Kept apart from PARTNERS so the ported records
+// stay diffable against mobile.
+
+/** How a partner's services are delivered. */
+export type PartnerFormat = "in_person" | "online" | "both" | "unknown";
+
+/**
+ * Where a partner serves. City keys are BC municipalities; `metro_vancouver`,
+ * `bc_wide` and `national` are wider scopes that also cover every BC city;
+ * `outside_bc` serves only outside BC.
+ */
+export type LocationKey =
+  | "vancouver"
+  | "surrey"
+  | "burnaby"
+  | "richmond"
+  | "delta"
+  | "metro_vancouver"
+  | "bc_wide"
+  | "national"
+  | "outside_bc";
+
+/** Immigration-status groups a partner states it serves. */
+export type EligibilityTag =
+  | "permanent_residents"
+  | "permits"
+  | "refugees"
+  | "everyone";
+
+export interface PartnerFacets {
+  format: PartnerFormat;
+  /** Empty = the text doesn't say. */
+  locations: LocationKey[];
+  /** Empty = the text doesn't say. */
+  eligibilityTags: EligibilityTag[];
+  /** Founding year, only where the partner's own text states it. */
+  founded?: number;
+}
+
+export const PARTNER_FACETS: Record<string, PartnerFacets> = {
+  diversecity: {
+    format: "unknown",
+    locations: ["metro_vancouver"], // serviceArea "Greater Vancouver"
+    // Settlement Services: "Permanent residents, refugees and protected persons
+    // … temporary residents, international students … and refugee claimants"
+    eligibilityTags: ["permanent_residents", "permits", "refugees"],
+    founded: 1978, // "a BC-registered charity (since 1978)"
+  },
+  "burnaby-neighbourhood-house": {
+    format: "unknown",
+    locations: ["burnaby"], // serviceArea "Burnaby"
+    // "focused on supporting permanent residents and convention refugees"
+    eligibilityTags: ["permanent_residents", "refugees"],
+  },
+  "ymca-bc": {
+    format: "unknown",
+    locations: ["bc_wide"], // serviceArea "British Columbia"
+    eligibilityTags: ["permits"], // program "International Students Employment Support"
+  },
+  "iec-bc": {
+    format: "online", // ASCEND: "Online, self-paced learning"
+    locations: ["bc_wide"], // serviceArea "British Columbia"
+    // TalentConnect: "Permanent residents in Canada"
+    eligibilityTags: ["permanent_residents"],
+  },
+  "newcomer-jobs-canada": {
+    // "Create an account online, upload your resume and apply for jobs on the website."
+    format: "online",
+    locations: ["national"], // serviceArea "Canada"
+    eligibilityTags: [],
+  },
+  // Tags only — the Canada Shaws record above is contract copy and stays untouched.
+  "canada-shaw-immigration": {
+    format: "unknown",
+    locations: ["richmond"], // serviceArea "Richmond"
+    // "The firm helps clients worldwide navigate their options"
+    eligibilityTags: ["everyone"],
+  },
+  "global-connect-immigration": {
+    format: "unknown",
+    locations: ["surrey"], // serviceArea "Surrey"
+    eligibilityTags: [],
+  },
+  "burnaby-public-library": {
+    format: "in_person", // "Walk in to any branch and ask at the service desk"
+    locations: ["burnaby"], // serviceArea "Burnaby · 4 branches"
+    eligibilityTags: [],
+  },
+  "surrey-libraries": {
+    format: "in_person", // "Visit the Newcomer Welcome Centre at City Centre Branch"
+    locations: ["surrey"], // serviceArea "Surrey · 10 branches"
+    // "No immigration-status restriction is stated."
+    eligibilityTags: ["everyone"],
+  },
+  "vancouver-public-library": {
+    format: "in_person", // "across 21 branches — free places for everyone"
+    locations: ["vancouver"], // serviceArea "Vancouver · 21 branches"
+    eligibilityTags: ["everyone"], // "free places for everyone"
+  },
+  "big-brothers-big-sisters": {
+    // "Mentor and mentee meet weekly at a set location such as a school"
+    format: "in_person",
+    locations: ["national"], // serviceArea "Canada"
+    eligibilityTags: [],
+  },
+  "united-way-bc": {
+    format: "unknown",
+    locations: ["bc_wide"], // serviceArea "British Columbia"
+    eligibilityTags: ["refugees"], // BC Safe Haven: "Refugee claimants."
+  },
+  "trout-lake-community-centre": {
+    format: "in_person", // "drop in and ask at the front desk"
+    locations: ["vancouver"], // serviceArea "Vancouver"
+    eligibilityTags: [],
+  },
+  amssa: {
+    format: "online", // AMSSA Institute: "Online learning centre"
+    locations: ["bc_wide"], // serviceArea "British Columbia"
+    eligibilityTags: [], // "AMSSA works with organizations, not individuals."
+  },
+  "surrey-lip": {
+    format: "online", // Surrey Services Map: "Online map of services"
+    locations: ["surrey"], // serviceArea "Surrey"
+    eligibilityTags: [], // "Surrey LIP works with agencies, not individuals."
+  },
+  "delta-lip": {
+    format: "online", // Delta Services Map: "An online map of services"
+    locations: ["delta"], // serviceArea "Delta"
+    eligibilityTags: [], // "Delta LIP works with agencies, not individuals."
+  },
+  "sfu-international": {
+    format: "both", // "Drop in (in person or virtual)"
+    locations: ["burnaby"], // serviceArea "SFU Burnaby campus"
+    // "International students enrolled at SFU" + "students who identify as refugees"
+    eligibilityTags: ["permits", "refugees"],
+  },
+  "fraser-international-college": {
+    format: "unknown",
+    locations: ["burnaby"], // serviceArea "Burnaby"
+    eligibilityTags: [],
+  },
+  tugo: {
+    format: "online", // "Start a quote online through a TuGo insurance partner"
+    locations: ["national"], // serviceArea "Canada and worldwide"
+    eligibilityTags: [],
+  },
+  desjardins: {
+    // "Open an account online … or … confirm your identity at a service location"
+    format: "both",
+    locations: ["outside_bc"], // serviceArea "Quebec and Ontario"
+    // "permanent residents, or temporary residents with a work permit"
+    eligibilityTags: ["permanent_residents", "permits"],
+  },
+};
+
+const UNKNOWN_FACETS: PartnerFacets = {
+  format: "unknown",
+  locations: [],
+  eligibilityTags: [],
+};
+
+/** A partner plus its filter facets. */
+export type ResourcePartner = Partner & PartnerFacets;
+
+export const withFacets = (partner: Partner): ResourcePartner => ({
+  ...partner,
+  ...(PARTNER_FACETS[partner.slug] ?? UNKNOWN_FACETS),
+});
+
+/** Active partners with facets, sorted by displayOrder. */
+export const getActiveResourcePartners = (): ResourcePartner[] =>
+  getActivePartners().map(withFacets);
+
+/** Cost values in filter order. */
+export const COST_ORDER: Cost[] = ["free", "paid", "mixed"];

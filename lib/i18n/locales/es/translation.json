@@ -1876,7 +1876,19 @@
       "joinLibrary": "Hazte miembro de la biblioteca",
       "visitWelcomeCentre": "Visita el Centro de Bienvenida"
     },
-    "referralDisclosure": "Socio de referidos: Unify puede recibir una comisión cuando usas este enlace."
+    "referralDisclosure": "Socio de referidos: Unify puede recibir una comisión cuando usas este enlace.",
+    "howWeChoose": {
+      "link": "Cómo las elegimos",
+      "title": "Cómo las elegimos",
+      "intro": "Unify incluye organizaciones que ayudan a las personas recién llegadas a establecerse en Columbia Británica. Esto es lo que revisamos antes de agregar una.",
+      "criteria": {
+        "serves": "Atienden directamente a personas recién llegadas, e indicamos la zona que cubren.",
+        "published": "La propia organización publica sus servicios, su horario y sus datos de contacto.",
+        "eligibility": "Anotamos quién califica. Muchos programas de asentamiento solo están abiertos a residentes permanentes y personas protegidas, y lo decimos desde el principio.",
+        "reviewed": "Revisamos la lista con el tiempo y quitamos las organizaciones que cierran o dejan de atender a personas recién llegadas."
+      },
+      "footnote": "Este directorio es un punto de partida, no es asesoría legal ni financiera. Confirma los datos con la organización antes de ir. Para informar de un dato faltante o desactualizado, escribe a contact@unifysocial.ca."
+    }
   },
   "resume": {
     "title": "Creador de currículum",

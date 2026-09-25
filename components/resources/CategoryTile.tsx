@@ -1,56 +1,43 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import type { PartnerCategory } from "@/types";
 import {
-  PARTNER_CATEGORY_COLORS,
-  PARTNER_CATEGORY_TINTS,
-  PARTNER_CATEGORY_ICONS,
+  PARTNER_CATEGORY_ICON_TINTS,
   PARTNER_CATEGORY_LABEL_KEYS,
-  PARTNER_CATEGORY_DESCRIPTION_KEYS,
+  categoryIconSrc,
 } from "@/lib/resources/categories";
+import type { PartnerCategory } from "@/types";
 
-interface CategoryTileProps {
-  category: PartnerCategory;
-  partnerCount: number;
-  onClick: () => void;
-}
-
-/** Colored grid tile for a resource category — opens the category's org list. */
+/** Category card on the Resources front page (Figma 8681:503 "Resource card"). */
 export function CategoryTile({
   category,
   partnerCount,
-  onClick,
-}: CategoryTileProps) {
+}: {
+  category: PartnerCategory;
+  partnerCount: number;
+}) {
   const { t } = useTranslation();
-  const color = PARTNER_CATEGORY_COLORS[category];
-  const tint = PARTNER_CATEGORY_TINTS[category];
-  const Icon = PARTNER_CATEGORY_ICONS[category];
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{ backgroundColor: tint }}
-      className="group flex h-full flex-col gap-3 rounded-card border border-border-card/50 p-4 text-start transition-shadow duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+    <Link
+      href={`/resources/category/${category}`}
+      className="flex h-full flex-col items-start gap-[9px] rounded-[17px] border-[1.16px] border-res-border bg-surface p-[15px] text-start shadow-[0_1px_1px_rgba(30,25,15,0.04)] transition-[border-color,box-shadow] hover:border-res-outline hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-res-link focus-visible:ring-offset-2"
     >
       <span
-        style={{ backgroundColor: color }}
-        className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
+        className="flex h-[37px] w-[37px] shrink-0 items-center justify-center rounded-[11.6px]"
+        style={{ backgroundColor: PARTNER_CATEGORY_ICON_TINTS[category] }}
+        aria-hidden
       >
-        <Icon className="h-5 w-5" aria-hidden />
+        {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG glyph */}
+        <img src={categoryIconSrc(category)} alt="" width={23} height={23} />
       </span>
-      <span className="mt-auto block">
-        <span className="block text-sm font-semibold leading-snug text-ink-secondary">
-          {t(PARTNER_CATEGORY_LABEL_KEYS[category])}
-        </span>
-        <span className="mt-1 line-clamp-2 block text-xs leading-snug text-ink-muted">
-          {t(PARTNER_CATEGORY_DESCRIPTION_KEYS[category])}
-        </span>
-        <span className="mt-1.5 block text-[11px] font-medium text-ink-tertiary">
-          {t("resources.orgCount", { count: partnerCount })}
-        </span>
+      <span className="min-h-[35px] text-base leading-[19.6px] font-bold break-words text-res-card-text">
+        {t(PARTNER_CATEGORY_LABEL_KEYS[category])}
       </span>
-    </button>
+      <span className="text-sm font-medium text-res-count">
+        {t("resources.orgCount", { count: partnerCount })}
+      </span>
+    </Link>
   );
 }

@@ -1792,6 +1792,18 @@
   "resources": {
     "cta": {
       "bookIntroMeeting": "Réserver une première rencontre gratuite"
+    },
+    "howWeChoose": {
+      "link": "Comment nous les choisissons",
+      "title": "Comment nous les choisissons",
+      "intro": "Unify répertorie des organismes qui aident les nouveaux arrivants à s'établir en Colombie-Britannique. Voici ce que nous vérifions avant d'en ajouter un à la liste.",
+      "criteria": {
+        "serves": "Ils servent directement les nouveaux arrivants, et nous indiquons la région qu'ils couvrent.",
+        "published": "Leurs services, heures et coordonnées sont publiés par l'organisme lui-même.",
+        "eligibility": "Nous notons qui est admissible. Beaucoup de programmes d'établissement sont réservés aux résidents permanents et aux personnes protégées, alors nous le précisons d'emblée.",
+        "reviewed": "Nous révisons la liste régulièrement et retirons les organismes qui ferment ou cessent de servir les nouveaux arrivants."
+      },
+      "footnote": "Ce répertoire est un point de départ, pas un avis juridique ou financier. Confirmez les détails auprès de l'organisme avant votre visite. Pour signaler une inscription manquante ou périmée, écrivez à contact@unifysocial.ca."
     }
   },
   "coverLetter": {

@@ -973,6 +973,28 @@ Wiring is already in place — this is drop-in once assets exist: set `logo` / `
 on the partner records in `lib/resources/partners.ts`; `components/resources/OrgMonogram.tsx` swaps to
 the logo when `logo` is present, and `components/resources/PartnerDetail.tsx` renders `heroImage` over
 the gradient when set. Add any new image hosts to `next.config.ts`.
+*(Update, Resources redesign: the Figma detail frame has no hero, so `heroImage` is no longer
+rendered; `logo` still shows in the "Provided by" card.)*
+
+**Partner copy is English-only on web; mobile has all 7 languages (follow-up, from the Resources
+redesign PR)**
+Mobile moved every partner string into its locale files (`learn.resources.partners.<slug>.*`, resolved
+by `utils/localizePartner.ts`, guarded by `__tests__/resources/partnerCopy.test.ts`), and all 20
+partners exist in en / fr-CA / ar / vi / es / hi / pa. Web still reads the hardcoded English in
+`lib/resources/partners.ts`. There is no shared source to switch to (it lives in the mobile repo's
+JSON), so the fix is a port: copy the existing `partners` blocks into web's
+`resources.partners.*`, add a web `localizePartner`, and a parity test. Use only mobile's existing
+translations (no machine translation). **Exception:** Canada Shaws copy is contract-controlled; confirm
+their translated blocks are approved before shipping them.
+
+**Resources redesign — design elements not built (need data or a DB change)**
+- **"Save for later"** (Figma 8681:851): needs a per-user saved-resources table on the shared DB.
+- **Verified badge**: no per-partner verification data except Canada Shaws' `lastVerified`; on
+  mobile the badge belongs to the partner spotlight. Needs a sourced verification field for all
+  partners before it can show without singling out a referral partner.
+- **Filter facets** (`PARTNER_FACETS` in `lib/resources/partners.ts`) are derived from each partner's
+  own text and many are `unknown`. Confirming format / area / eligibility with each org would make
+  the filters more complete.
 
 ---
 

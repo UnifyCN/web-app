@@ -1876,7 +1876,19 @@
       "joinLibrary": "Đăng ký thẻ thư viện",
       "visitWelcomeCentre": "Đến Trung tâm Chào đón"
     },
-    "referralDisclosure": "Đối tác giới thiệu — Unify có thể nhận phí khi bạn sử dụng liên kết này."
+    "referralDisclosure": "Đối tác giới thiệu — Unify có thể nhận phí khi bạn sử dụng liên kết này.",
+    "howWeChoose": {
+      "link": "Cách chúng tôi chọn",
+      "title": "Cách chúng tôi chọn",
+      "intro": "Unify liệt kê các tổ chức giúp người mới đến ổn định cuộc sống tại British Columbia. Đây là những điều chúng tôi kiểm tra trước khi đưa một tổ chức vào danh sách.",
+      "criteria": {
+        "serves": "Họ phục vụ trực tiếp người mới đến, và chúng tôi nêu rõ khu vực họ phụ trách.",
+        "published": "Dịch vụ, giờ làm việc và thông tin liên hệ do chính tổ chức đó công bố.",
+        "eligibility": "Chúng tôi ghi rõ ai đủ điều kiện. Nhiều chương trình định cư chỉ dành cho thường trú nhân và người được bảo vệ, và chúng tôi nói rõ điều đó ngay từ đầu.",
+        "reviewed": "Chúng tôi kiểm tra lại danh sách theo thời gian và loại bỏ những tổ chức đã đóng cửa hoặc ngừng phục vụ người mới đến."
+      },
+      "footnote": "Danh mục này là điểm khởi đầu, không phải tư vấn pháp lý hay tài chính. Hãy xác nhận thông tin với tổ chức trước khi đến. Để báo một mục còn thiếu hoặc đã lỗi thời, hãy gửi email tới contact@unifysocial.ca."
+    }
   },
   "resume": {
     "title": "Trình tạo hồ sơ",

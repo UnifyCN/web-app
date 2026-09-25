@@ -1,0 +1,58 @@
+{
+  "slug": "canada-shaw-immigration",
+  "logo": "/resources/logos/canada-shaw-immigration.png",
+  "logoFit": "contain",
+  "heroImage": "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&q=80&auto=format&fit=crop",
+  "name": "Canada Shaws Consulting Inc.",
+  "category": "immigrationHelp",
+  "partnershipType": "referral",
+  "tagline": "Licensed RCICs, Canadian immigration & visa service experts.",
+  "description": "Established in 2015 and based in Richmond, British Columbia, Canada Shaws Consulting Inc. is a member of Shaws Global Brand Group. Its immigration consultants are licensed by the College of Immigration and Citizenship Consultants (CICC), Canada’s regulatory body for immigration and citizenship consultants.\n\nCanada Shaws provides comprehensive support across a wide range of Canadian immigration programs, as well as study permits, work permits, and business and investment pathways. Together with its sister companies under Shaws Global Brand Group, it also offers business consulting, investment advisory, global immigration services, residency and citizenship planning, education planning, and career planning. The firm helps clients worldwide navigate their options and build personalized plans for their future, with services available in English, Filipino (Tagalog), Persian (Farsi), Mandarin, and Cantonese.",
+  "highlights": [
+    "CICC-licensed consultants",
+    "Study, work, PR & visa pathways",
+    "Service in five languages"
+  ],
+  "serviceArea": "Richmond",
+  "website": "https://www.immshaws.com/unify/",
+  "ctaLabelKey": "resources.cta.bookIntroMeeting",
+  "ctaOnly": true,
+  "cost": "mixed",
+  "howToStart": "Book a free introductory session to discuss your needs and learn about their services.",
+  "phone": "+1 672-867-6886",
+  "email": "info@canadashaws.com",
+  "address": "308-5811 Cooney Rd, Richmond, BC V6X 3M1",
+  "hours": "Mon–Fri 9:00am–6:00pm · Closed weekends",
+  "languages": [
+    "English",
+    "Filipino (Tagalog)",
+    "Persian (Farsi)",
+    "Mandarin",
+    "Cantonese"
+  ],
+  "programs": [
+    {
+      "name": "Study in Canada",
+      "description": "Explore educational opportunities in Canada with personalized guidance on school applications, study permits, and — where eligible — part-time work during your studies and potential pathways to permanent residency after graduation."
+    },
+    {
+      "name": "Work in Canada",
+      "description": "Navigate Canadian work permit options with professional support tailored to your career goals."
+    },
+    {
+      "name": "Canadian Permanent Residency",
+      "description": "Explore permanent residency pathways tailored to your qualifications, experience, and long-term goals in Canada."
+    },
+    {
+      "name": "Visas & Extensions",
+      "description": "Get assistance with visa applications, permit extensions, and maintaining your temporary resident status in Canada."
+    },
+    {
+      "name": "Other Services",
+      "description": "Access support with citizenship applications, document amendments, Permanent Resident Travel Documents (PRTDs), Access to Information and Privacy (ATIP) requests, and other services."
+    }
+  ],
+  "lastVerified": "2026-09-18",
+  "displayOrder": 0,
+  "active": true
+}

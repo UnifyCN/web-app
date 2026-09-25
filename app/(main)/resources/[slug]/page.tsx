@@ -3,7 +3,7 @@
 import { use } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { getPartnerBySlug } from "@/lib/resources/partners";
+import { getPartnerBySlug, withFacets } from "@/lib/resources/partners";
 import { PartnerDetail } from "@/components/resources/PartnerDetail";
 
 export default function PartnerDetailPage({
@@ -29,5 +29,5 @@ export default function PartnerDetailPage({
     );
   }
 
-  return <PartnerDetail partner={partner} />;
+  return <PartnerDetail partner={withFacets(partner)} />;
 }
