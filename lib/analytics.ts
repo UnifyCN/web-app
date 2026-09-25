@@ -123,17 +123,18 @@ export const trackCoverLetterExported = (p: { format: ExportFormat }) =>
   capture("cover_letter_exported", { format: p.format });
 
 /** One charged AI turn (chat or import). Only fired on success — failed turns
- *  are refunded server-side, so they don't consume the daily quota. */
+ *  are refunded server-side, so they don't consume the daily quota.
+ *  `promptsUsed` is omitted (never faked) when the usage read failed. */
 export const trackAiPromptSent = (p: {
   feature: DocumentFeature;
   mode: "chat" | "import";
-  promptsUsed: number;
+  promptsUsed?: number;
   promptLimit: number;
 }) =>
   capture("ai_prompt_sent", {
     feature: p.feature,
     mode: p.mode,
-    prompts_used: p.promptsUsed,
+    ...(p.promptsUsed !== undefined ? { prompts_used: p.promptsUsed } : {}),
     prompt_limit: p.promptLimit,
   });
 

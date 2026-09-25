@@ -90,21 +90,28 @@ export function createDraftHooks<TDraft extends DraftLike, TSummary>(
   const { service, keys, analytics } = config;
 
   /**
-   * Report one charged AI turn with the fresh daily count. Fire-and-forget: the
-   * usage read happens after the turn resolves and never blocks or fails it.
+   * Report one charged AI turn with the fresh daily count. Call it as soon as
+   * the generation response returns (the quota is already charged), not after
+   * the draft save. Fire-and-forget: never blocks or fails the turn. If the
+   * usage read fails the event still goes out, just without `prompts_used`.
    */
   function reportPromptSent(queryClient: QueryClient, mode: "chat" | "import") {
+    const send = (promptsUsed?: number) =>
+      trackAiPromptSent({
+        feature: analytics.feature,
+        mode,
+        promptsUsed,
+        promptLimit: analytics.promptLimit,
+      });
     queryClient
       .fetchQuery({ queryKey: keys.usage, queryFn: service.getUsage, staleTime: 0 })
-      .then((usage) =>
-        trackAiPromptSent({
-          feature: analytics.feature,
-          mode,
-          promptsUsed: usage.count,
-          promptLimit: analytics.promptLimit,
-        }),
-      )
-      .catch((err) => console.warn("[analytics] usage read failed", err));
+      .then(
+        (usage) => send(usage.count),
+        (err) => {
+          console.warn("[analytics] usage read failed", err);
+          send();
+        },
+      );
   }
 
   /** Report a daily-cap rejection (no-op for any other error). */

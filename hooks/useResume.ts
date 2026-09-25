@@ -140,6 +140,8 @@ export function useImportResumeDraft() {
         importText: text,
         profile,
       });
+      // Charged now — report before the save so a failed save can't drop it.
+      hooks.reportPromptSent(queryClient, "import");
       const opener: ResumeChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -162,7 +164,6 @@ export function useImportResumeDraft() {
       // The mapping turn consumed a message — refresh the quota meter.
       queryClient.invalidateQueries({ queryKey: USAGE_KEY });
       trackResumeCreated({ method: "file_import" });
-      hooks.reportPromptSent(queryClient, "import");
     },
     onError: (err) => hooks.reportLimitReached(err, "import"),
   });
@@ -275,6 +276,8 @@ export function useSendResumeMessage() {
           profile,
           traceId: draftId,
         });
+        // Charged now — report before the save so a failed save can't drop it.
+        hooks.reportPromptSent(queryClient, "chat");
 
         const assistantMessage: ResumeChatMessage = {
           id: crypto.randomUUID(),
@@ -339,7 +342,6 @@ export function useSendResumeMessage() {
         queryClient.setQueryData(draftKey(finalDraft.id), finalDraft);
         queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
         queryClient.invalidateQueries({ queryKey: USAGE_KEY });
-        hooks.reportPromptSent(queryClient, "chat");
       },
     },
   );

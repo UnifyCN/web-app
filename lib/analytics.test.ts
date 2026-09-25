@@ -112,6 +112,12 @@ describe("resume / cover-letter trackers send metadata only", () => {
       event: "ai_prompt_sent",
       keys: ["feature", "mode", "prompt_limit", "prompts_used"],
     });
+    // Usage read failed: the event still goes out, without a fabricated count.
+    trackAiPromptSent({ feature: "cover_letter", mode: "import", promptLimit: 20 });
+    expect(lastCall()).toMatchObject({
+      event: "ai_prompt_sent",
+      keys: ["feature", "mode", "prompt_limit"],
+    });
     trackAiPromptLimitReached({
       feature: "cover_letter",
       promptLimit: 20,

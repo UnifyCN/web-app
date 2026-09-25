@@ -185,6 +185,8 @@ export function useImportCoverLetterDraft() {
         todayDate: formatToday(),
         profile,
       });
+      // Charged now — report before the save so a failed save can't drop it.
+      hooks.reportPromptSent(queryClient, "import");
       const opener: CoverLetterChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -216,7 +218,6 @@ export function useImportCoverLetterDraft() {
         method: "file_import",
         hasLinkedResume: !!draft.coverLetter.resumeDraftId,
       });
-      hooks.reportPromptSent(queryClient, "import");
     },
     onError: (err) => hooks.reportLimitReached(err, "import"),
   });
@@ -321,6 +322,8 @@ export function useSendCoverLetterMessage() {
         profile,
         traceId: draftId,
       });
+      // Charged now — report before the save so a failed save can't drop it.
+      hooks.reportPromptSent(queryClient, "chat");
 
       const assistantMessage: CoverLetterChatMessage = {
         id: crypto.randomUUID(),
@@ -378,7 +381,6 @@ export function useSendCoverLetterMessage() {
       queryClient.setQueryData(draftKey(finalDraft.id), finalDraft);
       queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_KEY });
-      hooks.reportPromptSent(queryClient, "chat");
     },
   });
 }
