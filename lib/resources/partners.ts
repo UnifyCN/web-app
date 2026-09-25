@@ -937,8 +937,9 @@ export const PARTNER_FACETS: Record<string, PartnerFacets> = {
   "canada-shaw-immigration": {
     format: "unknown",
     locations: ["richmond"], // serviceArea "Richmond"
-    // "The firm helps clients worldwide navigate their options"
-    eligibilityTags: ["everyone"],
+    // "helps clients worldwide" is about where clients are, not who qualifies;
+    // neither the copy nor immshaws.com states eligibility → unknown.
+    eligibilityTags: [],
   },
   // Inactive (mobile: held as unverifiable); kept so the facet table stays total.
   "global-connect-immigration": {
@@ -958,8 +959,9 @@ export const PARTNER_FACETS: Record<string, PartnerFacets> = {
     // howToStart: "Visit the Newcomer Welcome Centre at City Centre Branch"
     format: "in_person",
     locations: ["surrey"], // serviceArea "Surrey · 10 branches"
-    // Free Settlement Services: "No status restriction is stated."
-    eligibilityTags: ["everyone"],
+    // "No status restriction is stated." records silence, not openness; the
+    // official newcomers page doesn't state eligibility either → unknown.
+    eligibilityTags: [],
   },
   "vancouver-public-library": {
     // howToStart: "Walk in to any branch … or register online for a temporary

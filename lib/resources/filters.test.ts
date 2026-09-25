@@ -117,7 +117,7 @@ describe("options", () => {
   });
 
   it("derives Canada Shaws tags without touching its record", () => {
-    expect(bySlug("canada-shaw-immigration").eligibilityTags).toEqual(["everyone"]);
+    expect(bySlug("canada-shaw-immigration").eligibilityTags).toEqual([]);
   });
 });
 
