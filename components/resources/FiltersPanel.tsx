@@ -4,15 +4,12 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  COST_ORDER,
-  getActiveResourcePartners,
-  type ResourcePartner,
-} from "@/lib/resources/partners";
+import { COST_ORDER, type ResourcePartner } from "@/lib/resources/partners";
 import {
   ELIGIBILITY_OPTIONS,
   FORMAT_OPTIONS,
   activeGroups,
+  languageLabels,
   languageOptions,
   locationOptions,
   type FilterGroup,
@@ -21,8 +18,12 @@ import {
 import { FilterPill } from "./FilterPill";
 import { filterValueLabel } from "./filterLabels";
 
-/** Languages shown before "Show all" (Surrey Libraries alone lists 14). */
+/** Languages shown before "Show all". */
 const LANGUAGE_PREVIEW = 6;
+
+/** Options a group really has (languages count all, not just the preview). */
+const groupSize = (group: FilterGroup, shown: number, allLanguages: number) =>
+  group === "lang" ? allLanguages : shown;
 
 /**
  * Filters panel (Figma 8681:643). Options come from the partners in scope, so a
@@ -31,11 +32,13 @@ const LANGUAGE_PREVIEW = 6;
  */
 export function FiltersPanel({
   partners,
+  directory,
   filters,
   onToggle,
   onClear,
 }: {
   partners: ResourcePartner[];
+  directory: ResourcePartner[];
   filters: ResourceFilters;
   onToggle: (group: FilterGroup, value: string) => void;
   onClear: () => void;
@@ -49,6 +52,7 @@ export function FiltersPanel({
   );
 
   const languages = languageOptions(partners);
+  const languageNames = languageLabels(directory);
   // Keep a selected language visible even when it's past the preview cut.
   const shownLanguages = allLanguages
     ? languages
@@ -72,7 +76,7 @@ export function FiltersPanel({
     { group: "format", options: formats },
     {
       group: "loc",
-      options: locationOptions(partners, getActiveResourcePartners()),
+      options: locationOptions(partners, directory),
     },
     { group: "elig", options: eligibility },
     { group: "lang", options: shownLanguages },
@@ -121,7 +125,10 @@ export function FiltersPanel({
         </div>
 
         {groups.map(({ group, options }) =>
-          options.length === 0 ? null : (
+          // A single option can't narrow anything — hide the group, unless a
+          // value is selected (so an active filter can always be cleared).
+          groupSize(group, options.length, languages.length) < 2 &&
+          filters[group].length === 0 ? null : (
             <div key={group} className="flex flex-col gap-2">
               <h3 className="text-xs font-semibold text-res-count uppercase">
                 {t(`resources.filters.group.${group}`)}
@@ -130,7 +137,7 @@ export function FiltersPanel({
                 {options.map((value) => (
                   <FilterPill
                     key={value}
-                    label={filterValueLabel(t, group, value)}
+                    label={filterValueLabel(t, group, value, languageNames)}
                     selected={(filters[group] as string[]).includes(value)}
                     onClick={() => onToggle(group, value)}
                   />

@@ -1,1039 +1,819 @@
-import type { Cost, Partner, PartnerCategory, CategoryWithCount } from "@/types";
+import type { TFunction } from "i18next";
+import type {
+  CategoryWithCount,
+  Cost,
+  LocalizedPartner,
+  Partner,
+  PartnerCategory,
+} from "@/types";
 import { CATEGORY_ORDER } from "./categories";
+import { localizePartner, partnerCopyKey } from "./localizePartner";
 
 /**
- * Partner directory for the Resources (Trusted Services) tab. Hardcoded for V1
- * (initial outreach stage) — there is no Supabase table or Sanity type behind
- * this, by design.
+ * Partner directory for the Resources tab. Hardcoded for V1 — there is no
+ * Supabase table or Sanity type behind it.
  *
- * Ported verbatim from the mobile app
- * (UnifyCN/mobile-app feat/resources-tab @ b7b5134 — constants/Partners.ts),
- * the ONLY web change being `ctaLabelKey` values re-namespaced from
- * `learn.resources.cta.*` to `resources.cta.*`. Keep this file diffable against
- * that source so a re-sync (once mobile PR #256 merges) stays a clean diff.
+ * STRUCTURE ONLY — every human-readable string lives in the locale files under
+ * `resources.partners.<slug>` (copied verbatim from mobile in all 7 languages)
+ * and is resolved at render time by `localizePartner`. Nothing here is shown to
+ * a person except `name` and the contact values, which are proper nouns.
  *
- * To add a partner: append to its category group, set active: true, bump
- * displayOrder. The UI falls back to a monogram + tinted gradient until real
- * `logo` / `heroImage` URLs arrive.
+ * Synced from mobile constants/Partners.ts (UnifyCN/mobile-app main @ ce38ba1).
+ * Web differences: `ctaLabelKey` re-namespaced from `learn.resources.cta.*` to
+ * `resources.cta.*`; web logo paths under /public/resources/logos (+ `logoFit`)
+ * instead of require()s; mobile's `spotlight` flag is not ported (web shows no
+ * promo placements). Web and mobile are still separate copies — see BACKLOG.md
+ * "Resources: one shared partner source".
  */
 export const PARTNERS: Partner[] = [
   // ── Getting Settled ─────────────────────────────────────────────────────
   {
     slug: "diversecity",
-    logo: "/resources/logos/diversecity.svg",
-    logoFit: "contain",
-    heroImage: "https://images.unsplash.com/photo-1531545514256-b1400bc00f31?w=1200&q=80&auto=format&fit=crop",
     name: "DIVERSEcity",
     category: "gettingSettled",
     partnershipType: "resource",
-    tagline: "Culturally safe programs across education, employment & wellbeing.",
-    description:
-      "DIVERSEcity Community Resources Society is a BC-registered charity (since 1978) that connects newcomers to culturally safe programs across education, employment, health, and wellbeing — the on-the-ground service arm for immigrant and refugee support in Greater Vancouver.",
-    highlights: [
-      "Culturally safe settlement programs",
-      "Education, employment & health support",
-      "Serving immigrants & refugees since 1978",
-    ],
-    serviceArea: "Greater Vancouver",
     website: "https://www.dcrs.ca/",
-    howToStart:
-      "For settlement services, email newcomers@dcrs.ca or call 604-507-6060. General enquiries: 604-597-0205.",
     phone: "604-597-0205",
     email: "info@dcrs.ca",
     address: "13455 76 Avenue, Surrey, BC V3W 2W3",
     programs: [
       {
-        name: "Settlement Services",
-        description:
-          "Help with settling in, from housing navigation to connecting with community supports.",
-        eligibility:
-          "Permanent residents, refugees and protected persons through IRCC funding; temporary residents, international students, naturalized citizens and refugee claimants through the BC Newcomer Services Program.",
+        id: "diversecity-settlement-services",
         cost: "free",
         url: "https://www.dcrs.ca/our-services/settlement-services/",
       },
       {
-        name: "English Language Programs",
-        description: "English classes and language support for newcomers.",
-        url: "https://www.dcrs.ca/our-services/english-language-programs/",
+        id: "diversecity-linc",
+        cost: "free",
+        url: "https://www.dcrs.ca/our-services/english-language-programs/language-instruction-for-newcomers-to-canada-linc/",
       },
       {
-        name: "Employment Programs",
-        description:
-          "Job search support and employment programs for newcomers.",
+        id: "diversecity-safe-haven",
+        cost: "free",
+        url: "https://www.dcrs.ca/our-services/settlement-services/services-for-non-permanent-residents/safe-haven-program/",
+      },
+      {
+        id: "diversecity-rise",
+        url: "https://www.dcrs.ca/our-services/programs-for-refugees/",
+      },
+      {
+        id: "diversecity-employment-programs",
         url: "https://www.dcrs.ca/our-services/employment-programs/",
       },
       {
-        name: "Mental Health and Substance Use Services",
-        description:
-          "Counselling and support. Intake: 604-547-1202, intake@dcrs.ca.",
+        id: "diversecity-early-childhood-education",
+        cost: "free",
+        url: "https://www.dcrs.ca/our-services/english-language-programs/early-childhood-education-program/",
+      },
+      {
+        id: "diversecity-mental-health-and-substance-use-services",
         url: "https://www.dcrs.ca/our-services/mental-health-and-substance-use-services/",
       },
       {
-        name: "Language Testing Centre (CELPIP)",
-        description:
-          "CELPIP language testing for immigration and citizenship applications.",
+        id: "diversecity-language-testing-centre-celpip",
         url: "https://www.dcrs.ca/our-services/celpip/",
       },
     ],
+    logo: "/resources/logos/diversecity.svg",
+    logoFit: "contain",
     displayOrder: 0,
     active: true,
   },
   {
     slug: "burnaby-neighbourhood-house",
-    logo: "/resources/logos/burnaby-neighbourhood-house.webp",
-    heroImage: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1200&q=80&auto=format&fit=crop",
     name: "Burnaby Neighbourhood House",
     category: "gettingSettled",
     partnershipType: "resource",
-    tagline: "Community programs, childcare, and newcomer support in Burnaby.",
-    description:
-      "Burnaby Neighbourhood House helps people enhance their lives and strengthen their community through programs built around the changing needs of a diverse population — childcare, family and food security, and dedicated newcomer support.",
-    highlights: [
-      "Newcomer settlement support",
-      "Childcare & family programs",
-      "Food security initiatives",
-    ],
-    serviceArea: "Burnaby",
     website: "https://burnabynh.ca/",
-    howToStart:
-      "Call or email the nearest house. For settlement services, contact settlementprogram@burnabynh.ca or 604-431-0400.",
     phone: "(604) 431-0400",
     email: "receptiona@burnabynh.ca",
     address: "#100 – 4460 Beresford St, Burnaby, BC V5H 0B8",
-    hours:
-      "South House Mon–Fri 9:00am–5:00pm · North House Mon–Fri 9:30am–4:30pm · Brentwood House Mon–Fri 9:00am–4:00pm",
     programs: [
       {
-        name: "Newcomers Settlement Services",
-        description:
-          "Settlement plans, benefit applications, language support and community connections.",
-        eligibility:
-          "Funded by IRCC and, in accordance with their requirements, focused on supporting permanent residents and convention refugees.",
+        id: "burnaby-neighbourhood-house-newcomers-settlement-services",
         url: "https://burnabynh.ca/programs-and-services/newcomers-settlement-services/",
       },
       {
-        name: "Volunteer Income Tax Program",
-        description: "Free help filing your income tax return.",
-        url: "https://burnabynh.ca/programs-and-services/community-program/volunteer-income-tax-program/",
+        id: "burnaby-neighbourhood-house-information-and-orientation",
+        url: "https://burnabynh.ca/programs-and-services/newcomers-settlement-services/",
       },
       {
-        name: "Early Years Program (0–5 years)",
-        description: "Programs for families with children under five.",
-        url: "https://burnabynh.ca/programs-and-services/child-care-programs/early-years-program-0-5-years-old/",
+        id: "burnaby-neighbourhood-house-naars",
+        url: "https://burnabynh.ca/programs-and-services/newcomers-settlement-services/",
+      },
+      {
+        id: "burnaby-neighbourhood-house-community-connections",
+        url: "https://burnabynh.ca/programs-and-services/newcomers-settlement-services/",
+      },
+      {
+        id: "burnaby-neighbourhood-house-food-security",
+        url: "https://burnabynh.ca/programs-and-services/community-program/food-security-programs/",
+      },
+      {
+        id: "burnaby-neighbourhood-house-child-care",
+        url: "https://burnabynh.ca/programs-and-services/child-care-programs/",
+      },
+      {
+        id: "burnaby-neighbourhood-house-volunteer-income-tax-program",
+        url: "https://burnabynh.ca/programs-and-services/community-program/volunteer-income-tax-program/",
       },
     ],
+    logo: "/resources/logos/burnaby-neighbourhood-house.webp",
     displayOrder: 1,
     active: true,
   },
   {
     slug: "ymca-bc",
-    logo: "/resources/logos/ymca-bc.png",
-    heroImage: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=1200&q=80&auto=format&fit=crop",
     name: "YMCA BC",
     category: "gettingSettled",
     partnershipType: "resource",
-    tagline: "Programs for families, children, and seniors across BC.",
-    description:
-      "YMCA BC supports families, children, and seniors in communities across British Columbia, building vibrant and healthy communities with a shared sense of social responsibility where people can thrive in spirit, mind, and body.",
-    highlights: [
-      "Programs for all ages",
-      "Health & wellness focus",
-      "Communities across BC",
-    ],
-    serviceArea: "British Columbia",
     website: "https://www.ymcabc.ca/",
     cost: "mixed",
-    howToStart:
-      "Call 604-681-9622 or email information.request@ymcabc.ca. Individual programs have their own registration forms.",
     phone: "604-681-9622",
     email: "information.request@ymcabc.ca",
+    // Head office. The newcomer programs themselves run at the Robert Lee YMCA
+    // in downtown Vancouver.
     address: "620 Royal Ave #10, New Westminster, BC V3M 1J2",
-    hours: "Mon–Fri 8:30am–4:30pm",
     programs: [
       {
-        name: "International Students Employment Support",
-        description:
-          "Free program to help overcome employment barriers in Canada.",
+        id: "ymca-bc-english-conversation-club",
         cost: "free",
+        url: "https://www.ymcabc.ca/employment-and-newcomers/english-conversation-club",
       },
       {
-        name: "Self Employment for Newcomers",
-        description: "Supports newcomers launching their own small business.",
-      },
-      {
-        name: "Self Employment Program",
-        description:
-          "Fully funded business coaching to help you launch and grow a small business.",
+        id: "ymca-bc-citizenship-test-prep",
         cost: "free",
+        url: "https://www.ymcabc.ca/employment-and-newcomers/canadian-citizenship-preparation",
       },
       {
-        name: "TradeWorks",
-        description: "Free support into trade employment or further training.",
+        id: "ymca-bc-connect2work",
         cost: "free",
+        url: "https://www.ymcabc.ca/employment-and-newcomers",
       },
       {
-        name: "InterviewME",
-        description:
-          "Helps job seekers connect with the right people at the right time.",
+        id: "ymca-bc-international-students-employment-support",
+        cost: "free",
+        url: "https://www.ymcabc.ca/employment-and-newcomers/international-students-employment-support",
+      },
+      {
+        id: "ymca-bc-self-employment-program",
+        cost: "free",
+        url: "https://www.ymcabc.ca/employment-and-newcomers/self-employment-program",
+      },
+      {
+        id: "ymca-bc-explore-child-care-career",
+        cost: "free",
+        url: "https://www.ymcabc.ca/employment-and-newcomers/explore-career-in-childcare-newcomers-program",
+      },
+      {
+        id: "ymca-bc-wellness-connection",
+        url: "https://www.ymcabc.ca/employment-and-newcomers/wellness-connection-newcomers",
       },
     ],
+    logo: "/resources/logos/ymca-bc.png",
     displayOrder: 2,
     active: true,
   },
   // ── Find Work ───────────────────────────────────────────────────────────
   {
     slug: "iec-bc",
-    logo: "/resources/logos/iec-bc.png",
-    heroImage: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&q=80&auto=format&fit=crop",
     name: "Immigrant Employment Council of BC",
     category: "findWork",
     partnershipType: "resource",
-    tagline: "Helping BC employers hire and retain immigrant talent.",
-    description:
-      "The Immigrant Employment Council of BC works on the employer side of immigrant integration — helping BC businesses recruit, hire, and retain skilled immigrant talent through mentorship programs, job boards, and employer education.",
-    highlights: [
-      "Mentorship programs",
-      "Job boards for newcomers",
-      "Employer education",
-    ],
-    serviceArea: "British Columbia",
     website: "https://iecbc.ca/",
     cost: "free",
-    howToStart: "Register online — each program has its own registration form.",
     phone: "(604) 629-5364",
     email: "employerengagement@iecbc.ca",
     address: "720 – 750 West Pender St, Vancouver, BC V6C 2T7",
     programs: [
       {
-        name: "MentorConnect",
-        description:
-          "One-on-one, occupation-specific coaching that pairs job-ready newcomers with established local professionals.",
-        eligibility:
-          "Newcomers to Canada within the past 10 years who are eligible to work and have a job-ready resume. You must be in BC or planning to move to BC.",
+        id: "iec-bc-talentconnect",
         cost: "free",
-        url: "https://iecbc.ca/our-work/programs/mentorconnect/",
+        url: "https://iecbc.ca/for-talent/connect-with-employers/",
       },
       {
-        name: "TalentConnect",
-        description:
-          "Connects BC employers with globally trained professionals through tailored hiring and networking opportunities.",
-        eligibility:
-          "Permanent residents in Canada, and those approved for immigration who have yet to land.",
+        id: "iec-bc-mentorconnect",
         cost: "free",
-        url: "https://iecbc.ca/our-work/programs/talentconnect/",
+        url: "https://iecbc.ca/mentorconnect/",
       },
       {
-        name: "ASCEND",
-        description:
-          "Online, self-paced learning to build the workplace soft skills Canadian employers look for (English & French).",
+        id: "iec-bc-ascend",
         cost: "free",
         url: "https://ascendemployment.com/participants/",
       },
       {
-        name: "FAST",
-        description:
-          "Helps newcomers see how their experience and training meet Canadian standards, with career-prep streams by field.",
+        id: "iec-bc-fast",
         cost: "free",
         url: "https://fastcanada.ca/",
       },
     ],
+    logo: "/resources/logos/iec-bc.png",
     displayOrder: 0,
     active: true,
   },
   {
     slug: "newcomer-jobs-canada",
-    logo: "/resources/logos/newcomer-jobs-canada.png",
-    heroImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80&auto=format&fit=crop",
     name: "Newcomer Jobs Canada",
     category: "findWork",
     partnershipType: "resource",
-    tagline: "A job board built for newcomers to Canada.",
-    description:
-      "Newcomer Jobs Canada is a dedicated job board connecting newcomers to Canada with employment opportunities across the country, making the job search more accessible for those starting their Canadian journey.",
-    highlights: [
-      "Newcomer-focused job board",
-      "Opportunities across Canada",
-      "Easier job search for new arrivals",
-    ],
-    serviceArea: "Canada",
     website: "https://newcomerjobscanada.ca/",
     cost: "mixed",
-    howToStart:
-      "Create an account online, upload your resume and apply for jobs on the website.",
     phone: "(306) 229-6774",
-    hours: "Mon–Fri 9:00am–5:00pm CST",
+    logo: "/resources/logos/newcomer-jobs-canada.png",
     displayOrder: 1,
     active: true,
   },
   // ── Immigration Help ────────────────────────────────────────────────────
-  // Copy supplied by the partner by email on 2026-09-18 (synced from mobile PR
-  // #301). On 2026-09-22 the partner asked that the website CTA be the only
-  // outbound link, so it can attribute referrals — hence `ctaOnly` and no
-  // program URLs.
+  // Copy, programs, languages and cost supplied by the partner by email on
+  // 2026-09-18. The slug predates the
+  // rename and stays put — it is the analytics and route key. On 2026-09-22
+  // the partner asked that the /unify/ referral link be the only way out of
+  // the listing so it can attribute referrals: programs carry no links and
+  // ctaOnly suppresses the call, email and directions actions.
   {
     slug: "canada-shaw-immigration",
-    logo: "/resources/logos/canada-shaw-immigration.png",
-    // Non-square mark (256x220): contain, matching mobile Monogram.
-    logoFit: "contain",
-    heroImage: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1200&q=80&auto=format&fit=crop",
     name: "Canada Shaws Consulting Inc.",
     category: "immigrationHelp",
     partnershipType: "referral",
-    tagline: "Licensed RCICs, Canadian immigration & visa service experts.",
-    description:
-      "Established in 2015 and based in Richmond, British Columbia, Canada Shaws Consulting Inc. is a member of Shaws Global Brand Group. Its immigration consultants are licensed by the College of Immigration and Citizenship Consultants (CICC), Canada’s regulatory body for immigration and citizenship consultants.\n\n" +
-      "Canada Shaws provides comprehensive support across a wide range of Canadian immigration programs, as well as study permits, work permits, and business and investment pathways. Together with its sister companies under Shaws Global Brand Group, it also offers business consulting, investment advisory, global immigration services, residency and citizenship planning, education planning, and career planning. The firm helps clients worldwide navigate their options and build personalized plans for their future, with services available in English, Filipino (Tagalog), Persian (Farsi), Mandarin, and Cantonese.",
-    highlights: [
-      "CICC-licensed consultants",
-      "Study, work, PR & visa pathways",
-      "Service in five languages",
-    ],
-    serviceArea: "Richmond",
     // Affiliate link supplied by the partner; deliberately unlabelled in the
     // UI and opened by the standard Website button.
     website: "https://www.immshaws.com/unify/",
     ctaLabelKey: "resources.cta.bookIntroMeeting",
-    ctaOnly: true,
     cost: "mixed",
-    howToStart:
-      "Book a free introductory session to discuss your needs and learn about their services.",
     phone: "+1 672-867-6886",
     email: "info@canadashaws.com",
     address: "308-5811 Cooney Rd, Richmond, BC V6X 3M1",
-    hours: "Mon–Fri 9:00am–6:00pm · Closed weekends",
-    languages: [
-      "English",
-      "Filipino (Tagalog)",
-      "Persian (Farsi)",
-      "Mandarin",
-      "Cantonese",
-    ],
+    ctaOnly: true,
     programs: [
-      {
-        name: "Study in Canada",
-        description:
-          "Explore educational opportunities in Canada with personalized guidance on school applications, study permits, and — where eligible — part-time work during your studies and potential pathways to permanent residency after graduation.",
-      },
-      {
-        name: "Work in Canada",
-        description:
-          "Navigate Canadian work permit options with professional support tailored to your career goals.",
-      },
-      {
-        name: "Canadian Permanent Residency",
-        description:
-          "Explore permanent residency pathways tailored to your qualifications, experience, and long-term goals in Canada.",
-      },
-      {
-        name: "Visas & Extensions",
-        description:
-          "Get assistance with visa applications, permit extensions, and maintaining your temporary resident status in Canada.",
-      },
-      {
-        name: "Other Services",
-        description:
-          "Access support with citizenship applications, document amendments, Permanent Resident Travel Documents (PRTDs), Access to Information and Privacy (ATIP) requests, and other services.",
-      },
+      { id: "canada-shaw-immigration-study-in-canada" },
+      { id: "canada-shaw-immigration-work-in-canada" },
+      { id: "canada-shaw-immigration-permanent-residency" },
+      { id: "canada-shaw-immigration-visas-extensions" },
+      { id: "canada-shaw-immigration-other-services" },
     ],
     lastVerified: "2026-09-18",
+    logo: "/resources/logos/canada-shaw-immigration.png",
+    logoFit: "contain",
     displayOrder: 0,
     active: true,
   },
+  // HELD INACTIVE — unverifiable. Its About page publishes "MEMBER ID:
+  // R123456", a template placeholder, names no consultant, and carries another
+  // firm's copy ("Maple Leaf Visas"). A paid representative who is not
+  // CICC-registered is acting illegally, and this audience is who that harms.
+  // Re-activate only once someone confirms the business by phone and against
+  // college-ic.ca. Tracked in .design/state.json.
   {
     slug: "global-connect-immigration",
-    logo: "/resources/logos/global-connect-immigration.png",
-    heroImage: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=1200&q=80&auto=format&fit=crop",
     name: "Global Connect Immigration",
     category: "immigrationHelp",
     partnershipType: "referral",
-    tagline: "Registered consultancy for PR, visas, and settlement.",
-    description:
-      "Global Connect is a registered Canadian immigration consulting firm helping newcomers navigate permanent residency pathways, visa processes, and settlement planning with expert, personalized guidance.",
-    highlights: [
-      "PR pathway guidance",
-      "Visa & work-permit support",
-      "Personalized settlement planning",
-    ],
-    serviceArea: "Surrey",
     website: "https://globalconnectmigration.com/",
     cost: "paid",
-    howToStart: "Phone, email, or book a consultation through the website.",
     phone: "+1 (604) 495-1927",
     email: "info@globalconnectmigration.com",
     address: "8556 120th Street, Unit 208, Surrey, BC V3W 3N5",
     programs: [
       {
-        name: "Family Sponsorship",
-        description:
-          "Help sponsoring a spouse, partner, children or parents for permanent residency.",
+        id: "global-connect-immigration-family-sponsorship",
       },
     ],
+    logo: "/resources/logos/global-connect-immigration.png",
     displayOrder: 1,
-    active: true,
+    active: false,
   },
   // ── Libraries & Learning ────────────────────────────────────────────────
   {
     slug: "burnaby-public-library",
-    logo: "/resources/logos/burnaby-public-library.svg",
-    heroImage: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1200&q=80&auto=format&fit=crop",
     name: "Burnaby Public Library",
     category: "librariesLearning",
     partnershipType: "resource",
-    tagline: "Inclusive spaces to gather, learn, and play.",
-    description:
-      "Burnaby Public Library creates inclusive spaces where people can gather, learn, and play across four branches — free programs, resources, and places to connect.",
-    highlights: [
-      "Free programs & resources",
-      "4 branches across Burnaby",
-      "Welcoming spaces to learn",
-    ],
-    serviceArea: "Burnaby · 4 branches",
     website: "https://bpl.bc.ca/",
     ctaLabelKey: "resources.cta.joinLibrary",
-    cost: "mixed",
-    eligibility:
-      "Membership is for people aged 13+ who live or own property in Burnaby, or live within the InterLINK area. A BC OneCard is available to BC residents outside InterLINK.",
-    howToStart: "Walk in to any branch and ask at the service desk, or call.",
+    cost: "free",
     phone: "604-436-5400",
     email: "eref@bpl.bc.ca",
     address: "6100 Willingdon Ave, Burnaby, BC V5H 4N5 (Bob Prittie Metrotown)",
-    hours: "Mon–Thu 10:00am–8:00pm · Fri–Sun 10:00am–6:00pm",
     programs: [
       {
-        name: "Services for Immigrants & Newcomers",
-        description:
-          "A guide to settlement, employment, English learning and citizenship services in Burnaby and nearby.",
-        url: "https://bpl.bc.ca/services-immigrants-newcomers",
+        id: "burnaby-public-library-become-a-member",
+        cost: "free",
+        url: "https://bpl.bc.ca/people-help/welcome-desk/become-a-member",
       },
       {
-        name: "Summer Reading Club",
-        description: "Free summer reading program for children of all ages.",
+        id: "burnaby-public-library-english-conversation-circle",
+        cost: "free",
+        url: "https://bpl.bc.ca/things-to-borrow/learning-english",
+      },
+      {
+        id: "burnaby-public-library-learning-english",
+        cost: "free",
+        url: "https://bpl.bc.ca/things-to-borrow/learning-english",
+      },
+      {
+        id: "burnaby-public-library-arrivals-in-english",
+        cost: "free",
+        url: "https://bpl.bc.ca/things-to-use/digital-resources/arrivals-in-english",
+      },
+      {
+        id: "burnaby-public-library-services-for-immigrants-newcomers",
+        cost: "free",
+        url: "https://bpl.bc.ca/people-help/information-community-resources/services-for-immigrants",
+      },
+      {
+        id: "burnaby-public-library-summer-reading-club",
         cost: "free",
       },
     ],
+    logo: "/resources/logos/burnaby-public-library.svg",
     displayOrder: 0,
     active: true,
   },
   {
     slug: "surrey-libraries",
-    logo: "/resources/logos/surrey-libraries.png",
-    heroImage: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200&q=80&auto=format&fit=crop",
     name: "Surrey Libraries",
     category: "librariesLearning",
     partnershipType: "resource",
-    tagline: "Sparking curiosity and lifelong learning.",
-    description:
-      "Surrey Libraries connects people, sparks curiosity, and inspires lifelong learning to enhance the lives of Surrey residents across ten branches.",
-    highlights: [
-      "Free lifelong-learning programs",
-      "10 branches across Surrey",
-      "Connecting the community",
-    ],
-    serviceArea: "Surrey · 10 branches",
     website: "https://www.surreylibraries.ca/",
     ctaLabelKey: "resources.cta.visitWelcomeCentre",
     cost: "free",
-    howToStart:
-      "Visit the Newcomer Welcome Centre at City Centre Branch, Level 4 — 604-590-7847 or newcomerwelcomecentre@surrey.ca.",
-    phone: "604-598-7300",
-    email: "libraryinfo@surrey.ca",
-    address: "City Centre Branch, 10350 University Drive, Surrey, BC V3T 4B8",
-    hours:
-      "Newcomer Welcome Centre: Mon–Thu 10:00am–9:00pm · Fri–Sat 10:00am–5:00pm",
-    languages: [
-      "Arabic",
-      "Cantonese",
-      "Dari",
-      "Farsi",
-      "French",
-      "Hindi",
-      "Kinyarwanda",
-      "Kirundi",
-      "Konkani",
-      "Mandarin",
-      "Marathi",
-      "Pashto",
-      "Punjabi",
-      "Somali",
-    ],
+    phone: "604-590-7847",
+    email: "library-newcomers@surrey.ca",
+    address:
+      "City Centre Branch, 10350 University Drive, Surrey, BC V3T 4B8 (Welcome Centre on Level 4)",
     programs: [
       {
-        name: "Free Settlement Services for Newcomers",
-        description:
-          "Settlement workers help you look for a job, find housing and start your life in Canada.",
-        eligibility:
-          "No status restriction is stated. Services are delivered by partner agencies — call ahead to confirm times and locations.",
+        id: "surrey-libraries-newcomer-welcome-centre",
         cost: "free",
-        url: "https://www.surreylibraries.ca/programs-services/newcomers",
+        url: "https://www.surreylibraries.ca/newcomer-centre",
       },
       {
-        name: "Newcomer Library Services",
-        description:
-          "English language learning tools and connections to settlement services, free at all branches.",
-        eligibility:
-          "Free and available at all branches. No immigration-status restriction is stated.",
+        id: "surrey-libraries-free-settlement-services-for-newcomers",
         cost: "free",
+        url: "https://www.surreylibraries.ca/free-settlement-services-newcomers",
       },
       {
-        name: "Get a Library Card",
-        description: "Free library cards for all ages. Bring ID to any branch.",
-        eligibility:
-          "You can become a member if you live in Surrey or a neighbouring community. Digital resources are for Surrey residents only.",
+        id: "surrey-libraries-english-language-learners",
         cost: "free",
+        url: "https://www.surreylibraries.ca/english-language-learners-programs",
+      },
+      {
+        id: "surrey-libraries-newcomer-teen-social-club",
+        cost: "free",
+        url: "https://www.surreylibraries.ca/newcomer-teen-social-club-0",
+      },
+      {
+        id: "surrey-libraries-get-a-library-card",
+        cost: "free",
+        url: "https://www.surreylibraries.ca/get-library-card",
+      },
+      {
+        id: "surrey-libraries-books-in-world-languages",
+        cost: "free",
+        url: "https://www.surreylibraries.ca/books-media/books-world-languages",
+      },
+      {
+        id: "surrey-libraries-technology-help",
+        cost: "free",
+        url: "https://www.surreylibraries.ca/technology-help",
       },
     ],
+    logo: "/resources/logos/surrey-libraries.png",
     displayOrder: 1,
     active: true,
   },
   {
     slug: "vancouver-public-library",
-    logo: "/resources/logos/vancouver-public-library.svg",
-    heroImage: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&q=80&auto=format&fit=crop",
     name: "Vancouver Public Library",
     category: "librariesLearning",
     partnershipType: "resource",
-    tagline: "Free places to discover, create, and share.",
-    description:
-      "Vancouver Public Library has served the lifelong learning, reading, and information needs of Vancouver residents for over 100 years across 21 branches — free places for everyone to discover, create, and share ideas and information.",
-    highlights: [
-      "Free for all residents",
-      "21 branches across Vancouver",
-      "100+ years serving the city",
-    ],
-    serviceArea: "Vancouver · 21 branches",
     website: "https://www.vpl.ca/",
-    // Drafted from the highlight "Free for all residents" (web-only; see the
-    // facet table below).
+    ctaLabelKey: "resources.cta.joinLibrary",
     cost: "free",
+    phone: "604-331-3603",
+    email: "info@vpl.ca",
+    address: "Central Library, 350 West Georgia St, Vancouver, BC V6B 6B1",
+    programs: [
+      {
+        id: "vancouver-public-library-get-a-library-card",
+        cost: "free",
+        url: "https://www.vpl.ca/borrowing/library-card",
+      },
+      {
+        id: "vancouver-public-library-esl-conversation-practice",
+        cost: "free",
+        url: "https://www.vpl.ca/programs/esl-conversation-practice",
+      },
+      {
+        id: "vancouver-public-library-immigration-and-settlement-guide",
+        cost: "free",
+        url: "https://www.vpl.ca/guides/immigration-and-settlement",
+      },
+      {
+        id: "vancouver-public-library-translation-services-guide",
+        cost: "free",
+        url: "https://www.vpl.ca/guides/immigration-and-settlement/translation-services",
+      },
+      {
+        id: "vancouver-public-library-clarity-english",
+        cost: "free",
+        url: "https://www.vpl.ca/digital-library/clarity-english-language-learning",
+      },
+      {
+        id: "vancouver-public-library-world-languages-collection",
+        cost: "free",
+        url: "https://www.vpl.ca/borrowing/world-languages",
+      },
+    ],
+    logo: "/resources/logos/vancouver-public-library.svg",
     displayOrder: 2,
     active: true,
   },
   // ── Community & Belonging ───────────────────────────────────────────────
   {
     slug: "big-brothers-big-sisters",
-    logo: "/resources/logos/big-brothers-big-sisters.png",
-    heroImage: "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=1200&q=80&auto=format&fit=crop",
     name: "Big Brothers Big Sisters",
     category: "communityBelonging",
     partnershipType: "resource",
-    tagline: "Life-changing mentoring for young people.",
-    description:
-      "Big Brothers Big Sisters champions the health and wellbeing of youth by providing life-changing mentoring experiences, ensuring children and teens are supported by caring adult role models.",
-    highlights: [
-      "1:1 youth mentoring",
-      "Supporting children's wellbeing",
-      "Caring adult role models",
-    ],
-    serviceArea: "Canada",
-    website: "https://bigbrothersbigsisters.ca/",
-    cost: "free",
-    howToStart:
-      'Use the "Find an agency near you" locator on their website to reach your local agency.',
+    website: "https://www.bigbrothersvancouver.com/",
+    // Contact points at the Greater Vancouver agency rather than the Toronto
+    // national office, because that is the agency a person here would apply to.
+    // National office: 905-639-0461 / 1-800-263-9133.
+    phone: "604-876-2447",
+    email: "officeadmin@bbgvf.com",
     programs: [
       {
-        name: "Community-Based 1:1 Mentoring",
-        description:
-          "Mentee and mentor explore their local community together, around 6–8 hours a month.",
-        cost: "free",
+        id: "big-brothers-big-sisters-community-mentoring",
+        url: "https://www.bigbrothersvancouver.com/our-programs/big-brothers/",
       },
       {
-        name: "Site-Based 1:1 Mentoring",
-        description:
-          "Mentor and mentee meet weekly at a set location such as a school, working towards set goals.",
-        cost: "free",
+        id: "big-brothers-big-sisters-in-school-mentoring",
+        url: "https://www.bigbrothersvancouver.com/our-programs/in-school-mentor/",
       },
       {
-        name: "Go Girls! Healthy Bodies, Healthy Minds",
-        description:
-          "Group mentoring on physical activity, healthy eating and self-esteem, over seven sessions.",
-        eligibility: "Girls ages 12–14.",
-        cost: "free",
+        id: "big-brothers-big-sisters-teen-mentoring",
+        url: "https://www.bigbrothersvancouver.com/our-programs/teen-mentor/",
       },
       {
-        name: "Game On! Eat Smart, Play Smart",
-        description:
-          "Group mentoring giving boys and young men support to make informed healthy choices.",
-        eligibility: "Boys and young men.",
+        id: "big-brothers-big-sisters-mentoring-with-math",
         cost: "free",
+        url: "https://www.bigbrothersvancouver.com/our-programs/mentoring-math/",
+      },
+      {
+        id: "big-brothers-big-sisters-game-on",
+        url: "https://www.bigbrothersvancouver.com/our-programs/game-on/",
+      },
+      {
+        id: "big-brothers-big-sisters-roots-mentoring",
+        url: "https://www.bigbrothersvancouver.com/our-programs/roots/",
       },
     ],
+    logo: "/resources/logos/big-brothers-big-sisters.png",
     displayOrder: 0,
     active: true,
   },
   {
     slug: "united-way-bc",
-    logo: "/resources/logos/united-way-bc.svg",
-    heroImage: "https://images.unsplash.com/photo-1593113630400-ea4288922497?w=1200&q=80&auto=format&fit=crop",
     name: "United Way BC",
     category: "communityBelonging",
     partnershipType: "resource",
-    tagline: "Support for the people who need it most across BC.",
-    description:
-      "United Way BC serves over five million British Columbians, delivering resources and support where they're needed most — emergency response, children & youth, seniors, poverty, mental health, and food security.",
-    highlights: [
-      "Emergency & poverty support",
-      "Programs for children, youth & seniors",
-      "Mental health & food security",
-    ],
-    serviceArea: "British Columbia",
     website: "https://uwbc.ca/",
-    howToStart:
-      "Call, email info@uwbc.ca, or use the contact form on their website.",
-    phone: "604.294.8929",
+    phone: "604-294-8929",
     email: "info@uwbc.ca",
     address: "4543 Canada Way, Burnaby, BC V5G 4T4",
-    hours: "Mon–Fri 8:30am–4:30pm (closed 12:00–1:00pm)",
     programs: [
       {
-        name: "BC Safe Haven Program",
-        description:
-          "Supports refugee claimants through volunteer mobilisations and public appeals for housing and services.",
-        eligibility: "Refugee claimants.",
+        id: "united-way-bc-211",
+        cost: "free",
+        url: "https://bc.211.ca",
       },
       {
-        name: "Better at Home",
-        description:
-          "Non-medical help for seniors — groceries, housekeeping and social connection — in 260+ communities.",
+        id: "united-way-bc-bc-safe-haven-program",
+        url: "https://uwbc.ca/program/bc-safe-haven/",
       },
       {
-        name: "Work Experience Opportunities Grant",
-        description: "Skills and job training supports.",
-        eligibility: "People receiving income assistance or disability assistance.",
+        id: "united-way-bc-food-security",
+        url: "https://uwbc.ca/program/food-security/",
       },
       {
-        name: "School's Out",
-        description:
-          "Out-of-school-time wellness, nutrition and developmental support for children.",
-        eligibility: "Ages 6–12.",
+        id: "united-way-bc-transit-assistance",
+        url: "https://uwbc.ca/program/transit-assistance-program/",
       },
       {
-        name: "Youth Futures Education Fund",
-        description: "Low-barrier funding for education.",
-        eligibility: "Youth formerly in government care.",
+        id: "united-way-bc-better-at-home",
+        url: "https://betterathome.ca",
+      },
+      {
+        id: "united-way-bc-school-s-out",
+        url: "https://uwbc.ca/stories/program/schools-out/",
+      },
+      {
+        id: "united-way-bc-work-experience-opportunities-grant",
+      },
+      {
+        id: "united-way-bc-youth-futures-education-fund",
       },
     ],
+    logo: "/resources/logos/united-way-bc.svg",
     displayOrder: 1,
     active: true,
   },
   {
     slug: "trout-lake-community-centre",
-    logo: "/resources/logos/trout-lake-community-centre.png",
-    heroImage: "https://images.unsplash.com/photo-1526976668912-1a811878dd37?w=1200&q=80&auto=format&fit=crop",
     name: "Trout Lake Community Centre",
     category: "communityBelonging",
     partnershipType: "resource",
-    tagline: "200+ programs for people of all ages.",
-    description:
-      "Trout Lake Community Centre offers more than 200 programs for people of all ages — a welcoming neighbourhood hub in East Vancouver run in partnership with the Vancouver Park Board.",
-    highlights: [
-      "200+ community programs",
-      "Activities for all ages",
-      "A neighbourhood gathering place",
-    ],
-    serviceArea: "Vancouver",
     website: "https://troutlakecc.com/",
     cost: "mixed",
-    howToStart:
-      "Register online through the City of Vancouver recreation system, or drop in and ask at the front desk.",
     phone: "604-257-6955",
     email: "troutlakecc@vancouver.ca",
     address: "3360 Victoria Dr, Vancouver, BC V5N 4M4",
-    hours: "Mon–Fri 9:00am–9:00pm · Sat–Sun 8:00am–4:00pm",
+    // The `hours` copy is the building's; the office and front desk close 30
+    // minutes earlier.
     programs: [
       {
-        name: "Leisure Access Program (LAP)",
-        description:
-          "City of Vancouver subsidy giving reduced-cost access to recreation.",
-        eligibility:
-          "Low-income Vancouver residents holding a valid leisure access card.",
+        id: "trout-lake-community-centre-leisure-access-program-lap",
       },
       {
-        name: "TLCCA Program Cost Assistance",
-        description:
-          "Help with program fees for community members in financial need.",
-        eligibility:
-          "Community members in financial need who are not eligible for LAP.",
+        id: "trout-lake-community-centre-tlcca-program-cost-assistance",
+        url: "https://troutlakecc.com/programs/",
       },
       {
-        name: "Adaptive Programs",
-        description: "Inclusive activities for all ages and abilities.",
+        id: "trout-lake-community-centre-adaptive-programs",
+        url: "https://troutlakecc.com/program/adaptive-programs/",
       },
       {
-        name: "Licensed Preschool",
-        description: "Licensed preschool program run at the community centre.",
+        id: "trout-lake-community-centre-licensed-preschool",
+        cost: "paid",
+        url: "https://troutlakecc.com/program/licensed-preschool/",
       },
       {
-        name: "Older Adult Programs",
-        description: "Stay active and connected with peers.",
+        id: "trout-lake-community-centre-older-adult-programs",
+        url: "https://troutlakecc.com/program/older-adult-programs/",
       },
     ],
+    logo: "/resources/logos/trout-lake-community-centre.png",
     displayOrder: 2,
     active: true,
   },
   // ── Networks & Planning Tables ──────────────────────────────────────────
   {
     slug: "amssa",
-    logo: "/resources/logos/amssa.png",
-    logoFit: "contain",
-    heroImage: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&q=80&auto=format&fit=crop",
     name: "AMSSA",
     category: "networksPlanning",
     partnershipType: "resource",
-    tagline: "The backbone supporting BC's newcomer-serving agencies.",
-    description:
-      "The Affiliation of Multicultural Societies and Service Agencies of BC is a provincial umbrella organization that strengthens the settlement and diversity sector — providing training, resources, e-learning, and advocacy for the agencies serving newcomers across BC.",
-    highlights: [
-      "Sector-wide training & e-learning",
-      "Resources for newcomer-serving agencies",
-      "Province-wide reach across BC",
-    ],
-    serviceArea: "British Columbia",
     website: "https://www.amssa.org/",
     cost: "mixed",
-    howToStart:
-      "Email amssa@amssa.org or use the contact form. AMSSA works with organizations, not individuals.",
     phone: "604-718-2780",
     email: "amssa@amssa.org",
     address: "Metrotower II, Suite 2308, 4720 Kingsway, Burnaby, BC V5H 4N2",
     programs: [
       {
-        name: "(Re)Settlement and Integration",
-        description:
-          "Indirect support to organizations and institutions funded by IRCC.",
+        id: "amssa-re-settlement-and-integration",
+        url: "https://www.amssa.org/programs/resettlement-and-integration/",
       },
       {
-        name: "Migrant Worker Hub",
-        description:
-          "Builds the capacity of organizations supporting migrant workers in BC.",
+        id: "amssa-migrant-worker-hub",
+        url: "https://www.amssa.org/programs/migrant-worker-hub/",
       },
       {
-        name: "AMSSA Institute",
-        description:
-          "Online learning centre — webinars, AMSSATalks and e-learning for sector staff.",
+        id: "amssa-amssa-institute",
+        url: "https://www.amssa.org/programs/amssa-institute/",
       },
       {
-        name: "National Sector Engagement",
-        description:
-          "Coordinates national engagement initiatives across the settlement sector.",
+        id: "amssa-canadian-humanitarian-assistance-response-char",
+        url: "https://www.amssa.org/char/",
       },
       {
-        name: "Canadian Humanitarian Assistance Response (CHAR)",
-        description:
-          "A network of community-based service providers offering essential supports across Canada.",
+        id: "amssa-indigenous-truth-and-decolonization",
+        url: "https://www.amssa.org/programs/indigenous-truth-and-decolonization/",
+      },
+      {
+        id: "amssa-national-sector-engagement",
+        url: "https://www.amssa.org/programs/",
       },
     ],
+    logo: "/resources/logos/amssa.png",
+    logoFit: "contain",
     displayOrder: 0,
     active: true,
   },
   {
     slug: "surrey-lip",
-    logo: "/resources/logos/surrey-lip.png",
-    heroImage: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1200&q=80&auto=format&fit=crop",
     name: "Surrey Local Immigration Partnership",
     category: "networksPlanning",
     partnershipType: "resource",
-    tagline: "30+ organizations coordinating newcomer integration in Surrey.",
-    description:
-      "An IRCC-funded, multi-stakeholder council that brings together 30+ community organizations to develop collaborative, research-driven strategies for newcomer integration in Surrey. Managed by DIVERSEcity, it also offers tools like a services map and a racism-reporting tool.",
-    highlights: [
-      "Coordinates 30+ local organizations",
-      "Services map for newcomers",
-      "Racism-reporting tool",
-    ],
-    serviceArea: "Surrey",
     website: "https://www.surreylip.ca/",
-    howToStart:
-      "Use the contact form on their website, or join one of the working groups or round tables. Surrey LIP works with agencies, not individuals.",
     programs: [
       {
-        name: "Surrey Services Map",
-        description: "Online map of services available in Surrey.",
+        id: "surrey-lip-community-connector-project",
+        url: "https://www.surreylip.ca/project/community-connector-project/",
       },
       {
-        name: "Community Connector Project",
-        description:
-          "Community connector streams with referral contacts for specific communities.",
+        id: "surrey-lip-surrey-services-map",
+        url: "https://www.surreylip.ca/surrey-services-map/",
+      },
+      {
+        id: "surrey-lip-immigrant-advisory-round-table",
+        url: "https://www.surreylip.ca/",
+      },
+      {
+        id: "surrey-lip-youth-newcomer-council",
+        url: "https://www.surreylip.ca/",
+      },
+      {
+        id: "surrey-lip-bridging-indigenous-and-newcomer",
+        url: "https://www.surreylip.ca/project/bridging-indigenous-and-newcomer-communities/",
+      },
+      {
+        id: "surrey-lip-first-peoples-guide",
+        url: "https://www.surreylip.ca/project/surrey-first-peoples-guide-for-newcomer-facilitation/",
       },
     ],
+    logo: "/resources/logos/surrey-lip.png",
     displayOrder: 1,
     active: true,
   },
   {
     slug: "delta-lip",
-    logo: "/resources/logos/delta-lip.webp",
-    logoFit: "contain",
-    heroImage: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1200&q=80&auto=format&fit=crop",
     name: "Delta Local Immigration Partnership",
     category: "networksPlanning",
     partnershipType: "resource",
-    tagline: "Coordinates newcomer services across Delta.",
-    description:
-      "The Delta Local Immigration Partnership is an IRCC-funded partnership table bringing local organizations together to make Delta more welcoming for newcomers. It states that it does not provide direct services to individuals.",
-    highlights: [
-      "Coordinates local newcomer services in Delta",
-      "Youth and immigrant advisory tables",
-      "Publishes the Delta Services Map",
-    ],
-    serviceArea: "Delta",
     website: "https://deltalip.ca/",
-    howToStart:
-      "Use the contact form on their website, or apply to join an advisory table. Delta LIP works with agencies, not individuals.",
+    email: "deltalip@dcrs.ca",
     programs: [
       {
-        name: "Delta Services Map",
-        description:
-          "An online map of services available to newcomers in Delta.",
+        id: "delta-lip-delta-services-map",
         url: "https://deltalip.ca/delta-services-map/",
       },
       {
-        name: "Delta Youth Newcomer Advisory Table (DYNAT)",
-        description:
-          "Brings together young people who want to make Delta more welcoming for newcomer youth.",
-        eligibility:
-          "Youth aged 16 to 25 who want to make Delta a more welcoming and inclusive place for newcomer youth.",
+        id: "delta-lip-resource-library",
+        url: "https://deltalip.ca/resources/",
       },
       {
-        name: "Immigrant Advisory Table",
-        description:
-          "A volunteer roundtable with members representing a diversity of backgrounds and experiences.",
-        eligibility: "Applicants must be at least 26 years old.",
+        id: "delta-lip-delta-youth-newcomer-advisory-table-dynat",
+      },
+      {
+        id: "delta-lip-immigrant-advisory-table",
       },
     ],
+    logo: "/resources/logos/delta-lip.webp",
+    logoFit: "contain",
     displayOrder: 2,
     active: true,
   },
   // ── International Students ──────────────────────────────────────────────
   {
     slug: "sfu-international",
-    logo: "/resources/logos/sfu-international.png",
-    heroImage: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1200&q=80&auto=format&fit=crop",
     name: "SFU International Services for Students",
     category: "internationalStudents",
     partnershipType: "resource",
-    tagline: "Advising, orientation, and newcomer support for SFU students.",
-    description:
-      "Simon Fraser University's International Services for Students supports international students with non-academic advising, orientation, and career programming, plus dedicated support for students who identify as refugees or newcomers.",
-    highlights: [
-      "Non-academic advising for international students",
-      "Orientation and career programming",
-      "Dedicated refugee and newcomer support",
-    ],
-    serviceArea: "SFU Burnaby campus",
     website: "https://www.sfu.ca/students/iss.html",
     ctaLabelKey: "resources.cta.bookAdvising",
-    eligibility:
-      "International students enrolled at SFU, including undergraduate, graduate and exchange students.",
-    howToStart:
-      "Drop in (in person or virtual), book an appointment, or email iss_office@sfu.ca.",
-    phone: "+1 778-782-4232",
+    phone: "778-782-4232",
     email: "iss_office@sfu.ca",
     address: "MBC 1200 – 8888 University Drive, Burnaby, BC V5A 1S6",
-    hours: "Mon–Fri 9:00am–4:00pm (closed 12:00–1:00pm)",
     programs: [
       {
-        name: "International and Newcomer Student Advising",
-        description:
-          "Non-academic advising for international undergraduate, graduate and exchange students.",
-        eligibility:
-          "International students, including undergraduate, graduate and exchange students.",
+        id: "sfu-international-international-and-newcomer-student-advising",
         url: "https://www.sfu.ca/students/isap.html",
       },
       {
-        name: "Refugee and Newcomer Programs",
-        description:
-          "Support for students who identify as refugees or newcomers, including the World University Service of Canada Student Refugee Program.",
-        eligibility: "SFU students who identify as refugees or newcomers.",
-        url: "https://www.sfu.ca/students/iss/refugee-and-newcomer-program.html",
+        id: "sfu-international-refugee-and-newcomer-programs",
+        url: "https://www.sfu.ca/refugeeprograms/students.html",
       },
       {
-        name: "International Student Orientation Series",
-        description:
-          "A multi-part series for all new international students beginning studies at SFU.",
-        eligibility: "New international students starting at SFU.",
+        id: "sfu-international-student-refugee-program",
+        url: "https://www.sfu.ca/refugeeprograms/students.html",
+      },
+      {
+        id: "sfu-international-global-student-centre",
+        url: "https://www.sfu.ca/students/iss.html",
+      },
+      {
+        id: "sfu-international-international-student-orientation-series",
         url: "https://www.sfu.ca/students/isap/programs/intlorientation.html",
       },
       {
-        name: "International Student Career Week",
-        description:
-          "A week-long series of career activities designed for international students.",
-        eligibility: "International undergraduate and graduate students.",
+        id: "sfu-international-international-student-career-week",
         url: "https://www.sfu.ca/students/isap/programs/IntlCareerWeek.html",
       },
     ],
+    logo: "/resources/logos/sfu-international.png",
     displayOrder: 0,
     active: true,
   },
   {
     slug: "fraser-international-college",
-    logo: "/resources/logos/fraser-international-college.png",
-    heroImage: "https://images.unsplash.com/photo-1562774053-701939374585?w=1200&q=80&auto=format&fit=crop",
     name: "Fraser International College",
     category: "internationalStudents",
     partnershipType: "resource",
-    tagline: "Pathway college programs leading into SFU degrees.",
-    description:
-      "Fraser International College is a private pathway college on SFU's Burnaby campus, offering foundation and first-year programs that lead into Simon Fraser University degrees. All programs are tuition-based.",
-    highlights: [
-      "University transfer pathway into SFU",
-      "Foundation and first-year university programs",
-      "Located on the SFU Burnaby campus",
-    ],
-    serviceArea: "Burnaby",
     website: "https://www.fraseric.ca/",
     ctaLabelKey: "resources.cta.applyOnline",
     cost: "paid",
-    eligibility:
-      "Applicants must be at least 17 years old by the last day of their first semester and submit all academic transcripts. Academic requirements vary by program and by country of origin.",
-    howToStart:
-      "Apply online through the FIC student portal, email info@fraseric.ca, or apply through a listed education agent.",
     phone: "(778) 782-5011",
     email: "info@fraseric.ca",
     address: "8999 Nelson Way, Burnaby, BC V5A 4B5",
     programs: [
       {
-        name: "Foundation Program (UTP Stage I)",
-        description: "Pre-university program taken over two terms.",
-        eligibility:
-          "Successful completion of Year 11 or equivalent, with benchmarks depending on the chosen program.",
+        id: "fraser-international-college-foundation-program-utp-stage-i",
         cost: "paid",
         url: "https://www.fraseric.ca/admissions/fees/",
       },
       {
-        name: "International Year One (UTP Stage II)",
-        description:
-          "First-year university credit programme leading into an SFU degree.",
-        eligibility:
-          "Generally Year 12 completion or equivalent; requirements vary by country system and program.",
+        id: "fraser-international-college-international-year-one-utp-stage-ii",
         cost: "paid",
         url: "https://www.fraseric.ca/admissions/fees/",
       },
       {
-        name: "Associate of Arts Degree",
-        description: "Two-year associate degree taken at FIC.",
-        eligibility: "Generally Year 12 completion or equivalent.",
+        id: "fraser-international-college-associate-of-arts-degree",
         cost: "paid",
         url: "https://www.fraseric.ca/admissions/fees/",
+      },
+      {
+        id: "fraser-international-college-student-success-team",
+        url: "https://www.fraseric.ca/student-services/",
+      },
+      {
+        id: "fraser-international-college-wellness-office",
+        url: "https://www.fraseric.ca/student-services/",
+      },
+      {
+        id: "fraser-international-college-student-support-services",
+        url: "https://www.fraseric.ca/student-services/",
       },
     ],
+    logo: "/resources/logos/fraser-international-college.png",
     displayOrder: 1,
     active: true,
   },
   // ── Insurance ───────────────────────────────────────────────────────────
   {
     slug: "tugo",
-    logo: "/resources/logos/tugo.png",
-    heroImage: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&q=80&auto=format&fit=crop",
     name: "TuGo",
     category: "insurance",
     partnershipType: "referral",
-    tagline:
-      "Travel and visitor insurance, including cover during the health-plan wait.",
-    description:
-      "TuGo is a Canadian-owned travel insurance provider with its head office in Richmond, BC. Its Visitors to Canada plans cover emergency medical costs for family visiting from abroad and for people waiting for a provincial health plan to take effect.",
-    highlights: [
-      "Emergency medical cover for visitors to Canada",
-      "Coverage options for pre-existing conditions",
-      "Canadian-owned, head office in Richmond, BC",
-    ],
-    serviceArea: "Canada and worldwide",
     // Affiliate link supplied by the partner; deliberately unlabelled in the
     // UI and opened by the standard Website button.
     website: "https://tugo.partnerlinks.io/68e8fsmokbc7",
     ctaLabelKey: "resources.cta.getQuote",
     cost: "paid",
-    howToStart:
-      "Start a quote online through a TuGo insurance partner, or call 1-855-929-8846.",
     phone: "1-855-929-8846",
     email: "info@tugo.com",
     address: "1200–6081 No. 3 Road, Richmond, BC V6Y 2B2",
-    hours: "Mon–Fri 6:00am–5:00pm PST · Sat 7:00am–4:00pm PST · Sun closed",
-    languages: ["English", "French"],
     programs: [
       {
-        name: "Visitors to Canada Insurance",
-        description:
-          "Emergency medical protection for visitors, with options covering pre-existing conditions.",
-        eligibility:
-          "For people visiting family or friends, travelling in Canada, or waiting for a provincial health plan to take effect.",
+        id: "tugo-visitors-to-canada-insurance",
         cost: "paid",
       },
       {
-        name: "Basic Visitors to Canada Insurance",
-        description:
-          "Lower-cost emergency medical coverage for visitors on a budget.",
+        id: "tugo-basic-visitors-to-canada-insurance",
         cost: "paid",
       },
       {
-        name: "Trip Cancellation & Trip Interruption Insurance",
-        description:
-          "Covers costs if a trip is cancelled before departure or disrupted during travel.",
+        id: "tugo-student-insurance",
         cost: "paid",
       },
       {
-        name: "24/7 Emergency Medical Assistance",
-        description:
-          "Round-the-clock emergency medical assistance and claims support on 1-800-663-0399.",
+        id: "tugo-trip-cancellation-trip-interruption-insurance",
+        cost: "paid",
+      },
+      {
+        id: "tugo-24-7-emergency-medical-assistance",
       },
     ],
+    logo: "/resources/logos/tugo.png",
     displayOrder: 0,
     active: true,
   },
   // ── Money & Banking ─────────────────────────────────────────────────────
   {
     slug: "desjardins",
-    logo: "/resources/logos/desjardins.svg",
-    logoFit: "contain",
-    heroImage: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&q=80&auto=format&fit=crop",
     name: "Desjardins",
     category: "money",
     partnershipType: "referral",
-    tagline: "Newcomer banking, credit building, and free legal help.",
-    description:
-      "Desjardins is Canada's largest cooperative financial group. Its newcomer offer includes a chequing account with no monthly plan fee during an eligibility period, no-annual-fee credit cards to help build Canadian credit history, and a free legal assistance service. Its branch network is in Quebec and Ontario.",
-    highlights: [
-      "No monthly plan fee during the newcomer period",
-      "Credit cards to build Canadian credit history",
-      "Free legal assistance service for two years",
-    ],
-    serviceArea: "Quebec and Ontario",
-    website:
-      "https://www.desjardins.com/ca/personal/you-are/newcomers-canada/",
+    website: "https://www.desjardins.com/ca/personal/you-are/newcomers-canada/",
     cost: "mixed",
-    eligibility:
-      "The newcomer account offer is for people aged 25 and over who are permanent residents, or temporary residents with a work permit valid for more than 8 months, who have lived in Canada 3 years or less and are not already Desjardins members. Separate offers cover ages 18–24 and full-time students aged 25–30.",
-    howToStart:
-      "Open an account online in about 15 minutes, or apply from abroad and confirm your identity at a service location on arrival.",
     phone: "1-877-435-6098",
-    hours:
-      "Legal assistance: file opening 24/7 · advisors Mon–Fri 9:00am–8:00pm, Sat 9:00am–5:00pm",
-    languages: ["English", "French"],
     programs: [
       {
-        name: "Newcomers chequing account (Unlimited plan)",
-        description:
-          "Chequing account with the monthly Unlimited plan fee waived during the eligibility period.",
-        eligibility:
-          "Aged 25+, permanent resident or temporary resident with a work permit valid more than 8 months, in Canada 3 years or less, and not already a Desjardins member.",
+        id: "desjardins-newcomers-chequing-account-unlimited-plan",
         cost: "mixed",
       },
       {
-        name: "Free legal assistance service",
-        description:
-          "Legal assistance included with the newcomer offer for two years, covering everyday matters.",
+        id: "desjardins-free-legal-assistance-service",
         cost: "free",
       },
       {
-        name: "International money transfers",
-        description: "International money transfers of up to $25,000 per day.",
+        id: "desjardins-international-money-transfers",
       },
       {
-        name: "Youth and student accounts",
-        description:
-          "Account offers for younger newcomers and full-time students.",
-        eligibility: "Ages 18–24, or 25–30 if a full-time student.",
+        id: "desjardins-youth-and-student-accounts",
         cost: "mixed",
       },
     ],
+    logo: "/resources/logos/desjardins.svg",
+    logoFit: "contain",
     displayOrder: 0,
     active: true,
   },
@@ -1075,11 +855,12 @@ export const getCategoriesWithPartners = (): CategoryWithCount[] => {
 // ── Filter facets (web-only) ───────────────────────────────────────────────
 //
 // Structured values behind the Resources filters (service format, location,
-// eligibility). Every value is derived ONLY from the partner's own text above;
-// the quoted source is on each line. Anything the text doesn't clearly state is
-// "unknown" (or an empty list), and the filter UI excludes that partner while
-// the matching filter is active. Kept apart from PARTNERS so the ported records
-// stay diffable against mobile.
+// eligibility). Every value is derived ONLY from the partner's own English copy
+// (resources.partners.<slug> in en/translation.json); the quoted source is on
+// each line. Anything the copy doesn't clearly state is "unknown" (or an empty
+// list), and the filter UI excludes that partner while the matching filter is
+// active. Kept apart from PARTNERS so the synced records stay diffable against
+// mobile.
 
 /** How a partner's services are delivered. */
 export type PartnerFormat = "in_person" | "online" | "both" | "unknown";
@@ -1109,78 +890,88 @@ export type EligibilityTag =
 
 export interface PartnerFacets {
   format: PartnerFormat;
-  /** Empty = the text doesn't say. */
+  /** Empty = the copy doesn't say. */
   locations: LocationKey[];
-  /** Empty = the text doesn't say. */
+  /** Empty = the copy doesn't say. */
   eligibilityTags: EligibilityTag[];
-  /** Founding year, only where the partner's own text states it. */
+  /** Founding year, only where the partner's own copy states it. */
   founded?: number;
 }
 
 export const PARTNER_FACETS: Record<string, PartnerFacets> = {
   diversecity: {
     format: "unknown",
-    locations: ["metro_vancouver"], // serviceArea "Greater Vancouver"
-    // Settlement Services: "Permanent residents, refugees and protected persons
-    // … temporary residents, international students … and refugee claimants"
+    locations: ["surrey", "delta"], // serviceArea "Surrey and Delta"
+    // eligibility: "open to permanent residents, refugees and protected persons
+    // … Temporary residents, international students … refugee claimants"
     eligibilityTags: ["permanent_residents", "permits", "refugees"],
-    founded: 1978, // "a BC-registered charity (since 1978)"
+    founded: 1978, // description: "a BC-registered charity (since 1978)"
   },
   "burnaby-neighbourhood-house": {
     format: "unknown",
     locations: ["burnaby"], // serviceArea "Burnaby"
-    // "focused on supporting permanent residents and convention refugees"
-    eligibilityTags: ["permanent_residents", "refugees"],
+    // eligibility: "focus on permanent residents and convention refugees.
+    // Community, food and childcare programs are open to everyone."
+    eligibilityTags: ["permanent_residents", "refugees", "everyone"],
   },
   "ymca-bc": {
-    format: "unknown",
+    format: "both", // Citizenship Test Prep: "A hybrid group program"
     locations: ["bc_wide"], // serviceArea "British Columbia"
-    eligibilityTags: ["permits"], // program "International Students Employment Support"
+    // English Conversation Club: "All immigration statuses except visitor visas"
+    eligibilityTags: ["permanent_residents", "permits", "refugees"],
   },
   "iec-bc": {
     format: "online", // ASCEND: "Online, self-paced learning"
     locations: ["bc_wide"], // serviceArea "British Columbia"
-    // TalentConnect: "Permanent residents in Canada"
-    eligibilityTags: ["permanent_residents"],
+    // FAST: "Permanent residents … refugees, international students, skilled
+    // immigrants with a valid work permit"
+    eligibilityTags: ["permanent_residents", "permits", "refugees"],
   },
   "newcomer-jobs-canada": {
-    // "Create an account online, upload your resume and apply for jobs on the website."
+    // "there is no BC office and no in-person service" + "Create a free account online"
     format: "online",
     locations: ["national"], // serviceArea "Canada"
     eligibilityTags: [],
   },
-  // Tags only — the Canada Shaws record above is contract copy and stays untouched.
+  // Tags only — Canada Shaws copy is contract-controlled and shown verbatim.
   "canada-shaw-immigration": {
     format: "unknown",
     locations: ["richmond"], // serviceArea "Richmond"
     // "The firm helps clients worldwide navigate their options"
     eligibilityTags: ["everyone"],
   },
+  // Inactive (mobile: held as unverifiable); kept so the facet table stays total.
   "global-connect-immigration": {
     format: "unknown",
     locations: ["surrey"], // serviceArea "Surrey"
     eligibilityTags: [],
   },
   "burnaby-public-library": {
-    format: "in_person", // "Walk in to any branch and ask at the service desk"
+    // English Conversation Circle: "Runs in branches and on Zoom."
+    format: "both",
     locations: ["burnaby"], // serviceArea "Burnaby · 4 branches"
-    eligibilityTags: [],
+    // eligibility: "Membership is free for anyone who lives in Burnaby …
+    // No identification is required"
+    eligibilityTags: ["everyone"],
   },
   "surrey-libraries": {
-    format: "in_person", // "Visit the Newcomer Welcome Centre at City Centre Branch"
+    // howToStart: "Visit the Newcomer Welcome Centre at City Centre Branch"
+    format: "in_person",
     locations: ["surrey"], // serviceArea "Surrey · 10 branches"
-    // "No immigration-status restriction is stated."
+    // Free Settlement Services: "No status restriction is stated."
     eligibilityTags: ["everyone"],
   },
   "vancouver-public-library": {
-    format: "in_person", // "across 21 branches — free places for everyone"
+    // howToStart: "Walk in to any branch … or register online for a temporary
+    // digital card"; Clarity English: "A free online language-learning resource"
+    format: "both",
     locations: ["vancouver"], // serviceArea "Vancouver · 21 branches"
-    eligibilityTags: ["everyone"], // "free places for everyone"
+    eligibilityTags: ["everyone"], // eligibility: "Programs and events are open to everyone."
   },
   "big-brothers-big-sisters": {
-    // "Mentor and mentee meet weekly at a set location such as a school"
+    // Community Mentoring: "Mentors commit to a weekly 2–4 hour outing"
     format: "in_person",
-    locations: ["national"], // serviceArea "Canada"
+    locations: ["metro_vancouver"], // serviceArea "Greater Vancouver"
     eligibilityTags: [],
   },
   "united-way-bc": {
@@ -1189,27 +980,27 @@ export const PARTNER_FACETS: Record<string, PartnerFacets> = {
     eligibilityTags: ["refugees"], // BC Safe Haven: "Refugee claimants."
   },
   "trout-lake-community-centre": {
-    format: "in_person", // "drop in and ask at the front desk"
+    format: "in_person", // howToStart: "Drop in and ask at the front desk"
     locations: ["vancouver"], // serviceArea "Vancouver"
     eligibilityTags: [],
   },
   amssa: {
-    format: "online", // AMSSA Institute: "Online learning centre"
+    format: "online", // AMSSA Institute: "An online learning platform"
     locations: ["bc_wide"], // serviceArea "British Columbia"
-    eligibilityTags: [], // "AMSSA works with organizations, not individuals."
+    eligibilityTags: [], // "serves member agencies … not individual newcomers"
   },
   "surrey-lip": {
-    format: "online", // Surrey Services Map: "Online map of services"
+    format: "online", // Surrey Services Map: "An online map of the services"
     locations: ["surrey"], // serviceArea "Surrey"
-    eligibilityTags: [], // "Surrey LIP works with agencies, not individuals."
+    eligibilityTags: [], // "does not deliver services to individuals"
   },
   "delta-lip": {
     format: "online", // Delta Services Map: "An online map of services"
     locations: ["delta"], // serviceArea "Delta"
-    eligibilityTags: [], // "Delta LIP works with agencies, not individuals."
+    eligibilityTags: [], // "does not deliver services to individuals"
   },
   "sfu-international": {
-    format: "both", // "Drop in (in person or virtual)"
+    format: "both", // howToStart: "Drop in (in person or virtual)"
     locations: ["burnaby"], // serviceArea "SFU Burnaby campus"
     // "International students enrolled at SFU" + "students who identify as refugees"
     eligibilityTags: ["permits", "refugees"],
@@ -1220,15 +1011,17 @@ export const PARTNER_FACETS: Record<string, PartnerFacets> = {
     eligibilityTags: [],
   },
   tugo: {
-    format: "online", // "Start a quote online through a TuGo insurance partner"
+    format: "online", // howToStart: "Start a quote online through a TuGo insurance partner"
     locations: ["national"], // serviceArea "Canada and worldwide"
-    eligibilityTags: [],
+    // Student Insurance: "International students studying in Canada"
+    eligibilityTags: ["permits"],
   },
   desjardins: {
-    // "Open an account online … or … confirm your identity at a service location"
+    // howToStart: "Open an account online … or … confirm your identity at a
+    // service location"
     format: "both",
     locations: ["outside_bc"], // serviceArea "Quebec and Ontario"
-    // "permanent residents, or temporary residents with a work permit"
+    // eligibility: "permanent residents, or temporary residents with a work permit"
     eligibilityTags: ["permanent_residents", "permits"],
   },
 };
@@ -1239,17 +1032,55 @@ const UNKNOWN_FACETS: PartnerFacets = {
   eligibilityTags: [],
 };
 
-/** A partner plus its filter facets. */
-export type ResourcePartner = Partner & PartnerFacets;
+/** Same language under two spellings in the partner copy → one filter value. */
+const LANGUAGE_ALIASES: Record<string, string> = {
+  "Persian (Farsi)": "Farsi",
+  "Filipino (Tagalog)": "Tagalog",
+};
 
-export const withFacets = (partner: Partner): ResourcePartner => ({
-  ...partner,
-  ...(PARTNER_FACETS[partner.slug] ?? UNKNOWN_FACETS),
-});
+/** The English language name used as a stable filter value. */
+export const canonicalLanguage = (name: string): string =>
+  LANGUAGE_ALIASES[name] ?? name;
 
-/** Active partners with facets, sorted by displayOrder. */
-export const getActiveResourcePartners = (): ResourcePartner[] =>
-  getActivePartners().map(withFacets);
+/**
+ * A localized partner plus its filter facets. `languageKeys` are the English
+ * language names (canonicalised), index-aligned with the localized
+ * `languages`, so filter values and URLs stay the same in every language.
+ */
+export type ResourcePartner = LocalizedPartner &
+  PartnerFacets & { languageKeys: string[] };
+
+/**
+ * Resolves a partner for display: copy in the language `t` is bound to, plus
+ * facets and English language keys (via `enT`, a `t` fixed to "en").
+ */
+export function toResourcePartner(
+  partner: Partner,
+  t: TFunction,
+  enT: TFunction,
+): ResourcePartner {
+  const english: unknown = enT(partnerCopyKey(partner.slug, "languages"), {
+    returnObjects: true,
+    defaultValue: [],
+  });
+  const languageKeys = Array.isArray(english)
+    ? english
+        .filter((l): l is string => typeof l === "string")
+        .map(canonicalLanguage)
+    : [];
+  return {
+    ...localizePartner(partner, t),
+    ...(PARTNER_FACETS[partner.slug] ?? UNKNOWN_FACETS),
+    languageKeys,
+  };
+}
+
+/** Active partners resolved for display, sorted by displayOrder. */
+export const getActiveResourcePartners = (
+  t: TFunction,
+  enT: TFunction,
+): ResourcePartner[] =>
+  getActivePartners().map((p) => toResourcePartner(p, t, enT));
 
 /** Cost values in filter order. */
 export const COST_ORDER: Cost[] = ["free", "paid", "mixed"];

@@ -11,7 +11,7 @@ import {
   CATEGORY_ORDER,
   PARTNER_CATEGORY_LABEL_KEYS,
 } from "@/lib/resources/categories";
-import { getActiveResourcePartners } from "@/lib/resources/partners";
+import { useResourcePartners } from "@/hooks/useResourcePartners";
 import { applyFilters } from "@/lib/resources/filters";
 import { selectPartnersMatching } from "@/lib/resources/search";
 import { trackResourcesCategoryOpened } from "@/lib/analytics";
@@ -60,9 +60,10 @@ export default function ResourcesCategoryPage({
 function CategoryBody({ category }: { category: PartnerCategory }) {
   const { t } = useTranslation();
   const { filters, query, setQuery, toggle, clearFilters } = useResourceFilters();
+  const directory = useResourcePartners();
   const scope = useMemo(
-    () => getActiveResourcePartners().filter((p) => p.category === category),
-    [category],
+    () => directory.filter((p) => p.category === category),
+    [directory, category],
   );
   const { results, unlistedCount } = useMemo(() => {
     const matched = selectPartnersMatching(scope, query, (c) =>
@@ -74,7 +75,7 @@ function CategoryBody({ category }: { category: PartnerCategory }) {
   return (
     <div className="flex flex-col gap-9">
       <div className="flex flex-col gap-4">
-        <BackLink href="/resources" label={t("tabs.resources")} />
+        <BackLink href="/resources" label={t("resources.navLabel")} />
         <ResourcesSearch value={query} onCommit={setQuery} />
       </div>
 
@@ -94,6 +95,7 @@ function CategoryBody({ category }: { category: PartnerCategory }) {
       ) : (
         <PartnerResults
           scope={scope}
+          directory={directory}
           results={results}
           unlistedCount={unlistedCount}
           filters={filters}

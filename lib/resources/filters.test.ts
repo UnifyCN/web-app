@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getActiveResourcePartners, withFacets, PARTNERS } from "./partners";
+import { makeT } from "./__fixtures__/i18n";
+import { getActiveResourcePartners } from "./partners";
 import {
   EMPTY_FILTERS,
   applyFilters,
@@ -11,11 +12,12 @@ import {
   type ResourceFilters,
 } from "./filters";
 
-const all = getActiveResourcePartners();
+const enT = makeT("en");
+const all = getActiveResourcePartners(enT, enT);
 const run = (f: Partial<ResourceFilters>) =>
   applyFilters(all, { ...EMPTY_FILTERS, ...f });
 const slugs = (f: Partial<ResourceFilters>) => run(f).results.map((p) => p.slug);
-const bySlug = (slug: string) => withFacets(PARTNERS.find((p) => p.slug === slug)!);
+const bySlug = (slug: string) => all.find((p) => p.slug === slug)!;
 
 describe("applyFilters", () => {
   it("is a no-op with no active filters", () => {
@@ -40,7 +42,8 @@ describe("applyFilters", () => {
     expect(surrey).toContain("surrey-libraries");
     expect(surrey).toContain("ymca-bc"); // British Columbia
     expect(surrey).toContain("tugo"); // Canada and worldwide
-    expect(surrey).toContain("diversecity"); // Greater Vancouver
+    expect(surrey).toContain("diversecity"); // Surrey and Delta
+    expect(surrey).toContain("big-brothers-big-sisters"); // Greater Vancouver
     expect(surrey).not.toContain("burnaby-public-library");
     expect(surrey).not.toContain("desjardins"); // Quebec and Ontario
   });
@@ -48,7 +51,7 @@ describe("applyFilters", () => {
   it("'Across BC' matches only province-wide and national partners", () => {
     const bc = slugs({ loc: ["bc_wide"] });
     expect(bc).toContain("amssa");
-    expect(bc).toContain("big-brothers-big-sisters");
+    expect(bc).toContain("tugo"); // Canada and worldwide
     expect(bc).not.toContain("surrey-libraries");
     expect(bc).not.toContain("diversecity");
   });
@@ -61,18 +64,18 @@ describe("applyFilters", () => {
   it("ORs within a group and ANDs across groups", () => {
     const either = slugs({ cost: ["free", "paid"] });
     expect(either).toContain("iec-bc");
-    expect(either).toContain("global-connect-immigration");
+    expect(either).toContain("tugo");
     expect(slugs({ cost: ["free"], loc: ["surrey"] })).toEqual(
       expect.arrayContaining(["surrey-libraries", "iec-bc"]),
     );
     expect(slugs({ cost: ["free"], loc: ["surrey"] })).not.toContain(
-      "global-connect-immigration",
+      "tugo",
     );
   });
 
   it("merges language aliases", () => {
     expect(slugs({ lang: ["Farsi"] })).toEqual(
-      expect.arrayContaining(["canada-shaw-immigration", "surrey-libraries"]),
+      expect.arrayContaining(["canada-shaw-immigration", "diversecity"]),
     );
   });
 });
@@ -109,7 +112,7 @@ describe("options", () => {
 
   it("orders languages by how many partners list them", () => {
     const langs = languageOptions(all);
-    expect(langs.slice(0, 2)).toEqual(["English", "French"]);
+    expect(langs[0]).toBe("English");
     expect(langs).not.toContain("Persian (Farsi)");
   });
 

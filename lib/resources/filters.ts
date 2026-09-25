@@ -70,18 +70,6 @@ export const ELIGIBILITY_OPTIONS: EligibilityTag[] = [
 /** Every city key is a Metro Vancouver municipality. */
 const WIDE_SCOPES: LocationKey[] = ["metro_vancouver", "bc_wide", "national"];
 
-/** Same language under two spellings in the partner copy → one filter value. */
-const LANGUAGE_ALIASES: Record<string, string> = {
-  "Persian (Farsi)": "Farsi",
-  "Filipino (Tagalog)": "Tagalog",
-};
-
-export const canonicalLanguage = (name: string): string =>
-  LANGUAGE_ALIASES[name] ?? name;
-
-const partnerLanguages = (p: ResourcePartner): string[] =>
-  (p.languages ?? []).map(canonicalLanguage);
-
 /** True when the partner's data doesn't state this group's value. */
 export function isUnknownFor(p: ResourcePartner, group: FilterGroup): boolean {
   switch (group) {
@@ -92,7 +80,7 @@ export function isUnknownFor(p: ResourcePartner, group: FilterGroup): boolean {
     case "elig":
       return p.eligibilityTags.length === 0;
     case "lang":
-      return partnerLanguages(p).length === 0;
+      return p.languageKeys.length === 0;
     case "cost":
       return p.cost === undefined;
   }
@@ -124,8 +112,7 @@ function matchesGroup(p: ResourcePartner, group: FilterGroup, f: ResourceFilters
     case "elig":
       return f.elig.some((t) => matchesEligibility(p, t));
     case "lang": {
-      const langs = partnerLanguages(p);
-      return f.lang.some((l) => langs.includes(l));
+      return f.lang.some((l) => p.languageKeys.includes(l));
     }
     case "cost":
       return p.cost !== undefined && f.cost.includes(p.cost);
@@ -178,17 +165,36 @@ export function locationOptions(
   return options.filter((o) => scope.some((p) => matchesLocation(p, o)));
 }
 
-/** Every language a partner lists, most-listed first, then A–Z. */
+/** Every language a partner lists (English keys), most-listed first, then A–Z. */
 export function languageOptions(partners: ResourcePartner[]): string[] {
   const counts = new Map<string, number>();
   for (const p of partners) {
-    for (const l of new Set(partnerLanguages(p))) {
+    for (const l of new Set(p.languageKeys)) {
       counts.set(l, (counts.get(l) ?? 0) + 1);
     }
   }
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([l]) => l);
+}
+
+/**
+ * Display label per English language key, taken from the partners' localized
+ * `languages` (index-aligned with `languageKeys`); falls back to the key.
+ */
+export function languageLabels(
+  partners: ResourcePartner[],
+): Map<string, string> {
+  const labels = new Map<string, string>();
+  for (const p of partners) {
+    const shown = p.languages ?? [];
+    p.languageKeys.forEach((key, i) => {
+      if (!labels.has(key) && shown.length === p.languageKeys.length) {
+        labels.set(key, shown[i]);
+      }
+    });
+  }
+  return labels;
 }
 
 // ── URL round-trip ───────────────────────────────────────────────────────────

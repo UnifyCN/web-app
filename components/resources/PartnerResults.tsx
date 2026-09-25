@@ -13,6 +13,7 @@ import { PartnerCard } from "./PartnerCard";
  */
 export function PartnerResults({
   scope,
+  directory,
   results,
   unlistedCount,
   filters,
@@ -22,6 +23,8 @@ export function PartnerResults({
 }: {
   /** Partners the filter options are drawn from (before filtering). */
   scope: ResourcePartner[];
+  /** The whole directory — keeps location pills stable across categories. */
+  directory: ResourcePartner[];
   results: ResourcePartner[];
   unlistedCount: number;
   filters: ResourceFilters;
@@ -35,6 +38,7 @@ export function PartnerResults({
     <div className="flex flex-col gap-6 md:flex-row md:items-start">
       <FiltersPanel
         partners={scope}
+        directory={directory}
         filters={filters}
         onToggle={onToggle}
         onClear={onClear}

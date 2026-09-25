@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, X } from "lucide-react";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 /**
  * Search field (Figma "Search" — #F4F2EE fill, 13px radius). Keeps its own
@@ -17,6 +18,8 @@ export function ResourcesSearch({
 }) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState(value);
+  // The full Figma placeholder doesn't fit a phone; `sm` = 640px.
+  const roomy = useMediaQuery("(min-width: 640px)", true);
   const committed = useRef(value);
 
   // Follow external changes (e.g. Back/Forward) without clobbering typing.
@@ -43,9 +46,11 @@ export function ResourcesSearch({
         type="search"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        placeholder={t("resources.searchPlaceholder")}
+        placeholder={t(
+          roomy ? "resources.searchPlaceholder" : "resources.searchPlaceholderShort",
+        )}
         aria-label={t("resources.searchLabel")}
-        className="min-w-0 flex-1 bg-transparent text-sm text-res-card-text placeholder:text-res-placeholder focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+        className="min-w-0 flex-1 truncate bg-transparent text-start text-sm text-res-card-text placeholder:truncate placeholder:text-res-placeholder focus:outline-none [&::-webkit-search-cancel-button]:hidden"
       />
       {draft && (
         <button

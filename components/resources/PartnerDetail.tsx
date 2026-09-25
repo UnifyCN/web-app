@@ -15,7 +15,7 @@ import {
   Phone,
   type LucideIcon,
 } from "lucide-react";
-import { externalHref, telHref } from "@/lib/utils";
+import { cn, externalHref, telHref } from "@/lib/utils";
 import { OrgMonogram } from "./OrgMonogram";
 import { BackLink } from "./BackLink";
 import { CostChip } from "./CostChip";
@@ -28,6 +28,7 @@ import {
   categoryIconSrc,
 } from "@/lib/resources/categories";
 import type { ResourcePartner } from "@/lib/resources/partners";
+import { programCopyKey } from "@/lib/resources/localizePartner";
 import {
   trackResourcesPartnerOpened,
   trackResourcesPartnerWebsiteOpened,
@@ -61,16 +62,24 @@ function registerSteps(partner: ResourcePartner): string[] {
   return text.split(/(?<=[.!?])\s+(?=[A-Z"“])/).filter(Boolean);
 }
 
-const SECTION_LABEL =
-  "text-[11px] font-bold tracking-[0.3px] text-res-count uppercase";
+/**
+ * Letter-spacing breaks Arabic joining and Devanagari / Gurmukhi head-strokes,
+ * so tracked labels fall back to normal spacing in those scripts.
+ */
+const SCRIPT_SAFE_TRACKING =
+  "[:lang(ar)_&]:tracking-normal [:lang(hi)_&]:tracking-normal [:lang(pa)_&]:tracking-normal";
+
+const SECTION_LABEL = `text-[11px] font-bold tracking-[0.3px] text-res-count uppercase ${SCRIPT_SAFE_TRACKING}`;
 
 /**
  * Organization detail (Figma 8681:851). Desktop: sidebar (Provided by + actions)
- * beside the main column. Mobile: title → sidebar → sections, so the actions
- * stay near the top.
+ * beside the main column. Mobile: title → sections → Provided by, with the
+ * actions in a sticky bar above the bottom nav.
  */
 export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Analytics keep the English program name, whatever the UI language.
+  const enT = i18n.getFixedT("en");
   const color = PARTNER_CATEGORY_COLORS[partner.category];
   const tint = PARTNER_CATEGORY_TINTS[partner.category];
   const categoryLabel = t(PARTNER_CATEGORY_LABEL_KEYS[partner.category]);
@@ -114,10 +123,6 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
           ? languages.join(", ")
           : t("resources.detail.languageCount", { count: languages.length }),
     },
-    {
-      label: t("resources.detail.location"),
-      value: partner.serviceArea,
-    },
   ].filter((f): f is { label: string; value: string } => Boolean(f));
 
   const quickActions = [
@@ -141,22 +146,42 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
   const verbatim = VERBATIM_SLUGS.has(partner.slug);
   const tagPills = verbatim ? [] : partner.eligibilityTags;
   const whoHasContent = tagPills.length > 0 || Boolean(partner.eligibility);
+  const hasActions = Boolean(website) || quickActions.length > 0;
+  const ctaLabel = partner.ctaLabelKey
+    ? t(partner.ctaLabelKey)
+    : t("resources.visitWebsite");
+  const trackWebsite = () =>
+    trackResourcesPartnerWebsiteOpened({
+      slug: partner.slug,
+      partnershipType: partner.partnershipType,
+    });
 
   return (
-    <div className="mx-auto w-full max-w-[1000px] animate-fade-in px-4 py-6 md:px-8 md:py-16">
+    <div
+      className={cn(
+        "mx-auto w-full max-w-[1000px] animate-fade-in px-4 py-6 md:px-8 md:py-16",
+        // Clear the sticky action bar on phones.
+        hasActions && "pb-28",
+      )}
+    >
       <BackLink
         href={`/resources/category/${partner.category}`}
         label={categoryLabel}
       />
 
-      <div className="mt-6 grid grid-cols-1 gap-5 [grid-template-areas:'head'_'side'_'body'] md:mt-8 md:grid-cols-[240px_minmax(0,1fr)] md:grid-rows-[auto_1fr] md:[grid-template-areas:'side_head'_'side_body']">
+      <div className="mt-6 grid grid-cols-1 gap-5 [grid-template-areas:'head'_'body'_'side'] md:mt-8 md:grid-cols-[240px_minmax(0,1fr)] md:grid-rows-[auto_1fr] md:[grid-template-areas:'side_head'_'side_body']">
         {/* ── Title block ─────────────────────────────────────────────── */}
         <header className="flex min-w-0 flex-col gap-2 [grid-area:head]">
-          <h1 className="text-2xl font-bold tracking-[-0.3px] break-words text-res-heading">
-            <bdi>{partner.name}</bdi>
+          <h1
+            className={cn(
+              "text-2xl font-bold tracking-[-0.3px] break-words text-res-heading",
+              SCRIPT_SAFE_TRACKING,
+            )}
+          >
+            <bdi dir="auto">{partner.name}</bdi>
           </h1>
           <p className="text-sm font-medium text-res-secondary">
-            <bdi>{partner.tagline}</bdi>
+            <bdi dir="auto">{partner.tagline}</bdi>
           </p>
           <div className="flex flex-wrap gap-x-3 gap-y-2">
             <span
@@ -169,11 +194,12 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-res-search px-2.5 py-[5px] text-[11.5px] font-semibold text-res-secondary">
               <MapPin className="h-[13px] w-[13px] shrink-0" aria-hidden />
-              <bdi>{partner.serviceArea}</bdi>
+              <bdi dir="auto">{partner.serviceArea}</bdi>
             </span>
           </div>
 
-          <dl className="mt-2 grid grid-cols-2 gap-y-3 self-stretch rounded-[10.5px] sm:w-fit sm:max-w-full sm:self-start border border-res-border bg-surface px-[13px] py-[11px] sm:flex sm:flex-wrap sm:gap-y-2">
+          {facts.length > 0 && (
+          <dl className="mt-2 grid grid-cols-2 gap-y-3 self-stretch rounded-[10.5px] border border-res-border bg-surface px-[13px] py-[11px] sm:flex sm:w-fit sm:max-w-full sm:flex-wrap sm:gap-y-2 sm:self-start">
             {facts.map((fact, i) => (
               <div
                 key={fact.label}
@@ -182,21 +208,32 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                   (i > 0 ? "sm:border-s sm:ps-[10.5px]" : "")
                 }
               >
-                <dt className="text-xs font-semibold tracking-[0.6px] text-res-count uppercase">
+                <dt
+                  className={cn(
+                    "text-xs font-semibold tracking-[0.6px] text-res-count uppercase",
+                    SCRIPT_SAFE_TRACKING,
+                  )}
+                >
                   {fact.label}
                 </dt>
                 <dd className="text-xs font-semibold break-words text-res-card-text">
-                  <bdi>{fact.value}</bdi>
+                  <bdi dir="auto">{fact.value}</bdi>
                 </dd>
               </div>
             ))}
           </dl>
+          )}
         </header>
 
         {/* ── Sidebar: Provided by + actions ─────────────────────────── */}
         <aside className="flex flex-col gap-[15px] self-start [grid-area:side]">
           <section className="flex flex-col gap-2.5 rounded-xl border border-res-border bg-surface p-[13px]">
-            <h2 className="text-[10.5px] font-extrabold tracking-[0.9px] text-res-count uppercase">
+            <h2
+              className={cn(
+                "text-[10.5px] font-extrabold tracking-[0.9px] text-res-count uppercase",
+                SCRIPT_SAFE_TRACKING,
+              )}
+            >
               {t("resources.detail.providedBy")}
             </h2>
             <div className="flex items-center gap-2.5">
@@ -210,7 +247,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
               />
               <div className="min-w-0">
                 <p className="text-sm font-bold break-words text-res-card-text">
-                  <bdi>{partner.name}</bdi>
+                  <bdi dir="auto">{partner.name}</bdi>
                 </p>
                 <p className="text-[11.5px] font-medium text-res-count">
                   {categoryLabel}
@@ -236,26 +273,19 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
             </ul>
           </section>
 
-          {(website || quickActions.length > 0) && (
-            <section className="flex flex-col gap-2 rounded-xl border border-res-border bg-surface p-[13px]">
+          {hasActions && (
+            <section className="hidden flex-col gap-2 rounded-xl border border-res-border bg-surface p-[13px] md:flex">
               {website && (
                 <a
                   href={website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() =>
-                    trackResourcesPartnerWebsiteOpened({
-                      slug: partner.slug,
-                      partnershipType: partner.partnershipType,
-                    })
-                  }
-                  className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-center text-sm font-bold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                  onClick={trackWebsite}
+                  className="flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-center text-sm leading-tight font-bold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                   style={{ backgroundColor: color }}
                 >
                   <Globe className="h-4 w-4 shrink-0" aria-hidden />
-                  {partner.ctaLabelKey
-                    ? t(partner.ctaLabelKey)
-                    : t("resources.visitWebsite")}
+                  {ctaLabel}
                 </a>
               )}
               {quickActions.length > 0 && (
@@ -268,10 +298,10 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                       {...(a.external
                         ? { target: "_blank", rel: "noopener noreferrer" }
                         : {})}
-                      className="flex min-h-9 items-center justify-center gap-1 rounded-[11px] border border-res-outline px-1 py-2 text-xs font-bold text-res-link transition-colors hover:bg-res-free-bg"
+                      className="flex min-h-9 items-center justify-center gap-1 rounded-[11px] border border-res-outline px-1 py-2 text-center text-xs leading-tight font-bold text-res-link transition-colors hover:bg-res-free-bg"
                     >
                       <a.icon className="h-4 w-4 shrink-0" aria-hidden />
-                      <span className="truncate">{a.label}</span>
+                      <span>{a.label}</span>
                     </a>
                   ))}
                 </div>
@@ -293,7 +323,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
             {/* Blank-line-separated paragraphs (partner-supplied copy can run long). */}
             {partner.description.split(/\n\s*\n/).map((para, i) => (
               <p key={i} className="text-[13.5px] leading-[20.9px] text-res-body">
-                <bdi>{para}</bdi>
+                <bdi dir="auto">{para}</bdi>
               </p>
             ))}
             {partner.highlights.length > 0 && (
@@ -301,7 +331,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                 {partner.highlights.map((h) => (
                   <li key={h} className="flex items-start gap-1.5 text-xs font-medium text-res-body">
                     <CheckCircle2 className="mt-px h-[13px] w-[13px] shrink-0 text-res-link" aria-hidden />
-                    <bdi>{h}</bdi>
+                    <bdi dir="auto">{h}</bdi>
                   </li>
                 ))}
               </ul>
@@ -320,7 +350,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
               )}
               {partner.eligibility && (
                 <p className="text-[13.5px] leading-[20.9px] text-res-body">
-                  <bdi>{partner.eligibility}</bdi>
+                  <bdi dir="auto">{partner.eligibility}</bdi>
                 </p>
               )}
             </section>
@@ -335,7 +365,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                     <span className="flex h-[16.5px] w-[16.5px] shrink-0 items-center justify-center rounded-full bg-res-free-bg text-[11px] font-black text-res-link">
                       {i + 1}
                     </span>
-                    <span className="min-w-0 break-words pt-px"><bdi>{step}</bdi></span>
+                    <span className="min-w-0 break-words pt-px"><bdi dir="auto">{step}</bdi></span>
                   </li>
                 ))}
               </ol>
@@ -350,7 +380,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                   const purl = ctaOnly ? null : externalHref(program.url);
                   return (
                     <li
-                      key={program.name}
+                      key={program.id}
                       className="rounded-[15px] border border-res-border bg-surface px-[15px] py-[14px]"
                     >
                       {purl ? (
@@ -361,28 +391,30 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                           onClick={() =>
                             trackResourcesProgramOpened({
                               slug: partner.slug,
-                              programName: program.name,
+                              programName: enT(
+                                programCopyKey(partner.slug, program.id, "name"),
+                              ),
                             })
                           }
                           className="inline-flex items-center gap-1.5 text-sm font-bold text-res-card-text transition-colors hover:text-res-link"
                         >
-                          <bdi>{program.name}</bdi>
+                          <bdi dir="auto">{program.name}</bdi>
                           <ExternalLink className="h-3.5 w-3.5 shrink-0 text-res-count" aria-hidden />
                         </a>
                       ) : (
                         <p className="text-sm font-bold text-res-card-text">
-                          <bdi>{program.name}</bdi>
+                          <bdi dir="auto">{program.name}</bdi>
                         </p>
                       )}
                       <p className="mt-1 text-[13px] leading-[18.2px] text-res-secondary">
-                        <bdi>{program.description}</bdi>
+                        <bdi dir="auto">{program.description}</bdi>
                       </p>
                       {program.eligibility && (
                         <p className="mt-1.5 text-xs leading-relaxed text-res-secondary">
                           <span className="font-semibold text-res-body">
                             {t("resources.whoItsFor")}:
                           </span>{" "}
-                          <bdi>{program.eligibility}</bdi>
+                          <bdi dir="auto">{program.eligibility}</bdi>
                         </p>
                       )}
                       {program.cost && <CostChip cost={program.cost} className="mt-2" />}
@@ -394,6 +426,51 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
           )}
         </div>
       </div>
+
+      {/* ── Phones: sticky action bar above the bottom nav ─────────────── */}
+      {hasActions && (
+        <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-30 border-t border-res-divider bg-surface px-4 py-2.5 md:hidden">
+          <div className="mx-auto flex max-w-[680px] items-stretch gap-2">
+            {website && (
+              <a
+                href={website}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={trackWebsite}
+                className="flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-center text-sm leading-tight font-bold text-white"
+                style={{ backgroundColor: color }}
+              >
+                <Globe className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="min-w-0">{ctaLabel}</span>
+              </a>
+            )}
+            {quickActions.map((a) => (
+              <a
+                key={a.label}
+                href={a.href}
+                aria-label={a.a11y}
+                title={a.label}
+                {...(a.external
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
+                className={cn(
+                  "flex min-h-11 items-center justify-center rounded-xl border border-res-outline text-res-link",
+                  website ? "w-11 shrink-0" : "flex-1 gap-1.5 text-xs font-bold",
+                )}
+              >
+                <a.icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
+                {!website && <span>{a.label}</span>}
+              </a>
+            ))}
+          </div>
+          {SHOW_REFERRAL_DISCLOSURE && partner.partnershipType === "referral" && (
+            <p className="mx-auto mt-1.5 flex max-w-[680px] items-center gap-1.5 text-xs text-res-count">
+              <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span>{t("resources.referralDisclosure")}</span>
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -413,10 +490,10 @@ function ContactRow({
       <Icon className="mt-0.5 h-[14px] w-[14px] shrink-0 text-res-count" aria-hidden />
       {href ? (
         <a href={href} className="min-w-0 break-words text-res-link hover:underline">
-          <bdi>{text}</bdi>
+          <bdi dir="auto">{text}</bdi>
         </a>
       ) : (
-        <bdi className="min-w-0 break-words">{text}</bdi>
+        <bdi dir="auto" className="min-w-0 break-words">{text}</bdi>
       )}
     </li>
   );

@@ -9,10 +9,8 @@ import { PartnerResults } from "@/components/resources/PartnerResults";
 import { ResourcesSearch } from "@/components/resources/ResourcesSearch";
 import { filterValueLabel } from "@/components/resources/filterLabels";
 import { useResourceFilters } from "@/hooks/useResourceFilters";
-import {
-  getActiveResourcePartners,
-  getCategoriesWithPartners,
-} from "@/lib/resources/partners";
+import { getCategoriesWithPartners } from "@/lib/resources/partners";
+import { useResourcePartners } from "@/hooks/useResourcePartners";
 import { PARTNER_CATEGORY_LABEL_KEYS } from "@/lib/resources/categories";
 import {
   PREFERENCE_PILLS,
@@ -46,7 +44,7 @@ function ResourcesFront() {
   const [howOpen, setHowOpen] = useState(false);
   const { filters, query, setQuery, toggle, clearFilters } = useResourceFilters();
   const categories = getCategoriesWithPartners();
-  const partners = useMemo(() => getActiveResourcePartners(), []);
+  const partners = useResourcePartners();
 
   const searching = query.trim().length > 0 || hasActiveFilters(filters);
   const { results, unlistedCount } = useMemo(() => {
@@ -98,6 +96,7 @@ function ResourcesFront() {
           </h2>
           <PartnerResults
             scope={partners}
+            directory={partners}
             results={results}
             unlistedCount={unlistedCount}
             filters={filters}

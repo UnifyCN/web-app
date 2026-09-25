@@ -976,16 +976,14 @@ the gradient when set. Add any new image hosts to `next.config.ts`.
 *(Update, Resources redesign: the Figma detail frame has no hero, so `heroImage` is no longer
 rendered; `logo` still shows in the "Provided by" card.)*
 
-**Partner copy is English-only on web; mobile has all 7 languages (follow-up, from the Resources
-redesign PR)**
-Mobile moved every partner string into its locale files (`learn.resources.partners.<slug>.*`, resolved
-by `utils/localizePartner.ts`, guarded by `__tests__/resources/partnerCopy.test.ts`), and all 20
-partners exist in en / fr-CA / ar / vi / es / hi / pa. Web still reads the hardcoded English in
-`lib/resources/partners.ts`. There is no shared source to switch to (it lives in the mobile repo's
-JSON), so the fix is a port: copy the existing `partners` blocks into web's
-`resources.partners.*`, add a web `localizePartner`, and a parity test. Use only mobile's existing
-translations (no machine translation). **Exception:** Canada Shaws copy is contract-controlled; confirm
-their translated blocks are approved before shipping them.
+**Resources: one shared partner source (follow-up from PR #137)**
+PR #137 synced web's partner data from mobile `main` @ `ce38ba1`: structure in
+`lib/resources/partners.ts`, copy in `resources.partners.<slug>` in all 7 locale files, resolved by
+`lib/resources/localizePartner.ts` (a port of mobile's). They are still **two copies** and will drift
+again as mobile edits listings. Move both apps to one source — a Sanity `partner` type (mobile's
+Partner shape maps 1:1) or a shared package — and delete both hardcoded copies. Until then, re-sync by
+diffing mobile `constants/Partners.ts` + `learn.resources.partners` against web. Canada Shaws copy is
+contract-controlled: only take what mobile has.
 
 **Resources redesign — design elements not built (need data or a DB change)**
 - **"Save for later"** (Figma 8681:851): needs a per-user saved-resources table on the shared DB.
