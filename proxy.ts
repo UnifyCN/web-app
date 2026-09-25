@@ -206,7 +206,13 @@ export const config = {
      * social-card assets fetched by unauthenticated crawlers, and the Sentry
      * tunnel receives unauthenticated POSTs from the browser SDK — neither must
      * be bounced through the /welcome auth gate.
+     *
+     * /api/cron/ is exempt because Vercel Cron calls it with no session.
+     * SECURITY: every route under /api/cron/ is therefore public to the
+     * internet and MUST verify CRON_SECRET itself (see
+     * app/api/cron/sentry-snapshot/route.ts). Keep the exemption to exactly
+     * this prefix.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|monitoring(?:/|$)|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|monitoring(?:/|$)|api/cron/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
