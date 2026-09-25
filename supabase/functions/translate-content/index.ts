@@ -57,6 +57,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
   hi: 'Hindi',
   ar: 'Arabic',
   'fr-CA': 'Canadian French',
+  pa: 'Punjabi',
 };
 
 const MAX_CONTENT_LENGTH = 5000; // same bound as translate-post
