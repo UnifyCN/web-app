@@ -140,6 +140,8 @@ export async function generateCoverLetterTurn(args: {
   jobPosting: { title: string; company: string; text: string } | null;
   todayDate: string;
   profile: CoverLetterProfileContext;
+  /** Draft id, used only as the `$ai_trace_id` grouping key (not content). */
+  traceId?: string;
 }): Promise<CoverLetterTurnResponse> {
   const history = args.history
     .slice(-COVER_LETTER_HISTORY_TURNS)
@@ -156,6 +158,7 @@ export async function generateCoverLetterTurn(args: {
       jobPosting: args.jobPosting,
       todayDate: args.todayDate,
       profile: args.profile,
+      traceId: args.traceId,
     }),
   });
 

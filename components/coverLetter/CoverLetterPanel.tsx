@@ -6,6 +6,7 @@ import {
   coverLetterDocxFilename,
 } from "@/lib/coverLetter/exportDocx";
 import { PreviewPanel } from "@/components/documents/PreviewPanel";
+import { trackCoverLetterExported } from "@/lib/analytics";
 import { CoverLetterPaper } from "./CoverLetterPaper";
 import type { CoverLetterUpdater } from "@/lib/coverLetter/editOps";
 import type { CoverLetterData } from "@/types/coverLetter";
@@ -53,6 +54,7 @@ export function CoverLetterPanel({
       buildingHint={t("coverLetter.buildingHint")}
       exportFailedLabel={t("coverLetter.exportFailed")}
       exportErrorLog="Cover letter: DOCX export failed"
+      onExported={(format) => trackCoverLetterExported({ format })}
       onExportDocx={() => buildCoverLetterDocx(data)}
       docxFilename={coverLetterDocxFilename(data)}
       printRootClassName="cover-letter-print-root"

@@ -11,6 +11,9 @@ import { buildProfile, nowIso } from "@/lib/drafts/profile";
 import type { CoverLetterUpdater } from "@/lib/coverLetter/editOps";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n/config";
+import { DocumentImportError } from "@/lib/documents/errors";
+import { COVER_LETTER_DAILY_MESSAGE_LIMIT } from "@/lib/coverLetter/schema";
+import { trackCoverLetterCreated } from "@/lib/analytics";
 import type { UserProfile } from "@/types";
 import type {
   CoverLetterChatMessage,
@@ -54,6 +57,13 @@ const hooks = createDraftHooks<CoverLetterDraft, CoverLetterDraftSummary>({
     duplicateDraft: coverLetter.duplicateDraft,
   },
   keys: { drafts: DRAFTS_KEY, usage: USAGE_KEY, draftKey },
+  analytics: {
+    feature: "cover_letter",
+    promptLimit: COVER_LETTER_DAILY_MESSAGE_LIMIT,
+    isLimitError: (err) =>
+      err instanceof coverLetter.CoverLetterLimitError ||
+      (err instanceof DocumentImportError && err.code === "daily_limit_reached"),
+  },
 });
 
 /** The two visible stages of an import, for a two-step progress indicator. */
@@ -141,6 +151,10 @@ export function useCreateCoverLetterDraft() {
     onSuccess: (draft) => {
       queryClient.setQueryData(draftKey(draft.id), draft);
       queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
+      trackCoverLetterCreated({
+        method: "scratch",
+        hasLinkedResume: !!draft.coverLetter.resumeDraftId,
+      });
     },
   });
 }
@@ -198,7 +212,13 @@ export function useImportCoverLetterDraft() {
       queryClient.setQueryData(draftKey(draft.id), draft);
       queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_KEY });
+      trackCoverLetterCreated({
+        method: "file_import",
+        hasLinkedResume: !!draft.coverLetter.resumeDraftId,
+      });
+      hooks.reportPromptSent(queryClient, "import");
     },
+    onError: (err) => hooks.reportLimitReached(err, "import"),
   });
 }
 
@@ -299,6 +319,7 @@ export function useSendCoverLetterMessage() {
         jobPosting,
         todayDate: draft.coverLetter.date || formatToday(),
         profile,
+        traceId: draftId,
       });
 
       const assistantMessage: CoverLetterChatMessage = {
@@ -349,13 +370,15 @@ export function useSendCoverLetterMessage() {
       );
       return { key };
     },
-    onError: (_err, _vars, context) => {
+    onError: (err, _vars, context) => {
       if (context) queryClient.invalidateQueries({ queryKey: context.key });
+      hooks.reportLimitReached(err, "chat");
     },
     onSuccess: (finalDraft) => {
       queryClient.setQueryData(draftKey(finalDraft.id), finalDraft);
       queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
       queryClient.invalidateQueries({ queryKey: USAGE_KEY });
+      hooks.reportPromptSent(queryClient, "chat");
     },
   });
 }

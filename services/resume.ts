@@ -109,6 +109,8 @@ export async function generateResumeTurn(args: {
   message: string;
   currentResume: ResumeData;
   profile: ResumeProfileContext;
+  /** Draft id, used only as the `$ai_trace_id` grouping key (not content). */
+  traceId?: string;
 }): Promise<ResumeTurnResponse> {
   const history = args.history
     .slice(-RESUME_HISTORY_TURNS)
@@ -122,6 +124,7 @@ export async function generateResumeTurn(args: {
       history,
       currentResume: args.currentResume,
       profile: args.profile,
+      traceId: args.traceId,
     }),
   });
 

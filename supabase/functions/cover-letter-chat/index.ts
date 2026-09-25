@@ -31,6 +31,11 @@ const corsHeaders = {
   'Content-Type': 'application/json',
 };
 
+// The draft id (forwarded by the web proxy) groups a document's generations as
+// one `$ai_trace_id`; anything else gets a fresh id. Never content.
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: corsHeaders });
 }
@@ -500,6 +505,7 @@ Deno.serve(async req => {
           message,
         );
 
+    const llmStartedAt = performance.now();
     const llmResult = await callOpenRouter({
       model: 'deepseek/deepseek-v4.1-flash',
       messages,
@@ -521,6 +527,7 @@ Deno.serve(async req => {
       return jsonResponse({ error: 'AI service unavailable' }, status);
     }
 
+    // Metadata only — never $ai_input / $ai_output_choices (resume/letter text).
     captureAiGeneration(authData.user.id, {
       $ai_model: llmResult.model,
       $ai_provider: llmResult.provider,
@@ -528,6 +535,13 @@ Deno.serve(async req => {
       $ai_output_tokens: llmResult.usage.completionTokens,
       $ai_total_tokens: llmResult.usage.totalTokens,
       $ai_total_cost_usd: llmResult.usage.costUsd,
+      $ai_latency: (performance.now() - llmStartedAt) / 1000,
+      $ai_trace_id:
+        typeof body.traceId === 'string' && UUID_RE.test(body.traceId)
+          ? body.traceId
+          : crypto.randomUUID(),
+      // Separates web AI cost from mobile's in the shared PostHog project.
+      platform: 'web',
       feature: 'cover_letter',
       // Web-only function — hardcode the source so a direct caller can't spoof
       // the $ai_generation source metric (the /api/cover-letter proxy is the

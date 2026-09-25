@@ -13,7 +13,20 @@
  * hooks and the bespoke ones key off the SAME objects.
  */
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
+import { JobPostingError } from "@/lib/drafts/errors";
+import {
+  jobSourceDomain,
+  trackAiPromptLimitReached,
+  trackAiPromptSent,
+  trackJobPostingImported,
+  type DocumentFeature,
+} from "@/lib/analytics";
 import type { ResumeJobPosting } from "@/types/resume";
 
 /** Minimum a draft record must expose for these hooks' cache merges. */
@@ -44,6 +57,14 @@ export interface DraftHooksConfig<TDraft extends DraftLike, TSummary> {
     usage: readonly unknown[];
     draftKey: (id: string) => readonly unknown[];
   };
+  /** Analytics identity for the feature's funnel + quota events. */
+  analytics: {
+    feature: DocumentFeature;
+    /** The server-enforced daily message cap (mirrors the edge fn). */
+    promptLimit: number;
+    /** True for the feature's daily-limit error (ResumeLimitError, …). */
+    isLimitError: (err: unknown) => boolean;
+  };
 }
 
 interface FetchJobPostingInput {
@@ -66,7 +87,38 @@ interface DuplicateInput {
 export function createDraftHooks<TDraft extends DraftLike, TSummary>(
   config: DraftHooksConfig<TDraft, TSummary>,
 ) {
-  const { service, keys } = config;
+  const { service, keys, analytics } = config;
+
+  /**
+   * Report one charged AI turn with the fresh daily count. Fire-and-forget: the
+   * usage read happens after the turn resolves and never blocks or fails it.
+   */
+  function reportPromptSent(queryClient: QueryClient, mode: "chat" | "import") {
+    queryClient
+      .fetchQuery({ queryKey: keys.usage, queryFn: service.getUsage, staleTime: 0 })
+      .then((usage) =>
+        trackAiPromptSent({
+          feature: analytics.feature,
+          mode,
+          promptsUsed: usage.count,
+          promptLimit: analytics.promptLimit,
+        }),
+      )
+      .catch((err) => console.warn("[analytics] usage read failed", err));
+  }
+
+  /** Report a daily-cap rejection (no-op for any other error). */
+  function reportLimitReached(
+    err: unknown,
+    trigger: "chat" | "import" | "job_import",
+  ) {
+    if (!analytics.isLimitError(err)) return;
+    trackAiPromptLimitReached({
+      feature: analytics.feature,
+      promptLimit: analytics.promptLimit,
+      trigger,
+    });
+  }
 
   function useDrafts() {
     return useQuery({ queryKey: keys.drafts, queryFn: service.listDrafts });
@@ -94,14 +146,45 @@ export function createDraftHooks<TDraft extends DraftLike, TSummary>(
    */
   function useFetchJobPosting() {
     const queryClient = useQueryClient();
+    // Domain only (never the URL itself); pasted text carries no source.
+    const importProps = (source: FetchJobPostingInput["source"]) =>
+      "url" in source
+        ? { input: "url" as const, sourceDomain: jobSourceDomain(source.url) }
+        : { input: "paste" as const };
     return useMutation<TDraft, Error, FetchJobPostingInput>({
       mutationFn: async ({ draftId, source }) => {
         const jobPosting = await service.fetchJobPosting(source);
         return service.setDraftJobPosting(draftId, jobPosting);
       },
-      onSuccess: (draft) => {
+      onMutate: ({ source }) => {
+        trackJobPostingImported({
+          feature: analytics.feature,
+          status: "started",
+          ...importProps(source),
+        });
+      },
+      onSuccess: (draft, { source }) => {
         queryClient.setQueryData(keys.draftKey(draft.id), draft);
         queryClient.invalidateQueries({ queryKey: keys.drafts });
+        trackJobPostingImported({
+          feature: analytics.feature,
+          status: "succeeded",
+          ...importProps(source),
+        });
+      },
+      onError: (err, { source }) => {
+        const limited = analytics.isLimitError(err);
+        trackJobPostingImported({
+          feature: analytics.feature,
+          status: "failed",
+          ...importProps(source),
+          errorCode: limited
+            ? "daily_limit_reached"
+            : err instanceof JobPostingError
+              ? err.code
+              : "generic",
+        });
+        reportLimitReached(err, "job_import");
       },
     });
   }
@@ -160,6 +243,8 @@ export function createDraftHooks<TDraft extends DraftLike, TSummary>(
   }
 
   return {
+    reportPromptSent,
+    reportLimitReached,
     useDrafts,
     useDraft,
     useUsage,

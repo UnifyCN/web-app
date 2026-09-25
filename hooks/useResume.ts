@@ -6,6 +6,9 @@ import { buildProfile, nowIso } from "@/lib/drafts/profile";
 import type { ResumeUpdater } from "@/lib/resume/editOps";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n/config";
+import { DocumentImportError } from "@/lib/documents/errors";
+import { RESUME_DAILY_MESSAGE_LIMIT } from "@/lib/resume/schema";
+import { trackResumeCreated } from "@/lib/analytics";
 import type { UserProfile } from "@/types";
 import type {
   ResumeChatMessage,
@@ -39,6 +42,13 @@ const hooks = createDraftHooks<ResumeDraft, ResumeDraftSummary>({
     duplicateDraft: resume.duplicateDraft,
   },
   keys: { drafts: DRAFTS_KEY, usage: USAGE_KEY, draftKey },
+  analytics: {
+    feature: "resume_builder",
+    promptLimit: RESUME_DAILY_MESSAGE_LIMIT,
+    isLimitError: (err) =>
+      err instanceof resume.ResumeLimitError ||
+      (err instanceof DocumentImportError && err.code === "daily_limit_reached"),
+  },
 });
 
 export const useResumeDrafts = hooks.useDrafts;
@@ -95,6 +105,7 @@ export function useCreateResumeDraft() {
     onSuccess: (draft) => {
       queryClient.setQueryData(draftKey(draft.id), draft);
       queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
+      trackResumeCreated({ method: "scratch" });
     },
   });
 }
@@ -150,7 +161,10 @@ export function useImportResumeDraft() {
       queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
       // The mapping turn consumed a message — refresh the quota meter.
       queryClient.invalidateQueries({ queryKey: USAGE_KEY });
+      trackResumeCreated({ method: "file_import" });
+      hooks.reportPromptSent(queryClient, "import");
     },
+    onError: (err) => hooks.reportLimitReached(err, "import"),
   });
 }
 
@@ -259,6 +273,7 @@ export function useSendResumeMessage() {
           message: modelPrompt ?? text,
           currentResume: draft.resume,
           profile,
+          traceId: draftId,
         });
 
         const assistantMessage: ResumeChatMessage = {
@@ -314,15 +329,17 @@ export function useSendResumeMessage() {
         );
         return { key };
       },
-      onError: (_err, _vars, context) => {
+      onError: (err, _vars, context) => {
         // The user turn was persisted; reconverge the cache to the stored state
         // (keeps their message, drops the failed assistant turn).
         if (context) queryClient.invalidateQueries({ queryKey: context.key });
+        hooks.reportLimitReached(err, "chat");
       },
       onSuccess: (finalDraft) => {
         queryClient.setQueryData(draftKey(finalDraft.id), finalDraft);
         queryClient.invalidateQueries({ queryKey: DRAFTS_KEY });
         queryClient.invalidateQueries({ queryKey: USAGE_KEY });
+        hooks.reportPromptSent(queryClient, "chat");
       },
     },
   );
