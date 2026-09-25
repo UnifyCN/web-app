@@ -56,6 +56,7 @@ const RESPONSE_LANGUAGE_NAMES: Record<string, string> = {
   hi: 'Hindi',
   ar: 'Arabic',
   'fr-CA': 'Canadian French',
+  pa: 'Punjabi',
 };
 
 const INVALID_ASSISTANT_LED_PATTERNS: RegExp[] = [
