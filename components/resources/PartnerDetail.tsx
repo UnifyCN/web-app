@@ -289,7 +289,9 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                 </a>
               )}
               {quickActions.length > 0 && (
-                <div className="grid auto-cols-fr grid-flow-col gap-1.5">
+                // One row per action: labels like "Correo electrónico" don't
+                // fit a third of the 240px column in every language.
+                <div className="flex flex-col gap-1.5">
                   {quickActions.map((a) => (
                     <a
                       key={a.label}
@@ -298,12 +300,10 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                       {...(a.external
                         ? { target: "_blank", rel: "noopener noreferrer" }
                         : {})}
-                      // Icon above the label: three buttons share a 240px
-                      // column, and "Appeler" / "Courriel" don't fit beside an icon.
-                      className="flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-[11px] border border-res-outline px-1 py-1.5 text-center text-[11px] leading-tight font-bold text-res-link transition-colors hover:bg-res-free-bg"
+                      className="flex min-h-9 items-center justify-center gap-1.5 rounded-[11px] border border-res-outline px-3 py-2 text-center text-xs leading-tight font-bold text-res-link transition-colors hover:bg-res-free-bg"
                     >
                       <a.icon className="h-4 w-4 shrink-0" aria-hidden />
-                      <span className="max-w-full break-words">{a.label}</span>
+                      <span>{a.label}</span>
                     </a>
                   ))}
                 </div>
