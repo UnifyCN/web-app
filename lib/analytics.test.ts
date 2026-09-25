@@ -33,7 +33,9 @@ describe("jobSourceDomain", () => {
   });
 
   it("drops credentials in the authority", () => {
-    expect(jobSourceDomain("https://user:pass@indeed.com/x")).toBe("indeed.com");
+    expect(jobSourceDomain("https://user:pass@indeed.com/x")).toBe(
+      "indeed.com",
+    );
   });
 
   it("returns undefined for unparseable input", () => {
@@ -58,7 +60,10 @@ describe("resume / cover-letter trackers send metadata only", () => {
 
   it("resume_created", () => {
     trackResumeCreated({ method: "scratch" });
-    expect(lastCall()).toMatchObject({ event: "resume_created", keys: ["method"] });
+    expect(lastCall()).toMatchObject({
+      event: "resume_created",
+      keys: ["method"],
+    });
   });
 
   it("cover_letter_created", () => {
@@ -93,7 +98,10 @@ describe("resume / cover-letter trackers send metadata only", () => {
 
   it("exports", () => {
     trackResumeExported({ format: "pdf" });
-    expect(lastCall()).toMatchObject({ event: "resume_exported", keys: ["format"] });
+    expect(lastCall()).toMatchObject({
+      event: "resume_exported",
+      keys: ["format"],
+    });
     trackCoverLetterExported({ format: "docx" });
     expect(lastCall()).toMatchObject({
       event: "cover_letter_exported",
@@ -113,7 +121,11 @@ describe("resume / cover-letter trackers send metadata only", () => {
       keys: ["feature", "mode", "prompt_limit", "prompts_used"],
     });
     // Usage read failed: the event still goes out, without a fabricated count.
-    trackAiPromptSent({ feature: "cover_letter", mode: "import", promptLimit: 20 });
+    trackAiPromptSent({
+      feature: "cover_letter",
+      mode: "import",
+      promptLimit: 20,
+    });
     expect(lastCall()).toMatchObject({
       event: "ai_prompt_sent",
       keys: ["feature", "mode", "prompt_limit"],

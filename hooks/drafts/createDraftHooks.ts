@@ -103,15 +103,18 @@ export function createDraftHooks<TDraft extends DraftLike, TSummary>(
         promptsUsed,
         promptLimit: analytics.promptLimit,
       });
-    queryClient
-      .fetchQuery({ queryKey: keys.usage, queryFn: service.getUsage, staleTime: 0 })
-      .then(
-        (usage) => send(usage.count),
-        (err) => {
-          console.warn("[analytics] usage read failed", err);
-          send();
-        },
-      );
+    // Read usage directly, not via fetchQuery: that would reuse an in-flight
+    // usage request started before this turn's charge and report a stale count.
+    service.getUsage().then(
+      (usage) => {
+        queryClient.setQueryData(keys.usage, usage);
+        send(usage.count);
+      },
+      (err) => {
+        console.warn("[analytics] usage read failed", err);
+        send();
+      },
+    );
   }
 
   /** Report a daily-cap rejection (no-op for any other error). */

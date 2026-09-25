@@ -9,13 +9,15 @@ vi.mock("@/lib/posthog", () => ({
 
 import { createDraftHooks } from "./createDraftHooks";
 
-function makeHooks() {
+function makeHooks(
+  getUsage: () => Promise<{ count: number; remaining: number }>,
+) {
   const noop = () => Promise.reject(new Error("unused"));
   return createDraftHooks({
     service: {
       listDrafts: noop,
       getDraft: noop,
-      getUsage: noop,
+      getUsage,
       fetchJobPosting: noop,
       setDraftJobPosting: noop,
       deleteDraft: noop,
@@ -31,8 +33,8 @@ function makeHooks() {
   });
 }
 
-const clientWith = (fetchQuery: () => Promise<unknown>) =>
-  ({ fetchQuery }) as unknown as QueryClient;
+const setQueryData = vi.fn();
+const client = { setQueryData } as unknown as QueryClient;
 
 // Let the fire-and-forget usage read settle.
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -41,15 +43,20 @@ describe("reportPromptSent", () => {
   beforeEach(() => {
     vi.stubGlobal("window", {});
     captureMock.mockReset();
+    setQueryData.mockReset();
   });
   afterEach(() => vi.unstubAllGlobals());
 
   it("sends prompts_used from the fresh usage read", async () => {
-    makeHooks().reportPromptSent(
-      clientWith(() => Promise.resolve({ count: 7, remaining: 13 })),
-      "chat",
-    );
+    makeHooks(() =>
+      Promise.resolve({ count: 7, remaining: 13 }),
+    ).reportPromptSent(client, "chat");
     await flush();
+    // The fresh read also refreshes the quota meter's cache.
+    expect(setQueryData).toHaveBeenCalledWith(["u"], {
+      count: 7,
+      remaining: 13,
+    });
     expect(captureMock).toHaveBeenCalledWith("ai_prompt_sent", {
       feature: "resume_builder",
       mode: "chat",
@@ -60,8 +67,8 @@ describe("reportPromptSent", () => {
 
   it("still sends the event, without prompts_used, when the read fails", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    makeHooks().reportPromptSent(
-      clientWith(() => Promise.reject(new Error("offline"))),
+    makeHooks(() => Promise.reject(new Error("offline"))).reportPromptSent(
+      client,
       "import",
     );
     await flush();
