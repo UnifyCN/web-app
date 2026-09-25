@@ -7,11 +7,10 @@
 
 /**
  * Supported UI languages (code → native display label). `en`/`vi`/`es`/`hi`/
- * `ar`/`fr-CA` mirror the mobile app's `i18n/index.ts` exactly (mobile PR
- * #299); `ar` (Arabic) is RTL — see RTL_LANGUAGES / dirForLanguage below.
- * `pa` (Punjabi) is web-first, opt-in only, pending native review — see
- * isLanguageEnabled. `ar`/`fr-CA` can be hidden again with their kill-switch
- * env var (isLanguageEnabled).
+ * `ar`/`fr-CA`/`pa` mirror the mobile app's `i18n/index.ts` exactly (mobile
+ * PRs #299 and #308); `ar` (Arabic) is RTL — see RTL_LANGUAGES /
+ * dirForLanguage below. `ar`/`fr-CA`/`pa` can each be hidden again with their
+ * kill-switch env var (isLanguageEnabled).
  */
 export const SUPPORTED_LANGUAGES = {
   en: "English",
@@ -43,17 +42,11 @@ export function isRtlLanguage(value: unknown): boolean {
 }
 
 /**
- * Arabic and Canadian French are ON by default — the mobile app ships them
- * ungated (mobile PR #299) and a user's `preferred_language` syncs across both
- * apps — with a kill-switch to hide either again (NEXT_PUBLIC_ENABLE_ARABIC /
- * NEXT_PUBLIC_ENABLE_FRENCH set to "false").
- *
- * Punjabi is the opposite: OFF by default, opt-in only. Its Sanity content
- * rollout is drafts-only pending native-speaker review (unlike ar/fr-CA,
- * which are already published on both apps), so it doesn't get the same
- * default as those two just because the code shape looks similar — set
- * NEXT_PUBLIC_ENABLE_PUNJABI to "true" to surface it for local testing. Do
- * not flip this on anywhere it would go live.
+ * Arabic, Canadian French and Punjabi are ON by default — the mobile app ships
+ * them ungated (mobile PRs #299 and #308), their Sanity content is published,
+ * and a user's `preferred_language` syncs across both apps — with a
+ * kill-switch to hide any of them again (NEXT_PUBLIC_ENABLE_ARABIC /
+ * NEXT_PUBLIC_ENABLE_FRENCH / NEXT_PUBLIC_ENABLE_PUNJABI set to "false").
  *
  * A disabled language stays a valid `SupportedLanguage` (still typechecks,
  * still resolves a direction for RTL mirroring) but every path that could
@@ -65,7 +58,7 @@ export function isRtlLanguage(value: unknown): boolean {
 export function isLanguageEnabled(lang: SupportedLanguage): boolean {
   if (lang === "ar") return process.env.NEXT_PUBLIC_ENABLE_ARABIC !== "false";
   if (lang === "fr-CA") return process.env.NEXT_PUBLIC_ENABLE_FRENCH !== "false";
-  if (lang === "pa") return process.env.NEXT_PUBLIC_ENABLE_PUNJABI === "true";
+  if (lang === "pa") return process.env.NEXT_PUBLIC_ENABLE_PUNJABI !== "false";
   return true;
 }
 
@@ -117,7 +110,7 @@ export function negotiateLanguage(
     if (!code) continue;
     const base = code.split("-")[0];
     // isLanguageEnabled here too, not just isSupportedLanguage: a gated catalog
-    // (ar/fr-CA/pa, pending native review) must not get auto-selected for a
+    // (ar/fr-CA/pa, when switched off) must not get auto-selected for a
     // brand-new visitor just because their browser sends that Accept-Language —
     // the cookie/localStorage gate checks elsewhere don't help on a first visit.
     if (isSupportedLanguage(base) && isLanguageEnabled(base)) return base;
