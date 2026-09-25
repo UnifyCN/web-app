@@ -18,6 +18,7 @@ import {
 import { cn, externalHref, telHref } from "@/lib/utils";
 import { OrgMonogram } from "./OrgMonogram";
 import { BackLink } from "./BackLink";
+import { Bidi } from "./Bidi";
 import { CostChip } from "./CostChip";
 import { FilterPill } from "./FilterPill";
 import {
@@ -178,10 +179,10 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
               SCRIPT_SAFE_TRACKING,
             )}
           >
-            <bdi dir="auto">{partner.name}</bdi>
+            <Bidi>{partner.name}</Bidi>
           </h1>
           <p className="text-sm font-medium text-res-secondary">
-            <bdi dir="auto">{partner.tagline}</bdi>
+            <Bidi>{partner.tagline}</Bidi>
           </p>
           <div className="flex flex-wrap gap-x-3 gap-y-2">
             <span
@@ -194,7 +195,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-res-search px-2.5 py-[5px] text-[11.5px] font-semibold text-res-secondary">
               <MapPin className="h-[13px] w-[13px] shrink-0" aria-hidden />
-              <bdi dir="auto">{partner.serviceArea}</bdi>
+              <Bidi>{partner.serviceArea}</Bidi>
             </span>
           </div>
 
@@ -217,7 +218,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                   {fact.label}
                 </dt>
                 <dd className="text-xs font-semibold break-words text-res-card-text">
-                  <bdi dir="auto">{fact.value}</bdi>
+                  <Bidi>{fact.value}</Bidi>
                 </dd>
               </div>
             ))}
@@ -247,7 +248,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
               />
               <div className="min-w-0">
                 <p className="text-sm font-bold break-words text-res-card-text">
-                  <bdi dir="auto">{partner.name}</bdi>
+                  <Bidi>{partner.name}</Bidi>
                 </p>
                 <p className="text-[11.5px] font-medium text-res-count">
                   {categoryLabel}
@@ -325,7 +326,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
             {/* Blank-line-separated paragraphs (partner-supplied copy can run long). */}
             {partner.description.split(/\n\s*\n/).map((para, i) => (
               <p key={i} className="text-[13.5px] leading-[20.9px] text-res-body">
-                <bdi dir="auto">{para}</bdi>
+                <Bidi>{para}</Bidi>
               </p>
             ))}
             {partner.highlights.length > 0 && (
@@ -333,7 +334,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                 {partner.highlights.map((h) => (
                   <li key={h} className="flex items-start gap-1.5 text-xs font-medium text-res-body">
                     <CheckCircle2 className="mt-px h-[13px] w-[13px] shrink-0 text-res-link" aria-hidden />
-                    <bdi dir="auto">{h}</bdi>
+                    <Bidi>{h}</Bidi>
                   </li>
                 ))}
               </ul>
@@ -352,7 +353,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
               )}
               {partner.eligibility && (
                 <p className="text-[13.5px] leading-[20.9px] text-res-body">
-                  <bdi dir="auto">{partner.eligibility}</bdi>
+                  <Bidi>{partner.eligibility}</Bidi>
                 </p>
               )}
             </section>
@@ -367,7 +368,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                     <span className="flex h-[16.5px] w-[16.5px] shrink-0 items-center justify-center rounded-full bg-res-free-bg text-[11px] font-black text-res-link">
                       {i + 1}
                     </span>
-                    <span className="min-w-0 break-words pt-px"><bdi dir="auto">{step}</bdi></span>
+                    <span className="min-w-0 break-words pt-px"><Bidi>{step}</Bidi></span>
                   </li>
                 ))}
               </ol>
@@ -400,23 +401,23 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                           }
                           className="inline-flex items-center gap-1.5 text-sm font-bold text-res-card-text transition-colors hover:text-res-link"
                         >
-                          <bdi dir="auto">{program.name}</bdi>
+                          <Bidi>{program.name}</Bidi>
                           <ExternalLink className="h-3.5 w-3.5 shrink-0 text-res-count" aria-hidden />
                         </a>
                       ) : (
                         <p className="text-sm font-bold text-res-card-text">
-                          <bdi dir="auto">{program.name}</bdi>
+                          <Bidi>{program.name}</Bidi>
                         </p>
                       )}
                       <p className="mt-1 text-[13px] leading-[18.2px] text-res-secondary">
-                        <bdi dir="auto">{program.description}</bdi>
+                        <Bidi>{program.description}</Bidi>
                       </p>
                       {program.eligibility && (
                         <p className="mt-1.5 text-xs leading-relaxed text-res-secondary">
                           <span className="font-semibold text-res-body">
                             {t("resources.whoItsFor")}:
                           </span>{" "}
-                          <bdi dir="auto">{program.eligibility}</bdi>
+                          <Bidi>{program.eligibility}</Bidi>
                         </p>
                       )}
                       {program.cost && <CostChip cost={program.cost} className="mt-2" />}
@@ -492,10 +493,10 @@ function ContactRow({
       <Icon className="mt-0.5 h-[14px] w-[14px] shrink-0 text-res-count" aria-hidden />
       {href ? (
         <a href={href} className="min-w-0 break-words text-res-link hover:underline">
-          <bdi dir="auto">{text}</bdi>
+          <Bidi>{text}</Bidi>
         </a>
       ) : (
-        <bdi dir="auto" className="min-w-0 break-words">{text}</bdi>
+        <Bidi className="min-w-0 break-words">{text}</Bidi>
       )}
     </li>
   );

@@ -6,6 +6,7 @@ import { ChevronRight, Languages, MapPin } from "lucide-react";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { PARTNER_CATEGORY_LABEL_KEYS } from "@/lib/resources/categories";
 import type { ResourcePartner } from "@/lib/resources/partners";
+import { Bidi } from "./Bidi";
 import { CostChip } from "./CostChip";
 
 const CHIP =
@@ -31,7 +32,7 @@ export function PartnerCard({
       <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
         <div className="flex flex-col gap-0.5">
           <p className="text-[15px] leading-snug font-extrabold break-words text-res-card-text">
-            <bdi dir="auto">{partner.name}</bdi>
+            <Bidi>{partner.name}</Bidi>
           </p>
           {showCategory && (
             <p className="text-xs font-semibold text-res-secondary">
@@ -40,12 +41,12 @@ export function PartnerCard({
           )}
         </div>
         <p className="line-clamp-2 text-[13px] leading-[18.2px] text-res-secondary">
-          <bdi dir="auto">{partner.tagline}</bdi>
+          <Bidi>{partner.tagline}</Bidi>
         </p>
         <div className="flex flex-wrap gap-1.5 pt-0.5">
           <span className={CHIP}>
             <MapPin className="h-[13px] w-[13px] shrink-0" aria-hidden />
-            <bdi dir="auto">{partner.serviceArea}</bdi>
+            <Bidi>{partner.serviceArea}</Bidi>
           </span>
           {partner.cost && <CostChip cost={partner.cost} />}
           {partner.format !== "unknown" && (
