@@ -138,15 +138,20 @@ export const trackAiPromptSent = (p: {
     prompt_limit: p.promptLimit,
   });
 
+/** `exhausted` = a charged turn used the last prompt (the UI then blocks
+ *  further sends, so this is the common case); `blocked` = the server rejected
+ *  an attempt with a 429. */
 export const trackAiPromptLimitReached = (p: {
   feature: DocumentFeature;
   promptLimit: number;
   trigger: "chat" | "import" | "job_import";
+  reason: "exhausted" | "blocked";
 }) =>
   capture("ai_prompt_limit_reached", {
     feature: p.feature,
     prompt_limit: p.promptLimit,
     trigger: p.trigger,
+    reason: p.reason,
   });
 
 /* ---- In-Lesson Help ---------------------------------------------------- */

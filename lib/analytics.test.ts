@@ -134,10 +134,11 @@ describe("resume / cover-letter trackers send metadata only", () => {
       feature: "cover_letter",
       promptLimit: 20,
       trigger: "job_import",
+      reason: "blocked",
     });
     expect(lastCall()).toMatchObject({
       event: "ai_prompt_limit_reached",
-      keys: ["feature", "prompt_limit", "trigger"],
+      keys: ["feature", "prompt_limit", "reason", "trigger"],
     });
   });
 

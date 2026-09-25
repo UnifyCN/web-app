@@ -13,12 +13,7 @@
  * hooks and the bespoke ones key off the SAME objects.
  */
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type QueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { JobPostingError } from "@/lib/drafts/errors";
 import {
   jobSourceDomain,
@@ -60,7 +55,8 @@ export interface DraftHooksConfig<TDraft extends DraftLike, TSummary> {
   /** Analytics identity for the feature's funnel + quota events. */
   analytics: {
     feature: DocumentFeature;
-    /** The server-enforced daily message cap (mirrors the edge fn). */
+    /** The daily cap the UI enforces (the feature's *_DAILY_MESSAGE_LIMIT, the
+     *  same constant behind the "N left" meter and the send lock). */
     promptLimit: number;
     /** True for the feature's daily-limit error (ResumeLimitError, …). */
     isLimitError: (err: unknown) => boolean;
@@ -95,7 +91,7 @@ export function createDraftHooks<TDraft extends DraftLike, TSummary>(
    * the draft save. Fire-and-forget: never blocks or fails the turn. If the
    * usage read fails the event still goes out, just without `prompts_used`.
    */
-  function reportPromptSent(queryClient: QueryClient, mode: "chat" | "import") {
+  function reportPromptSent(mode: "chat" | "import") {
     const send = (promptsUsed?: number) =>
       trackAiPromptSent({
         feature: analytics.feature,
@@ -105,10 +101,21 @@ export function createDraftHooks<TDraft extends DraftLike, TSummary>(
       });
     // Read usage directly, not via fetchQuery: that would reuse an in-flight
     // usage request started before this turn's charge and report a stale count.
+    // Analytics only: the quota meter refreshes via the mutations' own usage
+    // invalidation, so this never writes to the query cache.
     service.getUsage().then(
       (usage) => {
-        queryClient.setQueryData(keys.usage, usage);
         send(usage.count);
+        // This turn used the last prompt: the UI now blocks further sends, so
+        // no 429 will ever report the cap for this user today.
+        if (usage.count >= analytics.promptLimit) {
+          trackAiPromptLimitReached({
+            feature: analytics.feature,
+            promptLimit: analytics.promptLimit,
+            trigger: mode,
+            reason: "exhausted",
+          });
+        }
       },
       (err) => {
         console.warn("[analytics] usage read failed", err);
@@ -127,6 +134,7 @@ export function createDraftHooks<TDraft extends DraftLike, TSummary>(
       feature: analytics.feature,
       promptLimit: analytics.promptLimit,
       trigger,
+      reason: "blocked",
     });
   }
 

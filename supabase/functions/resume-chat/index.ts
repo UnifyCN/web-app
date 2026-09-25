@@ -33,6 +33,11 @@ const corsHeaders = {
 
 // The draft id (forwarded by the web proxy) groups a document's generations as
 // one `$ai_trace_id`; anything else gets a fresh id. Never content.
+// Server-enforced daily message cap. Kept at the value production runs today
+// (60); main's lower value was merged but never deployed, and the change is
+// pending a separate decision. Also reported as `prompt_limit` on $ai_generation.
+const DAILY_MESSAGE_LIMIT = 60;
+
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -507,7 +512,7 @@ Deno.serve(async req => {
     // generating, refund below if the turn fails. An import counts as one message.
     const { data: quotaOk, error: quotaError } = await supabase.rpc(
       'check_and_increment_resume_usage',
-      { p_user_id: authData.user.id, p_daily_limit: 20 },
+      { p_user_id: authData.user.id, p_daily_limit: DAILY_MESSAGE_LIMIT },
     );
     if (quotaError) {
       console.error('resume-chat quota RPC failed:', quotaError);
@@ -580,6 +585,7 @@ Deno.serve(async req => {
           : crypto.randomUUID(),
       // Separates web AI cost from mobile's in the shared PostHog project.
       platform: 'web',
+      prompt_limit: DAILY_MESSAGE_LIMIT,
       feature: 'resume_builder',
       mode: isImport ? 'import' : 'chat',
       source: typeof body.source === 'string' ? body.source : 'web',

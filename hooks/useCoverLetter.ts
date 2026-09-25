@@ -186,7 +186,7 @@ export function useImportCoverLetterDraft() {
         profile,
       });
       // Charged now — report before the save so a failed save can't drop it.
-      hooks.reportPromptSent(queryClient, "import");
+      hooks.reportPromptSent("import");
       const opener: CoverLetterChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -323,7 +323,7 @@ export function useSendCoverLetterMessage() {
         traceId: draftId,
       });
       // Charged now — report before the save so a failed save can't drop it.
-      hooks.reportPromptSent(queryClient, "chat");
+      hooks.reportPromptSent("chat");
 
       const assistantMessage: CoverLetterChatMessage = {
         id: crypto.randomUUID(),

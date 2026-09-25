@@ -141,7 +141,7 @@ export function useImportResumeDraft() {
         profile,
       });
       // Charged now — report before the save so a failed save can't drop it.
-      hooks.reportPromptSent(queryClient, "import");
+      hooks.reportPromptSent("import");
       const opener: ResumeChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -277,7 +277,7 @@ export function useSendResumeMessage() {
           traceId: draftId,
         });
         // Charged now — report before the save so a failed save can't drop it.
-        hooks.reportPromptSent(queryClient, "chat");
+        hooks.reportPromptSent("chat");
 
         const assistantMessage: ResumeChatMessage = {
           id: crypto.randomUUID(),

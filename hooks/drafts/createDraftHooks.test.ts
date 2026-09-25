@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { QueryClient } from "@tanstack/react-query";
 
 const captureMock = vi.fn();
 vi.mock("@/lib/posthog", () => ({
@@ -11,6 +10,7 @@ import { createDraftHooks } from "./createDraftHooks";
 
 function makeHooks(
   getUsage: () => Promise<{ count: number; remaining: number }>,
+  isLimitError: (err: unknown) => boolean = () => false,
 ) {
   const noop = () => Promise.reject(new Error("unused"));
   return createDraftHooks({
@@ -28,13 +28,10 @@ function makeHooks(
     analytics: {
       feature: "resume_builder",
       promptLimit: 20,
-      isLimitError: () => false,
+      isLimitError,
     },
   });
 }
-
-const setQueryData = vi.fn();
-const client = { setQueryData } as unknown as QueryClient;
 
 // Let the fire-and-forget usage read settle.
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -43,20 +40,14 @@ describe("reportPromptSent", () => {
   beforeEach(() => {
     vi.stubGlobal("window", {});
     captureMock.mockReset();
-    setQueryData.mockReset();
   });
   afterEach(() => vi.unstubAllGlobals());
 
   it("sends prompts_used from the fresh usage read", async () => {
     makeHooks(() =>
       Promise.resolve({ count: 7, remaining: 13 }),
-    ).reportPromptSent(client, "chat");
+    ).reportPromptSent("chat");
     await flush();
-    // The fresh read also refreshes the quota meter's cache.
-    expect(setQueryData).toHaveBeenCalledWith(["u"], {
-      count: 7,
-      remaining: 13,
-    });
     expect(captureMock).toHaveBeenCalledWith("ai_prompt_sent", {
       feature: "resume_builder",
       mode: "chat",
@@ -68,7 +59,6 @@ describe("reportPromptSent", () => {
   it("still sends the event, without prompts_used, when the read fails", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     makeHooks(() => Promise.reject(new Error("offline"))).reportPromptSent(
-      client,
       "import",
     );
     await flush();
@@ -78,5 +68,54 @@ describe("reportPromptSent", () => {
       prompt_limit: 20,
     });
     warn.mockRestore();
+  });
+
+  it("does not report the cap below the limit", async () => {
+    makeHooks(() =>
+      Promise.resolve({ count: 19, remaining: 1 }),
+    ).reportPromptSent("chat");
+    await flush();
+    expect(captureMock).not.toHaveBeenCalledWith(
+      "ai_prompt_limit_reached",
+      expect.anything(),
+    );
+  });
+
+  it("reports the cap as exhausted when a turn uses the last prompt", async () => {
+    makeHooks(() =>
+      Promise.resolve({ count: 20, remaining: 0 }),
+    ).reportPromptSent("import");
+    await flush();
+    expect(captureMock).toHaveBeenCalledWith("ai_prompt_limit_reached", {
+      feature: "resume_builder",
+      prompt_limit: 20,
+      trigger: "import",
+      reason: "exhausted",
+    });
+  });
+});
+
+describe("reportLimitReached", () => {
+  beforeEach(() => {
+    vi.stubGlobal("window", {});
+    captureMock.mockReset();
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  const unused = () => Promise.reject(new Error("unused"));
+
+  it("reports a 429 as blocked", () => {
+    makeHooks(unused, () => true).reportLimitReached(new Error("429"), "chat");
+    expect(captureMock).toHaveBeenCalledWith("ai_prompt_limit_reached", {
+      feature: "resume_builder",
+      prompt_limit: 20,
+      trigger: "chat",
+      reason: "blocked",
+    });
+  });
+
+  it("ignores errors that aren't the daily limit", () => {
+    makeHooks(unused).reportLimitReached(new Error("busy"), "chat");
+    expect(captureMock).not.toHaveBeenCalled();
   });
 });
