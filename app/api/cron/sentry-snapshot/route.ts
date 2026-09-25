@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 
 /**
  * Daily Sentry → PostHog health snapshot (Vercel Cron; see vercel.json).
@@ -34,12 +34,13 @@ const POSTHOG_HOST =
 // PostHog — worst case ~2× this, comfortably under maxDuration).
 const FETCH_TIMEOUT_MS = 8000;
 
-/** Constant-time bearer-token comparison (avoids CWE-208 timing leaks). */
+/** Constant-time bearer-token comparison (avoids CWE-208 timing leaks). Both
+ * inputs are hashed to fixed-size digests so a length mismatch can't
+ * short-circuit and reveal the secret's length. */
 function safeEqual(a: string, b: string): boolean {
-  const ab = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ab.length !== bb.length) return false;
-  return timingSafeEqual(ab, bb);
+  const ah = createHash("sha256").update(a).digest();
+  const bh = createHash("sha256").update(b).digest();
+  return timingSafeEqual(ah, bh);
 }
 
 /** Count of currently-unresolved issues. Uses the `X-Hits` header Sentry sets on

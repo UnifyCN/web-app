@@ -59,6 +59,14 @@ describe("GET /api/cron/sentry-snapshot auth", () => {
     vi.stubEnv("CRON_SECRET", SECRET);
     const res = await GET(request("Bearer wrong"));
     expect(res.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 401 for the correct secret with trailing bytes", async () => {
+    vi.stubEnv("CRON_SECRET", SECRET);
+    const res = await GET(request(`Bearer ${SECRET}x`));
+    expect(res.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("returns 401 for a same-length wrong secret", async () => {
