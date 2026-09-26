@@ -2813,6 +2813,36 @@
       "addSkill": "Agregar habilidad",
       "hint": "Haz clic en cualquier texto para editarlo, o usa \"Agregar al currículum\" abajo."
     },
+    "jobTarget": {
+      "button": "Apuntar a un empleo",
+      "chip": "Adaptando para {{title}}",
+      "chipWithCompany": "Adaptando para {{title}} · {{company}}",
+      "chipPasted": "Adaptando para un empleo pegado",
+      "urlPlaceholder": "Pega el enlace de la oferta…",
+      "urlLabel": "URL de la oferta",
+      "pasteLabel": "Descripción de la oferta",
+      "fetch": "Obtener",
+      "use": "Usar esto",
+      "pasteToggle": "Pegar la descripción",
+      "urlToggle": "Usar un enlace",
+      "pastePlaceholder": "Pega aquí el puesto, los requisitos y las responsabilidades…",
+      "cancel": "Cancelar",
+      "remove": "Quitar empleo objetivo",
+      "tailor": "Adaptar mi currículum",
+      "tailorUserBubble": "Por favor, adapta mi currículum a esta oferta de empleo.",
+      "fetching": "Leyendo la oferta…",
+      "errors": {
+        "invalid_url": "Ese enlace no parece válido. Revísalo e inténtalo de nuevo.",
+        "blocked_url": "Ese enlace no se puede abrir por seguridad. Pega un enlace público de la oferta.",
+        "fetch_failed": "No se pudo abrir esa oferta. Muchos sitios bloquean el acceso automático; prueba a pegar el texto de la descripción.",
+        "too_large": "Esa página es demasiado grande para leerla. Prueba a pegar el texto de la descripción.",
+        "extraction_failed": "No se encontró una oferta en esa página. Puede requerir inicio de sesión o cargar con JavaScript; pega el texto de la descripción.",
+        "daily_limit_reached": "Has alcanzado el límite del creador de currículum de hoy. Vuelve mañana.",
+        "rate_limited": "Lo estás haciendo demasiado rápido. Espera un momento e inténtalo de nuevo.",
+        "unauthorized": "Tu sesión expiró. Inicia sesión de nuevo.",
+        "generic": "No se pudo leer esa oferta. Prueba a pegar el texto de la descripción."
+      }
+    },
     "list": {
       "title": "Mis currículums",
       "backToList": "Volver a mis currículums",
