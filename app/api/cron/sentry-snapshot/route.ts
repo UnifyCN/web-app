@@ -7,8 +7,10 @@ import { createHash, timingSafeEqual } from "node:crypto";
  * Pulls two numbers from the Sentry REST API for the web project and fires a
  * single `sentry_snapshot` PostHog event so the "Unify Web — Weekly Review"
  * dashboard has a bugs/issues panel:
- *   - open_issue_count — currently unresolved issues
- *   - errors_24h       — error events received in the last 24h
+ *   - open_issue_count — unresolved issues seen in production
+ *   - errors_24h       — production error events in the last 24h
+ * Both are scoped to the `vercel-production` environment so local dev noise
+ * (the `development` environment) doesn't inflate them.
  *
  * Self-contained in the web-app repo (no shared Supabase infra). Invoked by
  * Vercel Cron with `Authorization: Bearer $CRON_SECRET`; any other caller gets a
@@ -25,6 +27,10 @@ export const maxDuration = 30;
 const SENTRY_ORG = "unify-kv";
 const SENTRY_PROJECT = "unify-web";
 const SENTRY_API = "https://sentry.io/api/0";
+// Numeric id of unify-web — the org-level events endpoint filters by id, not slug.
+const SENTRY_PROJECT_ID = "4511606747037696";
+// Only production counts; dev servers report as `development`.
+const SENTRY_ENVIRONMENT = "vercel-production";
 
 const POSTHOG_HOST =
   process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
@@ -43,10 +49,13 @@ function safeEqual(a: string, b: string): boolean {
   return timingSafeEqual(ah, bh);
 }
 
-/** Count of currently-unresolved issues. Uses the `X-Hits` header Sentry sets on
+/** Count of unresolved production issues. Uses the `X-Hits` header Sentry sets on
  * the issues endpoint, falling back to the returned page length. */
 async function fetchOpenIssueCount(token: string): Promise<number> {
-  const url = `${SENTRY_API}/projects/${SENTRY_ORG}/${SENTRY_PROJECT}/issues/?query=is:unresolved&limit=100`;
+  const query = encodeURIComponent(
+    `is:unresolved environment:${SENTRY_ENVIRONMENT}`,
+  );
+  const url = `${SENTRY_API}/projects/${SENTRY_ORG}/${SENTRY_PROJECT}/issues/?query=${query}&limit=100`;
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
@@ -64,23 +73,28 @@ async function fetchOpenIssueCount(token: string): Promise<number> {
   return Array.isArray(issues) ? issues.length : 0;
 }
 
-/** Error events received in the last 24h, summed from the project stats series. */
+/** Production error events in the last 24h, from the org-level events endpoint
+ * (the project `stats/` endpoint can't filter by environment). */
 async function fetchErrors24h(token: string): Promise<number> {
-  const until = Math.floor(Date.now() / 1000);
-  const since = until - 24 * 60 * 60;
-  const url = `${SENTRY_API}/projects/${SENTRY_ORG}/${SENTRY_PROJECT}/stats/?stat=received&resolution=1h&since=${since}&until=${until}`;
+  const params = new URLSearchParams({
+    field: "count()",
+    dataset: "errors",
+    project: SENTRY_PROJECT_ID,
+    environment: SENTRY_ENVIRONMENT,
+    statsPeriod: "24h",
+  });
+  const url = `${SENTRY_API}/organizations/${SENTRY_ORG}/events/?${params}`;
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!res.ok) {
-    throw new Error(`Sentry stats ${res.status}: ${await res.text()}`);
+    throw new Error(`Sentry events ${res.status}: ${await res.text()}`);
   }
-  // Response is [[unixTs, count], ...].
-  const series = (await res.json()) as [number, number][];
-  if (!Array.isArray(series)) return 0;
-  return series.reduce((sum, point) => sum + (Number(point?.[1]) || 0), 0);
+  // Response is { data: [{ "count()": n }], meta: … }.
+  const body = (await res.json()) as { data?: Record<string, unknown>[] };
+  return Number(body.data?.[0]?.["count()"]) || 0;
 }
 
 /**
@@ -93,7 +107,9 @@ async function captureSnapshot(
 ): Promise<"sent" | "skipped"> {
   const apiKey = process.env.POSTHOG_PROJECT_API_KEY;
   if (!apiKey) {
-    console.warn("sentry-snapshot: POSTHOG_PROJECT_API_KEY unset — skipping capture");
+    console.warn(
+      "sentry-snapshot: POSTHOG_PROJECT_API_KEY unset — skipping capture",
+    );
     return "skipped";
   }
   const res = await fetch(`${POSTHOG_HOST}/capture/`, {
@@ -121,7 +137,9 @@ export async function GET(req: NextRequest) {
   // with a 500 and never compare against an unset value ("Bearer undefined").
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret) {
-    console.error("sentry-snapshot: CRON_SECRET not configured; refusing to run");
+    console.error(
+      "sentry-snapshot: CRON_SECRET not configured; refusing to run",
+    );
     return NextResponse.json(
       { error: "CRON_SECRET not configured" },
       { status: 500 },
@@ -148,6 +166,7 @@ export async function GET(req: NextRequest) {
     const capture = await captureSnapshot({
       open_issue_count: openIssueCount,
       errors_24h: errors24h,
+      environment: SENTRY_ENVIRONMENT,
     });
     if (capture === "skipped") {
       // Metrics were fetched but no event was recorded — the cron is

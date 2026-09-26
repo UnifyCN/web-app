@@ -4,6 +4,7 @@ import {
   scrubEmailProps,
   stripEmailParams,
 } from "./scrubEmail";
+import { sentryPiiHooks } from "./sentryScrub";
 
 describe("stripEmailParams", () => {
   it("strips a plain email as the only param", () => {
@@ -118,8 +119,11 @@ describe("scrubEmailDeep", () => {
       level: "error",
       extra: { attempts: 2 },
     };
-    scrubEmailDeep(event);
-    expect(event).toEqual({
+    const original = structuredClone(event);
+    const scrubbed = scrubEmailDeep(event);
+    // Returns a scrubbed copy and leaves the input untouched.
+    expect(event).toEqual(original);
+    expect(scrubbed).toEqual({
       transaction: "/verify-email",
       request: {
         url: "https://app.unifysocial.ca/verify-email",
@@ -138,5 +142,97 @@ describe("scrubEmailDeep", () => {
 
   it("returns a scrubbed string for a string input", () => {
     expect(scrubEmailDeep("/x?email=a@b.co")).toBe("/x");
+  });
+
+  it("copies getter-only properties instead of writing into them", () => {
+    const withGetter = {};
+    Object.defineProperty(withGetter, "$", {
+      enumerable: true,
+      get: () => "/verify-email?email=a@b.co",
+    });
+    let scrubbed: Record<string, unknown> = {};
+    expect(() => {
+      scrubbed = scrubEmailDeep(withGetter) as Record<string, unknown>;
+    }).not.toThrow();
+    expect(scrubbed).toEqual({ $: "/verify-email" });
+    expect((withGetter as { $: string }).$).toBe("/verify-email?email=a@b.co");
+  });
+
+  it("handles a getter-only $ nested deep in a transaction (the prod shape)", () => {
+    const leaf = {};
+    Object.defineProperty(leaf, "$", {
+      enumerable: true,
+      get: () => "https://app.unifysocial.ca/reset-password?email=a%40b.co",
+    });
+    const transaction = {
+      type: "transaction",
+      transaction: "/reset-password?email=a%40b.co",
+      sdkProcessingMetadata: { a: { b: { c: { d: leaf } } } },
+    };
+    const scrubbed = scrubEmailDeep(transaction);
+    expect(scrubbed.transaction).toBe("/reset-password");
+    expect(scrubbed.sdkProcessingMetadata.a.b.c.d).toEqual({
+      $: "https://app.unifysocial.ca/reset-password",
+    });
+  });
+
+  it("scrubs frozen objects and arrays without throwing", () => {
+    const frozen = Object.freeze({
+      url: "/verify-email?email=a@b.co",
+      crumbs: Object.freeze(["/verify-email?email=a@b.co"]),
+    });
+    expect(scrubEmailDeep(frozen)).toEqual({
+      url: "/verify-email",
+      crumbs: ["/verify-email"],
+    });
+  });
+
+  it("returns class instances by reference, untouched", () => {
+    class ScopeLike {
+      url = "/verify-email?email=a@b.co";
+    }
+    const scope = new ScopeLike();
+    const scrubbed = scrubEmailDeep({ capturedSpanScope: scope });
+    expect(scrubbed.capturedSpanScope).toBe(scope);
+    expect(scope.url).toBe("/verify-email?email=a@b.co");
+  });
+});
+
+describe("sentryPiiHooks", () => {
+  it("strips emails from error events", () => {
+    const event = sentryPiiHooks.beforeSend({
+      request: {
+        url: "https://app.unifysocial.ca/verify-email?email=a%40b.co",
+      },
+      breadcrumbs: [{ data: { to: "/verify-email?email=a@b.co" } }],
+    });
+    expect(event.request.url).toBe("https://app.unifysocial.ca/verify-email");
+    expect(event.breadcrumbs[0].data.to).toBe("/verify-email");
+  });
+
+  it("strips emails from transactions, including the envelope DSC", () => {
+    const tx = sentryPiiHooks.beforeSendTransaction({
+      type: "transaction",
+      transaction: "/verify-email?email=a%40b.co",
+      request: {
+        url: "https://app.unifysocial.ca/verify-email?email=a%40b.co",
+      },
+      sdkProcessingMetadata: {
+        dynamicSamplingContext: { transaction: "/verify-email?email=a%40b.co" },
+      },
+    });
+    expect(tx.transaction).toBe("/verify-email");
+    expect(tx.request.url).toBe("https://app.unifysocial.ca/verify-email");
+    expect(tx.sdkProcessingMetadata.dynamicSamplingContext.transaction).toBe(
+      "/verify-email",
+    );
+  });
+
+  it("strips emails from breadcrumbs", () => {
+    const crumb = sentryPiiHooks.beforeBreadcrumb({
+      category: "navigation",
+      data: { from: "/signup", to: "/verify-email?email=a@b.co" },
+    });
+    expect(crumb.data).toEqual({ from: "/signup", to: "/verify-email" });
   });
 });
