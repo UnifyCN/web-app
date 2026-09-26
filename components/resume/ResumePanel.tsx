@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { buildResumeDocx, resumeDocxFilename } from "@/lib/resume/exportDocx";
 import { PreviewPanel } from "@/components/documents/PreviewPanel";
+import { trackResumeExported } from "@/lib/analytics";
 import { ResumePaper } from "./ResumePaper";
 import type { ResumeUpdater } from "@/lib/resume/editOps";
 import type { ResumeData } from "@/types/resume";
@@ -51,6 +52,7 @@ export function ResumePanel({
       buildingHint={t("resume.buildingHint")}
       exportFailedLabel={t("resume.exportFailed")}
       exportErrorLog="Resume: DOCX export failed"
+      onExported={(format) => trackResumeExported({ format })}
       // DOCX: build a real, editable Word file client-side (docx is dynamically
       // imported inside buildResumeDocx). Section-heading labels come from t() so
       // the DOCX matches the on-screen resume + PDF.

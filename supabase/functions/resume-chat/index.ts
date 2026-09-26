@@ -31,6 +31,16 @@ const corsHeaders = {
   'Content-Type': 'application/json',
 };
 
+// The draft id (forwarded by the web proxy) groups a document's generations as
+// one `$ai_trace_id`; anything else gets a fresh id. Never content.
+// Server-enforced daily message cap. Kept at the value production runs today
+// (60); main's lower value was merged but never deployed, and the change is
+// pending a separate decision. Also reported as `prompt_limit` on $ai_generation.
+const DAILY_MESSAGE_LIMIT = 60;
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: corsHeaders });
 }
@@ -502,7 +512,7 @@ Deno.serve(async req => {
     // generating, refund below if the turn fails. An import counts as one message.
     const { data: quotaOk, error: quotaError } = await supabase.rpc(
       'check_and_increment_resume_usage',
-      { p_user_id: authData.user.id, p_daily_limit: 20 },
+      { p_user_id: authData.user.id, p_daily_limit: DAILY_MESSAGE_LIMIT },
     );
     if (quotaError) {
       console.error('resume-chat quota RPC failed:', quotaError);
@@ -536,6 +546,7 @@ Deno.serve(async req => {
           message,
         );
 
+    const llmStartedAt = performance.now();
     const llmResult = await callOpenRouter({
       model: 'deepseek/deepseek-v4.1-flash',
       messages,
@@ -559,6 +570,7 @@ Deno.serve(async req => {
       return jsonResponse({ error: 'AI service unavailable' }, status);
     }
 
+    // Metadata only — never $ai_input / $ai_output_choices (resume/letter text).
     captureAiGeneration(authData.user.id, {
       $ai_model: llmResult.model,
       $ai_provider: llmResult.provider,
@@ -566,6 +578,14 @@ Deno.serve(async req => {
       $ai_output_tokens: llmResult.usage.completionTokens,
       $ai_total_tokens: llmResult.usage.totalTokens,
       $ai_total_cost_usd: llmResult.usage.costUsd,
+      $ai_latency: (performance.now() - llmStartedAt) / 1000,
+      $ai_trace_id:
+        typeof body.traceId === 'string' && UUID_RE.test(body.traceId)
+          ? body.traceId
+          : crypto.randomUUID(),
+      // Separates web AI cost from mobile's in the shared PostHog project.
+      platform: 'web',
+      prompt_limit: DAILY_MESSAGE_LIMIT,
       feature: 'resume_builder',
       mode: isImport ? 'import' : 'chat',
       source: typeof body.source === 'string' ? body.source : 'web',

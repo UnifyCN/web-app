@@ -19,6 +19,10 @@ import { MAX_COVER_LETTER_MESSAGE_LEN, MAX_COVER_LETTER_IMPORT_LEN } from "@/lib
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+// The draft id rides along as the `$ai_generation` trace id (grouping key only).
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
   const {
@@ -93,6 +97,9 @@ export async function POST(req: NextRequest) {
         todayDate: body.todayDate ?? "",
         profile: body.profile ?? {},
         source: "web",
+        ...(typeof body.traceId === "string" && UUID_RE.test(body.traceId)
+          ? { traceId: body.traceId }
+          : {}),
       };
 
   const { data, error } = await supabase.functions.invoke("cover-letter-chat", {

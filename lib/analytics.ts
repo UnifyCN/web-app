@@ -13,7 +13,13 @@ import type { TranslatableType } from "@/services/translations";
  */
 function capture(event: string, properties?: Record<string, unknown>) {
   if (typeof window === "undefined" || !isPostHogConfigured()) return;
-  posthog.capture(event, properties);
+  // Tracking must never break a feature: most captures run inside mutation
+  // callbacks, so a PostHog failure is logged and swallowed, never rethrown.
+  try {
+    posthog.capture(event, properties);
+  } catch (err) {
+    console.warn(`[analytics] capture "${event}" failed`, err);
+  }
 }
 
 /* ---- Auth ------------------------------------------------------------- */
@@ -62,6 +68,91 @@ export const trackCoverLetterStarted = (p: { source: GenerationSource }) =>
   capture("cover_letter_started", { source: p.source });
 
 export const trackCoverLetterGenerated = () => capture("cover_letter_generated");
+
+// Funnel + quota events (PR: resume/cover-letter analytics). METADATA ONLY — never
+// pass resume/letter/job text, names, emails, or full URLs. `feature` matches the
+// `$ai_generation` value the edge functions already send, so insights join.
+
+export type DocumentFeature = "resume_builder" | "cover_letter";
+type CreateMethod = "scratch" | "file_import";
+
+export const trackResumeCreated = (p: { method: CreateMethod }) =>
+  capture("resume_created", { method: p.method });
+
+export const trackCoverLetterCreated = (p: {
+  method: CreateMethod;
+  hasLinkedResume: boolean;
+}) =>
+  capture("cover_letter_created", {
+    method: p.method,
+    has_linked_resume: p.hasLinkedResume,
+  });
+
+/** Hostname only (no path/query, `www.` stripped) — never the full URL. */
+export function jobSourceDomain(url: string): string | undefined {
+  try {
+    const host = new URL(url.trim()).hostname.toLowerCase();
+    return host.replace(/^www\./, "") || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export const trackJobPostingImported = (p: {
+  feature: DocumentFeature;
+  status: "started" | "succeeded" | "failed";
+  input: "url" | "paste";
+  sourceDomain?: string;
+  errorCode?: string;
+}) =>
+  capture("job_posting_imported", {
+    feature: p.feature,
+    status: p.status,
+    input: p.input,
+    ...(p.sourceDomain ? { source_domain: p.sourceDomain } : {}),
+    ...(p.errorCode ? { error_code: p.errorCode } : {}),
+  });
+
+/** `pdf` = the print dialog was opened (the browser owns the actual save). */
+export type ExportFormat = "pdf" | "docx";
+
+export const trackResumeExported = (p: { format: ExportFormat }) =>
+  capture("resume_exported", { format: p.format });
+
+export const trackCoverLetterExported = (p: { format: ExportFormat }) =>
+  capture("cover_letter_exported", { format: p.format });
+
+/** One charged AI turn (chat or import). Only fired on success — failed turns
+ *  are refunded server-side, so they don't consume the daily quota.
+ *  `promptsUsed` is omitted (never faked) when the usage read failed. */
+export const trackAiPromptSent = (p: {
+  feature: DocumentFeature;
+  mode: "chat" | "import";
+  promptsUsed?: number;
+  promptLimit: number;
+}) =>
+  capture("ai_prompt_sent", {
+    feature: p.feature,
+    mode: p.mode,
+    ...(p.promptsUsed !== undefined ? { prompts_used: p.promptsUsed } : {}),
+    prompt_limit: p.promptLimit,
+  });
+
+/** `exhausted` = a charged turn used the last prompt (the UI then blocks
+ *  further sends, so this is the common case); `blocked` = the server rejected
+ *  an attempt with a 429. */
+export const trackAiPromptLimitReached = (p: {
+  feature: DocumentFeature;
+  promptLimit: number;
+  trigger: "chat" | "import" | "job_import";
+  reason: "exhausted" | "blocked";
+}) =>
+  capture("ai_prompt_limit_reached", {
+    feature: p.feature,
+    prompt_limit: p.promptLimit,
+    trigger: p.trigger,
+    reason: p.reason,
+  });
 
 /* ---- In-Lesson Help ---------------------------------------------------- */
 // Event names shared with mobile (PRD R5); `platform:'web'` comes from the

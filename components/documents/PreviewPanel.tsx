@@ -42,6 +42,8 @@ export interface PreviewPanelProps {
   /* DOCX export plumbing — the panel owns the download, the feature owns the build. */
   onExportDocx: () => Promise<Blob>;
   docxFilename: string;
+  /** Analytics hook: fires when the print dialog opens or a DOCX downloads. */
+  onExported?: (format: "pdf" | "docx") => void;
 
   /** Print-root class hook ("resume-print-root" | "cover-letter-print-root"). */
   printRootClassName: string;
@@ -78,6 +80,7 @@ export function PreviewPanel({
   exportErrorLog,
   onExportDocx,
   docxFilename,
+  onExported,
   printRootClassName,
   paper,
   printPaper,
@@ -97,6 +100,7 @@ export function PreviewPanel({
   // node, so it exports selectable, ATS-friendly text via the browser print dialog.
   function handlePdf() {
     window.print();
+    onExported?.("pdf");
   }
 
   // DOCX: the feature builds a real, editable Word file client-side (docx is
@@ -107,6 +111,7 @@ export function PreviewPanel({
     try {
       const blob = await onExportDocx();
       downloadBlob(blob, docxFilename);
+      onExported?.("docx");
     } catch (err) {
       console.error(exportErrorLog, err);
       toast.error(exportFailedLabel);

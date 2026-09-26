@@ -14,6 +14,14 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { JobPostingError } from "@/lib/drafts/errors";
+import {
+  jobSourceDomain,
+  trackAiPromptLimitReached,
+  trackAiPromptSent,
+  trackJobPostingImported,
+  type DocumentFeature,
+} from "@/lib/analytics";
 import type { ResumeJobPosting } from "@/types/resume";
 
 /** Minimum a draft record must expose for these hooks' cache merges. */
@@ -44,6 +52,15 @@ export interface DraftHooksConfig<TDraft extends DraftLike, TSummary> {
     usage: readonly unknown[];
     draftKey: (id: string) => readonly unknown[];
   };
+  /** Analytics identity for the feature's funnel + quota events. */
+  analytics: {
+    feature: DocumentFeature;
+    /** The daily cap the UI enforces (the feature's *_DAILY_MESSAGE_LIMIT, the
+     *  same constant behind the "N left" meter and the send lock). */
+    promptLimit: number;
+    /** True for the feature's daily-limit error (ResumeLimitError, …). */
+    isLimitError: (err: unknown) => boolean;
+  };
 }
 
 interface FetchJobPostingInput {
@@ -66,7 +83,60 @@ interface DuplicateInput {
 export function createDraftHooks<TDraft extends DraftLike, TSummary>(
   config: DraftHooksConfig<TDraft, TSummary>,
 ) {
-  const { service, keys } = config;
+  const { service, keys, analytics } = config;
+
+  /**
+   * Report one charged AI turn with the fresh daily count. Call it as soon as
+   * the generation response returns (the quota is already charged), not after
+   * the draft save. Fire-and-forget: never blocks or fails the turn. If the
+   * usage read fails the event still goes out, just without `prompts_used`.
+   */
+  function reportPromptSent(mode: "chat" | "import") {
+    const send = (promptsUsed?: number) =>
+      trackAiPromptSent({
+        feature: analytics.feature,
+        mode,
+        promptsUsed,
+        promptLimit: analytics.promptLimit,
+      });
+    // Read usage directly, not via fetchQuery: that would reuse an in-flight
+    // usage request started before this turn's charge and report a stale count.
+    // Analytics only: the quota meter refreshes via the mutations' own usage
+    // invalidation, so this never writes to the query cache.
+    service.getUsage().then(
+      (usage) => {
+        send(usage.count);
+        // This turn used the last prompt: the UI now blocks further sends, so
+        // no 429 will ever report the cap for this user today.
+        if (usage.count >= analytics.promptLimit) {
+          trackAiPromptLimitReached({
+            feature: analytics.feature,
+            promptLimit: analytics.promptLimit,
+            trigger: mode,
+            reason: "exhausted",
+          });
+        }
+      },
+      (err) => {
+        console.warn("[analytics] usage read failed", err);
+        send();
+      },
+    );
+  }
+
+  /** Report a daily-cap rejection (no-op for any other error). */
+  function reportLimitReached(
+    err: unknown,
+    trigger: "chat" | "import" | "job_import",
+  ) {
+    if (!analytics.isLimitError(err)) return;
+    trackAiPromptLimitReached({
+      feature: analytics.feature,
+      promptLimit: analytics.promptLimit,
+      trigger,
+      reason: "blocked",
+    });
+  }
 
   function useDrafts() {
     return useQuery({ queryKey: keys.drafts, queryFn: service.listDrafts });
@@ -94,14 +164,45 @@ export function createDraftHooks<TDraft extends DraftLike, TSummary>(
    */
   function useFetchJobPosting() {
     const queryClient = useQueryClient();
+    // Domain only (never the URL itself); pasted text carries no source.
+    const importProps = (source: FetchJobPostingInput["source"]) =>
+      "url" in source
+        ? { input: "url" as const, sourceDomain: jobSourceDomain(source.url) }
+        : { input: "paste" as const };
     return useMutation<TDraft, Error, FetchJobPostingInput>({
       mutationFn: async ({ draftId, source }) => {
         const jobPosting = await service.fetchJobPosting(source);
         return service.setDraftJobPosting(draftId, jobPosting);
       },
-      onSuccess: (draft) => {
+      onMutate: ({ source }) => {
+        trackJobPostingImported({
+          feature: analytics.feature,
+          status: "started",
+          ...importProps(source),
+        });
+      },
+      onSuccess: (draft, { source }) => {
         queryClient.setQueryData(keys.draftKey(draft.id), draft);
         queryClient.invalidateQueries({ queryKey: keys.drafts });
+        trackJobPostingImported({
+          feature: analytics.feature,
+          status: "succeeded",
+          ...importProps(source),
+        });
+      },
+      onError: (err, { source }) => {
+        const limited = analytics.isLimitError(err);
+        trackJobPostingImported({
+          feature: analytics.feature,
+          status: "failed",
+          ...importProps(source),
+          errorCode: limited
+            ? "daily_limit_reached"
+            : err instanceof JobPostingError
+              ? err.code
+              : "generic",
+        });
+        reportLimitReached(err, "job_import");
       },
     });
   }
@@ -160,6 +261,8 @@ export function createDraftHooks<TDraft extends DraftLike, TSummary>(
   }
 
   return {
+    reportPromptSent,
+    reportLimitReached,
     useDrafts,
     useDraft,
     useUsage,
