@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  AUTH_EMAIL_TTL_MS,
+  clearAllAuthEmails,
   clearAuthEmail,
   readAuthEmail,
   storeAuthEmail,
@@ -49,7 +51,10 @@ function useWindow(url: string, opts?: { storageThrows?: boolean }) {
 }
 
 beforeEach(() => useWindow("https://app.unifysocial.ca/verify-email"));
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
 
 describe("auth email hand-off", () => {
   it("stores, reads and clears the email per flow", () => {
@@ -68,8 +73,38 @@ describe("auth email hand-off", () => {
     expect(win.history.replaceState).not.toHaveBeenCalled();
   });
 
-  it("returns '' when nothing was handed over (new tab / other device)", () => {
+  it("a new tab starts with no email (its own empty sessionStorage)", () => {
+    storeAuthEmail("verify", "a@b.co");
+    // A separately opened tab gets a fresh window + sessionStorage.
+    useWindow("https://app.unifysocial.ca/verify-email");
     expect(takeAuthEmail("verify")).toBe("");
+    expect(takeAuthEmail("reset")).toBe("");
+  });
+
+  it("clears every flow at once (sign-out)", () => {
+    storeAuthEmail("verify", "a@b.co");
+    storeAuthEmail("reset", "c@d.co");
+    clearAllAuthEmails();
+    expect(readAuthEmail("verify")).toBe("");
+    expect(readAuthEmail("reset")).toBe("");
+    expect(win.store.size).toBe(0);
+  });
+
+  it("expires a hand-off after an hour and removes it", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-26T10:00:00Z"));
+    storeAuthEmail("verify", "a@b.co");
+    vi.setSystemTime(Date.now() + AUTH_EMAIL_TTL_MS - 1000);
+    expect(readAuthEmail("verify")).toBe("a@b.co");
+    vi.setSystemTime(Date.now() + 2000);
+    expect(readAuthEmail("verify")).toBe("");
+    expect(win.store.size).toBe(0);
+  });
+
+  it("treats a malformed stored value as absent", () => {
+    win.store.set("unify_auth_email:verify", "not-json@b.co");
+    expect(readAuthEmail("verify")).toBe("");
+    expect(win.store.size).toBe(0);
   });
 
   it("adopts a legacy ?email= link: stores it and strips it from the URL", () => {
@@ -79,7 +114,7 @@ describe("auth email hand-off", () => {
     expect(takeAuthEmail("reset")).toBe("a+test@b.co");
     expect(readAuthEmail("reset")).toBe("a+test@b.co");
     expect(win.history.replaceState).toHaveBeenCalledWith(
-      { __NA: true },
+      null,
       "",
       "/reset-password?lang=fr#top",
     );
@@ -93,7 +128,7 @@ describe("auth email hand-off", () => {
     takeAuthEmail("verify");
     expect(win.location.search).toBe("");
     expect(win.history.replaceState).toHaveBeenCalledWith(
-      { __NA: true },
+      null,
       "",
       "/verify-email",
     );

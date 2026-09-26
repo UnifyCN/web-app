@@ -16,6 +16,13 @@ export function useAuthEmail(flow: AuthEmailFlow) {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe one-time storage/URL read; runs once on mount
     setEmail(takeAuthEmail(flow));
+    // Back/forward can restore this page from the bfcache with the email still
+    // rendered — e.g. after a sign-out cleared it on a shared computer. Re-read.
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) setEmail(takeAuthEmail(flow));
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
   }, [flow]);
 
   return { email: email ?? "", resolved: email !== null };

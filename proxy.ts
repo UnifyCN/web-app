@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { RECOVERY_COOKIE, recoveryGate } from "@/lib/recoveryPending";
 
 const ONBOARDED_COOKIE = "unify_onboarded";
 const CONSENTED_COOKIE = "unify_consented";
@@ -105,6 +106,21 @@ export async function proxy(request: NextRequest) {
     redirect.cookies.delete(ONBOARDED_COOKIE);
     redirect.cookies.delete(CONSENTED_COOKIE);
     return redirect;
+  }
+
+  // Password recovery in progress (code verified, new password not saved yet):
+  // pin the user to /reset-password so a failed password save can be retried
+  // there instead of landing them in the app on their old password. Checked
+  // before the public-route bounce below, which would otherwise send a signed-in
+  // user from /reset-password to /home. See lib/recoveryPending.ts.
+  const recovery = recoveryGate(
+    pathname,
+    request.cookies.get(RECOVERY_COOKIE)?.value,
+    user.id,
+  );
+  if (recovery === "allow") return response;
+  if (recovery === "redirect") {
+    return redirectTo(request, response, "/reset-password");
   }
 
   // Signed in on a public auth route → into the app (the /home request then
