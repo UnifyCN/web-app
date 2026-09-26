@@ -73,7 +73,8 @@
     "learn": "सीखें",
     "resources": "संसाधन",
     "resume": "रिज़्यूमे",
-    "coverLetter": "कवर लेटर"
+    "coverLetter": "कवर लेटर",
+    "jobTools": "जॉब टूल्स"
   },
   "auth": {
     "signIn": "साइन इन करें",

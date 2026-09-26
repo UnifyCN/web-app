@@ -70,7 +70,11 @@
     "community": "Communauté",
     "companion": "Compagnon",
     "checklist": "Liste",
-    "learn": "Apprendre"
+    "learn": "Apprendre",
+    "jobTools": "Outils emploi",
+    "resources": "Ressources",
+    "resume": "CV",
+    "coverLetter": "Lettre de présentation"
   },
   "auth": {
     "signIn": "Se connecter",

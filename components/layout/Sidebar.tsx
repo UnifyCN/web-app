@@ -1,63 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { LogOut } from "lucide-react";
 import { UnifyLogo } from "@/components/UnifyLogo";
-import { signOut as signOutService } from "@/services/auth";
-import { trackUserSignedOut } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import {
   MAIN_NAV,
   PROFILE_ITEM,
   SETTINGS_ITEM,
-  isNavItemActive,
+  isItemActive,
   type NavItem,
 } from "./navItems";
 
-// Fixed-width icon rail with a label under each icon. Width is set so the full
-// "unify" wordmark lockup fits comfortably at the top (lockup ratio ≈ 2.24, so a
-// size-38 lockup is ~85px wide; its built-in padding leaves ~13px of visible
-// breathing room each side) while staying as narrow as possible — the longest
-// label ("Companion" / "Community") still fits the tile at text-xs.
-const SIDEBAR_WIDTH = 100;
+// Fixed-width icon rail with a label under each icon. Sized so the trimmed
+// "unify" wordmark lockup reads at close to the Figma lockup size (35px visible
+// height ≈ 117px wide, leaving ~12px each side) and long localized labels
+// ("Communauté", "Paramètres") fit the tile at text-xs without truncating.
+const SIDEBAR_WIDTH = 140;
+const LOGO_HEIGHT = 35;
 
 /**
  * Left sidebar — present on every (main) page, every breakpoint. Fixed width,
- * no collapse: each item is an icon stacked above its label.
+ * no collapse: each item is an icon stacked above its label. Sign out lives in
+ * Settings (as on the mobile bottom nav), keeping the rail short.
  */
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const { t } = useTranslation();
-
-  const signOut = async () => {
-    // Capture before sign-out: signOut() triggers the auth listener's
-    // resetPostHog(), which clears the identity the event needs to attach to.
-    trackUserSignedOut();
-    const { error } = await signOutService();
-    if (error) {
-      console.error("Sign out failed", error);
-      return; // stay put rather than pretend the session is cleared
-    }
-    // Drop every cached query so the next session never flashes this user's
-    // data, then go to the pre-login welcome screen (replace so Back can't
-    // return to an authed page).
-    queryClient.clear();
-    router.replace("/welcome");
-  };
-
-  const isActive = (href: string) => isNavItemActive(pathname, href);
 
   // Shared vertical tile: centred icon above a small label.
   const tileClass =
     "flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-xs leading-tight transition-colors duration-150";
 
   const renderNavLink = (item: NavItem) => {
-    const active = isActive(item.href);
+    const active = isItemActive(pathname, item);
     const Icon = item.icon;
 
     return (
@@ -91,13 +68,13 @@ export function Sidebar() {
       )}
     >
       {/* Logo — full "unify" wordmark lockup, centred in the rail. */}
-      <div className="flex h-16 items-center justify-center">
+      <div className="flex h-20 items-center justify-center">
         <Link
           href="/home"
           aria-label={t("nav.homeLinkLabel")}
           className="flex items-center"
         >
-          <UnifyLogo variant="lockup" size={38} priority />
+          <UnifyLogo variant="lockup" trim size={LOGO_HEIGHT} priority />
         </Link>
       </div>
 
@@ -106,21 +83,10 @@ export function Sidebar() {
         {MAIN_NAV.map(renderNavLink)}
       </nav>
 
-      {/* Profile + sign out, separated by a border */}
+      {/* Profile + Settings, separated by a border */}
       <div className="flex flex-col gap-1.5 border-t border-border-card px-2 py-3">
         {renderNavLink(PROFILE_ITEM)}
         {renderNavLink(SETTINGS_ITEM)}
-        <button
-          type="button"
-          onClick={signOut}
-          className={cn(
-            tileClass,
-            "cursor-pointer font-medium text-ink-muted hover:bg-surface-gray hover:text-ink",
-          )}
-        >
-          <LogOut className="h-5 w-5 shrink-0" />
-          <span className="w-full truncate text-center">{t("nav.signOut")}</span>
-        </button>
       </div>
     </aside>
   );

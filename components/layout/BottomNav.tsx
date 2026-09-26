@@ -4,13 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { MAIN_NAV, SETTINGS_ITEM, isNavItemActive } from "./navItems";
+import { MAIN_NAV, SETTINGS_ITEM, isItemActive } from "./navItems";
 
 // Mobile-only (< md) bottom tab bar — replaces the left sidebar on phones.
 // The 5 primary tabs + Settings (6 total) — 7 was cramped on 375px. Profile is
 // reached from within Settings (the "View your profile" row), and sign-out also
 // lives in Settings, so the profile / settings / sign-out chain stays reachable.
-// `desktopOnly` items (the width-hungry Resume Builder) are excluded here so the
+// `desktopOnly` items (the width-hungry Job tools) are excluded here so the
 // bottom bar stays within its item ceiling.
 const TABS = [...MAIN_NAV.filter((item) => !item.desktopOnly), SETTINGS_ITEM];
 
@@ -29,7 +29,7 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border-card bg-surface pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {TABS.map((item) => {
-        const active = isNavItemActive(pathname, item.href);
+        const active = isItemActive(pathname, item);
         const Icon = item.icon;
         return (
           <Link

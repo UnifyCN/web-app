@@ -73,7 +73,8 @@
     "learn": "Aprender",
     "resources": "Recursos",
     "resume": "Currículum",
-    "coverLetter": "Carta de presentación"
+    "coverLetter": "Carta de presentación",
+    "jobTools": "Empleo"
   },
   "auth": {
     "signIn": "Iniciar sesión",
