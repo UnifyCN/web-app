@@ -57,6 +57,13 @@ export interface Source {
    * since `events.location` is NOT NULL and a wrong location is worse than a dropped row.
    */
   defaultLocation?: string;
+  /**
+   * Landing-page partner slug (Unify-Landing-Page src/lib/partners.ts) when this source is
+   * a Unify partner. index.ts stamps it onto every row as `events.partner_slug`, which the
+   * landing page's /events filters on. Keep the backfill in
+   * 20260925120000_events_featured_partner.sql in step with these values.
+   */
+  partnerSlug?: string;
 }
 
 /**
@@ -91,6 +98,8 @@ export interface EventRow {
   address: string | null;
   genre: EventGenre;
   source: string;
+  /** Stamped by index.ts from Source.partnerSlug — adapters never set it. */
+  partner_slug?: string | null;
 }
 
 /** Per-run state threaded into every adapter. */

@@ -82,7 +82,10 @@ Deno.serve(async (req: Request) => {
   const perSourceResults = await Promise.all(
     ACTIVE_SOURCES.map(async (source) => ({
       slug: source.slug,
-      rows: await ADAPTERS[source.kind](source, ctx),
+      rows: (await ADAPTERS[source.kind](source, ctx)).map((row) => ({
+        ...row,
+        partner_slug: source.partnerSlug ?? null,
+      })),
     })),
   );
 

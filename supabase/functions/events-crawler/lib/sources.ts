@@ -39,6 +39,7 @@ export const SOURCES: Source[] = [
     kind: 'tribe',
     host: 'burnabynh.ca',
     enabled: true,
+    partnerSlug: 'burnaby-neighbourhood-house',
   },
   { slug: 'success', name: 'S.U.C.C.E.S.S.', kind: 'tribe', host: 'successbc.ca', enabled: true },
   {
@@ -77,6 +78,7 @@ export const SOURCES: Source[] = [
     kind: 'bibliocommons',
     host: 'vpl', // BiblioCommons tenant slug, not a hostname — see the adapter's caution
     enabled: true,
+    partnerSlug: 'vancouver-public-library',
     relevanceFilter: true,
   },
   // Burnaby Public Library is deliberately absent: its BiblioCommons tenant (`burnaby`)
@@ -89,6 +91,7 @@ export const SOURCES: Source[] = [
     kind: 'livewhale',
     host: 'events.sfu.ca',
     enabled: true,
+    partnerSlug: 'sfu',
     relevanceFilter: true,
   },
   {
@@ -109,6 +112,7 @@ export const SOURCES: Source[] = [
     kind: 'surrey-drupal',
     host: 'surreylibraries.ca',
     enabled: true,
+    partnerSlug: 'surrey-libraries',
     relevanceFilter: true,
   },
 
@@ -147,6 +151,7 @@ export const SOURCES: Source[] = [
     kind: 'capilano',
     host: 'www.capilanou.ca',
     enabled: true,
+    partnerSlug: 'capilano-university',
     relevanceFilter: true,
     // Strict, same as NVCL (Savar's 2026-08-09 review). No effect on the current 10-item
     // window — the one on-mission item, the International Student Orientation, matches a
