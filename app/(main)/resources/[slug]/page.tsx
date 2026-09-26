@@ -3,7 +3,7 @@
 import { use } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { getPartnerBySlug } from "@/lib/resources/partners";
+import { useResourcePartner } from "@/hooks/useResourcePartners";
 import { PartnerDetail } from "@/components/resources/PartnerDetail";
 
 export default function PartnerDetailPage({
@@ -13,7 +13,7 @@ export default function PartnerDetailPage({
 }) {
   const { t } = useTranslation();
   const { slug } = use(params);
-  const partner = getPartnerBySlug(slug);
+  const partner = useResourcePartner(slug);
 
   if (!partner || !partner.active) {
     return (

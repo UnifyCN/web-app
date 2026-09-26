@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="23.1884" height="23.1884" viewBox="0 0 23.1884 23.1884" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="account_balance">
+<mask id="mask0_0_23" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+<rect id="Bounding box" width="23.1884" height="23.1884" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_0_23)">
+<path id="account_balance_2" d="M4.63768 16.8117V9.2755H6.37681V16.8117H4.63768ZM10.7246 16.8117V9.2755H12.4638V16.8117H10.7246ZM2.31884 19.7103V17.9712H20.8696V19.7103H2.31884ZM16.8116 16.8117V9.2755H18.5507V16.8117H16.8116ZM2.31884 8.11608V5.79724L11.5942 1.15956L20.8696 5.79724V8.11608H2.31884Z" fill="#094F0C"/>
+</g>
+</g>
+</svg>

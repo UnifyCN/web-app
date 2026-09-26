@@ -973,6 +973,26 @@ Wiring is already in place — this is drop-in once assets exist: set `logo` / `
 on the partner records in `lib/resources/partners.ts`; `components/resources/OrgMonogram.tsx` swaps to
 the logo when `logo` is present, and `components/resources/PartnerDetail.tsx` renders `heroImage` over
 the gradient when set. Add any new image hosts to `next.config.ts`.
+*(Update, Resources redesign: the Figma detail frame has no hero, so `heroImage` is no longer
+rendered; `logo` still shows in the "Provided by" card.)*
+
+**Resources: one shared partner source (follow-up from PR #137)**
+PR #137 synced web's partner data from mobile `main` @ `ce38ba1`: structure in
+`lib/resources/partners.ts`, copy in `resources.partners.<slug>` in all 7 locale files, resolved by
+`lib/resources/localizePartner.ts` (a port of mobile's). They are still **two copies** and will drift
+again as mobile edits listings. Move both apps to one source — a Sanity `partner` type (mobile's
+Partner shape maps 1:1) or a shared package — and delete both hardcoded copies. Until then, re-sync by
+diffing mobile `constants/Partners.ts` + `learn.resources.partners` against web. Canada Shaws copy is
+contract-controlled: only take what mobile has.
+
+**Resources redesign — design elements not built (need data or a DB change)**
+- **"Save for later"** (Figma 8681:851): needs a per-user saved-resources table on the shared DB.
+- **Verified badge**: no per-partner verification data except Canada Shaws' `lastVerified`; on
+  mobile the badge belongs to the partner spotlight. Needs a sourced verification field for all
+  partners before it can show without singling out a referral partner.
+- **Filter facets** (`PARTNER_FACETS` in `lib/resources/partners.ts`) are derived from each partner's
+  own text and many are `unknown`. Confirming format / area / eligibility with each org would make
+  the filters more complete.
 
 ---
 

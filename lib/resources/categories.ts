@@ -1,15 +1,3 @@
-import {
-  Users,
-  Briefcase,
-  Stamp,
-  BookOpen,
-  HeartHandshake,
-  Network,
-  GraduationCap,
-  ShieldCheck,
-  Landmark,
-  type LucideIcon,
-} from "lucide-react";
 import type { PartnerCategory, Cost } from "@/types";
 
 /*
@@ -18,8 +6,7 @@ import type { PartnerCategory, Cost } from "@/types";
  * types/partner.ts), with two web adaptations:
  *   - i18n keys re-namespaced from `learn.resources.*` (mobile nests it under
  *     Learn) to top-level `resources.*` (web ships it as its own tab).
- *   - the MaterialCommunityIcons name map is replaced by a lucide-react
- *     component map.
+ *   - category glyphs are the Figma/mobile SVGs in public/resources/icons.
  */
 
 /** Fixed display order for the category grid. */
@@ -63,36 +50,24 @@ export const PARTNER_CATEGORY_DESCRIPTION_KEYS: Record<PartnerCategory, string> 
     money: "resources.category.money.description",
   };
 
-/** lucide-react icon per category (web equivalent of mobile's MCI names). */
-export const PARTNER_CATEGORY_ICONS: Record<PartnerCategory, LucideIcon> = {
-  gettingSettled: Users,
-  findWork: Briefcase,
-  immigrationHelp: Stamp,
-  librariesLearning: BookOpen,
-  communityBelonging: HeartHandshake,
-  networksPlanning: Network,
-  internationalStudents: GraduationCap,
-  insurance: ShieldCheck,
-  money: Landmark,
-};
-
 /**
- * Accent color per category (tiles, monograms, pills, highlight checks).
- * Ported verbatim from mobile so the two apps read as one system.
+ * Accent color per category (monograms, category pills, primary action button).
+ * Mobile's AA-safe values (types/partner.ts PARTNER_CATEGORY_COLORS): white
+ * button text on each clears 4.5:1.
  */
 export const PARTNER_CATEGORY_COLORS: Record<PartnerCategory, string> = {
-  gettingSettled: "#2DB39A",
-  findWork: "#3B82C4",
-  immigrationHelp: "#E5685A",
-  librariesLearning: "#7C6CD6",
-  communityBelonging: "#F68B26",
-  networksPlanning: "#5B6B8A",
-  internationalStudents: "#C25D8F",
-  insurance: "#3E9B63",
-  money: "#C8941F",
+  gettingSettled: "#167A69",
+  findWork: "#2563A5",
+  immigrationHelp: "#B8463B",
+  librariesLearning: "#6352B5",
+  communityBelonging: "#A64F00",
+  networksPlanning: "#465570",
+  internationalStudents: "#963F6D",
+  insurance: "#287447",
+  money: "#7D5A0B",
 };
 
-/** Soft tint per category (pill backgrounds, gradient fallback). */
+/** Soft tint per category (category pill backgrounds). */
 export const PARTNER_CATEGORY_TINTS: Record<PartnerCategory, string> = {
   gettingSettled: "#EAF7F0",
   findWork: "#EAF1FA",
@@ -104,6 +79,26 @@ export const PARTNER_CATEGORY_TINTS: Record<PartnerCategory, string> = {
   insurance: "#EAF6EF",
   money: "#FBF3E3",
 };
+
+/**
+ * Square chip behind each category glyph on the category grid (Figma 8681:503;
+ * mobile PARTNER_CATEGORY_ICON_TINTS).
+ */
+export const PARTNER_CATEGORY_ICON_TINTS: Record<PartnerCategory, string> = {
+  gettingSettled: "#B4E3D4",
+  findWork: "#B5D9EC",
+  immigrationHelp: "#F8CEC8",
+  librariesLearning: "#D1C5EF",
+  communityBelonging: "#F1D4BD",
+  networksPlanning: "#CBD9ED",
+  internationalStudents: "#EDC6DA",
+  insurance: "#EEDEBD",
+  money: "#B4E3B5",
+};
+
+/** Two-colour category glyph from Figma (same art as mobile assets/icons/resources). */
+export const categoryIconSrc = (category: PartnerCategory): string =>
+  `/resources/icons/${category}.svg`;
 
 /** i18n keys — resolve with `t()` at render time. */
 export const COST_LABEL_KEYS: Record<Cost, string> = {

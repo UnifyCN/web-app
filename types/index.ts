@@ -600,9 +600,10 @@ export interface LearningProgressSummary {
 }
 
 /* ----- Resources (Trusted Services directory) --------------------- *
- * Ported from the mobile app's Resources tab
- * (UnifyCN/mobile-app feat/resources-tab @ b7b5134 — types/partner.ts).
- * Hardcoded, no backend — see lib/resources/partners.ts.
+ * Ported from the mobile app (UnifyCN/mobile-app main @ ce38ba1 —
+ * types/partner.ts). Records hold STRUCTURE only; every human-readable string
+ * lives in the locale files under `resources.partners.<slug>` and is resolved
+ * by lib/resources/localizePartner.ts. Hardcoded, no backend.
  * ------------------------------------------------------------------ */
 
 export type PartnerCategory =
@@ -632,13 +633,13 @@ export type PartnerCtaKey =
 /** What a service costs the person using it. */
 export type Cost = "free" | "paid" | "mixed";
 
-/** A program a partner runs — a first-class record, not free text. Every field
- *  beyond `name`/`description` is optional; an absent value means "not published"
- *  and must never be inferred. */
+/** A program a partner runs. Structure only — its name, description and
+ *  eligibility live under `resources.partners.<slug>.programs.<key>`. Every
+ *  field beyond `id` is optional; an absent value is never inferred. */
 export interface PartnerProgram {
-  name: string;
-  description: string;
-  eligibility?: string;
+  /** Namespaced by the partner slug (`diversecity-linc`); the part after the
+   *  slug is the i18n key segment. */
+  id: string;
   cost?: Cost;
   category?: PartnerCategory;
   url?: string;
@@ -647,30 +648,18 @@ export interface PartnerProgram {
 }
 
 export interface Partner {
-  /** Stable kebab-case id (also used in routes + analytics). */
+  /** Stable kebab-case id (routes, analytics, and the i18n key segment). */
   slug: string;
+  /** The organization's own name. A proper noun — never translated. */
   name: string;
   category: PartnerCategory;
   partnershipType: PartnershipType;
-  /** One-line value prop shown in the list row. */
-  tagline: string;
-  /** Long-form "About" copy for the detail screen. */
-  description: string;
-  /** 2–4 "how they help newcomers" bullets. */
-  highlights: string[];
-  /** Area served, e.g. "Greater Vancouver". */
-  serviceArea: string;
-
-  // "How to get help" — every field optional; render only when populated. An
-  // absent value means the partner does not publish it, never "free"/"open to all".
+  // Contact + cost — every field optional; render only when populated. An
+  // absent value means the partner does not publish it, never "free".
   cost?: Cost;
-  eligibility?: string;
-  howToStart?: string;
   phone?: string;
   email?: string;
   address?: string;
-  hours?: string;
-  languages?: string[];
   /** Public website; opened in a new tab. Button hidden if absent. */
   website?: string;
   /** i18n key for the primary button when "Visit website" understates it.
@@ -678,16 +667,12 @@ export interface Partner {
   ctaLabelKey?: PartnerCtaKey;
   /** When true, the primary website CTA is the only outbound link on the detail
    *  page — program cards carry no links and phone/email/address render as plain
-   *  text with no call, email, or directions actions. For referral partners that
-   *  attribute leads through the CTA link. Mirrors mobile's `ctaOnly`. */
+   *  text with no call, email, or directions actions. Mirrors mobile's `ctaOnly`. */
   ctaOnly?: boolean;
   /** Optional brand logo URL; falls back to a monogram when absent. */
   logo?: string;
-  /** How the logo fills its square slot. Defaults to "cover" (edge-to-edge, for
-   *  square marks); "contain" letterboxes a horizontal wordmark instead of cropping. */
+  /** How the logo fills its square slot: "cover" (default) or "contain". */
   logoFit?: "cover" | "contain";
-  /** Optional hero photo URL; falls back to a category-tinted gradient. */
-  heroImage?: string;
   programs?: PartnerProgram[];
   /** ISO date; set only after human confirmation. Not surfaced yet. */
   lastVerified?: string;
@@ -695,6 +680,29 @@ export interface Partner {
   displayOrder: number;
   /** Inactive partners are filtered out of all UI. */
   active: boolean;
+}
+
+/** A program with its copy resolved for the active language. */
+export interface LocalizedPartnerProgram extends PartnerProgram {
+  name: string;
+  description: string;
+  eligibility?: string;
+}
+
+/** A partner with its copy resolved for the active language. */
+export interface LocalizedPartner extends Omit<Partner, "programs"> {
+  /** One-line value prop shown in the list row. */
+  tagline: string;
+  /** Long-form copy; blank-line-separated paragraphs. */
+  description: string;
+  highlights: string[];
+  /** Area served, e.g. "Surrey and Delta". */
+  serviceArea: string;
+  eligibility?: string;
+  howToStart?: string;
+  hours?: string;
+  languages?: string[];
+  programs?: LocalizedPartnerProgram[];
 }
 
 /** A category paired with its active-partner count, for the grid. */
