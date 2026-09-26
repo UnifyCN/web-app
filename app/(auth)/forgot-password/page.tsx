@@ -12,6 +12,7 @@ import { useStagger } from "@/components/auth/motion";
 import { Input } from "@/components/ui/Input";
 import { EMAIL_RE } from "@/lib/authValidation";
 import { sendPasswordReset } from "@/services/auth";
+import { storeAuthEmail } from "@/lib/authEmailHandoff";
 
 /** Forgot password — collect the email, then send a recovery code. */
 export default function ForgotPasswordPage() {
@@ -37,7 +38,8 @@ export default function ForgotPasswordPage() {
       setError(resetError.message || t("authWeb.couldntSendReset"));
       return;
     }
-    router.push(`/reset-password?email=${encodeURIComponent(normalized)}`);
+    storeAuthEmail("reset", normalized);
+    router.push("/reset-password");
   };
 
   return (

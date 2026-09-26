@@ -1,24 +1,30 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trans, useTranslation } from "react-i18next";
-import { Lock } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { OtpInput } from "@/components/auth/OtpInput";
 import { FormError } from "@/components/auth/FormError";
 import { Input } from "@/components/ui/Input";
-import { MIN_PASSWORD_LENGTH } from "@/lib/authValidation";
+import { EMAIL_RE, MIN_PASSWORD_LENGTH } from "@/lib/authValidation";
+import { clearAuthEmail } from "@/lib/authEmailHandoff";
+import { useAuthEmail } from "@/hooks/useAuthEmail";
 import { resetPasswordWithOtp, signOut } from "@/services/auth";
 
 /** Reset password — recovery code + new password on one screen (mobile parity). */
 function ResetPasswordScreen() {
   const router = useRouter();
-  const params = useSearchParams();
   const { t } = useTranslation();
-  const email = params.get("email") ?? "";
+  // Handed over in sessionStorage by forgot-password. When it's missing (new
+  // tab, other device, private window) the user types it instead.
+  const { email: handedEmail, resolved } = useAuthEmail("reset");
+  const [typedEmail, setTypedEmail] = useState("");
+  const askForEmail = resolved && !handedEmail;
+  const email = handedEmail || typedEmail.trim().toLowerCase();
 
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
@@ -26,28 +32,14 @@ function ResetPasswordScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!email) {
-    return (
-      <AuthShell backHref="/forgot-password">
-        <h1 className="text-3xl font-bold text-ink">{t("auth.resetPassword")}</h1>
-        <p className="mt-2 text-sm text-ink-muted">
-          {t("authWeb.resetMissingEmail")}{" "}
-          <Link
-            href="/forgot-password"
-            className="font-semibold text-mention-blue underline"
-          >
-            {t("authWeb.requestNewCode")}
-          </Link>
-          .
-        </p>
-      </AuthShell>
-    );
-  }
-
   const passwordValid = password.length >= MIN_PASSWORD_LENGTH;
   const match = password === confirm;
   const canSubmit =
-    code.length === 6 && passwordValid && confirm.length > 0 && match;
+    EMAIL_RE.test(email) &&
+    code.length === 6 &&
+    passwordValid &&
+    confirm.length > 0 &&
+    match;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -71,6 +63,7 @@ function ResetPasswordScreen() {
     // Send them to sign in with the new password (proxy bounces an authed user
     // off /login, so clear the recovery session first). If sign-out fails, the
     // recovery session would keep them authed — surface it instead of bouncing.
+    clearAuthEmail("reset");
     const { error: signOutError } = await signOut();
     if (signOutError) {
       setSubmitting(false);
@@ -84,23 +77,48 @@ function ResetPasswordScreen() {
     <AuthShell backHref="/login">
       <h1 className="text-3xl font-bold text-ink">{t("auth.resetPassword")}</h1>
       <p className="mt-1 text-sm text-ink-muted">
-        <Trans
-          i18nKey="authWeb.resetEnterCode"
-          values={{ email }}
-          components={{
-            email: <span className="font-semibold text-ink-secondary" />,
-          }}
-        />
+        {askForEmail ? (
+          <>
+            {t("auth.checkEmailCode")}.{" "}
+            <Link
+              href="/forgot-password"
+              className="font-semibold text-mention-blue underline"
+            >
+              {t("authWeb.requestNewCode")}
+            </Link>
+          </>
+        ) : (
+          <Trans
+            i18nKey="authWeb.resetEnterCode"
+            values={{ email }}
+            components={{
+              email: <span className="font-semibold text-ink-secondary" />,
+            }}
+          />
+        )}
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5" noValidate>
+        {askForEmail && (
+          <Input
+            leftIcon={<Mail className="h-5 w-5" />}
+            type="email"
+            autoComplete="email"
+            placeholder={t("auth.emailAddress")}
+            value={typedEmail}
+            onChange={(e) => {
+              setTypedEmail(e.target.value);
+              setError(null);
+            }}
+          />
+        )}
         <OtpInput
           value={code}
           onChange={(v) => {
             setCode(v);
             setError(null);
           }}
-          autoFocus
+          autoFocus={!askForEmail}
           error={Boolean(error)}
         />
         <Input

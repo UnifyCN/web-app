@@ -23,6 +23,7 @@ import {
 import { isCommonPassword } from "@/lib/passwordStrength";
 import { suggestEmailCorrection } from "@/lib/emailTypos";
 import { signUpWithEmail } from "@/services/auth";
+import { storeAuthEmail } from "@/lib/authEmailHandoff";
 import { trackSignUpFailed, trackSignUpStarted } from "@/lib/analytics";
 
 /** Create account — email + password with a required consent checkbox (image 8). */
@@ -71,7 +72,10 @@ export default function SignUpPage() {
     // Carry the consent timestamp to /verify-email, where it's stamped on the
     // user row. If the cookie is lost, verifySignupOtp defaults to verify-time.
     setSignupConsentCookie(new Date().toISOString());
-    router.push(`/verify-email?email=${encodeURIComponent(normalized)}`);
+    // Hand the email over in sessionStorage, never the URL (see
+    // lib/authEmailHandoff.ts).
+    storeAuthEmail("verify", normalized);
+    router.push("/verify-email");
   };
 
   return (

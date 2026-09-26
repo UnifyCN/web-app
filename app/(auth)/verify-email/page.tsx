@@ -1,29 +1,37 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, Mail } from "lucide-react";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { OtpInput } from "@/components/auth/OtpInput";
 import { FormError } from "@/components/auth/FormError";
+import { Input } from "@/components/ui/Input";
 import { resendSignupOtp, verifySignupOtp } from "@/services/auth";
 import {
+  EMAIL_RE,
   clearSignupConsentCookie,
   readSignupConsentCookie,
 } from "@/lib/authValidation";
+import { clearAuthEmail } from "@/lib/authEmailHandoff";
+import { useAuthEmail } from "@/hooks/useAuthEmail";
 import { trackSignUpCompleted } from "@/lib/analytics";
 
 /** "Verify your email" — enter the 6-digit signup code (image 10). */
 function VerifyEmailScreen() {
   const router = useRouter();
-  const params = useSearchParams();
   const reduce = useReducedMotion();
   const { t } = useTranslation();
-  const email = params.get("email") ?? "";
+  // Handed over in sessionStorage by signup / login. When it's missing (new
+  // tab, other device, private window) the user types it instead.
+  const { email: handedEmail, resolved } = useAuthEmail("verify");
+  const [typedEmail, setTypedEmail] = useState("");
+  const askForEmail = resolved && !handedEmail;
+  const email = handedEmail || typedEmail.trim().toLowerCase();
 
   const [code, setCode] = useState("");
   const [verifying, setVerifying] = useState(false);
@@ -36,8 +44,10 @@ function VerifyEmailScreen() {
     // Take the token directly from OtpInput.onComplete (the just-typed code) so
     // auto-submit never fires with a one-render-stale `code` state.
     const otp = token ?? code;
-    if (!email) {
-      setError(t("authWeb.missingEmailContext"));
+    if (!EMAIL_RE.test(email)) {
+      setError(
+        askForEmail ? t("auth.invalidEmail") : t("authWeb.missingEmailContext"),
+      );
       return;
     }
     if (otp.length !== 6 || verifying) return;
@@ -58,6 +68,7 @@ function VerifyEmailScreen() {
       return;
     }
     clearSignupConsentCookie();
+    clearAuthEmail("verify");
     trackSignUpCompleted();
     // Brief success beat before routing into the app.
     setSuccess(true);
@@ -66,6 +77,12 @@ function VerifyEmailScreen() {
 
   const handleResend = async () => {
     if (resending) return;
+    if (!EMAIL_RE.test(email)) {
+      setError(
+        askForEmail ? t("auth.invalidEmail") : t("authWeb.missingEmailContext"),
+      );
+      return;
+    }
     setResending(true);
     setError(null);
     setResent(false);
@@ -108,11 +125,31 @@ function VerifyEmailScreen() {
         <>
           <p className="mt-6 text-center text-base text-ink-muted">
             {t("auth.otp.sentCodeTo")}
-            <br />
-            <span className="font-semibold text-ink-secondary">
-              {email || t("authWeb.yourEmail")}
-            </span>
+            {!askForEmail && (
+              <>
+                <br />
+                <span className="font-semibold text-ink-secondary">
+                  {email || t("authWeb.yourEmail")}
+                </span>
+              </>
+            )}
           </p>
+
+          {askForEmail && (
+            <div className="mt-4">
+              <Input
+                leftIcon={<Mail className="h-5 w-5" />}
+                type="email"
+                autoComplete="email"
+                placeholder={t("auth.emailAddress")}
+                value={typedEmail}
+                onChange={(e) => {
+                  setTypedEmail(e.target.value);
+                  setError(null);
+                }}
+              />
+            </div>
+          )}
 
           <div className="mt-8">
             <OtpInput
@@ -122,7 +159,7 @@ function VerifyEmailScreen() {
                 setError(null);
               }}
               onComplete={handleVerify}
-              autoFocus
+              autoFocus={!askForEmail}
               disabled={verifying}
               error={Boolean(error)}
             />
