@@ -1071,3 +1071,30 @@ conflict, so two language rollouts converge instead of clobbering each other's e
   product events (no `event_viewed` / `event_opened` / link-click capture) and no server
   telemetry. Deliberately left out of scope for the weekly-review dashboard work (PR #127).
   Worth instrumenting if the events board becomes a priority — no current plan to build it.
+
+### Resume / cover letter — follow-ups from PR #134 (analytics, merged 2026-09-25)
+
+- **Daily AI cap mismatch — decide with Savar.** Production `resume-chat` enforces **60/day**
+  and `cover-letter-chat` **30/day**, via `DAILY_MESSAGE_LIMIT` in each edge fn. Those values
+  were deployed before #126, and #126's 20 was never deployed. #134 deliberately kept 60/30 so
+  its deploy changed tracking only. The client UI (`RESUME_/COVER_LETTER_DAILY_MESSAGE_LIMIT`)
+  and `/api/resume/job-posting` all use **20**, so users are blocked at 20 while direct API
+  callers can reach 60/30. CodeRabbit flagged this as a 🟡 Moderate security-architecture risk:
+  signed-in users can add generation cost.
+  Pick one value and align the edge fns, client constants, job-posting gate, and `prompt_limit`
+  in the analytics events.
+- **Cover-letter job import is gated on the *resume* quota.** `createDraftService.fetchJobPosting`
+  always calls `/api/resume/job-posting`, which reads `resume_usage` against a hard-coded 20. A
+  user with cover-letter messages left gets "You've reached today's cover-letter limit" once
+  their resume quota is used up (reproduced 2026-09-25 with 19 cover-letter messages left). It
+  also emits `ai_prompt_limit_reached{feature:"cover_letter", trigger:"job_import"}` for the
+  wrong quota. Fix: pass the feature to the route and check its own usage table.
+- **Quota meter isn't refreshed when a charged turn fails to save.** If generation succeeds but
+  the final `saveDraft` fails, the send/import mutations' `onError` doesn't invalidate the usage
+  key, so the "N left" meter can show the pre-charge count until the next refetch. This behaviour
+  already existed on main (raised by CodeRabbit on #134). Fix: invalidate usage in `onError` only
+  when the failure came after the generation response.
+- **`rag-query` sends Companion conversation text to PostHog** (`$ai_input` /
+  `$ai_output_choices` on `$ai_generation`). This is intentional per the owner (2026-09-25) and
+  recorded here so it isn't flagged again as a leak. Any change is a shared-function change and
+  needs Savar's sign-off.
