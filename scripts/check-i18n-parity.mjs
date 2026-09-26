@@ -57,6 +57,16 @@ function setEqual(a, b) {
 }
 
 const baseline = load(BASELINE);
+
+// i18next's v3 JSON format (`compatibilityJSON: "v3"`) names plural forms for
+// languages with more than two of them (e.g. Arabic) `<key>_0` … `<key>_5`
+// instead of `_plural`. EN only has `<key>` / `<key>_plural`, so a numeric
+// form is legitimate when its base key exists in EN.
+const NUMERIC_PLURAL_RE = /^(.*)_[0-5]$/;
+function isNumericPluralForm(key) {
+  const m = NUMERIC_PLURAL_RE.exec(key);
+  return m !== null && m[1] in baseline;
+}
 let hasError = false;
 let totalUntranslated = 0;
 
@@ -64,7 +74,9 @@ for (const lang of LOCALES) {
   if (lang === BASELINE) continue;
   const other = load(lang);
   const missing = Object.keys(baseline).filter((k) => !(k in other));
-  const extra = Object.keys(other).filter((k) => !(k in baseline));
+  const extra = Object.keys(other).filter(
+    (k) => !(k in baseline) && !isNumericPluralForm(k),
+  );
   const placeholderMismatches = [];
   for (const key of Object.keys(baseline)) {
     if (!(key in other)) continue;

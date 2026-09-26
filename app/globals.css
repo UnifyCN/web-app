@@ -89,6 +89,26 @@
   --color-onb-learn-housing: #e78d42;
   --color-onb-learn-docs: #2c7acd;
 
+  /* Resources directory — warm neutrals + teal, ported from mobile
+   * constants/ResourceTheme.ts (AA-darkened values). Used ONLY inside
+   * components/resources/*. Category accents/tints stay in
+   * lib/resources/categories.ts (per-category data, like mobile). */
+  --color-res-heading: #1a1815;
+  --color-res-card-text: #23211d;
+  --color-res-body: #3f3c36;
+  --color-res-secondary: #6f6c64;
+  --color-res-count: #79766f;
+  --color-res-placeholder: #6e6e6e;
+  --color-res-border: #e7e4de;
+  --color-res-divider: #eceae6;
+  --color-res-outline: #d8d5cd;
+  --color-res-search: #f4f2ee;
+  --color-res-chevron: #c4c1ba;
+  --color-res-link: #0f766e;
+  --color-res-free-bg: #e6f7f4;
+  --color-res-mixed-bg: #fdf1e2;
+  --color-res-mixed-text: #9a6318;
+
   /* Radius — cards use 10–12px */
   --radius-card: 0.625rem;
 }

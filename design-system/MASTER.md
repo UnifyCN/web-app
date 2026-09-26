@@ -78,6 +78,31 @@
 
 Priority order is fixed everywhere: **Do now → Do soon → Explore & connect → Optional/later**.
 
+### Resources directory (scoped to `components/resources/*` only)
+
+Ported from mobile `constants/ResourceTheme.ts` (Figma 8681:503/643/851), using
+mobile's AA-darkened values where Figma differs. Tailwind tokens are `res-*`.
+
+| Token | Hex | Use |
+| --- | --- | --- |
+| `res-heading` | `#1A1815` | Page titles |
+| `res-card-text` | `#23211D` | Card titles, fact values |
+| `res-body` | `#3F3C36` | Detail body copy |
+| `res-secondary` | `#6F6C64` | Secondary text, pill text |
+| `res-count` | `#79766F` | Counts, section labels (Figma `#8B8880`, darkened for AA) |
+| `res-placeholder` | `#6E6E6E` | Search placeholder (Figma `#747474`, darkened for AA) |
+| `res-border` | `#E7E4DE` | Card borders |
+| `res-divider` | `#ECEAE6` | Hairline dividers |
+| `res-outline` | `#D8D5CD` | Outline buttons, filter pills |
+| `res-search` | `#F4F2EE` | Search field, neutral chips |
+| `res-chevron` | `#C4C1BA` | Row chevrons |
+| `res-link` | `#0F766E` | Links, checks, step numbers |
+| `res-free-bg` / `res-link` | `#E6F7F4` / `#0F766E` | Free cost chip |
+| `res-mixed-bg` / `res-mixed-text` | `#FDF1E2` / `#9A6318` | Mixed cost chip |
+
+Per-category accent / tint / icon-chip colours live in `lib/resources/categories.ts`
+(mirrors mobile `types/partner.ts`).
+
 ### Logo Circles (Unify mark only — not UI colours)
 
 Top-left orange `#f68b26` · top-right blue `#4A90D9` · bottom-left green `#5CB85C` ·
