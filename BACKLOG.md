@@ -994,6 +994,13 @@ contract-controlled: only take what mobile has.
   own text and many are `unknown`. Confirming format / area / eligibility with each org would make
   the filters more complete.
 
+**useResourceFilters: derive consecutive URL updates from the latest params (CodeRabbit Minor, PR #137)**
+`hooks/useResourceFilters.ts` builds each `router.replace` from the render-captured `params` /
+`filters`. Two updates in the same tick (e.g. toggling a pill while the search debounce commits)
+can each start from the same stale base, so one of them is lost. Fix: keep the pending query string
+in a ref synced from `useSearchParams`, apply every `setQuery` / `toggle` / `clearFilters` to that
+latest value, then `router.replace`. Low impact today (updates are user-paced), so deferred.
+
 ---
 
 ## Email & Branding
