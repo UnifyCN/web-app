@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Building2, CalendarDays, Pencil, Plus, Star, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
+import { CalendarDays, Pencil, Plus, Trash2 } from "lucide-react";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Tabs } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/ToastProvider";
 import { FormError } from "@/components/auth/FormError";
+import { EventVisibilityControls } from "@/components/admin/EventVisibilityControls";
 import { useAdminEvents, useDeleteAdminEvent } from "@/hooks/useAdminEvents";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { DELETED_TOAST, DELETE_FAILED_MESSAGE } from "@/lib/admin/eventForm";
@@ -20,15 +20,14 @@ import {
   type AdminEvent,
   type AdminEventTab,
 } from "@/lib/admin/eventList";
-import { partnerLabel } from "@/lib/admin/eventPartners";
 import { cn } from "@/lib/utils";
 
 /*
  * /admin/events — the list of every event that has not ended (spec #142, slices
- * #143 and #145). The admin layout already 404s non-admins. English only (spec D8).
- * Every row opens /admin/events/[id]; rows on the "Added by team" tab also get Edit
- * and Delete (crawler rows are never deletable). Inline feature/partner controls
- * arrive in #146.
+ * #143, #145 and #146). The admin layout already 404s non-admins. English only
+ * (spec D8). Every row opens /admin/events/[id] and has an inline "Feature" switch
+ * and partner dropdown that save at once (#146). Rows on the "Added by team" tab
+ * also get Edit and Delete (crawler rows are never deletable).
  */
 
 const EMPTY_COPY: Record<AdminEventTab, { title: string; body: string }> = {
@@ -51,7 +50,7 @@ function TeamRowActions({
   onDelete: (event: AdminEvent) => void;
 }) {
   return (
-    <div className="flex items-center gap-1 sm:-me-2">
+    <div className="-me-2.5 flex items-center gap-1">
       <Link
         href={`/admin/events/${event.id}`}
         className={cn(
@@ -91,10 +90,9 @@ function EventRow({
   actions?: React.ReactNode;
 }) {
   const when = formatPacificWhen(event.eventDatetime, event.eventEndDatetime, now);
-  const partner = partnerLabel(event.partnerSlug);
 
   return (
-    <li className="grid grid-cols-[6rem_minmax(0,1fr)] gap-x-4 px-4 py-3.5 sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:px-5">
+    <li className="grid grid-cols-[6rem_minmax(0,1fr)] gap-x-4 px-4 py-3.5 sm:grid-cols-[8rem_minmax(0,1fr)] sm:px-5">
       <div>
         <p className="text-sm font-semibold text-ink-secondary">{when.date}</p>
         <p className="mt-0.5 text-xs text-ink-muted">{when.time}</p>
@@ -112,29 +110,25 @@ function EventRow({
         >
           {event.title}
         </Link>
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-ink-muted">
-          {event.isFeatured && (
-            <Badge leftIcon={<Star className="h-3 w-3 fill-current" aria-hidden />}>
-              Featured
-            </Badge>
+        <p className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-ink-muted">
+          <span className="shrink-0">{formatLabel(event.eventType)}</span>
+          {/* An Online event's venue is "Online"; do not say it twice. */}
+          {event.location &&
+            event.location.trim().toLowerCase() !==
+              formatLabel(event.eventType).toLowerCase() && (
+            <>
+              <span aria-hidden>·</span>
+              <span className="truncate">{event.location}</span>
+            </>
           )}
-          <span>{formatLabel(event.eventType)}</span>
-          <span className="inline-flex min-w-0 items-center gap-1">
-            <Building2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {partner ? (
-              <span className="truncate">{partner}</span>
-            ) : (
-              <span className="text-ink-placeholder">No partner</span>
-            )}
-          </span>
-        </div>
+        </p>
       </div>
 
-      {actions && (
-        <div className="col-start-2 mt-2 -ms-2.5 sm:col-start-3 sm:row-start-1 sm:mt-0 sm:ms-0 sm:self-center">
-          {actions}
-        </div>
-      )}
+      {/* Feature + partner (both tabs), then Edit/Delete (team tab). Full width on a
+          phone so the dropdown has room; under the title from sm up. */}
+      <div className="col-span-2 mt-3 sm:col-span-1 sm:col-start-2">
+        <EventVisibilityControls event={event} trailing={actions} />
+      </div>
     </li>
   );
 }
