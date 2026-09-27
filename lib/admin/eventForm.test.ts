@@ -5,18 +5,24 @@ import {
   DUPLICATE_LINK_MESSAGE,
   EMPTY_EVENT_FORM,
   EVENT_TOPIC_OPTIONS,
+  EVENT_UPDATABLE_COLUMNS,
   NOT_ON_LANDING_HINT,
   ONLINE_VENUE,
   SAVE_FAILED_MESSAGE,
   appsAppearDate,
+  buildCrawlerEventUpdate,
+  buildTeamEventUpdate,
+  eventToFormState,
   isHttpUrl,
   mapSaveError,
+  parseEventId,
   pacificWallTimeToUtc,
   showsAddress,
   utcToPacificWallTime,
   validateEventForm,
   visibilityHints,
   withEventType,
+  type AdminEventDetail,
   type EventFormState,
   type EventInsertPayload,
 } from "./eventForm";
@@ -449,5 +455,273 @@ describe("mapSaveError", () => {
     expect(SAVE_FAILED_MESSAGE).toBe(
       "Could not save. Your account may not have admin access.",
     );
+  });
+});
+
+/* ---- Edit (#145) -------------------------------------------------------- */
+
+const SAVED_AT = new Date("2026-09-27T20:15:00.000Z");
+
+/** The row a form would have stored, as the edit page reads it back. */
+function detailFrom(
+  payload: EventInsertPayload,
+  overrides: Partial<AdminEventDetail> = {},
+): AdminEventDetail {
+  return {
+    id: 42,
+    title: payload.title,
+    description: payload.description,
+    eventDatetime: payload.event_datetime,
+    eventEndDatetime: payload.event_end_datetime,
+    eventType: payload.event_type,
+    location: payload.location,
+    address: payload.address,
+    hostedBy: payload.hosted_by,
+    genre: payload.genre,
+    externalLink: payload.external_link,
+    coverPhotoUrl: null,
+    partnerSlug: payload.partner_slug,
+    isFeatured: payload.is_featured,
+    source: null,
+    ...overrides,
+  };
+}
+
+const FORBIDDEN_UPDATE_COLUMNS = ["id", "source", "created_at", "max_attendees"];
+
+describe("eventToFormState (edit prefill)", () => {
+  it("prefills every field from a stored row, in Pacific time", () => {
+    const state = eventToFormState(detailFrom(payloadOf(form())));
+    expect(state).toEqual({ ...form(), endDate: "" });
+  });
+
+  it("round-trips a saved form to the same payload", () => {
+    for (const overrides of [
+      {},
+      { partnerSlug: "rbc", isFeatured: true, hostedBy: "", description: "" },
+      { eventType: "online" as const, location: "Online", address: "" },
+      { endDate: "2026-10-05", endTime: "10:00" },
+      { endTime: "" },
+    ]) {
+      const payload = payloadOf(form(overrides));
+      expect(payloadOf(eventToFormState(detailFrom(payload)))).toEqual(payload);
+    }
+  });
+
+  it("round-trips every non-gap start time on both DST dates and a normal date", () => {
+    for (const date of ["2026-03-08", "2026-11-01", "2026-06-10"]) {
+      for (let minutes = 0; minutes < 24 * 60; minutes += 15) {
+        const time = `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(
+          minutes % 60,
+        ).padStart(2, "0")}`;
+        if (!pacificWallTimeToUtc(date, time).ok) continue; // the spring-forward gap
+        const saved = payloadOf(
+          form({ startDate: date, startTime: time, endDate: "", endTime: "" }),
+        );
+        const state = eventToFormState(detailFrom(saved));
+        expect(state.startDate).toBe(date);
+        expect(state.startTime).toBe(time);
+        expect(payloadOf(state).event_datetime).toBe(saved.event_datetime);
+      }
+    }
+  });
+
+  it("keeps the fall-back overlap on the earlier (PDT) occurrence", () => {
+    const state = eventToFormState(
+      detailFrom(payloadOf(form()), {
+        eventDatetime: "2026-11-01T08:30:00.000Z", // 01:30 PDT
+        eventEndDatetime: "2026-11-01T10:30:00.000Z", // 02:30 PST
+      }),
+    );
+    expect(state).toMatchObject({
+      startDate: "2026-11-01",
+      startTime: "01:30",
+      endDate: "",
+      endTime: "02:30",
+    });
+    expect(payloadOf(state).event_datetime).toBe("2026-11-01T08:30:00.000Z");
+  });
+
+  it("fills the end date only when the event ends on a later Pacific day", () => {
+    const sameDay = eventToFormState(
+      detailFrom(payloadOf(form()), {
+        eventDatetime: "2026-10-04T01:00:00.000Z",
+        eventEndDatetime: "2026-10-04T06:59:00.000Z", // 23:59 Pacific, Oct 3
+      }),
+    );
+    expect(sameDay).toMatchObject({ endDate: "", endTime: "23:59" });
+
+    const nextDay = eventToFormState(
+      detailFrom(payloadOf(form()), {
+        eventEndDatetime: "2026-10-04T07:30:00.000Z", // 00:30 Pacific, Oct 4
+      }),
+    );
+    expect(nextDay).toMatchObject({ endDate: "2026-10-04", endTime: "00:30" });
+  });
+
+  it("leaves a format or topic the form does not offer unset, and nulls as empty", () => {
+    const state = eventToFormState(
+      detailFrom(payloadOf(form()), {
+        eventType: "In Person",
+        genre: "Uncategorized",
+        description: null,
+        address: null,
+        hostedBy: null,
+        eventEndDatetime: null,
+      }),
+    );
+    expect(state).toMatchObject({
+      eventType: "",
+      genre: "",
+      description: "",
+      address: "",
+      hostedBy: "",
+      endDate: "",
+      endTime: "",
+    });
+    expect(errorsOf(state)).toEqual({
+      eventType: "Pick a format.",
+      genre: "Pick a topic.",
+    });
+  });
+});
+
+describe("buildTeamEventUpdate", () => {
+  function updateOf(state: EventFormState) {
+    const result = buildTeamEventUpdate(state, SAVED_AT);
+    if (!result.ok) {
+      throw new Error(`expected a valid form, got ${JSON.stringify(result.errors)}`);
+    }
+    return result.payload;
+  }
+
+  it("builds the insert fields without source, plus updated_at", () => {
+    const { source: _source, ...insertFields } = payloadOf(form());
+    void _source;
+    expect(updateOf(form())).toEqual({
+      ...insertFields,
+      updated_at: "2026-09-27T20:15:00.000Z",
+    });
+  });
+
+  it("uses only granted columns: never id, source, created_at or max_attendees", () => {
+    const payload = updateOf(form({ isFeatured: true, partnerSlug: "rbc" }));
+    for (const key of Object.keys(payload)) {
+      expect(EVENT_UPDATABLE_COLUMNS).toContain(key);
+    }
+    for (const column of FORBIDDEN_UPDATE_COLUMNS) {
+      expect(column in payload).toBe(false);
+    }
+    expect(payload.updated_at).toBe(SAVED_AT.toISOString());
+  });
+
+  it("saves a null address for an Online event (same rule as create)", () => {
+    const payload = updateOf(
+      form({ eventType: "online", location: "Online", address: "Somewhere 1" }),
+    );
+    expect(payload.address).toBeNull();
+  });
+
+  it("rejects the same things create rejects", () => {
+    const result = buildTeamEventUpdate(
+      form({ title: "", endTime: "17:00", genre: "Uncategorized" as never }),
+      SAVED_AT,
+    );
+    expect(result).toEqual({
+      ok: false,
+      errors: {
+        title: "Add a title.",
+        end: "The end must be after the start.",
+        genre: "Pick a topic.",
+      },
+    });
+  });
+});
+
+describe("buildCrawlerEventUpdate", () => {
+  it("contains exactly is_featured, partner_slug and updated_at", () => {
+    const result = buildCrawlerEventUpdate(
+      { isFeatured: true, partnerSlug: "sfu" },
+      SAVED_AT,
+    );
+    expect(result).toEqual({
+      ok: true,
+      payload: {
+        is_featured: true,
+        partner_slug: "sfu",
+        updated_at: "2026-09-27T20:15:00.000Z",
+      },
+    });
+    if (!result.ok) return;
+    expect(Object.keys(result.payload).sort()).toEqual([
+      "is_featured",
+      "partner_slug",
+      "updated_at",
+    ]);
+  });
+
+  it("stores no partner as null", () => {
+    const result = buildCrawlerEventUpdate(
+      { isFeatured: false, partnerSlug: "  " },
+      SAVED_AT,
+    );
+    expect(result.ok && result.payload.partner_slug).toBeNull();
+  });
+
+  it("rejects a partner slug that is not in the list", () => {
+    expect(
+      buildCrawlerEventUpdate({ isFeatured: false, partnerSlug: "acme" }, SAVED_AT),
+    ).toEqual({ ok: false, errors: { partnerSlug: "Pick a partner from the list." } });
+  });
+});
+
+describe("EVENT_UPDATABLE_COLUMNS", () => {
+  it("matches the live per-column UPDATE grant", () => {
+    expect([...EVENT_UPDATABLE_COLUMNS].sort()).toEqual(
+      [
+        "title",
+        "description",
+        "event_datetime",
+        "event_end_datetime",
+        "location",
+        "address",
+        "event_type",
+        "hosted_by",
+        "genre",
+        "cover_photo_url",
+        "external_link",
+        "is_featured",
+        "partner_slug",
+        "updated_at",
+      ].sort(),
+    );
+    for (const column of FORBIDDEN_UPDATE_COLUMNS) {
+      expect(EVENT_UPDATABLE_COLUMNS).not.toContain(column);
+    }
+  });
+});
+
+describe("parseEventId", () => {
+  it("accepts a positive integer id", () => {
+    expect(parseEventId("959")).toBe(959);
+    expect(parseEventId("1")).toBe(1);
+  });
+
+  it("rejects anything else", () => {
+    for (const raw of [
+      "0",
+      "-3",
+      "007",
+      "1.5",
+      "12abc",
+      "abc",
+      "",
+      " 12",
+      "99999999999999999999",
+      undefined,
+      ["12"],
+    ]) {
+      expect(parseEventId(raw)).toBeNull();
+    }
   });
 });

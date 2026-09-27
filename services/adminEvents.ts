@@ -10,7 +10,10 @@ import {
 } from "@/lib/admin/eventList";
 import {
   UNIQUE_VIOLATION,
+  type AdminEventDetail,
+  type CrawlerEventUpdatePayload,
   type EventInsertPayload,
+  type TeamEventUpdatePayload,
 } from "@/lib/admin/eventForm";
 
 /**
@@ -136,4 +139,159 @@ export async function createAdminEvent(
     throw error;
   }
   return (data as { id: number }).id;
+}
+
+/* ---- One event: read, update, delete (#145) ----------------------------- */
+
+interface AdminEventDetailRow {
+  id: number;
+  title: string;
+  description: string | null;
+  event_datetime: string;
+  event_end_datetime: string | null;
+  event_type: string;
+  location: string;
+  address: string | null;
+  hosted_by: string | null;
+  genre: string | null;
+  external_link: string;
+  cover_photo_url: string | null;
+  partner_slug: string | null;
+  is_featured: boolean | null;
+  source: string | null;
+}
+
+const ADMIN_EVENT_DETAIL_COLUMNS =
+  "id, title, description, event_datetime, event_end_datetime, event_type, location, address, hosted_by, genre, external_link, cover_photo_url, partner_slug, is_featured, source";
+
+function rowToAdminEventDetail(row: AdminEventDetailRow): AdminEventDetail {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    eventDatetime: row.event_datetime,
+    eventEndDatetime: row.event_end_datetime,
+    eventType: row.event_type,
+    location: row.location,
+    address: row.address,
+    hostedBy: row.hosted_by,
+    genre: row.genre,
+    externalLink: row.external_link,
+    coverPhotoUrl: row.cover_photo_url,
+    partnerSlug: row.partner_slug,
+    isFeatured: row.is_featured === true,
+    source: row.source,
+  };
+}
+
+/**
+ * One event by id, or null when no row has that id (or Supabase is not configured,
+ * or nobody is signed in: the edit page then shows its not-found state).
+ */
+export async function getAdminEvent(id: number): Promise<AdminEventDetail | null> {
+  if (!isSupabaseConfigured()) return null;
+  const userId = await getAuthUserId();
+  if (!userId) return null;
+
+  const { data, error } = await createClient()
+    .from("events")
+    .select(ADMIN_EVENT_DETAIL_COLUMNS)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? rowToAdminEventDetail(data as AdminEventDetailRow) : null;
+}
+
+/**
+ * Updates a team row (`source is null`) with the full edit payload from
+ * buildTeamEventUpdate. `.is("source", null)` keeps a team update off crawler rows
+ * even if a caller mixes them up.
+ *
+ * `.select("id")` returns the updated rows, so an update that RLS blocks or that
+ * matches nothing (0 rows) throws instead of silently succeeding (the
+ * deleteDiscussion pattern). A link that collides with another event throws
+ * DuplicateEventLinkError, as create does.
+ */
+export async function updateTeamEvent(
+  id: number,
+  payload: TeamEventUpdatePayload,
+): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("updateTeamEvent: Supabase is not configured");
+  }
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("updateTeamEvent: no auth session");
+
+  const { data, error } = await createClient()
+    .from("events")
+    .update(payload)
+    .eq("id", id)
+    .is("source", null)
+    .select("id");
+
+  if (error) {
+    if (error.code === UNIQUE_VIOLATION) {
+      const existingEventId = await findEventIdByExternalLink(
+        payload.external_link,
+      ).catch(() => null);
+      throw new DuplicateEventLinkError(
+        existingEventId === id ? null : existingEventId,
+      );
+    }
+    throw error;
+  }
+  if (!data || data.length === 0) {
+    throw new Error("updateTeamEvent: event not found or not allowed");
+  }
+}
+
+/**
+ * Updates a crawler row. The payload (from buildCrawlerEventUpdate) holds only
+ * `is_featured`, `partner_slug` and `updated_at`, so the crawler's own fields are
+ * never changed. Throws on 0 rows, like updateTeamEvent.
+ */
+export async function updateCrawlerEvent(
+  id: number,
+  payload: CrawlerEventUpdatePayload,
+): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("updateCrawlerEvent: Supabase is not configured");
+  }
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("updateCrawlerEvent: no auth session");
+
+  const { data, error } = await createClient()
+    .from("events")
+    .update(payload)
+    .eq("id", id)
+    .select("id");
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("updateCrawlerEvent: event not found or not allowed");
+  }
+}
+
+/**
+ * Hard-deletes a team row. The delete policy only allows `source is null`, and the
+ * filter says the same, so a crawler row is never deleted (it would come back on
+ * the crawler's next run). The only foreign key, `event_translations`, cascades.
+ * Throws on 0 rows (RLS block, crawler row, or already gone).
+ */
+export async function deleteTeamEvent(id: number): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    throw new Error("deleteTeamEvent: Supabase is not configured");
+  }
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("deleteTeamEvent: no auth session");
+
+  const { data, error } = await createClient()
+    .from("events")
+    .delete()
+    .eq("id", id)
+    .is("source", null)
+    .select("id");
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("deleteTeamEvent: event not found or not allowed");
+  }
 }

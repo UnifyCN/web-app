@@ -2,15 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Building2, CalendarDays, Plus, Star } from "lucide-react";
+import { Building2, CalendarDays, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Tabs } from "@/components/ui/Tabs";
-import { useAdminEvents } from "@/hooks/useAdminEvents";
+import { useToast } from "@/components/ui/ToastProvider";
+import { FormError } from "@/components/auth/FormError";
+import { useAdminEvents, useDeleteAdminEvent } from "@/hooks/useAdminEvents";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { DELETED_TOAST, DELETE_FAILED_MESSAGE } from "@/lib/admin/eventForm";
 import {
   ADMIN_EVENT_TABS,
   formatLabel,
   formatPacificWhen,
+  isTeamEvent,
   splitByTab,
   type AdminEvent,
   type AdminEventTab,
@@ -19,9 +24,11 @@ import { partnerLabel } from "@/lib/admin/eventPartners";
 import { cn } from "@/lib/utils";
 
 /*
- * /admin/events — the read-only list of every event that has not ended (spec #142,
- * slice #143). The admin layout already 404s non-admins. English only (spec D8).
- * Inline feature/partner controls, Edit, and Delete arrive in later slices.
+ * /admin/events — the list of every event that has not ended (spec #142, slices
+ * #143 and #145). The admin layout already 404s non-admins. English only (spec D8).
+ * Every row opens /admin/events/[id]; rows on the "Added by team" tab also get Edit
+ * and Delete (crawler rows are never deletable). Inline feature/partner controls
+ * arrive in #146.
  */
 
 const EMPTY_COPY: Record<AdminEventTab, { title: string; body: string }> = {
@@ -35,13 +42,60 @@ const EMPTY_COPY: Record<AdminEventTab, { title: string; body: string }> = {
   },
 };
 
-function EventRow({ event, now }: { event: AdminEvent; now: Date }) {
+/** Edit + Delete, for team rows only. */
+function TeamRowActions({
+  event,
+  onDelete,
+}: {
+  event: AdminEvent;
+  onDelete: (event: AdminEvent) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1 sm:-me-2">
+      <Link
+        href={`/admin/events/${event.id}`}
+        className={cn(
+          "inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-ink-muted",
+          "transition-colors duration-200 hover:bg-surface-gray hover:text-ink",
+          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none",
+        )}
+      >
+        <Pencil className="h-3.5 w-3.5" aria-hidden />
+        Edit
+        <span className="sr-only">“{event.title}”</span>
+      </Link>
+      <button
+        type="button"
+        onClick={() => onDelete(event)}
+        className={cn(
+          "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-ink-muted",
+          "transition-colors duration-200 hover:bg-destructive/5 hover:text-destructive",
+          "focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none",
+        )}
+      >
+        <Trash2 className="h-3.5 w-3.5" aria-hidden />
+        Delete
+        <span className="sr-only">“{event.title}”</span>
+      </button>
+    </div>
+  );
+}
+
+function EventRow({
+  event,
+  now,
+  actions,
+}: {
+  event: AdminEvent;
+  now: Date;
+  actions?: React.ReactNode;
+}) {
   const when = formatPacificWhen(event.eventDatetime, event.eventEndDatetime, now);
   const partner = partnerLabel(event.partnerSlug);
 
   return (
-    <li className="flex gap-4 px-4 py-3.5 sm:px-5">
-      <div className="w-24 shrink-0 sm:w-32">
+    <li className="grid grid-cols-[6rem_minmax(0,1fr)] gap-x-4 px-4 py-3.5 sm:grid-cols-[8rem_minmax(0,1fr)_auto] sm:px-5">
+      <div>
         <p className="text-sm font-semibold text-ink-secondary">{when.date}</p>
         <p className="mt-0.5 text-xs text-ink-muted">{when.time}</p>
         {when.endsOn && (
@@ -51,10 +105,13 @@ function EventRow({ event, now }: { event: AdminEvent; now: Date }) {
         )}
       </div>
 
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium break-words text-ink-secondary">
+      <div className="min-w-0">
+        <Link
+          href={`/admin/events/${event.id}`}
+          className="rounded text-sm font-medium break-words text-ink-secondary underline-offset-2 transition-colors duration-200 hover:text-primary hover:underline focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+        >
           {event.title}
-        </p>
+        </Link>
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-ink-muted">
           {event.isFeatured && (
             <Badge leftIcon={<Star className="h-3 w-3 fill-current" aria-hidden />}>
@@ -72,6 +129,12 @@ function EventRow({ event, now }: { event: AdminEvent; now: Date }) {
           </span>
         </div>
       </div>
+
+      {actions && (
+        <div className="col-start-2 mt-2 -ms-2.5 sm:col-start-3 sm:row-start-1 sm:mt-0 sm:ms-0 sm:self-center">
+          {actions}
+        </div>
+      )}
     </li>
   );
 }
@@ -113,6 +176,29 @@ export default function AdminEventsPage() {
   const activeIndex = ADMIN_EVENT_TABS.findIndex(({ id }) => id === activeTab);
   const rows = byTab[activeTab];
 
+  const toast = useToast();
+  const deleteEvent = useDeleteAdminEvent();
+  // The team row the admin asked to delete; the confirm modal is open while set.
+  const [toDelete, setToDelete] = useState<AdminEvent | null>(null);
+  // The row whose delete failed, for the inline message.
+  const [failedDelete, setFailedDelete] = useState<AdminEvent | null>(null);
+
+  function confirmDelete() {
+    if (!toDelete) return;
+    const target = toDelete;
+    setFailedDelete(null);
+    deleteEvent.mutate(target.id, {
+      onSuccess: () => {
+        setToDelete(null);
+        toast.success(DELETED_TOAST);
+      },
+      onError: () => {
+        setToDelete(null);
+        setFailedDelete(target);
+      },
+    });
+  }
+
   return (
     <div className="mx-auto max-w-[800px] animate-fade-in px-4 py-6 sm:px-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
@@ -150,6 +236,14 @@ export default function AdminEventsPage() {
         onChange={(_, index) => setActiveTab(ADMIN_EVENT_TABS[index].id)}
       />
 
+      <FormError className="mt-4">
+        {failedDelete && (
+          <>
+            {DELETE_FAILED_MESSAGE} (“{failedDelete.title}”)
+          </>
+        )}
+      </FormError>
+
       <div role="tabpanel" aria-label={ADMIN_EVENT_TABS[activeIndex].label} className="mt-4">
         {isLoading ? (
           <ListSkeleton />
@@ -180,11 +274,40 @@ export default function AdminEventsPage() {
         ) : (
           <ul className="divide-y divide-border-card rounded-card border border-border-card bg-surface">
             {rows.map((event) => (
-              <EventRow key={event.id} event={event} now={now} />
+              <EventRow
+                key={event.id}
+                event={event}
+                now={now}
+                actions={
+                  // Edit and Delete only on team rows: the delete policy (and the
+                  // crawler, which would re-add the row) rule out crawler rows.
+                  activeTab === "team" && isTeamEvent(event) ? (
+                    <TeamRowActions event={event} onDelete={setToDelete} />
+                  ) : undefined
+                }
+              />
             ))}
           </ul>
         )}
       </div>
+
+      <ConfirmModal
+        open={toDelete !== null}
+        title="Delete this event?"
+        description={
+          toDelete && (
+            <>
+              “{toDelete.title}” will be removed from the Unify apps and
+              unifysocial.ca. This cannot be undone.
+            </>
+          )
+        }
+        confirmLabel="Delete event"
+        cancelLabel="Cancel"
+        isPending={deleteEvent.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => setToDelete(null)}
+      />
     </div>
   );
 }

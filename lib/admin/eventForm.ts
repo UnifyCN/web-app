@@ -3,8 +3,8 @@ import { PACIFIC_TZ } from "./eventList";
 import { isKnownPartnerSlug } from "./eventPartners";
 
 /**
- * Pure logic behind the admin "Add event" form (spec #142, "Form → row mapping"):
- * form state → validated insert payload, Pacific wall time → UTC, the live
+ * Pure logic behind the admin event forms (spec #142, "Form → row mapping"): form
+ * state → validated insert or update payload, Pacific wall time ↔ UTC, the live
  * visibility hints, and save-error messages. Kept free of React and Supabase so it
  * is unit-tested (eventForm.test.ts). No date library (spec D9): the time-zone math
  * uses Intl only.
@@ -273,6 +273,8 @@ export type EventFormResult =
 
 const optional = (value: string): string | null => value.trim() || null;
 
+const PARTNER_NOT_IN_LIST = "Pick a partner from the list.";
+
 /** True for a value that parses as an absolute `https:` or `http:` URL. */
 export function isHttpUrl(value: string): boolean {
   try {
@@ -360,7 +362,7 @@ export function validateEventForm(state: EventFormState): EventFormResult {
 
   const partnerSlug = state.partnerSlug.trim();
   if (partnerSlug && !isKnownPartnerSlug(partnerSlug)) {
-    errors.partnerSlug = "Pick a partner from the list.";
+    errors.partnerSlug = PARTNER_NOT_IN_LIST;
   }
 
   if (Object.keys(errors).length > 0 || !start) {
@@ -383,6 +385,174 @@ export function validateEventForm(state: EventFormState): EventFormResult {
       partner_slug: partnerSlug || null,
       is_featured: state.isFeatured,
       source: null,
+    },
+  };
+}
+
+/* ---- Edit: stored row → form, and update payloads ------------------------ */
+
+/**
+ * One `public.events` row as the edit page needs it (camelCase). Text columns the
+ * table allows to be free text (`event_type`, `genre`) stay `string` here: a row
+ * added by hand in the Table Editor may hold a value the form does not offer.
+ */
+export interface AdminEventDetail {
+  id: number;
+  title: string;
+  description: string | null;
+  /** Start, an exact UTC instant (ISO string). */
+  eventDatetime: string;
+  eventEndDatetime: string | null;
+  eventType: string;
+  location: string;
+  address: string | null;
+  hostedBy: string | null;
+  genre: string | null;
+  externalLink: string;
+  coverPhotoUrl: string | null;
+  partnerSlug: string | null;
+  isFeatured: boolean;
+  /** Null for rows the team added; `crawler:<org>` for rows the events-crawler added. */
+  source: string | null;
+}
+
+/**
+ * The event id in an `/admin/events/[id]` URL: a positive integer (`events.id` is
+ * serial), or null for anything else ("abc", "0", "1.5", "007", huge numbers).
+ */
+export function parseEventId(raw: string | string[] | undefined): number | null {
+  if (typeof raw !== "string" || !/^[1-9]\d*$/.test(raw)) return null;
+  const id = Number(raw);
+  return Number.isSafeInteger(id) ? id : null;
+}
+
+/**
+ * The columns `authenticated` may UPDATE on `public.events` (a per-column grant,
+ * spec #142 comment on #148). PostgREST rejects an update that names any other
+ * column (`id`, `source`, `created_at`, `max_attendees`) with 42501, so every update
+ * payload must use only these keys.
+ */
+export const EVENT_UPDATABLE_COLUMNS = [
+  "title",
+  "description",
+  "event_datetime",
+  "event_end_datetime",
+  "location",
+  "address",
+  "event_type",
+  "hosted_by",
+  "genre",
+  "cover_photo_url",
+  "external_link",
+  "is_featured",
+  "partner_slug",
+  "updated_at",
+] as const;
+
+export type EventUpdatableColumn = (typeof EVENT_UPDATABLE_COLUMNS)[number];
+
+/**
+ * Prefills the form from a stored row: UTC instants become Pacific wall dates and
+ * times (the inverse of validateEventForm, so an unchanged form saves the same
+ * instants). An end on the start's Pacific date leaves the end date blank, as the
+ * create form does. A format or topic the form does not offer (e.g. the crawler's
+ * `Uncategorized`) is left unset, so validation asks the admin to pick one.
+ */
+export function eventToFormState(event: AdminEventDetail): EventFormState {
+  const start = utcToPacificWallTime(event.eventDatetime);
+  const end = event.eventEndDatetime
+    ? utcToPacificWallTime(event.eventEndDatetime)
+    : null;
+  const eventType = EVENT_FORMAT_OPTIONS.some(
+    (option) => option.value === event.eventType,
+  )
+    ? (event.eventType as EventType)
+    : "";
+  const genre = EVENT_TOPIC_OPTIONS.includes(event.genre as EventGenre)
+    ? (event.genre as EventGenre)
+    : "";
+
+  return {
+    title: event.title,
+    description: event.description ?? "",
+    startDate: start.date,
+    startTime: start.time,
+    endDate: end && end.date !== start.date ? end.date : "",
+    endTime: end ? end.time : "",
+    eventType,
+    location: event.location,
+    address: event.address ?? "",
+    hostedBy: event.hostedBy ?? "",
+    genre,
+    externalLink: event.externalLink,
+    partnerSlug: event.partnerSlug?.trim() ?? "",
+    isFeatured: event.isFeatured,
+  };
+}
+
+/**
+ * The full update for a team row (`source is null`). The same fields and rules as
+ * the insert, minus `source` (not updatable), plus `updated_at` (the table has no
+ * trigger for it). `cover_photo_url` is not in the form yet (#147), so it is left
+ * out and the stored value stays.
+ */
+export type TeamEventUpdatePayload = Omit<EventInsertPayload, "source"> & {
+  updated_at: string;
+};
+
+export type TeamEventUpdateResult =
+  | { ok: true; payload: TeamEventUpdatePayload }
+  | { ok: false; errors: EventFormErrors };
+
+/** Validates the edit form (same rules as create) and builds the team-row update. */
+export function buildTeamEventUpdate(
+  state: EventFormState,
+  now: Date,
+): TeamEventUpdateResult {
+  const result = validateEventForm(state);
+  if (!result.ok) return result;
+  // Drop `source`: it is in the insert payload but must never be in an update.
+  const { source: _source, ...fields } = result.payload;
+  void _source;
+  return { ok: true, payload: { ...fields, updated_at: now.toISOString() } };
+}
+
+/** The only fields the admin may change on a crawler row (spec D4). */
+export interface CrawlerEventControls {
+  isFeatured: boolean;
+  /** "" = no partner. */
+  partnerSlug: string;
+}
+
+/** The update for a crawler row: exactly these three keys, nothing else. */
+export interface CrawlerEventUpdatePayload {
+  is_featured: boolean;
+  partner_slug: string | null;
+  updated_at: string;
+}
+
+export type CrawlerEventUpdateResult =
+  | { ok: true; payload: CrawlerEventUpdatePayload }
+  | { ok: false; errors: Pick<EventFormErrors, "partnerSlug"> };
+
+/**
+ * Builds the update for a crawler row. The payload carries only `is_featured`,
+ * `partner_slug` and `updated_at`, so the crawler's text fields are never touched.
+ */
+export function buildCrawlerEventUpdate(
+  controls: CrawlerEventControls,
+  now: Date,
+): CrawlerEventUpdateResult {
+  const partnerSlug = controls.partnerSlug.trim();
+  if (partnerSlug && !isKnownPartnerSlug(partnerSlug)) {
+    return { ok: false, errors: { partnerSlug: PARTNER_NOT_IN_LIST } };
+  }
+  return {
+    ok: true,
+    payload: {
+      is_featured: controls.isFeatured,
+      partner_slug: partnerSlug || null,
+      updated_at: now.toISOString(),
     },
   };
 }
@@ -452,6 +622,11 @@ export function visibilityHints(
 export const DUPLICATE_LINK_MESSAGE = "An event with this link already exists.";
 export const SAVE_FAILED_MESSAGE =
   "Could not save. Your account may not have admin access.";
+/** Delete has no duplicate case; the generic message, worded for a delete. */
+export const DELETE_FAILED_MESSAGE =
+  "Could not delete. Your account may not have admin access.";
+
+export const DELETED_TOAST = "Deleted. It is gone from the apps now and from unifysocial.ca within about 5 minutes.";
 
 /** Postgres unique_violation; on `events` the only unique column the form sets is `external_link`. */
 export const UNIQUE_VIOLATION = "23505";
