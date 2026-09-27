@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { EVENT_PARTNERS } from "./eventPartners";
+import { COVER_UPLOAD_FAILED_MESSAGE } from "./eventCover";
 import {
+  COVER_UPLOAD_FAILED,
   DST_GAP_MESSAGE,
   DUPLICATE_LINK_MESSAGE,
   EMPTY_EVENT_FORM,
@@ -437,6 +439,13 @@ describe("mapSaveError", () => {
       }),
     ).toEqual({ kind: "duplicate", message: DUPLICATE_LINK_MESSAGE });
     expect(DUPLICATE_LINK_MESSAGE).toBe("An event with this link already exists.");
+  });
+
+  it("maps a failed cover upload to the cover message", () => {
+    expect(mapSaveError({ code: COVER_UPLOAD_FAILED })).toEqual({
+      kind: "cover",
+      message: COVER_UPLOAD_FAILED_MESSAGE,
+    });
   });
 
   it("maps any other code, or no code, to the generic message", () => {

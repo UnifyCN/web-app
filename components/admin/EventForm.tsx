@@ -30,12 +30,18 @@ import {
   VisibilityHintList,
   describedBy,
 } from "./EventFormParts";
+import {
+  CoverPhotoField,
+  KEEP_COVER_DRAFT,
+  type CoverDraft,
+} from "./CoverPhotoField";
 
 /*
  * The team-event form (spec #142, "Form → row mapping"), shared by
  * /admin/events/new (empty) and /admin/events/[id] (prefilled from the row). It owns
  * the field state and shows validation; the page owns the save: `onSubmit` runs only
  * when validateEventForm passes, and the page builds the insert or update payload.
+ * The cover photo (#147) is a separate draft: picked here, uploaded by the save.
  */
 
 /** The element each field's error message moves focus to, in form order. */
@@ -53,6 +59,8 @@ const FIELD_ORDER = Object.keys(FOCUS_TARGET) as EventFormField[];
 
 export interface EventFormProps {
   initialState: EventFormState;
+  /** The stored `cover_photo_url` (edit page); null or omitted on the add page. */
+  initialCoverUrl?: string | null;
   submitLabel: string;
   /** The save is running, or has succeeded and the page is leaving. */
   busy: boolean;
@@ -60,8 +68,8 @@ export interface EventFormProps {
   saveError: unknown;
   /** Called on every change, so the page can clear a save error about old values. */
   onEdit: () => void;
-  /** Called with the form state once it passes validation. */
-  onSubmit: (state: EventFormState) => void;
+  /** Called with the form state (once it passes validation) and the cover draft. */
+  onSubmit: (state: EventFormState, cover: CoverDraft) => void;
   /** Another message for the action row (e.g. a failed delete). */
   actionError?: string | null;
   /** Shown at the start of the action row (e.g. Delete on the edit page). */
@@ -70,6 +78,7 @@ export interface EventFormProps {
 
 export function EventForm({
   initialState,
+  initialCoverUrl = null,
   submitLabel,
   busy,
   saveError,
@@ -79,6 +88,7 @@ export function EventForm({
   secondaryAction,
 }: EventFormProps) {
   const [form, setForm] = useState<EventFormState>(initialState);
+  const [cover, setCover] = useState<CoverDraft>(KEEP_COVER_DRAFT);
   // Errors show after the first Save attempt, then update live as fields change.
   const [submitted, setSubmitted] = useState(false);
   // One clock per mount, so renders stay pure (the hints depend on it).
@@ -107,7 +117,7 @@ export function EventForm({
       if (first) document.getElementById(FOCUS_TARGET[first])?.focus();
       return;
     }
-    onSubmit(form);
+    onSubmit(form, cover);
   }
 
   return (
@@ -136,6 +146,21 @@ export function EventForm({
             className={cn(CONTROL, "block min-h-32 resize-y px-4 py-3 leading-relaxed")}
           />
         </Field>
+      </Section>
+
+      <Section
+        title="Cover photo"
+        description="Optional. Shows on the event in the Unify apps and on unifysocial.ca."
+      >
+        <CoverPhotoField
+          initialUrl={initialCoverUrl}
+          draft={cover}
+          onChange={(next) => {
+            setCover(next);
+            onEdit();
+          }}
+          disabled={busy}
+        />
       </Section>
 
       <Section title="When" description="Pacific time (Vancouver).">

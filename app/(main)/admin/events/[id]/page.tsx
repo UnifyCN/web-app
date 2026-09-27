@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { AdminEventHeader } from "@/components/admin/AdminEventHeader";
 import { CrawlerEventPanel } from "@/components/admin/CrawlerEventPanel";
 import { EventForm } from "@/components/admin/EventForm";
+import type { CoverDraft } from "@/components/admin/CoverPhotoField";
 import { SECONDARY_LINK } from "@/components/admin/EventFormParts";
 import {
   useAdminEvent,
@@ -34,7 +35,8 @@ import { isTeamEvent } from "@/lib/admin/eventList";
  * 404s non-admins. English only (spec D8).
  *
  * - Team row (`source is null`): the add form, prefilled (UTC → Pacific), with the
- *   same validation; Save updates the row. Delete asks first, then hard-deletes.
+ *   same validation; Save updates the row (and uploads, replaces or removes the
+ *   cover, #147). Delete asks first, then hard-deletes (and removes our cover).
  * - Crawler row: a read-only summary; only Feature and Partner can change
  *   (CrawlerEventPanel). No delete: the crawler would re-add the row.
  * - A malformed id or a missing row: a not-found state.
@@ -105,12 +107,17 @@ function TeamEventEditor({
 
   const leaving = updateEvent.isSuccess || deleteEvent.isSuccess;
 
-  function handleSubmit(state: EventFormState) {
+  function handleSubmit(state: EventFormState, cover: CoverDraft) {
     const result = buildTeamEventUpdate(state, new Date());
     if (!result.ok) return; // EventForm only submits a valid form
     deleteEvent.reset();
     updateEvent.mutate(
-      { kind: "team", id: event.id, payload: result.payload },
+      {
+        kind: "team",
+        id: event.id,
+        payload: result.payload,
+        cover: { cover, previousCoverUrl: event.coverPhotoUrl },
+      },
       {
         onSuccess: () => {
           toast.success(SAVED_TOAST);
@@ -136,6 +143,7 @@ function TeamEventEditor({
     <>
       <EventForm
         initialState={initialState}
+        initialCoverUrl={event.coverPhotoUrl}
         submitLabel="Save changes"
         busy={updateEvent.isPending || leaving}
         saveError={updateEvent.error}

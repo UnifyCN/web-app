@@ -49,6 +49,19 @@ The list at `/admin/events` has two tabs:
 
 Every date and time in the admin pages is Pacific time.
 
+## Cover photos
+
+A team event can have one optional cover photo: JPEG, PNG, or WebP, up to 5 MB. It
+shows at 16:9. The photo uploads when you click Save, not when you pick it.
+
+- Files go to the public Storage bucket `event-covers` as `<uuid>.<ext>`. The event
+  stores the public URL in `cover_photo_url`.
+- When you replace or remove a cover, or delete a team event, the app also removes the
+  old file from `event-covers`. If that cleanup fails, the save still succeeds; the old
+  file stays in the bucket.
+- The app never removes an image that is not in `event-covers` (for example, a
+  crawler event's image from a partner website).
+
 ## One-time setup (Savar)
 
 1. Run the Step 0 live-schema queries from the PR that added this feature, and paste the

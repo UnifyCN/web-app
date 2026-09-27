@@ -1,6 +1,7 @@
 import { EVENT_GENRES, type EventGenre, type EventType } from "@/types";
 import { PACIFIC_TZ } from "./eventList";
 import { isKnownPartnerSlug } from "./eventPartners";
+import { COVER_UPLOAD_FAILED_MESSAGE } from "./eventCover";
 
 /**
  * Pure logic behind the admin event forms (spec #142, "Form → row mapping"): form
@@ -236,8 +237,8 @@ export function showsAddress(eventType: EventFormState["eventType"]): boolean {
 /**
  * The row the form inserts into `public.events`. `source` is always null (the
  * insert policy requires it); `max_attendees`, `id`, `created_at` and
- * `updated_at` are never sent. `cover_photo_url` arrives with the cover upload
- * (#147).
+ * `updated_at` are never sent. `cover_photo_url` is not part of the form state:
+ * services/adminEvents.ts adds it after the cover upload (#147, lib/admin/eventCover.ts).
  */
 export interface EventInsertPayload {
   title: string;
@@ -493,8 +494,8 @@ export function eventToFormState(event: AdminEventDetail): EventFormState {
 /**
  * The full update for a team row (`source is null`). The same fields and rules as
  * the insert, minus `source` (not updatable), plus `updated_at` (the table has no
- * trigger for it). `cover_photo_url` is not in the form yet (#147), so it is left
- * out and the stored value stays.
+ * trigger for it). `cover_photo_url` is added by services/adminEvents.ts only when
+ * the cover changes (#147); otherwise it is left out and the stored value stays.
  */
 export type TeamEventUpdatePayload = Omit<EventInsertPayload, "source"> & {
   updated_at: string;
@@ -631,8 +632,12 @@ export const DELETED_TOAST = "Deleted. It is gone from the apps now and from uni
 /** Postgres unique_violation; on `events` the only unique column the form sets is `external_link`. */
 export const UNIQUE_VIOLATION = "23505";
 
+/** The `code` of the error thrown when the cover upload fails (CoverUploadError). */
+export const COVER_UPLOAD_FAILED = "cover_upload_failed";
+
 export type EventSaveError =
   | { kind: "duplicate"; message: string }
+  | { kind: "cover"; message: string }
   | { kind: "generic"; message: string };
 
 /** Maps a failed insert (a PostgREST error or anything else) to the message the form shows. */
@@ -643,6 +648,9 @@ export function mapSaveError(error: unknown): EventSaveError {
       : null;
   if (code === UNIQUE_VIOLATION) {
     return { kind: "duplicate", message: DUPLICATE_LINK_MESSAGE };
+  }
+  if (code === COVER_UPLOAD_FAILED) {
+    return { kind: "cover", message: COVER_UPLOAD_FAILED_MESSAGE };
   }
   return { kind: "generic", message: SAVE_FAILED_MESSAGE };
 }
