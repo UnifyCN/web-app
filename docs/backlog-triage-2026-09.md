@@ -31,7 +31,7 @@ Legend: **Savar** = needs Savar's sign-off. **DB** = needs a migration, RLS, RPC
 | 19 | Rich text in posts (`PostCard` runs `stripHtml`) | G5 L291 | Low-Med | M | No | No |
 | 20 | Tasks card on the section page | Learn L805 | Med | M | No | No |
 | 21 | Broad anon `REVOKE` + re-grant | Security L691 | Med security | M | **Yes** | **Yes** |
-| 22 | Full pre-launch security audit (**see `docs/security-audit-2026-09.md`**) | Security L694 | Med | M | No | No |
+| 22 | Full pre-launch security audit (done 2026-09; report kept private) | Security L694 | Med | M | No | No |
 | 23 | `encodeMatch` stores display text, so content edits break answers | Learn L909 | Low-Med | M | **Yes** | **Yes** (answers migration) |
 | 24 | Un-`@ts-nocheck` the edge fns (rag-query part needs Savar) | CI L1028 | Low | M | Partly | No |
 | 25 | Investigate why web may show fewer modules than mobile | Learn L774 | Unknown | S | No | No |
