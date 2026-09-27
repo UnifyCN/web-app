@@ -1,6 +1,8 @@
 import type { AuthError, PostgrestError, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { ensureUserRow } from "@/lib/supabase/ensureUserRow";
+import { clearAllAuthEmails } from "@/lib/authEmailHandoff";
+import { clearRecoveryPending } from "@/lib/recoveryPending";
 
 /**
  * Auth data access. Browser-side only — every call goes through the shared
@@ -21,6 +23,10 @@ export async function signInWithGoogle(): Promise<{ error: AuthError | null }> {
 }
 
 export async function signOut(): Promise<{ error: AuthError | null }> {
+  // Forget any handed-over signup/reset email and a pending recovery, so the
+  // next person on a shared computer doesn't inherit them.
+  clearAllAuthEmails();
+  clearRecoveryPending();
   const supabase = createClient();
   const { error } = await supabase.auth.signOut();
   return { error };
@@ -130,20 +136,22 @@ export async function sendPasswordReset(
 }
 
 /** Verify the recovery code, then set the new password (`updateUser`). */
-export async function resetPasswordWithOtp(
+/**
+ * Step 1 of a reset: check the recovery code. Success signs the user in with a
+ * recovery session and consumes the code, so the caller must keep them on
+ * /reset-password until `updatePassword` succeeds (see lib/recoveryPending.ts).
+ */
+export async function verifyRecoveryOtp(
   email: string,
   token: string,
-  newPassword: string,
-): Promise<{ error: AuthError | null }> {
+): Promise<{ userId: string | null; error: AuthError | null }> {
   const supabase = createClient();
-  const { error: otpError } = await supabase.auth.verifyOtp({
+  const { data, error } = await supabase.auth.verifyOtp({
     email,
     token,
     type: "recovery",
   });
-  if (otpError) return { error: otpError };
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
-  return { error };
+  return { userId: data?.user?.id ?? null, error };
 }
 
 /* ---- Account (settings) ------------------------------------------------ */
