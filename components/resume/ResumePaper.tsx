@@ -13,6 +13,10 @@ import {
 import { useTranslation } from "react-i18next";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
 import { PaperSheet, SERIF } from "@/components/documents/PaperSheet";
+import {
+  documentT,
+  type DocumentLanguage,
+} from "@/lib/documents/documentLanguage";
 import { EditableText } from "./EditableText";
 import {
   addBullet,
@@ -129,8 +133,17 @@ function Bullets({ items }: { items: string[] }) {
   );
 }
 
-function ReadOnlyResume({ data }: { data: ResumeData }) {
-  const { t } = useTranslation();
+function ReadOnlyResume({
+  data,
+  docLang,
+}: {
+  data: ResumeData;
+  docLang?: DocumentLanguage;
+}) {
+  // The print copy passes the document language so exported headings don't
+  // follow the UI language; the on-screen read-only render omits it.
+  const { t: uiT, i18n } = useTranslation();
+  const t = docLang ? documentT(i18n, docLang) : uiT;
   const contacts = contactLine(data);
   const name = data.contact.name.trim();
   return (
@@ -491,6 +504,7 @@ export function ResumePaper({
   editable = false,
   disabled = false,
   onChange,
+  docLang,
 }: {
   data: ResumeData;
   editable?: boolean;
@@ -498,6 +512,8 @@ export function ResumePaper({
    *  flipping the editable layout back to the read-only one. */
   disabled?: boolean;
   onChange?: (update: ResumeUpdater) => void;
+  /** Export language for the read-only (print) render's headings. */
+  docLang?: DocumentLanguage;
 }) {
   const isEditable = editable && !!onChange;
   return (
@@ -511,7 +527,7 @@ export function ResumePaper({
       {isEditable ? (
         <EditableResume data={data} onChange={onChange} />
       ) : (
-        <ReadOnlyResume data={data} />
+        <ReadOnlyResume data={data} docLang={docLang} />
       )}
     </PaperSheet>
   );

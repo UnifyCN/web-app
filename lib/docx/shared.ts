@@ -16,6 +16,7 @@
 
 import type { Paragraph } from "docx";
 import type { ResumeContact } from "@/types/resume";
+import type { DocumentLanguage } from "@/lib/documents/documentLanguage";
 
 export const DOCX_FONT = "Georgia";
 
@@ -76,17 +77,24 @@ export async function buildHeaderParagraphs(opts: {
   return paras;
 }
 
-/** Wrap the built paragraphs in a single-section Document (font default + page
- *  margins) and pack to a Blob. */
+/** Word proofing-language tag for a document language (Canadian English/French). */
+function proofingLanguage(lang: DocumentLanguage): string {
+  return lang === "fr-CA" ? "fr-CA" : "en-CA";
+}
+
+/** Wrap the built paragraphs in a single-section Document (font default, page
+ *  margins, and the document language for Word's spell-check) and pack to a Blob. */
 export async function buildDocument(opts: {
   creator: string;
   margin: { top: number; right: number; bottom: number; left: number };
   children: Paragraph[];
+  language?: DocumentLanguage;
 }): Promise<Blob> {
   const { Document, Packer } = await import("docx");
+  const language = { value: proofingLanguage(opts.language ?? "en") };
   const doc = new Document({
     creator: opts.creator,
-    styles: { default: { document: { run: { font: DOCX_FONT } } } },
+    styles: { default: { document: { run: { font: DOCX_FONT, language } } } },
     sections: [
       {
         properties: { page: { margin: opts.margin } },

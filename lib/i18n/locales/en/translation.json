@@ -2779,6 +2779,7 @@
     },
     "download": "Download",
     "downloadDocx": "Download Word (.docx)",
+    "documentLanguage": "Document language",
     "exporting": "Exporting…",
     "exportFailed": "Couldn't export the file. Please try again.",
     "announcement": {
@@ -2908,6 +2909,7 @@
     "buildingHint": "Your cover letter appears here. Add a job posting, then press Generate to write a first draft.",
     "download": "Download",
     "downloadDocx": "Download Word (.docx)",
+    "documentLanguage": "Document language",
     "exporting": "Exporting…",
     "exportFailed": "Couldn't export the file. Please try again.",
     "paper": {

@@ -9,10 +9,12 @@
  * editable Word text (Packer.toBlob), never a flattened image.
  *
  * Letter *content* is already English (the model guarantees it regardless of UI
- * language); only the labels here would localize, and a letter has none.
+ * language) and a letter has no headings, so no UI-language strings reach the
+ * file; the document language only sets Word's proofing language.
  */
 
 import type { CoverLetterData } from "@/types/coverLetter";
+import type { DocumentLanguage } from "@/lib/documents/documentLanguage";
 import {
   DOCX_FONT,
   buildDocument,
@@ -27,6 +29,7 @@ const SIZE_META = 21;
 
 export async function buildCoverLetterDocx(
   data: CoverLetterData,
+  language: DocumentLanguage = "en",
 ): Promise<Blob> {
   const { Paragraph, TextRun } = await import("docx");
 
@@ -121,6 +124,7 @@ export async function buildCoverLetterDocx(
     creator: "Unify Cover Letter Generator",
     margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
     children,
+    language,
   });
 }
 

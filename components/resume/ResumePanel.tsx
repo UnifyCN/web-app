@@ -1,8 +1,14 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { buildResumeDocx, resumeDocxFilename } from "@/lib/resume/exportDocx";
+import {
+  buildResumeDocx,
+  resumeDocxFilename,
+  resumeDocxLabels,
+} from "@/lib/resume/exportDocx";
 import { PreviewPanel } from "@/components/documents/PreviewPanel";
+import { useDocumentLanguage } from "@/hooks/useDocumentLanguage";
+import { documentT } from "@/lib/documents/documentLanguage";
 import { trackResumeExported } from "@/lib/analytics";
 import { ResumePaper } from "./ResumePaper";
 import type { ResumeUpdater } from "@/lib/resume/editOps";
@@ -21,6 +27,8 @@ interface ResumePanelProps {
   /** Mobile master/detail: is the resume the visible pane (vs the chat)? */
   mobileActive: boolean;
   onBackToChat: () => void;
+  /** Keys the remembered export language (per draft). */
+  draftId: string;
 }
 
 export function ResumePanel({
@@ -32,8 +40,11 @@ export function ResumePanel({
   onEditResume,
   mobileActive,
   onBackToChat,
+  draftId,
 }: ResumePanelProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Exports follow the document language (English by default), not the UI.
+  const [docLang, setDocLang] = useDocumentLanguage("resume", draftId);
   return (
     <PreviewPanel
       isEmpty={isEmpty}
@@ -54,19 +65,19 @@ export function ResumePanel({
       exportErrorLog="Resume: DOCX export failed"
       onExported={(format) => trackResumeExported({ format })}
       // DOCX: build a real, editable Word file client-side (docx is dynamically
-      // imported inside buildResumeDocx). Section-heading labels come from t() so
-      // the DOCX matches the on-screen resume + PDF.
+      // imported inside buildResumeDocx). Section headings resolve in the
+      // document language so the DOCX matches the PDF.
       onExportDocx={() =>
-        buildResumeDocx(data, {
-          yourName: t("resume.paper.yourName"),
-          summary: t("resume.sections.summary"),
-          education: t("resume.sections.education"),
-          experience: t("resume.sections.experience"),
-          projects: t("resume.sections.projects"),
-          skills: t("resume.sections.skills"),
-        })
+        buildResumeDocx(
+          data,
+          resumeDocxLabels(documentT(i18n, docLang)),
+          docLang,
+        )
       }
       docxFilename={resumeDocxFilename(data)}
+      documentLanguage={docLang}
+      onDocumentLanguageChange={setDocLang}
+      documentLanguageLabel={t("resume.documentLanguage")}
       printRootClassName="resume-print-root"
       paper={
         <ResumePaper
@@ -76,7 +87,7 @@ export function ResumePanel({
           onChange={onEditResume}
         />
       }
-      printPaper={<ResumePaper data={data} />}
+      printPaper={<ResumePaper data={data} docLang={docLang} />}
     />
   );
 }
