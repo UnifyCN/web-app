@@ -394,3 +394,14 @@ export const trackResourcesProgramOpened = (p: {
     slug: p.slug,
     program_name: p.programName,
   });
+
+/* ---- What's new card -------------------------------------------------- */
+
+export const trackWhatsNewShown = (p: { trigger: "auto" | "settings" }) =>
+  capture("whats_new_shown", { trigger: p.trigger });
+
+export const trackWhatsNewDismissed = () => capture("whats_new_dismissed");
+
+export const trackWhatsNewShowMe = (p: {
+  item: "job_tools" | "resources" | "language";
+}) => capture("whats_new_show_me", { item: p.item });

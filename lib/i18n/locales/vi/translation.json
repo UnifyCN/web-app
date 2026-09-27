@@ -3019,5 +3019,33 @@
         "chat": "Trò chuyện và chỉnh sửa"
       }
     }
+  },
+  "whatsNew": {
+    "title": "Có gì mới",
+    "subtitle": "Một vài thay đổi kể từ lần ghé thăm trước của bạn.",
+    "showMe": "Chỉ cho tôi",
+    "gotIt": "Đã hiểu",
+    "settingsLink": "Có gì mới",
+    "settingsDesc": "Xem các cập nhật mới nhất của Unify",
+    "items": {
+      "jobTools": {
+        "title": "Công cụ việc làm",
+        "body": "Sơ yếu lý lịch và Thư xin việc giờ nằm trong Công cụ việc làm. Nhập tin tuyển dụng để điều chỉnh sơ yếu lý lịch chỉ trong vài giây."
+      },
+      "resources": {
+        "title": "Trang Tài nguyên mới",
+        "body": "Tìm kiếm, bộ lọc và các tổ chức địa phương đáng tin cậy."
+      },
+      "language": {
+        "title": "Ngôn ngữ của bạn",
+        "body": "Unify hiện có 7 ngôn ngữ."
+      }
+    },
+    "tips": {
+      "jobImportStart": "Mở hoặc tạo một sơ yếu lý lịch, rồi nhấn “Nhắm đến một công việc” để nhập tin tuyển dụng.",
+      "jobImport": "Dán liên kết hoặc mô tả công việc vào đây để điều chỉnh sơ yếu lý lịch.",
+      "resources": "Tìm dịch vụ hoặc lọc theo danh mục và thành phố.",
+      "language": "Chọn ngôn ngữ tại đây. Lựa chọn cũng đồng bộ với ứng dụng di động."
+    }
   }
 }

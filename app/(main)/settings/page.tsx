@@ -31,7 +31,8 @@ import {
   useUpdateLearningReminders,
 } from "@/hooks/useOnboarding";
 import { USERNAME_RE } from "@/lib/supabase/username";
-import { cn, moveCaretToEnd } from "@/lib/utils";
+import { cn, moveCaretToEnd, RTL_FLIP } from "@/lib/utils";
+import { openWhatsNew } from "@/lib/whatsNew";
 import type { UserProfile } from "@/types";
 
 /** Readable text for a failed mutation, falling back when there's no message. */
@@ -394,8 +395,30 @@ function PreferencesSection({ profile }: { profile: UserProfile }) {
               {t("settingsWeb.languageDesc")}
             </p>
           </div>
-          <LanguagePicker className="shrink-0" />
+          <div data-whats-new-target="language" className="shrink-0">
+            <LanguagePicker />
+          </div>
         </div>
+
+        {/* Reopens the one-time What's new card (components/whatsNew). */}
+        <button
+          type="button"
+          onClick={() => openWhatsNew("settings")}
+          className="flex w-full cursor-pointer items-center justify-between gap-4 border-t border-border-card pt-4 text-start"
+        >
+          <span className="min-w-0">
+            <span className="block text-sm font-medium text-ink-secondary">
+              {t("whatsNew.settingsLink")}
+            </span>
+            <span className="block text-xs text-ink-muted">
+              {t("whatsNew.settingsDesc")}
+            </span>
+          </span>
+          <ChevronRight
+            className={cn("h-4 w-4 shrink-0 text-ink-placeholder", RTL_FLIP)}
+            aria-hidden
+          />
+        </button>
 
         {hasOnboarding ? (
           <>

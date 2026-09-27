@@ -3019,5 +3019,33 @@
         "chat": "Chatear y mejorar"
       }
     }
+  },
+  "whatsNew": {
+    "title": "Novedades",
+    "subtitle": "Algunas cosas cambiaron desde tu última visita.",
+    "showMe": "Muéstrame",
+    "gotIt": "Entendido",
+    "settingsLink": "Novedades",
+    "settingsDesc": "Mira las últimas actualizaciones de Unify",
+    "items": {
+      "jobTools": {
+        "title": "Empleo",
+        "body": "El currículum y la carta de presentación ahora están en Empleo. Importa una oferta de trabajo para adaptar tu currículum en segundos."
+      },
+      "resources": {
+        "title": "Nueva página de Recursos",
+        "body": "Búsqueda, filtros y organizaciones locales de confianza."
+      },
+      "language": {
+        "title": "Tu idioma",
+        "body": "Unify ahora funciona en 7 idiomas."
+      }
+    },
+    "tips": {
+      "jobImportStart": "Abre o crea un currículum y luego toca “Apuntar a un empleo” para importar una oferta.",
+      "jobImport": "Pega aquí el enlace o la descripción de una oferta para adaptar tu currículum.",
+      "resources": "Busca servicios o filtra por categoría y ciudad.",
+      "language": "Elige tu idioma aquí. También se sincroniza con la app móvil."
+    }
   }
 }
