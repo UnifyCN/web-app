@@ -23,7 +23,7 @@ export function useAdminEvents() {
 }
 
 /** The `["events"]` family: the admin list, /community's Events tab, and event details. */
-const EVENTS_FAMILY_KEY = ["events"] as const;
+export const EVENTS_FAMILY_KEY = ["events"] as const;
 
 export interface AdminEventCreate {
   payload: EventInsertPayload;
