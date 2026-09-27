@@ -12,13 +12,13 @@
 --                        select id, email, permissions from public.users where permissions = 'user' limit 5;
 --
 -- RESULT: if every check passes, the last result is one row that says
--- "events_admin_rls: all 12 checks passed". If a check fails, the script stops with an
+-- "events_admin_rls: all 13 checks passed". If a check fails, the script stops with an
 -- ERROR whose text starts with "FAIL" and names the check. Either way nothing is saved.
 --
 -- What it proves:
 --   (a) the admin can insert, update, and delete a manual row (source is null);
 --       can feature a crawler row; cannot delete a crawler row; cannot insert a
---       row with a source.
+--       row with a source; cannot change source on any row.
 --   (b) the normal user cannot insert, update, or delete a manual row, and cannot
 --       feature a crawler row.
 
@@ -124,6 +124,16 @@ begin
   exception
     when insufficient_privilege then null; -- expected: RLS with-check violation
   end;
+
+  -- 8) cannot change source on any row (UPDATE is granted per column, source excluded),
+  --    so a crawler row cannot become a deletable manual row
+  begin
+    update public.events set source = null
+    where external_link = 'https://example.invalid/events-admin-rls/crawler-fixture';
+    raise exception 'FAIL a8: admin changed source on a crawler row';
+  exception
+    when insufficient_privilege then null; -- expected: no UPDATE privilege on source
+  end;
 end
 $$;
 
@@ -140,12 +150,12 @@ do $$
 declare
   v_rows integer;
 begin
-  -- 8
+  -- 9
   if public.is_admin() then
     raise exception 'FAIL b1: is_admin() is true for the normal user';
   end if;
 
-  -- 9) cannot insert a manual row
+  -- 10) cannot insert a manual row
   begin
     insert into public.events
       (title, event_datetime, location, address, event_type, external_link, genre, source)
@@ -157,7 +167,7 @@ begin
     when insufficient_privilege then null; -- expected
   end;
 
-  -- 10) cannot update a manual row (RLS filters it out: 0 rows, no error)
+  -- 11) cannot update a manual row (RLS filters it out: 0 rows, no error)
   update public.events set title = 'RLS check - normal update'
   where external_link = 'https://example.invalid/events-admin-rls/manual-fixture';
   get diagnostics v_rows = row_count;
@@ -165,7 +175,7 @@ begin
     raise exception 'FAIL b3: normal user UPDATED a manual row (% rows)', v_rows;
   end if;
 
-  -- 11) cannot delete a manual row
+  -- 12) cannot delete a manual row
   delete from public.events
   where external_link = 'https://example.invalid/events-admin-rls/manual-fixture';
   get diagnostics v_rows = row_count;
@@ -173,7 +183,7 @@ begin
     raise exception 'FAIL b4: normal user DELETED a manual row (% rows)', v_rows;
   end if;
 
-  -- 12) cannot feature a crawler row
+  -- 13) cannot feature a crawler row
   update public.events set is_featured = false
   where external_link = 'https://example.invalid/events-admin-rls/crawler-fixture';
   get diagnostics v_rows = row_count;
@@ -186,4 +196,4 @@ $$;
 rollback;
 
 -- Reached only when no check raised. Runs after the rollback, as the editor's role.
-select 'events_admin_rls: all 12 checks passed (everything rolled back)' as result;
+select 'events_admin_rls: all 13 checks passed (everything rolled back)' as result;

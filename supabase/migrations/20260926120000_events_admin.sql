@@ -13,9 +13,9 @@
 --
 -- AFTER APPLYING: run supabase/checks/events_admin_rls.sql once (it rolls back).
 --
--- SAFE TO APPLY NOW: additive only. One helper function, three write policies on
--- public.events, one bucket, and four admin-only policies on storage.objects. No column
--- changes. The existing select policy on public.events is NOT touched. Until someone
+-- SAFE TO APPLY NOW: one helper function, three write policies on public.events, a
+-- column-level UPDATE grant (section 2), one bucket, and four admin-only policies on
+-- storage.objects. No column changes. The existing select policy on public.events is NOT touched. Until someone
 -- has permissions = 'admin', nobody gains a new write.
 --
 -- Accepted side effect (spec D2): on mobile, 'admin' can also delete and pin any post.
@@ -49,12 +49,26 @@ grant execute on function public.is_admin() to authenticated;
 
 -- ----------------------------------------------------------------------------
 -- 2) Table privileges for the admin writes.
--- Defensive and idempotent: Supabase's default grants normally give `authenticated`
--- these already, in which case this is a no-op. Without them, every admin write fails
--- with 42501 before RLS is even consulted. RLS below still decides which rows a user
--- may write; with no matching policy, a non-admin still writes nothing.
+-- INSERT / DELETE: defensive and idempotent. Supabase's default grants normally give
+-- `authenticated` these already, in which case this is a no-op. Without them, every
+-- admin write fails with 42501 before RLS is even consulted. RLS below still decides
+-- which rows a user may write; with no matching policy, a non-admin still writes nothing.
+--
+-- UPDATE is column-level, NOT table-wide. RLS cannot compare old and new values, so a
+-- table-wide UPDATE would let an admin set `source` to null on a crawler row and then
+-- delete it through events_admin_delete (and the crawler re-inserts it on Monday).
+-- The revoke also removes any column grants; the grant then lists exactly the columns
+-- the admin form edits. `id`, `source`, `created_at` and `max_attendees` are excluded.
+-- No authenticated client updates events today (there was no write policy), so the
+-- revoke takes nothing away. service_role (the crawler) has its own grants.
 -- ----------------------------------------------------------------------------
-grant insert, update, delete on table public.events to authenticated;
+grant insert, delete on table public.events to authenticated;
+revoke update on table public.events from authenticated;
+grant update (
+  title, description, event_datetime, event_end_datetime, location, address,
+  event_type, hosted_by, genre, cover_photo_url, external_link,
+  is_featured, partner_slug, updated_at
+) on table public.events to authenticated;
 
 -- events.id is a serial on the live table: an insert calls nextval() on its sequence.
 do $$
