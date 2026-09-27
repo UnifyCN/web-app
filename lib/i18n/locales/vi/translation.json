@@ -2814,6 +2814,36 @@
       "addSkill": "Thêm kỹ năng",
       "hint": "Nhấp vào bất kỳ văn bản nào để chỉnh sửa, hoặc dùng \"Thêm vào hồ sơ\" bên dưới."
     },
+    "jobTarget": {
+      "button": "Nhắm đến một công việc",
+      "chip": "Đang điều chỉnh cho {{title}}",
+      "chipWithCompany": "Đang điều chỉnh cho {{title}} · {{company}}",
+      "chipPasted": "Đang điều chỉnh cho công việc đã dán",
+      "urlPlaceholder": "Dán liên kết tin tuyển dụng…",
+      "urlLabel": "URL tin tuyển dụng",
+      "pasteLabel": "Mô tả tin tuyển dụng",
+      "fetch": "Lấy",
+      "use": "Dùng cái này",
+      "pasteToggle": "Dán mô tả thay vì liên kết",
+      "urlToggle": "Dùng liên kết thay vì mô tả",
+      "pastePlaceholder": "Dán chức danh, yêu cầu và trách nhiệm công việc vào đây…",
+      "cancel": "Hủy",
+      "remove": "Xóa công việc mục tiêu",
+      "tailor": "Điều chỉnh hồ sơ của tôi",
+      "tailorUserBubble": "Vui lòng điều chỉnh hồ sơ của tôi theo tin tuyển dụng này.",
+      "fetching": "Đang đọc tin tuyển dụng…",
+      "errors": {
+        "invalid_url": "Đó không giống một liên kết web hợp lệ. Hãy kiểm tra lại và thử lần nữa.",
+        "blocked_url": "Không thể mở liên kết đó vì lý do bảo mật. Hãy dán một liên kết tin tuyển dụng công khai.",
+        "fetch_failed": "Không mở được tin tuyển dụng đó. Nhiều trang chặn truy cập tự động — hãy thử dán nội dung mô tả.",
+        "too_large": "Trang đó quá lớn để đọc. Hãy thử dán nội dung mô tả công việc.",
+        "extraction_failed": "Không tìm thấy tin tuyển dụng trên trang đó. Có thể cần đăng nhập hoặc tải bằng JavaScript — hãy dán nội dung mô tả.",
+        "daily_limit_reached": "Bạn đã đạt giới hạn tạo hồ sơ hôm nay. Vui lòng quay lại vào ngày mai.",
+        "rate_limited": "Bạn thao tác quá nhanh. Vui lòng đợi một lát rồi thử lại.",
+        "unauthorized": "Phiên của bạn đã hết hạn. Vui lòng đăng nhập lại.",
+        "generic": "Không đọc được tin tuyển dụng đó. Hãy thử dán nội dung mô tả."
+      }
+    },
     "list": {
       "title": "Hồ sơ của tôi",
       "backToList": "Quay lại hồ sơ của tôi",
