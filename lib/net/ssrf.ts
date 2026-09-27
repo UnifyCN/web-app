@@ -5,7 +5,7 @@
  * `supabase/functions/_shared/ssrf.ts` — kept byte-for-byte in sync with it
  * (that file is the source of truth; it's pure JS — `URL`/regex/`parseInt` only,
  * so this port is identical apart from dropping the `@ts-nocheck` Deno header).
- * The resume job-posting route (app/api/resume/job-posting) fetches arbitrary
+ * The job-posting routes (app/api/{resume,cover-letter}/job-posting) fetch arbitrary
  * third-party URLs, so a crafted link must never reach an internal host.
  *
  * Relies on WHATWG URL normalisation (`new URL(raw).hostname`), which is what
