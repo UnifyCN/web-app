@@ -16,6 +16,7 @@ import {
 import { formatRelativeTime } from "@/lib/utils";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
 import { ModalShell } from "@/components/ui/ModalShell";
+import { JobToolsTabs } from "@/components/jobTools/JobToolsTabs";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import {
   useCoverLetterDrafts,
@@ -164,6 +165,7 @@ export default function MyCoverLettersPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl animate-fade-in px-4 py-6 sm:px-6 sm:py-8">
+      <JobToolsTabs className="mb-6" />
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-ink-secondary">

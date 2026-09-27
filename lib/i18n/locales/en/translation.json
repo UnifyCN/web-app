@@ -73,7 +73,8 @@
     "learn": "Learn",
     "resources": "Resources",
     "resume": "Resume",
-    "coverLetter": "Cover Letter"
+    "coverLetter": "Cover Letter",
+    "jobTools": "Job tools"
   },
   "auth": {
     "signIn": "Sign in",

@@ -70,7 +70,11 @@
     "community": "المجتمع",
     "companion": "المرافق",
     "checklist": "قائمة المهام",
-    "learn": "تعلّم"
+    "learn": "تعلّم",
+    "jobTools": "أدوات العمل",
+    "resources": "الموارد",
+    "resume": "السيرة الذاتية",
+    "coverLetter": "خطاب التقديم"
   },
   "auth": {
     "signIn": "تسجيل الدخول",

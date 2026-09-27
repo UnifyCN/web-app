@@ -73,7 +73,8 @@
     "learn": "Học",
     "resources": "Tài nguyên",
     "resume": "Hồ sơ",
-    "coverLetter": "Thư xin việc"
+    "coverLetter": "Thư xin việc",
+    "jobTools": "Công cụ việc làm"
   },
   "auth": {
     "signIn": "Đăng nhập",
