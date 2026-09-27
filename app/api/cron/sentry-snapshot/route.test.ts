@@ -86,11 +86,8 @@ describe("GET /api/cron/sentry-snapshot auth", () => {
       if (url.includes("/issues/")) {
         return new Response("[]", { headers: { "X-Hits": "7" } });
       }
-      if (url.includes("/stats/")) {
-        return Response.json([
-          [1, 2],
-          [2, 3],
-        ]);
+      if (url.includes("/organizations/unify-kv/events/")) {
+        return Response.json({ data: [{ "count()": 5 }] });
       }
       if (url.endsWith("/capture/")) return new Response("{}");
       throw new Error(`unexpected fetch ${url}`);
@@ -113,6 +110,23 @@ describe("GET /api/cron/sentry-snapshot auth", () => {
     expect(body.properties).toMatchObject({
       open_issue_count: 7,
       errors_24h: 5,
+      environment: "vercel-production",
     });
+
+    // Both Sentry queries are scoped to production so dev noise isn't counted.
+    const urls = fetchMock.mock.calls.map(
+      ([u]) => new globalThis.URL(String(u)),
+    );
+    const issues = urls.find((u) => u.pathname.endsWith("/issues/"));
+    expect(issues?.searchParams.get("query")).toBe(
+      "is:unresolved environment:vercel-production",
+    );
+    const events = urls.find((u) =>
+      u.pathname.endsWith("/organizations/unify-kv/events/"),
+    );
+    expect(events?.searchParams.get("environment")).toBe("vercel-production");
+    expect(events?.searchParams.get("dataset")).toBe("errors");
+    expect(events?.searchParams.get("project")).toBe("4511606747037696");
+    expect(events?.searchParams.get("statsPeriod")).toBe("24h");
   });
 });
