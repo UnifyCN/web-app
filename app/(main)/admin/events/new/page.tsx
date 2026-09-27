@@ -299,7 +299,14 @@ export default function NewAdminEventPage() {
                 value={form.endDate}
                 onChange={(e) => set("endDate", e.target.value)}
                 error={!!errors.end}
-                {...describedBy("event-end-date", undefined, true)}
+                // The end error renders under End time; point this input at it too
+                // (and keep the hint, which stays visible).
+                aria-invalid={errors.end ? true : undefined}
+                aria-describedby={
+                  errors.end
+                    ? "event-end-time-error event-end-date-hint"
+                    : "event-end-date-hint"
+                }
               />
             </Field>
             <Field id="event-end-time" label="End time" optional error={errors.end}>
