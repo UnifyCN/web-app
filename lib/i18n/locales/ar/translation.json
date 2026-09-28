@@ -2782,6 +2782,7 @@
     "buildingHint": "يظهر خطاب التقديم هنا. أضف إعلان وظيفة، ثم اضغط \"إنشاء\" لكتابة المسودة الأولى.",
     "download": "تنزيل",
     "downloadDocx": "تنزيل Word (.docx)",
+    "documentLanguage": "لغة المستند",
     "exporting": "جارٍ التصدير…",
     "exportFailed": "تعذّر تصدير الملف. يرجى المحاولة مرة أخرى.",
     "paper": {
@@ -2933,6 +2934,7 @@
     },
     "download": "تنزيل",
     "downloadDocx": "تنزيل Word (.docx)",
+    "documentLanguage": "لغة المستند",
     "exporting": "جارٍ التصدير…",
     "exportFailed": "تعذّر تصدير الملف. يرجى المحاولة مرة أخرى.",
     "announcement": {

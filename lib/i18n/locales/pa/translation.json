@@ -2779,6 +2779,7 @@
     },
     "download": "ਡਾਊਨਲੋਡ",
     "downloadDocx": "Word (.docx) ਡਾਊਨਲੋਡ ਕਰੋ",
+    "documentLanguage": "ਦਸਤਾਵੇਜ਼ ਦੀ ਭਾਸ਼ਾ",
     "exporting": "ਐਕਸਪੋਰਟ ਹੋ ਰਿਹਾ ਹੈ…",
     "exportFailed": "ਫਾਈਲ ਐਕਸਪੋਰਟ ਨਹੀਂ ਹੋ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
     "announcement": {
@@ -2908,6 +2909,7 @@
     "buildingHint": "ਤੁਹਾਡਾ ਕਵਰ ਲੈਟਰ ਇੱਥੇ ਦਿਖਾਈ ਦੇਵੇਗਾ। ਇੱਕ ਨੌਕਰੀ ਪੋਸਟਿੰਗ ਸ਼ਾਮਲ ਕਰੋ, ਫਿਰ ਪਹਿਲਾ ਡਰਾਫਟ ਲਿਖਣ ਲਈ Generate ਦਬਾਓ।",
     "download": "ਡਾਊਨਲੋਡ",
     "downloadDocx": "Word (.docx) ਡਾਊਨਲੋਡ ਕਰੋ",
+    "documentLanguage": "ਦਸਤਾਵੇਜ਼ ਦੀ ਭਾਸ਼ਾ",
     "exporting": "ਐਕਸਪੋਰਟ ਹੋ ਰਿਹਾ ਹੈ…",
     "exportFailed": "ਫਾਈਲ ਐਕਸਪੋਰਟ ਨਹੀਂ ਹੋ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
     "paper": {

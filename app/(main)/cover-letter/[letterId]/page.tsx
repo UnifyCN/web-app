@@ -151,6 +151,7 @@ function CoverLetterEditor() {
         onEditLetter={handleEditLetter}
         mobileActive={mobileShowLetter}
         onBackToChat={() => setMobileShowLetter(false)}
+        draftId={draftId}
       />
 
       <CoverLetterImportNextCard

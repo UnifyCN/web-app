@@ -1,17 +1,26 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 /**
- * Localized short relative timestamp — the i18n-aware version of
- * `formatRelativeTime` in lib/utils.ts (which stays English for
- * not-yet-translated callers). Uses `common.justNow` / `minutesShort` /
- * `hoursShort` / `daysShort`, and formats week-old dates with the active UI
- * language instead of hardcoded en-CA.
+ * Localized short relative timestamp: "Just now", "5m", "3h", "2d", then a
+ * calendar date with the year once past a week. Uses `common.justNow` /
+ * `minutesShort` / `hoursShort` / `daysShort`, and formats week-old dates with
+ * Intl.DateTimeFormat in the active UI language (not a hardcoded en-CA). Used by
+ * every list card and feed timestamp.
  */
 export function useRelativeTime(): (iso: string) => string {
   const { t, i18n } = useTranslation();
+  const dateFormat = useMemo(
+    () =>
+      new Intl.DateTimeFormat(i18n.language, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+    [i18n.language],
+  );
 
   return useCallback(
     (iso: string) => {
@@ -27,12 +36,8 @@ export function useRelativeTime(): (iso: string) => string {
       const diffDay = Math.round(diffHr / 24);
       if (diffDay < 7) return t("common.daysShort", { count: diffDay });
 
-      return date.toLocaleDateString(i18n.language, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
+      return dateFormat.format(date);
     },
-    [t, i18n.language],
+    [t, dateFormat],
   );
 }

@@ -117,9 +117,13 @@ function AssistantMessage({
           )}
         </button>
 
-        <p className="whitespace-pre-wrap pe-8 text-[15px] leading-relaxed text-ink-secondary">
-          {message.content}
-        </p>
+        {/* Padding lives on the wrapper so it stays on the copy button's side
+            (UI direction) while the text itself follows its own direction. */}
+        <div className="pe-8">
+          <p dir="auto" className="whitespace-pre-wrap text-[15px] leading-relaxed text-ink-secondary">
+            {message.content}
+          </p>
+        </div>
 
         {message.sources && message.sources.length > 0 && (
           <SourceList sources={message.sources} />
@@ -171,7 +175,7 @@ function UserMessage({
           groupedWithNext && "rounded-br-md rtl:rounded-bl-md rtl:rounded-br-2xl",
         )}
       >
-        <p className="whitespace-pre-wrap">{message.content}</p>
+        <p dir="auto" className="whitespace-pre-wrap">{message.content}</p>
       </div>
     </div>
   );

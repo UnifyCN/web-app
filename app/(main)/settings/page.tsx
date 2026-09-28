@@ -5,7 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Camera, ChevronRight, KeyRound, LogOut, Mail, Trash2 } from "lucide-react";
+import {
+  CalendarCog,
+  Camera,
+  ChevronRight,
+  KeyRound,
+  LogOut,
+  Mail,
+  Trash2,
+} from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Switch } from "@/components/ui/Switch";
@@ -33,6 +41,7 @@ import {
 import { USERNAME_RE } from "@/lib/supabase/username";
 import { cn, moveCaretToEnd, RTL_FLIP } from "@/lib/utils";
 import { openWhatsNew } from "@/lib/whatsNew";
+import { isAdminPermission } from "@/lib/admin/access";
 import type { UserProfile } from "@/types";
 
 /** Readable text for a failed mutation, falling back when there's no message. */
@@ -502,6 +511,36 @@ function PreferencesSection({ profile }: { profile: UserProfile }) {
   );
 }
 
+/* ---- Team tools (admins only) ------------------------------------------- */
+
+/** Entry point to the admin section. Rendered only for `permissions = 'admin'`; the
+ *  /admin layout re-checks on the server, and RLS guards the writes. English only
+ *  (admin UI, spec D8). */
+function TeamToolsSection() {
+  return (
+    <Section title="Team tools">
+      <Link
+        href="/admin/events"
+        className="flex items-center gap-3 text-sm text-ink-muted transition-colors hover:text-ink"
+      >
+        <CalendarCog className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="block font-medium text-ink-secondary">
+            Events admin
+          </span>
+          <span className="block text-xs">
+            Manage events for the Unify apps and unifysocial.ca.
+          </span>
+        </span>
+        <ChevronRight
+          className="h-4 w-4 shrink-0 text-ink-placeholder"
+          aria-hidden
+        />
+      </Link>
+    </Section>
+  );
+}
+
 /* ---- Legal -------------------------------------------------------------- */
 
 const LEGAL_LINKS = [
@@ -787,6 +826,7 @@ export default function SettingsPage() {
         <Section title={t("settingsWeb.blockedAccounts")}>
           <BlockedAccountsList />
         </Section>
+        {isAdminPermission(profile.permissions) && <TeamToolsSection />}
         <LegalSection />
         <AccountSection />
       </div>

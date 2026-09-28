@@ -5,8 +5,8 @@
  *
  * The daily-limit / busy errors stay per-feature (ResumeLimitError,
  * CoverLetterLimitError, …) because the UI maps them to feature-specific copy;
- * only `JobPostingError`, which is genuinely shared (the job-posting endpoint is
- * feature-neutral), lives here.
+ * only `JobPostingError`, which is genuinely shared (both job-posting routes share
+ * one handler and error contract), lives here.
  */
 
 /**

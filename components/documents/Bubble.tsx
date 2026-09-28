@@ -5,7 +5,8 @@
  *
  * User turns are right-aligned orange bubbles; assistant turns are left-aligned
  * bordered cards. Extracted verbatim from the per-feature chat columns — the
- * classNames and DOM structure must stay byte-identical.
+ * classNames and DOM structure must stay byte-identical. Message text is
+ * `dir="auto"` so an English message in an RTL UI keeps its punctuation in place.
  */
 
 /** The minimal message shape both document chat columns share. */
@@ -22,7 +23,7 @@ export function Bubble({ message }: { message: DocumentChatMessage }) {
     return (
       <div className="mt-4 flex animate-message-in justify-end">
         <div className="max-w-[85%] rounded-2xl bg-primary-light px-4 py-2.5 text-sm leading-relaxed text-white">
-          <p className="whitespace-pre-wrap">{message.content}</p>
+          <p dir="auto" className="whitespace-pre-wrap">{message.content}</p>
         </div>
       </div>
     );
@@ -30,7 +31,7 @@ export function Bubble({ message }: { message: DocumentChatMessage }) {
   return (
     <div className="mt-4 flex animate-message-in justify-start">
       <div className="w-full rounded-2xl border border-border-card bg-surface px-4 py-3 shadow-sm">
-        <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-ink-secondary">
+        <p dir="auto" className="whitespace-pre-wrap text-[15px] leading-relaxed text-ink-secondary">
           {message.content}
         </p>
       </div>

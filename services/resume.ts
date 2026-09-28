@@ -58,6 +58,7 @@ const service = createDraftService<ResumeData, ResumeChatMessage, ResumeDraft, R
   storageKey: "unify_resume_drafts_v1",
   notFoundMessage: "Draft not found",
   LimitError: ResumeLimitError,
+  jobPostingEndpoint: "/api/resume/job-posting",
   draftCols: "id, title, resume, messages, complete, created_at, updated_at",
   payloadColumn: "resume",
   payloadProp: "resume",

@@ -18,6 +18,13 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "cdn.sanity.io" },
+      // Team-event covers uploaded from /admin/events (the public `event-covers`
+      // bucket on the shared project, #147). Pinned to public object URLs only.
+      {
+        protocol: "https",
+        hostname: "wrbauxutkysljmsqojts.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
       // Curated group cover photos (groups.cover_photo_url) — see
       // 20260619120000_group_covers_unsplash.sql.
       { protocol: "https", hostname: "images.unsplash.com" },

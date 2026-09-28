@@ -2779,6 +2779,7 @@
     },
     "download": "Descargar",
     "downloadDocx": "Descargar Word (.docx)",
+    "documentLanguage": "Idioma del documento",
     "exporting": "Exportando…",
     "exportFailed": "No se pudo exportar el archivo. Inténtalo de nuevo.",
     "announcement": {
@@ -2908,6 +2909,7 @@
     "buildingHint": "Tu carta aparece aquí. Agrega una oferta de empleo y pulsa Generar para escribir un primer borrador.",
     "download": "Descargar",
     "downloadDocx": "Descargar Word (.docx)",
+    "documentLanguage": "Idioma del documento",
     "exporting": "Exportando…",
     "exportFailed": "No se pudo exportar el archivo. Inténtalo de nuevo.",
     "paper": {

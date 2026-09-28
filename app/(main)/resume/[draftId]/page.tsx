@@ -163,6 +163,7 @@ function ResumeEditor() {
         onEditResume={handleEditResume}
         mobileActive={mobileShowResume}
         onBackToChat={() => setMobileShowResume(false)}
+        draftId={draftId}
       />
 
       <ImportNextCard

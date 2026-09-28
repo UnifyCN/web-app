@@ -10,12 +10,15 @@
  * editable Word text (Packer.toBlob), never a flattened image — that's the whole
  * point: users can fix a bullet in Word without another AI turn.
  *
- * Section-heading labels are passed in (resolved from the component's `t()`), so
- * the DOCX matches whatever the on-screen resume + PDF show. Resume *content* is
+ * Section-heading labels are passed in, resolved in the DOCUMENT language (see
+ * lib/documents/documentLanguage), not the UI language, so an Arabic UI still
+ * exports English (or French) headings, matching the PDF. Resume *content* is
  * already English (the model guarantees it regardless of UI language).
  */
 
+import type { TFunction } from "i18next";
 import type { ResumeData } from "@/types/resume";
+import type { DocumentLanguage } from "@/lib/documents/documentLanguage";
 import {
   DOCX_FONT,
   buildDocument,
@@ -31,6 +34,18 @@ export interface ResumeDocxLabels {
   skills: string;
 }
 
+/** Heading labels from a `t` bound to the document language (documentT). */
+export function resumeDocxLabels(t: TFunction): ResumeDocxLabels {
+  return {
+    yourName: t("resume.paper.yourName"),
+    summary: t("resume.sections.summary"),
+    education: t("resume.sections.education"),
+    experience: t("resume.sections.experience"),
+    projects: t("resume.sections.projects"),
+    skills: t("resume.sections.skills"),
+  };
+}
+
 const FONT = DOCX_FONT;
 // Half-point sizes (docx `size` unit): name 22pt, headings 11pt, body 10.5pt.
 const SIZE_NAME = 44;
@@ -41,6 +56,7 @@ const SIZE_META = 20; // italic dates/location
 export async function buildResumeDocx(
   data: ResumeData,
   labels: ResumeDocxLabels,
+  language: DocumentLanguage = "en",
 ): Promise<Blob> {
   const { Paragraph, TextRun, TabStopType, TabStopPosition, BorderStyle } =
     await import("docx");
@@ -223,6 +239,7 @@ export async function buildResumeDocx(
     creator: "Unify Resume Builder",
     margin: { top: 720, right: 792, bottom: 720, left: 792 },
     children,
+    language,
   });
 }
 
