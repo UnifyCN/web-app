@@ -7,23 +7,21 @@ vi.mock("@/lib/posthog", () => ({
 }));
 
 import {
-  HIGHLIGHT_TARGETS,
-  HIGHLIGHT_TIP_KEYS,
-  WHATS_NEW_ITEMS,
-  clearHighlight,
+  WHATS_NEW_STEPS,
   closeWhatsNew,
   hasSeenWhatsNew,
   markWhatsNewSeen,
+  navTourTarget,
   openWhatsNew,
-  requestHighlight,
+  placeTooltip,
   seenKey,
-  whatsNewHighlightStore,
   whatsNewOpenStore,
 } from "./whatsNew";
 import {
+  trackWhatsNewCompleted,
   trackWhatsNewDismissed,
-  trackWhatsNewShowMe,
   trackWhatsNewShown,
+  trackWhatsNewStep,
 } from "./analytics";
 import en from "./i18n/locales/en/translation.json";
 
@@ -61,42 +59,88 @@ describe("seen flag", () => {
   });
 });
 
-describe("items", () => {
-  it("lists job tools, resources, language — in that order, with their routes", () => {
-    expect(WHATS_NEW_ITEMS.map((i) => [i.id, i.href])).toEqual([
-      ["job_tools", "/resume"],
-      ["resources", "/resources"],
-      ["language", "/settings"],
+describe("seen key", () => {
+  it("is new for the tour, so people who saw the old card still get it", () => {
+    expect(seenKey("a")).toMatch(/^unify\.whatsNewTourSeen:/);
+    expect(seenKey("a")).not.toMatch(/^unify\.whatsNewSeen:/);
+  });
+});
+
+describe("steps", () => {
+  it("are job tools, resources, language, in that order", () => {
+    expect(WHATS_NEW_STEPS.map((s) => s.id)).toEqual([
+      "job_tools",
+      "resources",
+      "language",
     ]);
   });
 
-  it("every item and highlight tip has English copy", () => {
-    type Tree = { [k: string]: Tree | string | undefined };
-    const whatsNew = (en as unknown as Tree).whatsNew as Tree;
-    const items = whatsNew.items as Record<string, Record<string, string>>;
-    for (const item of WHATS_NEW_ITEMS) {
-      expect(items[item.key].title).toBeTruthy();
-      expect(items[item.key].body).toBeTruthy();
-      if (item.id === "job_tools") {
-        // Phone copy that doesn't point at the desktop-only Job tools nav.
-        const mobile = (items[item.key] as unknown as Record<string, Record<string, string>>).mobile;
-        expect(mobile.title).toBeTruthy();
-        expect(mobile.body).not.toMatch(/Job tools/);
-      }
-      for (const target of HIGHLIGHT_TARGETS[item.id]) {
-        const key = HIGHLIGHT_TIP_KEYS[target].split(".").slice(1);
-        const copy = key.reduce<Tree | string | undefined>(
-          (o, k) => (typeof o === "object" ? o[k] : undefined),
-          whatsNew,
-        );
-        expect(copy, target).toBeTruthy();
-      }
+  it("point at the nav items the sidebar / bottom nav tag", () => {
+    expect(navTourTarget("/resume")).toBe("nav-job-tools");
+    expect(navTourTarget("/resources")).toBe("nav-resources");
+    expect(navTourTarget("/settings")).toBe("nav-settings");
+    expect(navTourTarget("/home")).toBeUndefined();
+    const navTargets = new Set(["nav-job-tools", "nav-resources", "nav-settings"]);
+    for (const step of WHATS_NEW_STEPS) {
+      expect(step.targets.some((t) => navTargets.has(t)), step.id).toBe(true);
+    }
+  });
+
+  it("every step has English copy", () => {
+    const items = (en as unknown as {
+      whatsNew: { items: Record<string, { title: string; body: string }> };
+    }).whatsNew.items;
+    for (const step of WHATS_NEW_STEPS) {
+      expect(items[step.key].title).toBeTruthy();
+      expect(items[step.key].body).toBeTruthy();
     }
   });
 });
 
-describe("stores", () => {
-  it("open / close and highlight request / clear notify subscribers", () => {
+describe("placeTooltip", () => {
+  const tip = { width: 300, height: 180 };
+  const vp = { width: 1440, height: 900 };
+  const sidebarItem = { left: 6, top: 300, width: 88, height: 56 };
+
+  it("goes beside a desktop sidebar item, vertically centred", () => {
+    const p = placeTooltip(sidebarItem, tip, vp, false, 44, 12);
+    expect(p.side).toBe("right");
+    expect(p.left).toBe(6 + 88 + 44);
+    expect(p.top).toBe(300 + 28 - 90);
+  });
+
+  it("mirrors in RTL (sidebar on the right)", () => {
+    const rtlItem = { left: 1440 - 94, top: 300, width: 88, height: 56 };
+    const p = placeTooltip(rtlItem, tip, vp, true, 44, 12);
+    expect(p.side).toBe("left");
+    expect(p.left).toBe(1440 - 94 - 44 - 300);
+  });
+
+  it("flips to the other side when the preferred one doesn't fit", () => {
+    const nearRight = { left: 1300, top: 300, width: 88, height: 56 };
+    expect(placeTooltip(nearRight, tip, vp, false, 44, 12).side).toBe("left");
+  });
+
+  it("sits above a phone bottom-nav item and stays on screen", () => {
+    const phone = { width: 375, height: 812 };
+    const navItem = { left: 300, top: 752, width: 70, height: 60 };
+    const p = placeTooltip(navItem, { width: 351, height: 180 }, phone, false, 44, 12);
+    expect(p.side).toBe("top");
+    expect(p.top).toBe(752 - 44 - 180);
+    expect(p.left).toBe(12);
+    expect(p.left + 351).toBeLessThanOrEqual(375 - 12);
+  });
+
+  it("clamps the cross axis inside the viewport", () => {
+    const low = { left: 6, top: 850, width: 88, height: 40 };
+    const p = placeTooltip(low, tip, vp, false, 44, 12);
+    expect(p.side).toBe("right");
+    expect(p.top).toBe(900 - 12 - 180);
+  });
+});
+
+describe("store", () => {
+  it("open / close notify subscribers", () => {
     const onOpen = vi.fn();
     const unsub = whatsNewOpenStore.subscribe(onOpen);
     openWhatsNew("settings");
@@ -105,17 +149,6 @@ describe("stores", () => {
     expect(whatsNewOpenStore.get()).toBeNull();
     expect(onOpen).toHaveBeenCalledTimes(2);
     unsub();
-
-    requestHighlight(WHATS_NEW_ITEMS[0]);
-    expect(whatsNewHighlightStore.get()?.id).toBe("job_tools");
-    clearHighlight();
-    expect(whatsNewHighlightStore.get()).toBeNull();
-
-    // Reopening the card drops any leftover highlight.
-    requestHighlight(WHATS_NEW_ITEMS[2]);
-    openWhatsNew("settings");
-    expect(whatsNewHighlightStore.get()).toBeNull();
-    closeWhatsNew();
   });
 });
 
@@ -125,14 +158,16 @@ describe("analytics", () => {
     captureMock.mockReset();
   });
 
-  it("sends exactly the three events with their properties", () => {
+  it("sends the four tour events with their properties", () => {
     trackWhatsNewShown({ trigger: "auto" });
-    trackWhatsNewDismissed();
-    trackWhatsNewShowMe({ item: "resources" });
+    trackWhatsNewStep({ step: 2 });
+    trackWhatsNewDismissed({ atStep: 2 });
+    trackWhatsNewCompleted();
     expect(captureMock.mock.calls).toEqual([
       ["whats_new_shown", { trigger: "auto" }],
-      ["whats_new_dismissed", undefined],
-      ["whats_new_show_me", { item: "resources" }],
+      ["whats_new_step", { step: 2 }],
+      ["whats_new_dismissed", { at_step: 2 }],
+      ["whats_new_completed", undefined],
     ]);
   });
 });

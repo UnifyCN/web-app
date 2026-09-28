@@ -404,12 +404,12 @@ function PreferencesSection({ profile }: { profile: UserProfile }) {
               {t("settingsWeb.languageDesc")}
             </p>
           </div>
-          <div data-whats-new-target="language" className="shrink-0">
+          <div data-tour="language" className="shrink-0">
             <LanguagePicker />
           </div>
         </div>
 
-        {/* Reopens the one-time What's new card (components/whatsNew). */}
+        {/* Replays the one-time What's new tour (components/whatsNew). */}
         <button
           type="button"
           onClick={() => openWhatsNew("settings")}

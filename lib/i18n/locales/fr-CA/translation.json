@@ -3032,19 +3032,12 @@
   },
   "whatsNew": {
     "title": "Quoi de neuf",
-    "subtitle": "Quelques changements depuis votre dernière visite.",
-    "showMe": "Me montrer",
-    "gotIt": "J’ai compris",
     "settingsLink": "Quoi de neuf",
     "settingsDesc": "Voir les dernières nouveautés d’Unify",
     "items": {
       "jobTools": {
         "title": "Outils emploi",
-        "body": "Le CV et la lettre de présentation se trouvent maintenant dans Outils emploi. Importez une offre d’emploi pour adapter votre CV en quelques secondes.",
-        "mobile": {
-          "title": "CV et lettre de présentation",
-          "body": "Importez une offre d’emploi pour adapter votre CV en quelques secondes."
-        }
+        "body": "Le CV et la lettre de présentation se trouvent maintenant dans Outils emploi. Importez une offre d’emploi pour adapter votre CV en quelques secondes."
       },
       "resources": {
         "title": "Nouvelle page Ressources",
@@ -3055,11 +3048,12 @@
         "body": "Unify est maintenant offert en 7 langues."
       }
     },
-    "tips": {
-      "jobImportStart": "Ouvrez ou créez un CV, puis touchez « Cibler un emploi » pour importer une offre.",
-      "jobImport": "Collez ici le lien ou la description d’une offre pour adapter votre CV.",
-      "resources": "Cherchez des services ou filtrez par catégorie et par ville.",
-      "language": "Choisissez votre langue ici. Elle se synchronise aussi avec l’application mobile."
+    "tour": {
+      "back": "Retour",
+      "next": "Suivant",
+      "skip": "Passer",
+      "done": "Terminé",
+      "stepOf": "{{current}} sur {{total}}"
     }
   }
 }
