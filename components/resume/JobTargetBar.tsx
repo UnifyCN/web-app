@@ -141,6 +141,7 @@ export function JobTargetBar({
         <button
           type="button"
           disabled={disabled}
+          data-whats-new-target="job-import"
           onClick={() => {
             setError(null);
             setExpanded(true);

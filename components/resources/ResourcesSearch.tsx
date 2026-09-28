@@ -40,7 +40,10 @@ export function ResourcesSearch({
   }, [draft, onCommit]);
 
   return (
-    <div className="flex w-full items-center gap-2.5 rounded-[13px] bg-res-search px-3.5 py-[11px] focus-within:ring-2 focus-within:ring-res-link/40">
+    <div
+      data-whats-new-target="resources-search"
+      className="flex w-full items-center gap-2.5 rounded-[13px] bg-res-search px-3.5 py-[11px] focus-within:ring-2 focus-within:ring-res-link/40"
+    >
       <Search className="h-5 w-5 shrink-0 text-res-placeholder" aria-hidden />
       <input
         type="search"
