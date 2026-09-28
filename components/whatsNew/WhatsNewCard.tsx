@@ -7,6 +7,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, BriefcaseBusiness, Globe, Handshake } from "lucide-react";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { useAuthUser } from "@/hooks/useAuthUser";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import {
   trackWhatsNewDismissed,
   trackWhatsNewShowMe,
@@ -52,6 +53,9 @@ export function WhatsNewCard() {
   const router = useRouter();
   const reduce = useReducedMotion();
   const { data: user } = useAuthUser();
+  // Job tools is a desktop-only nav item, so on phones the Job tools copy
+  // names the features instead of the nav (Show me still opens /resume).
+  const isMobile = !useMediaQuery("(min-width: 768px)", true);
   const userId = user?.id;
   const trigger = useSyncExternalStore(
     whatsNewOpenStore.subscribe,
@@ -110,6 +114,10 @@ export function WhatsNewCard() {
       <ul className="-mx-1 max-h-[60dvh] space-y-3 overflow-y-auto px-1">
         {WHATS_NEW_ITEMS.map((item, i) => {
           const Icon = ICONS[item.id];
+          const copyKey =
+            isMobile && item.id === "job_tools"
+              ? `whatsNew.items.${item.key}.mobile`
+              : `whatsNew.items.${item.key}`;
           return (
             <motion.li
               key={item.id}
@@ -123,10 +131,10 @@ export function WhatsNewCard() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-ink-secondary">
-                  {t(`whatsNew.items.${item.key}.title`)}
+                  {t(`${copyKey}.title`)}
                 </p>
                 <p className="mt-0.5 text-xs leading-relaxed text-ink-muted">
-                  {t(`whatsNew.items.${item.key}.body`)}
+                  {t(`${copyKey}.body`)}
                 </p>
                 <button
                   type="button"

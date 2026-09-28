@@ -3030,7 +3030,11 @@
     "items": {
       "jobTools": {
         "title": "Job tools",
-        "body": "Resume and Cover Letter now live under Job tools. Import a job posting to tailor your resume in seconds."
+        "body": "Resume and Cover Letter now live under Job tools. Import a job posting to tailor your resume in seconds.",
+        "mobile": {
+          "title": "Resume and Cover Letter",
+          "body": "Import a job posting to tailor your resume in seconds."
+        }
       },
       "resources": {
         "title": "New Resources page",

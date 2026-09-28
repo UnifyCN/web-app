@@ -3030,7 +3030,11 @@
     "items": {
       "jobTools": {
         "title": "Empleo",
-        "body": "El currículum y la carta de presentación ahora están en Empleo. Importa una oferta de trabajo para adaptar tu currículum en segundos."
+        "body": "El currículum y la carta de presentación ahora están en Empleo. Importa una oferta de trabajo para adaptar tu currículum en segundos.",
+        "mobile": {
+          "title": "Currículum y carta de presentación",
+          "body": "Importa una oferta de trabajo para adaptar tu currículum en segundos."
+        }
       },
       "resources": {
         "title": "Nueva página de Recursos",

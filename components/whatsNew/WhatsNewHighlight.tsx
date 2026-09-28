@@ -129,7 +129,11 @@ export function WhatsNewHighlight() {
   if (typeof document === "undefined") return null;
 
   const show = item && found;
-  let tipTop = 0;
+  // Vertical anchor: `top` below the target, `bottom` above it. Anchoring with
+  // `bottom` (not a translateY(-100%) transform) leaves `transform` free for
+  // Motion's animated `y`, which would otherwise override the offset.
+  let tipTop: number | undefined;
+  let tipBottom: number | undefined;
   let tipLeft = 0;
   let below = true;
   if (show) {
@@ -137,7 +141,8 @@ export function WhatsNewHighlight() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     below = rect.bottom + GAP + 96 < vh || rect.top < 120;
-    tipTop = below ? rect.bottom + GAP : rect.top - GAP;
+    if (below) tipTop = rect.bottom + GAP;
+    else tipBottom = vh - (rect.top - GAP);
     const center = rect.left + rect.width / 2;
     tipLeft = Math.min(
       Math.max(center - TIP_WIDTH / 2, EDGE),
@@ -181,9 +186,9 @@ export function WhatsNewHighlight() {
             className="pointer-events-auto absolute rounded-card border border-border-card bg-surface p-3 pe-9 shadow-lg"
             style={{
               top: tipTop,
+              bottom: tipBottom,
               left: tipLeft,
               width: TIP_WIDTH,
-              transform: below ? undefined : "translateY(-100%)",
             }}
             initial={reduce ? { opacity: 0 } : { opacity: 0, y: below ? 6 : -6 }}
             animate={{ opacity: 1, y: 0 }}

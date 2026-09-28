@@ -77,6 +77,12 @@ describe("items", () => {
     for (const item of WHATS_NEW_ITEMS) {
       expect(items[item.key].title).toBeTruthy();
       expect(items[item.key].body).toBeTruthy();
+      if (item.id === "job_tools") {
+        // Phone copy that doesn't point at the desktop-only Job tools nav.
+        const mobile = (items[item.key] as unknown as Record<string, Record<string, string>>).mobile;
+        expect(mobile.title).toBeTruthy();
+        expect(mobile.body).not.toMatch(/Job tools/);
+      }
       for (const target of HIGHLIGHT_TARGETS[item.id]) {
         const key = HIGHLIGHT_TIP_KEYS[target].split(".").slice(1);
         const copy = key.reduce<Tree | string | undefined>(

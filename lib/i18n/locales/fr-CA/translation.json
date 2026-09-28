@@ -3029,7 +3029,11 @@
     "items": {
       "jobTools": {
         "title": "Outils emploi",
-        "body": "Le CV et la lettre de présentation se trouvent maintenant dans Outils emploi. Importez une offre d’emploi pour adapter votre CV en quelques secondes."
+        "body": "Le CV et la lettre de présentation se trouvent maintenant dans Outils emploi. Importez une offre d’emploi pour adapter votre CV en quelques secondes.",
+        "mobile": {
+          "title": "CV et lettre de présentation",
+          "body": "Importez une offre d’emploi pour adapter votre CV en quelques secondes."
+        }
       },
       "resources": {
         "title": "Nouvelle page Ressources",

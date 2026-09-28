@@ -3030,7 +3030,11 @@
     "items": {
       "jobTools": {
         "title": "Công cụ việc làm",
-        "body": "Sơ yếu lý lịch và Thư xin việc giờ nằm trong Công cụ việc làm. Nhập tin tuyển dụng để điều chỉnh sơ yếu lý lịch chỉ trong vài giây."
+        "body": "Sơ yếu lý lịch và Thư xin việc giờ nằm trong Công cụ việc làm. Nhập tin tuyển dụng để điều chỉnh sơ yếu lý lịch chỉ trong vài giây.",
+        "mobile": {
+          "title": "Sơ yếu lý lịch và Thư xin việc",
+          "body": "Nhập tin tuyển dụng để điều chỉnh sơ yếu lý lịch chỉ trong vài giây."
+        }
       },
       "resources": {
         "title": "Trang Tài nguyên mới",
