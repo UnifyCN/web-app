@@ -3,6 +3,7 @@
 import { useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { useRelativeTime } from "@/hooks/useRelativeTime";
 import {
   CheckCircle2,
   Copy,
@@ -13,7 +14,6 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
-import { formatRelativeTime } from "@/lib/utils";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
 import { ModalShell } from "@/components/ui/ModalShell";
 import { JobToolsTabs } from "@/components/jobTools/JobToolsTabs";
@@ -309,6 +309,7 @@ function ResumeCard({
   onDelete: () => void;
 }) {
   const { t } = useTranslation();
+  const formatRelativeTime = useRelativeTime();
   return (
     <li className="group relative rounded-lg border border-border-card bg-surface-card transition-colors hover:border-primary/40">
       <button
