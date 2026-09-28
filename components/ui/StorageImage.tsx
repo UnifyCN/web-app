@@ -32,6 +32,6 @@ export function StorageImage({ src, alt, className }: StorageImageProps) {
 
   return (
     // eslint-disable-next-line @next/next/no-img-element -- signed S3 URLs expire per-request; next/image doesn't fit
-    <img src={url} alt={alt} className={className} />
+    <img src={url} alt={alt} className={className} decoding="async" />
   );
 }

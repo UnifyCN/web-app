@@ -32,6 +32,7 @@ export function Avatar({
       <img
         src={url}
         alt={username}
+        decoding="async"
         style={dimensions}
         className={cn("shrink-0 rounded-full object-cover", className)}
       />

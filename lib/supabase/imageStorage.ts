@@ -70,11 +70,53 @@ function parseSignedUrlExpiry(url: string): number | null {
   }
 }
 
+// Keys that need signing are collected for SIGN_BATCH_WINDOW_MS and sent as
+// one `getMany` request, so a feed that mounts 15 avatars makes one route call
+// instead of 15. SIGN_BATCH_MAX must match MAX_BATCH_KEYS in the route.
+const SIGN_BATCH_WINDOW_MS = 10;
+const SIGN_BATCH_MAX = 50;
+
+type PendingSign = (url: string | null) => void;
+let pendingSigns = new Map<string, PendingSign>();
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+async function flushSignBatch(): Promise<void> {
+  flushTimer = null;
+  const batch = pendingSigns;
+  pendingSigns = new Map();
+  const keys = [...batch.keys()];
+
+  for (let i = 0; i < keys.length; i += SIGN_BATCH_MAX) {
+    const chunk = keys.slice(i, i + SIGN_BATCH_MAX);
+    let urls: Record<string, string | null> = {};
+    try {
+      const res = await fetch("/api/storage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ op: "getMany", keys: chunk }),
+      });
+      if (!res.ok) throw new Error(`sign failed (${res.status})`);
+      urls = ((await res.json()) as { urls?: typeof urls }).urls ?? {};
+    } catch (error) {
+      console.error("resolveImageUrl batch failed", error);
+    }
+    for (const key of chunk) batch.get(key)?.(urls[key] ?? null);
+  }
+}
+
+function signViaBatch(key: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    pendingSigns.set(key, resolve);
+    flushTimer ??= setTimeout(() => void flushSignBatch(), SIGN_BATCH_WINDOW_MS);
+  });
+}
+
 /**
  * Resolve a stored image reference to a renderable URL. Full http(s) URLs
  * (mock / external / legacy) pass through unchanged; bare keys are signed via
- * the same-origin `/api/storage` proxy, cached until ~30s before expiry, with
- * in-flight dedup so a feed full of the same author avatar makes one request.
+ * the same-origin `/api/storage` proxy (batched with any other keys requested
+ * in the same ~10ms window), cached until ~30s before expiry, with in-flight
+ * dedup so a feed full of the same author avatar signs it once.
  * Returns null for empty input or on failure — React Query disallows
  * `undefined` query data — so the caller falls back gracefully.
  */
@@ -95,24 +137,14 @@ export async function resolveImageUrl(
   const existing = inflight.get(key);
   if (existing) return existing;
 
-  const request = fetch("/api/storage", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ op: "get", key }),
-  })
-    .then(async (res) => {
-      if (!res.ok) throw new Error(`sign failed (${res.status})`);
-      const { url } = (await res.json()) as { url?: string };
-      if (!url) throw new Error("no signed url returned");
+  const request = signViaBatch(key)
+    .then((url) => {
+      if (!url) return null;
       cacheSet(key, {
         url,
         expiresAt: parseSignedUrlExpiry(url) ?? Date.now() + DEFAULT_TTL_MS,
       });
       return url;
-    })
-    .catch((error) => {
-      console.error("resolveImageUrl failed", key, error);
-      return null;
     })
     .finally(() => {
       inflight.delete(key);
