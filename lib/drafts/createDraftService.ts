@@ -63,6 +63,9 @@ export interface DraftServiceConfig<TData extends DraftDataBase> {
   notFoundMessage: string;
   /** Error thrown by `fetchJobPosting` on a daily-limit 429. */
   LimitError: new () => Error;
+  /** Same-origin job-posting route; each soft-gates on its own feature's quota
+   *  ("/api/resume/job-posting" | "/api/cover-letter/job-posting"). */
+  jobPostingEndpoint: string;
   /** Select column list including the feature's payload column. */
   draftCols: string;
   /** snake_case DB payload column (e.g. "resume" / "cover_letter"). */
@@ -86,6 +89,7 @@ export function createDraftService<
     storageKey,
     notFoundMessage,
     LimitError,
+    jobPostingEndpoint,
     draftCols,
     payloadColumn,
     payloadProp,
@@ -316,19 +320,19 @@ export function createDraftService<
   }
 
   /* ================================================================== *
-   * Job-posting target (tailoring). Feature-neutral endpoint.
+   * Job-posting target (tailoring). Per-feature endpoint (own quota gate).
    * ================================================================== */
 
   /**
    * Fetch + extract a job posting server-side (URL) or normalize pasted text.
-   * Proxies /api/resume/job-posting (SSRF-guarded, size-capped, no IP leak). Throws
+   * Proxies the feature's job-posting route (SSRF-guarded, size-capped, no IP leak). Throws
    * the feature's LimitError when the daily budget is gone, or JobPostingError(code)
    * with a specific reason otherwise.
    */
   async function fetchJobPosting(
     input: { url: string } | { text: string },
   ): Promise<ResumeJobPosting> {
-    const res = await fetch("/api/resume/job-posting", {
+    const res = await fetch(jobPostingEndpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),

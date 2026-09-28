@@ -8,7 +8,8 @@
  * tokens differ). This file supplies those tokens and keeps the feature-specific
  * pieces: `newDraft`, `setDraftResumeLink`, and the one AI call
  * `generateCoverLetterTurn` → POST /api/cover-letter (proxies `cover-letter-chat`).
- * The job-posting fetch reuses the feature-neutral /api/resume/job-posting endpoint.
+ * The job-posting fetch goes to /api/cover-letter/job-posting, which soft-gates
+ * on the cover-letter quota (not the resume one).
  */
 
 import { createDraftService } from "@/lib/drafts/createDraftService";
@@ -63,6 +64,7 @@ const service = createDraftService<
   storageKey: "unify_cover_letters_v1",
   notFoundMessage: "Cover letter not found",
   LimitError: CoverLetterLimitError,
+  jobPostingEndpoint: "/api/cover-letter/job-posting",
   draftCols: "id, title, cover_letter, messages, complete, created_at, updated_at",
   payloadColumn: "cover_letter",
   payloadProp: "coverLetter",
