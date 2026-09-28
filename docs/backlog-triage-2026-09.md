@@ -62,10 +62,10 @@ Legend: **Savar** = needs Savar's sign-off. **DB** = needs a migration, RLS, RPC
 - Approach: set Site URL to the production web domain, and add the mobile deep-link scheme plus `localhost:3000` to Redirect URLs.
 - Risk: mobile flows that use `{{ .SiteURL }}` would change, so check mobile's templates with Savar first. Confirm the current value before acting.
 
-**3. Cover-letter import quota** (S, no DB). **Done in PR #152:** a separate `/api/cover-letter/job-posting` route gated on `cover_letter_usage`, instead of the body flag sketched below.
-- Files: `app/api/resume/job-posting/route.ts` (hard-codes `resume_usage` at L118 and the limit 20), `lib/drafts/createDraftService.ts` (L331 fetch).
-- Approach: send `feature` in the request body. The route selects `resume_usage` or `cover_letter_usage` (RLS select-own; table in `20260904120000_cover_letters.sql`) with the matching limit, and emits `trigger:"job_import"` with the right feature.
-- Risk: the SSRF/size-cap path stays as it is. Ship after #5 or together with it, since #5 sets the limit values.
+**3. Cover-letter import quota**: **done in PR #152.**
+- Shipped as a separate route, `app/api/cover-letter/job-posting/route.ts`, gated on `cover_letter_usage` and `COVER_LETTER_DAILY_MESSAGE_LIMIT`.
+- The shared fetch/extract/SSRF handler moved to `lib/jobPosting/handler.ts`; `createDraftService` takes a per-feature `jobPostingEndpoint`.
+- No migration, RPC or edge change. The limit values still depend on #5 (cap alignment).
 
 **4. URL-backed tabs** (S, no DB)
 - Files: `app/(main)/home/page.tsx` (L50), `app/(main)/profile/page.tsx` (L157), `app/(main)/profile/[userId]/page.tsx` (L72), `app/(main)/profile/[userId]/followers/page.tsx` (L65-67). Reference: `app/(main)/community/page.tsx`.
