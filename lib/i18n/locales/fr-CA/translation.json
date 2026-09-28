@@ -254,7 +254,16 @@
     "groups": "GROUPES",
     "noResults": "Aucun résultat de recherche trouvé.",
     "searchEvents": "Rechercher des événements près de chez vous",
-    "discoveryPrompt": "Rechercher des groupes, des publications et des personnes"
+    "discoveryPrompt": "Rechercher des groupes, des publications et des personnes",
+    "tabs": {
+      "posts": "Publications",
+      "people": "Personnes",
+      "groups": "Groupes"
+    },
+    "tabWithCount": "{{label}}\u00a0({{count}})",
+    "clear": "Effacer la recherche",
+    "resultsFor": "Résultats pour « {{term}} »",
+    "error": "La recherche n'a pas pu être chargée. Veuillez réessayer."
   },
   "report": {
     "sendReport": "Envoyer le signalement"

@@ -254,7 +254,16 @@
     "groups": "समूह",
     "noResults": "कोई खोज परिणाम नहीं मिला।",
     "searchEvents": "अपने पास के इवेंट खोजें",
-    "discoveryPrompt": "समूह, पोस्ट और लोगों को खोजें"
+    "discoveryPrompt": "समूह, पोस्ट और लोगों को खोजें",
+    "tabs": {
+      "posts": "पोस्ट",
+      "people": "लोग",
+      "groups": "समूह"
+    },
+    "tabWithCount": "{{label}}\u00a0({{count}})",
+    "clear": "खोज साफ़ करें",
+    "resultsFor": "“{{term}}” के परिणाम",
+    "error": "खोज लोड नहीं हो सकी। कृपया फिर से कोशिश करें।"
   },
   "report": {
     "sendReport": "रिपोर्ट भेजें"

@@ -254,7 +254,16 @@
     "groups": "ਗਰੁੱਪ",
     "noResults": "ਕੋਈ ਖੋਜ ਨਤੀਜੇ ਨਹੀਂ ਮਿਲੇ।",
     "searchEvents": "ਤੁਹਾਡੇ ਨੇੜੇ ਦੇ ਸਮਾਗਮ ਖੋਜੋ",
-    "discoveryPrompt": "ਗਰੁੱਪਾਂ, ਪੋਸਟਾਂ, ਅਤੇ ਲੋਕਾਂ ਨੂੰ ਖੋਜੋ"
+    "discoveryPrompt": "ਗਰੁੱਪਾਂ, ਪੋਸਟਾਂ, ਅਤੇ ਲੋਕਾਂ ਨੂੰ ਖੋਜੋ",
+    "tabs": {
+      "posts": "ਪੋਸਟਾਂ",
+      "people": "ਲੋਕ",
+      "groups": "ਗਰੁੱਪ"
+    },
+    "tabWithCount": "{{label}}\u00a0({{count}})",
+    "clear": "ਖੋਜ ਸਾਫ਼ ਕਰੋ",
+    "resultsFor": "“{{term}}” ਲਈ ਨਤੀਜੇ",
+    "error": "ਖੋਜ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
   },
   "report": {
     "sendReport": "ਰਿਪੋਰਟ ਭੇਜੋ"

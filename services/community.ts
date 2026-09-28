@@ -22,6 +22,7 @@ import {
 } from "@/lib/mock/events";
 import { newsItems as mockNews } from "@/lib/mock/news";
 import { currentCircle } from "@/lib/mock/circles";
+import { ilikeContains, SEARCH_GROUPS_LIMIT } from "@/lib/search";
 
 /**
  * Community data access (groups, events, news, circles).
@@ -172,6 +173,51 @@ export async function getJoinedGroups(): Promise<Group[]> {
     .map((row) => (row as unknown as { groups: GroupRow }).groups)
     .filter(Boolean)
     .map((groupRow) => rowToGroup(groupRow, true));
+}
+
+/**
+ * Social search → Groups. Mirrors mobile's `searchGroups`: name OR description
+ * match (two parallel `ilike` queries, deduped by id), most members first.
+ */
+export async function searchGroups(term: string): Promise<Group[]> {
+  const needle = term.toLowerCase();
+  const userId = isSupabaseConfigured() ? await getAuthUserId() : null;
+  if (!userId) {
+    return mockGroups.filter(
+      (group) =>
+        group.groupName.toLowerCase().includes(needle) ||
+        group.groupDescription.toLowerCase().includes(needle),
+    );
+  }
+
+  const supabase = createClient();
+  const pattern = ilikeContains(term);
+  const byColumn = (column: "group_name" | "group_description") =>
+    supabase
+      .from("groups")
+      .select("id, group_name, group_description, member_count, cover_photo_url")
+      .ilike(column, pattern)
+      .order("member_count", { ascending: false })
+      .limit(SEARCH_GROUPS_LIMIT);
+  const [byName, byDescription, joinedIds] = await Promise.all([
+    byColumn("group_name"),
+    byColumn("group_description"),
+    fetchJoinedGroupIds(supabase, userId),
+  ]);
+  if (byName.error) throw byName.error;
+  if (byDescription.error) throw byDescription.error;
+
+  const unique = new Map<number, GroupRow>();
+  for (const row of [
+    ...(byName.data as GroupRow[]),
+    ...(byDescription.data as GroupRow[]),
+  ]) {
+    unique.set(row.id, row);
+  }
+  return [...unique.values()]
+    .sort((a, b) => b.member_count - a.member_count)
+    .slice(0, SEARCH_GROUPS_LIMIT)
+    .map((row) => rowToGroup(row, joinedIds.has(row.id)));
 }
 
 export async function joinGroup(groupId: number): Promise<void> {

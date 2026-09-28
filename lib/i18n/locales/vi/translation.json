@@ -254,7 +254,16 @@
     "groups": "NHÓM",
     "noResults": "Không tìm thấy kết quả.",
     "searchEvents": "Tìm sự kiện gần bạn",
-    "discoveryPrompt": "Tìm nhóm, bài viết và mọi người"
+    "discoveryPrompt": "Tìm nhóm, bài viết và mọi người",
+    "tabs": {
+      "posts": "Bài viết",
+      "people": "Mọi người",
+      "groups": "Nhóm"
+    },
+    "tabWithCount": "{{label}}\u00a0({{count}})",
+    "clear": "Xóa tìm kiếm",
+    "resultsFor": "Kết quả cho “{{term}}”",
+    "error": "Không tải được kết quả tìm kiếm. Vui lòng thử lại."
   },
   "report": {
     "sendReport": "Gửi báo cáo"

@@ -12,6 +12,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
 import { getBlockedUserIds } from "./moderation";
+import { ilikeContains, SEARCH_POSTS_LIMIT } from "@/lib/search";
 import { posts as mockPosts, followedUsernames } from "@/lib/mock/posts";
 import { currentUser } from "@/lib/mock/users";
 import { mockCommentsForPost } from "@/lib/mock/comments";
@@ -408,6 +409,38 @@ export async function getGroupPosts(groupId: number): Promise<Post[]> {
   if (error) throw error;
 
   const posts = (data as unknown as JoinedPostRow[]).map(rowToPost);
+  return enrichPostsWithMetadata(posts);
+}
+
+/**
+ * Social search → Posts. Mirrors mobile's search (`getAllPosts(…, searchQuery)`):
+ * title match, newest first, up to 50, including group posts (posts are
+ * public-read). Like the web feeds, drops posts by accounts the caller has
+ * blocked, and (like mobile) rows whose author no longer resolves.
+ */
+export async function searchPosts(term: string): Promise<Post[]> {
+  const needle = term.toLowerCase();
+  if (!isSupabaseConfigured() || !(await getAuthUserId())) {
+    return mockPosts.filter((post) => post.title.toLowerCase().includes(needle));
+  }
+
+  const supabase = createClient();
+  const blocked = await getBlockedUserIds();
+  let query = supabase
+    .from("posts")
+    .select(POSTS_SELECT)
+    .ilike("title", ilikeContains(term));
+  if (blocked.length) {
+    query = query.not("user_id", "in", `(${blocked.join(",")})`);
+  }
+  const { data, error } = await query
+    .order("created_at", { ascending: false })
+    .limit(SEARCH_POSTS_LIMIT);
+  if (error) throw error;
+
+  const posts = (data as unknown as JoinedPostRow[])
+    .filter((row) => row.users !== null)
+    .map(rowToPost);
   return enrichPostsWithMetadata(posts);
 }
 
