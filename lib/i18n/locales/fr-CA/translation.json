@@ -2758,6 +2758,7 @@
     "buildingHint": "Votre lettre de présentation apparaît ici. Ajoutez une offre d'emploi, puis appuyez sur Générer pour rédiger une première version.",
     "download": "Télécharger",
     "downloadDocx": "Télécharger en Word (.docx)",
+    "documentLanguage": "Langue du document",
     "exporting": "Exportation…",
     "exportFailed": "Impossible d'exporter le fichier. Veuillez réessayer.",
     "paper": {
@@ -2909,6 +2910,7 @@
     },
     "download": "Télécharger",
     "downloadDocx": "Télécharger en Word (.docx)",
+    "documentLanguage": "Langue du document",
     "exporting": "Exportation…",
     "exportFailed": "Impossible d'exporter le fichier. Veuillez réessayer.",
     "announcement": {

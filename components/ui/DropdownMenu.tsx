@@ -35,6 +35,7 @@ export function DropdownMenu({
   className,
   triggerClassName,
   triggerContent,
+  header,
 }: {
   items: DropdownMenuItem[];
   ariaLabel?: string;
@@ -45,6 +46,9 @@ export function DropdownMenu({
   triggerClassName?: string;
   /** Replace the default "…" icon content of the trigger. */
   triggerContent?: ReactNode;
+  /** Optional non-item content above the items (e.g. an export option). It
+   *  sits inside the menu, so interacting with it doesn't close the menu. */
+  header?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -143,6 +147,7 @@ export function DropdownMenu({
               transform: rightAlign ? "translateX(-100%)" : undefined,
             }}
           >
+            {header}
             {items.map((item) => (
               <button
                 key={item.key}

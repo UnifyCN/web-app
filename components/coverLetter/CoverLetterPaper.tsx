@@ -3,6 +3,10 @@
 import { Plus, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PaperSheet } from "@/components/documents/PaperSheet";
+import {
+  documentT,
+  type DocumentLanguage,
+} from "@/lib/documents/documentLanguage";
 import { EditableText } from "@/components/resume/EditableText";
 import {
   addParagraph,
@@ -49,8 +53,17 @@ function contactLine(data: CoverLetterData): string[] {
  * READ-ONLY render (used by the print copy).
  * ================================================================== */
 
-function ReadOnlyLetter({ data }: { data: CoverLetterData }) {
-  const { t } = useTranslation();
+function ReadOnlyLetter({
+  data,
+  docLang,
+}: {
+  data: CoverLetterData;
+  docLang?: DocumentLanguage;
+}) {
+  // The print copy passes the document language so the exported letter doesn't
+  // follow the UI language; the on-screen read-only render omits it.
+  const { t: uiT, i18n } = useTranslation();
+  const t = docLang ? documentT(i18n, docLang) : uiT;
   const contacts = contactLine(data);
   const name = data.contact.name.trim() || data.signature.trim();
   const recipientTop = [data.recipient.name, data.recipient.title]
@@ -282,12 +295,15 @@ export function CoverLetterPaper({
   editable = false,
   disabled = false,
   onChange,
+  docLang,
 }: {
   data: CoverLetterData;
   editable?: boolean;
   /** Temporarily block edits (e.g. while an AI turn is in flight). */
   disabled?: boolean;
   onChange?: (update: CoverLetterUpdater) => void;
+  /** Export language for the read-only (print) render. */
+  docLang?: DocumentLanguage;
 }) {
   const isEditable = editable && !!onChange;
   return (
@@ -301,7 +317,7 @@ export function CoverLetterPaper({
       {isEditable ? (
         <EditableLetter data={data} onChange={onChange} />
       ) : (
-        <ReadOnlyLetter data={data} />
+        <ReadOnlyLetter data={data} docLang={docLang} />
       )}
     </PaperSheet>
   );

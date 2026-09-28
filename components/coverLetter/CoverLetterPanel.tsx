@@ -6,6 +6,7 @@ import {
   coverLetterDocxFilename,
 } from "@/lib/coverLetter/exportDocx";
 import { PreviewPanel } from "@/components/documents/PreviewPanel";
+import { useDocumentLanguage } from "@/hooks/useDocumentLanguage";
 import { trackCoverLetterExported } from "@/lib/analytics";
 import { CoverLetterPaper } from "./CoverLetterPaper";
 import type { CoverLetterUpdater } from "@/lib/coverLetter/editOps";
@@ -23,6 +24,8 @@ interface CoverLetterPanelProps {
   /** Mobile master/detail: is the letter the visible pane (vs the chat)? */
   mobileActive: boolean;
   onBackToChat: () => void;
+  /** Keys the remembered export language (per draft). */
+  draftId: string;
 }
 
 export function CoverLetterPanel({
@@ -34,8 +37,11 @@ export function CoverLetterPanel({
   onEditLetter,
   mobileActive,
   onBackToChat,
+  draftId,
 }: CoverLetterPanelProps) {
   const { t } = useTranslation();
+  // Exports follow the document language (English by default), not the UI.
+  const [docLang, setDocLang] = useDocumentLanguage("coverLetter", draftId);
   return (
     <PreviewPanel
       isEmpty={isEmpty}
@@ -55,8 +61,11 @@ export function CoverLetterPanel({
       exportFailedLabel={t("coverLetter.exportFailed")}
       exportErrorLog="Cover letter: DOCX export failed"
       onExported={(format) => trackCoverLetterExported({ format })}
-      onExportDocx={() => buildCoverLetterDocx(data)}
+      onExportDocx={() => buildCoverLetterDocx(data, docLang)}
       docxFilename={coverLetterDocxFilename(data)}
+      documentLanguage={docLang}
+      onDocumentLanguageChange={setDocLang}
+      documentLanguageLabel={t("coverLetter.documentLanguage")}
       printRootClassName="cover-letter-print-root"
       paper={
         <CoverLetterPaper
@@ -66,7 +75,7 @@ export function CoverLetterPanel({
           onChange={onEditLetter}
         />
       }
-      printPaper={<CoverLetterPaper data={data} />}
+      printPaper={<CoverLetterPaper data={data} docLang={docLang} />}
     />
   );
 }

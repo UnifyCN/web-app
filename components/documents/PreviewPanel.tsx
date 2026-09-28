@@ -14,6 +14,11 @@ import {
 import { cn, RTL_FLIP, downloadBlob } from "@/lib/utils";
 import { DropdownMenu } from "@/components/ui/DropdownMenu";
 import { useToast } from "@/components/ui/ToastProvider";
+import {
+  DOCUMENT_LANGUAGES,
+  DOCUMENT_LANGUAGE_LABELS,
+  type DocumentLanguage,
+} from "@/lib/documents/documentLanguage";
 
 export interface PreviewPanelProps {
   isEmpty: boolean;
@@ -44,6 +49,13 @@ export interface PreviewPanelProps {
   docxFilename: string;
   /** Analytics hook: fires when the print dialog opens or a DOCX downloads. */
   onExported?: (format: "pdf" | "docx") => void;
+
+  /** Export language (English / French) — drives the print copy + DOCX
+   *  headings; the on-screen paper stays in the UI language. */
+  documentLanguage: DocumentLanguage;
+  onDocumentLanguageChange: (lang: DocumentLanguage) => void;
+  /** "Document language" label for the choice in the export menu. */
+  documentLanguageLabel: string;
 
   /** Print-root class hook ("resume-print-root" | "cover-letter-print-root"). */
   printRootClassName: string;
@@ -81,6 +93,9 @@ export function PreviewPanel({
   onExportDocx,
   docxFilename,
   onExported,
+  documentLanguage,
+  onDocumentLanguageChange,
+  documentLanguageLabel,
   printRootClassName,
   paper,
   printPaper,
@@ -159,6 +174,40 @@ export function PreviewPanel({
               <ChevronDown className="h-3.5 w-3.5" aria-hidden />
             </>
           }
+          header={
+            <div
+              role="group"
+              aria-label={documentLanguageLabel}
+              className="border-b border-border-card px-3.5 pt-1.5 pb-2.5"
+            >
+              <p className="mb-1.5 text-[11px] font-medium text-ink-placeholder">
+                {documentLanguageLabel}
+              </p>
+              <div className="flex gap-1.5">
+                {DOCUMENT_LANGUAGES.map((lang) => {
+                  const selected = lang === documentLanguage;
+                  return (
+                    <button
+                      key={lang}
+                      type="button"
+                      lang={lang}
+                      role="menuitemradio"
+                      aria-checked={selected}
+                      onClick={() => onDocumentLanguageChange(lang)}
+                      className={cn(
+                        "flex-1 cursor-pointer rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                        selected
+                          ? "border-primary bg-primary-bg text-primary"
+                          : "border-border-card text-ink-muted hover:bg-surface-gray hover:text-ink",
+                      )}
+                    >
+                      {DOCUMENT_LANGUAGE_LABELS[lang]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          }
           items={[
             {
               key: "pdf",
@@ -192,10 +241,17 @@ export function PreviewPanel({
 
       {/* Print-only copy: portaled to <body> so PDF export (window.print)
           prints just the document in normal flow, not the app shell. Hidden on
-          screen via the print-root class; shown only under @media print. */}
+          screen via the print-root class; shown only under @media print.
+          Tagged with the document language + LTR so an RTL UI (Arabic) doesn't
+          mirror the exported English/French document. */}
       {mounted &&
         createPortal(
-          <div className={printRootClassName} aria-hidden>
+          <div
+            className={printRootClassName}
+            lang={documentLanguage}
+            dir="ltr"
+            aria-hidden
+          >
             {printPaper}
           </div>,
           document.body,
