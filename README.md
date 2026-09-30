@@ -249,6 +249,9 @@ in CI by `npm run check-i18n`.
 - **Session refresh + gated routing** — `proxy.ts` (Next 16's middleware successor)
   refreshes the session, redirects unauthenticated traffic to `/welcome`, then runs two
   ordered gates: legal consent, then onboarding.
+  The three learning sections linked by marketing search CTAs retain their
+  destination through those gates for up to 30 minutes; see
+  [learning destinations](docs/learning-destinations.md) for the allowlist and rollout order.
 - **Portable Text rendering** — `components/learn/PortableTextRenderer.tsx` renders
   Sanity lessons including the custom content-block types.
 
