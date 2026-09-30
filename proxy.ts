@@ -105,19 +105,25 @@ export async function proxy(request: NextRequest) {
   const requestedDestination = allowedLearningDestination(pathname);
   const storedDestination = request.cookies.get(LEARNING_DESTINATION_COOKIE)?.value;
   const pendingDestination = readLearningDestination(storedDestination);
-  const isBackgroundRequest = pathname.startsWith("/api/") ||
-    request.headers.has("next-router-prefetch") || request.headers.get("purpose") === "prefetch";
+  // Next strips Flight/prefetch headers before Proxy. Only a document request
+  // may mutate intent; client navigations acknowledge it after the page mounts.
+  // Fetch Metadata is a UX signal, never an authentication bypass.
+  const isDocumentNavigation = request.method === "GET" &&
+    request.headers.get("sec-fetch-mode") === "navigate" &&
+    request.headers.get("sec-fetch-dest") === "document";
+  const canChangeDestination = isDocumentNavigation && !pathname.startsWith("/api/") &&
+    request.headers.get("purpose") !== "prefetch";
   const isDestinationFlow = AUTH_PUBLIC_PATHS.has(pathname) ||
     pathname.startsWith("/auth") || pathname === "/home" ||
-    pathname === "/before-you-continue" || pathname === "/onboarding" || isBackgroundRequest;
+    pathname === "/before-you-continue" || pathname === "/onboarding";
 
   // A fresh app entry (/, another feature, or a new section) cancels old intent.
   // Back/forward within welcome/login/signup retains it for the same short flow.
-  if (storedDestination && (!pendingDestination || !isDestinationFlow)) {
+  if (canChangeDestination && storedDestination && (!pendingDestination || !isDestinationFlow)) {
     response.cookies.delete(LEARNING_DESTINATION_COOKIE);
   }
   function rememberDestination(redirect: NextResponse) {
-    if (requestedDestination && !isBackgroundRequest) {
+    if (requestedDestination && canChangeDestination) {
       redirect.cookies.set(LEARNING_DESTINATION_COOKIE, encodeLearningDestination(requestedDestination), {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -140,7 +146,7 @@ export async function proxy(request: NextRequest) {
     redirect.cookies.delete(CONSENTED_COOKIE);
     // A session can expire while setup is still in progress. Keep valid intent
     // on those flow routes; fresh / and unrelated entries still cancel it.
-    if (!requestedDestination && !isDestinationFlow) redirect.cookies.delete(LEARNING_DESTINATION_COOKIE);
+    if (canChangeDestination && !requestedDestination && !isDestinationFlow) redirect.cookies.delete(LEARNING_DESTINATION_COOKIE);
     return rememberDestination(redirect);
   }
 
@@ -248,7 +254,7 @@ export async function proxy(request: NextRequest) {
 
   // All existing consent/onboarding gates have passed. Auth screens and the
   // wizard finish at /home; resume the original section exactly once here.
-  if (pathname === "/home" && pendingDestination && !isBackgroundRequest) {
+  if (pathname === "/home" && pendingDestination && canChangeDestination) {
     const redirect = redirectTo(request, response, pendingDestination);
     redirect.cookies.delete(LEARNING_DESTINATION_COOKIE);
     // Auth/marketing query strings are never forwarded to learning content.

@@ -1,3 +1,4 @@
+import "next/dist/server/node-environment";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -21,6 +22,7 @@ vi.mock("@supabase/ssr", () => ({
   }),
 }));
 import { proxy } from "./proxy";
+import { adapter } from "next/dist/server/web/adapter";
 
 const PR = "/learn/9717e260-bdeb-4ee4-8d39-4159a48eb627/3d5abe49-8616-48f8-a857-b80317ddeb35";
 const TAX = "/learn/4c79ebb5-b03a-47aa-862e-6d0853eba7d4/b7988f8b-6105-4a26-ade1-6df5864f8ee6";
@@ -40,11 +42,36 @@ afterEach(() => {
 
 function request(path: string, pending?: string, extraHeaders: Record<string, string> = {}) {
   return new NextRequest(`https://app.unifysocial.ca${path}`, {
-    headers: { ...(pending ? { cookie: `${COOKIE}=${pending}` } : {}), ...extraHeaders },
+    headers: { "sec-fetch-mode": "navigate", "sec-fetch-dest": "document", ...(pending ? { cookie: `${COOKIE}=${pending}` } : {}), ...extraHeaders },
   });
 }
 function location(response: Awaited<ReturnType<typeof proxy>>) {
   return response.headers.get("location")?.replace("https://app.unifysocial.ca", "");
+}
+
+async function normalizedRequest(path: string, pending: string) {
+  return adapter({
+    page: "/proxy",
+    handler: async (request) => {
+      expect(request.headers.get("next-router-prefetch")).toBeNull();
+      expect(request.headers.get("rsc")).toBeNull();
+      expect(request.nextUrl.searchParams.has("_rsc")).toBe(false);
+      return proxy(request);
+    },
+    request: {
+      url: `https://app.unifysocial.ca${path}?_rsc=test`,
+      method: "GET",
+      signal: new AbortController().signal,
+      headers: {
+        cookie: `${COOKIE}=${pending}`,
+        rsc: "1",
+        "next-router-prefetch": "1",
+        "next-router-segment-prefetch": "/_tree",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+      },
+    },
+  });
 }
 
 describe("learning destination validation", () => {
@@ -159,9 +186,34 @@ describe("proxy learning destination flow", () => {
 
   it("does not consume or replace intent on prefetch", async () => {
     state.signedIn = state.consented = state.onboarded = true;
-    const response = await proxy(request("/home", encodeLearningDestination(PR), { "next-router-prefetch": "1" }));
+    const response = await proxy(request("/home", encodeLearningDestination(PR), { "sec-fetch-mode": "cors", "sec-fetch-dest": "empty", "next-router-prefetch": "1" }));
     expect(location(response)).toBeUndefined();
     expect(response.cookies.get(COOKIE)).toBeUndefined();
+  });
+
+  it.each(["/community", "/home"])("preserves intent on a framework-normalized prefetch to %s", async (path) => {
+    state.signedIn = state.consented = state.onboarded = true;
+    const { response } = await normalizedRequest(path, encodeLearningDestination(PR));
+    expect(response.headers.get("set-cookie")).not.toContain(`${COOKIE}=`);
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it.each([
+    [false, false, false, "/welcome"],
+    [true, false, false, "/before-you-continue"],
+    [true, true, false, "/onboarding"],
+  ] as const)("keeps normalized prefetch behind the existing auth/setup gates", async (signedIn, consented, onboarded, gate) => {
+    Object.assign(state, { signedIn, consented, onboarded });
+    const { response } = await normalizedRequest("/community", encodeLearningDestination(PR));
+    expect(response.headers.get("location") || response.headers.get("x-nextjs-redirect")).toContain(gate);
+    expect(response.headers.get("set-cookie")).not.toContain(`${COOKIE}=`);
+  });
+
+  it.each(["/home", "/community", PR])("does not mutate intent on client fetch navigation or missing Fetch Metadata: %s", async (path) => {
+    state.signedIn = state.consented = state.onboarded = true;
+    const response = await proxy(request(path, encodeLearningDestination(PR), { "sec-fetch-mode": "", "sec-fetch-dest": "" }));
+    expect(response.cookies.get(COOKIE)).toBeUndefined();
+    expect(location(response)).toBeUndefined();
   });
 
   it("keeps the password-recovery gate ahead of learning resumption", async () => {
