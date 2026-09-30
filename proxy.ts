@@ -1,5 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  allowedLearningDestination,
+  encodeLearningDestination,
+  readLearningDestination,
+  LEARNING_DESTINATION_COOKIE,
+  LEARNING_DESTINATION_TTL_SECONDS,
+} from "./lib/learningDestination";
 import { RECOVERY_COOKIE, recoveryGate } from "@/lib/recoveryPending";
 
 const ONBOARDED_COOKIE = "unify_onboarded";
@@ -95,6 +102,38 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  const requestedDestination = allowedLearningDestination(pathname);
+  const storedDestination = request.cookies.get(LEARNING_DESTINATION_COOKIE)?.value;
+  const pendingDestination = readLearningDestination(storedDestination);
+  // Next strips Flight/prefetch headers before Proxy. Only a document request
+  // may mutate intent; client navigations acknowledge it after the page mounts.
+  // Fetch Metadata is a UX signal, never an authentication bypass.
+  const isDocumentNavigation = request.method === "GET" &&
+    request.headers.get("sec-fetch-mode") === "navigate" &&
+    request.headers.get("sec-fetch-dest") === "document";
+  const canChangeDestination = isDocumentNavigation && !pathname.startsWith("/api/") &&
+    request.headers.get("purpose") !== "prefetch";
+  const isDestinationFlow = AUTH_PUBLIC_PATHS.has(pathname) ||
+    pathname.startsWith("/auth") || pathname === "/home" ||
+    pathname === "/before-you-continue" || pathname === "/onboarding";
+
+  // A fresh app entry (/, another feature, or a new section) cancels old intent.
+  // Back/forward within welcome/login/signup retains it for the same short flow.
+  if (canChangeDestination && storedDestination && (!pendingDestination || !isDestinationFlow)) {
+    response.cookies.delete(LEARNING_DESTINATION_COOKIE);
+  }
+  function rememberDestination(redirect: NextResponse) {
+    if (requestedDestination && canChangeDestination) {
+      redirect.cookies.set(LEARNING_DESTINATION_COOKIE, encodeLearningDestination(requestedDestination), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: LEARNING_DESTINATION_TTL_SECONDS,
+      });
+    }
+    return redirect;
+  }
 
   // Signed out: clear the hint cookies and gate everything except the public
   // auth routes to /welcome.
@@ -105,7 +144,10 @@ export async function proxy(request: NextRequest) {
     const redirect = redirectTo(request, response, "/welcome");
     redirect.cookies.delete(ONBOARDED_COOKIE);
     redirect.cookies.delete(CONSENTED_COOKIE);
-    return redirect;
+    // A session can expire while setup is still in progress. Keep valid intent
+    // on those flow routes; fresh / and unrelated entries still cancel it.
+    if (canChangeDestination && !requestedDestination && !isDestinationFlow) redirect.cookies.delete(LEARNING_DESTINATION_COOKIE);
+    return rememberDestination(redirect);
   }
 
   // Password recovery in progress (code verified, new password not saved yet):
@@ -120,7 +162,7 @@ export async function proxy(request: NextRequest) {
   );
   if (recovery === "allow") return response;
   if (recovery === "redirect") {
-    return redirectTo(request, response, "/reset-password");
+    return rememberDestination(redirectTo(request, response, "/reset-password"));
   }
 
   // Signed in on a public auth route → into the app (the /home request then
@@ -162,7 +204,7 @@ export async function proxy(request: NextRequest) {
   // (ERR_TOO_MANY_REDIRECTS).
   if (!consented) {
     if (isConsentRoute) return response;
-    return redirectTo(request, response, "/before-you-continue");
+    return rememberDestination(redirectTo(request, response, "/before-you-continue"));
   }
 
   // Consented but sitting on the gate → into the app.
@@ -207,7 +249,18 @@ export async function proxy(request: NextRequest) {
 
   // Un-onboarded users are sent to the wizard from any app route.
   if (!isOnboardingRoute && !onboarded) {
-    return redirectTo(request, response, "/onboarding");
+    return rememberDestination(redirectTo(request, response, "/onboarding"));
+  }
+
+  // All existing consent/onboarding gates have passed. Auth screens and the
+  // wizard finish at /home; resume the original section exactly once here.
+  if (pathname === "/home" && pendingDestination && canChangeDestination) {
+    const redirect = redirectTo(request, response, pendingDestination);
+    redirect.cookies.delete(LEARNING_DESTINATION_COOKIE);
+    // Auth/marketing query strings are never forwarded to learning content.
+    const destinationUrl = new URL(pendingDestination, request.url);
+    redirect.headers.set("location", destinationUrl.href);
+    return redirect;
   }
 
   return response;

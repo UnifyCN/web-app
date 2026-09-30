@@ -10,6 +10,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Providers } from "./providers";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { LearningDestinationNavigation } from "@/components/layout/LearningDestinationNavigation";
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_COOKIE,
@@ -125,7 +126,10 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <PostHogProvider>
-          <Providers initialLocale={initialLocale}>{children}</Providers>
+          <Providers initialLocale={initialLocale}>
+            <LearningDestinationNavigation />
+            {children}
+          </Providers>
         </PostHogProvider>
         <Analytics />
         <SpeedInsights />
