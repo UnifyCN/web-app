@@ -106,6 +106,37 @@ describe("proxy learning destination flow", () => {
     expect(location(await proxy(request("/home", pending)))).toBe(TAX);
   });
 
+  it.each(["/home", "/before-you-continue", "/onboarding"])("retains valid intent if the session is lost while reloading %s", async (path) => {
+    const pending = encodeLearningDestination(PR);
+    const response = await proxy(request(path, pending));
+    expect(location(response)).toBe("/welcome");
+    expect(response.cookies.get(COOKIE)).toBeUndefined();
+    expect(response.cookies.get("unify_onboarded")?.value).toBe("");
+    expect(response.cookies.get("unify_consented")?.value).toBe("");
+    state.signedIn = state.consented = state.onboarded = true;
+    expect(location(await proxy(request("/login", pending)))).toBe("/home");
+    const completion = await proxy(request("/home", pending));
+    expect(location(completion)).toBe(PR);
+    expect(completion.cookies.get(COOKIE)?.value).toBe("");
+  });
+
+  it("resumes the section after session loss during unfinished onboarding and reauthentication", async () => {
+    const entry = await proxy(request(HEALTH));
+    const pending = entry.cookies.get(COOKIE)!.value;
+    state.signedIn = state.consented = true;
+    expect(location(await proxy(request("/home", pending)))).toBe("/onboarding");
+    state.signedIn = false;
+    const reload = await proxy(request("/onboarding", pending));
+    expect(location(reload)).toBe("/welcome");
+    expect(reload.cookies.get(COOKIE)).toBeUndefined();
+    state.signedIn = true;
+    expect(location(await proxy(request("/home", pending)))).toBe("/onboarding");
+    state.onboarded = true;
+    const completion = await proxy(request("/home", pending));
+    expect(location(completion)).toBe(HEALTH);
+    expect(completion.cookies.get(COOKIE)?.value).toBe("");
+  });
+
   it("preserves direct links for authenticated readers and drops an older destination", async () => {
     state.signedIn = state.consented = state.onboarded = true;
     const response = await proxy(request(HEALTH, encodeLearningDestination(PR)));

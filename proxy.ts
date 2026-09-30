@@ -138,8 +138,9 @@ export async function proxy(request: NextRequest) {
     const redirect = redirectTo(request, response, "/welcome");
     redirect.cookies.delete(ONBOARDED_COOKIE);
     redirect.cookies.delete(CONSENTED_COOKIE);
-    // Non-CTA app entries must not pick up an abandoned login destination.
-    if (!requestedDestination && !isBackgroundRequest) redirect.cookies.delete(LEARNING_DESTINATION_COOKIE);
+    // A session can expire while setup is still in progress. Keep valid intent
+    // on those flow routes; fresh / and unrelated entries still cancel it.
+    if (!requestedDestination && !isDestinationFlow) redirect.cookies.delete(LEARNING_DESTINATION_COOKIE);
     return rememberDestination(redirect);
   }
 
