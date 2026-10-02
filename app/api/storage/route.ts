@@ -34,6 +34,16 @@ const MAX_MULTIPART_OVERHEAD_BYTES = 8 * 1024;
 // segment, so it can't reach another user's path via extra segments.
 const STORAGE_FILENAME = /^[A-Za-z0-9._-]+$/;
 
+// Upper bound on keys per batched `getMany` sign request. Must match
+// SIGN_BATCH_MAX in lib/supabase/imageStorage.ts.
+const MAX_BATCH_KEYS = 50;
+
+// Per-key signing timeout inside a batch. Shorter than STORAGE_TIMEOUT_MS so a
+// single stuck sign can't hold the whole Promise.all past the route's 10s
+// maxDuration: that leaves room for getUser and the response, and the stuck
+// key just resolves to null (its image falls back) while the rest return.
+const BATCH_SIGN_TIMEOUT_MS = 6_000;
+
 /** fetch() with a hard timeout. On timeout the AbortController fires and fetch()
  *  rejects with an AbortError (see isAbortError). */
 async function fetchWithTimeout(
@@ -73,6 +83,7 @@ function isAbortError(err: unknown): boolean {
  * the request carries the caller's session JWT.
  *
  *   POST (json) { op:"get", key }    -> { url }
+ *   POST (json) { op:"getMany", keys } -> { urls: { [key]: url | null } }
  *   POST (json) { op:"remove", key } -> { ok: true }   (server-side S3 DELETE)
  *   POST (multipart, field "file")   -> { key }         (server-side S3 PUT)
  */
@@ -207,8 +218,42 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as {
     op?: string;
     key?: string;
+    keys?: unknown;
   };
   const op = body.op;
+
+  if (op === "getMany") {
+    // Batched read signing: one route call (one getUser, one function
+    // instance) for a whole feed of avatars / post images instead of one per
+    // image. Signs in parallel; a key that fails maps to null so one bad
+    // object never blanks the rest. Cross-user like `get`.
+    const keys = Array.isArray(body.keys)
+      ? [
+          ...new Set(
+            body.keys
+              .filter((k): k is string => typeof k === "string")
+              .map((k) => k.trim())
+              .filter(Boolean),
+          ),
+        ]
+      : [];
+    if (keys.length === 0 || keys.length > MAX_BATCH_KEYS) {
+      return NextResponse.json({ error: "Invalid keys" }, { status: 400 });
+    }
+    const signed = await Promise.all(
+      keys.map(async (k) => {
+        const { data, error } = await supabase.functions.invoke<{
+          url: string;
+        }>("profile-picture-get", {
+          body: { key: k },
+          timeout: BATCH_SIGN_TIMEOUT_MS,
+        });
+        if (error) console.error("/api/storage getMany: sign failed", error);
+        return [k, data?.url ?? null] as const;
+      }),
+    );
+    return NextResponse.json({ urls: Object.fromEntries(signed) });
+  }
   const key = typeof body.key === "string" ? body.key.trim() : "";
   if (!key) {
     return NextResponse.json({ error: "Invalid key" }, { status: 400 });
