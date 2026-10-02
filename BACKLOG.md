@@ -965,8 +965,9 @@ To add it, this needs **per-organization content sourcing** (a content task, not
   the same spirit as the events crawler's Pexels/Unsplash fallback for image-less events.
 - **Caution:** using an org's own logo to represent it is generally fine (factual representation of
   their branding), but keep a beat of care for anything that could imply **endorsement** — especially
-  the 4 `referral` partners (Canada-Shaw, Global Connect, TuGo, Desjardins), whose referral disclosure
-  is currently hidden pending Savar's confirmation (PR #104).
+  the 4 `referral` partners (Canada-Shaw, Global Connect, TuGo, Desjardins). Only Canada Shaws shows
+  the referral disclosure (signed agreement; `lib/resources/referralDisclosure.ts`); the other three
+  stay undisclosed until their agreements are confirmed.
 
 Wiring is already in place — this is drop-in once assets exist: set `logo` / `heroImage` (image URLs)
 on the partner records in `lib/resources/partners.ts`; `components/resources/OrgMonogram.tsx` swaps to
