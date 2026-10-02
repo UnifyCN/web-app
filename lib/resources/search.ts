@@ -46,6 +46,7 @@ function haystack(
       partner.tagline,
       partner.description,
       partner.serviceArea,
+      partner.serviceAreaEn,
       labelFor(partner.category),
       ...partner.highlights,
       ...(partner.languages ?? []),

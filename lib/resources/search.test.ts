@@ -42,4 +42,24 @@ describe("selectPartnersMatching", () => {
   it("searches program names", () => {
     expect(slugs("mentorconnect")).toEqual(["iec-bc"]);
   });
+
+  // The city chip is in the UI's script, but people type the official name.
+  it.each(["pa", "hi", "ar"] as const)(
+    'matches "Surrey" typed in Latin letters and in the local script (%s)',
+    (lang) => {
+      const t = makeT(lang);
+      const localized = getActiveResourcePartners(t, enT);
+      const hits = (q: string) =>
+        selectPartnersMatching(localized, q, label).map((p) => p.slug);
+      const surrey = t("resources.location.surrey") as string;
+      expect(surrey).not.toBe("Surrey");
+      for (const q of ["Surrey", surrey]) {
+        expect(hits(q), q).toEqual(
+          expect.arrayContaining(["surrey-lip", "surrey-libraries", "diversecity"]),
+        );
+      }
+      // A city-only partner with no Latin "Delta" left in its localized copy.
+      expect(hits("Delta")).toContain("delta-lip");
+    },
+  );
 });

@@ -2293,7 +2293,7 @@
         "programs": {
           "get-a-library-card": {
             "name": "Làm thẻ thư viện",
-            "description": "Hãy đăng ký tại bất kỳ chi nhánh nào cùng giấy tờ tùy thân, hoặc đăng ký trực tuyến để nhận thẻ số tạm thời. Thẻ PR, Confirmation of Permanent Residence, hoặc visa hay giấy phép lao động cấp từ sáu tháng trở lên đều được chấp nhận, kèm giấy tờ chứng minh địa chỉ tại Vancouver.",
+            "description": "Hãy đăng ký tại bất kỳ chi nhánh nào cùng giấy tờ tùy thân, hoặc đăng ký trực tuyến để nhận thẻ số tạm thời. Thẻ PR (PR card), Confirmation of Permanent Residence, hoặc visa hay giấy phép lao động cấp từ sáu tháng trở lên đều được chấp nhận, kèm giấy tờ chứng minh địa chỉ tại Vancouver.",
             "eligibility": "Miễn phí cho người sống hoặc sở hữu bất động sản trong thành phố Vancouver."
           },
           "esl-conversation-practice": {

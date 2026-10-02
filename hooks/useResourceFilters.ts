@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   EMPTY_FILTERS,
@@ -8,7 +8,6 @@ import {
   parseFilters,
   toggleFilter,
   type FilterGroup,
-  type ResourceFilters,
 } from "@/lib/resources/filters";
 
 /**
@@ -28,29 +27,42 @@ export function useResourceFilters() {
   );
   const query = params.get("q") ?? "";
 
+  // Updates build on the last query string this hook wrote, not on the render's
+  // snapshot: while a `router.replace` is still pending, a second toggle would
+  // otherwise start from the old URL and drop the first change.
+  const latestParams = useRef(params.toString());
+  useEffect(() => {
+    latestParams.current = params.toString();
+  }, [params]);
+
   const write = useCallback(
-    (next: ResourceFilters, q?: string) => {
-      const search = filtersToParams(
-        new URLSearchParams(params.toString()),
-        next,
-        q,
-      ).toString();
+    (update: (base: URLSearchParams) => URLSearchParams) => {
+      const search = update(new URLSearchParams(latestParams.current)).toString();
+      latestParams.current = search;
       router.replace(search ? `${pathname}?${search}` : pathname, {
         scroll: false,
       });
     },
-    [params, pathname, router],
+    [pathname, router],
   );
 
   return {
     filters,
     query,
-    setQuery: useCallback((q: string) => write(filters, q), [write, filters]),
+    setQuery: useCallback(
+      (q: string) => write((base) => filtersToParams(base, parseFilters(base), q)),
+      [write],
+    ),
     toggle: useCallback(
       (group: FilterGroup, value: string) =>
-        write(toggleFilter(filters, group, value)),
-      [write, filters],
+        write((base) =>
+          filtersToParams(base, toggleFilter(parseFilters(base), group, value)),
+        ),
+      [write],
     ),
-    clearFilters: useCallback(() => write(EMPTY_FILTERS), [write]),
+    clearFilters: useCallback(
+      () => write((base) => filtersToParams(base, EMPTY_FILTERS)),
+      [write],
+    ),
   };
 }

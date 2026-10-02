@@ -1048,9 +1048,11 @@ export const canonicalLanguage = (name: string): string =>
  * A localized partner plus its filter facets. `languageKeys` are the English
  * language names (canonicalised), index-aligned with the localized
  * `languages`, so filter values and URLs stay the same in every language.
+ * `serviceAreaEn` is the English service area, kept for search only: a city
+ * typed in Latin letters ("Surrey") must match in every language.
  */
 export type ResourcePartner = LocalizedPartner &
-  PartnerFacets & { languageKeys: string[] };
+  PartnerFacets & { languageKeys: string[]; serviceAreaEn: string };
 
 /**
  * Resolves a partner for display: copy in the language `t` is bound to, plus
@@ -1074,6 +1076,9 @@ export function toResourcePartner(
     ...localizePartner(partner, t),
     ...(PARTNER_FACETS[partner.slug] ?? UNKNOWN_FACETS),
     languageKeys,
+    serviceAreaEn: enT(partnerCopyKey(partner.slug, "serviceArea"), {
+      defaultValue: "",
+    }),
   };
 }
 

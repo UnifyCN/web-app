@@ -2293,7 +2293,7 @@
         "programs": {
           "get-a-library-card": {
             "name": "Obtén una tarjeta de biblioteca",
-            "description": "Regístrate en cualquier sucursal con una identificación, o en línea para una tarjeta digital temporal. Se acepta una tarjeta de RP, la Confirmación de Residencia Permanente, o una visa o permiso de trabajo emitido por seis meses o más, junto con un comprobante de domicilio en Vancouver.",
+            "description": "Regístrate en cualquier sucursal con una identificación, o en línea para una tarjeta digital temporal. Se acepta una tarjeta de RP (PR card), la Confirmación de Residencia Permanente (Confirmation of Permanent Residence), o una visa o permiso de trabajo emitido por seis meses o más, junto con un comprobante de domicilio en Vancouver.",
             "eligibility": "Gratis para las personas que viven o tienen una propiedad en la Ciudad de Vancouver."
           },
           "esl-conversation-practice": {
