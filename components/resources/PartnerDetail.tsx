@@ -7,7 +7,6 @@ import {
   Clock,
   ExternalLink,
   Globe,
-  Info,
   Languages,
   Mail,
   MapPin,
@@ -21,6 +20,7 @@ import { BackLink } from "./BackLink";
 import { Bidi } from "./Bidi";
 import { CostChip } from "./CostChip";
 import { FilterPill } from "./FilterPill";
+import { ReferralDisclosure } from "./ReferralDisclosure";
 import {
   PARTNER_CATEGORY_COLORS,
   PARTNER_CATEGORY_TINTS,
@@ -30,20 +30,12 @@ import {
 } from "@/lib/resources/categories";
 import type { ResourcePartner } from "@/lib/resources/partners";
 import { programCopyKey } from "@/lib/resources/localizePartner";
+import { hasReferralDisclosure } from "@/lib/resources/referralDisclosure";
 import {
   trackResourcesPartnerOpened,
   trackResourcesPartnerWebsiteOpened,
   trackResourcesProgramOpened,
 } from "@/lib/analytics";
-
-/**
- * Referral-partnership disclosure — temporarily hidden pending Savar's confirmation
- * that the `referral` partners (Canada-Shaw, Global Connect, TuGo, Desjardins) are
- * actual live partnerships and not categorization placeholders ported from his draft.
- * Flip to `true` to re-enable; the `partnershipType` data + the
- * `resources.referralDisclosure` i18n string are left intact so this is a one-line reversal.
- */
-const SHOW_REFERRAL_DISCLOSURE = false;
 
 /**
  * Contract-controlled listings: copy is shown exactly as supplied — never
@@ -309,12 +301,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                   ))}
                 </div>
               )}
-              {SHOW_REFERRAL_DISCLOSURE && partner.partnershipType === "referral" && (
-                <p className="flex items-center gap-1.5 text-xs text-res-count">
-                  <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span>{t("resources.referralDisclosure")}</span>
-                </p>
-              )}
+              {hasReferralDisclosure(partner) && <ReferralDisclosure />}
             </section>
           )}
         </aside>
@@ -466,11 +453,8 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
               </a>
             ))}
           </div>
-          {SHOW_REFERRAL_DISCLOSURE && partner.partnershipType === "referral" && (
-            <p className="mx-auto mt-1.5 flex max-w-[680px] items-center gap-1.5 text-xs text-res-count">
-              <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span>{t("resources.referralDisclosure")}</span>
-            </p>
+          {hasReferralDisclosure(partner) && (
+            <ReferralDisclosure className="mx-auto mt-1.5 max-w-[680px]" />
           )}
         </div>
       )}
