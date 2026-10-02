@@ -20,6 +20,10 @@ import {
   useGroupsFeed,
 } from "@/hooks/useFeed";
 import { ResumeAnnouncementModal } from "@/components/resume/ResumeAnnouncementModal";
+import {
+  SocialSearchBar,
+  SocialSearchResults,
+} from "@/components/home/SocialSearch";
 
 /** Empty-state copy per feed tab — i18n keys, translated at render. */
 const FEED_EMPTY: Record<FeedTab, { titleKey: string; subKey: string }> = {
@@ -51,6 +55,8 @@ export default function HomePage() {
   const [mobileSection, setMobileSection] = useState<MobileSection>(
     MOBILE_SECTIONS[0],
   );
+  // Submitted Social search term; while set, results replace the feed.
+  const [searchTerm, setSearchTerm] = useState("");
 
   const forYou = useForYouFeed(activeTab === "forYou");
   const following = useFollowingFeed(activeTab === "following");
@@ -99,91 +105,106 @@ export default function HomePage() {
         {t("tabs.social")}
       </h1>
 
-      {/* Phones stack Learning + News above the feed, pushing it far down the
-          page — split the three into tabs so the feed is reachable. md+ keeps
-          the full multi-column layout with every section visible. */}
-      <div className="mb-5 md:hidden">
-        {/* The shared Tabs primitive matches activeTab against the tabs array
-            by string equality — pass translated labels for both and map the
-            change back to the stable section id by index. */}
-        <Tabs
-          tabs={MOBILE_SECTIONS.map((section) =>
-            t(MOBILE_SECTION_LABEL_KEYS[section]),
-          )}
-          activeTab={t(MOBILE_SECTION_LABEL_KEYS[mobileSection])}
-          onChange={(_, index) => setMobileSection(MOBILE_SECTIONS[index])}
+      <div className="mx-auto mb-5 max-w-[680px]">
+        <SocialSearchBar
+          onSubmit={setSearchTerm}
+          onClear={() => setSearchTerm("")}
         />
       </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        {/* Feed — on phones only when the Feed tab is active; always shown md+ */}
-        <section
-          className={cn(
-            "order-2 min-w-0 flex-1 md:block lg:order-1 lg:max-w-[680px]",
-            mobileSection === "feed" ? "block" : "hidden",
-          )}
-        >
-          <div className="overflow-hidden rounded-card border border-border-card bg-surface">
-            <div className="px-3 pt-1">
-              <FeedTabs activeTab={activeTab} onChange={setActiveTab} />
-            </div>
-
-            {activeTab === "groups" && (
-              <div className="px-4 pt-4">
-                <JoinGroupsCard />
-              </div>
+      {searchTerm ? (
+        <div className="mx-auto max-w-[680px]">
+          <SocialSearchResults term={searchTerm} />
+        </div>
+      ) : (
+        <>
+        {/* Phones stack Learning + News above the feed, pushing it far down the
+            page — split the three into tabs so the feed is reachable. md+ keeps
+            the full multi-column layout with every section visible. */}
+        <div className="mb-5 md:hidden">
+          {/* The shared Tabs primitive matches activeTab against the tabs array
+              by string equality — pass translated labels for both and map the
+              change back to the stable section id by index. */}
+          <Tabs
+            tabs={MOBILE_SECTIONS.map((section) =>
+              t(MOBILE_SECTION_LABEL_KEYS[section]),
             )}
+            activeTab={t(MOBILE_SECTION_LABEL_KEYS[mobileSection])}
+            onChange={(_, index) => setMobileSection(MOBILE_SECTIONS[index])}
+          />
+        </div>
 
-            {active.isLoading ? (
-              <div className="divide-y divide-border-card">
-                <PostCardSkeleton withImage />
-                <PostCardSkeleton />
-                <PostCardSkeleton withImage />
-                <PostCardSkeleton />
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          {/* Feed — on phones only when the Feed tab is active; always shown md+ */}
+          <section
+            className={cn(
+              "order-2 min-w-0 flex-1 md:block lg:order-1 lg:max-w-[680px]",
+              mobileSection === "feed" ? "block" : "hidden",
+            )}
+          >
+            <div className="overflow-hidden rounded-card border border-border-card bg-surface">
+              <div className="px-3 pt-1">
+                <FeedTabs activeTab={activeTab} onChange={setActiveTab} />
               </div>
-            ) : active.error && posts.length === 0 ? (
-              <div className="px-5 py-14 text-center">
-                <p role="alert" className="text-sm text-destructive">
-                  {t("home.feedLoadError")}
-                </p>
-              </div>
-            ) : posts.length > 0 ? (
-              <div className="animate-fade-in divide-y divide-border-card">
-                {posts.map((post) => (
-                  <PostCard key={post.id} post={post} />
-                ))}
 
-                {isFetchingNextPage && (
-                  <>
-                    <PostCardSkeleton />
-                    <PostCardSkeleton withImage />
-                  </>
-                )}
+              {activeTab === "groups" && (
+                <div className="px-4 pt-4">
+                  <JoinGroupsCard />
+                </div>
+              )}
 
-                {hasNextPage ? (
-                  <div ref={sentinelRef} aria-hidden className="h-px" />
-                ) : (
-                  <p className="px-5 py-8 text-center text-sm text-ink-placeholder">
-                    {t("home.allCaughtUp")}
+              {active.isLoading ? (
+                <div className="divide-y divide-border-card">
+                  <PostCardSkeleton withImage />
+                  <PostCardSkeleton />
+                  <PostCardSkeleton withImage />
+                  <PostCardSkeleton />
+                </div>
+              ) : active.error && posts.length === 0 ? (
+                <div className="px-5 py-14 text-center">
+                  <p role="alert" className="text-sm text-destructive">
+                    {t("home.feedLoadError")}
                   </p>
-                )}
-              </div>
-            ) : (
-              <div className="px-5 py-14 text-center">
-                <p className="text-sm font-semibold text-ink-secondary">
-                  {t(empty.titleKey)}
-                </p>
-                <p className="mx-auto mt-1 max-w-xs whitespace-pre-line text-sm text-ink-placeholder">
-                  {t(empty.subKey)}
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
+                </div>
+              ) : posts.length > 0 ? (
+                <div className="animate-fade-in divide-y divide-border-card">
+                  {posts.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                  ))}
 
-        {/* Right-hand widgets */}
-        <RightPanel mobileSection={mobileSection} />
-      </div>
+                  {isFetchingNextPage && (
+                    <>
+                      <PostCardSkeleton />
+                      <PostCardSkeleton withImage />
+                    </>
+                  )}
+
+                  {hasNextPage ? (
+                    <div ref={sentinelRef} aria-hidden className="h-px" />
+                  ) : (
+                    <p className="px-5 py-8 text-center text-sm text-ink-placeholder">
+                      {t("home.allCaughtUp")}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="px-5 py-14 text-center">
+                  <p className="text-sm font-semibold text-ink-secondary">
+                    {t(empty.titleKey)}
+                  </p>
+                  <p className="mx-auto mt-1 max-w-xs whitespace-pre-line text-sm text-ink-placeholder">
+                    {t(empty.subKey)}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Right-hand widgets */}
+          <RightPanel mobileSection={mobileSection} />
+        </div>
+        </>
+      )}
 
       <ComposeButton />
 

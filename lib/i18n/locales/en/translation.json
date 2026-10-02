@@ -254,7 +254,16 @@
     "groups": "GROUPS",
     "noResults": "No search results found.",
     "searchEvents": "Search for events near you",
-    "discoveryPrompt": "Search for groups, posts, and people"
+    "discoveryPrompt": "Search for groups, posts, and people",
+    "tabs": {
+      "posts": "Posts",
+      "people": "People",
+      "groups": "Groups"
+    },
+    "tabWithCount": "{{label}}\u00a0({{count}})",
+    "clear": "Clear search",
+    "resultsFor": "Results for “{{term}}”",
+    "error": "Search didn't load. Please try again."
   },
   "report": {
     "sendReport": "Send Report"

@@ -405,3 +405,16 @@ export const trackWhatsNewDismissed = () => capture("whats_new_dismissed");
 export const trackWhatsNewShowMe = (p: {
   item: "job_tools" | "resources" | "language";
 }) => capture("whats_new_show_me", { item: p.item });
+
+/* ---- Social search ---------------------------------------------------- */
+
+/** One search result view: the tab shown and how many results it holds. The
+ *  search text itself is never sent. */
+export const trackSocialSearchPerformed = (p: {
+  tab: "posts" | "people" | "groups";
+  resultCount: number;
+}) =>
+  capture("social_search_performed", {
+    tab: p.tab,
+    result_count: p.resultCount,
+  });
