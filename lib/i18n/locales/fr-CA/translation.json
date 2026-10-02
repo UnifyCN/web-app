@@ -2292,7 +2292,7 @@
         "programs": {
           "get-a-library-card": {
             "name": "Obtenir une carte de bibliothèque",
-            "description": "Inscrivez-vous dans n'importe quelle succursale avec une pièce d'identité, ou en ligne pour une carte numérique temporaire. La carte de RP, la Confirmation de résidence permanente, ou un visa ou permis de travail délivré pour six mois ou plus sont acceptés, avec une preuve d'adresse à Vancouver.",
+            "description": "Inscrivez-vous dans n'importe quelle succursale avec une pièce d'identité, ou en ligne pour une carte numérique temporaire. La carte de RP (PR card), la Confirmation de résidence permanente (Confirmation of Permanent Residence), ou un visa ou permis de travail délivré pour six mois ou plus sont acceptés, avec une preuve d'adresse à Vancouver.",
             "eligibility": "Gratuit pour les personnes qui habitent la Ville de Vancouver ou y possèdent une propriété."
           },
           "esl-conversation-practice": {
