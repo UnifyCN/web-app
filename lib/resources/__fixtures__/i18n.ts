@@ -1,12 +1,14 @@
 import i18next, { type TFunction } from "i18next";
 import en from "@/lib/i18n/locales/en/translation.json";
 import ar from "@/lib/i18n/locales/ar/translation.json";
+import hi from "@/lib/i18n/locales/hi/translation.json";
+import pa from "@/lib/i18n/locales/pa/translation.json";
 
 /**
  * A synchronous i18next instance over the real locale bundles, configured like
  * the app (v3 JSON, EN fallback), for tests of localized Resources logic.
  */
-export function makeT(lng: "en" | "ar"): TFunction {
+export function makeT(lng: "en" | "ar" | "hi" | "pa"): TFunction {
   const instance = i18next.createInstance();
   void instance.init({
     lng,
@@ -14,7 +16,12 @@ export function makeT(lng: "en" | "ar"): TFunction {
     compatibilityJSON: "v3",
     initImmediate: false,
     interpolation: { escapeValue: false },
-    resources: { en: { translation: en }, ar: { translation: ar } },
+    resources: {
+      en: { translation: en },
+      ar: { translation: ar },
+      hi: { translation: hi },
+      pa: { translation: pa },
+    },
   });
   return instance.t;
 }
