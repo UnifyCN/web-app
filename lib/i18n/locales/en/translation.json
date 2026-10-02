@@ -3033,19 +3033,12 @@
   },
   "whatsNew": {
     "title": "What's new",
-    "subtitle": "A few things changed since your last visit.",
-    "showMe": "Show me",
-    "gotIt": "Got it",
     "settingsLink": "What's new",
     "settingsDesc": "See the latest updates to Unify",
     "items": {
       "jobTools": {
         "title": "Job tools",
-        "body": "Resume and Cover Letter now live under Job tools. Import a job posting to tailor your resume in seconds.",
-        "mobile": {
-          "title": "Resume and Cover Letter",
-          "body": "Import a job posting to tailor your resume in seconds."
-        }
+        "body": "Resume and Cover Letter now live under Job tools. Import a job posting to tailor your resume in seconds."
       },
       "resources": {
         "title": "New Resources page",
@@ -3056,11 +3049,12 @@
         "body": "Unify now works in 7 languages."
       }
     },
-    "tips": {
-      "jobImportStart": "Open or start a resume, then tap “Target a job” to import a posting.",
-      "jobImport": "Paste a job link or description here to tailor your resume.",
-      "resources": "Search services, or filter by category and city.",
-      "language": "Pick your language here. It syncs to the mobile app too."
+    "tour": {
+      "back": "Back",
+      "next": "Next",
+      "skip": "Skip",
+      "done": "Done",
+      "stepOf": "{{current}} of {{total}}"
     }
   }
 }

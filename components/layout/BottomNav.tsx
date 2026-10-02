@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { MAIN_NAV, SETTINGS_ITEM, isItemActive } from "./navItems";
+import { navTourTarget } from "@/lib/whatsNew";
 
 // Mobile-only (< md) bottom tab bar — replaces the left sidebar on phones.
 // The 5 primary tabs + Settings (6 total) — 7 was cramped on 375px. Profile is
@@ -35,6 +36,7 @@ export function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
+            data-tour={navTourTarget(item.href)}
             aria-current={active ? "page" : undefined}
             className={cn(
               "flex min-h-[3.5rem] flex-1 flex-col items-center justify-center gap-1 px-0.5 py-2",

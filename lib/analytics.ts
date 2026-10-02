@@ -395,16 +395,20 @@ export const trackResourcesProgramOpened = (p: {
     program_name: p.programName,
   });
 
-/* ---- What's new card -------------------------------------------------- */
+/* ---- What's new tour ------------------------------------------------- */
 
 export const trackWhatsNewShown = (p: { trigger: "auto" | "settings" }) =>
   capture("whats_new_shown", { trigger: p.trigger });
 
-export const trackWhatsNewDismissed = () => capture("whats_new_dismissed");
+/** A tour step came on screen (`step` is 1-based among the steps shown). */
+export const trackWhatsNewStep = (p: { step: number }) =>
+  capture("whats_new_step", { step: p.step });
 
-export const trackWhatsNewShowMe = (p: {
-  item: "job_tools" | "resources" | "language";
-}) => capture("whats_new_show_me", { item: p.item });
+export const trackWhatsNewCompleted = () => capture("whats_new_completed");
+
+/** Skipped (Skip, Escape) before the last step; `at_step` is 1-based. */
+export const trackWhatsNewDismissed = (p: { atStep: number }) =>
+  capture("whats_new_dismissed", { at_step: p.atStep });
 
 /* ---- Social search ---------------------------------------------------- */
 

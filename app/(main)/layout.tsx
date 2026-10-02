@@ -3,8 +3,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { NavHistoryTracker } from "@/components/layout/NavHistoryTracker";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { LanguageSync } from "@/lib/i18n/useLanguageSync";
-import { WhatsNewCard } from "@/components/whatsNew/WhatsNewCard";
-import { WhatsNewHighlight } from "@/components/whatsNew/WhatsNewHighlight";
+import { WhatsNewTour } from "@/components/whatsNew/WhatsNewTour";
 
 /**
  * Shell for all authenticated app pages. Desktop (≥ md): fixed left sidebar +
@@ -29,8 +28,7 @@ export default function MainLayout({
         </main>
       </div>
       <BottomNav />
-      <WhatsNewCard />
-      <WhatsNewHighlight />
+      <WhatsNewTour />
     </ToastProvider>
   );
 }

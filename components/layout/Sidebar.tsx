@@ -12,6 +12,7 @@ import {
   isItemActive,
   type NavItem,
 } from "./navItems";
+import { navTourTarget } from "@/lib/whatsNew";
 
 // Fixed-width icon rail with a label under each icon. Sized so the trimmed
 // "unify" wordmark lockup reads at close to the Figma lockup size (35px visible
@@ -41,6 +42,7 @@ export function Sidebar() {
       <Link
         key={item.href}
         href={item.href}
+        data-tour={navTourTarget(item.href)}
         aria-current={active ? "page" : undefined}
         className={cn(
           tileClass,
