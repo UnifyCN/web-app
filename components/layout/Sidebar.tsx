@@ -14,7 +14,7 @@ import {
   type NavItem,
 } from "./navItems";
 import { navTourTarget } from "@/lib/whatsNew";
-import { APP_STORE_URL } from "@/lib/appLinks";
+import { useMobileAppUrl } from "@/hooks/useMobileAppUrl";
 
 // Fixed-width icon rail with a label under each icon. Sized so the trimmed
 // "unify" wordmark lockup reads at close to the Figma lockup size (35px visible
@@ -31,6 +31,7 @@ const LOGO_HEIGHT = 35;
 export function Sidebar() {
   const pathname = usePathname();
   const { t } = useTranslation();
+  const mobileAppUrl = useMobileAppUrl();
 
   // Shared vertical tile: centred icon above a small label.
   const tileClass =
@@ -91,18 +92,23 @@ export function Sidebar() {
       <div className="flex flex-col gap-1.5 border-t border-border-card px-2 py-3">
         {renderNavLink(PROFILE_ITEM)}
         {renderNavLink(SETTINGS_ITEM)}
-        <a
-          href={APP_STORE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={cn(
-            tileClass,
-            "font-medium text-ink-muted hover:bg-surface-gray hover:text-ink",
-          )}
-        >
-          <Smartphone className="h-5 w-5 shrink-0" />
-          <span className="w-full truncate text-center">{t("nav.getApp")}</span>
-        </a>
+        {/* Hidden on Android: there is no Play listing to send it to yet. */}
+        {mobileAppUrl && (
+          <a
+            href={mobileAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              tileClass,
+              "font-medium text-ink-muted hover:bg-surface-gray hover:text-ink",
+            )}
+          >
+            <Smartphone className="h-5 w-5 shrink-0" />
+            <span className="w-full truncate text-center">
+              {t("nav.getApp")}
+            </span>
+          </a>
+        )}
       </div>
     </aside>
   );

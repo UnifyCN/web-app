@@ -26,6 +26,7 @@ import { ChangePasswordModal } from "@/components/account/ChangePasswordModal";
 import { DeleteAccountModal } from "@/components/account/DeleteAccountModal";
 import { BlockedAccountsList } from "@/components/moderation/BlockedAccountsList";
 import { useAuthUser } from "@/hooks/useAuthUser";
+import { useMobileAppUrl } from "@/hooks/useMobileAppUrl";
 import { signOut } from "@/services/auth";
 import { trackUserSignedOut } from "@/lib/analytics";
 import {
@@ -42,7 +43,6 @@ import {
 import { USERNAME_RE } from "@/lib/supabase/username";
 import { cn, moveCaretToEnd, RTL_FLIP } from "@/lib/utils";
 import { openWhatsNew } from "@/lib/whatsNew";
-import { APP_STORE_URL } from "@/lib/appLinks";
 import { isAdminPermission } from "@/lib/admin/access";
 import type { UserProfile } from "@/types";
 
@@ -381,6 +381,7 @@ function PreferencesSection({ profile }: { profile: UserProfile }) {
   const toast = useToast();
   const { t } = useTranslation();
   const [editingOnboarding, setEditingOnboarding] = useState(false);
+  const mobileAppUrl = useMobileAppUrl();
   const updateReminders = useUpdateLearningReminders();
   const hasOnboarding = profile.onboarding != null;
   const serverReminders = profile.onboarding?.learningReminders ?? false;
@@ -431,28 +432,34 @@ function PreferencesSection({ profile }: { profile: UserProfile }) {
           />
         </button>
 
-        <a
-          href={APP_STORE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-between gap-4 border-t border-border-card pt-4"
-        >
-          <span className="flex min-w-0 items-center gap-3">
-            <Smartphone className="h-5 w-5 shrink-0 text-primary" aria-hidden />
-            <span className="min-w-0">
-              <span className="block text-sm font-medium text-ink-secondary">
-                {t("settingsWeb.getMobileApp")}
-              </span>
-              <span className="block text-xs text-ink-muted">
-                {t("settingsWeb.getMobileAppDesc")}
+        {/* Hidden on Android: there is no Play listing to send it to yet. */}
+        {mobileAppUrl && (
+          <a
+            href={mobileAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between gap-4 border-t border-border-card pt-4"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <Smartphone
+                className="h-5 w-5 shrink-0 text-primary"
+                aria-hidden
+              />
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-ink-secondary">
+                  {t("settingsWeb.getMobileApp")}
+                </span>
+                <span className="block text-xs text-ink-muted">
+                  {t("settingsWeb.getMobileAppDesc")}
+                </span>
               </span>
             </span>
-          </span>
-          <ChevronRight
-            className={cn("h-4 w-4 shrink-0 text-ink-placeholder", RTL_FLIP)}
-            aria-hidden
-          />
-        </a>
+            <ChevronRight
+              className={cn("h-4 w-4 shrink-0 text-ink-placeholder", RTL_FLIP)}
+              aria-hidden
+            />
+          </a>
+        )}
 
         {hasOnboarding ? (
           <>
