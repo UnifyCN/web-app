@@ -53,7 +53,7 @@ export function PracticeQuestionList({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 rounded-card border border-border-card bg-surface px-4 py-2.5 text-left transition-all duration-200 hover:bg-surface-card active:scale-[0.99]"
+        className="flex w-full items-center justify-between gap-2 rounded-card border border-border-card bg-surface px-4 py-2.5 text-left press hover:bg-surface-card"
       >
         <span className="text-sm font-semibold text-ink-secondary">
           {t("learnWeb.practice.questionsCount", { count: flat.length })}

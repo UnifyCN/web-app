@@ -15,6 +15,7 @@ import { useSocialSearch } from "@/hooks/useSocialSearch";
 import { trackSocialSearchPerformed } from "@/lib/analytics";
 import { normalizeSearchTerm } from "@/lib/search";
 import type { SocialSearchResults } from "@/services/search";
+import { LoadingSwap } from "@/components/ui/LoadingSwap";
 
 /**
  * Social search, ported from the mobile app's `app/search.tsx`: one bar that
@@ -178,101 +179,106 @@ export function SocialSearchResults({ term }: { term: string }) {
       </div>
 
       <div aria-live="polite" aria-busy={isLoading}>
-        {isLoading ? (
-          <div className="divide-y divide-border-card">
-            <PostCardSkeleton />
-            <PostCardSkeleton />
-            <PostCardSkeleton />
-          </div>
-        ) : isError || !data ? (
-          <div className="px-5 py-14 text-center">
-            <p role="alert" className="text-sm text-destructive">
-              {t("search.error")}
-            </p>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="mt-3"
-              loading={isRefetching}
-              onClick={() => void refetch()}
-            >
-              {t("common.retry")}
-            </Button>
-          </div>
-        ) : countFor(data, tab) === 0 ? (
-          <div className="flex flex-col items-center px-5 py-14 text-center">
-            <SearchX className="h-8 w-8 text-ink-placeholder" aria-hidden />
-            <p className="mt-2 text-sm text-ink-muted">
-              {t("search.noResults")}
-            </p>
-          </div>
-        ) : tab === "posts" ? (
-          <div className="animate-fade-in divide-y divide-border-card">
-            {data.posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
-        ) : tab === "people" ? (
-          <ul className="animate-fade-in divide-y divide-border-card">
-            {data.people.map((person) => (
-              <li key={person.id}>
-                <Link
-                  href={`/profile/${person.id}`}
-                  className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-surface-gray focus-visible:bg-surface-gray focus-visible:outline-none"
-                >
-                  <Avatar
-                    profilePictureUrl={person.profilePictureUrl}
-                    username={person.username}
-                    size={40}
-                  />
-                  <span className="min-w-0">
-                    <bdi className="block truncate text-sm font-semibold text-ink-secondary">
-                      {person.username}
-                    </bdi>
-                    {person.firstName && (
-                      <bdi className="block truncate text-xs text-ink-placeholder">
-                        {person.firstName}
-                      </bdi>
-                    )}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <ul className="animate-fade-in divide-y divide-border-card">
-            {data.groups.map((group) => (
-              <li key={group.id}>
-                <Link
-                  href={`/community/${group.id}`}
-                  className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-surface-gray focus-visible:bg-surface-gray focus-visible:outline-none"
-                >
-                  <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-gray">
-                    <GroupCover
-                      coverPhotoUrl={group.coverPhotoUrl}
-                      sizes="48px"
-                      iconClassName="h-5 w-5 text-ink-placeholder"
+        <LoadingSwap
+          loading={isLoading}
+          skeleton={
+            <div className="divide-y divide-border-card">
+              <PostCardSkeleton />
+              <PostCardSkeleton />
+              <PostCardSkeleton />
+            </div>
+          }
+        >
+          {isError || !data ? (
+            <div className="px-5 py-14 text-center">
+              <p role="alert" className="text-sm text-destructive">
+                {t("search.error")}
+              </p>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="mt-3"
+                loading={isRefetching}
+                onClick={() => void refetch()}
+              >
+                {t("common.retry")}
+              </Button>
+            </div>
+          ) : countFor(data, tab) === 0 ? (
+            <div className="flex flex-col items-center px-5 py-14 text-center">
+              <SearchX className="h-8 w-8 text-ink-placeholder" aria-hidden />
+              <p className="mt-2 text-sm text-ink-muted">
+                {t("search.noResults")}
+              </p>
+            </div>
+          ) : tab === "posts" ? (
+            <div className="animate-fade-in divide-y divide-border-card">
+              {data.posts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+            </div>
+          ) : tab === "people" ? (
+            <ul className="animate-fade-in divide-y divide-border-card">
+              {data.people.map((person) => (
+                <li key={person.id}>
+                  <Link
+                    href={`/profile/${person.id}`}
+                    className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-surface-gray focus-visible:bg-surface-gray focus-visible:outline-none"
+                  >
+                    <Avatar
+                      profilePictureUrl={person.profilePictureUrl}
+                      username={person.username}
+                      size={40}
                     />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <bdi className="block truncate text-sm font-semibold text-ink-secondary">
-                      {group.groupName}
-                    </bdi>
-                    {group.groupDescription && (
-                      <bdi className="block truncate text-xs text-ink-muted">
-                        {group.groupDescription}
+                    <span className="min-w-0">
+                      <bdi className="block truncate text-sm font-semibold text-ink-secondary">
+                        {person.username}
                       </bdi>
-                    )}
-                    <span className="mt-0.5 flex items-center gap-1 text-xs text-ink-placeholder">
-                      <Users className="h-3.5 w-3.5" aria-hidden />
-                      {t("common.memberCount", { count: group.memberCount })}
+                      {person.firstName && (
+                        <bdi className="block truncate text-xs text-ink-placeholder">
+                          {person.firstName}
+                        </bdi>
+                      )}
                     </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <ul className="animate-fade-in divide-y divide-border-card">
+              {data.groups.map((group) => (
+                <li key={group.id}>
+                  <Link
+                    href={`/community/${group.id}`}
+                    className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-surface-gray focus-visible:bg-surface-gray focus-visible:outline-none"
+                  >
+                    <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-gray">
+                      <GroupCover
+                        coverPhotoUrl={group.coverPhotoUrl}
+                        sizes="48px"
+                        iconClassName="h-5 w-5 text-ink-placeholder"
+                      />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <bdi className="block truncate text-sm font-semibold text-ink-secondary">
+                        {group.groupName}
+                      </bdi>
+                      {group.groupDescription && (
+                        <bdi className="block truncate text-xs text-ink-muted">
+                          {group.groupDescription}
+                        </bdi>
+                      )}
+                      <span className="mt-0.5 flex items-center gap-1 text-xs text-ink-placeholder">
+                        <Users className="h-3.5 w-3.5" aria-hidden />
+                        {t("common.memberCount", { count: group.memberCount })}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </LoadingSwap>
       </div>
     </section>
   );

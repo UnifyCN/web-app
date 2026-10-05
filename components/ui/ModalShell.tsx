@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
-import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
+import {
+  DialogOverlay,
+  DialogPanel,
+  DialogPresence,
+} from "@/components/ui/Dialog";
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -88,22 +92,18 @@ export function ModalShell({
     };
   }, [open, busy, onClose]);
 
-  // `document` is undefined during SSR; modals only open via client interaction
-  // (closed on the server + first hydration render), so this never mismatches.
-  if (!open || typeof document === "undefined") return null;
-
-  // Portal to <body> so the fixed overlay can never be trapped by an ancestor's
-  // containing block (a transform/filter/contain anywhere up the tree would
-  // otherwise render it inline within the page column instead of the viewport).
-  return createPortal(
-    <div
+  // DialogPresence portals to <body>, so the fixed overlay can never be trapped
+  // by an ancestor's containing block (a transform/filter/contain anywhere up
+  // the tree would otherwise render it inside the page column).
+  const dialog = (
+    <DialogOverlay
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
       role="presentation"
       onClick={() => {
         if (!busy) onClose();
       }}
     >
-      <div
+      <DialogPanel
         ref={dialogRef}
         tabIndex={-1}
         className="w-full max-w-sm overflow-hidden rounded-card bg-surface shadow-lg outline-none"
@@ -135,8 +135,9 @@ export function ModalShell({
           </button>
         </div>
         <div className="px-5 pt-4 pb-5">{children}</div>
-      </div>
-    </div>,
-    document.body,
+      </DialogPanel>
+    </DialogOverlay>
   );
+
+  return <DialogPresence open={open}>{dialog}</DialogPresence>;
 }

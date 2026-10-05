@@ -35,7 +35,7 @@ export function Sidebar() {
 
   // Shared vertical tile: centred icon above a small label.
   const tileClass =
-    "flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-xs leading-tight transition-colors duration-150";
+    "flex flex-col items-center gap-1 rounded-lg px-1 py-2 text-xs leading-tight press-dim";
 
   const renderNavLink = (item: NavItem) => {
     const active = isItemActive(pathname, item);

@@ -56,11 +56,11 @@ const ARROWS: Record<Side, typeof ArrowLeft> = {
   top: ArrowDown,
 };
 
-/** Arrow bounce: a slow ease toward the target and back, forever. */
+/** Arrow nudge: a slow ease toward the target and back, twice, then it rests. */
 const BOUNCE = {
   opacity: { duration: 0.2 },
-  x: { duration: 1.1, repeat: Infinity, ease: "easeInOut" as const },
-  y: { duration: 1.1, repeat: Infinity, ease: "easeInOut" as const },
+  x: { duration: 1.1, repeat: 1, ease: "easeInOut" as const },
+  y: { duration: 1.1, repeat: 1, ease: "easeInOut" as const },
 };
 
 /** True while another modal dialog (e.g. the resume announcement) is open. */

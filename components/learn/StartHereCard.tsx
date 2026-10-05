@@ -27,7 +27,7 @@ export function StartHereCard({
   return (
     <Link
       href={`/learn/${moduleId}`}
-      className="group relative block overflow-hidden rounded-card p-6 text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5"
+      className="group relative block overflow-hidden rounded-card p-6 text-white shadow-sm press hover:shadow-md"
       style={{ backgroundColor: colorHex }}
     >
       <Blob

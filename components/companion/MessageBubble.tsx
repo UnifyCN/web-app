@@ -5,6 +5,7 @@ import { Check, ChevronDown, ChevronUp, Copy, Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { ChatMessage, ChatSource } from "@/types";
+import { Reveal } from "@/components/ui/Reveal";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -47,7 +48,7 @@ function SourceList({ sources }: { sources: ChatSource[] }) {
         )}
       </button>
 
-      {open && (
+      <Reveal open={open}>
         <ul className="mt-2 space-y-1.5">
           {sources.map((source) => {
             const host = hostFromUrl(source.url);
@@ -77,7 +78,7 @@ function SourceList({ sources }: { sources: ChatSource[] }) {
             );
           })}
         </ul>
-      )}
+      </Reveal>
     </div>
   );
 }

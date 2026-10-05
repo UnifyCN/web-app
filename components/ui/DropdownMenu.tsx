@@ -8,9 +8,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { MoreHorizontal } from "lucide-react";
+import { motion } from "framer-motion";
+import { BodyPresence } from "@/components/ui/Dialog";
+import { menuMotion } from "@/lib/motion";
 import { useIsRtl } from "@/hooks/useDirection";
 import { cn } from "@/lib/utils";
 
@@ -132,47 +134,47 @@ export function DropdownMenu({
         {triggerContent ?? <MoreHorizontal className="h-4 w-4" aria-hidden />}
       </button>
 
-      {open &&
-        coords &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            ref={menuRef}
-            id={menuId}
-            role="menu"
-            className="fixed z-[60] min-w-44 overflow-hidden rounded-card border border-border-card bg-surface py-1 shadow-lg"
-            style={{
-              top: coords.top,
-              left: coords.left,
-              transform: rightAlign ? "translateX(-100%)" : undefined,
-            }}
-          >
-            {header}
-            {items.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setOpen(false);
-                  item.onSelect();
-                }}
-                className={cn(
-                  "flex w-full items-center gap-2.5 px-3.5 py-2 text-start text-sm transition-colors hover:bg-surface-gray",
-                  item.destructive ? "text-destructive" : "text-ink-secondary",
-                )}
-              >
-                {item.icon && (
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center">
-                    {item.icon}
-                  </span>
-                )}
-                {item.label}
-              </button>
-            ))}
-          </div>,
-          document.body,
-        )}
+      <BodyPresence open={open && coords !== null}>
+        <motion.div
+          ref={menuRef}
+          id={menuId}
+          role="menu"
+          className="fixed z-[60] min-w-44 overflow-hidden rounded-card border border-border-card bg-surface py-1 shadow-lg"
+          {...menuMotion}
+          style={{
+            top: coords?.top,
+            left: coords?.left,
+            // Framer owns `transform`, so the right-align shift is its `x`.
+            x: rightAlign ? "-100%" : 0,
+            // Grow from the corner nearest the trigger.
+            transformOrigin: rightAlign ? "top right" : "top left",
+          }}
+        >
+          {header}
+          {items.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                item.onSelect();
+              }}
+              className={cn(
+                "flex w-full items-center gap-2.5 px-3.5 py-2 text-start text-sm press-dim hover:bg-surface-gray",
+                item.destructive ? "text-destructive" : "text-ink-secondary",
+              )}
+            >
+              {item.icon && (
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center">
+                  {item.icon}
+                </span>
+              )}
+              {item.label}
+            </button>
+          ))}
+        </motion.div>
+      </BodyPresence>
     </>
   );
 }

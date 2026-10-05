@@ -214,7 +214,7 @@ export function StarterPromptChips({
             key={starter.topicKey}
             type="button"
             onClick={() => onSelect(question)}
-            className="flex cursor-pointer items-start gap-3 rounded-card border border-border-card bg-surface p-3 text-left transition-shadow duration-150 hover:shadow-md"
+            className="flex cursor-pointer items-start gap-3 rounded-card border border-border-card bg-surface p-3 text-left press hover:shadow-md"
           >
             <span
               className={cn(

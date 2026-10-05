@@ -49,7 +49,7 @@ export default function ResourcesCategoryPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-[945px] animate-fade-in px-4 py-6 md:px-8 md:py-16">
+    <div className="mx-auto w-full max-w-[945px] px-4 py-6 md:px-8 md:py-16">
       <Suspense>
         <CategoryBody category={category} />
       </Suspense>

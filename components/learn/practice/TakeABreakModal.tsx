@@ -2,6 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  DialogOverlay,
+  DialogPanel,
+  DialogPresence,
+} from "@/components/ui/Dialog";
 
 interface TakeABreakModalProps {
   open: boolean;
@@ -64,15 +69,13 @@ export function TakeABreakModal({
     };
   }, [open, onContinue]);
 
-  if (!open) return null;
-
-  return (
-    <div
+  const dialog = (
+    <DialogOverlay
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
       onClick={onContinue}
       role="presentation"
     >
-      <div
+      <DialogPanel
         ref={dialogRef}
         className="w-full max-w-sm rounded-card bg-surface p-6 shadow-lg"
         onClick={(event) => event.stopPropagation()}
@@ -106,7 +109,9 @@ export function TakeABreakModal({
             {t("learn.practice.exitActivityContinue")}
           </button>
         </div>
-      </div>
-    </div>
+      </DialogPanel>
+    </DialogOverlay>
   );
+
+  return <DialogPresence open={open}>{dialog}</DialogPresence>;
 }

@@ -22,7 +22,7 @@ export function CategoryTile({
   return (
     <Link
       href={`/resources/category/${category}`}
-      className="flex h-full flex-col items-start gap-[9px] rounded-[17px] border-[1.16px] border-res-border bg-surface p-[15px] text-start shadow-[0_1px_1px_rgba(30,25,15,0.04)] transition-[border-color,box-shadow] hover:border-res-outline hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-res-link focus-visible:ring-offset-2"
+      className="flex h-full flex-col items-start gap-[9px] rounded-[17px] border-[1.16px] border-res-border bg-surface p-[15px] text-start shadow-[0_1px_1px_rgba(30,25,15,0.04)] press hover:border-res-outline hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-res-link focus-visible:ring-offset-2"
     >
       <span
         className="flex h-[37px] w-[37px] shrink-0 items-center justify-center rounded-[11.6px]"

@@ -31,7 +31,7 @@ export default function ResourcesPage() {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-[894px] animate-fade-in px-4 py-6 md:px-8 md:py-16">
+    <div className="mx-auto w-full max-w-[894px] px-4 py-6 md:px-8 md:py-16">
       <Suspense>
         <ResourcesFront />
       </Suspense>

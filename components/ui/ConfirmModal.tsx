@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
+import { DialogOverlay, DialogPanel, DialogPresence } from "@/components/ui/Dialog";
 
 interface ConfirmModalProps {
   open: boolean;
@@ -74,17 +75,15 @@ export function ConfirmModal({
     };
   }, [open, isPending, onCancel]);
 
-  if (!open) return null;
-
-  return (
-    <div
+  const dialog = (
+    <DialogOverlay
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
       onClick={() => {
         if (!isPending) onCancel();
       }}
       role="presentation"
     >
-      <div
+      <DialogPanel
         className="w-full max-w-sm overflow-hidden rounded-card bg-surface shadow-sm"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
@@ -121,7 +120,9 @@ export function ConfirmModal({
             {resolvedConfirmLabel}
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogPanel>
+    </DialogOverlay>
   );
+
+  return <DialogPresence open={open}>{dialog}</DialogPresence>;
 }

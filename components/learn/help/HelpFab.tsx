@@ -47,7 +47,7 @@ export function HelpFab({ onOpen }: { onOpen: () => void }) {
       className={cn(
         "fixed end-4 z-40 flex h-14 w-14 cursor-pointer items-center justify-center",
         "rounded-2xl bg-gradient-to-br from-teal-600 to-purple-600 text-white shadow-xl",
-        "transition-transform hover:scale-105 active:scale-95",
+        "press",
         "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         // Clear the fixed BottomNav (+ safe area) on mobile; sit lower on md+
         // where the sidebar layout has no bottom bar.
@@ -57,7 +57,8 @@ export function HelpFab({ onOpen }: { onOpen: () => void }) {
       {pulse && (
         <span
           aria-hidden
-          className="absolute inset-0 -z-10 animate-ping rounded-2xl bg-teal-600/40 motion-reduce:hidden"
+          // Rings twice to point the button out, then rests; it never loops.
+          className="absolute inset-0 -z-10 animate-ping rounded-2xl bg-teal-600/40 [animation-fill-mode:forwards] [animation-iteration-count:2] motion-reduce:hidden"
         />
       )}
       <MessageCircleQuestion className="h-7 w-7" strokeWidth={2} aria-hidden />

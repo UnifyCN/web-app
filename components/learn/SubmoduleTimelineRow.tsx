@@ -169,7 +169,7 @@ export function SubmoduleTimelineRow({
                 ? t("learnWeb.module.hideLessons")
                 : t("learnWeb.module.showLessons")
             }
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border-card bg-surface text-ink-muted transition-all duration-200 hover:bg-surface-gray hover:text-ink active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-border-card bg-surface text-ink-muted press hover:bg-surface-gray hover:text-ink"
           >
             <motion.span
               className="flex"

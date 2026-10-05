@@ -21,6 +21,7 @@ import { TranslateButton } from "@/components/home/TranslateButton";
 import { cn } from "@/lib/utils";
 import { useRelativeTime } from "@/hooks/useRelativeTime";
 import type { Discussion } from "@/types";
+import { Reveal } from "@/components/ui/Reveal";
 
 /**
  * One question thread on the module board: purple upvote rail, author line
@@ -211,8 +212,10 @@ export function DiscussionThreadCard({
                 })}
           </button>
 
-          {expanded && (
-            <div className="mt-3 space-y-3 border-s-2 border-purple-100 ps-3">
+          <Reveal
+            open={expanded}
+            className="mt-3 space-y-3 border-s-2 border-purple-100 ps-3"
+          >
               {repliesQuery.isLoading ? (
                 <p className="text-xs text-ink-placeholder">
                   {t("learnWeb.discussion.loadingReplies")}
@@ -236,8 +239,7 @@ export function DiscussionThreadCard({
                 errorMessage={replyError}
                 compact
               />
-            </div>
-          )}
+          </Reveal>
         </div>
       </div>
 

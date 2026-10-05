@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SlidersHorizontal } from "lucide-react";
+import { animate, useReducedMotion } from "framer-motion";
+import { ENTER_FAST } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { COST_ORDER, type ResourcePartner } from "@/lib/resources/partners";
 import {
@@ -46,6 +48,22 @@ export function FiltersPanel({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [allLanguages, setAllLanguages] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
+  const reduce = useReducedMotion();
+
+  // The panel is always in the DOM (it is permanent on md+), so its phone
+  // open is a class swap. Fade it in when the toggle opens it; closing is
+  // instant. `open` starts false, so nothing plays on page load.
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!open || !panel) return;
+    const controls = animate(
+      panel,
+      reduce ? { opacity: [0, 1] } : { opacity: [0, 1], y: [-4, 0] },
+      ENTER_FAST,
+    );
+    return () => controls.complete();
+  }, [open, reduce]);
   const activeCount = activeGroups(filters).reduce(
     (n, g) => n + filters[g].length,
     0,
@@ -102,6 +120,7 @@ export function FiltersPanel({
       </button>
 
       <section
+        ref={panelRef}
         id="resources-filters"
         aria-label={t("resources.filters.title")}
         className={cn(

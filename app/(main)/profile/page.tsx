@@ -18,6 +18,7 @@ import { PostCardSkeleton } from "@/components/home/PostCardSkeleton";
 import { useCurrentUser, useLessonHighlights } from "@/hooks/useProfile";
 import { useSavedPosts, useUserComments, useUserPosts } from "@/hooks/useFeed";
 import type { Post } from "@/types";
+import { LoadingSwap } from "@/components/ui/LoadingSwap";
 
 function TabMessage({ children }: { children: ReactNode }) {
   return (
@@ -49,23 +50,23 @@ function PostFeed({
   emptyText: string;
   emptyAction?: ReactNode;
 }) {
-  if (isLoading) return <SkeletonPostList />;
-  if (items.length === 0) {
-    return emptyAction ? (
-      <div className="rounded-card border border-border-card bg-surface px-5 py-12 text-center">
-        <p className="text-sm text-ink-placeholder">{emptyText}</p>
-        <div className="mt-4 flex justify-center">{emptyAction}</div>
-      </div>
-    ) : (
-      <TabMessage>{emptyText}</TabMessage>
-    );
-  }
   return (
-    <div className="divide-y divide-border-card overflow-hidden rounded-card border border-border-card bg-surface">
-      {items.map((post) => (
-        <PostCard key={post.id} post={post} />
-      ))}
-    </div>
+    <LoadingSwap loading={isLoading} skeleton={<SkeletonPostList />}>
+      {items.length > 0 ? (
+        <div className="divide-y divide-border-card overflow-hidden rounded-card border border-border-card bg-surface">
+          {items.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </div>
+      ) : emptyAction ? (
+        <div className="rounded-card border border-border-card bg-surface px-5 py-12 text-center">
+          <p className="text-sm text-ink-placeholder">{emptyText}</p>
+          <div className="mt-4 flex justify-center">{emptyAction}</div>
+        </div>
+      ) : (
+        <TabMessage>{emptyText}</TabMessage>
+      )}
+    </LoadingSwap>
   );
 }
 
@@ -171,7 +172,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-[680px] animate-fade-in px-6 py-6">
+      <div className="mx-auto max-w-[680px] px-6 py-6">
         <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
           {t("profile.title")}
         </h1>
@@ -200,7 +201,7 @@ export default function ProfilePage() {
   const highlightItems = highlights ?? [];
 
   return (
-    <div className="mx-auto max-w-[680px] animate-fade-in px-6 py-6">
+    <div className="mx-auto max-w-[680px] px-6 py-6">
       <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
         {t("profile.title")}
       </h1>
@@ -228,18 +229,22 @@ export default function ProfilePage() {
             }
           />
         )}
-        {tab === "comments" &&
-          (commentsLoading ? (
-            <SkeletonCommentList />
-          ) : commentItems.length > 0 ? (
-            <div className="space-y-3">
-              {commentItems.map((comment) => (
-                <CommentCard key={comment.id} comment={comment} />
-              ))}
-            </div>
-          ) : (
-            <TabMessage>{t("profile.noCommentsSelfHint")}</TabMessage>
-          ))}
+        {tab === "comments" && (
+          <LoadingSwap
+            loading={commentsLoading}
+            skeleton={<SkeletonCommentList />}
+          >
+            {commentItems.length > 0 ? (
+              <div className="space-y-3">
+                {commentItems.map((comment) => (
+                  <CommentCard key={comment.id} comment={comment} />
+                ))}
+              </div>
+            ) : (
+              <TabMessage>{t("profile.noCommentsSelfHint")}</TabMessage>
+            )}
+          </LoadingSwap>
+        )}
         {tab === "saved" && (
           <PostFeed
             items={saved}
@@ -247,18 +252,22 @@ export default function ProfilePage() {
             emptyText={t("profile.noSavedPosts")}
           />
         )}
-        {tab === "highlights" &&
-          (highlightsLoading ? (
-            <SkeletonHighlightList />
-          ) : highlightItems.length > 0 ? (
-            <div className="space-y-3">
-              {highlightItems.map((highlight) => (
-                <HighlightCard key={highlight.id} highlight={highlight} />
-              ))}
-            </div>
-          ) : (
-            <TabMessage>{t("profile.noHighlights")}</TabMessage>
-          ))}
+        {tab === "highlights" && (
+          <LoadingSwap
+            loading={highlightsLoading}
+            skeleton={<SkeletonHighlightList />}
+          >
+            {highlightItems.length > 0 ? (
+              <div className="space-y-3">
+                {highlightItems.map((highlight) => (
+                  <HighlightCard key={highlight.id} highlight={highlight} />
+                ))}
+              </div>
+            ) : (
+              <TabMessage>{t("profile.noHighlights")}</TabMessage>
+            )}
+          </LoadingSwap>
+        )}
       </div>
     </div>
   );

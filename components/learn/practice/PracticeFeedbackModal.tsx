@@ -4,6 +4,11 @@ import { useEffect, useRef } from "react";
 import { Loader2, MessageCircle, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { PracticeFeedbackState } from "@/services/learn";
+import {
+  DialogOverlay,
+  DialogPanel,
+  DialogPresence,
+} from "@/components/ui/Dialog";
 
 interface PracticeFeedbackModalProps {
   open: boolean;
@@ -71,18 +76,16 @@ export function PracticeFeedbackModal({
     };
   }, [open, onClose, state?.status]);
 
-  if (!open) return null;
-
   const isLoading = state?.status === "loading";
   const isError = state?.status === "error";
 
-  return (
-    <div
+  const dialog = (
+    <DialogOverlay
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
       onClick={isLoading ? undefined : onClose}
       role="presentation"
     >
-      <div
+      <DialogPanel
         ref={dialogRef}
         className="w-full max-w-md rounded-3xl bg-surface p-6 shadow-lg"
         onClick={(event) => event.stopPropagation()}
@@ -141,7 +144,9 @@ export function PracticeFeedbackModal({
             {t("learn.practiceFeedback.gotIt")}
           </button>
         )}
-      </div>
-    </div>
+      </DialogPanel>
+    </DialogOverlay>
   );
+
+  return <DialogPresence open={open}>{dialog}</DialogPresence>;
 }

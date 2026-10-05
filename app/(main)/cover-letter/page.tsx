@@ -37,6 +37,7 @@ import {
 } from "@/lib/documents/importValidation";
 import { DocumentImportError } from "@/lib/documents/errors";
 import type { CoverLetterDraftSummary } from "@/types/coverLetter";
+import { LoadingSwap } from "@/components/ui/LoadingSwap";
 
 const DOCUMENT_ACCEPT = `.pdf,.docx,${PDF_MIME},${DOCX_MIME}`;
 
@@ -164,7 +165,7 @@ export default function MyCoverLettersPage() {
   const isEmpty = draftsQuery.isSuccess && drafts.length === 0;
 
   return (
-    <div className="mx-auto w-full max-w-4xl animate-fade-in px-4 py-6 sm:px-6 sm:py-8">
+    <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
       <JobToolsTabs className="mb-6" />
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -205,7 +206,9 @@ export default function MyCoverLettersPage() {
         className="hidden"
       />
 
-      {draftsQuery.isLoading ? (
+      <LoadingSwap
+        loading={draftsQuery.isLoading}
+        skeleton={
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {[0, 1, 2, 3].map((i) => (
             <div
@@ -214,7 +217,9 @@ export default function MyCoverLettersPage() {
             />
           ))}
         </div>
-      ) : isEmpty ? (
+        }
+      >
+        {isEmpty ? (
         <EmptyState
           onCreate={handleCreate}
           creating={anyMutationPending}
@@ -235,6 +240,7 @@ export default function MyCoverLettersPage() {
           ))}
         </ul>
       )}
+      </LoadingSwap>
 
       {renaming && (
         <RenameDialog

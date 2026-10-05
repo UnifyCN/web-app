@@ -27,7 +27,7 @@ export function PartnerCard({
   return (
     <Link
       href={`/resources/${partner.slug}`}
-      className="group flex items-start gap-3 rounded-2xl border border-res-border bg-surface px-[15px] py-[14px] shadow-[0_1px_1px_rgba(30,25,15,0.04)] transition-[border-color,box-shadow] hover:border-res-outline hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-res-link focus-visible:ring-offset-2"
+      className="group flex items-start gap-3 rounded-2xl border border-res-border bg-surface px-[15px] py-[14px] shadow-[0_1px_1px_rgba(30,25,15,0.04)] press hover:border-res-outline hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-res-link focus-visible:ring-offset-2"
     >
       <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
         <div className="flex flex-col gap-0.5">

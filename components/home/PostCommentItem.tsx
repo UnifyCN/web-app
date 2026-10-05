@@ -11,6 +11,7 @@ import { useRelativeTime } from "@/hooks/useRelativeTime";
 import { TranslateButton } from "@/components/home/TranslateButton";
 import { cn, stripHtml } from "@/lib/utils";
 import type { PostComment } from "@/types";
+import { Reveal } from "@/components/ui/Reveal";
 
 interface PostCommentItemProps {
   comment: PostComment;
@@ -179,8 +180,10 @@ export function PostCommentItem({
                   ? t("posts.hideReplies")
                   : t("posts.viewReplies", { count: replies.length })}
               </button>
-              {showReplies && (
-                <div className="mt-2 space-y-3 border-l border-border-card pl-3">
+              <Reveal
+                open={showReplies}
+                className="mt-2 space-y-3 border-l border-border-card pl-3"
+              >
                   {replies.map((reply) => (
                     <PostCommentItem
                       key={reply.id}
@@ -190,8 +193,7 @@ export function PostCommentItem({
                       isReply
                     />
                   ))}
-                </div>
-              )}
+              </Reveal>
             </div>
           )}
         </div>

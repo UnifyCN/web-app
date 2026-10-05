@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { DURATION, EASE } from "@/lib/motion";
 import { Check, X } from "lucide-react";
 
 /**
@@ -105,7 +106,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 reduce ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }
               }
               exit={reduce ? { opacity: 0 } : { opacity: 0, y: 6, scale: 0.98 }}
-              transition={{ duration: reduce ? 0 : 0.18, ease: "easeOut" }}
+              transition={{
+                duration: reduce ? 0 : DURATION.base,
+                ease: EASE.out,
+              }}
               className="pointer-events-auto flex items-center gap-2.5 rounded-full border border-border-card bg-surface-card px-4 py-2.5 shadow-lg"
             >
               {t.variant === "success" && (

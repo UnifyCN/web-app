@@ -3,8 +3,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MoreHorizontal, Search, SquarePen, Trash2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import { menuMotion } from "@/lib/motion";
 import { useIsRtl } from "@/hooks/useDirection";
 import { useRelativeTime } from "@/hooks/useRelativeTime";
 import type { Conversation } from "@/types";
@@ -65,14 +67,18 @@ function RowMenu({
 
   if (!pos) return null;
   return createPortal(
-    <div
+    <motion.div
       ref={portalRef}
       role="menu"
+      initial={menuMotion.initial}
+      animate={menuMotion.animate}
       style={{
         position: "fixed",
         top: pos.top,
         left: pos.left,
-        transform: rightAlign ? "translateX(-100%)" : undefined,
+        // Framer owns `transform`, so the right-align shift is its `x`.
+        x: rightAlign ? "-100%" : 0,
+        transformOrigin: rightAlign ? "top right" : "top left",
       }}
       className="z-50 w-32 overflow-hidden rounded-lg border border-border-card bg-surface py-1 shadow-lg"
     >
@@ -85,7 +91,7 @@ function RowMenu({
         <Trash2 className="h-4 w-4" aria-hidden />
         {t("common.delete")}
       </button>
-    </div>,
+    </motion.div>,
     document.body,
   );
 }
