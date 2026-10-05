@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { Smartphone } from "lucide-react";
 import { UnifyLogo } from "@/components/UnifyLogo";
 import { cn } from "@/lib/utils";
 import {
@@ -13,6 +14,7 @@ import {
   type NavItem,
 } from "./navItems";
 import { navTourTarget } from "@/lib/whatsNew";
+import { APP_STORE_URL } from "@/lib/appLinks";
 
 // Fixed-width icon rail with a label under each icon. Sized so the trimmed
 // "unify" wordmark lockup reads at close to the Figma lockup size (35px visible
@@ -85,10 +87,22 @@ export function Sidebar() {
         {MAIN_NAV.map(renderNavLink)}
       </nav>
 
-      {/* Profile + Settings, separated by a border */}
+      {/* Profile + Settings + the mobile-app store link, separated by a border */}
       <div className="flex flex-col gap-1.5 border-t border-border-card px-2 py-3">
         {renderNavLink(PROFILE_ITEM)}
         {renderNavLink(SETTINGS_ITEM)}
+        <a
+          href={APP_STORE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            tileClass,
+            "font-medium text-ink-muted hover:bg-surface-gray hover:text-ink",
+          )}
+        >
+          <Smartphone className="h-5 w-5 shrink-0" />
+          <span className="w-full truncate text-center">{t("nav.getApp")}</span>
+        </a>
       </div>
     </aside>
   );

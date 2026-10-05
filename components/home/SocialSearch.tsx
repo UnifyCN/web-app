@@ -92,7 +92,7 @@ export function SocialSearchBar({
         maxLength={100}
         dir="auto"
         className={cn(
-          "h-11 w-full rounded-full border border-border-card bg-surface ps-10 pe-11 text-sm text-ink",
+          "h-11 w-full rounded-full border border-border-card bg-surface ps-10 pe-12 text-sm text-ink",
           "placeholder:text-ink-placeholder",
           "focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
           "[&::-webkit-search-cancel-button]:appearance-none",
@@ -103,9 +103,13 @@ export function SocialSearchBar({
           type="button"
           onClick={clear}
           aria-label={t("search.clear")}
-          className="absolute end-2 top-1/2 flex h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          title={t("search.clear")}
+          // 44px hit area (the full height of the bar) around a filled 28px chip.
+          className="group absolute end-0 top-0 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full focus-visible:outline-none"
         >
-          <X className="h-4 w-4" aria-hidden />
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-gray text-ink-secondary transition-colors group-hover:bg-surface-input group-hover:text-ink group-focus-visible:bg-surface-input group-focus-visible:text-ink group-focus-visible:ring-2 group-focus-visible:ring-primary">
+            <X className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+          </span>
         </button>
       )}
     </form>

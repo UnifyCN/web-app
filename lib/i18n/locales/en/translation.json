@@ -1270,6 +1270,7 @@
     }
   },
   "nav": {
+    "getApp": "Get the app",
     "signOut": "Sign out",
     "primaryNavLabel": "Primary",
     "homeLinkLabel": "Unify home"
@@ -1322,6 +1323,8 @@
     }
   },
   "settingsWeb": {
+    "getMobileApp": "Get the mobile app",
+    "getMobileAppDesc": "Download Unify for iPhone on the App Store",
     "editProfile": "Edit profile",
     "blockedAccounts": "Blocked accounts",
     "blockedLoadError": "Couldn’t load your blocked accounts.",
@@ -1884,7 +1887,6 @@
       "joinLibrary": "Join the library",
       "visitWelcomeCentre": "Visit the Welcome Centre"
     },
-    "referralDisclosure": "Unify may earn a referral fee if you use this service.",
     "heading": "Find programs and services",
     "intro": "Trusted programs and resources to help you settle in Canada.",
     "searchPlaceholder": "Search a need, program, provider, or location...",

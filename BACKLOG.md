@@ -965,9 +965,9 @@ To add it, this needs **per-organization content sourcing** (a content task, not
   the same spirit as the events crawler's Pexels/Unsplash fallback for image-less events.
 - **Caution:** using an org's own logo to represent it is generally fine (factual representation of
   their branding), but keep a beat of care for anything that could imply **endorsement** — especially
-  the 4 `referral` partners (Canada-Shaw, Global Connect, TuGo, Desjardins). Only Canada Shaws shows
-  the referral disclosure (signed agreement; `lib/resources/referralDisclosure.ts`); the other three
-  stay undisclosed until their agreements are confirmed.
+  the 4 `referral` partners (Canada-Shaw, Global Connect, TuGo, Desjardins). No listing shows a
+  referral disclosure: the Canada Shaws line added in #164 was removed (agreed with Savar,
+  2026-10-02).
 
 Wiring is already in place — this is drop-in once assets exist: set `logo` / `heroImage` (image URLs)
 on the partner records in `lib/resources/partners.ts`; `components/resources/OrgMonogram.tsx` swaps to
@@ -1101,15 +1101,11 @@ conflict, so two language rollouts converge instead of clobbering each other's e
 
 ### Resume / cover letter — follow-ups from PR #134 (analytics, merged 2026-09-25)
 
-- **Daily AI cap mismatch — decide with Savar.** Production `resume-chat` enforces **60/day**
-  and `cover-letter-chat` **30/day**, via `DAILY_MESSAGE_LIMIT` in each edge fn. Those values
-  were deployed before #126, and #126's 20 was never deployed. #134 deliberately kept 60/30 so
-  its deploy changed tracking only. The client UI (`RESUME_/COVER_LETTER_DAILY_MESSAGE_LIMIT`)
-  and `/api/resume/job-posting` all use **20**, so users are blocked at 20 while direct API
-  callers can reach 60/30. CodeRabbit flagged this as a 🟡 Moderate security-architecture risk:
-  signed-in users can add generation cost.
-  Pick one value and align the edge fns, client constants, job-posting gate, and `prompt_limit`
-  in the analytics events.
+- **Daily AI cap mismatch — RESOLVED (2026-10-02, agreed with Savar): 50/day for both.**
+  `DAILY_MESSAGE_LIMIT` in the `resume-chat` and `cover-letter-chat` edge fns, the client
+  constants (`RESUME_/COVER_LETTER_DAILY_MESSAGE_LIMIT`), the job-posting gates and the
+  `prompt_limit` analytics property all read 50. Previously prod enforced 60 / 30 while the UI
+  used 20.
 - **Cover-letter job import is gated on the *resume* quota.** `createDraftService.fetchJobPosting`
   always calls `/api/resume/job-posting`, which reads `resume_usage` against a hard-coded 20. A
   user with cover-letter messages left gets "You've reached today's cover-letter limit" once

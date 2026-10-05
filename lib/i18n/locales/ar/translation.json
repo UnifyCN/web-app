@@ -1270,6 +1270,7 @@
     }
   },
   "nav": {
+    "getApp": "احصل على التطبيق",
     "signOut": "تسجيل الخروج",
     "primaryNavLabel": "الرئيسية",
     "homeLinkLabel": "الصفحة الرئيسية ليونيفاي"
@@ -1322,6 +1323,8 @@
     }
   },
   "settingsWeb": {
+    "getMobileApp": "احصل على تطبيق الجوال",
+    "getMobileAppDesc": "نزّل Unify لهاتف iPhone من App Store",
     "editProfile": "تعديل الملف الشخصي",
     "blockedAccounts": "الحسابات المحظورة",
     "blockedLoadError": "تعذّر تحميل حساباتك المحظورة.",
@@ -1812,7 +1815,6 @@
       "joinLibrary": "انضم إلى المكتبة",
       "visitWelcomeCentre": "زيارة مركز الترحيب"
     },
-    "referralDisclosure": "قد تحصل Unify على عمولة إحالة إذا استخدمت هذه الخدمة.",
     "howWeChoose": {
       "link": "كيف نختار هذه المنظمات",
       "title": "كيف نختار هذه المنظمات",

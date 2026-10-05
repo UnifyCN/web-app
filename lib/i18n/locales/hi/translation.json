@@ -1270,6 +1270,7 @@
     }
   },
   "nav": {
+    "getApp": "ऐप पाएँ",
     "signOut": "साइन आउट करें",
     "primaryNavLabel": "मुख्य",
     "homeLinkLabel": "यूनिफ़ाई होम"
@@ -1322,6 +1323,8 @@
     }
   },
   "settingsWeb": {
+    "getMobileApp": "मोबाइल ऐप पाएँ",
+    "getMobileAppDesc": "iPhone के लिए Unify को App Store से डाउनलोड करें",
     "editProfile": "प्रोफ़ाइल संपादित करें",
     "blockedAccounts": "ब्लॉक किए गए खाते",
     "blockedLoadError": "आपके ब्लॉक किए गए खाते लोड नहीं हो सके।",
@@ -1884,7 +1887,6 @@
       "joinLibrary": "पुस्तकालय के सदस्य बनें",
       "visitWelcomeCentre": "वेलकम सेंटर जाएँ"
     },
-    "referralDisclosure": "यदि आप इस सेवा का उपयोग करते हैं, तो Unify को रेफ़रल शुल्क मिल सकता है।",
     "howWeChoose": {
       "link": "हम इन्हें कैसे चुनते हैं",
       "title": "हम इन्हें कैसे चुनते हैं",

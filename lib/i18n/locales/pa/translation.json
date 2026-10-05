@@ -1270,6 +1270,7 @@
     }
   },
   "nav": {
+    "getApp": "ਐਪ ਲਵੋ",
     "signOut": "ਸਾਈਨ ਆਊਟ",
     "primaryNavLabel": "ਮੁੱਖ",
     "homeLinkLabel": "Unify ਹੋਮ"
@@ -1322,6 +1323,8 @@
     }
   },
   "settingsWeb": {
+    "getMobileApp": "ਮੋਬਾਈਲ ਐਪ ਲਵੋ",
+    "getMobileAppDesc": "iPhone ਲਈ Unify ਨੂੰ App Store ਤੋਂ ਡਾਊਨਲੋਡ ਕਰੋ",
     "editProfile": "ਪ੍ਰੋਫਾਈਲ ਸੰਪਾਦਿਤ ਕਰੋ",
     "blockedAccounts": "ਬਲਾਕ ਕੀਤੇ ਖਾਤੇ",
     "blockedLoadError": "ਤੁਹਾਡੇ ਬਲਾਕ ਕੀਤੇ ਖਾਤੇ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੇ।",
@@ -1884,7 +1887,6 @@
       "joinLibrary": "ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਵੋ",
       "visitWelcomeCentre": "ਵੈਲਕਮ ਸੈਂਟਰ ’ਤੇ ਜਾਓ"
     },
-    "referralDisclosure": "ਜੇ ਤੁਸੀਂ ਇਹ ਸੇਵਾ ਵਰਤਦੇ ਹੋ, ਤਾਂ Unify ਨੂੰ ਰੈਫਰਲ ਫੀਸ ਮਿਲ ਸਕਦੀ ਹੈ।",
     "howWeChoose": {
       "link": "ਅਸੀਂ ਇਹਨਾਂ ਨੂੰ ਕਿਵੇਂ ਚੁਣਦੇ ਹਾਂ",
       "title": "ਅਸੀਂ ਇਹਨਾਂ ਨੂੰ ਕਿਵੇਂ ਚੁਣਦੇ ਹਾਂ",

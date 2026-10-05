@@ -33,10 +33,9 @@ const corsHeaders = {
 
 // The draft id (forwarded by the web proxy) groups a document's generations as
 // one `$ai_trace_id`; anything else gets a fresh id. Never content.
-// Server-enforced daily message cap. Kept at the value production runs today
-// (60); main's lower value was merged but never deployed, and the change is
-// pending a separate decision. Also reported as `prompt_limit` on $ai_generation.
-const DAILY_MESSAGE_LIMIT = 60;
+// Server-enforced daily message cap; keep in sync with RESUME_DAILY_MESSAGE_LIMIT
+// (lib/resume/schema.ts). Also reported as `prompt_limit` on $ai_generation.
+const DAILY_MESSAGE_LIMIT = 50;
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
