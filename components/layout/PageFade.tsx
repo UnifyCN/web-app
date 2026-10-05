@@ -2,8 +2,8 @@
 
 import { useLayoutEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { animate, useReducedMotion } from "framer-motion";
-import { DURATION, EASE } from "@/lib/motion";
+import { useReducedMotion } from "framer-motion";
+import { DURATION, EASE_CSS } from "@/lib/motion";
 
 /**
  * Fades the page in when the user moves to another page inside the app.
@@ -14,6 +14,8 @@ import { DURATION, EASE } from "@/lib/motion";
  * fade only (no movement): the text people read stays still and it doesn't
  * stack with Safari's swipe-back. Opacity only also matters for layout: a
  * wrapper that keeps a `transform` would clip `fixed` overlays inside the page.
+ * It runs on the browser's own `element.animate()`, off the main thread, and
+ * leaves no inline style behind when it ends.
  */
 export function PageFade({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -26,12 +28,11 @@ export function PageFade({ children }: { children: React.ReactNode }) {
     shownPath.current = pathname;
     const node = ref.current;
     if (!node || reduce) return;
-    const controls = animate(
-      node,
-      { opacity: [0, 1] },
-      { duration: DURATION.base, ease: EASE.out },
-    );
-    return () => controls.complete();
+    const fade = node.animate([{ opacity: 0 }, { opacity: 1 }], {
+      duration: DURATION.base * 1000,
+      easing: EASE_CSS.out,
+    });
+    return () => fade.cancel();
   }, [pathname, reduce]);
 
   return <div ref={ref}>{children}</div>;

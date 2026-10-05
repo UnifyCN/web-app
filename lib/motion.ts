@@ -93,14 +93,17 @@ export const revealMotion = {
 const ms = (seconds: number) => `${Math.round(seconds * 1000)}ms`;
 const bezier = (points: Bezier) => `cubic-bezier(${points.join(", ")})`;
 
+/** The curves as CSS strings, for the browser's own `element.animate()`. */
+export const EASE_CSS = { out: bezier(EASE.out), in: bezier(EASE.in) } as const;
+
 /** The same values as CSS custom properties; set on `<html>` by the root layout. */
 export const motionCssVars = {
   "--motion-press": ms(DURATION.press),
   "--motion-fast": ms(DURATION.fast),
   "--motion-base": ms(DURATION.base),
   "--motion-slow": ms(DURATION.slow),
-  "--motion-ease-out": bezier(EASE.out),
-  "--motion-ease-in": bezier(EASE.in),
+  "--motion-ease-out": EASE_CSS.out,
+  "--motion-ease-in": EASE_CSS.in,
   "--motion-press-scale": String(PRESS_SCALE),
   "--motion-press-dim": String(PRESS_DIM),
 } as CSSProperties;

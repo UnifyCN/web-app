@@ -3,8 +3,8 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SlidersHorizontal } from "lucide-react";
-import { animate, useReducedMotion } from "framer-motion";
-import { ENTER_FAST } from "@/lib/motion";
+import { useReducedMotion } from "framer-motion";
+import { DURATION, EASE_CSS } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { COST_ORDER, type ResourcePartner } from "@/lib/resources/partners";
 import {
@@ -57,12 +57,16 @@ export function FiltersPanel({
   useLayoutEffect(() => {
     const panel = panelRef.current;
     if (!open || !panel) return;
-    const controls = animate(
-      panel,
-      reduce ? { opacity: [0, 1] } : { opacity: [0, 1], y: [-4, 0] },
-      ENTER_FAST,
+    const reveal = panel.animate(
+      reduce
+        ? [{ opacity: 0 }, { opacity: 1 }]
+        : [
+            { opacity: 0, transform: "translateY(-4px)" },
+            { opacity: 1, transform: "none" },
+          ],
+      { duration: DURATION.fast * 1000, easing: EASE_CSS.out },
     );
-    return () => controls.complete();
+    return () => reveal.cancel();
   }, [open, reduce]);
   const activeCount = activeGroups(filters).reduce(
     (n, g) => n + filters[g].length,
