@@ -6,10 +6,8 @@ import { ChevronRight, Languages, MapPin } from "lucide-react";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { PARTNER_CATEGORY_LABEL_KEYS } from "@/lib/resources/categories";
 import type { ResourcePartner } from "@/lib/resources/partners";
-import { hasReferralDisclosure } from "@/lib/resources/referralDisclosure";
 import { Bidi } from "./Bidi";
 import { CostChip } from "./CostChip";
-import { ReferralDisclosure } from "./ReferralDisclosure";
 
 const CHIP =
   "inline-flex items-center gap-1 rounded-full bg-res-search px-[9px] py-1 text-[11px] leading-none font-semibold text-res-secondary";
@@ -61,7 +59,6 @@ export function PartnerCard({
             </span>
           )}
         </div>
-        {hasReferralDisclosure(partner) && <ReferralDisclosure className="pt-0.5" />}
       </div>
       <ChevronRight
         className={cn(

@@ -1270,6 +1270,7 @@
     }
   },
   "nav": {
+    "getApp": "Tải ứng dụng",
     "signOut": "Đăng xuất",
     "primaryNavLabel": "Điều hướng chính",
     "homeLinkLabel": "Trang chủ Unify"
@@ -1322,6 +1323,8 @@
     }
   },
   "settingsWeb": {
+    "getMobileApp": "Tải ứng dụng di động",
+    "getMobileAppDesc": "Tải Unify cho iPhone trên App Store",
     "editProfile": "Chỉnh sửa hồ sơ",
     "blockedAccounts": "Tài khoản đã chặn",
     "blockedLoadError": "Không thể tải danh sách tài khoản đã chặn của bạn.",
@@ -1884,7 +1887,6 @@
       "joinLibrary": "Đăng ký thẻ thư viện",
       "visitWelcomeCentre": "Đến Trung tâm Chào đón"
     },
-    "referralDisclosure": "Unify có thể nhận phí giới thiệu nếu bạn sử dụng dịch vụ này.",
     "howWeChoose": {
       "link": "Cách chúng tôi chọn",
       "title": "Cách chúng tôi chọn",

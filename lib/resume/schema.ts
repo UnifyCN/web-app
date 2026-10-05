@@ -25,10 +25,9 @@ import type {
  *  (the resume-chat edge function's own `p_daily_limit`; the two are separate
  *  constants in separate runtimes, kept in manual sync, not read from one
  *  source of truth). Used here for the UI "remaining" display and the
- *  job-posting route's soft pre-gate. A full resume runs 20+ turns, so this
- *  is a tight, roughly one-resume-per-day budget rather than the more
- *  generous "a couple of full resumes/day" this constant allowed at 60. */
-export const RESUME_DAILY_MESSAGE_LIMIT = 20;
+ *  job-posting route's soft pre-gate. A full resume runs 20+ turns, so 50
+ *  covers about two full resumes a day. */
+export const RESUME_DAILY_MESSAGE_LIMIT = 50;
 
 /** Max characters accepted for a single user message (bounds prompt cost). */
 export const MAX_RESUME_MESSAGE_LEN = 2000;

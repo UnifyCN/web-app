@@ -20,7 +20,6 @@ import { BackLink } from "./BackLink";
 import { Bidi } from "./Bidi";
 import { CostChip } from "./CostChip";
 import { FilterPill } from "./FilterPill";
-import { ReferralDisclosure } from "./ReferralDisclosure";
 import {
   PARTNER_CATEGORY_COLORS,
   PARTNER_CATEGORY_TINTS,
@@ -30,7 +29,6 @@ import {
 } from "@/lib/resources/categories";
 import type { ResourcePartner } from "@/lib/resources/partners";
 import { programCopyKey } from "@/lib/resources/localizePartner";
-import { hasReferralDisclosure } from "@/lib/resources/referralDisclosure";
 import {
   trackResourcesPartnerOpened,
   trackResourcesPartnerWebsiteOpened,
@@ -301,7 +299,6 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
                   ))}
                 </div>
               )}
-              {hasReferralDisclosure(partner) && <ReferralDisclosure />}
             </section>
           )}
         </aside>
@@ -453,9 +450,6 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
               </a>
             ))}
           </div>
-          {hasReferralDisclosure(partner) && (
-            <ReferralDisclosure className="mx-auto mt-1.5 max-w-[680px]" />
-          )}
         </div>
       )}
     </div>

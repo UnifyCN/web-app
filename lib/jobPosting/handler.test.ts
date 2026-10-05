@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { COVER_LETTER_DAILY_MESSAGE_LIMIT } from "@/lib/coverLetter/schema";
+import { RESUME_DAILY_MESSAGE_LIMIT } from "@/lib/resume/schema";
 
 // Per-table usage rows the mocked Supabase client returns.
 const usage: Record<string, { message_count: number; last_message_at: string } | null> = {};
@@ -45,8 +47,8 @@ afterEach(() => vi.clearAllMocks());
 
 describe("job-posting quota gate", () => {
   it("cover-letter import checks the cover-letter quota, not the resume quota", async () => {
-    // The reported bug: resume quota used up, cover letter has 19 left.
-    usage.resume_usage = { message_count: 20, last_message_at: now() };
+    // The reported bug: resume quota used up, cover letter barely touched.
+    usage.resume_usage = { message_count: RESUME_DAILY_MESSAGE_LIMIT, last_message_at: now() };
     usage.cover_letter_usage = { message_count: 1, last_message_at: now() };
 
     const res = await coverLetterPOST(req("/api/cover-letter/job-posting"));
@@ -56,7 +58,7 @@ describe("job-posting quota gate", () => {
 
   it("cover-letter import is blocked when the cover-letter quota is used up", async () => {
     usage.resume_usage = { message_count: 0, last_message_at: now() };
-    usage.cover_letter_usage = { message_count: 20, last_message_at: now() };
+    usage.cover_letter_usage = { message_count: COVER_LETTER_DAILY_MESSAGE_LIMIT, last_message_at: now() };
 
     const res = await coverLetterPOST(req("/api/cover-letter/job-posting"));
     expect(res.status).toBe(429);
@@ -66,7 +68,7 @@ describe("job-posting quota gate", () => {
   });
 
   it("resume import still checks the resume quota", async () => {
-    usage.resume_usage = { message_count: 20, last_message_at: now() };
+    usage.resume_usage = { message_count: RESUME_DAILY_MESSAGE_LIMIT, last_message_at: now() };
     usage.cover_letter_usage = { message_count: 0, last_message_at: now() };
 
     const res = await resumePOST(req("/api/resume/job-posting"));
@@ -77,7 +79,7 @@ describe("job-posting quota gate", () => {
 
   it("yesterday's usage doesn't count (UTC-day rollover)", async () => {
     usage.cover_letter_usage = {
-      message_count: 20,
+      message_count: COVER_LETTER_DAILY_MESSAGE_LIMIT,
       last_message_at: new Date(Date.now() - 2 * 86_400_000).toISOString(),
     };
     const res = await coverLetterPOST(req("/api/cover-letter/job-posting"));

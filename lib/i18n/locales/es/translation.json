@@ -1270,6 +1270,7 @@
     }
   },
   "nav": {
+    "getApp": "Obtener la app",
     "signOut": "Cerrar sesión",
     "primaryNavLabel": "Principal",
     "homeLinkLabel": "Inicio de Unify"
@@ -1322,6 +1323,8 @@
     }
   },
   "settingsWeb": {
+    "getMobileApp": "Obtén la app móvil",
+    "getMobileAppDesc": "Descarga Unify para iPhone en el App Store",
     "editProfile": "Editar perfil",
     "blockedAccounts": "Cuentas bloqueadas",
     "blockedLoadError": "No se pudieron cargar tus cuentas bloqueadas.",
@@ -1884,7 +1887,6 @@
       "joinLibrary": "Hazte miembro de la biblioteca",
       "visitWelcomeCentre": "Visita el Centro de Bienvenida"
     },
-    "referralDisclosure": "Unify puede recibir una comisión por recomendación si usas este servicio.",
     "howWeChoose": {
       "link": "Cómo las elegimos",
       "title": "Cómo las elegimos",
