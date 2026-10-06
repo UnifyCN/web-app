@@ -774,64 +774,6 @@
     "requestReasonPlaceholder": "Parlez-nous un peu du besoin (au moins 10 caractères).",
     "requestReviewNote": "Nous examinons chaque demande et faisons un suivi par courriel."
   },
-  "officialGroups": {
-    "4": {
-      "name": "Passionnés de techno",
-      "description": "Un groupe pour les personnes passionnées de technologie."
-    },
-    "5": {
-      "name": "Club de lecture",
-      "description": "Discutez de vos livres et de vos auteurs préférés."
-    },
-    "7": {
-      "name": "Aide au logement",
-      "description": "Un groupe pour obtenir des conseils sur les options de logement, ainsi que des trucs et astuces."
-    },
-    "11": {
-      "name": "Étudiants internationaux",
-      "description": "Un espace où les étudiants internationaux au Canada peuvent poser des questions, partager leurs expériences et s'entraider pour les études, le travail et la vie en dehors des cours. Sujets abordés : permis d'études, travail à temps partiel, logement, vie sur le campus et parcours après l'obtention du diplôme."
-    },
-    "12": {
-      "name": "Demandeurs de résidence permanente (PR)",
-      "description": "Pour toutes les personnes qui cheminent dans Entrée express (Express Entry), les programmes des candidats des provinces (PNP), les permis de travail et les délais de la résidence permanente (PR)."
-    },
-    "13": {
-      "name": "Travailler au Canada",
-      "description": "Discussions sur la recherche d'emploi, la culture en milieu de travail, les CV, les entrevues et les droits des travailleurs."
-    },
-    "14": {
-      "name": "Pratique et conversation en anglais",
-      "description": "Un espace convivial pour pratiquer l'anglais, partager des ressources et trouver des partenaires de conversation, sans pression."
-    },
-    "15": {
-      "name": "Banque, crédit et impôts",
-      "description": "Bâtissez votre crédit, choisissez vos comptes et vos cartes, et préparez-vous pour la saison des impôts grâce à des explications simples."
-    },
-    "16": {
-      "name": "Parents et familles",
-      "description": "Services de garde, écoles, ressources pour les familles et soutien au quotidien pour les parents qui s'installent dans un nouvel endroit."
-    },
-    "17": {
-      "name": "Alertes à la fraude et sécurité",
-      "description": "Partagez les fraudes courantes, les signaux d'alarme en matière de logement et des conseils pour rester en sécurité en ligne et dans la communauté."
-    },
-    "18": {
-      "name": "Club gourmand",
-      "description": "Échangez vos bonnes adresses de restaurants, vos trouvailles halal ou végétariennes, les endroits de cuisine du monde et les lieux où l'on se sent comme à la maison."
-    },
-    "19": {
-      "name": "Victoires des nouveaux arrivants",
-      "description": "Partagez votre victoire de la semaine, petite ou grande, et encouragez les autres avec vos bons mots et vos conseils."
-    },
-    "20": {
-      "name": "Ciné-club",
-      "description": "Votez pour un film, regardez-le ensemble ou publiez de courtes critiques et des fils de discussion."
-    },
-    "21": {
-      "name": "Club de musique",
-      "description": "Partagez vos listes de lecture, découvrez de nouveaux artistes et parlez de musique!"
-    }
-  },
   "posts": {
     "postButton": "Publier",
     "forYou": "Pour vous",

@@ -58,10 +58,10 @@ export function GroupCard({ group }: { group: Group }) {
           href={`/community/${group.id}`}
           className="text-sm font-semibold text-ink-secondary transition-colors hover:text-primary"
         >
-          {groupName(group.id, group.groupName)}
+          {groupName(group)}
         </Link>
         <p className="mt-1 line-clamp-2 flex-1 text-xs leading-relaxed text-ink-muted">
-          {groupDescription(group.id, group.groupDescription)}
+          {groupDescription(group)}
         </p>
         <div className="mt-3 flex items-center justify-between">
           <span className="flex items-center gap-1 text-xs text-ink-placeholder">

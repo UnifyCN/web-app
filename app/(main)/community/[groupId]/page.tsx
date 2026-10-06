@@ -108,7 +108,7 @@ export default function GroupDetailPage({
         </div>
         <div className="p-5">
           <h1 className="text-lg font-semibold text-ink-secondary">
-            {groupName(group.id, group.groupName)}
+            {groupName(group)}
           </h1>
           <GroupMemberAvatarStack
             avatars={group.memberAvatars}
@@ -116,7 +116,7 @@ export default function GroupDetailPage({
             className="mt-2"
           />
           <p className="mt-3 text-sm leading-relaxed text-ink-muted">
-            {groupDescription(group.id, group.groupDescription)}
+            {groupDescription(group)}
           </p>
           <Button
             variant={joined ? "secondary" : "primary"}

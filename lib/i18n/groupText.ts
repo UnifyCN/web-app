@@ -2,89 +2,50 @@
 
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { i18n as I18nInstance } from "i18next";
-import { DEFAULT_LANGUAGE } from "./config";
+import type { Group, LocalizedText } from "@/types";
+import { pickLocalized } from "./localizedText";
 
 /* ------------------------------------------------------------------ *
- * Translated names and descriptions for the official community groups.
+ * Group names and descriptions in the active language.
  *
- * Group text lives in the shared `groups` table in English only, and
- * neither app has a translated copy of it. The official groups are a
- * short, fixed list, so their translations ship in the locale files
- * under `officialGroups.<group id>`; the English entry there is a copy
- * of the database text.
- *
- * A translation is used only while the database text still matches
- * that English copy. A renamed or rewritten group, a group with no
- * entry (a newly approved request), and mock data whose ids overlap
- * all show the database text instead of a stale translation.
+ * The text and its translations both come from the shared `groups`
+ * table (see localizedText.ts), so the two apps show the same thing
+ * and a new group needs no app release. A group without a translation
+ * for the active language shows its English text.
  * ------------------------------------------------------------------ */
 
-type GroupField = "name" | "description";
-
-const NAMESPACE = "translation";
-
-/** Whitespace-insensitive, so a stray newline in the table still matches. */
-function normalize(text: string): string {
-  return text.trim().replace(/\s+/g, " ");
-}
-
-function resource(
-  i18n: I18nInstance,
-  lang: string,
-  groupId: number,
-  field: GroupField,
-): string | null {
-  const value: unknown = i18n.getResource(
-    lang,
-    NAMESPACE,
-    `officialGroups.${groupId}.${field}`,
-  );
-  return typeof value === "string" && value.length > 0 ? value : null;
-}
-
-/** `text` in the active language, or `text` itself when there is no translation for it. */
-export function localizeGroupField(
-  i18n: I18nInstance,
-  groupId: number,
-  field: GroupField,
-  text: string,
-): string {
-  const lang = i18n.resolvedLanguage ?? i18n.language;
-  if (!text || !lang || lang === DEFAULT_LANGUAGE) return text;
-  const source = resource(i18n, DEFAULT_LANGUAGE, groupId, field);
-  if (!source || normalize(source) !== normalize(text)) return text;
-  return resource(i18n, lang, groupId, field) ?? text;
-}
+type NamedGroup = Pick<Group, "groupName" | "nameI18n">;
+type DescribedGroup = Pick<Group, "groupDescription" | "descriptionI18n">;
 
 export interface GroupText {
   /** A group's name in the active language. */
-  groupName: (groupId: number, name: string) => string;
+  groupName: (group: NamedGroup) => string;
   /** A group's description in the active language. */
-  groupDescription: (groupId: number, description: string) => string;
+  groupDescription: (group: DescribedGroup) => string;
+  /** The group label on a post, in the active language. */
+  postGroupName: (name: string, nameI18n?: LocalizedText | null) => string;
   /**
    * Whether `needle` (already lower-cased) is in the group's name, as stored
    * or as shown. Search matches both, so the English name still works in
    * every language.
    */
-  nameMatches: (groupId: number, name: string, needle: string) => boolean;
+  nameMatches: (group: NamedGroup, needle: string) => boolean;
 }
 
 export function useGroupText(): GroupText {
   const { i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? i18n.language;
   return useMemo<GroupText>(() => {
-    const groupName = (groupId: number, name: string) =>
-      localizeGroupField(i18n, groupId, "name", name);
+    const groupName = (group: NamedGroup) =>
+      pickLocalized(group.groupName, group.nameI18n, lang);
     return {
       groupName,
-      groupDescription: (groupId, description) =>
-        localizeGroupField(i18n, groupId, "description", description),
-      nameMatches: (groupId, name, needle) =>
-        name.toLowerCase().includes(needle) ||
-        groupName(groupId, name).toLowerCase().includes(needle),
+      groupDescription: (group) =>
+        pickLocalized(group.groupDescription, group.descriptionI18n, lang),
+      postGroupName: (name, nameI18n) => pickLocalized(name, nameI18n, lang),
+      nameMatches: (group, needle) =>
+        group.groupName.toLowerCase().includes(needle) ||
+        groupName(group).toLowerCase().includes(needle),
     };
-    // `lang` is read through `i18n`; listing it rebuilds on a language switch.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i18n, lang]);
+  }, [lang]);
 }

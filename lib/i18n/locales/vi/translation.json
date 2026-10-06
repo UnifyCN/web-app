@@ -774,64 +774,6 @@
     "requestReasonPlaceholder": "Hãy cho chúng tôi biết đôi chút về nhu cầu này (tối thiểu 10 ký tự).",
     "requestReviewNote": "Chúng tôi sẽ xem xét mọi yêu cầu và phản hồi qua email."
   },
-  "officialGroups": {
-    "4": {
-      "name": "Người yêu công nghệ",
-      "description": "Nhóm dành cho những người đam mê công nghệ."
-    },
-    "5": {
-      "name": "Câu lạc bộ sách",
-      "description": "Thảo luận về những cuốn sách và tác giả bạn yêu thích."
-    },
-    "7": {
-      "name": "Hỗ trợ nhà ở",
-      "description": "Nhóm dành cho những ai muốn được tư vấn về các lựa chọn nhà ở cùng nhiều mẹo hữu ích."
-    },
-    "11": {
-      "name": "Du học sinh",
-      "description": "Không gian để du học sinh tại Canada đặt câu hỏi, chia sẻ kinh nghiệm và hỗ trợ nhau trong việc học, việc làm và cuộc sống ngoài lớp học. Các chủ đề gồm giấy phép du học, việc làm bán thời gian, nhà ở, đời sống sinh viên và các hướng đi sau khi tốt nghiệp."
-    },
-    "12": {
-      "name": "Người nộp hồ sơ PR",
-      "description": "Dành cho những ai đang tìm hiểu Express Entry, các chương trình PNP, giấy phép lao động và thời gian xử lý hồ sơ PR."
-    },
-    "13": {
-      "name": "Làm việc tại Canada",
-      "description": "Thảo luận về tìm việc, văn hóa nơi làm việc, sơ yếu lý lịch, phỏng vấn và quyền của người lao động."
-    },
-    "14": {
-      "name": "Luyện tập và trò chuyện tiếng Anh",
-      "description": "Không gian thân thiện để luyện tiếng Anh, chia sẻ tài liệu và tìm bạn trò chuyện mà không áp lực."
-    },
-    "15": {
-      "name": "Ngân hàng, tín dụng và thuế",
-      "description": "Xây dựng điểm tín dụng, chọn tài khoản và thẻ, và chuẩn bị cho mùa khai thuế với những giải thích đơn giản."
-    },
-    "16": {
-      "name": "Phụ huynh và gia đình",
-      "description": "Chăm sóc trẻ, trường học, nguồn hỗ trợ cho gia đình và sự giúp đỡ hằng ngày dành cho phụ huynh đang ổn định cuộc sống ở nơi mới."
-    },
-    "17": {
-      "name": "Cảnh báo lừa đảo và an toàn",
-      "description": "Chia sẻ các chiêu lừa đảo thường gặp, dấu hiệu đáng ngờ khi thuê nhà và mẹo giữ an toàn trên mạng cũng như trong cộng đồng."
-    },
-    "18": {
-      "name": "Câu lạc bộ ẩm thực",
-      "description": "Trao đổi gợi ý nhà hàng, quán halal hoặc quán chay, các địa điểm ẩm thực văn hóa và những nơi mang lại cảm giác như ở nhà."
-    },
-    "19": {
-      "name": "Thành công của người mới đến",
-      "description": "Chia sẻ thành công trong tuần của bạn, dù lớn hay nhỏ, và cổ vũ mọi người bằng lời động viên và mẹo hay."
-    },
-    "20": {
-      "name": "Câu lạc bộ phim",
-      "description": "Bình chọn phim, xem cùng nhau hoặc để lại nhận xét ngắn và chủ đề thảo luận."
-    },
-    "21": {
-      "name": "Câu lạc bộ âm nhạc",
-      "description": "Chia sẻ danh sách phát, khám phá nghệ sĩ mới và trò chuyện về âm nhạc!"
-    }
-  },
   "posts": {
     "postButton": "Đăng",
     "forYou": "Dành cho bạn",

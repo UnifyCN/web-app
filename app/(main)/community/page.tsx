@@ -160,7 +160,7 @@ function CommunityPageContent() {
 
   const groupNeedle = search.trim().toLowerCase();
   const filteredGroups = groups.filter((group) =>
-    nameMatches(group.id, group.groupName, groupNeedle),
+    nameMatches(group, groupNeedle),
   );
 
   // A refetch can drop the genre the user had selected — an event passes its start

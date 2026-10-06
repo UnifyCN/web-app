@@ -32,7 +32,7 @@ export function MyGroupsStrip({ groups }: { groups: Group[] }) {
               />
             </div>
             <span className="line-clamp-2 text-center text-xs font-medium text-ink-secondary">
-              {groupName(group.id, group.groupName)}
+              {groupName(group)}
             </span>
           </Link>
         ))}

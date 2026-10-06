@@ -101,9 +101,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
   const selectedGroup = allGroups.find((group) => group.id === groupId) ?? null;
   const groupQuery = groupSearch.trim().toLowerCase();
   const filteredGroups = groupQuery
-    ? allGroups.filter((group) =>
-        nameMatches(group.id, group.groupName, groupQuery),
-      )
+    ? allGroups.filter((group) => nameMatches(group, groupQuery))
     : allGroups;
   const joinedGroups = filteredGroups.filter((group) => group.joinedByMe);
   const discoverGroups = filteredGroups.filter((group) => !group.joinedByMe);
@@ -247,10 +245,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                 <div className="mt-3 flex items-center gap-2 text-sm">
                   <span className="font-semibold text-ink-secondary">
                     {t("posts.postingTo", {
-                      name: groupName(
-                        selectedGroup.id,
-                        selectedGroup.groupName,
-                      ),
+                      name: groupName(selectedGroup),
                     })}
                   </span>
                   <button
@@ -306,23 +301,17 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                                 className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-surface-gray"
                               >
                                 <Avatar
-                                  username={groupName(
-                                    group.id,
-                                    group.groupName,
-                                  )}
+                                  username={groupName(group)}
                                   profilePictureUrl={group.coverPhotoUrl}
                                   size={40}
                                 />
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-semibold text-ink-secondary">
-                                    {groupName(group.id, group.groupName)}
+                                    {groupName(group)}
                                   </p>
                                   {group.groupDescription && (
                                     <p className="line-clamp-2 text-xs text-ink-muted">
-                                      {groupDescription(
-                                        group.id,
-                                        group.groupDescription,
-                                      )}
+                                      {groupDescription(group)}
                                     </p>
                                   )}
                                 </div>
@@ -351,23 +340,17 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                                   className="flex items-center gap-3 rounded-lg px-2 py-2"
                                 >
                                   <Avatar
-                                    username={groupName(
-                                      group.id,
-                                      group.groupName,
-                                    )}
+                                    username={groupName(group)}
                                     profilePictureUrl={group.coverPhotoUrl}
                                     size={40}
                                   />
                                   <div className="min-w-0 flex-1">
                                     <p className="truncate text-sm font-semibold text-ink-secondary">
-                                      {groupName(group.id, group.groupName)}
+                                      {groupName(group)}
                                     </p>
                                     {group.groupDescription && (
                                       <p className="line-clamp-2 text-xs text-ink-muted">
-                                        {groupDescription(
-                                          group.id,
-                                          group.groupDescription,
-                                        )}
+                                        {groupDescription(group)}
                                       </p>
                                     )}
                                   </div>

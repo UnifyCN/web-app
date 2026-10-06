@@ -101,6 +101,8 @@ export interface Post {
    * and per-user enrichment from get_post_metadata_batch). */
   author: User;
   groupName?: string;
+  /** The group's translated names (`groups.name_i18n`), when it has any. */
+  groupNameI18n?: LocalizedText | null;
   likedByMe?: boolean;
   savedByMe?: boolean;
 }
@@ -134,10 +136,22 @@ export interface UserComment extends PostComment {
 
 /* ----- Community --------------------------------------------------- */
 
+/**
+ * Translations stored beside an English column, keyed by app language code
+ * ("fr-CA", "vi", "es", "ar", "hi", "pa"). English is never in the map.
+ */
+export type LocalizedText = Partial<Record<string, string>>;
+
 export interface Group {
   id: number;
+  /** English, from `groups.group_name`. */
   groupName: string;
+  /** English, from `groups.group_description`. */
   groupDescription: string;
+  /** `groups.name_i18n`: the name in the other languages, or null. */
+  nameI18n: LocalizedText | null;
+  /** `groups.description_i18n`: the description in the other languages, or null. */
+  descriptionI18n: LocalizedText | null;
   memberCount: number;
   coverPhotoUrl: string | null;
   joinedByMe: boolean;

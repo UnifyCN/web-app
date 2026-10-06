@@ -31,7 +31,7 @@ export function PostCard({
   priority?: boolean;
 }) {
   const { t } = useTranslation();
-  const { groupName } = useGroupText();
+  const { postGroupName } = useGroupText();
   const formatRelativeTime = useRelativeTime();
   const [liked, setLiked] = useState(post.likedByMe ?? false);
   const [saved, setSaved] = useState(post.savedByMe ?? false);
@@ -121,9 +121,7 @@ export function PostCard({
           </div>
           {post.groupName && (
             <Badge className="mt-1">
-              {post.groupId === null
-                ? post.groupName
-                : groupName(post.groupId, post.groupName)}
+              {postGroupName(post.groupName, post.groupNameI18n)}
             </Badge>
           )}
         </div>

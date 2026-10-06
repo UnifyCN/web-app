@@ -142,10 +142,8 @@ export function SocialSearchResults({ term }: { term: string }) {
     const extra = allGroups.filter(
       (group) =>
         !listed.has(group.id) &&
-        (groupName(group.id, group.groupName).toLowerCase().includes(needle) ||
-          groupDescription(group.id, group.groupDescription)
-            .toLowerCase()
-            .includes(needle)),
+        (groupName(group).toLowerCase().includes(needle) ||
+          groupDescription(group).toLowerCase().includes(needle)),
     );
     return extra.length > 0
       ? { ...found, groups: [...found.groups, ...extra] }
@@ -289,11 +287,11 @@ export function SocialSearchResults({ term }: { term: string }) {
                     </span>
                     <span className="min-w-0 flex-1">
                       <bdi className="block truncate text-sm font-semibold text-ink-secondary">
-                        {groupName(group.id, group.groupName)}
+                        {groupName(group)}
                       </bdi>
                       {group.groupDescription && (
                         <bdi className="block truncate text-xs text-ink-muted">
-                          {groupDescription(group.id, group.groupDescription)}
+                          {groupDescription(group)}
                         </bdi>
                       )}
                       <span className="mt-0.5 flex items-center gap-1 text-xs text-ink-placeholder">
