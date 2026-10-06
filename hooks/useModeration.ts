@@ -81,9 +81,15 @@ export function useUserBlockStatus(
 }
 
 /** Invalidate the feed (refilter) + moderation queries after a block change. */
-function invalidateAfterBlockChange(
+async function invalidateAfterBlockChange(
   queryClient: ReturnType<typeof useQueryClient>,
 ) {
+  // A blocked-id request that started before this change (the shell starts one
+  // on load) would otherwise be handed to the feed's refetch as if it were
+  // current. Drop it first, so the next read fetches the list again.
+  await queryClient.cancelQueries({
+    queryKey: [...MODERATION_KEY, "blocked-ids"],
+  });
   // Moderation first: the feed's refetch reads the cached blocked-id list, and
   // it must already be marked out of date by the time that refetch starts.
   queryClient.invalidateQueries({ queryKey: MODERATION_KEY });

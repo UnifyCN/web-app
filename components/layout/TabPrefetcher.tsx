@@ -74,7 +74,8 @@ export function TabPrefetcher() {
   // blocked. Start that small request as soon as the shell mounts, alongside
   // everything else, so the feed finds it ready whichever page was opened first.
   useEffect(() => {
-    void prefetchBlockedUserIds(queryClient);
+    // Best-effort: if it fails here, the feed asks again when it needs it.
+    prefetchBlockedUserIds(queryClient).catch(() => undefined);
   }, [queryClient]);
 
   useEffect(() => {
