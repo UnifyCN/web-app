@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DURATION,
   EASE,
+  LOADING_DELAY,
   PRESS_DIM,
   PRESS_SCALE,
   motionCssVars,
@@ -15,6 +16,9 @@ describe("motion config", () => {
     expect(cssVars["--motion-fast"]).toBe(`${DURATION.fast * 1000}ms`);
     expect(cssVars["--motion-base"]).toBe(`${DURATION.base * 1000}ms`);
     expect(cssVars["--motion-slow"]).toBe(`${DURATION.slow * 1000}ms`);
+    expect(cssVars["--motion-loading-delay"]).toBe(
+      `${LOADING_DELAY * 1000}ms`,
+    );
   });
 
   it("gives CSS the same curves and press values", () => {

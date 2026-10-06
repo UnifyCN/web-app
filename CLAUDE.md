@@ -289,11 +289,10 @@ Only invoke `emil-design-eng` for these specific components:
 - Tab switching — underline slide transition
 - Toast/notification appear/dismiss
 
-Never animate: sidebar nav clicks, form submissions, any action repeated >10x/day.
-
-Page changes are the one exception to "no page transitions": the incoming page gets a 200ms
-fade-in only (`components/layout/PageFade.tsx`). No slide, no exit animation, and never on the
-first page load, so navigation never waits and the text people read never moves.
+Never animate page transitions or actions repeated many times a day: sidebar and tab-bar
+clicks, moving between pages, form submissions. Switching tabs or pages is instant, as it is in
+the native app. (The sign-in flow's step entrance in `app/(auth)/template.tsx` predates this
+system and is seen once; it is the only screen-level entrance.)
 
 ### Motion system
 
@@ -302,14 +301,18 @@ CSS reads the same values as `--motion-*` variables that the root layout sets on
 Tailwind's `ease-out` / `ease-in` / default transition point at them. Never hard-code a duration
 or a curve.
 
-- **Two speeds, one curve:** taps are acknowledged in 120ms (`press`); anything that arrives
-  settles in 200ms (`base`); exits are a 150ms fade. Timings follow the native app.
+- **Two speeds, one curve:** taps are acknowledged in 100ms (`press`); dialogs and sheets settle
+  in 200ms (`base`); menus open in 150ms from the corner of what was tapped; exits are a 150ms
+  fade. Timings follow the native app.
+- **Loading states wait 300ms** (`LOADING_DELAY`). Every skeleton (`animate-pulse`) and
+  "Loading…" (`loading-delayed`) stays invisible for that long, so a fast or cached load never
+  flashes one. `LoadingSwap` crossfades only when its skeleton was actually on screen.
 - **CSS for press and hover, Framer Motion only for things that mount and unmount.** Use the
   `press` utility on buttons and cards (slight shrink) and `press-dim` on rows and nav tiles
   (they dim, as native does).
 - **Shared pieces:** `components/ui/Dialog.tsx` (every dialog's enter/exit), `Reveal.tsx`
   (content opened in place), `LoadingSwap.tsx` (skeleton to content crossfade), `Tabs.tsx`
-  (sliding underline), `PageFade.tsx` (page changes).
+  (sliding underline).
 - **Rules:** transform and opacity only (Learn's `Collapse` height animation is the one
   deliberate exception). Nothing loops except real waits: skeleton pulse, typing dots, spinners.
   Reading surfaces (lesson text, checklist text, listings) never move. Reduced motion is handled

@@ -50,7 +50,9 @@ export function TabPrefetcher() {
     warmedThisLoad = true;
 
     let cancelled = false;
+    let started = false;
     const warm = async () => {
+      started = true;
       for (const href of PREFETCHABLE_TABS) {
         if (cancelled) return;
         // The page the user is on fetches its own data.
@@ -65,6 +67,8 @@ export function TabPrefetcher() {
 
     return () => {
       cancelled = true;
+      // Cancelled before it began: let the next run schedule it again.
+      if (!started) warmedThisLoad = false;
       if (window.cancelIdleCallback) window.cancelIdleCallback(idle);
       else window.clearTimeout(idle);
     };

@@ -372,7 +372,7 @@ function CommunityPageContent() {
         {activeTab === TAB_CIRCLES && (
           <div className="max-w-2xl space-y-4">
             {circleQuery.isLoading ? (
-              <p className="py-12 text-center text-sm text-ink-muted">
+              <p className="loading-delayed py-12 text-center text-sm text-ink-muted">
                 {t("common.loading")}
               </p>
             ) : circleQuery.error ? (

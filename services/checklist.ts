@@ -188,7 +188,9 @@ export async function getTasks(
   ]);
 
   // No onboarding row yet → persona/stage filtering can't run. Show mock so
-  // the page stays browsable instead of rendering empty.
+  // the page stays browsable instead of rendering empty. A failed lookup is
+  // not "no row": it must surface as an error, not as mock tasks.
+  if (onboardingRes.error) throw onboardingRes.error;
   const onboarding = onboardingRes.data;
   if (!onboarding) return mockTasks;
 
