@@ -184,9 +184,10 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
     `Avatar`, `StorageImage`). The storage edge function's signed URLs expire after 60 seconds
     and point at full-size originals, so the route signs server-side, resizes with `sharp`, and
     answers with a one-year `Cache-Control`. The URL for a key + width never changes, so revisits
-    come from the browser cache. Sharing the result at Vercel's edge as well is switched off
-    (`SHARE_AT_EDGE` in the route) until `/api/storage/image/probe` has shown on production that
-    a signed-out request cannot be answered from that cache. Never render a signed S3 URL
+    come from the browser cache. The result is also cached at Vercel's edge for 30 days
+    (`s-maxage`), so only the first request for a picture pays for signing and resizing.
+    `proxy.ts` still checks the session before the edge cache answers (verified on production,
+    2026-10-05), so keep this route inside the proxy matcher. Never render a signed S3 URL
     directly. The route
     only accepts `users/<uuid>/<file>.<jpg|png|webp>` keys and a fixed list of widths (400
     otherwise), fetches only from the one host in `lib/supabase/storageHost.ts` without following
