@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import * as community from "@/services/community";
 
 /** React Query hooks for Community data (groups, events, news, circles). */
@@ -83,4 +88,31 @@ export function useCancelCircleMatching() {
 
 export function useRequestGroup() {
   return useMutation({ mutationFn: community.requestGroup });
+}
+
+/** Warms the news list, shown on both Social (the widget) and Community. */
+export function prefetchNews(queryClient: QueryClient) {
+  return queryClient.prefetchQuery({
+    queryKey: ["news"],
+    queryFn: community.getNews,
+  });
+}
+
+/** Warms the Community tab's lists (same keys and fetchers as the hooks above). */
+export function prefetchCommunity(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: GROUPS_KEY,
+      queryFn: community.getGroups,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: [...GROUPS_KEY, "joined"],
+      queryFn: community.getJoinedGroups,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ["events"],
+      queryFn: community.getEvents,
+    }),
+    prefetchNews(queryClient),
+  ]);
 }

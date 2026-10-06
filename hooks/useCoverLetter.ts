@@ -72,6 +72,7 @@ export type ImportPhase = "extracting" | "mapping";
 export const useCoverLetterDrafts = hooks.useDrafts;
 export const useCoverLetterDraft = hooks.useDraft;
 export const useCoverLetterUsage = hooks.useUsage;
+export const prefetchCoverLetterList = hooks.prefetchList;
 export const useFetchJobPosting = hooks.useFetchJobPosting;
 export const useClearJobPosting = hooks.useClearJobPosting;
 export const useDeleteCoverLetterDraft = hooks.useDelete;

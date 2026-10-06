@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { NavHistoryTracker } from "@/components/layout/NavHistoryTracker";
 import { PageFade } from "@/components/layout/PageFade";
+import { TabPrefetcher } from "@/components/layout/TabPrefetcher";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { LanguageSync } from "@/lib/i18n/useLanguageSync";
 import { WhatsNewTour } from "@/components/whatsNew/WhatsNewTour";
@@ -22,6 +23,7 @@ export default function MainLayout({
     <ToastProvider>
       <LanguageSync />
       <NavHistoryTracker />
+      <TabPrefetcher />
       <div className="flex min-h-dvh bg-surface">
         <Sidebar />
         <main className="min-w-0 flex-1 pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] md:pb-0">

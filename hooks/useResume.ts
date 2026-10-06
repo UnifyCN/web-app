@@ -54,6 +54,7 @@ const hooks = createDraftHooks<ResumeDraft, ResumeDraftSummary>({
 export const useResumeDrafts = hooks.useDrafts;
 export const useResumeDraft = hooks.useDraft;
 export const useResumeUsage = hooks.useUsage;
+export const prefetchResumeList = hooks.prefetchList;
 /** Fetch + attach a target job posting (the editor then offers "Tailor my resume"). */
 export const useFetchJobPosting = hooks.useFetchJobPosting;
 export const useClearJobPosting = hooks.useClearJobPosting;

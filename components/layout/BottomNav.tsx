@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { MAIN_NAV, SETTINGS_ITEM, isItemActive } from "./navItems";
 import { navTourTarget } from "@/lib/whatsNew";
+import { usePrefetchTab } from "@/hooks/usePrefetchTab";
 
 // Mobile-only (< md) bottom tab bar — replaces the left sidebar on phones.
 // The 5 primary tabs + Settings (6 total) — 7 was cramped on 375px. Profile is
@@ -23,6 +24,7 @@ const TABS = [...MAIN_NAV.filter((item) => !item.desktopOnly), SETTINGS_ITEM];
 export function BottomNav() {
   const pathname = usePathname();
   const { t } = useTranslation();
+  const prefetchTab = usePrefetchTab();
 
   return (
     <nav
@@ -36,6 +38,11 @@ export function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
+            // Fetch the route ahead of the tap, and warm the tab's data the
+            // moment a finger lands on it.
+            prefetch
+            onTouchStart={() => void prefetchTab(item.href)}
+            onFocus={() => void prefetchTab(item.href)}
             data-tour={navTourTarget(item.href)}
             aria-current={active ? "page" : undefined}
             className={cn(

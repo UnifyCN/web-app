@@ -179,6 +179,21 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   read and `tip_translations` is owner-scoped — a `using (true)` policy there would have
   leaked other users' tips.
 
+- **Instant tabs (perf).** Opening a main tab should show content, not a skeleton.
+  - **Images** render through `GET /api/storage/image?key=…&w=…` (`lib/supabase/imageUrl.ts`,
+    `Avatar`, `StorageImage`). The storage edge function's signed URLs expire after 60 seconds
+    and point at full-size originals, so the route signs server-side, resizes with `sharp`, and
+    answers with a one-year `Cache-Control`. The URL for a key + width never changes, so revisits
+    come from the browser cache. Never render a signed S3 URL directly.
+  - **Prefetch.** Each hooks file exports a `prefetch*` helper beside its query hooks;
+    `hooks/usePrefetchTab.ts` maps nav hrefs to them. `components/layout/TabPrefetcher.tsx` warms
+    the other tabs once the page is idle (skipped on Save-Data / 2G), and the nav warms a tab on
+    hover / focus / touchstart. Add a tab's core query there when you add a tab.
+  - **Cache.** Queries stay cached for 30 minutes after their tab closes (`gcTime` in
+    `app/providers.tsx`), so a revisit shows data and refetches in the background.
+  - **Waterfalls.** Read the user id with `getAuthUserId()` (local session), not
+    `auth.getUser()` (a network call), and start independent queries together.
+
 ---
 
 ## Pending Tasks

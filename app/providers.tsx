@@ -28,7 +28,14 @@ export function Providers({
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { staleTime: 60_000, refetchOnWindowFocus: false },
+          queries: {
+            staleTime: 60_000,
+            // Keep a tab's data for half an hour after leaving it (the default
+            // is 5 minutes), so coming back shows it at once and refreshes in
+            // the background instead of starting from a skeleton.
+            gcTime: 30 * 60_000,
+            refetchOnWindowFocus: false,
+          },
         },
       }),
   );

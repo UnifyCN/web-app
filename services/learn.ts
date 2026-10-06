@@ -139,6 +139,71 @@ function computeModulePercent(
  */
 const mockFavouriteModuleIds = new Set<string>();
 
+interface UserModuleState {
+  progressByModuleId: Record<string, LearnProgressRow>;
+  favouriteIds: Set<string>;
+  completedLessonIds: Set<string>;
+}
+
+/**
+ * The signed-in user's progress, favourites and completed lessons across all
+ * modules. Only when Supabase is configured AND the caller is signed in;
+ * otherwise default state (no progress, and the in-memory mock favourites when
+ * the env isn't configured).
+ */
+async function loadUserModuleState(): Promise<UserModuleState> {
+  const state: UserModuleState = {
+    progressByModuleId: {},
+    favouriteIds: new Set<string>(),
+    completedLessonIds: new Set<string>(),
+  };
+  if (!isSupabaseConfigured()) {
+    // Env-not-configured: reflect the in-memory mock favourites.
+    state.favouriteIds = mockFavouriteModuleIds;
+    return state;
+  }
+  const userId = await getAuthUserId();
+  if (!userId) return state;
+
+  const supabase = createClient();
+  const [progressRes, favRes, lessonsRes] = await Promise.all([
+    supabase
+      .from("learn_progress")
+      .select("module_id, status, completed_at, updated_at")
+      .eq("user_id", userId),
+    supabase
+      .from("learn_favourites")
+      .select("sanity_module_id")
+      .eq("user_id", userId),
+    supabase
+      .from("user_lesson_progress")
+      .select("sanity_lesson_id, is_completed")
+      .eq("user_id", userId)
+      .eq("is_completed", true),
+  ]);
+  if (progressRes.error) throw progressRes.error;
+  if (favRes.error) throw favRes.error;
+  if (lessonsRes.error) throw lessonsRes.error;
+
+  state.progressByModuleId = Object.fromEntries(
+    ((progressRes.data ?? []) as LearnProgressRow[]).map((r) => [
+      r.module_id,
+      r,
+    ]),
+  );
+  state.favouriteIds = new Set(
+    ((favRes.data ?? []) as { sanity_module_id: string }[]).map(
+      (r) => r.sanity_module_id,
+    ),
+  );
+  state.completedLessonIds = new Set(
+    ((lessonsRes.data ?? []) as { sanity_lesson_id: string }[]).map(
+      (r) => r.sanity_lesson_id,
+    ),
+  );
+  return state;
+}
+
 export async function getModules(
   language: SupportedLanguage = "en",
 ): Promise<LearnModuleView[]> {
@@ -149,62 +214,14 @@ export async function getModules(
     }));
   }
 
-  const rows = await sanityClient.fetch<ModuleRow[]>(MODULES_LIST_QUERY, {
-    lang: language,
-  });
+  // The module content (Sanity) and the user's own state (Supabase) don't
+  // depend on each other, so they load side by side instead of back to back.
+  const [rows, userState] = await Promise.all([
+    sanityClient.fetch<ModuleRow[]>(MODULES_LIST_QUERY, { lang: language }),
+    loadUserModuleState(),
+  ]);
   const sanityModules = rows.map(mergeModuleTreeI18n);
-
-  // Per-user merge: only when Supabase is configured AND the caller is
-  // signed in. Otherwise return the Sanity modules with default state
-  // (no progress, no favourites).
-  let progressByModuleId: Record<string, LearnProgressRow> = {};
-  let favouriteIds = new Set<string>();
-  let completedLessonIds = new Set<string>();
-
-  if (isSupabaseConfigured()) {
-    const userId = await getAuthUserId();
-    if (userId) {
-      const supabase = createClient();
-      const [progressRes, favRes, lessonsRes] = await Promise.all([
-        supabase
-          .from("learn_progress")
-          .select("module_id, status, completed_at, updated_at")
-          .eq("user_id", userId),
-        supabase
-          .from("learn_favourites")
-          .select("sanity_module_id")
-          .eq("user_id", userId),
-        supabase
-          .from("user_lesson_progress")
-          .select("sanity_lesson_id, is_completed")
-          .eq("user_id", userId)
-          .eq("is_completed", true),
-      ]);
-      if (progressRes.error) throw progressRes.error;
-      if (favRes.error) throw favRes.error;
-      if (lessonsRes.error) throw lessonsRes.error;
-
-      progressByModuleId = Object.fromEntries(
-        ((progressRes.data ?? []) as LearnProgressRow[]).map((r) => [
-          r.module_id,
-          r,
-        ]),
-      );
-      favouriteIds = new Set(
-        ((favRes.data ?? []) as { sanity_module_id: string }[]).map(
-          (r) => r.sanity_module_id,
-        ),
-      );
-      completedLessonIds = new Set(
-        ((lessonsRes.data ?? []) as { sanity_lesson_id: string }[]).map(
-          (r) => r.sanity_lesson_id,
-        ),
-      );
-    }
-  } else {
-    // Env-not-configured: reflect the in-memory mock favourites.
-    favouriteIds = mockFavouriteModuleIds;
-  }
+  const { progressByModuleId, favouriteIds, completedLessonIds } = userState;
 
   return sanityModules.map((mod) => {
     const status: ModuleStatus =

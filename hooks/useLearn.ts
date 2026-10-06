@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import * as learn from "@/services/learn";
 import type {
   PracticeFeedbackInput,
@@ -278,4 +283,20 @@ export function useSetLessonProgress() {
       queryClient.invalidateQueries({ queryKey: LEARNING_PROGRESS_KEY });
     },
   });
+}
+
+/** Warms the Learn tab: the module list and the user's lesson progress (same
+ *  keys and fetchers as `useModules` / `useAllLessonProgresses`). */
+export function prefetchLearn(queryClient: QueryClient, language: string) {
+  const lang = language as Parameters<typeof learn.getModules>[0];
+  return Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: [...MODULES_KEY, language],
+      queryFn: () => learn.getModules(lang),
+    }),
+    queryClient.prefetchQuery({
+      queryKey: LESSON_PROGRESSES_KEY,
+      queryFn: learn.getAllLessonProgresses,
+    }),
+  ]);
 }

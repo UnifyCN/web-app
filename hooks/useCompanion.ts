@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import * as companion from "@/services/companion";
 import {
@@ -241,4 +246,19 @@ export function useDeleteConversation() {
       queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
     },
   });
+}
+
+/** Warms the Companion tab: the conversation list and today's usage (same keys
+ *  and fetchers as `useConversations` / `useChatbotUsage`). */
+export function prefetchCompanion(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: CONVERSATIONS_KEY,
+      queryFn: companion.getConversations,
+    }),
+    queryClient.prefetchQuery({
+      queryKey: CHATBOT_USAGE_KEY,
+      queryFn: companion.getChatbotUsage,
+    }),
+  ]);
 }
