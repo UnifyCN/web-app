@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { I18nextProvider } from "react-i18next";
 import JSZip from "jszip";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createI18n } from "@/lib/i18n";
+import { createI18n, loadLocale } from "@/lib/i18n";
 import {
   DEFAULT_DOCUMENT_LANGUAGE,
   documentLanguageStorageKey,
@@ -19,6 +19,10 @@ import { emptyResume } from "@/lib/resume/schema";
 import { emptyCoverLetter } from "@/lib/coverLetter/schema";
 import type { ResumeData } from "@/types/resume";
 import type { CoverLetterData } from "@/types/coverLetter";
+
+// Only English is bundled; the others load on demand, so load the ones these
+// tests use before building the instance.
+await Promise.all([loadLocale("ar"), loadLocale("fr-CA")]);
 
 // The UI is in Arabic for every test: exports must not follow it.
 const arUi = createI18n("ar");
