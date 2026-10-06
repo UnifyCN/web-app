@@ -159,6 +159,14 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   RTL mirroring runs through `hooks/useDirection.ts`. Locale-key parity is enforced in CI by
   `npm run check-i18n` (`scripts/check-i18n-parity.mjs`) — **run it after touching any
   locale file.**
+  **Only English is in the main bundle; the other languages are separate chunks**
+  (`lib/i18n/index.ts`). `I18nProvider` waits for the active language's chunk with React's
+  `use()` on the server and during hydration, so the first paint is already in that language.
+  Before showing text in another language, await `ensureLocale(i18n, lang)`:
+  `i18n.changeLanguage` does it itself, and callers that also call `persistLocale` (which flips
+  `<html lang dir>`) must await it first so direction and text change together. Never import a
+  locale JSON statically in client code, and never call `getFixedT(lang)` for a language that
+  has not been loaded (`useDocumentLanguage` reports a document language only once it is).
   **User-generated content** translates on demand: `components/home/TranslateButton.tsx` →
   `hooks/useTranslations.ts` → `services/translations.ts` → the same-origin
   `/api/translate` proxy → the **web-owned `translate-content` edge function**, covering
