@@ -17,7 +17,7 @@ import { PostCardSkeleton } from "@/components/home/PostCardSkeleton";
 import {
   useCurrentUser,
   useFollowsYou,
-  useUserProfile,
+  useOtherUserProfile,
 } from "@/hooks/useProfile";
 import { useUserComments, useUserPosts } from "@/hooks/useFeed";
 
@@ -72,7 +72,9 @@ export default function UserProfilePage() {
   const [tab, setTab] = useState<ProfileTabKey>(OTHER_PROFILE_TABS[0]);
 
   const { data: currentUser } = useCurrentUser();
-  const { data: profile, isLoading } = useUserProfile(userId);
+  // The header shows as soon as the profile itself is there; the persona and
+  // stage badges load separately and join it.
+  const { data: profile, isLoading } = useOtherUserProfile(userId);
 
   const isOwnProfile = Boolean(
     currentUser && profile && currentUser.id === profile.id,

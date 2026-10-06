@@ -182,14 +182,41 @@ export async function getUserById(
     return undefined;
   }
 
-  // user_onboarding_profiles is own-row RLS, so a direct read of another user's
-  // row returns nothing. The mobile `public-onboarding-profile` edge function
-  // exposes the public-facing fields (persona + arrival_date); city / province /
-  // goals stay private and stage is derived from arrival_date. It ships no CORS
-  // headers, so the browser can't invoke it directly — we go through the
-  // same-origin /api/onboarding-profile proxy. Best-effort: a failure just
-  // leaves the profile without persona / stage badges.
-  let onboarding: UserProfile["onboarding"] = null;
+  return {
+    id: row.id,
+    username: row.username,
+    firstName: row.first_name ?? null,
+    profilePictureUrl: row.profile_picture_url,
+    isPremium: row.is_premium,
+    permissions: row.permissions ? [row.permissions] : [],
+    bio: row.biography ?? null,
+    pronouns: row.pronouns ?? null,
+    createdAt: row.created_at ?? null,
+    followerCount: followerRes.count ?? 0,
+    followingCount: followingRes.count ?? 0,
+    // Another user's persona and stage come from a separate, slower call:
+    // see getPublicOnboarding. The page adds them when they arrive.
+    onboarding: null,
+  };
+}
+
+/**
+ * The public part of another user's onboarding profile: persona, and the stage
+ * derived from their arrival date. Null when they have none or the call fails.
+ *
+ * user_onboarding_profiles is own-row RLS, so a direct read of another user's
+ * row returns nothing. The mobile `public-onboarding-profile` edge function
+ * exposes the public-facing fields (persona + arrival_date); city / province /
+ * goals stay private. It ships no CORS headers, so the browser can't invoke it
+ * directly: this goes through the same-origin /api/onboarding-profile proxy.
+ * That is three server hops, which is why it is its own query and never holds
+ * up the rest of the profile. Best-effort: a failure just leaves the profile
+ * without persona / stage badges.
+ */
+export async function getPublicOnboarding(
+  id: string,
+): Promise<{ persona: Persona; arrivalDate: string | null; stage: Stage } | null> {
+  if (!isSupabaseConfigured()) return null;
   try {
     const res = await fetch("/api/onboarding-profile", {
       method: "POST",
@@ -204,50 +231,43 @@ export async function getUserById(
     const parsed: unknown = res.ok ? await res.json().catch(() => null) : null;
     const rawProfile =
       isRecord(parsed) && isRecord(parsed.profile) ? parsed.profile : null;
-    const p =
-      rawProfile && typeof rawProfile.persona === "string"
-        ? {
-            persona: rawProfile.persona as Persona,
-            arrival_date:
-              typeof rawProfile.arrival_date === "string"
-                ? rawProfile.arrival_date
-                : null,
-          }
+    if (!rawProfile || typeof rawProfile.persona !== "string") return null;
+    const arrivalDate =
+      typeof rawProfile.arrival_date === "string"
+        ? rawProfile.arrival_date
         : null;
-    if (p) {
-      onboarding = {
-        id,
-        firstName: row.first_name ?? null,
-        persona: p.persona,
-        referralSource: null,
-        arrivalDate: p.arrival_date ? p.arrival_date.slice(0, 10) : null,
-        city: "",
-        province: "",
-        stage: calculateUserStage(p.arrival_date ?? null),
-        goals: [],
-        learningInterests: [],
-        hobbies: [],
-        learningReminders: false,
-        // Not exposed for other users; the field is only meaningful for self.
-        preferredLanguage: DEFAULT_LANGUAGE,
-      };
-    }
+    return {
+      persona: rawProfile.persona as Persona,
+      arrivalDate: arrivalDate ? arrivalDate.slice(0, 10) : null,
+      stage: calculateUserStage(arrivalDate),
+    };
   } catch (error) {
-    console.error("getUserById: public-onboarding-profile failed", error);
+    console.error("getPublicOnboarding: public-onboarding-profile failed", error);
+    return null;
   }
+}
 
+/** A full onboarding object for another user, from its public fields only. */
+export function publicOnboardingProfile(
+  id: string,
+  firstName: string | null,
+  fields: { persona: Persona; arrivalDate: string | null; stage: Stage },
+): NonNullable<UserProfile["onboarding"]> {
   return {
-    id: row.id,
-    username: row.username,
-    profilePictureUrl: row.profile_picture_url,
-    isPremium: row.is_premium,
-    permissions: row.permissions ? [row.permissions] : [],
-    bio: row.biography ?? null,
-    pronouns: row.pronouns ?? null,
-    createdAt: row.created_at ?? null,
-    followerCount: followerRes.count ?? 0,
-    followingCount: followingRes.count ?? 0,
-    onboarding,
+    id,
+    firstName,
+    persona: fields.persona,
+    referralSource: null,
+    arrivalDate: fields.arrivalDate,
+    city: "",
+    province: "",
+    stage: fields.stage,
+    goals: [],
+    learningInterests: [],
+    hobbies: [],
+    learningReminders: false,
+    // Not exposed for other users; the field is only meaningful for self.
+    preferredLanguage: DEFAULT_LANGUAGE,
   };
 }
 

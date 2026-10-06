@@ -126,22 +126,29 @@ async function getPostMetadataBatch(
   return map;
 }
 
+function applyPostMetadata(
+  posts: Post[],
+  meta: Map<number, PostMetadata>,
+): Post[] {
+  return posts.map((post) => {
+    const m = meta.get(post.id);
+    if (!m) return post;
+    return {
+      ...post,
+      likeCount: m.like_count,
+      commentCount: m.comment_count,
+      saveCount: m.save_count,
+      likedByMe: m.liked_by_me,
+      savedByMe: m.saved_by_me,
+    };
+  });
+}
+
 async function enrichPostsWithMetadata(posts: Post[]): Promise<Post[]> {
   if (posts.length === 0) return posts;
   try {
     const meta = await getPostMetadataBatch(posts.map((p) => p.id));
-    return posts.map((post) => {
-      const m = meta.get(post.id);
-      if (!m) return post;
-      return {
-        ...post,
-        likeCount: m.like_count,
-        commentCount: m.comment_count,
-        saveCount: m.save_count,
-        likedByMe: m.liked_by_me,
-        savedByMe: m.saved_by_me,
-      };
-    });
+    return applyPostMetadata(posts, meta);
   } catch (error) {
     // Feed still renders if the RPC fails — counts fall back to whatever
     // came off the posts row, likedByMe / savedByMe stay false.
@@ -165,6 +172,7 @@ function mockForTab(tab: FeedTab): Post[] {
 export async function getForYouFeed(
   cursor?: string,
   limit: number = DEFAULT_LIMIT,
+  blockedIds?: string[],
 ): Promise<FeedResponse> {
   if (!isSupabaseConfigured()) {
     return { posts: mockForTab("For You"), nextCursor: undefined };
@@ -174,9 +182,12 @@ export async function getForYouFeed(
   if (!userId) return { posts: mockForTab("For You"), nextCursor: undefined };
 
   const supabase = createClient();
-  // Drop posts authored by users the caller has blocked (applied server-side
-  // before ordering so it stays on the filter builder).
-  const blocked = await getBlockedUserIds();
+  // Drop posts authored by users the caller has blocked. This is applied in
+  // the query on purpose: blocking is a safety feature, so a blocked author's
+  // posts must never be sent to this browser at all, not merely hidden.
+  // The caller may hand the list in (the feed hooks keep it cached, so it is
+  // not fetched again before every page); otherwise it is fetched here.
+  const blocked = blockedIds ?? (await getBlockedUserIds());
   const blockedList = blocked.length ? `(${blocked.join(",")})` : null;
   const isFirstPage = !cursor;
 
@@ -642,17 +653,23 @@ export async function getPost(postId: number): Promise<Post | null> {
   if (!userId) return mockPosts.find((post) => post.id === postId) ?? null;
 
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("posts")
-    .select(POSTS_SELECT)
-    .eq("id", postId)
-    .maybeSingle();
+  // The id is known up front, so the post and its per-user metadata are
+  // requested together instead of one after the other. A failed metadata call
+  // still shows the post, with the counts from its row (as in the feed).
+  const [{ data, error }, meta] = await Promise.all([
+    supabase.from("posts").select(POSTS_SELECT).eq("id", postId).maybeSingle(),
+    getPostMetadataBatch([postId]).catch((metaError) => {
+      console.error("getPost: metadata failed", metaError);
+      return new Map<number, PostMetadata>();
+    }),
+  ]);
   if (error) throw error;
   if (!data) return null;
 
-  const [enriched] = await enrichPostsWithMetadata([
-    rowToPost(data as unknown as JoinedPostRow),
-  ]);
+  const [enriched] = applyPostMetadata(
+    [rowToPost(data as unknown as JoinedPostRow)],
+    meta,
+  );
   return enriched;
 }
 

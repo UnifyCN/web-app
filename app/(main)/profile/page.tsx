@@ -15,6 +15,7 @@ import { CommentCard } from "@/components/profile/CommentCard";
 import { SkeletonCommentList } from "@/components/profile/SkeletonCommentList";
 import { PostCard } from "@/components/home/PostCard";
 import { PostCardSkeleton } from "@/components/home/PostCardSkeleton";
+import { useAuthUser } from "@/hooks/useAuthUser";
 import { useCurrentUser, useLessonHighlights } from "@/hooks/useProfile";
 import { useSavedPosts, useUserComments, useUserPosts } from "@/hooks/useFeed";
 import type { Post } from "@/types";
@@ -157,15 +158,19 @@ export default function ProfilePage() {
   const { t } = useTranslation();
   const [tab, setTab] = useState<ProfileTabKey>(PROFILE_TABS[0]);
   const { data: profile, isLoading } = useCurrentUser();
+  // The signed-in user's id is known from the stored session straight away, so
+  // their posts and comments are requested alongside the profile instead of
+  // after it.
+  const { data: authUser } = useAuthUser();
+  const myId = profile?.id ?? authUser?.id ?? "";
 
-  const { data: myPosts, isLoading: postsLoading } = useUserPosts(
-    profile?.id ?? "",
-    { enabled: Boolean(profile?.id) },
-  );
+  const { data: myPosts, isLoading: postsLoading } = useUserPosts(myId, {
+    enabled: Boolean(myId),
+  });
   const { data: savedPosts, isLoading: savedLoading } = useSavedPosts();
   const { data: comments, isLoading: commentsLoading } = useUserComments(
-    profile?.id ?? "",
-    { enabled: Boolean(profile?.id) },
+    myId,
+    { enabled: Boolean(myId) },
   );
   const { data: highlights, isLoading: highlightsLoading } =
     useLessonHighlights();

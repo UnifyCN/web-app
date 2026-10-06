@@ -61,6 +61,9 @@ export interface User {
 export interface UserProfile extends User {
   /** Null until the user finishes onboarding (no row in user_onboarding_profiles). */
   onboarding: UserOnboardingProfile | null;
+  /** users.first_name. Set for another user's profile, whose onboarding fields
+   *  load separately; the display name must not wait for them. */
+  firstName?: string | null;
   followingCount: number;
   followerCount: number;
   /** users.biography — free-text bio shown on the profile header. */

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as profile from "@/services/profile";
 import type { UserProfile } from "@/types";
@@ -24,6 +25,47 @@ export function useUserProfile(id: string) {
     enabled: Boolean(id),
     staleTime: 60_000,
   });
+}
+
+/**
+ * Another user's public persona and stage. Its own query on purpose: the call
+ * behind it is slow (three server hops), and the profile must not wait for it.
+ * Keyed outside "user-profile" so following someone does not refetch it.
+ */
+export function usePublicOnboarding(
+  id: string,
+  options: { enabled?: boolean } = {},
+) {
+  return useQuery({
+    queryKey: ["public-onboarding", id],
+    queryFn: () => profile.getPublicOnboarding(id),
+    enabled: Boolean(id) && (options.enabled ?? true),
+    staleTime: 5 * 60_000,
+  });
+}
+
+/**
+ * Another user's profile for their profile page: the profile as soon as it
+ * loads, with the public persona and stage added when they arrive.
+ */
+export function useOtherUserProfile(id: string) {
+  const base = useUserProfile(id);
+  const { data: onboarding } = usePublicOnboarding(id);
+  const data = useMemo(
+    () =>
+      base.data && onboarding && !base.data.onboarding
+        ? {
+            ...base.data,
+            onboarding: profile.publicOnboardingProfile(
+              base.data.id,
+              base.data.firstName ?? null,
+              onboarding,
+            ),
+          }
+        : base.data,
+    [base.data, onboarding],
+  );
+  return { data, isLoading: base.isLoading };
 }
 
 export function useLessonHighlights() {

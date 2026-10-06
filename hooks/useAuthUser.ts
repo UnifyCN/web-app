@@ -3,9 +3,15 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { getAuthUser } from "@/services/auth";
+import { getSessionUser } from "@/services/auth";
 
-/** The authenticated Supabase user (auth.users), or null when signed out. */
+/**
+ * The signed-in Supabase user (auth.users), or null when signed out. Read from
+ * the stored session, so it costs no request: this hook is mounted on every
+ * page, and a network user check here made all page data wait behind it. The
+ * subscription below refreshes it whenever the session changes (sign-in,
+ * sign-out, an email change), so it does not go stale.
+ */
 export const AUTH_USER_KEY = ["auth-user"] as const;
 
 export function useAuthUser() {
@@ -25,9 +31,6 @@ export function useAuthUser() {
 
   return useQuery({
     queryKey: AUTH_USER_KEY,
-    queryFn: async () => {
-      const { user } = await getAuthUser();
-      return user;
-    },
+    queryFn: getSessionUser,
   });
 }

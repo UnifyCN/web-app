@@ -6,6 +6,7 @@ import {
   Noto_Sans_Gurmukhi,
 } from "next/font/google";
 import { cookies, headers } from "next/headers";
+import { preconnect } from "react-dom";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Providers } from "./providers";
@@ -109,12 +110,35 @@ async function resolveInitialLocale(): Promise<SupportedLanguage> {
   );
 }
 
+/**
+ * Opens the connections the first data requests will use while the page's
+ * scripts are still loading, so those requests do not start with DNS and TLS.
+ * Both hosts are called from the browser without cookies, hence "anonymous".
+ */
+function preconnectDataHosts() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrl) {
+    try {
+      preconnect(new URL(supabaseUrl).origin, { crossOrigin: "anonymous" });
+    } catch {
+      // Malformed env value: skip the hint, nothing depends on it.
+    }
+  }
+  const sanityProjectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
+  if (sanityProjectId && sanityProjectId !== "placeholder") {
+    preconnect(`https://${sanityProjectId}.apicdn.sanity.io`, {
+      crossOrigin: "anonymous",
+    });
+  }
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const initialLocale = await resolveInitialLocale();
+  preconnectDataHosts();
 
   return (
     <html

@@ -32,6 +32,22 @@ export async function signOut(): Promise<{ error: AuthError | null }> {
   return { error };
 }
 
+/**
+ * The signed-in user as the browser already knows it, read from the stored
+ * session with no network call. Use this for display (the account's email, a
+ * per-user "seen" flag). `getAuthUser` below asks the auth server instead; it
+ * is for the moments where a stale or tampered local session must not be
+ * trusted, and it holds the client's auth lock for the length of that request,
+ * which makes every other Supabase call wait behind it.
+ */
+export async function getSessionUser(): Promise<User | null> {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.user ?? null;
+}
+
 export async function getAuthUser(): Promise<{
   user: User | null;
   error: AuthError | null;
