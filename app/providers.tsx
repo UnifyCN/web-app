@@ -6,7 +6,6 @@ import { MotionConfig } from "framer-motion";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { I18nProvider } from "@/lib/i18n/I18nProvider";
 import { type SupportedLanguage } from "@/lib/i18n/config";
-import { useIsFirstLoad } from "@/hooks/useIsFirstLoad";
 
 /**
  * App-wide client providers: TanStack Query + i18n. `initialLocale` is resolved
@@ -21,9 +20,6 @@ export function Providers({
   initialLocale: SupportedLanguage;
   children: React.ReactNode;
 }) {
-  // Mounted on every page, so this marks the end of the first load for the
-  // whole app: entrance animations that skip the landing page play afterwards.
-  useIsFirstLoad();
   const [queryClient] = useState(
     () =>
       new QueryClient({
