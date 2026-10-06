@@ -289,9 +289,10 @@ Only invoke `emil-design-eng` for these specific components:
 - Tab switching — underline slide transition
 - Toast/notification appear/dismiss
 
-Never animate page transitions or actions repeated many times a day: sidebar and tab-bar
-clicks, moving between pages, form submissions. Switching tabs or pages is instant, as it is in
-the native app. (The sign-in flow's step entrance in `app/(auth)/template.tsx` predates this
+Never animate page transitions or actions repeated many times a day: sidebar and bottom-nav
+clicks, moving between pages, form submissions. Switching pages is instant, as it is in the
+native app. An in-page tab strip (`Tabs.tsx`) keeps its sliding underline, but the content under
+it swaps instantly. (The sign-in flow's step entrance in `app/(auth)/template.tsx` predates this
 system and is seen once; it is the only screen-level entrance.)
 
 ### Motion system
