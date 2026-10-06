@@ -1,6 +1,9 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { SHARED_IMAGE_CACHE_CONTROL } from "@/lib/supabase/imageCacheControl";
+import { NextResponse, type NextRequest } from "next/server";
+import { createCacheAwareClient } from "@/lib/supabase/cacheAwareClient";
+import {
+  PRIVATE_IMAGE_CACHE_CONTROL,
+  SHARED_IMAGE_CACHE_CONTROL,
+} from "@/lib/supabase/imageCacheControl";
 
 export const runtime = "nodejs";
 
@@ -22,8 +25,8 @@ export const runtime = "nodejs";
  *
  * Delete this file once the image route's SHARE_AT_EDGE has been decided.
  */
-export async function GET() {
-  const supabase = await createClient();
+export async function GET(request: NextRequest) {
+  const { supabase, wroteCookies } = await createCacheAwareClient(request);
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -35,6 +38,14 @@ export async function GET() {
   }
   return NextResponse.json(
     { probe: "edge-cache", note: "No user data. Safe to cache." },
-    { headers: { "Cache-Control": SHARED_IMAGE_CACHE_CONTROL } },
+    {
+      headers: {
+        // Same rule as the image route: a response that sets a cookie is
+        // never shared (and would make the check meaningless).
+        "Cache-Control": wroteCookies()
+          ? PRIVATE_IMAGE_CACHE_CONTROL
+          : SHARED_IMAGE_CACHE_CONTROL,
+      },
+    },
   );
 }

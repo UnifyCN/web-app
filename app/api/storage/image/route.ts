@@ -1,8 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
 import { fileTypeFromBuffer } from "file-type";
 import sharp from "sharp";
+import { createCacheAwareClient } from "@/lib/supabase/cacheAwareClient";
 import { parseImageRequest } from "@/lib/supabase/imageUrl";
 import {
   PRIVATE_IMAGE_CACHE_CONTROL,
@@ -33,6 +32,9 @@ const MAX_SOURCE_PIXELS = 50_000_000;
 // still turns away signed-out requests that the CDN could answer from its
 // cache. `./probe/route.ts` exists to prove that on production before any real
 // picture is shared; flip SHARE_AT_EDGE only after that check has passed.
+// Sharing also assumes what is true today: every signed-in person may see every
+// user picture (the feed shows them all). If pictures ever become private to
+// some people, this must stay off.
 const SHARE_AT_EDGE = false;
 
 // Errors are never cached, so a transient failure cannot stick.
@@ -102,27 +104,7 @@ export async function GET(req: NextRequest) {
   const request = parseImageRequest(req.nextUrl.searchParams);
   if (!request) return fail("Invalid image request", 400);
 
-  // Same client as lib/supabase/server.ts, except that it records whether the
-  // session had to be refreshed here (which writes cookies). The proxy normally
-  // does that before this runs; if it ever happens here, the response must
-  // stay out of any shared cache.
-  const cookieStore = await cookies();
-  let wroteCookies = false;
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-    {
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll(cookiesToSet) {
-          wroteCookies = true;
-          cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options),
-          );
-        },
-      },
-    },
-  );
+  const { supabase, wroteCookies } = await createCacheAwareClient(req);
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -193,7 +175,7 @@ export async function GET(req: NextRequest) {
       "Content-Length": String(output.byteLength),
       "Cache-Control":
         // A response that had to write a session cookie is never shared.
-        SHARE_AT_EDGE && !wroteCookies
+        SHARE_AT_EDGE && !wroteCookies()
           ? SHARED_IMAGE_CACHE_CONTROL
           : PRIVATE_IMAGE_CACHE_CONTROL,
       "X-Content-Type-Options": "nosniff",
