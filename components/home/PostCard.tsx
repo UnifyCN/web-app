@@ -18,13 +18,16 @@ import type { Post } from "@/types";
 /** A single feed post — header, body, optional images, and an action row.
  *  `linkToDetail` (default true) makes the title/body and the comment badge
  *  navigate to /post/[id]; the detail page itself passes false to avoid
- *  self-navigation. */
+ *  self-navigation. `priority` is for a post that is on screen when the page
+ *  opens: its images load right away instead of lazily. */
 export function PostCard({
   post,
   linkToDetail = true,
+  priority = false,
 }: {
   post: Post;
   linkToDetail?: boolean;
+  priority?: boolean;
 }) {
   const { t } = useTranslation();
   const formatRelativeTime = useRelativeTime();
@@ -155,6 +158,7 @@ export function PostCard({
             >
               <StorageImage
                 src={url}
+                priority={priority}
                 alt={
                   cleanTitle
                     ? t("posts.postImageAltTitled", {

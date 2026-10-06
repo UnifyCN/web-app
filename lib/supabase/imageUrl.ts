@@ -16,14 +16,15 @@ export type ImageWidth = (typeof IMAGE_WIDTHS)[number];
 
 const isHttpUrl = (value: string): boolean => /^https?:\/\//i.test(value);
 
-// Object keys are path-like: letters, digits and `/ _ . -`. Anything else
-// (query strings, schemes, traversal) is not a key this app ever stores.
-const KEY_PATTERN = /^[A-Za-z0-9][A-Za-z0-9/_.-]{0,254}$/;
+// The only keys this app stores: `users/<user uuid>/<file>.<jpg|png|webp>`,
+// exactly as the upload edge function names them. The image route accepts
+// that shape and nothing else: one user folder, one file name, an image
+// extension.
+const KEY_PATTERN =
+  /^users\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[A-Za-z0-9][A-Za-z0-9_.-]{0,127}\.(?:jpe?g|png|webp)$/i;
 
 export function isStorageKey(value: string): boolean {
-  return (
-    KEY_PATTERN.test(value) && !value.includes("..") && !value.includes("//")
-  );
+  return KEY_PATTERN.test(value) && !value.includes("..");
 }
 
 /** The smallest produced width that covers `cssWidth` on a 2x screen. */

@@ -173,8 +173,9 @@ export default function HomePage() {
                 </div>
               ) : posts.length > 0 ? (
                 <div className="divide-y divide-border-card">
-                  {posts.map((post) => (
-                    <PostCard key={post.id} post={post} />
+                  {posts.map((post, index) => (
+                    // The first two posts are on screen when the feed opens.
+                    <PostCard key={post.id} post={post} priority={index < 2} />
                   ))}
 
                   {isFetchingNextPage && (

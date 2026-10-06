@@ -26,12 +26,15 @@ interface StorageImageProps {
   sizes?: string;
   /** Widths offered to the browser; it picks one from `sizes` and the screen. */
   widths?: readonly ImageWidth[];
+  /** For an image that is on screen as soon as the page opens: load it right
+   *  away and ahead of other images, instead of lazily. */
+  priority?: boolean;
 }
 
 /**
  * Renders an image stored as a signed-URL key, at display size, from a stable
- * cacheable URL (see lib/supabase/imageUrl.ts). Loads lazily and fades in when
- * it had to be fetched; a cached image just shows. Give the parent a fixed box
+ * cacheable URL (see lib/supabase/imageUrl.ts). Loads lazily (unless `priority`)
+ * and fades in when it had to be fetched; a cached image just shows. Give the parent a fixed box
  * (and a neutral background if it should read as a placeholder while loading).
  * Uses a plain `<img>` on purpose: the route already resizes, so `next/image`
  * would only resize a second time.
@@ -42,6 +45,7 @@ export function StorageImage({
   className,
   sizes = "(max-width: 768px) 100vw, 640px",
   widths = DEFAULT_WIDTHS,
+  priority = false,
 }: StorageImageProps) {
   // The middle width is the fallback for browsers that ignore `srcset`.
   const url = storageImageUrlAt(src, widths[Math.floor(widths.length / 2)]);
@@ -60,7 +64,8 @@ export function StorageImage({
       srcSet={storageImageSrcSet(src, widths)}
       sizes={sizes}
       alt={alt}
-      loading="lazy"
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
       decoding="async"
       onLoad={revealOnLoad}
       onError={() => setFailedUrl(url)}

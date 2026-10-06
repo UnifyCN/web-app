@@ -29,6 +29,7 @@ describe("storageImageUrl", () => {
     expect(storageImageUrl("  ", 40)).toBeNull();
     expect(storageImageUrl("users/../secrets", 40)).toBeNull();
     expect(storageImageUrl("users/a b.jpg", 40)).toBeNull();
+    expect(storageImageUrl("knowledge/guide.pdf", 40)).toBeNull();
   });
 
   it("lists one candidate per width in a srcset", () => {
@@ -67,14 +68,41 @@ describe("parseImageRequest", () => {
     expect(parseImageRequest(params(`key=${KEY}&w=abc`))).toBeNull();
   });
 
-  it("rejects anything that is not a plain object key", () => {
+  it("accepts the key shapes the upload function produces", () => {
+    const folder = "users/1ddb1707-8cfc-4a63-9534-000000000000";
+    for (const key of [
+      `${folder}/1790058218989.jpg`,
+      `${folder}/1790058218989.png`,
+      `${folder}/1790058218989.webp`,
+      `${folder}/photo_1-a.JPEG`,
+    ]) {
+      expect(isStorageKey(key), key).toBe(true);
+    }
+  });
+
+  it("rejects anything that is not a user's picture", () => {
+    const folder = "users/1ddb1707-8cfc-4a63-9534-000000000000";
     for (const key of [
       "",
       "https://example.com/a.jpg",
       "users/../../etc/passwd",
       "users//a.jpg",
       "/users/a.jpg",
+      "users/a.jpg",
       "users/a.jpg?x=1",
+      // Not under a user's folder, or not a picture.
+      "knowledge/guide.pdf",
+      "documents/report.jpg",
+      `${folder}/notes.pdf`,
+      `${folder}/page.svg`,
+      `${folder}/picture`,
+      // Only one file name under the user's folder.
+      `${folder}/nested/a.jpg`,
+      `${folder}/..jpg`,
+      `${folder}/a..jpg`,
+      "users/not-a-uuid/a.jpg",
+      `${folder}/a.jpg#x`,
+      `${folder}/a b.jpg`,
     ]) {
       expect(isStorageKey(key), key).toBe(false);
       expect(
