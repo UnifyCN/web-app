@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { X, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
+import {
+  DialogOverlay,
+  DialogPanel,
+  DialogPresence,
+} from "@/components/ui/Dialog";
 
 interface RequestGroupModalProps {
   open: boolean;
@@ -71,8 +76,6 @@ export function RequestGroupModal({ open, onClose }: RequestGroupModalProps) {
     }
   }
 
-  if (!open) return null;
-
   const canSubmit =
     groupName.trim().length >= 1 &&
     audience.trim().length >= 1 &&
@@ -87,13 +90,13 @@ export function RequestGroupModal({ open, onClose }: RequestGroupModalProps) {
     window.setTimeout(onClose, 1800);
   }
 
-  return (
-    <div
+  const dialog = (
+    <DialogOverlay
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
       onClick={onClose}
       role="presentation"
     >
-      <div
+      <DialogPanel
         className="w-full max-w-md overflow-hidden rounded-card bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
@@ -188,7 +191,9 @@ export function RequestGroupModal({ open, onClose }: RequestGroupModalProps) {
             </form>
           </>
         )}
-      </div>
-    </div>
+      </DialogPanel>
+    </DialogOverlay>
   );
+
+  return <DialogPresence open={open}>{dialog}</DialogPresence>;
 }

@@ -24,6 +24,7 @@ import {
   SocialSearchBar,
   SocialSearchResults,
 } from "@/components/home/SocialSearch";
+import { LoadingSwap } from "@/components/ui/LoadingSwap";
 
 /** Empty-state copy per feed tab — i18n keys, translated at render. */
 const FEED_EMPTY: Record<FeedTab, { titleKey: string; subKey: string }> = {
@@ -100,7 +101,7 @@ export default function HomePage() {
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
-    <div className="mx-auto max-w-[1080px] animate-fade-in px-6 py-6">
+    <div className="mx-auto max-w-[1080px] px-6 py-6">
       <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
         {t("tabs.social")}
       </h1>
@@ -153,21 +154,25 @@ export default function HomePage() {
                 </div>
               )}
 
-              {active.isLoading ? (
-                <div className="divide-y divide-border-card">
-                  <PostCardSkeleton withImage />
-                  <PostCardSkeleton />
-                  <PostCardSkeleton withImage />
-                  <PostCardSkeleton />
-                </div>
-              ) : active.error && posts.length === 0 ? (
+              <LoadingSwap
+                loading={active.isLoading}
+                skeleton={
+                  <div className="divide-y divide-border-card">
+                    <PostCardSkeleton withImage />
+                    <PostCardSkeleton />
+                    <PostCardSkeleton withImage />
+                    <PostCardSkeleton />
+                  </div>
+                }
+              >
+              {active.error && posts.length === 0 ? (
                 <div className="px-5 py-14 text-center">
                   <p role="alert" className="text-sm text-destructive">
                     {t("home.feedLoadError")}
                   </p>
                 </div>
               ) : posts.length > 0 ? (
-                <div className="animate-fade-in divide-y divide-border-card">
+                <div className="divide-y divide-border-card">
                   {posts.map((post) => (
                     <PostCard key={post.id} post={post} />
                   ))}
@@ -197,6 +202,7 @@ export default function HomePage() {
                   </p>
                 </div>
               )}
+              </LoadingSwap>
             </div>
           </section>
 

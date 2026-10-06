@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
+import { DialogOverlay, DialogPanel, DialogPresence } from "@/components/ui/Dialog";
 import type { UserOnboardingProfile } from "@/types";
 import { OnboardingFlow } from "./OnboardingFlow";
 import { EMPTY_DRAFT, draftFromProfile } from "./types";
@@ -94,20 +94,15 @@ export function OnboardingEditModal({
     };
   }, [open]);
 
-  // `open` only flips true via client interaction (post-hydration), so the
-  // portal is never reached during SSR; the typeof guard is belt-and-braces.
-  // Portaling to <body> lets the `fixed inset-0` overlay cover the true viewport
-  // instead of being clipped to the page's transformed `animate-fade-in` wrapper
-  // (a non-`none` transform becomes the containing block for fixed positioning).
-  if (!open || typeof document === "undefined") return null;
-
-  return createPortal(
-    <div
+  // DialogPresence portals to <body>, so the `fixed inset-0` overlay covers the
+  // true viewport whatever the page's ancestors do.
+  const dialog = (
+    <DialogOverlay
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
       onClick={onClose}
       role="presentation"
     >
-      <div
+      <DialogPanel
         ref={dialogRef}
         tabIndex={-1}
         className="flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-card bg-surface shadow-lg focus:outline-none"
@@ -138,8 +133,9 @@ export function OnboardingEditModal({
             onCancel={onClose}
           />
         </div>
-      </div>
-    </div>,
-    document.body,
+      </DialogPanel>
+    </DialogOverlay>
   );
+
+  return <DialogPresence open={open}>{dialog}</DialogPresence>;
 }

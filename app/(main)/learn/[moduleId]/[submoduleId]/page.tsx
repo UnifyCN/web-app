@@ -148,7 +148,7 @@ export default function SubmoduleLandingPage({
           ) : (
             <Link
               href={`/learn/${moduleId}/${submoduleId}/${targetLesson._id}`}
-              className="flex items-center justify-between gap-3 rounded-card p-4 text-white shadow-sm transition-all duration-200 hover:opacity-95 active:scale-[0.99]"
+              className="flex items-center justify-between gap-3 rounded-card p-4 text-white shadow-sm press hover:opacity-95"
               style={{ backgroundColor: colorHex }}
             >
               <div className="min-w-0">

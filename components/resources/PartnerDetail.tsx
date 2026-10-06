@@ -150,7 +150,7 @@ export function PartnerDetail({ partner }: { partner: ResourcePartner }) {
   return (
     <div
       className={cn(
-        "mx-auto w-full max-w-[1000px] animate-fade-in px-4 py-6 md:px-8 md:py-16",
+        "mx-auto w-full max-w-[1000px] px-4 py-6 md:px-8 md:py-16",
         // Clear the sticky action bar on phones.
         hasActions && "pb-28",
       )}

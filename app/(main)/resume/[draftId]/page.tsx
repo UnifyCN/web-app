@@ -140,7 +140,7 @@ function ResumeEditor() {
   const resumeData = draft?.resume ?? emptyResume();
 
   return (
-    <div className="flex h-[calc(100dvh_-_3.5rem_-_env(safe-area-inset-bottom))] animate-fade-in md:h-dvh">
+    <div className="flex h-[calc(100dvh_-_3.5rem_-_env(safe-area-inset-bottom))] md:h-dvh">
       <ResumeChatColumn
         draft={draft}
         draftId={draftId}

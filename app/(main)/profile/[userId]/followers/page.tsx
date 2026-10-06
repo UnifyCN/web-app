@@ -82,7 +82,7 @@ function FollowersFollowingContent() {
   const tabLabels = [t("profile.followersTab"), t("profile.followingTab")];
 
   return (
-    <div className="mx-auto max-w-[680px] animate-fade-in px-6 py-6">
+    <div className="mx-auto max-w-[680px] px-6 py-6">
       <div className="mb-4 flex items-center gap-3">
         <Link
           href={`/profile/${userId}`}

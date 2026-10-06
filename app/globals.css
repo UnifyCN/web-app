@@ -123,6 +123,48 @@
    * Gurmukhi (Punjabi) falls through to Noto Gurmukhi. */
   --font-sans: var(--font-inter), var(--font-noto-devanagari),
     var(--font-noto-arabic), var(--font-noto-gurmukhi);
+
+  /* Motion — the values live in lib/motion.ts and reach CSS as the --motion-*
+   * variables the root layout sets on <html> (the fallbacks only cover a page
+   * rendered without that layout). Pointing Tailwind's own tokens at them means
+   * every `transition-*`, `ease-out` and `ease-in` utility uses the shared curve. */
+  --ease-out: var(--motion-ease-out, cubic-bezier(0.33, 1, 0.68, 1));
+  --ease-in: var(--motion-ease-in, cubic-bezier(0.32, 0, 0.67, 0));
+  --default-transition-duration: var(--motion-fast, 150ms);
+  --default-transition-timing-function: var(
+    --motion-ease-out,
+    cubic-bezier(0.33, 1, 0.68, 1)
+  );
+}
+
+/* Press feedback — one recipe wherever something is tappable. `press` is for
+ * buttons and cards (a slight shrink); `press-dim` is for rows and nav tiles
+ * that should hold their size (they dim, as the native app does). Both also
+ * carry the colour/shadow transition, so they replace `transition-colors` on
+ * the element rather than joining it. No shrink while keyboard focus is
+ * visible, on disabled controls, or under reduced motion. */
+@utility press {
+  transition-property: color, background-color, border-color, box-shadow,
+    opacity, scale;
+  transition-duration: var(--motion-press, 120ms);
+  transition-timing-function: var(--motion-ease-out, ease-out);
+
+  @media (prefers-reduced-motion: no-preference) {
+    &:active:not(:disabled):not(:focus-visible) {
+      scale: var(--motion-press-scale, 0.97);
+    }
+  }
+}
+
+@utility press-dim {
+  transition-property: color, background-color, border-color, box-shadow,
+    opacity;
+  transition-duration: var(--motion-press, 120ms);
+  transition-timing-function: var(--motion-ease-out, ease-out);
+
+  &:active:not(:disabled) {
+    opacity: var(--motion-press-dim, 0.7);
+  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -195,7 +237,7 @@ input:-webkit-autofill:active {
   }
 }
 .animate-like-pop {
-  animation: like-pop 200ms ease-out;
+  animation: like-pop var(--motion-base, 200ms) var(--motion-ease-out, ease-out);
 }
 
 /* Companion — chat message entrance (emil-design-eng, ≤200ms ease-out). */
@@ -210,7 +252,7 @@ input:-webkit-autofill:active {
   }
 }
 .animate-message-in {
-  animation: message-in 180ms ease-out;
+  animation: message-in var(--motion-base, 200ms) var(--motion-ease-out, ease-out);
 }
 
 /* Companion — typing indicator dot pulse (smooth, no bounce easing). */
@@ -245,7 +287,7 @@ input:-webkit-autofill:active {
   }
 }
 .animate-checkbox-pop {
-  animation: checkbox-pop 150ms ease-out;
+  animation: checkbox-pop var(--motion-fast, 150ms) var(--motion-ease-out, ease-out);
 }
 
 /* Delete-account hold-to-confirm — Emil Kowalski's clip-path technique
@@ -257,10 +299,10 @@ input:-webkit-autofill:active {
  * so the reveal is visible for everyone; the actual delete is gated by a JS 3s
  * setTimeout regardless of the visual. */
 .hold-delete-btn {
-  transition: transform 200ms ease-out;
+  transition: transform var(--motion-press, 120ms) var(--motion-ease-out, ease-out);
 }
 .hold-delete-btn:active {
-  transform: scale(0.97);
+  transform: scale(var(--motion-press-scale, 0.97));
 }
 .hold-delete-btn .hold-overlay {
   clip-path: inset(0px 100% 0px 0px);
@@ -289,7 +331,7 @@ input:-webkit-autofill:active {
   background: currentColor;
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 200ms ease-out;
+  transition: transform var(--motion-base, 200ms) var(--motion-ease-out, ease-out);
 }
 /* Grow the strike from the reading-start edge (right) under RTL. */
 [dir="rtl"] .task-strike::after {
@@ -299,7 +341,9 @@ input:-webkit-autofill:active {
   transform: scaleX(1);
 }
 
-/* Skeleton → content / list entrance — subtle fade. Defined unconditionally so
+/* Content arriving in place (results, a tab's panel) — subtle fade. Page
+ * changes are handled by components/layout/PageFade.tsx, not this class, so the
+ * first page load never fades. Defined unconditionally so
  * it fires on mobile Safari: the previous `prefers-reduced-motion: no-preference`
  * wrapper silently suppressed it whenever that query didn't evaluate true on a
  * phone (notably iOS Low Power Mode, which forces the reduce signal). Users who
@@ -316,7 +360,7 @@ input:-webkit-autofill:active {
   }
 }
 .animate-fade-in {
-  animation: fade-in 150ms ease-out both;
+  animation: fade-in var(--motion-base, 200ms) var(--motion-ease-out, ease-out) both;
 }
 
 /* Respect reduced-motion — disable non-essential animation */

@@ -3,6 +3,11 @@
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { StorageImage } from "@/components/ui/StorageImage";
+import {
+  DialogOverlay,
+  DialogPanel,
+  DialogPresence,
+} from "@/components/ui/Dialog";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useIsRtl } from "@/hooks/useDirection";
 import { cn, RTL_FLIP } from "@/lib/utils";
@@ -64,12 +69,10 @@ export function ImageLightbox({
     };
   }, [open, multi, isRtl, goPrev, goNext, onClose]);
 
-  if (!open || count === 0) return null;
+  const safeIndex = count > 0 ? ((index % count) + count) % count : 0;
 
-  const safeIndex = ((index % count) + count) % count;
-
-  return (
-    <div
+  const dialog = (
+    <DialogOverlay
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-4"
       onClick={onClose}
       role="presentation"
@@ -86,7 +89,7 @@ export function ImageLightbox({
         <X className="h-5 w-5" aria-hidden />
       </button>
 
-      <div
+      <DialogPanel
         className="relative h-[85vh] w-[90vw] max-w-5xl"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
@@ -130,7 +133,9 @@ export function ImageLightbox({
             </div>
           </>
         )}
-      </div>
-    </div>
+      </DialogPanel>
+    </DialogOverlay>
   );
+
+  return <DialogPresence open={open && count > 0}>{dialog}</DialogPresence>;
 }

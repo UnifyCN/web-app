@@ -275,7 +275,7 @@ function LearnPageContent() {
   return (
     <div className="mx-auto max-w-[1080px] px-6 py-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <div className="order-2 min-w-0 flex-1 animate-fade-in space-y-8 lg:order-1">
+        <div className="order-2 min-w-0 flex-1 space-y-8 lg:order-1">
           {/* Search results (when searching), then "Browse all modules". */}
           {isSearching && (
             <>

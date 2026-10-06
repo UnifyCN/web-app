@@ -5,6 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { HelpCircle, Loader2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { explainTerm } from "@/services/highlights";
+import {
+  DialogOverlay,
+  DialogPanel,
+  DialogPresence,
+} from "@/components/ui/Dialog";
 
 interface ExplainTermModalProps {
   /** The selected term to explain. When null, the modal is closed. */
@@ -54,10 +59,10 @@ export function ExplainTermModal({
     return () => previouslyFocused?.focus?.();
   }, [term]);
 
-  if (!term) return null;
-
-  return (
-    <div
+  // While the dialog fades out, AnimatePresence keeps showing its last render,
+  // so the term and explanation stay on screen after `term` clears.
+  const dialog = (
+    <DialogOverlay
       className="fixed inset-0 z-[90] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
@@ -69,7 +74,7 @@ export function ExplainTermModal({
         onClick={onClose}
         aria-label={t("common.close")}
       />
-      <div className="relative w-full max-w-md rounded-card border border-border-card bg-surface p-5 shadow-xl">
+      <DialogPanel className="relative w-full max-w-md rounded-card border border-border-card bg-surface p-5 shadow-xl">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-bg text-primary">
@@ -119,7 +124,9 @@ export function ExplainTermModal({
             <p>{query.data?.explanation}</p>
           )}
         </div>
-      </div>
-    </div>
+      </DialogPanel>
+    </DialogOverlay>
   );
+
+  return <DialogPresence open={!!term}>{dialog}</DialogPresence>;
 }

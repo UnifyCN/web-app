@@ -44,7 +44,7 @@ import { isTeamEvent } from "@/lib/admin/eventList";
 
 function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto max-w-[720px] animate-fade-in px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-[720px] px-4 py-6 sm:px-6">
       {children}
     </div>
   );

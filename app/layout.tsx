@@ -20,6 +20,7 @@ import {
   negotiateLanguage,
   type SupportedLanguage,
 } from "@/lib/i18n/config";
+import { motionCssVars } from "@/lib/motion";
 import "./globals.css";
 
 const inter = Inter({
@@ -120,6 +121,8 @@ export default async function RootLayout({
       lang={initialLocale}
       dir={dirForLanguage(initialLocale)}
       className={`${inter.variable} ${notoDevanagari.variable} ${notoArabic.variable} ${notoGurmukhi.variable} h-full antialiased`}
+      // Motion tokens for CSS, from the same config Framer Motion reads.
+      style={motionCssVars}
     >
       <body
         className="min-h-full flex flex-col font-sans"

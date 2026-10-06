@@ -5,6 +5,11 @@ import { useTranslation } from "react-i18next";
 import { X, Check, ImagePlus, Search } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import {
+  DialogOverlay,
+  DialogPanel,
+  DialogPresence,
+} from "@/components/ui/Dialog";
 import { useCreatePost } from "@/hooks/useFeed";
 import { useGroups, useJoinGroup } from "@/hooks/useCommunity";
 import { uploadPostImages } from "@/lib/supabase/uploadImage";
@@ -86,8 +91,6 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
     [],
   );
 
-  if (!open) return null;
-
   const canPost =
     title.trim().length > 0 &&
     body.trim().length > 0 &&
@@ -158,13 +161,13 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
     }
   }
 
-  return (
-    <div
+  const dialog = (
+    <DialogOverlay
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
       onClick={onClose}
       role="presentation"
     >
-      <div
+      <DialogPanel
         className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-card bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
         role="dialog"
@@ -279,8 +282,8 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                   ) : (
                     <div className="relative mt-1">
                       {/* Scrolls internally; the bottom fade hints there are more
-                          groups below the visible rows. pb-6 keeps the last row
-                          clear of the fade. */}
+                        groups below the visible rows. pb-6 keeps the last row
+                        clear of the fade. */}
                       <div className="max-h-72 overflow-y-auto pb-6">
                         {/* Your Groups */}
                         <h3 className="text-sm font-bold text-ink-secondary">
@@ -420,7 +423,9 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                       {/* eslint-disable-next-line @next/next/no-img-element -- local object-URL preview, not a remote asset */}
                       <img
                         src={img.url}
-                        alt={t("posts.selectedImageAlt", { number: index + 1 })}
+                        alt={t("posts.selectedImageAlt", {
+                          number: index + 1,
+                        })}
                         className="h-full w-full object-cover"
                       />
                       <button
@@ -473,7 +478,9 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
             </div>
           </>
         )}
-      </div>
-    </div>
+      </DialogPanel>
+    </DialogOverlay>
   );
+
+  return <DialogPresence open={open}>{dialog}</DialogPresence>;
 }

@@ -31,6 +31,7 @@ import { PRIORITY_LABEL_KEY } from "@/lib/i18n/labels";
 import { useReorderTasks } from "@/hooks/useChecklist";
 import { TaskRow } from "./TaskRow";
 import type { ChecklistTask, Priority } from "@/types";
+import { Reveal } from "@/components/ui/Reveal";
 
 /** One sortable row — only the right-side handle (its dnd-kit attributes +
  *  listeners) starts the drag; the rest of the row stays interactive. */
@@ -212,7 +213,7 @@ export function PrioritySection({
         />
       </button>
 
-      {open && (
+      <Reveal open={open}>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -240,7 +241,7 @@ export function PrioritySection({
             </div>
           </SortableContext>
         </DndContext>
-      )}
+      </Reveal>
     </section>
   );
 }

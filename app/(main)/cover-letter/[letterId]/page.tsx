@@ -128,7 +128,7 @@ function CoverLetterEditor() {
   const letterData = draft?.coverLetter ?? emptyCoverLetter();
 
   return (
-    <div className="flex h-[calc(100dvh_-_3.5rem_-_env(safe-area-inset-bottom))] animate-fade-in md:h-dvh">
+    <div className="flex h-[calc(100dvh_-_3.5rem_-_env(safe-area-inset-bottom))] md:h-dvh">
       <CoverLetterChatColumn
         draft={draft}
         draftId={draftId}

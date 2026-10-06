@@ -24,6 +24,7 @@ import {
   useStartCircleMatching,
 } from "@/hooks/useCommunity";
 import type { EventGenre } from "@/types";
+import { LoadingSwap } from "@/components/ui/LoadingSwap";
 
 const TAB_GROUPS = "groups";
 const TAB_EVENTS = "events";
@@ -182,7 +183,7 @@ function CommunityPageContent() {
     tabLabels[0];
 
   return (
-    <div className="mx-auto max-w-[1080px] animate-fade-in px-6 py-6">
+    <div className="mx-auto max-w-[1080px] px-6 py-6">
       <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
         {t("tabs.community")}
       </h1>
@@ -212,13 +213,20 @@ function CommunityPageContent() {
             </div>
 
             {search.trim() === "" &&
-              (joinedGroupsQuery.isLoading ? (
+              (<LoadingSwap
+                loading={joinedGroupsQuery.isLoading}
+                skeleton={
                 <MyGroupsStripSkeleton />
-              ) : (
+                }
+              >
+                {(
                 <MyGroupsStrip groups={joinedGroups} />
-              ))}
+              )}
+              </LoadingSwap>)}
 
-            {groupsQuery.isLoading ? (
+            <LoadingSwap
+              loading={groupsQuery.isLoading}
+              skeleton={
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div
@@ -241,7 +249,9 @@ function CommunityPageContent() {
                   </div>
                 ))}
               </div>
-            ) : groupsQuery.error ? (
+              }
+            >
+              {groupsQuery.error ? (
               <p
                 role="alert"
                 className="py-12 text-center text-sm text-destructive"
@@ -261,6 +271,7 @@ function CommunityPageContent() {
                   : t("groups.noGroupsMatch")}
               </p>
             )}
+            </LoadingSwap>
 
             <Button
               variant="secondary"
@@ -272,10 +283,13 @@ function CommunityPageContent() {
           </div>
         )}
 
-        {activeTab === TAB_EVENTS && (
-          eventsQuery.isLoading ? (
+        {activeTab === TAB_EVENTS && (<LoadingSwap
+   loading={eventsQuery.isLoading}
+   skeleton={
             <EventsSkeleton />
-          ) : eventsQuery.error ? (
+   }
+ >
+   {eventsQuery.error ? (
             <p role="alert" className="py-12 text-center text-sm text-destructive">
               {t("events.failedLoad")}
             </p>
@@ -302,13 +316,15 @@ function CommunityPageContent() {
             <p className="py-12 text-center text-sm text-ink-placeholder">
               {t("events.noUpcoming")}
             </p>
-          )
-        )}
+          )}
+ </LoadingSwap>)}
 
         {activeTab === TAB_NEWS && (
           <div className="space-y-4">
             <DailyTipCard />
-            {newsQuery.isLoading ? (
+            <LoadingSwap
+              loading={newsQuery.isLoading}
+              skeleton={
               <div className="divide-y divide-border-card rounded-card border border-border-card bg-surface px-4">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div
@@ -329,7 +345,9 @@ function CommunityPageContent() {
                   </div>
                 ))}
               </div>
-            ) : newsQuery.error ? (
+              }
+            >
+              {newsQuery.error ? (
               <p
                 role="alert"
                 className="py-12 text-center text-sm text-destructive"
@@ -347,6 +365,7 @@ function CommunityPageContent() {
                 {t("news.noNews")}
               </p>
             )}
+            </LoadingSwap>
           </div>
         )}
 

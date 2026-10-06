@@ -791,7 +791,7 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-[680px] animate-fade-in px-6 py-6">
+      <div className="mx-auto max-w-[680px] px-6 py-6">
         <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
           {t("settings.title")}
         </h1>
@@ -822,7 +822,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[680px] animate-fade-in px-6 py-6">
+    <div className="mx-auto max-w-[680px] px-6 py-6">
       <h1 className="mb-5 text-center text-xl font-semibold text-ink-secondary">
         {t("settings.title")}
       </h1>

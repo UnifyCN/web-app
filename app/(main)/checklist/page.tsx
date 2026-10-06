@@ -13,6 +13,7 @@ import {
   useToggleTask,
 } from "@/hooks/useChecklist";
 import type { ChecklistTask, Priority } from "@/types";
+import { LoadingSwap } from "@/components/ui/LoadingSwap";
 
 const PRIORITY_ORDER: Priority[] = [
   "Do now",
@@ -113,21 +114,20 @@ export default function ChecklistPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[720px] animate-fade-in px-6 py-6">
+    <div className="mx-auto max-w-[720px] px-6 py-6">
       <h1 className="text-xl font-semibold text-ink-secondary">
         {t("tabs.checklist")}
       </h1>
       <p className="mt-1 text-sm text-ink-muted">{t("checklist.subtitle")}</p>
 
-      {isLoading && <ChecklistSkeleton />}
-
+      <LoadingSwap loading={isLoading} skeleton={<ChecklistSkeleton />}>
       {error && (
         <p role="alert" className="mt-5 text-sm text-destructive">
           {t("checklist.loadError")}
         </p>
       )}
 
-      {!isLoading && !error && (
+      {!error && (
         <div className="mt-5 space-y-4">
           <OverallProgressBar
             completed={completedCount}
@@ -147,6 +147,7 @@ export default function ChecklistPage() {
           <AddCustomTask onAdd={handleAdd} />
         </div>
       )}
+      </LoadingSwap>
 
       <DeleteTaskModal
         open={deleteTarget !== null}

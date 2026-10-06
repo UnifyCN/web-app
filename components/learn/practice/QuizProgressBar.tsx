@@ -58,9 +58,15 @@ export function QuizProgressBar({
         aria-valuemin={0}
         aria-valuemax={100}
       >
+        {/* Scaled, not resized, so the fill costs no layout work per frame and
+            the gradient still spans exactly the filled part. */}
         <div
-          className="h-full rounded-full transition-all duration-300 ease-out"
-          style={{ width: `${clamped}%`, background: fillStyle(colorHex, isRtl) }}
+          className="h-full w-full rounded-full transition-transform duration-[var(--motion-slow)] ease-out"
+          style={{
+            transform: `scaleX(${clamped / 100})`,
+            transformOrigin: isRtl ? "right center" : "left center",
+            background: fillStyle(colorHex, isRtl),
+          }}
         />
       </div>
     </div>

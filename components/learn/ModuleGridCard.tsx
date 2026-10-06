@@ -30,7 +30,7 @@ export function ModuleGridCard({ mod }: ModuleGridCardProps) {
   return (
     <Link
       href={`/learn/${mod._id}`}
-      className="group relative block aspect-[5/4] overflow-hidden rounded-card text-white shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-md"
+      className="group relative block aspect-[5/4] overflow-hidden rounded-card text-white shadow-sm press hover:shadow-md"
       style={{ backgroundColor: colorHex }}
     >
       <Blob

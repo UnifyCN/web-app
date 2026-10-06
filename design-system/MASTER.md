@@ -204,16 +204,22 @@ hover `bg-surface-gray text-ink`.
 
 ## Motion (taste-skill dials: VARIANCE=6, MOTION=3, DENSITY=7)
 
-- All UI transitions **≤300ms**, ease-out. Default `duration-150` for hover/colour.
+- All UI transitions **≤300ms**, ease-out. Every duration, easing and spring comes
+  from `lib/motion.ts` (see "Motion system" in CLAUDE.md): press 120ms, arrivals
+  200ms, exits 150ms. Never hard-code one.
 - Respect `prefers-reduced-motion` — disable non-essential motion.
-- **Animate only** (per CLAUDE.md / emil-design-eng):
+- **Animate:**
+  - Press feedback on anything tappable (`press` / `press-dim`).
+  - Things that arrive or leave: dialogs, menus, content opened in place, loaded
+    content replacing a skeleton, toasts.
   - Chat message send/receive — scale + opacity, ≤200ms ease-out.
   - Checklist checkbox — scale bounce ≤150ms + strikethrough transition ≤200ms.
   - Like button — press feedback.
   - Tab switch — underline slide.
-  - Toast appear/dismiss.
-- **Never animate:** sidebar nav clicks, page transitions, form submissions, any
-  keyboard-initiated action, anything repeated >10×/day.
+  - Page change — 200ms fade-in only; no slide, no exit, never on first load.
+- **Never animate:** sidebar nav clicks, form submissions, any keyboard-initiated
+  action, anything repeated >10×/day. Nothing loops except real waits (skeleton
+  pulse, typing dots, spinners).
 
 ---
 

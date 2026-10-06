@@ -39,7 +39,7 @@ export default function NewAdminEventPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[720px] animate-fade-in px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-[720px] px-4 py-6 sm:px-6">
       <AdminEventHeader
         title="Add event"
         subtitle="It goes live in the Unify apps when you save. Times are Pacific."

@@ -1,5 +1,8 @@
 "use client";
 
+import { useId } from "react";
+import { motion } from "framer-motion";
+import { SPRING } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 interface TabsProps {
@@ -11,8 +14,11 @@ interface TabsProps {
   className?: string;
 }
 
-/** Underline tab bar — active tab carries an orange underline + label. */
+/** Underline tab bar — active tab carries an orange underline + label. The
+ *  underline is one element that slides to the active tab (Framer `layoutId`,
+ *  so it follows the tab in RTL too and jumps under reduced motion). */
 export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
+  const underlineId = useId();
   return (
     <div
       role="tablist"
@@ -32,15 +38,24 @@ export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
             aria-selected={isActive}
             onClick={() => onChange(tab, index)}
             className={cn(
-              "relative -mb-px cursor-pointer border-b-2 px-5 py-3",
-              "text-sm transition-colors duration-150",
+              "relative -mb-px cursor-pointer border-b-2 border-transparent px-5 py-3",
+              "press-dim text-sm",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
               isActive
-                ? "border-primary font-semibold text-primary"
-                : "border-transparent font-medium text-ink-inactive hover:text-ink",
+                ? "font-semibold text-primary"
+                : "font-medium text-ink-inactive hover:text-ink",
             )}
           >
             {tab}
+            {isActive && (
+              <motion.span
+                layoutId={underlineId}
+                transition={SPRING}
+                // Sits over the button's transparent bottom border.
+                className="absolute inset-x-0 -bottom-0.5 h-0.5 bg-primary"
+                aria-hidden
+              />
+            )}
           </button>
         );
       })}

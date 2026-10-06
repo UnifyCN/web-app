@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { useIsRtl } from "@/hooks/useDirection";
 
 interface OverallProgressBarProps {
   completed: number;
@@ -13,6 +14,7 @@ export function OverallProgressBar({
   total,
 }: OverallProgressBarProps) {
   const { t } = useTranslation();
+  const isRtl = useIsRtl();
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
@@ -26,9 +28,13 @@ export function OverallProgressBar({
         </span>
       </div>
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-surface-input">
+        {/* Full-width fill slid into view with a transform (no layout work per
+            frame); the track clips it. It enters from the reading-start edge. */}
         <div
-          className="h-full rounded-full bg-primary transition-all duration-300 ease-out"
-          style={{ width: `${percent}%` }}
+          className="h-full w-full rounded-full bg-primary transition-transform duration-[var(--motion-slow)] ease-out"
+          style={{
+            transform: `translateX(${isRtl ? 100 - percent : percent - 100}%)`,
+          }}
         />
       </div>
     </div>
