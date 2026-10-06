@@ -34,16 +34,6 @@ const MAX_MULTIPART_OVERHEAD_BYTES = 8 * 1024;
 // segment, so it can't reach another user's path via extra segments.
 const STORAGE_FILENAME = /^[A-Za-z0-9._-]+$/;
 
-// Upper bound on keys per batched `getMany` sign request. Must match
-// SIGN_BATCH_MAX in lib/supabase/imageStorage.ts.
-const MAX_BATCH_KEYS = 50;
-
-// Per-key signing timeout inside a batch. Shorter than STORAGE_TIMEOUT_MS so a
-// single stuck sign can't hold the whole Promise.all past the route's 10s
-// maxDuration: that leaves room for getUser and the response, and the stuck
-// key just resolves to null (its image falls back) while the rest return.
-const BATCH_SIGN_TIMEOUT_MS = 6_000;
-
 /** fetch() with a hard timeout. On timeout the AbortController fires and fetch()
  *  rejects with an AbortError (see isAbortError). */
 async function fetchWithTimeout(
@@ -82,10 +72,12 @@ function isAbortError(err: unknown): boolean {
  * AND the browser→S3 CORS on the PUT/DELETE. Uses the server Supabase client so
  * the request carries the caller's session JWT.
  *
- *   POST (json) { op:"get", key }    -> { url }
- *   POST (json) { op:"getMany", keys } -> { urls: { [key]: url | null } }
  *   POST (json) { op:"remove", key } -> { ok: true }   (server-side S3 DELETE)
  *   POST (multipart, field "file")   -> { key }         (server-side S3 PUT)
+ *
+ * There is deliberately no operation that returns a signed read URL to the
+ * browser. Images are served, validated and resized, by
+ * `app/api/storage/image/route.ts` instead.
  */
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -214,112 +206,61 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ key: data.key });
   }
 
-  // ---- get / remove (json) ------------------------------------------------
+  // ---- remove (json) ------------------------------------------------------
   const body = (await req.json().catch(() => ({}))) as {
     op?: string;
     key?: string;
-    keys?: unknown;
   };
   const op = body.op;
 
-  if (op === "getMany") {
-    // Batched read signing: one route call (one getUser, one function
-    // instance) for a whole feed of avatars / post images instead of one per
-    // image. Signs in parallel; a key that fails maps to null so one bad
-    // object never blanks the rest. Cross-user like `get`.
-    const keys = Array.isArray(body.keys)
-      ? [
-          ...new Set(
-            body.keys
-              .filter((k): k is string => typeof k === "string")
-              .map((k) => k.trim())
-              .filter(Boolean),
-          ),
-        ]
-      : [];
-    if (keys.length === 0 || keys.length > MAX_BATCH_KEYS) {
-      return NextResponse.json({ error: "Invalid keys" }, { status: 400 });
-    }
-    const signed = await Promise.all(
-      keys.map(async (k) => {
-        const { data, error } = await supabase.functions.invoke<{
-          url: string;
-        }>("profile-picture-get", {
-          body: { key: k },
-          timeout: BATCH_SIGN_TIMEOUT_MS,
-        });
-        if (error) console.error("/api/storage getMany: sign failed", error);
-        return [k, data?.url ?? null] as const;
-      }),
-    );
-    return NextResponse.json({ urls: Object.fromEntries(signed) });
-  }
   const key = typeof body.key === "string" ? body.key.trim() : "";
   if (!key) {
     return NextResponse.json({ error: "Invalid key" }, { status: 400 });
   }
-  if (op !== "get" && op !== "remove") {
+  if (op !== "remove") {
     return NextResponse.json({ error: "Invalid operation" }, { status: 400 });
   }
 
-  if (op === "remove") {
-    // Owner-only delete: the key must be `users/<own-uid>/<filename>` with a
-    // single filename segment (no `/`), so a user can only delete their own
-    // objects — never another user's, and never via extra path segments. (A
-    // lone `..` filename is allowed by the charset but harmless: it stays within
-    // the user's own prefix. `get` is intentionally cross-user — the feed
-    // resolves other users' avatars and post images.)
-    const ownPrefix = `users/${user.id}/`;
-    if (
-      !key.startsWith(ownPrefix) ||
-      !STORAGE_FILENAME.test(key.slice(ownPrefix.length))
-    ) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-    const { data, error } = await supabase.functions.invoke<{
-      deleteUrl: string;
-    }>("profile-picture-remove", { body: { key }, timeout: STORAGE_TIMEOUT_MS });
-    if (error || !data?.deleteUrl) {
-      if (error) console.error("/api/storage remove: sign failed", error);
-      const timedOut = isAbortError(error);
-      return NextResponse.json(
-        { error: timedOut ? "Image delete timed out" : "Image delete failed" },
-        { status: timedOut ? 504 : 502 },
-      );
-    }
-    let del: Response;
-    try {
-      del = await fetchWithTimeout(data.deleteUrl, { method: "DELETE" });
-    } catch (err) {
-      console.error("/api/storage remove: S3 DELETE failed", err);
-      const timedOut = isAbortError(err);
-      return NextResponse.json(
-        { error: timedOut ? "Image delete timed out" : "Image delete failed" },
-        { status: timedOut ? 504 : 502 },
-      );
-    }
-    if (!del.ok) {
-      console.error("/api/storage remove: S3 DELETE status", del.status);
-      return NextResponse.json(
-        { error: "Image delete failed" },
-        { status: 502 },
-      );
-    }
-    return NextResponse.json({ ok: true });
+  // Owner-only delete: the key must be `users/<own-uid>/<filename>` with a
+  // single filename segment (no `/`), so a user can only delete their own
+  // objects — never another user's, and never via extra path segments. (A
+  // lone `..` filename is allowed by the charset but harmless: it stays within
+  // the user's own prefix.)
+  const ownPrefix = `users/${user.id}/`;
+  if (
+    !key.startsWith(ownPrefix) ||
+    !STORAGE_FILENAME.test(key.slice(ownPrefix.length))
+  ) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-
-  // default: get a signed read URL
-  const { data, error } = await supabase.functions.invoke<{ url: string }>(
-    "profile-picture-get",
-    { body: { key }, timeout: STORAGE_TIMEOUT_MS },
-  );
-  if (error || !data?.url) {
-    if (error) console.error("/api/storage get: sign failed", error);
+  const { data, error } = await supabase.functions.invoke<{
+    deleteUrl: string;
+  }>("profile-picture-remove", { body: { key }, timeout: STORAGE_TIMEOUT_MS });
+  if (error || !data?.deleteUrl) {
+    if (error) console.error("/api/storage remove: sign failed", error);
     const timedOut = isAbortError(error);
     return NextResponse.json(
-      { error: timedOut ? "Image request timed out" : "Image request failed" },
+      { error: timedOut ? "Image delete timed out" : "Image delete failed" },
       { status: timedOut ? 504 : 502 },
     );
   }
-  return NextResponse.json({ url: data.url });
+  let del: Response;
+  try {
+    del = await fetchWithTimeout(data.deleteUrl, { method: "DELETE" });
+  } catch (err) {
+    console.error("/api/storage remove: S3 DELETE failed", err);
+    const timedOut = isAbortError(err);
+    return NextResponse.json(
+      { error: timedOut ? "Image delete timed out" : "Image delete failed" },
+      { status: timedOut ? 504 : 502 },
+    );
+  }
+  if (!del.ok) {
+    console.error("/api/storage remove: S3 DELETE status", del.status);
+    return NextResponse.json(
+      { error: "Image delete failed" },
+      { status: 502 },
+    );
+  }
+  return NextResponse.json({ ok: true });
 }

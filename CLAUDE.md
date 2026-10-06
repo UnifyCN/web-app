@@ -184,7 +184,13 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
     `Avatar`, `StorageImage`). The storage edge function's signed URLs expire after 60 seconds
     and point at full-size originals, so the route signs server-side, resizes with `sharp`, and
     answers with a one-year `Cache-Control`. The URL for a key + width never changes, so revisits
-    come from the browser cache. Never render a signed S3 URL directly.
+    come from the browser cache, and the response is also cached at Vercel's edge (`s-maxage`), so
+    only the first request for a picture pays for signing and resizing. `proxy.ts` still checks
+    the session before the edge cache answers. Never render a signed S3 URL directly. The route
+    only accepts `users/<uuid>/<file>.<jpg|png|webp>` keys and a fixed list of widths (400
+    otherwise), fetches only from the one host in `lib/supabase/storageHost.ts` without following
+    redirects, and checks the bytes are a JPEG, PNG or WebP before decoding. Keep those checks
+    strict, and never let this route's response carry a `Set-Cookie`.
   - **Prefetch.** Each hooks file exports a `prefetch*` helper beside its query hooks;
     `hooks/usePrefetchTab.ts` maps nav hrefs to them. `components/layout/TabPrefetcher.tsx` warms
     the other tabs once the page is idle (skipped on Save-Data / 2G), and the nav warms a tab on

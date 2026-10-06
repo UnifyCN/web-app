@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+import { fileTypeFromBuffer } from "file-type";
 import sharp from "sharp";
-import { createClient } from "@/lib/supabase/server";
 import { parseImageRequest } from "@/lib/supabase/imageUrl";
+import { ALLOWED_IMAGE_MIME_TYPES } from "@/lib/supabase/imageValidation";
+import { isTrustedStorageUrl } from "@/lib/supabase/storageHost";
 
 // sharp is a Node dependency; this route must never run on the Edge runtime.
 export const runtime = "nodejs";
@@ -9,14 +13,63 @@ export const maxDuration = 15;
 
 const SIGN_TIMEOUT_MS = 6_000;
 const FETCH_TIMEOUT_MS = 8_000;
-// Refuse to buffer anything far beyond what the upload paths accept.
+const RESIZE_TIMEOUT_SECONDS = 5;
+// Uploads are capped at 4MB; this leaves room for larger photos from the
+// native app while refusing to buffer anything far beyond that.
 const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
 // Caps decode memory: a 50-megapixel source is already larger than any phone photo.
 const MAX_SOURCE_PIXELS = 50_000_000;
 
-// Keys are immutable (a new upload gets a new key), so a given key + width can
-// be cached for good. `private`: the response depends on the caller's session.
-const CACHE_CONTROL = "private, max-age=31536000, immutable";
+// Keys are immutable (a new upload gets a new key) and the bytes depend only on
+// the key and width, never on who asked, so the result is cached twice: by the
+// browser for a year, and by the CDN for 30 days (`s-maxage`) so the first
+// request pays for the signing and resize and everyone after gets the stored
+// copy. Sharing it does not open it up: `proxy.ts` runs before the CDN cache on
+// every request and turns away anyone who is not signed in.
+const SHARED_CACHE_CONTROL =
+  "public, max-age=31536000, s-maxage=2592000, immutable";
+// Used instead when this request had to write a session cookie: a response
+// that sets a cookie must never be stored in a shared cache.
+const PRIVATE_CACHE_CONTROL = "private, max-age=31536000, immutable";
+
+// Errors are never cached, so a transient failure cannot stick.
+const fail = (error: string, status: number) =>
+  NextResponse.json(
+    { error },
+    { status, headers: { "Cache-Control": "no-store" } },
+  );
+
+/**
+ * Reads a response body up to `limit` bytes. Returns null as soon as the body
+ * turns out to be larger, so an oversized or mislabelled object is never fully
+ * buffered, whatever its Content-Length header claimed.
+ */
+async function readCapped(
+  response: Response,
+  limit: number,
+): Promise<Uint8Array | null> {
+  const reader = response.body?.getReader();
+  if (!reader) return null;
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limit) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
 
 /**
  * GET /api/storage/image?key=<object key>&w=<width>
@@ -28,24 +81,50 @@ const CACHE_CONTROL = "private, max-age=31536000, immutable";
  * a minute. This route does the signing server-side, resizes with sharp, and
  * lets the browser cache the result.
  *
- * Access is unchanged: the signed URL comes from `profile-picture-get`, invoked
- * with the caller's session, and that function verifies the JWT itself. No
- * valid session, no signed URL, no image. Output is always re-encoded, so the
- * route never relays the stored bytes as-is.
+ * What it will and will not do:
+ * - The caller never supplies a URL. They supply a key, which must be a user's
+ *   picture (`users/<uuid>/<file>.<jpg|png|webp>`), and one of a fixed list of
+ *   widths; anything else is a 400. Keep that shape check strict: it is what
+ *   limits this route to pictures.
+ * - Only signed-in people get an image. `proxy.ts` verifies the session on
+ *   every request, including ones the CDN answers from its cache, and the
+ *   signed URL comes from `profile-picture-get`, invoked with the caller's
+ *   session (its gateway verifies the JWT again).
+ * - The server only fetches from the one storage host, over https, for exactly
+ *   the key requested, and does not follow redirects.
+ * - The bytes must really be a JPEG, PNG or WebP (checked by content, not by
+ *   name), within the size, pixel and time limits above. Output is always
+ *   re-encoded as WebP, so the stored bytes are never relayed as-is.
  */
 export async function GET(req: NextRequest) {
   const request = parseImageRequest(req.nextUrl.searchParams);
-  if (!request) {
-    return NextResponse.json({ error: "Invalid image request" }, { status: 400 });
-  }
+  if (!request) return fail("Invalid image request", 400);
 
-  const supabase = await createClient();
+  // Same client as lib/supabase/server.ts, except that it records whether the
+  // session had to be refreshed here (which writes cookies). The proxy normally
+  // does that before this runs; if it ever happens here, the response is kept
+  // out of the shared cache.
+  const cookieStore = await cookies();
+  let wroteCookies = false;
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    {
+      cookies: {
+        getAll: () => cookieStore.getAll(),
+        setAll(cookiesToSet) {
+          wroteCookies = true;
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options),
+          );
+        },
+      },
+    },
+  );
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
-  }
+  if (!session) return fail("Not signed in", 401);
 
   const { data, error } = await supabase.functions.invoke<{ url: string }>(
     "profile-picture-get",
@@ -53,41 +132,56 @@ export async function GET(req: NextRequest) {
   );
   if (error || !data?.url) {
     if (error) console.error("/api/storage/image: sign failed", error);
-    return NextResponse.json({ error: "Image not available" }, { status: 404 });
+    return fail("Image not available", 404);
+  }
+  if (!isTrustedStorageUrl(data.url, request.key)) {
+    // Never log the URL itself: its query string carries the signature.
+    console.error("/api/storage/image: signed URL is not on the storage host");
+    return fail("Image request failed", 502);
   }
 
-  let source: ArrayBuffer;
+  let source: Uint8Array | null;
   try {
     const upstream = await fetch(data.url, {
+      // A redirect could lead anywhere; the storage host never needs one.
+      redirect: "error",
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     if (!upstream.ok) {
       console.error("/api/storage/image: S3 status", upstream.status);
-      return NextResponse.json({ error: "Image not available" }, { status: 404 });
+      return fail("Image not available", 404);
     }
     const declared = Number(upstream.headers.get("content-length"));
     if (Number.isFinite(declared) && declared > MAX_SOURCE_BYTES) {
-      return NextResponse.json({ error: "Image too large" }, { status: 413 });
+      await upstream.body?.cancel();
+      return fail("Image too large", 413);
     }
-    source = await upstream.arrayBuffer();
-    if (source.byteLength > MAX_SOURCE_BYTES) {
-      return NextResponse.json({ error: "Image too large" }, { status: 413 });
-    }
+    source = await readCapped(upstream, MAX_SOURCE_BYTES);
   } catch (err) {
     console.error("/api/storage/image: fetch failed", err);
-    return NextResponse.json({ error: "Image request failed" }, { status: 502 });
+    return fail("Image request failed", 502);
+  }
+  if (!source) {
+    return fail("Image too large", 413);
+  }
+
+  // By content, not by file name: only the formats uploads accept get decoded.
+  const sniffed = await fileTypeFromBuffer(source);
+  if (!sniffed || !ALLOWED_IMAGE_MIME_TYPES.includes(sniffed.mime)) {
+    return fail("Unsupported image", 415);
   }
 
   let output: Buffer;
   try {
     output = await sharp(source, { limitInputPixels: MAX_SOURCE_PIXELS })
+      .timeout({ seconds: RESIZE_TIMEOUT_SECONDS })
       .rotate() // apply EXIF orientation before it is stripped
       .resize({ width: request.width, withoutEnlargement: true })
       .webp({ quality: 78 })
       .toBuffer();
   } catch (err) {
     console.error("/api/storage/image: resize failed", err);
-    return NextResponse.json({ error: "Unsupported image" }, { status: 415 });
+    return fail("Unsupported image", 415);
   }
 
   return new NextResponse(new Uint8Array(output), {
@@ -95,7 +189,9 @@ export async function GET(req: NextRequest) {
     headers: {
       "Content-Type": "image/webp",
       "Content-Length": String(output.byteLength),
-      "Cache-Control": CACHE_CONTROL,
+      "Cache-Control": wroteCookies
+        ? PRIVATE_CACHE_CONTROL
+        : SHARED_CACHE_CONTROL,
       "X-Content-Type-Options": "nosniff",
     },
   });

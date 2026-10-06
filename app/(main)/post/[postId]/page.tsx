@@ -174,7 +174,7 @@ export default function PostDetailPage({
 
       {/* Post */}
       <div className="overflow-hidden rounded-card border border-border bg-surface">
-        <PostCard post={post} linkToDetail={false} />
+        <PostCard post={post} linkToDetail={false} priority />
       </div>
 
       {/* Composer */}
