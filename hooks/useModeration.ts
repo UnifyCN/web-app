@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import * as moderation from "@/services/moderation";
 
 /**
@@ -21,6 +26,15 @@ export function useBlockedUserIds() {
 /** Blocked accounts with display info, for the Settings management list. */
 export function useBlockedUsers() {
   return useQuery({
+    queryKey: [...MODERATION_KEY, "blocked-users"],
+    queryFn: moderation.getBlockedUsers,
+  });
+}
+
+/** Warms the Settings page's blocked-accounts list (same key and fetcher as
+ *  `useBlockedUsers`). */
+export function prefetchBlockedUsers(queryClient: QueryClient) {
+  return queryClient.prefetchQuery({
     queryKey: [...MODERATION_KEY, "blocked-users"],
     queryFn: moderation.getBlockedUsers,
   });

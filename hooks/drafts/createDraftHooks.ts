@@ -13,7 +13,12 @@
  * hooks and the bespoke ones key off the SAME objects.
  */
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { JobPostingError } from "@/lib/drafts/errors";
 import {
   jobSourceDomain,
@@ -157,6 +162,21 @@ export function createDraftHooks<TDraft extends DraftLike, TSummary>(
     return useQuery({ queryKey: keys.usage, queryFn: service.getUsage });
   }
 
+  /** Warms the list page: drafts and today's usage (same keys and fetchers as
+   *  `useDrafts` / `useUsage`). */
+  function prefetchList(queryClient: QueryClient) {
+    return Promise.all([
+      queryClient.prefetchQuery({
+        queryKey: keys.drafts,
+        queryFn: service.listDrafts,
+      }),
+      queryClient.prefetchQuery({
+        queryKey: keys.usage,
+        queryFn: service.getUsage,
+      }),
+    ]);
+  }
+
   /**
    * Fetch + extract a target job posting (or accept pasted text) and attach it to
    * the draft. Errors (JobPostingError / the feature LimitError) propagate to the
@@ -266,6 +286,7 @@ export function createDraftHooks<TDraft extends DraftLike, TSummary>(
     useDrafts,
     useDraft,
     useUsage,
+    prefetchList,
     useFetchJobPosting,
     useClearJobPosting,
     useDelete,

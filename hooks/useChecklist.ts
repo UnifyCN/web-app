@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import * as checklist from "@/services/checklist";
 import {
   trackChecklistTaskCompleted,
@@ -191,5 +196,15 @@ export function useDeleteCustomTask() {
       }
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
+  });
+}
+
+/** Warms the Checklist tab (same key and fetcher as `useTasks`). */
+export function prefetchChecklist(queryClient: QueryClient, language: string) {
+  const lang = language as Parameters<typeof checklist.getTasks>[0];
+  return queryClient.prefetchQuery({
+    queryKey: [...TASKS_KEY, language],
+    queryFn: () => checklist.getTasks(lang),
+    staleTime: 60_000,
   });
 }

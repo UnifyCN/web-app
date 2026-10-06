@@ -3,8 +3,13 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type QueryClient,
 } from "@tanstack/react-query";
-import type { FeedTab } from "@/types";
+import type { FeedTab, Post } from "@/types";
+import {
+  storageImageUrl,
+  storageImageUrlAt,
+} from "@/lib/supabase/imageUrl";
 import * as feed from "@/services/feed";
 import { trackCommentCreated, trackPostCreated } from "@/lib/analytics";
 
@@ -223,5 +228,56 @@ export function useDeletePost() {
   return useMutation({
     mutationFn: (postId: number) => feed.deletePost(postId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: FEED_KEY }),
+  });
+}
+
+/* ---- Prefetch (same keys and fetchers as the hooks above) ------------- */
+
+// How much of the first screen of the feed gets its pictures fetched ahead.
+const WARM_AVATARS = 8;
+const WARM_POST_IMAGES = 2;
+
+/** Fetches the pictures at the top of a feed page into the browser cache. */
+function warmFeedImages(posts: Post[]): void {
+  if (typeof window === "undefined") return;
+  const urls = new Set<string>();
+  for (const post of posts.slice(0, WARM_AVATARS)) {
+    // 40px is the size PostCard renders the author avatar at.
+    const avatar = storageImageUrl(post.author.profilePictureUrl, 40);
+    if (avatar) urls.add(avatar);
+  }
+  for (const post of posts.slice(0, WARM_POST_IMAGES)) {
+    // 640 is StorageImage's fallback width, and what a single-image post
+    // resolves to on a phone or in the desktop feed column.
+    const image = storageImageUrlAt(post.postImageUrls[0], 640);
+    if (image) urls.add(image);
+  }
+  for (const url of urls) new window.Image().src = url;
+}
+
+/**
+ * Warms the first page of the For You feed, the Social tab's default view,
+ * and then the pictures at the top of it, so the tab opens with faces already
+ * in place instead of initials.
+ */
+export async function prefetchForYouFeed(queryClient: QueryClient) {
+  const queryKey = [...FEED_KEY, "forYou"];
+  await queryClient.prefetchInfiniteQuery({
+    queryKey,
+    queryFn: ({ pageParam }) => feed.getForYouFeed(pageParam),
+    initialPageParam: undefined as string | undefined,
+    staleTime: 60_000,
+  });
+  const cached = queryClient.getQueryData<{ pages: { posts: Post[] }[] }>(
+    queryKey,
+  );
+  warmFeedImages(cached?.pages[0]?.posts ?? []);
+}
+
+/** Warms a user's own posts, the Profile page's default tab. */
+export function prefetchUserPosts(queryClient: QueryClient, userId: string) {
+  return queryClient.prefetchQuery({
+    queryKey: [...FEED_KEY, "user", userId],
+    queryFn: () => feed.getUserPosts(userId),
   });
 }

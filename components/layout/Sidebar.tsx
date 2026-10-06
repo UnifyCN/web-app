@@ -15,6 +15,7 @@ import {
 } from "./navItems";
 import { navTourTarget } from "@/lib/whatsNew";
 import { useMobileAppUrl } from "@/hooks/useMobileAppUrl";
+import { usePrefetchTab } from "@/hooks/usePrefetchTab";
 
 // Fixed-width icon rail with a label under each icon. Sized so the trimmed
 // "unify" wordmark lockup reads at close to the Figma lockup size (35px visible
@@ -32,6 +33,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { t } = useTranslation();
   const mobileAppUrl = useMobileAppUrl();
+  const prefetchTab = usePrefetchTab();
 
   // Shared vertical tile: centred icon above a small label.
   const tileClass =
@@ -45,6 +47,11 @@ export function Sidebar() {
       <Link
         key={item.href}
         href={item.href}
+        // Fetch the route ahead of the click, and warm the tab's data as soon
+        // as the pointer or keyboard focus shows intent.
+        prefetch
+        onMouseEnter={() => void prefetchTab(item.href)}
+        onFocus={() => void prefetchTab(item.href)}
         data-tour={navTourTarget(item.href)}
         aria-current={active ? "page" : undefined}
         className={cn(

@@ -1,5 +1,9 @@
 import type { ChecklistTask, Persona, Priority, Stage } from "@/types";
-import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  createClient,
+  getAuthUserId,
+  isSupabaseConfigured,
+} from "@/lib/supabase/client";
 import { mergeI18nOverlay, sanityClient, type WithI18n } from "@/lib/sanity";
 import type { SupportedLanguage } from "@/lib/i18n/config";
 import { tasks as mockTasks } from "@/lib/mock/tasks";
@@ -154,41 +158,45 @@ export async function getTasks(
 ): Promise<ChecklistTask[]> {
   if (!isSupabaseConfigured()) return mockTasks;
 
+  // The session is read locally (no auth round trip); RLS still decides what
+  // these queries can return.
+  const userId = await getAuthUserId();
+  if (!userId) return mockTasks;
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return mockTasks;
 
-  const { data: onboarding } = await supabase
-    .from("user_onboarding_profiles")
-    .select("persona, stage")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  // No onboarding row yet → persona/stage filtering can't run. Show mock so
-  // the page stays browsable instead of rendering empty.
-  if (!onboarding) return mockTasks;
-
-  const persona = onboarding.persona as Persona;
-  const stageSlug = STAGE_TO_SLUG[Number(onboarding.stage) as Stage];
-
-  const [items, userTasksRes, customRes, orderRes] = await Promise.all([
-    getChecklistByPersonaAndStage(persona, stageSlug, language),
+  // The user's own rows don't depend on persona/stage, so they load alongside
+  // the onboarding lookup. Only the Sanity checklist has to wait for it.
+  const [onboardingRes, userTasksRes, customRes, orderRes] = await Promise.all([
+    supabase
+      .from("user_onboarding_profiles")
+      .select("persona, stage")
+      .eq("id", userId)
+      .maybeSingle(),
     supabase
       .from("user_tasks")
       .select("sanity_checklist_id, completed, completed_at")
-      .eq("user_id", user.id),
+      .eq("user_id", userId),
     supabase
       .from("custom_checklist_tasks")
       .select("id, priority, title, description, completed, completed_at")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("created_at", { ascending: true }),
     supabase
       .from("checklist_task_order")
       .select("priority, ordered_keys")
-      .eq("user_id", user.id),
+      .eq("user_id", userId),
   ]);
+
+  // No onboarding row yet → persona/stage filtering can't run. Show mock so
+  // the page stays browsable instead of rendering empty. A failed lookup is
+  // not "no row": it must surface as an error, not as mock tasks.
+  if (onboardingRes.error) throw onboardingRes.error;
+  const onboarding = onboardingRes.data;
+  if (!onboarding) return mockTasks;
+
+  const persona = onboarding.persona as Persona;
+  const stageSlug = STAGE_TO_SLUG[Number(onboarding.stage) as Stage];
+  const items = await getChecklistByPersonaAndStage(persona, stageSlug, language);
 
   // Sanity errors are swallowed inside getChecklistByPersonaAndStage so a CMS
   // outage doesn't blank out the user's saved progress. Supabase errors must

@@ -205,8 +205,8 @@ hover `bg-surface-gray text-ink`.
 ## Motion (taste-skill dials: VARIANCE=6, MOTION=3, DENSITY=7)
 
 - All UI transitions **≤300ms**, ease-out. Every duration, easing and spring comes
-  from `lib/motion.ts` (see "Motion system" in CLAUDE.md): press 120ms, arrivals
-  200ms, exits 150ms. Never hard-code one.
+  from `lib/motion.ts` (see "Motion system" in CLAUDE.md): press 100ms, arrivals
+  200ms, menus and exits 150ms. Never hard-code one.
 - Respect `prefers-reduced-motion` — disable non-essential motion.
 - **Animate:**
   - Press feedback on anything tappable (`press` / `press-dim`).
@@ -216,9 +216,11 @@ hover `bg-surface-gray text-ink`.
   - Checklist checkbox — scale bounce ≤150ms + strikethrough transition ≤200ms.
   - Like button — press feedback.
   - Tab switch — underline slide.
-  - Page change — 200ms fade-in only; no slide, no exit, never on first load.
-- **Never animate:** sidebar nav clicks, form submissions, any keyboard-initiated
-  action, anything repeated >10×/day. Nothing loops except real waits (skeleton
+- **Never animate:** page transitions (switching tabs or pages is instant, as in
+  the native app), sidebar nav clicks, form submissions, any keyboard-initiated
+  action, anything repeated many times a day.
+- **Loading states wait 300ms** before they show, so a fast load never flashes a
+  skeleton. Nothing loops except real waits (skeleton
   pulse, typing dots, spinners).
 
 ---

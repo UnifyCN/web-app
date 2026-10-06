@@ -179,6 +179,21 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   read and `tip_translations` is owner-scoped — a `using (true)` policy there would have
   leaked other users' tips.
 
+- **Instant tabs (perf).** Opening a main tab should show content, not a skeleton.
+  - **Images** render through `GET /api/storage/image?key=…&w=…` (`lib/supabase/imageUrl.ts`,
+    `Avatar`, `StorageImage`). The storage edge function's signed URLs expire after 60 seconds
+    and point at full-size originals, so the route signs server-side, resizes with `sharp`, and
+    answers with a one-year `Cache-Control`. The URL for a key + width never changes, so revisits
+    come from the browser cache. Never render a signed S3 URL directly.
+  - **Prefetch.** Each hooks file exports a `prefetch*` helper beside its query hooks;
+    `hooks/usePrefetchTab.ts` maps nav hrefs to them. `components/layout/TabPrefetcher.tsx` warms
+    the other tabs once the page is idle (skipped on Save-Data / 2G), and the nav warms a tab on
+    hover / focus / touchstart. Add a tab's core query there when you add a tab.
+  - **Cache.** Queries stay cached for 30 minutes after their tab closes (`gcTime` in
+    `app/providers.tsx`), so a revisit shows data and refetches in the background.
+  - **Waterfalls.** Read the user id with `getAuthUserId()` (local session), not
+    `auth.getUser()` (a network call), and start independent queries together.
+
 ---
 
 ## Pending Tasks
@@ -274,11 +289,11 @@ Only invoke `emil-design-eng` for these specific components:
 - Tab switching — underline slide transition
 - Toast/notification appear/dismiss
 
-Never animate: sidebar nav clicks, form submissions, any action repeated >10x/day.
-
-Page changes are the one exception to "no page transitions": the incoming page gets a 200ms
-fade-in only (`components/layout/PageFade.tsx`). No slide, no exit animation, and never on the
-first page load, so navigation never waits and the text people read never moves.
+Never animate page transitions or actions repeated many times a day: sidebar and bottom-nav
+clicks, moving between pages, form submissions. Switching pages is instant, as it is in the
+native app. An in-page tab strip (`Tabs.tsx`) keeps its sliding underline, but the content under
+it swaps instantly. (The sign-in flow's step entrance in `app/(auth)/template.tsx` predates this
+system and is seen once; it is the only screen-level entrance.)
 
 ### Motion system
 
@@ -287,14 +302,18 @@ CSS reads the same values as `--motion-*` variables that the root layout sets on
 Tailwind's `ease-out` / `ease-in` / default transition point at them. Never hard-code a duration
 or a curve.
 
-- **Two speeds, one curve:** taps are acknowledged in 120ms (`press`); anything that arrives
-  settles in 200ms (`base`); exits are a 150ms fade. Timings follow the native app.
+- **Two speeds, one curve:** taps are acknowledged in 100ms (`press`); dialogs and sheets settle
+  in 200ms (`base`); menus open in 150ms from the corner of what was tapped; exits are a 150ms
+  fade. Timings follow the native app.
+- **Loading states wait 300ms** (`LOADING_DELAY`). Every skeleton (`animate-pulse`) and
+  "Loading…" (`loading-delayed`) stays invisible for that long, so a fast or cached load never
+  flashes one. `LoadingSwap` crossfades only when its skeleton was actually on screen.
 - **CSS for press and hover, Framer Motion only for things that mount and unmount.** Use the
   `press` utility on buttons and cards (slight shrink) and `press-dim` on rows and nav tiles
   (they dim, as native does).
 - **Shared pieces:** `components/ui/Dialog.tsx` (every dialog's enter/exit), `Reveal.tsx`
   (content opened in place), `LoadingSwap.tsx` (skeleton to content crossfade), `Tabs.tsx`
-  (sliding underline), `PageFade.tsx` (page changes).
+  (sliding underline).
 - **Rules:** transform and opacity only (Learn's `Collapse` height animation is the one
   deliberate exception). Nothing loops except real waits: skeleton pulse, typing dots, spinners.
   Reading surfaces (lesson text, checklist text, listings) never move. Reduced motion is handled

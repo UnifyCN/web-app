@@ -2,16 +2,16 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { DURATION, ENTER, EXIT } from "@/lib/motion";
+import { ENTER, EXIT, LOADING_DELAY } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 /**
- * Skeleton → content, as a crossfade in place: the skeleton fades out while
- * the content fades in over the same grid cell, so nothing jumps. Opacity
- * only. When the data is already there on first render (a cached revisit),
- * the content is simply shown, with no fade. The same goes for data that lands
- * while the page itself is still fading in: a second fade on top of the page
- * change would read as a flicker, so the swap is instant until that has passed.
+ * Skeleton → content, in place over the same grid cell, so nothing jumps.
+ *
+ * The skeleton stays invisible for `LOADING_DELAY` (it still holds its space),
+ * so a fast load never flashes one: content that arrives inside that window, or
+ * is already cached, simply appears. Only when the skeleton has actually been
+ * on screen does the swap crossfade (opacity only), skeleton out as content in.
  */
 export function LoadingSwap({
   loading,
@@ -24,12 +24,21 @@ export function LoadingSwap({
   className?: string;
   children: ReactNode;
 }) {
-  // False while the page change that mounted this could still be running.
-  const [settled, setSettled] = useState(false);
+  // True once this load has lasted long enough for the skeleton to be visible.
+  const [skeletonShown, setSkeletonShown] = useState(false);
   useEffect(() => {
-    const id = window.setTimeout(() => setSettled(true), DURATION.slow * 1000);
-    return () => window.clearTimeout(id);
-  }, []);
+    if (!loading) return;
+    const id = window.setTimeout(
+      () => setSkeletonShown(true),
+      LOADING_DELAY * 1000,
+    );
+    return () => {
+      window.clearTimeout(id);
+      // Runs after the content has mounted with its entrance already chosen,
+      // so the next load starts from "not shown" again.
+      setSkeletonShown(false);
+    };
+  }, [loading]);
 
   return (
     <div className={cn("grid grid-cols-[minmax(0,1fr)]", className)}>
@@ -37,8 +46,8 @@ export function LoadingSwap({
         {loading ? (
           <motion.div
             key="skeleton"
-            className="pointer-events-none [grid-area:1/1]"
-            exit={settled ? { opacity: 0, transition: EXIT } : undefined}
+            className="loading-delayed pointer-events-none [grid-area:1/1]"
+            exit={skeletonShown ? { opacity: 0, transition: EXIT } : undefined}
           >
             {skeleton}
           </motion.div>
@@ -46,7 +55,7 @@ export function LoadingSwap({
           <motion.div
             key="content"
             className="[grid-area:1/1]"
-            initial={settled ? { opacity: 0 } : false}
+            initial={skeletonShown ? { opacity: 0 } : false}
             animate={{ opacity: 1, transition: ENTER }}
           >
             {children}

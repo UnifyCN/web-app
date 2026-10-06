@@ -37,7 +37,9 @@ export default function SubmoduleLandingPage({
   if (moduleQuery.isLoading) {
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
-        <p className="text-sm text-ink-muted">{t("common.loading")}</p>
+        <p className="loading-delayed text-sm text-ink-muted">
+          {t("common.loading")}
+        </p>
       </div>
     );
   }

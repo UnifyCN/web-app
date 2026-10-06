@@ -10,19 +10,28 @@ import type { Transition } from "framer-motion";
  * arrives settles in `base`. Timings follow the native app (fades 200ms in,
  * 150ms out, ease-out cubic) so web and mobile feel like one product.
  * Movement is transform/opacity only, nothing loops, and exits are plain fades.
+ * Moving between pages and tabs is never animated: it is instant, as it is in
+ * the native app.
  */
 
 /** Seconds, as Framer Motion expects. */
 export const DURATION = {
   /** Touch feedback: press scale / dim, hover colour. */
-  press: 0.12,
+  press: 0.1,
   /** Small reveals and every exit. */
   fast: 0.15,
-  /** Anything that arrives: page, dialog, menu, loaded content. */
+  /** Anything that arrives: dialog, sheet, loaded content. */
   base: 0.2,
   /** Larger travel: progress fills. */
   slow: 0.25,
 } as const;
+
+/**
+ * How long a wait has to last before a skeleton or "Loading…" shows at all.
+ * Content that arrives sooner simply appears, so a fast load never flashes a
+ * loading state. Kept out of `DURATION`: it is a wait, not an animation.
+ */
+export const LOADING_DELAY = 0.3;
 
 type Bezier = [number, number, number, number];
 
@@ -76,11 +85,7 @@ export const panelMotion = {
 /** Menus and popovers: grow slightly from their trigger corner. */
 export const menuMotion = {
   initial: { opacity: 0, scale: PRESS_SCALE },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: DURATION.press, ease: EASE.out },
-  },
+  animate: { opacity: 1, scale: 1, transition: ENTER_FAST },
   // Stops taking clicks the moment it starts leaving, so a fast second tap
   // can't fire an item twice.
   exit: { opacity: 0, pointerEvents: "none", transition: EXIT },
@@ -104,6 +109,7 @@ export const motionCssVars = {
   "--motion-fast": ms(DURATION.fast),
   "--motion-base": ms(DURATION.base),
   "--motion-slow": ms(DURATION.slow),
+  "--motion-loading-delay": ms(LOADING_DELAY),
   "--motion-ease-out": EASE_CSS.out,
   "--motion-ease-in": EASE_CSS.in,
   "--motion-press-scale": String(PRESS_SCALE),

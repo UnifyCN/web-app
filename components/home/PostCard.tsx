@@ -151,7 +151,7 @@ export function PostCard({
               type="button"
               onClick={() => setLightboxIndex(index)}
               aria-label={t("posts.viewImageAria", { number: index + 1 })}
-              className="relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-lg border border-border"
+              className="relative aspect-[4/3] cursor-zoom-in overflow-hidden rounded-lg border border-border bg-surface-gray"
             >
               <StorageImage
                 src={url}
@@ -164,6 +164,11 @@ export function PostCard({
                     : t("posts.postImageAlt", { number: index + 1 })
                 }
                 className="absolute inset-0 h-full w-full object-cover"
+                sizes={
+                  multiImage
+                    ? "(max-width: 768px) 50vw, 320px"
+                    : "(max-width: 768px) 100vw, 640px"
+                }
               />
             </button>
           ))}

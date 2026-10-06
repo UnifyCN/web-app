@@ -135,6 +135,31 @@
     --motion-ease-out,
     cubic-bezier(0.33, 1, 0.68, 1)
   );
+
+  /* Every skeleton uses `animate-pulse`. It stays invisible for the loading
+   * delay and then fades in, so content that arrives quickly never flashes a
+   * skeleton first; the pulse starts once the fade has finished. */
+  --animate-pulse:
+    pulse 2s cubic-bezier(0.4, 0, 0.6, 1)
+      calc(var(--motion-loading-delay, 300ms) + var(--motion-fast, 150ms))
+      infinite,
+    loading-appear var(--motion-fast, 150ms)
+      var(--motion-ease-out, ease-out) var(--motion-loading-delay, 300ms)
+      backwards;
+}
+
+/* Loading states wait before they show (see --animate-pulse above). The delay
+ * is not motion, so it also applies under reduced motion; only the fade is
+ * dropped there. `loading-delayed` is the same wait for a plain "Loading…". */
+@keyframes loading-appear {
+  from {
+    opacity: 0;
+  }
+}
+
+@utility loading-delayed {
+  animation: loading-appear var(--motion-fast, 150ms)
+    var(--motion-ease-out, ease-out) var(--motion-loading-delay, 300ms) backwards;
 }
 
 /* Press feedback — one recipe wherever something is tappable. `press` is for
@@ -146,7 +171,7 @@
 @utility press {
   transition-property: color, background-color, border-color, box-shadow,
     opacity, scale;
-  transition-duration: var(--motion-press, 120ms);
+  transition-duration: var(--motion-press, 100ms);
   transition-timing-function: var(--motion-ease-out, ease-out);
 
   @media (prefers-reduced-motion: no-preference) {
@@ -159,7 +184,7 @@
 @utility press-dim {
   transition-property: color, background-color, border-color, box-shadow,
     opacity;
-  transition-duration: var(--motion-press, 120ms);
+  transition-duration: var(--motion-press, 100ms);
   transition-timing-function: var(--motion-ease-out, ease-out);
 
   &:active:not(:disabled) {
@@ -299,7 +324,7 @@ input:-webkit-autofill:active {
  * so the reveal is visible for everyone; the actual delete is gated by a JS 3s
  * setTimeout regardless of the visual. */
 .hold-delete-btn {
-  transition: transform var(--motion-press, 120ms) var(--motion-ease-out, ease-out);
+  transition: transform var(--motion-press, 100ms) var(--motion-ease-out, ease-out);
 }
 .hold-delete-btn:active {
   transform: scale(var(--motion-press-scale, 0.97));
@@ -341,9 +366,8 @@ input:-webkit-autofill:active {
   transform: scaleX(1);
 }
 
-/* Content arriving in place (results, a tab's panel) — subtle fade. Page
- * changes are handled by components/layout/PageFade.tsx, not this class, so the
- * first page load never fades. Defined unconditionally so
+/* Content arriving in place (results, a tab's panel) — subtle fade. Never put
+ * it on a page wrapper: moving between pages is instant. Defined unconditionally so
  * it fires on mobile Safari: the previous `prefers-reduced-motion: no-preference`
  * wrapper silently suppressed it whenever that query didn't evaluate true on a
  * phone (notably iOS Low Power Mode, which forces the reduce signal). Users who

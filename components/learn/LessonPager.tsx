@@ -277,7 +277,9 @@ export function LessonPager({
       {isQuizPage && (
         <div className="mt-7">
           {quizProgressQuery.isLoading ? (
-            <p className="text-sm text-ink-muted">{t("common.loading")}</p>
+            <p className="loading-delayed text-sm text-ink-muted">
+          {t("common.loading")}
+        </p>
           ) : (
             <LessonQuiz
               lessonId={lessonId}

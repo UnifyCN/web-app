@@ -1,4 +1,3 @@
-import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { validateImageFile } from "@/lib/supabase/imageValidation";
 
 /**
@@ -16,143 +15,13 @@ import { validateImageFile } from "@/lib/supabase/imageValidation";
  * functions were built for the native app and emit no CORS headers, so the
  * browser can't call them directly — every call below goes through the
  * same-origin `app/api/storage` route, which invokes them server-side.
+ *
+ * This module covers writes (upload, delete). Rendering does not sign URLs in
+ * the browser any more: images are shown through `/api/storage/image`, which
+ * signs, resizes and caches on the server — see `lib/supabase/imageUrl.ts`.
  */
 
 const isHttpUrl = (value: string): boolean => /^https?:\/\//i.test(value);
-
-export const DEFAULT_TTL_MS = 4 * 60 * 1000; // fallback when the signature has no expiry
-export const REFRESH_BUFFER_MS = 30 * 1000; // re-sign 30s before the URL actually expires
-
-interface CacheEntry {
-  url: string;
-  expiresAt: number;
-}
-const urlCache = new Map<string, CacheEntry>();
-const inflight = new Map<string, Promise<string | null>>();
-
-const MAX_CACHE_ENTRIES = 500; // LRU cap so long-lived sessions don't grow unbounded
-
-/**
- * Insert/refresh a cache entry with LRU eviction. `Map` iterates in insertion
- * order, so deleting-then-setting moves a key to the newest position; when the
- * cache is full we drop the oldest (least-recently-used) key first.
- */
-function cacheSet(key: string, entry: CacheEntry): void {
-  urlCache.delete(key);
-  if (urlCache.size >= MAX_CACHE_ENTRIES) {
-    const oldest = urlCache.keys().next().value;
-    if (oldest !== undefined) urlCache.delete(oldest);
-  }
-  urlCache.set(key, entry);
-}
-
-/** Expiry (epoch ms) embedded in an S3 SigV4 signed URL, or null if unparseable. */
-function parseSignedUrlExpiry(url: string): number | null {
-  try {
-    const parsed = new URL(url);
-    const amzDate = parsed.searchParams.get("X-Amz-Date"); // YYYYMMDDTHHMMSSZ
-    const amzExpires = parsed.searchParams.get("X-Amz-Expires"); // seconds
-    if (!amzDate || !amzExpires) return null;
-    const base = Date.UTC(
-      Number(amzDate.slice(0, 4)),
-      Number(amzDate.slice(4, 6)) - 1,
-      Number(amzDate.slice(6, 8)),
-      Number(amzDate.slice(9, 11)),
-      Number(amzDate.slice(11, 13)),
-      Number(amzDate.slice(13, 15)),
-    );
-    const seconds = Number(amzExpires);
-    if (!Number.isFinite(base) || Number.isNaN(base)) return null;
-    if (!Number.isFinite(seconds) || seconds <= 0) return null;
-    return base + seconds * 1000;
-  } catch {
-    return null;
-  }
-}
-
-// Keys that need signing are collected for SIGN_BATCH_WINDOW_MS and sent as
-// one `getMany` request, so a feed that mounts 15 avatars makes one route call
-// instead of 15. SIGN_BATCH_MAX must match MAX_BATCH_KEYS in the route.
-const SIGN_BATCH_WINDOW_MS = 10;
-const SIGN_BATCH_MAX = 50;
-
-type PendingSign = (url: string | null) => void;
-let pendingSigns = new Map<string, PendingSign>();
-let flushTimer: ReturnType<typeof setTimeout> | null = null;
-
-async function flushSignBatch(): Promise<void> {
-  flushTimer = null;
-  const batch = pendingSigns;
-  pendingSigns = new Map();
-  const keys = [...batch.keys()];
-
-  for (let i = 0; i < keys.length; i += SIGN_BATCH_MAX) {
-    const chunk = keys.slice(i, i + SIGN_BATCH_MAX);
-    let urls: Record<string, string | null> = {};
-    try {
-      const res = await fetch("/api/storage", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ op: "getMany", keys: chunk }),
-      });
-      if (!res.ok) throw new Error(`sign failed (${res.status})`);
-      urls = ((await res.json()) as { urls?: typeof urls }).urls ?? {};
-    } catch (error) {
-      console.error("resolveImageUrl batch failed", error);
-    }
-    for (const key of chunk) batch.get(key)?.(urls[key] ?? null);
-  }
-}
-
-function signViaBatch(key: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    pendingSigns.set(key, resolve);
-    flushTimer ??= setTimeout(() => void flushSignBatch(), SIGN_BATCH_WINDOW_MS);
-  });
-}
-
-/**
- * Resolve a stored image reference to a renderable URL. Full http(s) URLs
- * (mock / external / legacy) pass through unchanged; bare keys are signed via
- * the same-origin `/api/storage` proxy (batched with any other keys requested
- * in the same ~10ms window), cached until ~30s before expiry, with in-flight
- * dedup so a feed full of the same author avatar signs it once.
- * Returns null for empty input or on failure — React Query disallows
- * `undefined` query data — so the caller falls back gracefully.
- */
-export async function resolveImageUrl(
-  ref?: string | null,
-): Promise<string | null> {
-  const key = ref?.trim();
-  if (!key) return null;
-  if (isHttpUrl(key)) return key;
-  if (!isSupabaseConfigured()) return null;
-
-  const cached = urlCache.get(key);
-  if (cached && cached.expiresAt - Date.now() > REFRESH_BUFFER_MS) {
-    cacheSet(key, cached); // LRU touch — mark as recently used
-    return cached.url;
-  }
-
-  const existing = inflight.get(key);
-  if (existing) return existing;
-
-  const request = signViaBatch(key)
-    .then((url) => {
-      if (!url) return null;
-      cacheSet(key, {
-        url,
-        expiresAt: parseSignedUrlExpiry(url) ?? Date.now() + DEFAULT_TTL_MS,
-      });
-      return url;
-    })
-    .finally(() => {
-      inflight.delete(key);
-    });
-
-  inflight.set(key, request);
-  return request;
-}
 
 /**
  * Upload a file through the same-origin `/api/storage` proxy, which signs the

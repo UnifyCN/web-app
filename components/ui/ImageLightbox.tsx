@@ -3,6 +3,7 @@
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { StorageImage } from "@/components/ui/StorageImage";
+import type { ImageWidth } from "@/lib/supabase/imageUrl";
 import {
   DialogOverlay,
   DialogPanel,
@@ -11,6 +12,9 @@ import {
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useIsRtl } from "@/hooks/useDirection";
 import { cn, RTL_FLIP } from "@/lib/utils";
+
+// The viewer is nearly full-screen, so offer larger sizes than a feed thumbnail.
+const LIGHTBOX_WIDTHS: readonly ImageWidth[] = [640, 1080, 1600];
 
 interface ImageLightboxProps {
   open: boolean;
@@ -108,6 +112,8 @@ export function ImageLightbox({
               : t("ui.imageOfAlt", { number: safeIndex + 1, count })
           }
           className="absolute inset-0 h-full w-full object-contain"
+          sizes="90vw"
+          widths={LIGHTBOX_WIDTHS}
         />
 
         {multi && (

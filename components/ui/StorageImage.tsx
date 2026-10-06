@@ -1,37 +1,70 @@
 "use client";
 
-import { useResolvedImageUrl } from "@/hooks/useResolvedImageUrl";
+import { useState } from "react";
+import {
+  storageImageSrcSet,
+  storageImageUrlAt,
+  type ImageWidth,
+} from "@/lib/supabase/imageUrl";
+import {
+  IMAGE_FADE_CLASS,
+  hideWhileLoading,
+  revealOnLoad,
+} from "@/components/ui/imageFade";
 import { cn } from "@/lib/utils";
+
+const DEFAULT_WIDTHS: readonly ImageWidth[] = [320, 640, 1080];
 
 interface StorageImageProps {
   /** A stored object key (`users/<uid>/…`) or a full URL. */
   src?: string | null;
   alt: string;
   /** Sizing / object-fit classes — applied to both the image and the
-   *  loading/empty placeholder so the box stays stable. */
+   *  empty/failed placeholder so the box stays stable. */
   className?: string;
+  /** How wide the image is shown, as an `<img sizes>` value. */
+  sizes?: string;
+  /** Widths offered to the browser; it picks one from `sizes` and the screen. */
+  widths?: readonly ImageWidth[];
 }
 
 /**
- * Renders an image stored as a signed-URL key. Resolves the key at render time
- * (cached via `useResolvedImageUrl`) and shows a neutral placeholder while
- * loading or on failure. Uses a plain `<img>` on purpose: signed S3 URLs change
- * per request and expire, so `next/image` optimization/allow-listing doesn't fit.
+ * Renders an image stored as a signed-URL key, at display size, from a stable
+ * cacheable URL (see lib/supabase/imageUrl.ts). Loads lazily and fades in when
+ * it had to be fetched; a cached image just shows. Give the parent a fixed box
+ * (and a neutral background if it should read as a placeholder while loading).
+ * Uses a plain `<img>` on purpose: the route already resizes, so `next/image`
+ * would only resize a second time.
  */
-export function StorageImage({ src, alt, className }: StorageImageProps) {
-  const { url, isLoading } = useResolvedImageUrl(src);
+export function StorageImage({
+  src,
+  alt,
+  className,
+  sizes = "(max-width: 768px) 100vw, 640px",
+  widths = DEFAULT_WIDTHS,
+}: StorageImageProps) {
+  // The middle width is the fallback for browsers that ignore `srcset`.
+  const url = storageImageUrlAt(src, widths[Math.floor(widths.length / 2)]);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
-  if (!url) {
-    return (
-      <div
-        aria-hidden
-        className={cn("bg-surface-gray", isLoading && "animate-pulse", className)}
-      />
-    );
+  if (!url || failedUrl === url) {
+    return <div aria-hidden className={cn("bg-surface-gray", className)} />;
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- signed S3 URLs expire per-request; next/image doesn't fit
-    <img src={url} alt={alt} className={className} decoding="async" />
+    // eslint-disable-next-line @next/next/no-img-element -- already resized by /api/storage/image; next/image would resize it a second time
+    <img
+      key={url}
+      ref={hideWhileLoading}
+      src={url}
+      srcSet={storageImageSrcSet(src, widths)}
+      sizes={sizes}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      onLoad={revealOnLoad}
+      onError={() => setFailedUrl(url)}
+      className={cn(IMAGE_FADE_CLASS, className)}
+    />
   );
 }
