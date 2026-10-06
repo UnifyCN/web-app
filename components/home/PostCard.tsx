@@ -12,6 +12,7 @@ import { useLikePost, useSavePost } from "@/hooks/useFeed";
 import { useRelativeTime } from "@/hooks/useRelativeTime";
 import { PostModerationMenu } from "@/components/moderation/PostModerationMenu";
 import { TranslateButton } from "@/components/home/TranslateButton";
+import { useGroupText } from "@/lib/i18n/groupText";
 import { cn, stripHtml } from "@/lib/utils";
 import type { Post } from "@/types";
 
@@ -30,6 +31,7 @@ export function PostCard({
   priority?: boolean;
 }) {
   const { t } = useTranslation();
+  const { postGroupName } = useGroupText();
   const formatRelativeTime = useRelativeTime();
   const [liked, setLiked] = useState(post.likedByMe ?? false);
   const [saved, setSaved] = useState(post.savedByMe ?? false);
@@ -117,7 +119,11 @@ export function PostCard({
               {formatRelativeTime(post.createdAt)}
             </span>
           </div>
-          {post.groupName && <Badge className="mt-1">{post.groupName}</Badge>}
+          {post.groupName && (
+            <Badge className="mt-1">
+              {postGroupName(post.groupName, post.groupNameI18n)}
+            </Badge>
+          )}
         </div>
         {post.isPinned && (
           <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-primary">

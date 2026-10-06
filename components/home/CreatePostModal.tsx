@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/Dialog";
 import { useCreatePost } from "@/hooks/useFeed";
 import { useGroups, useJoinGroup } from "@/hooks/useCommunity";
+import { useGroupText } from "@/lib/i18n/groupText";
 import { uploadPostImages } from "@/lib/supabase/uploadImage";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,7 @@ interface CreatePostModalProps {
  *  images to the post-images bucket first, then inserts the post). */
 export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
   const { t } = useTranslation();
+  const { groupName, groupDescription, nameMatches } = useGroupText();
   const [destination, setDestination] = useState<Destination>("forYou");
   const [groupId, setGroupId] = useState<number | null>(null);
   const [groupSearch, setGroupSearch] = useState("");
@@ -99,9 +101,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
   const selectedGroup = allGroups.find((group) => group.id === groupId) ?? null;
   const groupQuery = groupSearch.trim().toLowerCase();
   const filteredGroups = groupQuery
-    ? allGroups.filter((group) =>
-        group.groupName.toLowerCase().includes(groupQuery),
-      )
+    ? allGroups.filter((group) => nameMatches(group, groupQuery))
     : allGroups;
   const joinedGroups = filteredGroups.filter((group) => group.joinedByMe);
   const discoverGroups = filteredGroups.filter((group) => !group.joinedByMe);
@@ -244,7 +244,9 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
               {destination === "group" && selectedGroup && (
                 <div className="mt-3 flex items-center gap-2 text-sm">
                   <span className="font-semibold text-ink-secondary">
-                    {t("posts.postingTo", { name: selectedGroup.groupName })}
+                    {t("posts.postingTo", {
+                      name: groupName(selectedGroup),
+                    })}
                   </span>
                   <button
                     type="button"
@@ -299,17 +301,17 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                                 className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-surface-gray"
                               >
                                 <Avatar
-                                  username={group.groupName}
+                                  username={groupName(group)}
                                   profilePictureUrl={group.coverPhotoUrl}
                                   size={40}
                                 />
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-semibold text-ink-secondary">
-                                    {group.groupName}
+                                    {groupName(group)}
                                   </p>
                                   {group.groupDescription && (
                                     <p className="line-clamp-2 text-xs text-ink-muted">
-                                      {group.groupDescription}
+                                      {groupDescription(group)}
                                     </p>
                                   )}
                                 </div>
@@ -338,17 +340,17 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                                   className="flex items-center gap-3 rounded-lg px-2 py-2"
                                 >
                                   <Avatar
-                                    username={group.groupName}
+                                    username={groupName(group)}
                                     profilePictureUrl={group.coverPhotoUrl}
                                     size={40}
                                   />
                                   <div className="min-w-0 flex-1">
                                     <p className="truncate text-sm font-semibold text-ink-secondary">
-                                      {group.groupName}
+                                      {groupName(group)}
                                     </p>
                                     {group.groupDescription && (
                                       <p className="line-clamp-2 text-xs text-ink-muted">
-                                        {group.groupDescription}
+                                        {groupDescription(group)}
                                       </p>
                                     )}
                                   </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { Search, SearchX, Users, X } from "lucide-react";
@@ -11,8 +11,10 @@ import { Tabs } from "@/components/ui/Tabs";
 import { GroupCover } from "@/components/community/GroupCover";
 import { PostCard } from "@/components/home/PostCard";
 import { PostCardSkeleton } from "@/components/home/PostCardSkeleton";
+import { useGroups } from "@/hooks/useCommunity";
 import { useSocialSearch } from "@/hooks/useSocialSearch";
 import { trackSocialSearchPerformed } from "@/lib/analytics";
+import { useGroupText } from "@/lib/i18n/groupText";
 import { normalizeSearchTerm } from "@/lib/search";
 import type { SocialSearchResults } from "@/services/search";
 import { LoadingSwap } from "@/components/ui/LoadingSwap";
@@ -121,8 +123,32 @@ export function SocialSearchBar({
 
 export function SocialSearchResults({ term }: { term: string }) {
   const { t } = useTranslation();
-  const { data, isLoading, isError, refetch, isRefetching } =
-    useSocialSearch(term);
+  const { groupName, groupDescription } = useGroupText();
+  const {
+    data: found,
+    isLoading,
+    isError,
+    refetch,
+    isRefetching,
+  } = useSocialSearch(term);
+  const { data: allGroups } = useGroups();
+  // The search runs on the stored (English) group text. Add the groups whose
+  // name or description matches in the language on screen, so searching for
+  // what you can read finds it.
+  const data = useMemo(() => {
+    if (!found || !allGroups) return found;
+    const needle = term.toLowerCase();
+    const listed = new Set(found.groups.map((group) => group.id));
+    const extra = allGroups.filter(
+      (group) =>
+        !listed.has(group.id) &&
+        (groupName(group).toLowerCase().includes(needle) ||
+          groupDescription(group).toLowerCase().includes(needle)),
+    );
+    return extra.length > 0
+      ? { ...found, groups: [...found.groups, ...extra] }
+      : found;
+  }, [found, allGroups, term, groupName, groupDescription]);
   // The user's tab pick belongs to one set of results; new results open the
   // first tab that has anything (Posts → People → Groups) instead.
   const [picked, setPicked] = useState<{
@@ -261,11 +287,11 @@ export function SocialSearchResults({ term }: { term: string }) {
                     </span>
                     <span className="min-w-0 flex-1">
                       <bdi className="block truncate text-sm font-semibold text-ink-secondary">
-                        {group.groupName}
+                        {groupName(group)}
                       </bdi>
                       {group.groupDescription && (
                         <bdi className="block truncate text-xs text-ink-muted">
-                          {group.groupDescription}
+                          {groupDescription(group)}
                         </bdi>
                       )}
                       <span className="mt-0.5 flex items-center gap-1 text-xs text-ink-placeholder">

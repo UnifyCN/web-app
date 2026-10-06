@@ -15,13 +15,17 @@ import {
   getAuthUserId,
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
-import { groups as mockGroups, getGroupById as findMockGroup } from "@/lib/mock/groups";
+import {
+  groups as mockGroups,
+  getGroupById as findMockGroup,
+} from "@/lib/mock/groups";
 import {
   events as communityEvents,
   getEventById as findCommunityEvent,
 } from "@/lib/mock/events";
 import { newsItems as mockNews } from "@/lib/mock/news";
 import { currentCircle } from "@/lib/mock/circles";
+import { toLocalizedText } from "@/lib/i18n/localizedText";
 import { ilikeContains, SEARCH_GROUPS_LIMIT } from "@/lib/search";
 
 /**
@@ -41,13 +45,21 @@ interface GroupRow {
   group_description: string | null;
   member_count: number;
   cover_photo_url: string | null;
+  name_i18n: unknown;
+  description_i18n: unknown;
 }
+
+/** Every column a group row needs. English text plus its translations. */
+const GROUP_COLUMNS =
+  "id, group_name, group_description, member_count, cover_photo_url, name_i18n, description_i18n";
 
 function rowToGroup(row: GroupRow, joinedByMe: boolean): Group {
   return {
     id: row.id,
     groupName: row.group_name,
     groupDescription: row.group_description ?? "",
+    nameI18n: toLocalizedText(row.name_i18n),
+    descriptionI18n: toLocalizedText(row.description_i18n),
     memberCount: row.member_count,
     coverPhotoUrl: row.cover_photo_url,
     joinedByMe,
@@ -116,7 +128,7 @@ export async function getGroups(): Promise<Group[]> {
   const [groupsRes, joinedIds] = await Promise.all([
     supabase
       .from("groups")
-      .select("id, group_name, group_description, member_count, cover_photo_url")
+      .select(GROUP_COLUMNS)
       .order("created_at", { ascending: false }),
     fetchJoinedGroupIds(supabase, userId),
   ]);
@@ -135,11 +147,7 @@ export async function getGroupById(id: number): Promise<Group | undefined> {
 
   const supabase = createClient();
   const [groupRes, joinedIds, memberAvatars] = await Promise.all([
-    supabase
-      .from("groups")
-      .select("id, group_name, group_description, member_count, cover_photo_url")
-      .eq("id", id)
-      .maybeSingle(),
+    supabase.from("groups").select(GROUP_COLUMNS).eq("id", id).maybeSingle(),
     fetchJoinedGroupIds(supabase, userId),
     fetchGroupMemberAvatars(supabase, id),
   ]);
@@ -162,9 +170,7 @@ export async function getJoinedGroups(): Promise<Group[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("group_members")
-    .select(
-      "groups!inner(id, group_name, group_description, member_count, cover_photo_url)",
-    )
+    .select(`groups!inner(${GROUP_COLUMNS})`)
     .eq("user_id", userId)
     .order("joined_at", { ascending: false });
   if (error) throw error;
@@ -195,7 +201,7 @@ export async function searchGroups(term: string): Promise<Group[]> {
   const byColumn = (column: "group_name" | "group_description") =>
     supabase
       .from("groups")
-      .select("id, group_name, group_description, member_count, cover_photo_url")
+      .select(GROUP_COLUMNS)
       .ilike(column, pattern)
       .order("member_count", { ascending: false })
       .limit(SEARCH_GROUPS_LIMIT);

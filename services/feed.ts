@@ -12,6 +12,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
 import { getBlockedUserIds } from "./moderation";
+import { toLocalizedText } from "@/lib/i18n/localizedText";
 import { ilikeContains, SEARCH_POSTS_LIMIT } from "@/lib/search";
 import { posts as mockPosts, followedUsernames } from "@/lib/mock/posts";
 import { currentUser } from "@/lib/mock/users";
@@ -33,7 +34,7 @@ const POSTS_SELECT = `
   id, title, content, like_count, comment_count, is_pinned, created_at,
   user_id, group_id, post_image_urls,
   users!user_id ( id, username, profile_picture_url ),
-  groups!group_id ( id, group_name )
+  groups!group_id ( id, group_name, name_i18n )
 `;
 
 const DEFAULT_LIMIT = 20;
@@ -54,7 +55,7 @@ interface JoinedPostRow {
     username: string;
     profile_picture_url: string | null;
   } | null;
-  groups: { id: number; group_name: string } | null;
+  groups: { id: number; group_name: string; name_i18n: unknown } | null;
 }
 
 function rowToPost(row: JoinedPostRow): Post {
@@ -88,6 +89,7 @@ function rowToPost(row: JoinedPostRow): Post {
     createdAt: row.created_at,
     author,
     groupName: row.groups?.group_name ?? undefined,
+    groupNameI18n: toLocalizedText(row.groups?.name_i18n),
     likedByMe: false, // filled in by enrichPostsWithMetadata
     savedByMe: false, // filled in by enrichPostsWithMetadata
   };

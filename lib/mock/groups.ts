@@ -16,6 +16,8 @@ export const groups: Group[] = [
     groupName: "Newcomers to Toronto",
     groupDescription:
       "Tips, meetups, and support for people settling into the GTA.",
+    nameI18n: null,
+    descriptionI18n: null,
     memberCount: 4820,
     coverPhotoUrl: "https://picsum.photos/seed/grp-toronto/480/270",
     joinedByMe: true,
@@ -26,6 +28,8 @@ export const groups: Group[] = [
     groupName: "Settling in BC",
     groupDescription:
       "Everything from MSP to rentals for newcomers across British Columbia.",
+    nameI18n: null,
+    descriptionI18n: null,
     memberCount: 3110,
     coverPhotoUrl: "https://picsum.photos/seed/grp-bc/480/270",
     joinedByMe: true,
@@ -36,6 +40,8 @@ export const groups: Group[] = [
     groupName: "Newcomer Parents",
     groupDescription:
       "Schools, childcare, and family life for parents new to Canada.",
+    nameI18n: null,
+    descriptionI18n: null,
     memberCount: 1975,
     coverPhotoUrl: "https://picsum.photos/seed/grp-parents/480/270",
     joinedByMe: true,
@@ -46,6 +52,8 @@ export const groups: Group[] = [
     groupName: "Job Search Canada",
     groupDescription:
       "Resume help, Canadian workplace culture, and job leads.",
+    nameI18n: null,
+    descriptionI18n: null,
     memberCount: 6340,
     coverPhotoUrl: "https://picsum.photos/seed/grp-jobs/480/270",
     joinedByMe: false,
@@ -56,6 +64,8 @@ export const groups: Group[] = [
     groupName: "Tech Professionals in Canada",
     groupDescription:
       "Networking and referrals for newcomers working in tech.",
+    nameI18n: null,
+    descriptionI18n: null,
     memberCount: 2580,
     coverPhotoUrl: "https://picsum.photos/seed/grp-tech/480/270",
     joinedByMe: false,
@@ -66,6 +76,8 @@ export const groups: Group[] = [
     groupName: "International Students Network",
     groupDescription:
       "Study permits, campus life, and post-graduation pathways.",
+    nameI18n: null,
+    descriptionI18n: null,
     memberCount: 5170,
     coverPhotoUrl: "https://picsum.photos/seed/grp-students/480/270",
     joinedByMe: false,
@@ -76,6 +88,8 @@ export const groups: Group[] = [
     groupName: "French for Newcomers",
     groupDescription:
       "Practise French and prepare for life in francophone Canada.",
+    nameI18n: null,
+    descriptionI18n: null,
     memberCount: 1340,
     coverPhotoUrl: "https://picsum.photos/seed/grp-french/480/270",
     joinedByMe: false,
@@ -86,6 +100,8 @@ export const groups: Group[] = [
     groupName: "Groceries & Cooking in Canada",
     groupDescription:
       "Where to find familiar ingredients and budget grocery tips.",
+    nameI18n: null,
+    descriptionI18n: null,
     memberCount: 2890,
     coverPhotoUrl: "https://picsum.photos/seed/grp-food/480/270",
     joinedByMe: false,
