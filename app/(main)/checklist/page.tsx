@@ -9,6 +9,7 @@ import { DeleteTaskModal } from "@/components/checklist/DeleteTaskModal";
 import {
   useAddCustomTask,
   useDeleteCustomTask,
+  useSetSuggestedTaskDismissed,
   useTasks,
   useToggleTask,
 } from "@/hooks/useChecklist";
@@ -75,9 +76,14 @@ export default function ChecklistPage() {
   const toggle = useToggleTask();
   const add = useAddCustomTask();
   const del = useDeleteCustomTask();
+  const setDismissed = useSetSuggestedTaskDismissed();
   const [deleteTarget, setDeleteTarget] = useState<ChecklistTask | null>(null);
 
-  const completedCount = tasks.filter((task) => task.completed).length;
+  const activeTasks = tasks.filter((task) => !task.dismissedAt);
+  const removedTasks = tasks.filter(
+    (task) => !task.isCustom && task.dismissedAt,
+  );
+  const completedCount = activeTasks.filter((task) => task.completed).length;
 
   function handleToggle(id: string) {
     const task = tasks.find((t) => t.id === id);
@@ -105,7 +111,14 @@ export default function ChecklistPage() {
   async function handleConfirmDelete() {
     if (!deleteTarget) return;
     try {
-      await del.mutateAsync(deleteTarget.id);
+      if (deleteTarget.isCustom) {
+        await del.mutateAsync(deleteTarget.id);
+      } else {
+        await setDismissed.mutateAsync({
+          id: deleteTarget.id,
+          dismissed: true,
+        });
+      }
       setDeleteTarget(null);
     } catch {
       // Leave the modal open (isPending flips back to false) so the user can
@@ -121,41 +134,74 @@ export default function ChecklistPage() {
       <p className="mt-1 text-sm text-ink-muted">{t("checklist.subtitle")}</p>
 
       <LoadingSwap loading={isLoading} skeleton={<ChecklistSkeleton />}>
-      {error && (
-        <p role="alert" className="mt-5 text-sm text-destructive">
-          {t("checklist.loadError")}
-        </p>
-      )}
+        {error && (
+          <p role="alert" className="mt-5 text-sm text-destructive">
+            {t("checklist.loadError")}
+          </p>
+        )}
 
-      {!error && (
-        <div className="mt-5 space-y-4">
-          <OverallProgressBar
-            completed={completedCount}
-            total={tasks.length}
-          />
-
-          {PRIORITY_ORDER.map((priority) => (
-            <PrioritySection
-              key={priority}
-              priority={priority}
-              tasks={tasks.filter((task) => task.priority === priority)}
-              onToggle={handleToggle}
-              onDelete={requestDelete}
+        {!error && (
+          <div className="mt-5 space-y-4">
+            <OverallProgressBar
+              completed={completedCount}
+              total={activeTasks.length}
             />
-          ))}
 
-          <AddCustomTask onAdd={handleAdd} />
-        </div>
-      )}
+            {PRIORITY_ORDER.map((priority) => (
+              <PrioritySection
+                key={priority}
+                priority={priority}
+                tasks={activeTasks.filter((task) => task.priority === priority)}
+                onToggle={handleToggle}
+                onDelete={requestDelete}
+              />
+            ))}
+
+            <AddCustomTask onAdd={handleAdd} />
+
+            {removedTasks.length > 0 && (
+              <section className="rounded-card border border-border-card bg-surface px-4 py-3">
+                <h2 className="text-sm font-semibold text-ink-muted">
+                  {t("checklist.removedTasks")}
+                </h2>
+                <div className="mt-2 divide-y divide-border-card">
+                  {removedTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="flex min-h-11 items-center justify-between gap-3 py-2"
+                    >
+                      <span className="text-sm text-ink-muted">
+                        {task.title}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDismissed.mutate({ id: task.id, dismissed: false })
+                        }
+                        className="cursor-pointer text-sm font-semibold text-primary hover:text-primary-dark"
+                        aria-label={t("checklist.restoreTaskAria", {
+                          title: task.title,
+                        })}
+                      >
+                        {t("checklist.restore")}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        )}
       </LoadingSwap>
 
       <DeleteTaskModal
         open={deleteTarget !== null}
         taskTitle={deleteTarget?.title ?? ""}
-        isPending={del.isPending}
+        isPending={del.isPending || setDismissed.isPending}
+        variant={deleteTarget?.isCustom === false ? "remove" : "delete"}
         onConfirm={handleConfirmDelete}
         onCancel={() => {
-          if (!del.isPending) setDeleteTarget(null);
+          if (!del.isPending && !setDismissed.isPending) setDeleteTarget(null);
         }}
       />
     </div>

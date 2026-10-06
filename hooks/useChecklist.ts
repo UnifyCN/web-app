@@ -134,7 +134,10 @@ export function useReorderTasks() {
     { previous: ChecklistTask[] | undefined; tasksKey: readonly unknown[] }
   >({
     mutationFn: ({ priority, bucket }) =>
-      checklist.saveChecklistOrder(priority, bucket.map(checklist.taskOrderKey)),
+      checklist.saveChecklistOrder(
+        priority,
+        bucket.map(checklist.taskOrderKey),
+      ),
     onMutate: async ({ priority, bucket }) => {
       await queryClient.cancelQueries({ queryKey: TASKS_KEY });
       const previous = queryClient.getQueryData<ChecklistTask[]>(tasksKey);
@@ -183,14 +186,48 @@ export function useDeleteCustomTask() {
       await queryClient.cancelQueries({ queryKey: TASKS_KEY });
       const previous = queryClient.getQueryData<ChecklistTask[]>(tasksKey);
       queryClient.setQueryData<ChecklistTask[]>(tasksKey, (prev) =>
-        prev
-          ? prev.filter((task) => !(task.isCustom && task.id === id))
-          : prev,
+        prev ? prev.filter((task) => !(task.isCustom && task.id === id)) : prev,
       );
       // Mutation-time key — see useToggleTask.
       return { previous, tasksKey };
     },
     onError: (_error, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(context.tasksKey, context.previous);
+      }
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
+  });
+}
+
+/** Remove or restore a Sanity suggestion with an optimistic cache update. */
+export function useSetSuggestedTaskDismissed() {
+  const queryClient = useQueryClient();
+  const tasksKey = useTasksKey();
+  return useMutation<
+    void,
+    Error,
+    { id: string; dismissed: boolean },
+    { previous: ChecklistTask[] | undefined; tasksKey: readonly unknown[] }
+  >({
+    mutationFn: ({ id, dismissed }) =>
+      checklist.setSuggestedTaskDismissed(id, dismissed),
+    onMutate: async ({ id, dismissed }) => {
+      await queryClient.cancelQueries({ queryKey: TASKS_KEY });
+      const previous = queryClient.getQueryData<ChecklistTask[]>(tasksKey);
+      queryClient.setQueryData<ChecklistTask[]>(tasksKey, (current) =>
+        current?.map((task) =>
+          !task.isCustom && task.id === id
+            ? {
+                ...task,
+                dismissedAt: dismissed ? new Date().toISOString() : null,
+              }
+            : task,
+        ),
+      );
+      return { previous, tasksKey };
+    },
+    onError: (_error, _input, context) => {
       if (context?.previous) {
         queryClient.setQueryData(context.tasksKey, context.previous);
       }

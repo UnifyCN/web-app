@@ -176,8 +176,6 @@ export function PrioritySection({
     reorder.mutate({ priority, bucket: next });
   }
 
-  if (tasks.length === 0) return null;
-
   const meta = PRIORITY_META[priority];
   const Icon = meta.icon;
   const done = tasks.filter((task) => task.completed).length;

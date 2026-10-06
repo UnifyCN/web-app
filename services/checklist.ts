@@ -174,7 +174,7 @@ export async function getTasks(
       .maybeSingle(),
     supabase
       .from("user_tasks")
-      .select("sanity_checklist_id, completed, completed_at")
+      .select("sanity_checklist_id, completed, completed_at, dismissed_at")
       .eq("user_id", userId),
     supabase
       .from("custom_checklist_tasks")
@@ -196,7 +196,11 @@ export async function getTasks(
 
   const persona = onboarding.persona as Persona;
   const stageSlug = STAGE_TO_SLUG[Number(onboarding.stage) as Stage];
-  const items = await getChecklistByPersonaAndStage(persona, stageSlug, language);
+  const items = await getChecklistByPersonaAndStage(
+    persona,
+    stageSlug,
+    language,
+  );
 
   // Sanity errors are swallowed inside getChecklistByPersonaAndStage so a CMS
   // outage doesn't blank out the user's saved progress. Supabase errors must
@@ -206,13 +210,18 @@ export async function getTasks(
 
   const userRowBySanityId = new Map<
     string,
-    { completed: boolean; completed_at: string | null }
+    {
+      completed: boolean;
+      completed_at: string | null;
+      dismissed_at: string | null;
+    }
   >();
   (userTasksRes.data ?? []).forEach((row) => {
     if (row.sanity_checklist_id) {
       userRowBySanityId.set(row.sanity_checklist_id, {
         completed: row.completed,
         completed_at: row.completed_at,
+        dismissed_at: row.dismissed_at,
       });
     }
   });
@@ -226,6 +235,7 @@ export async function getTasks(
       description: item.longer_description || item.description || "",
       completed: row?.completed ?? false,
       completedAt: row?.completed_at ?? null,
+      dismissedAt: row?.dismissed_at ?? null,
       learnHowHref: resolveLearnHowHref(item),
       isCustom: false,
     };
@@ -238,6 +248,7 @@ export async function getTasks(
     description: row.description ?? "",
     completed: row.completed,
     completedAt: row.completed_at,
+    dismissedAt: null,
     isCustom: true,
   }));
 
@@ -275,10 +286,12 @@ export async function saveChecklistOrder(
   } = await supabase.auth.getUser();
   if (!user) throw new Error("saveChecklistOrder: no auth session");
 
-  const { error } = await supabase.from("checklist_task_order").upsert(
-    { user_id: user.id, priority, ordered_keys: orderedKeys },
-    { onConflict: "user_id,priority" },
-  );
+  const { error } = await supabase
+    .from("checklist_task_order")
+    .upsert(
+      { user_id: user.id, priority, ordered_keys: orderedKeys },
+      { onConflict: "user_id,priority" },
+    );
   if (error) throw error;
 }
 
@@ -309,6 +322,7 @@ export async function getCustomTasks(): Promise<ChecklistTask[]> {
     description: row.description ?? "",
     completed: row.completed,
     completedAt: row.completed_at,
+    dismissedAt: null,
     isCustom: true,
   }));
 }
@@ -409,5 +423,29 @@ export async function deleteCustomTask(id: string): Promise<void> {
     .delete()
     .eq("id", id)
     .eq("user_id", user.id);
+  if (error) throw error;
+}
+
+/** Hide or restore one Sanity suggestion for the signed-in user. */
+export async function setSuggestedTaskDismissed(
+  id: string,
+  dismissed: boolean,
+): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("setSuggestedTaskDismissed: no auth session");
+
+  const { error } = await supabase.from("user_tasks").upsert(
+    {
+      user_id: user.id,
+      sanity_checklist_id: id,
+      dismissed_at: dismissed ? new Date().toISOString() : null,
+    },
+    { onConflict: "user_id,sanity_checklist_id" },
+  );
   if (error) throw error;
 }

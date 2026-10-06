@@ -451,7 +451,8 @@
       "protected_person": "संरक्षित व्यक्ति",
       "skilled_worker": "कुशल कर्मचारी",
       "immigrant": "अप्रवासी",
-      "pr": "PR"
+      "pr": "PR",
+      "other": "नवागंतुक"
     },
     "createItem": {
       "headerTitle": "नया चेकलिस्ट आइटम",
@@ -469,6 +470,13 @@
     "deleteTaskAria": "कार्य हटाएं: {{title}}",
     "deleteTaskDesc": "यह <strong>\"{{title}}\"</strong> को स्थायी रूप से हटा देगा। इसे पूर्ववत नहीं किया जा सकता।",
     "deleteTaskTitle": "इस कार्य को हटाएं?",
+    "remove": "हटाएँ",
+    "removeTaskAria": "सुझाव हटाएँ: {{title}}",
+    "removeTaskDesc": "यह <strong>\"{{title}}\"</strong> को आपकी सूची से हटा देगा। आप इसे बाद में वापस जोड़ सकते हैं।",
+    "removeTaskTitle": "यह सुझाव हटाएँ?",
+    "removedTasks": "हटाए गए कार्य",
+    "restore": "वापस जोड़ें",
+    "restoreTaskAria": "कार्य वापस जोड़ें: {{title}}",
     "loadError": "आपकी चेकलिस्ट लोड नहीं हो सकी।",
     "markDoneAria": "पूर्ण चिह्नित करें",
     "markNotDoneAria": "अधूरा चिह्नित करें",

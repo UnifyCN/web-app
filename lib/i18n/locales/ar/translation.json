@@ -451,7 +451,8 @@
       "protected_person": "شخص محميّ",
       "skilled_worker": "عامل ماهر",
       "immigrant": "مهاجر",
-      "pr": "مقيم دائم"
+      "pr": "مقيم دائم",
+      "other": "وافد جديد"
     },
     "createItem": {
       "headerTitle": "عنصر جديد في القائمة",
@@ -469,6 +470,13 @@
     "deleteTaskAria": "حذف المهمة: {{title}}",
     "deleteTaskDesc": "سيؤدي هذا إلى إزالة <strong>\"{{title}}\"</strong> نهائيًا. لا يمكن التراجع عن ذلك.",
     "deleteTaskTitle": "حذف هذه المهمة؟",
+    "remove": "إزالة",
+    "removeTaskAria": "إزالة الاقتراح: {{title}}",
+    "removeTaskDesc": "سيؤدي هذا إلى إزالة <strong>\"{{title}}\"</strong> من قائمتك. يمكنك استعادته لاحقًا.",
+    "removeTaskTitle": "هل تريد إزالة هذا الاقتراح؟",
+    "removedTasks": "المهام المُزالة",
+    "restore": "استعادة",
+    "restoreTaskAria": "استعادة المهمة: {{title}}",
     "loadError": "تعذّر تحميل قائمة مهامك.",
     "markDoneAria": "تعليم كمنجَز",
     "markNotDoneAria": "تعليم كغير منجَز",
