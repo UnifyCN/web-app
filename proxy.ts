@@ -276,12 +276,16 @@ export const config = {
      * tunnel receives unauthenticated POSTs from the browser SDK — neither must
      * be bounced through the /welcome auth gate.
      *
+     * /robots.txt and /sitemap.xml (app/robots.ts, app/sitemap.ts) are exempt
+     * for the same reason: crawlers have no session, and redirecting them to
+     * /welcome served them a web page where they expected a robots file.
+     *
      * /api/cron/ is exempt because Vercel Cron calls it with no session.
      * SECURITY: every route under /api/cron/ is therefore public to the
      * internet and MUST verify CRON_SECRET itself (see
      * app/api/cron/sentry-snapshot/route.ts). Keep the exemption to exactly
      * this prefix.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|monitoring(?:/|$)|api/cron/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots\\.txt$|sitemap\\.xml$|opengraph-image|twitter-image|monitoring(?:/|$)|api/cron/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
