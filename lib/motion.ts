@@ -81,7 +81,9 @@ export const menuMotion = {
     scale: 1,
     transition: { duration: DURATION.press, ease: EASE.out },
   },
-  exit: { opacity: 0, transition: { duration: 0.1, ease: EASE.in } },
+  // Stops taking clicks the moment it starts leaving, so a fast second tap
+  // can't fire an item twice.
+  exit: { opacity: 0, pointerEvents: "none", transition: EXIT },
 } as const;
 
 /** Content revealed in place (an opened section, a thread of replies). */
