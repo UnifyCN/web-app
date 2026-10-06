@@ -4,7 +4,11 @@ import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "@/hooks/useProfile";
 import { updatePreferredLanguage } from "@/services/language";
-import { hasUserPickedThisSession, persistLocale } from "./index";
+import {
+  ensureLocale,
+  hasUserPickedThisSession,
+  persistLocale,
+} from "./index";
 import {
   isLanguageEnabled,
   isSupportedLanguage,
@@ -50,8 +54,16 @@ function useLanguageSync() {
       isLanguageEnabled(remote) &&
       remote !== local
     ) {
-      persistLocale(remote);
-      void i18n.changeLanguage(remote);
+      // Strings first, then the cookie / <html lang dir> and the switch, so
+      // direction and text change together.
+      void ensureLocale(i18n, remote)
+        .then(() => {
+          persistLocale(remote);
+          return i18n.changeLanguage(remote);
+        })
+        .catch((error: unknown) => {
+          console.error("i18n: synced language failed to load", error);
+        });
     }
   }, [currentUser?.id, currentUser?.onboarding, remote, i18n]);
 }

@@ -4,43 +4,109 @@ import {
   DEFAULT_LANGUAGE,
   LANGUAGE_COOKIE,
   LANGUAGE_STORAGE_KEY,
+  SUPPORTED_LANGUAGES,
   dirForLanguage,
   isLanguageEnabled,
   isSupportedLanguage,
   type SupportedLanguage,
 } from "./config";
 import en from "./locales/en/translation.json";
-import vi from "./locales/vi/translation.json";
-import es from "./locales/es/translation.json";
-import hi from "./locales/hi/translation.json";
-import ar from "./locales/ar/translation.json";
-import frCA from "./locales/fr-CA/translation.json";
-import pa from "./locales/pa/translation.json";
 
-const resources = {
-  en: { translation: en },
-  vi: { translation: vi },
-  es: { translation: es },
-  hi: { translation: hi },
-  ar: { translation: ar },
-  "fr-CA": { translation: frCA },
-  pa: { translation: pa },
-} as const;
+/**
+ * Locale bundles.
+ *
+ * English ships in the main bundle: it is the fallback for every other language
+ * and the language most people use. The other six are separate chunks, loaded
+ * only when they are needed, so nobody downloads and parses seven languages to
+ * read one. Each is fetched once per page load (and once per server process)
+ * and kept here.
+ */
+type TranslationBundle = Record<string, unknown>;
+type LazyLanguage = Exclude<SupportedLanguage, "en">;
+
+const NAMESPACE = "translation";
+
+const loaders: Record<
+  LazyLanguage,
+  () => Promise<{ default: TranslationBundle }>
+> = {
+  vi: () => import("./locales/vi/translation.json"),
+  es: () => import("./locales/es/translation.json"),
+  hi: () => import("./locales/hi/translation.json"),
+  ar: () => import("./locales/ar/translation.json"),
+  "fr-CA": () => import("./locales/fr-CA/translation.json"),
+  pa: () => import("./locales/pa/translation.json"),
+};
+
+const loadedBundles = new Map<SupportedLanguage, TranslationBundle>([
+  [DEFAULT_LANGUAGE, en],
+]);
+const bundlePromises = new Map<SupportedLanguage, Promise<TranslationBundle>>([
+  [DEFAULT_LANGUAGE, Promise.resolve(en)],
+]);
+
+/**
+ * The bundle for a language, loading it if needed. Always returns the same
+ * promise for the same language, which is what lets a component hand it to
+ * React's `use()` (see I18nProvider). A failed load is forgotten so the next
+ * call tries again.
+ */
+export function loadLocale(lang: SupportedLanguage): Promise<TranslationBundle> {
+  const existing = bundlePromises.get(lang);
+  if (existing) return existing;
+  const promise = loaders[lang as LazyLanguage]()
+    .then((module) => {
+      loadedBundles.set(lang, module.default);
+      return module.default;
+    })
+    .catch((error: unknown) => {
+      bundlePromises.delete(lang);
+      throw error;
+    });
+  bundlePromises.set(lang, promise);
+  return promise;
+}
+
+/**
+ * Makes sure an instance has a language's strings before that language is
+ * shown. Call it (and await it) before switching language or rendering text in
+ * a language other than the active one, so nothing ever falls back to English
+ * or shows a raw key while the bundle is on its way.
+ */
+export async function ensureLocale(
+  instance: I18nInstance,
+  lang: SupportedLanguage,
+): Promise<void> {
+  if (instance.hasResourceBundle(lang, NAMESPACE)) return;
+  const bundle = await loadLocale(lang);
+  instance.addResourceBundle(lang, NAMESPACE, bundle, true, true);
+}
 
 /**
  * Create + synchronously initialize an i18next instance for the given language.
+ *
+ * It starts with every bundle that is already loaded: English always, plus the
+ * active language, which the caller must have loaded first (I18nProvider does,
+ * through `loadLocale`). Other languages are added on demand by
+ * `ensureLocale`; `changeLanguage` does that by itself before it switches.
  *
  * A fresh instance per call keeps server-side rendering request-safe — no shared
  * mutable `language` bleeding across concurrent SSR requests. On the client the
  * provider creates it exactly once per tab (see I18nProvider).
  */
 export function createI18n(lng: SupportedLanguage): I18nInstance {
+  const resources = Object.fromEntries(
+    [...loadedBundles].map(([lang, bundle]) => [
+      lang,
+      { [NAMESPACE]: bundle },
+    ]),
+  );
   const instance = createInstance();
   instance.use(initReactI18next).init({
     resources,
     lng,
     fallbackLng: DEFAULT_LANGUAGE,
-    supportedLngs: Object.keys(resources),
+    supportedLngs: Object.keys(SUPPORTED_LANGUAGES),
     interpolation: {
       escapeValue: false,
       // v3 compat (below) disables i18next's modern built-in Intl formatters,
@@ -58,6 +124,18 @@ export function createI18n(lng: SupportedLanguage): I18nInstance {
     // Initialize synchronously so the very first render already has strings.
     initImmediate: false,
   });
+
+  // Every switch loads the target language first, whoever asks for it, so a
+  // caller cannot switch to a language whose strings are not there yet.
+  const switchLanguage = instance.changeLanguage.bind(instance);
+  instance.changeLanguage = (async (
+    next?: string,
+    callback?: Parameters<typeof switchLanguage>[1],
+  ) => {
+    if (isSupportedLanguage(next)) await ensureLocale(instance, next);
+    return switchLanguage(next, callback);
+  }) as typeof instance.changeLanguage;
+
   return instance;
 }
 

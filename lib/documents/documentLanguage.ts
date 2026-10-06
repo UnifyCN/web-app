@@ -60,7 +60,8 @@ export function writeDocumentLanguage(key: string, lang: DocumentLanguage) {
 
 /**
  * A `t` bound to the document language, independent of the active UI language.
- * Every locale bundle is loaded up front (lib/i18n), so this never waits.
+ * The language's strings must already be loaded: `useDocumentLanguage` only
+ * reports a language once they are, so pass the language it gives you.
  */
 export function documentT(i18n: I18nInstance, lang: DocumentLanguage): TFunction {
   return i18n.getFixedT(lang);
