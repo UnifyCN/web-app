@@ -24,18 +24,20 @@ const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
 const MAX_SOURCE_PIXELS = 50_000_000;
 
 // Keys are immutable (a new upload gets a new key) and the bytes depend only on
-// the key and width, never on who asked, so a result can be cached for good.
+// the key and width, never on who asked. So the result is cached twice: by the
+// browser for a year, and by the CDN for 30 days, which makes the signing and
+// resize a one-time cost for everyone instead of once per browser.
 //
-// Browser only, for now: every browser still pays for the signing and resize
-// once per picture. Caching at the CDN as well (the shared value) would
-// make that a one-time cost for everyone, but it is only safe if `proxy.ts`
-// still turns away signed-out requests that the CDN could answer from its
-// cache. `./probe/route.ts` exists to prove that on production before any real
-// picture is shared; flip SHARE_AT_EDGE only after that check has passed.
-// Sharing also assumes what is true today: every signed-in person may see every
-// user picture (the feed shows them all). If pictures ever become private to
-// some people, this must stay off.
-const SHARE_AT_EDGE = false;
+// Sharing it at the CDN does not open it up. `proxy.ts` runs before the CDN
+// cache on every request and turns away anyone who is not signed in; this was
+// checked on production (2026-10-05) with a probe response held in the cache:
+// signed-in requests were served from it, signed-out requests to the same URL
+// were redirected to /welcome. It does assume what is true today: every
+// signed-in person may see every user picture (the feed shows them all). If
+// pictures ever become private to some people, go back to the private value.
+//
+// A response that had to write a session cookie always uses the private value:
+// a response that sets a cookie must never be stored in a shared cache.
 
 // Errors are never cached, so a transient failure cannot stick.
 const fail = (error: string, status: number) =>
@@ -92,8 +94,9 @@ async function readCapped(
  *   widths; anything else is a 400. Keep that shape check strict: it is what
  *   limits this route to pictures.
  * - Only signed-in people get an image. `proxy.ts` verifies the session on
- *   every request, and the signed URL comes from `profile-picture-get`,
- *   invoked with the caller's session (its gateway verifies the JWT again).
+ *   every request, including the ones the CDN answers from its cache, and the
+ *   signed URL comes from `profile-picture-get`, invoked with the caller's
+ *   session (its gateway verifies the JWT again).
  * - The server only fetches from the one storage host, over https, for exactly
  *   the key requested, and does not follow redirects.
  * - The bytes must really be a JPEG, PNG or WebP (checked by content, not by
@@ -173,11 +176,9 @@ export async function GET(req: NextRequest) {
     headers: {
       "Content-Type": "image/webp",
       "Content-Length": String(output.byteLength),
-      "Cache-Control":
-        // A response that had to write a session cookie is never shared.
-        SHARE_AT_EDGE && !wroteCookies()
-          ? SHARED_IMAGE_CACHE_CONTROL
-          : PRIVATE_IMAGE_CACHE_CONTROL,
+      "Cache-Control": wroteCookies()
+        ? PRIVATE_IMAGE_CACHE_CONTROL
+        : SHARED_IMAGE_CACHE_CONTROL,
       "X-Content-Type-Options": "nosniff",
     },
   });
