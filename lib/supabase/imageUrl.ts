@@ -7,7 +7,7 @@
  * re-downloaded at full resolution about once a minute, and a 40px avatar could
  * be a 3000px photo. `/api/storage/image` fixes both: the URL below never
  * changes for a given key and width, the route answers with a long-lived
- * `Cache-Control` (browser and CDN), and the image is resized on the server.
+ * `Cache-Control`, and the image is resized on the server.
  */
 
 /** Widths the image route will produce. Requests are snapped up to one of these. */
