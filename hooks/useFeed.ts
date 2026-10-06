@@ -11,6 +11,7 @@ import {
   storageImageUrlAt,
 } from "@/lib/supabase/imageUrl";
 import * as feed from "@/services/feed";
+import { fetchBlockedUserIds } from "@/hooks/useModeration";
 import { trackCommentCreated, trackPostCreated } from "@/lib/analytics";
 
 /** React Query hooks for feed / posts data. */
@@ -19,10 +20,20 @@ const FEED_KEY = ["feed"] as const;
 
 /* ---- Per-tab feed queries (cursor-paginated, infinite scroll) --------- */
 
+/** One page of the For You feed, using the cached blocked-id list. */
+async function fetchForYouPage(
+  queryClient: QueryClient,
+  pageParam: string | undefined,
+) {
+  const blockedIds = await fetchBlockedUserIds(queryClient);
+  return feed.getForYouFeed(pageParam, undefined, blockedIds);
+}
+
 export function useForYouFeed(enabled: boolean = true) {
+  const queryClient = useQueryClient();
   return useInfiniteQuery({
     queryKey: [...FEED_KEY, "forYou"],
-    queryFn: ({ pageParam }) => feed.getForYouFeed(pageParam),
+    queryFn: ({ pageParam }) => fetchForYouPage(queryClient, pageParam),
     // Keyset cursor on (created_at, id); first page has no cursor.
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
@@ -264,7 +275,7 @@ export async function prefetchForYouFeed(queryClient: QueryClient) {
   const queryKey = [...FEED_KEY, "forYou"];
   await queryClient.prefetchInfiniteQuery({
     queryKey,
-    queryFn: ({ pageParam }) => feed.getForYouFeed(pageParam),
+    queryFn: ({ pageParam }) => fetchForYouPage(queryClient, pageParam),
     initialPageParam: undefined as string | undefined,
     staleTime: 60_000,
   });

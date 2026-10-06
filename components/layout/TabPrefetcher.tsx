@@ -2,7 +2,9 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/useProfile";
+import { prefetchBlockedUserIds } from "@/hooks/useModeration";
 import { PREFETCHABLE_TABS, usePrefetchTab } from "@/hooks/usePrefetchTab";
 
 // Once per page load is enough: after that the data is in the cache and each
@@ -26,19 +28,54 @@ function shouldSaveData(): boolean {
   );
 }
 
+// Longest the warm-up will wait for the current page's own requests.
+const PAGE_SETTLE_CAP_MS = 6000;
+
+/**
+ * Resolves once nothing is being fetched (or after the cap). "Idle" to the
+ * browser only means the main thread is free: on a hard load that is true
+ * while the page's own data is still on its way, and warming seven other tabs
+ * then would compete with it.
+ */
+function whenQueriesSettle(queryClient: QueryClient): Promise<void> {
+  return new Promise((resolve) => {
+    if (queryClient.isFetching() === 0) {
+      resolve();
+      return;
+    }
+    const finish = () => {
+      unsubscribe();
+      window.clearTimeout(timer);
+      resolve();
+    };
+    const unsubscribe = queryClient.getQueryCache().subscribe(() => {
+      if (queryClient.isFetching() === 0) finish();
+    });
+    const timer = window.setTimeout(finish, PAGE_SETTLE_CAP_MS);
+  });
+}
+
 /**
  * Warms the other main tabs' data once the current page has settled, so the
  * first visit to each one shows content right away. It waits for the browser
- * to be idle and fetches one tab at a time, so it never competes with the page
- * the user is looking at. Skipped entirely on Save-Data or 2G connections,
+ * to be idle and for the page's own requests to finish, then fetches one tab at
+ * a time, so it never competes with the page the user is looking at. Skipped entirely on Save-Data or 2G connections,
  * where the tabs still warm on hover / focus / touch (see the nav components).
  * Renders nothing.
  */
 export function TabPrefetcher() {
   const pathname = usePathname();
   const prefetchTab = usePrefetchTab();
+  const queryClient = useQueryClient();
   const { data: currentUser } = useCurrentUser();
   const signedIn = Boolean(currentUser?.id);
+
+  // The Social feed cannot ask for posts until it knows who the user has
+  // blocked. Start that small request as soon as the shell mounts, alongside
+  // everything else, so the feed finds it ready whichever page was opened first.
+  useEffect(() => {
+    void prefetchBlockedUserIds(queryClient);
+  }, [queryClient]);
 
   useEffect(() => {
     if (!signedIn) {
@@ -53,6 +90,7 @@ export function TabPrefetcher() {
     let started = false;
     const warm = async () => {
       started = true;
+      await whenQueriesSettle(queryClient);
       for (const href of PREFETCHABLE_TABS) {
         if (cancelled) return;
         // The page the user is on fetches its own data.

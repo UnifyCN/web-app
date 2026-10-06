@@ -238,6 +238,57 @@ export async function getModules(
   });
 }
 
+/**
+ * One module's per-user state: its status, whether it is a favourite, and which
+ * lessons the user has completed. Null when Supabase is not configured or
+ * nobody is signed in.
+ */
+async function loadUserStateForModule(moduleId: string): Promise<{
+  status: ModuleStatus;
+  isFavourite: boolean;
+  completedByLesson: Map<string, boolean>;
+} | null> {
+  if (!isSupabaseConfigured()) return null;
+  const userId = await getAuthUserId();
+  if (!userId) return null;
+
+  const supabase = createClient();
+  const [progressRes, favRes, lessonsRes] = await Promise.all([
+    supabase
+      .from("learn_progress")
+      .select("status, completed_at")
+      .eq("user_id", userId)
+      .eq("module_id", moduleId)
+      .maybeSingle(),
+    supabase
+      .from("learn_favourites")
+      .select("sanity_module_id")
+      .eq("user_id", userId)
+      .eq("sanity_module_id", moduleId)
+      .maybeSingle(),
+    supabase
+      .from("user_lesson_progress")
+      .select("sanity_lesson_id, is_completed")
+      .eq("user_id", userId),
+  ]);
+  if (progressRes.error) throw progressRes.error;
+  if (favRes.error) throw favRes.error;
+  if (lessonsRes.error) throw lessonsRes.error;
+
+  return {
+    status: (progressRes.data?.status as ModuleStatus) ?? "not_started",
+    isFavourite: !!favRes.data,
+    completedByLesson: new Map(
+      (
+        (lessonsRes.data ?? []) as {
+          sanity_lesson_id: string;
+          is_completed: boolean;
+        }[]
+      ).map((r) => [r.sanity_lesson_id, r.is_completed]),
+    ),
+  };
+}
+
 export async function getModule(
   moduleId: string,
   language: SupportedLanguage = "en",
@@ -249,61 +300,36 @@ export async function getModule(
       : mock;
   }
 
+  // The module content (Sanity) and this user's state for it (Supabase) do not
+  // depend on each other, so both are started together. The state is only
+  // awaited once the module is known to exist, so an unknown id still reads as
+  // "not found" rather than as a failed user-state lookup.
+  const userStatePromise = loadUserStateForModule(moduleId);
+  userStatePromise.catch(() => {});
   const row = await sanityClient.fetch<ModuleRow | null>(MODULE_DETAIL_QUERY, {
     moduleId,
     lang: language,
   });
   if (!row) return undefined;
   const sanityModule = mergeModuleTreeI18n(row);
+  const userState = await userStatePromise;
 
   let status: ModuleStatus = "not_started";
   let isFavourite = false;
   let progressPercent = 0;
 
   if (isSupabaseConfigured()) {
-    const userId = await getAuthUserId();
-    if (userId) {
-      const supabase = createClient();
-      const [progressRes, favRes, lessonsRes] = await Promise.all([
-        supabase
-          .from("learn_progress")
-          .select("status, completed_at")
-          .eq("user_id", userId)
-          .eq("module_id", moduleId)
-          .maybeSingle(),
-        supabase
-          .from("learn_favourites")
-          .select("sanity_module_id")
-          .eq("user_id", userId)
-          .eq("sanity_module_id", moduleId)
-          .maybeSingle(),
-        supabase
-          .from("user_lesson_progress")
-          .select("sanity_lesson_id, is_completed")
-          .eq("user_id", userId),
-      ]);
-      if (progressRes.error) throw progressRes.error;
-      if (favRes.error) throw favRes.error;
-      if (lessonsRes.error) throw lessonsRes.error;
-
-      status = (progressRes.data?.status as ModuleStatus) ?? "not_started";
-      isFavourite = !!favRes.data;
+    if (userState) {
+      status = userState.status;
+      isFavourite = userState.isFavourite;
 
       // Real progressPercent: completed lessons in this module / total.
       const lessonIds = (sanityModule.submodules ?? []).flatMap((s) =>
         (s.lessons ?? []).map((l) => l._id),
       );
-      const completedByLesson = new Map(
-        (
-          (lessonsRes.data ?? []) as {
-            sanity_lesson_id: string;
-            is_completed: boolean;
-          }[]
-        ).map((r) => [r.sanity_lesson_id, r.is_completed]),
-      );
       const total = lessonIds.length;
       const completed = lessonIds.filter((id) =>
-        completedByLesson.get(id),
+        userState.completedByLesson.get(id),
       ).length;
       progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0;
     }

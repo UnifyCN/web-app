@@ -201,6 +201,17 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
     `app/providers.tsx`), so a revisit shows data and refetches in the background.
   - **Waterfalls.** Read the user id with `getAuthUserId()` (local session), not
     `auth.getUser()` (a network call), and start independent queries together.
+  - **Hard loads.** Never call `supabase.auth.getUser()` from anything mounted on every page.
+    It holds the client's auth lock for a whole network round trip, and every other Supabase
+    request needs that lock to read its token, so all page data queues behind it (this cost 200
+    to 350 ms on every page). `useAuthUser` reads the stored session and is for display and UI
+    state only; `getAuthUser` (server-verified) stays for the login redirect and password reset.
+    Do not make a page's header wait on a slow secondary call: load it as its own query
+    (`usePublicOnboarding` on another user's profile).
+  - **Blocked authors.** Their posts are excluded in the posts query, never filtered in the
+    browser: blocking is a safety feature. The blocked-id list is cached per user for 10 minutes
+    (`fetchBlockedUserIds`), started when the shell mounts, and marked out of date before the
+    feed refetches after a block or unblock.
 
 ---
 

@@ -105,7 +105,9 @@ export function ProfileHeader({
   };
 
   // Prefer the onboarding first name as the display name, with @username beneath.
-  const firstName = profile.onboarding?.firstName?.trim();
+  const firstName = (
+    profile.onboarding?.firstName ?? profile.firstName
+  )?.trim();
 
   const memberSince = profile.createdAt
     ? new Date(profile.createdAt).toLocaleDateString(i18n.language, {
