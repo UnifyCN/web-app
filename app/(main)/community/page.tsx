@@ -23,6 +23,7 @@ import {
   useNews,
   useStartCircleMatching,
 } from "@/hooks/useCommunity";
+import { useGroupText } from "@/lib/i18n/groupText";
 import type { EventGenre } from "@/types";
 import { LoadingSwap } from "@/components/ui/LoadingSwap";
 
@@ -115,6 +116,7 @@ function MyGroupsStripSkeleton() {
 
 function CommunityPageContent() {
   const { t } = useTranslation();
+  const { nameMatches } = useGroupText();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -156,8 +158,9 @@ function CommunityPageContent() {
   const events = eventsQuery.data ?? [];
   const newsItems = newsQuery.data ?? [];
 
+  const groupNeedle = search.trim().toLowerCase();
   const filteredGroups = groups.filter((group) =>
-    group.groupName.toLowerCase().includes(search.trim().toLowerCase()),
+    nameMatches(group.id, group.groupName, groupNeedle),
   );
 
   // A refetch can drop the genre the user had selected — an event passes its start

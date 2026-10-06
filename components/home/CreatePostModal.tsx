@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/Dialog";
 import { useCreatePost } from "@/hooks/useFeed";
 import { useGroups, useJoinGroup } from "@/hooks/useCommunity";
+import { useGroupText } from "@/lib/i18n/groupText";
 import { uploadPostImages } from "@/lib/supabase/uploadImage";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,7 @@ interface CreatePostModalProps {
  *  images to the post-images bucket first, then inserts the post). */
 export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
   const { t } = useTranslation();
+  const { groupName, groupDescription, nameMatches } = useGroupText();
   const [destination, setDestination] = useState<Destination>("forYou");
   const [groupId, setGroupId] = useState<number | null>(null);
   const [groupSearch, setGroupSearch] = useState("");
@@ -100,7 +102,7 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
   const groupQuery = groupSearch.trim().toLowerCase();
   const filteredGroups = groupQuery
     ? allGroups.filter((group) =>
-        group.groupName.toLowerCase().includes(groupQuery),
+        nameMatches(group.id, group.groupName, groupQuery),
       )
     : allGroups;
   const joinedGroups = filteredGroups.filter((group) => group.joinedByMe);
@@ -244,7 +246,12 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
               {destination === "group" && selectedGroup && (
                 <div className="mt-3 flex items-center gap-2 text-sm">
                   <span className="font-semibold text-ink-secondary">
-                    {t("posts.postingTo", { name: selectedGroup.groupName })}
+                    {t("posts.postingTo", {
+                      name: groupName(
+                        selectedGroup.id,
+                        selectedGroup.groupName,
+                      ),
+                    })}
                   </span>
                   <button
                     type="button"
@@ -299,17 +306,23 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                                 className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-surface-gray"
                               >
                                 <Avatar
-                                  username={group.groupName}
+                                  username={groupName(
+                                    group.id,
+                                    group.groupName,
+                                  )}
                                   profilePictureUrl={group.coverPhotoUrl}
                                   size={40}
                                 />
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-semibold text-ink-secondary">
-                                    {group.groupName}
+                                    {groupName(group.id, group.groupName)}
                                   </p>
                                   {group.groupDescription && (
                                     <p className="line-clamp-2 text-xs text-ink-muted">
-                                      {group.groupDescription}
+                                      {groupDescription(
+                                        group.id,
+                                        group.groupDescription,
+                                      )}
                                     </p>
                                   )}
                                 </div>
@@ -338,17 +351,23 @@ export function CreatePostModal({ open, onClose }: CreatePostModalProps) {
                                   className="flex items-center gap-3 rounded-lg px-2 py-2"
                                 >
                                   <Avatar
-                                    username={group.groupName}
+                                    username={groupName(
+                                      group.id,
+                                      group.groupName,
+                                    )}
                                     profilePictureUrl={group.coverPhotoUrl}
                                     size={40}
                                   />
                                   <div className="min-w-0 flex-1">
                                     <p className="truncate text-sm font-semibold text-ink-secondary">
-                                      {group.groupName}
+                                      {groupName(group.id, group.groupName)}
                                     </p>
                                     {group.groupDescription && (
                                       <p className="line-clamp-2 text-xs text-ink-muted">
-                                        {group.groupDescription}
+                                        {groupDescription(
+                                          group.id,
+                                          group.groupDescription,
+                                        )}
                                       </p>
                                     )}
                                   </div>

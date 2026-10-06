@@ -774,6 +774,64 @@
     "requestReasonPlaceholder": "Tell us a little about the need (at least 10 characters).",
     "requestReviewNote": "We review every request and follow up by email."
   },
+  "officialGroups": {
+    "4": {
+      "name": "Tech Enthusiasts",
+      "description": "A group for people passionate about technology."
+    },
+    "5": {
+      "name": "Book Club",
+      "description": "Discuss your favorite books and authors."
+    },
+    "7": {
+      "name": "Housing Assistance",
+      "description": "A group for people who want advice regarding housing options and different tips and tricks"
+    },
+    "11": {
+      "name": "International Students",
+      "description": "A space for international students in Canada to ask questions, share experiences, and support each other through school, work, and life outside the classroom. Topics include study permits, part-time work, housing, campus life, and pathways after graduation."
+    },
+    "12": {
+      "name": "PR Applicants",
+      "description": "For anyone navigating Express Entry, PNPs, work permits, and PR timelines."
+    },
+    "13": {
+      "name": "Working in Canada",
+      "description": "Discussions around finding jobs, workplace culture, resumes, interviews, and employment rights."
+    },
+    "14": {
+      "name": "English Practice and Conversation",
+      "description": "A friendly space to practice English, share resources, and find conversation partners without pressure."
+    },
+    "15": {
+      "name": "Banking, Credit, and Taxes",
+      "description": "Build credit, choose accounts and cards, and get ready for tax season with simple explanations."
+    },
+    "16": {
+      "name": "Parents and Families",
+      "description": "Childcare, schools, family resources, and day-to-day support for parents settling in a new place."
+    },
+    "17": {
+      "name": "Scam Alerts and Safety",
+      "description": "Share common scams, housing red flags, and tips to stay safe online and in the community."
+    },
+    "18": {
+      "name": "Food Club",
+      "description": "Swap restaurant recs, halal/veg finds, cultural food spots, and places that feel like home."
+    },
+    "19": {
+      "name": "Newcomer Wins",
+      "description": "Share your weekly win, big or small, and hype others up with encouragement and tips."
+    },
+    "20": {
+      "name": "Movie Club",
+      "description": "Vote on a movie, watch together, or drop quick reviews and discussion threads."
+    },
+    "21": {
+      "name": "Music Club",
+      "description": "Share playlists, discover new artists, and discuss music!"
+    }
+  },
   "posts": {
     "postButton": "Post",
     "forYou": "For You",

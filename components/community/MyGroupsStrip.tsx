@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { GroupCover } from "@/components/community/GroupCover";
+import { useGroupText } from "@/lib/i18n/groupText";
 import type { Group } from "@/types";
 
 /** Horizontal scroll strip of the groups the user has joined. */
 export function MyGroupsStrip({ groups }: { groups: Group[] }) {
   const { t } = useTranslation();
+  const { groupName } = useGroupText();
   if (groups.length === 0) return null;
 
   return (
@@ -30,7 +32,7 @@ export function MyGroupsStrip({ groups }: { groups: Group[] }) {
               />
             </div>
             <span className="line-clamp-2 text-center text-xs font-medium text-ink-secondary">
-              {group.groupName}
+              {groupName(group.id, group.groupName)}
             </span>
           </Link>
         ))}

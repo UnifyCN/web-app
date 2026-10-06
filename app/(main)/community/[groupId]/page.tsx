@@ -12,6 +12,7 @@ import { PostCard } from "@/components/home/PostCard";
 import { useGroup, useJoinGroup, useLeaveGroup } from "@/hooks/useCommunity";
 import { useGroupPosts } from "@/hooks/useFeed";
 import { trackGroupJoined, trackGroupViewed } from "@/lib/analytics";
+import { useGroupText } from "@/lib/i18n/groupText";
 
 export default function GroupDetailPage({
   params,
@@ -19,6 +20,7 @@ export default function GroupDetailPage({
   params: Promise<{ groupId: string }>;
 }) {
   const { t } = useTranslation();
+  const { groupName, groupDescription } = useGroupText();
   const { groupId } = use(params);
   const parsedId = Number(groupId);
   const id = Number.isFinite(parsedId) && parsedId > 0 ? parsedId : 0;
@@ -106,7 +108,7 @@ export default function GroupDetailPage({
         </div>
         <div className="p-5">
           <h1 className="text-lg font-semibold text-ink-secondary">
-            {group.groupName}
+            {groupName(group.id, group.groupName)}
           </h1>
           <GroupMemberAvatarStack
             avatars={group.memberAvatars}
@@ -114,7 +116,7 @@ export default function GroupDetailPage({
             className="mt-2"
           />
           <p className="mt-3 text-sm leading-relaxed text-ink-muted">
-            {group.groupDescription}
+            {groupDescription(group.id, group.groupDescription)}
           </p>
           <Button
             variant={joined ? "secondary" : "primary"}

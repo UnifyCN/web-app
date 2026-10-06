@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { GroupCover } from "@/components/community/GroupCover";
 import { useJoinGroup, useLeaveGroup } from "@/hooks/useCommunity";
 import { trackGroupJoined } from "@/lib/analytics";
+import { useGroupText } from "@/lib/i18n/groupText";
 import type { Group } from "@/types";
 
 /** Group card for the Community → Groups grid. Join state flips optimistically;
@@ -16,6 +17,7 @@ import type { Group } from "@/types";
  *  prop→state sync effect needed. */
 export function GroupCard({ group }: { group: Group }) {
   const { t } = useTranslation();
+  const { groupName, groupDescription } = useGroupText();
   const [joinedOverride, setJoinedOverride] = useState<boolean | null>(null);
   const joinMutation = useJoinGroup();
   const leaveMutation = useLeaveGroup();
@@ -56,10 +58,10 @@ export function GroupCard({ group }: { group: Group }) {
           href={`/community/${group.id}`}
           className="text-sm font-semibold text-ink-secondary transition-colors hover:text-primary"
         >
-          {group.groupName}
+          {groupName(group.id, group.groupName)}
         </Link>
         <p className="mt-1 line-clamp-2 flex-1 text-xs leading-relaxed text-ink-muted">
-          {group.groupDescription}
+          {groupDescription(group.id, group.groupDescription)}
         </p>
         <div className="mt-3 flex items-center justify-between">
           <span className="flex items-center gap-1 text-xs text-ink-placeholder">

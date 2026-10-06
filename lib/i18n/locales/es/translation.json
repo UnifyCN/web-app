@@ -774,6 +774,64 @@
     "requestReasonPlaceholder": "Cuéntanos un poco sobre la necesidad (mínimo 10 caracteres).",
     "requestReviewNote": "Revisamos cada solicitud y te contactaremos por correo electrónico."
   },
+  "officialGroups": {
+    "4": {
+      "name": "Entusiastas de la tecnología",
+      "description": "Un grupo para personas apasionadas por la tecnología."
+    },
+    "5": {
+      "name": "Club de lectura",
+      "description": "Conversa sobre tus libros y autores favoritos."
+    },
+    "7": {
+      "name": "Ayuda con la vivienda",
+      "description": "Un grupo para quienes buscan consejos sobre opciones de vivienda, además de trucos y recomendaciones."
+    },
+    "11": {
+      "name": "Estudiantes internacionales",
+      "description": "Un espacio para que los estudiantes internacionales en Canadá hagan preguntas, compartan experiencias y se apoyen entre sí en los estudios, el trabajo y la vida fuera del aula. Los temas incluyen permisos de estudio, trabajo a tiempo parcial, vivienda, vida en el campus y opciones después de graduarse."
+    },
+    "12": {
+      "name": "Solicitantes de residencia permanente (PR)",
+      "description": "Para quienes están en el proceso de Express Entry, los PNP, los permisos de trabajo y los plazos de la residencia permanente (PR)."
+    },
+    "13": {
+      "name": "Trabajar en Canadá",
+      "description": "Conversaciones sobre cómo encontrar empleo, la cultura laboral, los currículums, las entrevistas y los derechos laborales."
+    },
+    "14": {
+      "name": "Práctica y conversación en inglés",
+      "description": "Un espacio amigable para practicar inglés, compartir recursos y encontrar compañeros de conversación, sin presión."
+    },
+    "15": {
+      "name": "Banca, crédito e impuestos",
+      "description": "Construye tu historial de crédito, elige cuentas y tarjetas, y prepárate para la temporada de impuestos con explicaciones sencillas."
+    },
+    "16": {
+      "name": "Padres y familias",
+      "description": "Cuidado infantil, escuelas, recursos para familias y apoyo en el día a día para padres que se establecen en un lugar nuevo."
+    },
+    "17": {
+      "name": "Alertas de estafas y seguridad",
+      "description": "Comparte estafas comunes, señales de alerta al buscar vivienda y consejos para mantenerte seguro en línea y en la comunidad."
+    },
+    "18": {
+      "name": "Club de comida",
+      "description": "Intercambia recomendaciones de restaurantes, opciones halal o vegetarianas, lugares de comida típica y sitios que se sienten como en casa."
+    },
+    "19": {
+      "name": "Logros de recién llegados",
+      "description": "Comparte tu logro de la semana, grande o pequeño, y anima a los demás con palabras de aliento y consejos."
+    },
+    "20": {
+      "name": "Club de cine",
+      "description": "Vota por una película, véanla juntos o deja reseñas breves e hilos de conversación."
+    },
+    "21": {
+      "name": "Club de música",
+      "description": "¡Comparte listas de reproducción, descubre nuevos artistas y habla de música!"
+    }
+  },
   "posts": {
     "postButton": "Publicar",
     "forYou": "Para ti",
