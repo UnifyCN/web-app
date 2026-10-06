@@ -5,7 +5,7 @@ import { I18nextProvider } from "react-i18next";
 import {
   createI18n,
   ensureLocale,
-  loadLocale,
+  loadLocaleForRender,
   persistLocale,
   readStoredLocale,
 } from "./index";
@@ -33,7 +33,7 @@ export function I18nProvider({
   initialLocale: SupportedLanguage;
   children: React.ReactNode;
 }) {
-  if (initialLocale !== DEFAULT_LANGUAGE) use(loadLocale(initialLocale));
+  if (initialLocale !== DEFAULT_LANGUAGE) use(loadLocaleForRender(initialLocale));
   const [i18n] = useState(() => createI18n(initialLocale));
 
   useEffect(() => {

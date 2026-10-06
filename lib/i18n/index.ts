@@ -67,6 +67,29 @@ export function loadLocale(lang: SupportedLanguage): Promise<TranslationBundle> 
   return promise;
 }
 
+const settledPromises = new Map<SupportedLanguage, Promise<boolean>>();
+
+/**
+ * `loadLocale` for the first render: the same promise every time for a
+ * language, and it never rejects. If the chunk cannot be fetched (offline, a
+ * deploy in progress) it resolves `false` and the page falls back to English
+ * rather than failing to start.
+ */
+export function loadLocaleForRender(lang: SupportedLanguage): Promise<boolean> {
+  let settled = settledPromises.get(lang);
+  if (!settled) {
+    settled = loadLocale(lang).then(
+      () => true,
+      (error: unknown) => {
+        console.error(`i18n: could not load "${lang}"`, error);
+        return false;
+      },
+    );
+    settledPromises.set(lang, settled);
+  }
+  return settled;
+}
+
 /**
  * Makes sure an instance has a language's strings before that language is
  * shown. Call it (and await it) before switching language or rendering text in
