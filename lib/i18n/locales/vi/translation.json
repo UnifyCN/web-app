@@ -451,7 +451,8 @@
       "protected_person": "Người được bảo vệ",
       "skilled_worker": "Lao động tay nghề",
       "immigrant": "Người nhập cư",
-      "pr": "PR"
+      "pr": "PR",
+      "other": "Người mới đến"
     },
     "createItem": {
       "headerTitle": "Mục danh sách mới",
@@ -469,6 +470,13 @@
     "deleteTaskAria": "Xóa nhiệm vụ: {{title}}",
     "deleteTaskDesc": "Thao tác này sẽ xóa vĩnh viễn <strong>\"{{title}}\"</strong>. Không thể hoàn tác.",
     "deleteTaskTitle": "Xóa nhiệm vụ này?",
+    "remove": "Gỡ",
+    "removeTaskAria": "Gỡ đề xuất: {{title}}",
+    "removeTaskDesc": "Thao tác này sẽ gỡ <strong>\"{{title}}\"</strong> khỏi danh sách của bạn. Bạn có thể khôi phục sau.",
+    "removeTaskTitle": "Gỡ đề xuất này?",
+    "removedTasks": "Nhiệm vụ đã gỡ",
+    "restore": "Khôi phục",
+    "restoreTaskAria": "Khôi phục nhiệm vụ: {{title}}",
     "loadError": "Không thể tải danh sách của bạn.",
     "markDoneAria": "Đánh dấu hoàn thành",
     "markNotDoneAria": "Đánh dấu chưa hoàn thành",

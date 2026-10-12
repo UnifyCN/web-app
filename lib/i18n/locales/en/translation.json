@@ -451,7 +451,8 @@
       "protected_person": "Protected Person",
       "skilled_worker": "Skilled Worker",
       "immigrant": "Immigrant",
-      "pr": "PR"
+      "pr": "PR",
+      "other": "Newcomer"
     },
     "createItem": {
       "headerTitle": "New Checklist Item",
@@ -469,6 +470,13 @@
     "deleteTaskAria": "Delete task: {{title}}",
     "deleteTaskDesc": "This will permanently remove <strong>\"{{title}}\"</strong>. This can't be undone.",
     "deleteTaskTitle": "Delete this task?",
+    "remove": "Remove",
+    "removeTaskAria": "Remove suggestion: {{title}}",
+    "removeTaskDesc": "This will remove <strong>\"{{title}}\"</strong> from your checklist. You can restore it later.",
+    "removeTaskTitle": "Remove this suggestion?",
+    "removedTasks": "Removed tasks",
+    "restore": "Restore",
+    "restoreTaskAria": "Restore task: {{title}}",
     "loadError": "Couldn't load your checklist.",
     "markDoneAria": "Mark as done",
     "markNotDoneAria": "Mark as not done",

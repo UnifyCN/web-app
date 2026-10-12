@@ -451,7 +451,8 @@
       "protected_person": "ਸੁਰੱਖਿਅਤ ਵਿਅਕਤੀ",
       "skilled_worker": "ਹੁਨਰਮੰਦ ਕਾਮਾ",
       "immigrant": "ਪ੍ਰਵਾਸੀ",
-      "pr": "PR"
+      "pr": "PR",
+      "other": "ਨਵਾਂ ਆਇਆ ਵਿਅਕਤੀ"
     },
     "createItem": {
       "headerTitle": "ਨਵੀਂ ਚੈੱਕਲਿਸਟ ਆਈਟਮ",
@@ -469,6 +470,13 @@
     "deleteTaskAria": "ਕੰਮ ਮਿਟਾਓ: {{title}}",
     "deleteTaskDesc": "ਇਹ <strong>\"{{title}}\"</strong> ਨੂੰ ਸਥਾਈ ਤੌਰ 'ਤੇ ਹਟਾ ਦੇਵੇਗਾ। ਇਹ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।",
     "deleteTaskTitle": "ਇਹ ਕੰਮ ਮਿਟਾਉਣਾ ਹੈ?",
+    "remove": "ਹਟਾਓ",
+    "removeTaskAria": "ਸੁਝਾਅ ਹਟਾਓ: {{title}}",
+    "removeTaskDesc": "ਇਹ <strong>\"{{title}}\"</strong> ਨੂੰ ਤੁਹਾਡੀ ਸੂਚੀ ਤੋਂ ਹਟਾ ਦੇਵੇਗਾ। ਤੁਸੀਂ ਇਸਨੂੰ ਬਾਅਦ ਵਿੱਚ ਵਾਪਸ ਲਿਆ ਸਕਦੇ ਹੋ।",
+    "removeTaskTitle": "ਇਹ ਸੁਝਾਅ ਹਟਾਉਣਾ ਹੈ?",
+    "removedTasks": "ਹਟਾਏ ਕੰਮ",
+    "restore": "ਵਾਪਸ ਲਿਆਓ",
+    "restoreTaskAria": "ਕੰਮ ਵਾਪਸ ਲਿਆਓ: {{title}}",
     "loadError": "ਤੁਹਾਡੀ ਚੈੱਕਲਿਸਟ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀ।",
     "markDoneAria": "ਪੂਰਾ ਵਜੋਂ ਨਿਸ਼ਾਨਬੱਧ ਕਰੋ",
     "markNotDoneAria": "ਅਧੂਰਾ ਵਜੋਂ ਨਿਸ਼ਾਨਬੱਧ ਕਰੋ",

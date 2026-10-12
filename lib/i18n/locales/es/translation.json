@@ -451,7 +451,8 @@
       "protected_person": "Persona protegida",
       "skilled_worker": "Trabajador calificado",
       "immigrant": "Inmigrante",
-      "pr": "PR"
+      "pr": "PR",
+      "other": "Recién llegado"
     },
     "createItem": {
       "headerTitle": "Nuevo elemento",
@@ -469,6 +470,13 @@
     "deleteTaskAria": "Eliminar tarea: {{title}}",
     "deleteTaskDesc": "Esto eliminará permanentemente <strong>\"{{title}}\"</strong>. Esta acción no se puede deshacer.",
     "deleteTaskTitle": "¿Eliminar esta tarea?",
+    "remove": "Quitar",
+    "removeTaskAria": "Quitar sugerencia: {{title}}",
+    "removeTaskDesc": "Esto quitará <strong>\"{{title}}\"</strong> de tu lista. Puedes restaurarla más tarde.",
+    "removeTaskTitle": "¿Quitar esta sugerencia?",
+    "removedTasks": "Tareas eliminadas",
+    "restore": "Restaurar",
+    "restoreTaskAria": "Restaurar tarea: {{title}}",
     "loadError": "No se pudo cargar tu lista.",
     "markDoneAria": "Marcar como completado",
     "markNotDoneAria": "Marcar como no completado",

@@ -360,6 +360,8 @@ export interface ChecklistTask {
   description: string;
   completed: boolean;
   completedAt: string | null;
+  /** Non-null when this user removed a Sanity suggestion from their checklist. */
+  dismissedAt: string | null;
   /** Optional deep-link to a Learn module / external how-to. */
   learnHowHref?: string;
   /** Custom tasks are user-created; seed tasks come from Sanity. */
@@ -498,7 +500,11 @@ export interface SanityQuizQuestion {
   /** Present for matching questions (right_items repeat — they're categories). */
   matching_pairs?: SanityMatchingPair[];
   /** Present for free-text questions (fill_blank / short_answer / long_answer). */
-  correct_answer?: { value: string[]; explanation?: SanityBlock[]; points?: number };
+  correct_answer?: {
+    value: string[];
+    explanation?: SanityBlock[];
+    points?: number;
+  };
   order_number: number;
   answer_box?: SanityAnswerBox | null;
 }

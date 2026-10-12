@@ -13,6 +13,8 @@ export const tasks: ChecklistTask[] = [
       "Your SIN is needed to work and access government services. Apply at a Service Canada office or online.",
     completed: true,
     completedAt: "2026-05-10T16:00:00Z",
+
+    dismissedAt: null,
     learnHowHref: "/learn",
     isCustom: false,
   },
@@ -24,6 +26,8 @@ export const tasks: ChecklistTask[] = [
       "Most banks offer newcomer packages with no fees for the first year.",
     completed: false,
     completedAt: null,
+
+    dismissedAt: null,
     learnHowHref: "/learn",
     isCustom: false,
   },
@@ -35,6 +39,8 @@ export const tasks: ChecklistTask[] = [
       "A local number makes job applications, housing, and appointments far easier.",
     completed: false,
     completedAt: null,
+
+    dismissedAt: null,
     isCustom: false,
   },
 
@@ -47,6 +53,8 @@ export const tasks: ChecklistTask[] = [
       "Coverage can take up to three months to start — apply the week you arrive.",
     completed: false,
     completedAt: null,
+
+    dismissedAt: null,
     learnHowHref: "/learn",
     isCustom: false,
   },
@@ -58,6 +66,8 @@ export const tasks: ChecklistTask[] = [
       "Line up references and proof of funds; landlords often ask for both.",
     completed: false,
     completedAt: null,
+
+    dismissedAt: null,
     isCustom: false,
   },
   {
@@ -68,6 +78,8 @@ export const tasks: ChecklistTask[] = [
       "Contact your local school board with proof of address and immigration documents.",
     completed: false,
     completedAt: null,
+
+    dismissedAt: null,
     isCustom: false,
   },
 
@@ -80,6 +92,8 @@ export const tasks: ChecklistTask[] = [
       "Local groups are the fastest way to find advice, friends, and job leads.",
     completed: false,
     completedAt: null,
+
+    dismissedAt: null,
     learnHowHref: "/community",
     isCustom: false,
   },
@@ -91,6 +105,8 @@ export const tasks: ChecklistTask[] = [
       "Government-funded LINC classes are free for eligible permanent residents.",
     completed: false,
     completedAt: null,
+
+    dismissedAt: null,
     isCustom: false,
   },
   {
@@ -101,6 +117,8 @@ export const tasks: ChecklistTask[] = [
       "Free internet, settlement workshops, and language resources — all with a free card.",
     completed: true,
     completedAt: "2026-05-13T19:30:00Z",
+
+    dismissedAt: null,
     isCustom: false,
   },
 
@@ -113,6 +131,8 @@ export const tasks: ChecklistTask[] = [
       "A secured credit card used responsibly builds the score you'll need for renting and loans.",
     completed: false,
     completedAt: null,
+
+    dismissedAt: null,
     learnHowHref: "/learn",
     isCustom: false,
   },
@@ -124,6 +144,8 @@ export const tasks: ChecklistTask[] = [
       "Most permanent residents can apply for citizenship after three years in Canada.",
     completed: false,
     completedAt: null,
+
+    dismissedAt: null,
     isCustom: false,
   },
   {
@@ -134,6 +156,8 @@ export const tasks: ChecklistTask[] = [
       "Map out rent, transit, groceries, and phone so the first months hold no surprises.",
     completed: false,
     completedAt: null,
+
+    dismissedAt: null,
     isCustom: false,
   },
 ];

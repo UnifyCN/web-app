@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { Check, GripVertical, Trash2 } from "lucide-react";
+import { Check, EyeOff, GripVertical, Trash2 } from "lucide-react";
 import type {
   DraggableAttributes,
   DraggableSyntheticListeners,
@@ -106,16 +106,23 @@ export function TaskRow({
         )}
       </div>
 
-      {task.isCustom && (
-        <button
-          type="button"
-          onClick={() => onDelete(task.id)}
-          aria-label={t("checklist.deleteTaskAria", { title: task.title })}
-          className="mt-0.5 flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:text-destructive"
-        >
+      <button
+        type="button"
+        onClick={() => onDelete(task.id)}
+        aria-label={t(
+          task.isCustom
+            ? "checklist.deleteTaskAria"
+            : "checklist.removeTaskAria",
+          { title: task.title },
+        )}
+        className="mt-0.5 flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:text-destructive"
+      >
+        {task.isCustom ? (
           <Trash2 className="h-4 w-4" aria-hidden />
-        </button>
-      )}
+        ) : (
+          <EyeOff className="h-4 w-4" aria-hidden />
+        )}
+      </button>
 
       {dragHandleListeners && (
         <button

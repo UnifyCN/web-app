@@ -451,7 +451,8 @@
       "protected_person": "Personne protégée",
       "skilled_worker": "Travailleur qualifié",
       "immigrant": "Immigrant",
-      "pr": "RP"
+      "pr": "RP",
+      "other": "Nouvel arrivant"
     },
     "createItem": {
       "headerTitle": "Nouvel élément de liste",
@@ -469,6 +470,13 @@
     "deleteTaskAria": "Supprimer la tâche : {{title}}",
     "deleteTaskDesc": "Ceci supprimera définitivement <strong>« {{title}} »</strong>. Cette action est irréversible.",
     "deleteTaskTitle": "Supprimer cette tâche?",
+    "remove": "Retirer",
+    "removeTaskAria": "Retirer la suggestion : {{title}}",
+    "removeTaskDesc": "Cette action retirera <strong>\"{{title}}\"</strong> de votre liste. Vous pourrez la restaurer plus tard.",
+    "removeTaskTitle": "Retirer cette suggestion?",
+    "removedTasks": "Tâches retirées",
+    "restore": "Restaurer",
+    "restoreTaskAria": "Restaurer la tâche : {{title}}",
     "loadError": "Impossible de charger votre liste.",
     "markDoneAria": "Marquer comme terminée",
     "markNotDoneAria": "Marquer comme non terminée",

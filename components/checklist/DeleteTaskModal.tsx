@@ -13,6 +13,7 @@ interface DeleteTaskModalProps {
   open: boolean;
   taskTitle: string;
   isPending: boolean;
+  variant: "delete" | "remove";
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -29,6 +30,7 @@ export function DeleteTaskModal({
   open,
   taskTitle,
   isPending,
+  variant,
   onConfirm,
   onCancel,
 }: DeleteTaskModalProps) {
@@ -86,11 +88,19 @@ export function DeleteTaskModal({
             id="delete-task-title"
             className="text-base font-semibold text-ink-secondary"
           >
-            {t("checklist.deleteTaskTitle")}
+            {t(
+              variant === "delete"
+                ? "checklist.deleteTaskTitle"
+                : "checklist.removeTaskTitle",
+            )}
           </h2>
           <p className="mt-2 text-sm text-ink-muted">
             <Trans
-              i18nKey="checklist.deleteTaskDesc"
+              i18nKey={
+                variant === "delete"
+                  ? "checklist.deleteTaskDesc"
+                  : "checklist.removeTaskDesc"
+              }
               values={{ title: taskTitle }}
               components={{
                 strong: <span className="font-medium text-ink-secondary" />,
@@ -117,7 +127,7 @@ export function DeleteTaskModal({
             onClick={onConfirm}
             loading={isPending}
           >
-            {t("common.delete")}
+            {t(variant === "delete" ? "common.delete" : "checklist.remove")}
           </Button>
         </div>
       </DialogPanel>
