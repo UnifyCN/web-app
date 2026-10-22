@@ -8,6 +8,7 @@ import {
   isPostHogConfigured,
   posthog,
   resetPostHog,
+  shouldResetPostHog,
 } from "@/lib/posthog";
 
 /**
@@ -30,7 +31,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     let identifiedId: string | null = null;
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       // supabase-js v2 emits INITIAL_SESSION on subscribe, so an already
       // signed-in user is identified on first load without a separate
       // getSession() call.
@@ -62,7 +63,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         identifiedId = null;
-        resetPostHog();
+        // INITIAL_SESSION also fires with no session for every signed-out
+        // visitor; resetting then would drop their landing-page identity.
+        if (shouldResetPostHog(event, posthog.get_property("$user_state"))) {
+          resetPostHog();
+        }
       }
     });
     return () => subscription.unsubscribe();

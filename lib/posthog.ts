@@ -100,6 +100,19 @@ export function initPostHog() {
 }
 
 /**
+ * Whether a Supabase auth event with no session should reset PostHog. Only an
+ * identified PostHog user is reset: an anonymous visitor (e.g. arriving from
+ * the landing page on the shared `.unifysocial.ca` cookie) keeps their
+ * anonymous id, so `identify()` at sign-up merges their landing-page history.
+ */
+export function shouldResetPostHog(
+  event: string,
+  userState: unknown,
+): boolean {
+  return event === "SIGNED_OUT" || userState === "identified";
+}
+
+/**
  * Clear the identified user on sign-out, then restore the `platform` super
  * property (`reset()` wipes super properties along with the identity).
  */
