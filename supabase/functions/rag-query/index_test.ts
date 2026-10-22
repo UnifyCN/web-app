@@ -111,9 +111,13 @@ function parseSse(text: string): Array<[string, Record<string, unknown>]> {
     });
 }
 
-async function ask(body: Record<string, unknown>, tail = '\n[TOPIC]: housing') {
+async function ask(
+  body: Record<string, unknown>,
+  tail = '\n[TOPIC]: housing',
+  reply: string | null = null
+) {
   modelTail = tail;
-  modelReply = null;
+  modelReply = reply;
   setRoutes(routes);
   const res = await handler(request(body));
   const payload = await res.json();
@@ -359,5 +363,65 @@ Deno.test({
       'Do I need a guarantor?',
     ]);
     assertEquals(complete.topic, 'housing');
+  },
+});
+
+const THREE_SUGGESTIONS =
+  '[SUGGESTIONS]: How much is a deposit? | Do I need a guarantor? | Is rent paid monthly?';
+
+Deno.test({
+  ...opts,
+  name: 'an off-list label on the last line: nothing visible, every suggestion kept, topic "other"',
+  fn: async () => {
+    const reply = `Answer.\n${THREE_SUGGESTIONS}\n[TOPIC]: nhà ở`;
+    const { payload, event } = await ask(
+      { prompt: 'Làm sao để thuê nhà?', platform: 'ios', responseLanguage: 'vi' },
+      '',
+      reply
+    );
+    assertEquals(payload.answer, 'Answer.');
+    assertEquals(payload.suggestedNextSteps, [
+      'How much is a deposit?',
+      'Do I need a guarantor?',
+      'Is rent paid monthly?',
+    ]);
+    assertEquals(payload.topic, 'other');
+    assertEquals(event.topic, 'other');
+
+    modelReply = reply;
+    setRoutes(routes);
+    const res = await handler(
+      request({ prompt: 'Làm sao để thuê nhà?', platform: 'ios', stream: true })
+    );
+    modelReply = null;
+    const events = parseSse(await res.text());
+    const streamed = events
+      .filter(([name]) => name === 'token')
+      .map(([, data]) => data.delta)
+      .join('');
+    assertEquals(streamed, `Answer.\n${THREE_SUGGESTIONS}\n`);
+    const complete = events.find(([name]) => name === 'complete')?.[1];
+    assert(complete, 'complete event sent');
+    assertEquals(complete.cleanAnswer, 'Answer.');
+    assertEquals((complete.suggestedNextSteps as string[]).length, 3);
+    assertEquals(complete.topic, 'other');
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'a kept [TOPIC] line after the suggestions does not cost a suggestion',
+  fn: async () => {
+    const { payload } = await ask(
+      { prompt: 'Làm sao để thuê nhà?', platform: 'web' },
+      '',
+      `Answer.\n${THREE_SUGGESTIONS}\n[TOPIC]: nhà ở\nOne more line.`
+    );
+    assertEquals(payload.suggestedNextSteps, [
+      'How much is a deposit?',
+      'Do I need a guarantor?',
+      'Is rent paid monthly?',
+    ]);
+    assertEquals(payload.topic, 'other');
   },
 });

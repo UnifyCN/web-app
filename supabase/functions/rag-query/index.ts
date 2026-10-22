@@ -627,7 +627,11 @@ function parseSuggestionsFromResponse(answer: string): {
   const suggestionsMatch = answer.match(/\[SUGGESTIONS\]:\s*([\s\S]*)$/im);
 
   if (suggestionsMatch) {
-    const suggestionsText = suggestionsMatch[1].trim();
+    // Stop at a [TOPIC] line the topic filter kept (an off-list label
+    // mid-answer), so it cannot fuse with the last suggestion and drop it.
+    const suggestionsText = suggestionsMatch[1]
+      .split(/\n[ \t*_`~]*\[topic\]/i)[0]
+      .trim();
     const rawSuggestions = suggestionsText
       .replace(/\n+/g, ' ')
       .split('|')

@@ -78,23 +78,43 @@ export function normalizeTopic(raw: unknown): Topic | null {
  *   touching it before; the rest of the line and its line break stay;
  * - at the start of a line with text after it: the tag and the spaces after it.
  * Two tags: both are removed and the first one sets the topic.
+ *
+ * One exception, approved in round 5: the LAST non-blank line of the answer,
+ * when it starts with `[TOPIC]:` (after spaces/marks), is removed whatever its
+ * label (a translated or off-list label is still the model's tag). An
+ * off-list label gives no topic, so the fallback `other` applies. The same
+ * line mid-answer stays visible.
  */
 
 /** Spaces and markdown marks that may sit around a tag. */
 const DECOR = ' \t*_`~';
 
+/** The start of a tag, anchored at its `[`: `[TOPIC]`, marks, colon. */
+const TAG_HEAD = String.raw`^\[topic\][*_${'`'}~]{0,4}[ \t]{0,2}:`;
+
 /** A tag, anchored at its `[`. Group 1 is the label: a topic from the list,
- *  "settling_in" also written with a space or hyphen. */
+ *  "settling_in" also written with a space or hyphen. The label must end at a
+ *  word boundary in any script: no letter or digit may follow, directly or
+ *  after underscores ("housing2", "housingé", "housing_x" are not tags; the
+ *  closing "_" of "_education_" is a mark). Closing marks may include a
+ *  full stop. */
 const TAG = new RegExp(
-  String.raw`^\[topic\][*_${'`'}~]{0,4}[ \t]{0,2}:[*_${'`'}~"' \t]{0,8}` +
+  TAG_HEAD +
+    String.raw`[*_${'`'}~"' \t]{0,8}` +
     `(${TOPICS.map(t => t.replace('_', '[ _-]')).join('|')})` +
-    String.raw`(?![a-z])[*_${'`'}~"']{0,4}`,
-  'i'
+    String.raw`(?!_*[\p{L}\p{N}])[*_${'`'}~"'.]{0,4}`,
+  'iu'
 );
 
-/** The longest a tag can be, plus room to see what follows it. A candidate
- *  is decided once its line ends, the stream ends, or this many characters
- *  of it have arrived. */
+/** `[TOPIC]:` with any label (or none): removed only as the last line. */
+const LOOSE_TAG = new RegExp(TAG_HEAD, 'i');
+
+/** What may follow a tag on its line for the tag to count as alone. */
+const ALONE_REST = /^[ \t*_`~"'\r]*$/;
+
+/** Longer than any tag plus the character after it. The tag pattern is
+ *  matched against at most this many characters of the candidate, so the
+ *  match does not depend on how the text was chunked. */
 const DECIDE_AT = 64;
 
 const OPEN = '[topic]';
@@ -122,8 +142,10 @@ function findOpen(text: string): number {
 export function createTopicTagFilter(): {
   push: (delta: string) => string;
   flush: () => string;
-  /** The label of every tag removed so far, in order. */
+  /** The label of every valid tag removed so far, in order. */
   labels: () => readonly string[];
+  /** Whether anything (a tag, or a last `[TOPIC]:` line) has been removed. */
+  removedAny: () => boolean;
 } {
   let pending = '';
   /** Whether text has been forwarded since the last line break. */
@@ -131,6 +153,11 @@ export function createTopicTagFilter(): {
   /** After a tag that started a line: drop the spaces that follow it, even
    *  when they arrive in later chunks. */
   let skipSpaces = false;
+  /** A `[TOPIC]:` line with no valid label, plus the blank text after it:
+   *  dropped if the answer ends here, forwarded as written if it goes on. */
+  let lastLineCandidate: string | null = null;
+  /** Whether anything has been removed. */
+  let removed = false;
   const labels: string[] = [];
 
   const run = (final: boolean): string => {
@@ -143,6 +170,24 @@ export function createTopicTagFilter(): {
     };
 
     for (;;) {
+      if (lastLineCandidate !== null) {
+        const blank = /^[ \t\r\n]*/.exec(pending)![0];
+        lastLineCandidate += blank;
+        pending = pending.slice(blank.length);
+        if (!pending) {
+          if (final) {
+            lastLineCandidate = null; // it was the last line: drop it
+            removed = true;
+          }
+          return out;
+        }
+        // More text follows: forward the line as written. Blank text after
+        // its last line break goes back to be scanned with what follows.
+        const cut = lastLineCandidate.lastIndexOf('\n') + 1;
+        emit(lastLineCandidate.slice(0, cut));
+        pending = lastLineCandidate.slice(cut) + pending;
+        lastLineCandidate = null;
+      }
       if (skipSpaces) {
         pending = pending.replace(/^[ \t]+/, '');
         if (!pending) return out;
@@ -165,47 +210,58 @@ export function createTopicTagFilter(): {
       const lead = pending.slice(start, open);
       const candidate = pending.slice(open);
 
-      // Only the first DECIDE_AT characters are looked at, so the decision is
-      // a function of the text, not of how it was chunked: streaming and
-      // extractTopicTag always agree.
-      const seen = candidate.slice(0, DECIDE_AT);
-      const lineEnd = seen.indexOf('\n');
-      if (lineEnd === -1 && seen.length < DECIDE_AT && !final) {
-        pending = lead + candidate; // wait for more
+      const lineEnd = candidate.indexOf('\n');
+      const line = lineEnd === -1 ? candidate : candidate.slice(0, lineEnd);
+      const lineKnown = lineEnd !== -1 || final;
+      const wait = () => {
+        pending = lead + candidate;
         return out;
-      }
-      const window = lineEnd !== -1 ? seen.slice(0, lineEnd) : seen;
-      const tag = TAG.exec(window);
+      };
 
-      if (!tag) {
-        // Ordinary text: forward up to and including this `[`, scan on.
-        emit(lead + '[');
-        pending = candidate.slice(1);
+      // 1. Is it a tag? Matched on the first DECIDE_AT characters only.
+      if (!lineKnown && line.length < DECIDE_AT) return wait();
+      const tag = TAG.exec(line.slice(0, DECIDE_AT));
+
+      if (tag) {
+        const rest = line.slice(tag[0].length);
+        const restIsBlank = ALONE_REST.test(rest);
+        // Alone on its line? Needs the whole line unless text came first or
+        // something other than spaces/marks follows. Trailing spaces never
+        // force a decision early.
+        if (!lineHasText && restIsBlank && !lineKnown) return wait();
+        labels.push(tag[1]);
+        removed = true;
+        if (!lineHasText && restIsBlank) {
+          // Drop the whole line, its newline included.
+          pending = lineEnd !== -1 ? candidate.slice(lineEnd + 1) : '';
+          continue;
+        }
+        // Drop the tag and the spaces/marks touching it before; keep the
+        // marks that close earlier text ("*b* [TOPIC]" keeps "*b*").
+        const touching = /[ \t]*[*_`~]*$/.exec(lead)!;
+        emit(lead.slice(0, touching.index));
+        pending = candidate.slice(tag[0].length);
+        skipSpaces = !lineHasText;
         continue;
       }
 
-      labels.push(tag[1]);
-      const after = candidate.slice(tag[0].length);
-      const restOfLine = window.slice(tag[0].length);
-      // The whole line is known when it ends, or the stream ends, within
-      // DECIDE_AT characters.
-      const lineComplete =
-        lineEnd !== -1 || (final && candidate.length < DECIDE_AT);
-      const aloneOnLine =
-        !lineHasText && lineComplete && /^[ \t*_`~"'\r]*$/.test(restOfLine);
-
-      if (aloneOnLine) {
-        // Drop the whole line, its newline included.
-        pending = lineEnd !== -1 ? candidate.slice(lineEnd + 1) : '';
-        skipSpaces = false;
+      // 2. `[TOPIC]:` starting a line, off-list label: removed only if it is
+      //    the last line, so hold it until that is known.
+      if (!lineHasText && LOOSE_TAG.test(line)) {
+        if (!lineKnown) return wait();
+        if (lineEnd === -1) {
+          pending = ''; // the stream ended on this line
+          removed = true;
+          continue;
+        }
+        lastLineCandidate = lead + candidate.slice(0, lineEnd + 1);
+        pending = candidate.slice(lineEnd + 1);
         continue;
       }
-      // Drop the tag and the spaces/marks touching it before; keep the marks
-      // that close earlier text ("*b* [TOPIC]" keeps "*b*").
-      const touching = /[ \t]*[*_`~]*$/.exec(lead)!;
-      emit(lead.slice(0, touching.index));
-      pending = after;
-      skipSpaces = !lineHasText;
+
+      // 3. Ordinary text: forward up to and including this `[`, scan on.
+      emit(lead + '[');
+      pending = candidate.slice(1);
     }
   };
 
@@ -216,28 +272,32 @@ export function createTopicTagFilter(): {
     },
     flush: () => run(true),
     labels: () => labels,
+    removedAny: () => removed,
   };
 }
 
 /**
  * Take the `[TOPIC]` tag out of a model answer (rules above). Returns the
  * answer without the tag (the `[SUGGESTIONS]` line is left for
- * parseSuggestionsFromResponse) and the label of the first tag. No tag (none,
- * or only `[TOPIC]` text that is not a tag): the answer comes back unchanged,
- * byte for byte, and the topic is `other`.
+ * parseSuggestionsFromResponse) and the label of the first valid tag, else
+ * `other`. When nothing is removed (no tag, or only `[TOPIC]` text that is not
+ * a tag) the answer comes back unchanged, byte for byte.
  */
 export function extractTopicTag(answer: string): {
   answer: string;
   topic: Topic;
-  /** False when the answer had no tag (the topic is the fallback). */
+  /** False when the answer had no valid label (the topic is the fallback). */
   labelled: boolean;
 } {
   const filter = createTopicTagFilter();
   const stripped = filter.push(answer) + filter.flush();
-  const [first] = filter.labels();
-  const topic = normalizeTopic(first);
-  if (first === undefined || topic === null) {
+  if (!filter.removedAny()) {
     return { answer, topic: FALLBACK_TOPIC, labelled: false };
   }
-  return { answer: stripped.trim(), topic, labelled: true };
+  const topic = normalizeTopic(filter.labels()[0]);
+  return {
+    answer: stripped.trim(),
+    topic: topic ?? FALLBACK_TOPIC,
+    labelled: topic !== null,
+  };
 }

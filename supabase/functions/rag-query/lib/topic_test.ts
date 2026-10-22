@@ -81,8 +81,8 @@ function splits(text: string): string[][] {
 
 /**
  * `answer` streams as `expected` at every chunk boundary, and extractTopicTag
- * saves the same text (trimmed when a tag was removed, byte-for-byte when
- * there was none) with `topic`.
+ * saves the same text (trimmed when something was removed, byte-for-byte when
+ * nothing was) with `topic` (null: no valid label, so the fallback `other`).
  */
 function check(answer: string, expected: string, topic: Topic | null): void {
   for (const deltas of splits(answer)) {
@@ -91,7 +91,7 @@ function check(answer: string, expected: string, topic: Topic | null): void {
   const result = extractTopicTag(answer);
   assertEquals(result.topic, topic ?? 'other', answer);
   assertEquals(result.labelled, topic !== null, answer);
-  assertEquals(result.answer, topic === null ? answer : expected.trim(), answer);
+  assertEquals(result.answer, expected === answer ? answer : expected.trim(), answer);
 }
 
 Deno.test('a tag on its own line: the whole line goes, newline included', () => {
@@ -164,11 +164,12 @@ Deno.test('[TOPIC] that is not a tag is ordinary text, unchanged', () => {
     'The form says [TOPIC] is optional.\nBring your lease.',
     'Fill in [TOPIC] and [NAME].',
     'Answer.\n[TOPIC] housing',
-    'Answer.\n[TOPIC]: banking',
-    'Answer.\n[TOPIC]: السكن',
-    'Answer.\n[TOPIC]: nhà ở',
+    // Off-list labels mid-answer: more text follows the line.
+    'Answer.\n[TOPIC]: banking\nMore.',
+    'Answer.\n[TOPIC]: السكن\nMore.',
+    'Answer.\n[TOPIC]: nhà ở\n  \n\nMore.',
+    'Answer.\n[TOPIC]:\nMore.',
     'Answer. [TOPIC]: workshops near you\nMore.',
-    'Answer.\n[TOPIC]:',
     'Ends with [TOP',
     'Ends with **[topic]',
     'Ends with [TOPIC]: hous',
@@ -190,12 +191,41 @@ Deno.test('text with no tag streams and saves byte-for-byte unchanged', () => {
   }
 });
 
+Deno.test('the last line starting with [TOPIC]: goes whatever its label', () => {
+  check('Answer.\n[TOPIC]: nhà ở', 'Answer.\n', null);
+  check('Answer.\n[TOPIC]: السكن\n', 'Answer.\n', null);
+  check('Answer.\n**[TOPIC]:** banking  \n \n', 'Answer.\n', null);
+  check('Answer.\n[TOPIC]:', 'Answer.\n', null);
+  check('Answer.\r\n[topic]: housing2\r\n', 'Answer.\r\n', null);
+  // After the suggestions line: every suggestion stays.
+  check(
+    'Answer.\n[SUGGESTIONS]: A? | B? | C?\n[TOPIC]: nhà ở',
+    'Answer.\n[SUGGESTIONS]: A? | B? | C?\n',
+    null
+  );
+  // A valid tag earlier still sets the topic.
+  check('A.\n[TOPIC]: work\nB.\n[TOPIC]: nhà ở', 'A.\nB.\n', 'work');
+  // Not at the start of its line: ordinary text (round-4 rule).
+  check('Answer. [TOPIC]: nhà ở', 'Answer. [TOPIC]: nhà ở', null);
+});
+
+Deno.test('the label must end at a word boundary, in any script', () => {
+  check('Answer.\n[TOPIC]: housing2\nAfter.', 'Answer.\n[TOPIC]: housing2\nAfter.', null);
+  check('Answer.\n[TOPIC]: housingé\nAfter.', 'Answer.\n[TOPIC]: housingé\nAfter.', null);
+  check('Answer.\n[TOPIC]: housing_x\nAfter.', 'Answer.\n[TOPIC]: housing_x\nAfter.', null);
+  check('Answer. [TOPIC]: housing2', 'Answer. [TOPIC]: housing2', null);
+  check('Answer.\n[TOPIC]: housing.\nAfter.', 'Answer.\nAfter.', 'housing');
+  check('Answer.\n[TOPIC]: housing**\nAfter.', 'Answer.\nAfter.', 'housing');
+  check('Answer.\n[TOPIC]: housing', 'Answer.\n', 'housing');
+});
+
 Deno.test('a long line is decided the same however it is chunked', () => {
   const pad = ' '.repeat(70);
-  // Spaces run past DECIDE_AT, so the line is not known to be the tag's
-  // alone; the tag and the spaces after it still go.
+  // Trailing spaces never count toward the decision limit: the tag is still
+  // alone on its line, so the whole line goes.
   check(`A.\n[TOPIC]: work${pad}`, 'A.\n', 'work');
-  check(`A.\n[TOPIC]: work${pad}\nB.`, 'A.\n\nB.', 'work');
+  check(`A.\n[TOPIC]: work${pad}\nB.`, 'A.\nB.', 'work');
+  check(`A.\n**[TOPIC]: work**${pad}\r\nB.`, 'A.\nB.', 'work');
   const long = `A [TOPIC] note that runs on${'.'.repeat(60)}\nB.`;
   check(long, long, null);
 });
