@@ -95,6 +95,7 @@ export function InLessonChat({
     setDraft("");
     try {
       let id = conversationId;
+      const isNewConversation = !id;
       if (!id) {
         const created = await createConversation.mutateAsync({
           firstMessage: text,
@@ -111,6 +112,7 @@ export function InLessonChat({
         text,
         lessonContext,
         inputSource,
+        isNewConversation,
       });
     } catch (err) {
       setSendError(

@@ -84,6 +84,7 @@ describe("useSendMessage analytics", () => {
       conversationIdentifier: "conv-1",
       text: "How do I rent?",
       inputSource: "starter_prompt",
+      isNewConversation: true,
     });
     expect(eventProps("companion_message_sent")).toEqual({
       message_length: 14,
@@ -105,11 +106,30 @@ describe("useSendMessage analytics", () => {
       conversationIdentifier: "conv-1",
       text: "And the deposit?",
       inputSource: "suggestion",
+      isNewConversation: false,
     });
     expect(eventProps("companion_message_sent")).toMatchObject({
       turn_number: 3,
       input_source: "suggestion",
     });
+  });
+
+  it("an existing conversation sent to before its history loads: no turn_number", async () => {
+    const client = new QueryClient();
+    // Nothing cached for this conversation yet (the fetch is still in flight).
+    await renderSendMessage(client).mutateAsync({
+      conversationIdentifier: "conv-1",
+      text: "And the deposit?",
+      inputSource: "typed",
+      isNewConversation: false,
+    });
+    const props = eventProps("companion_message_sent");
+    expect(props).toEqual({
+      message_length: 16,
+      conversation_id: "conv-1",
+      input_source: "typed",
+    });
+    expect("turn_number" in props).toBe(false);
   });
 
   it("the response event carries rag-query's topic and usage", async () => {
@@ -119,6 +139,7 @@ describe("useSendMessage analytics", () => {
       conversationIdentifier: "conv-1",
       text: "How do I rent?",
       inputSource: "typed",
+      isNewConversation: true,
     });
     const props = eventProps("companion_response_received");
     expect(props).toMatchObject({

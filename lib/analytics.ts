@@ -59,14 +59,15 @@ export const trackOnboardingCompleted = () => capture("onboarding_completed");
 export const trackCompanionMessageSent = (p: {
   messageLength: number;
   conversationId: string;
-  /** 1 for the first user message in a conversation. */
-  turnNumber: number;
+  /** 1 for the first user message in a conversation; undefined (and left out
+   *  of the event) while an existing conversation's history has not loaded. */
+  turnNumber: number | undefined;
   inputSource: CompanionInputSource;
 }) =>
   capture("companion_message_sent", {
     message_length: p.messageLength,
     conversation_id: p.conversationId,
-    turn_number: p.turnNumber,
+    ...(p.turnNumber !== undefined ? { turn_number: p.turnNumber } : {}),
     input_source: p.inputSource,
   });
 

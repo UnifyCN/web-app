@@ -1,17 +1,18 @@
-// Companion topic label (spec UnifyCN/mobile-app#314, ticket #318).
-//
-// rag-query labels every question with exactly one topic from a fixed list
-// (approved by Savar 2026-10-21). The label goes on `$ai_generation` and back
-// to the client; the question text never does. The expected labels below are
-// worked examples of what a person would file each question under.
+// Topic label helpers (spec UnifyCN/mobile-app#314).
 //
 // RUN (from web-app/):
 //   deno test supabase/functions/rag-query/lib/topic_test.ts
 
-import { assert, assertEquals } from 'jsr:@std/assert@1';
-import { classifyTopic, isTopic, TOPICS } from './topic.ts';
+import { assertEquals } from 'jsr:@std/assert@1';
+import {
+  createTopicTagFilter,
+  extractTopicTag,
+  normalizeTopic,
+  TOPIC_INSTRUCTION,
+  TOPICS,
+} from './topic.ts';
 
-Deno.test('the topic list is exactly the approved list', () => {
+Deno.test('the topic list is the approved one', () => {
   assertEquals(
     [...TOPICS],
     [
@@ -29,108 +30,112 @@ Deno.test('the topic list is exactly the approved list', () => {
   );
 });
 
-const EXAMPLES: Array<[string, string]> = [
-  // immigration
-  ['How do I apply for permanent residence through Express Entry?', 'immigration'],
-  ['When can I apply for Canadian citizenship?', 'immigration'],
-  ['My study permit expires next month, what do I do?', 'immigration'],
-  ['How long does a PGWP take to process?', 'immigration'],
-  ['Can I sponsor my parents to come to Canada?', 'immigration'],
-  ['How do I renew my PR card?', 'immigration'],
-  ['Can I work more than 24 hours a week on a work permit?', 'immigration'],
-  // work
-  ['How do I find a job in Toronto?', 'work'],
-  ['Can you help me write a resume for Canadian employers?', 'work'],
-  ['What is the minimum wage in Alberta?', 'work'],
-  ['How should I prepare for a job interview?', 'work'],
-  // housing
-  ['How do I find an apartment to rent in Vancouver?', 'housing'],
-  ['My landlord wants a deposit of three months, is that legal?', 'housing'],
-  ['What should I check before signing a lease?', 'housing'],
-  // money
-  ['How do I open a bank account as a newcomer?', 'money'],
-  ['How can I build my credit score in Canada?', 'money'],
-  ['What is the difference between a TFSA and an RRSP?', 'money'],
-  ['Am I eligible for the Canada Child Benefit?', 'money'],
-  // taxes
-  ['Do I need to file taxes in my first year in Canada?', 'taxes'],
-  ['How do I file a tax return with the CRA?', 'taxes'],
-  ['What is a T4 slip?', 'taxes'],
-  // health
-  ['How do I get an OHIP card?', 'health'],
-  ['How do I find a family doctor?', 'health'],
-  ['Is dental care covered for newcomers?', 'health'],
-  ['Where can I get help for my mental health?', 'health'],
-  // education
-  ['How do I get my foreign degree assessed by WES?', 'education'],
-  ['How do I enrol my kids in school?', 'education'],
-  ['Are there free English classes for newcomers?', 'education'],
-  ['Which college programs are good for international students?', 'education'],
-  // transportation
-  ['How do I get a driver\'s licence in Ontario?', 'transportation'],
-  ['What is the cheapest way to take transit in Montreal?', 'transportation'],
-  ['Do I need car insurance before I drive?', 'transportation'],
-  // settling_in
-  ['How do I get a Social Insurance Number?', 'settling_in'],
-  ['What phone plan should I get when I arrive?', 'settling_in'],
-  ['How do I prepare for my first winter?', 'settling_in'],
-  ['Where can I find a food bank near me?', 'settling_in'],
-  // other
-  ['Tell me a joke', 'other'],
-  ['What is the capital of Australia?', 'other'],
-  ['', 'other'],
-];
+Deno.test('the instruction names every topic and the tag format', () => {
+  for (const topic of TOPICS) {
+    assertEquals(TOPIC_INSTRUCTION.includes(`\n${topic} (`), true, topic);
+  }
+  assertEquals(TOPIC_INSTRUCTION.includes('[TOPIC]: '), true);
+});
 
-for (const [prompt, expected] of EXAMPLES) {
-  Deno.test(`"${prompt}" -> ${expected}`, () => {
-    assertEquals(classifyTopic(prompt), expected);
-  });
+Deno.test('normalizeTopic accepts every label as written', () => {
+  for (const topic of TOPICS) assertEquals(normalizeTopic(topic), topic);
+});
+
+Deno.test('normalizeTopic tolerates case, markdown, spacing and extra words', () => {
+  assertEquals(normalizeTopic('Housing'), 'housing');
+  assertEquals(normalizeTopic('**housing**'), 'housing');
+  assertEquals(normalizeTopic(' "taxes". '), 'taxes');
+  assertEquals(normalizeTopic('settling in'), 'settling_in');
+  assertEquals(normalizeTopic('Settling-In'), 'settling_in');
+  assertEquals(normalizeTopic('housing (renting)'), 'housing');
+});
+
+Deno.test('normalizeTopic is null for anything off the list', () => {
+  assertEquals(normalizeTopic('nhà ở'), null); // translated label
+  assertEquals(normalizeTopic('السكن'), null);
+  assertEquals(normalizeTopic('rent'), null);
+  assertEquals(normalizeTopic(''), null);
+  assertEquals(normalizeTopic(undefined), null);
+  assertEquals(normalizeTopic(42), null);
+});
+
+Deno.test('extractTopicTag reads the label and strips the tag', () => {
+  const result = extractTopicTag(
+    'Bạn có thể thuê nhà qua các trang web.\n[SUGGESTIONS]: Tiền đặt cọc là bao nhiêu? | Tôi cần giấy tờ gì?\n[TOPIC]: housing'
+  );
+  assertEquals(result.topic, 'housing');
+  assertEquals(result.labelled, true);
+  assertEquals(
+    result.answer,
+    'Bạn có thể thuê nhà qua các trang web.\n[SUGGESTIONS]: Tiền đặt cọc là bao nhiêu? | Tôi cần giấy tờ gì?'
+  );
+});
+
+Deno.test('extractTopicTag handles a tag before the suggestions or in markdown', () => {
+  const before = extractTopicTag('Answer.\n[TOPIC]: money\n[SUGGESTIONS]: A? | B?');
+  assertEquals(before.topic, 'money');
+  assertEquals(before.answer, 'Answer.\n\n[SUGGESTIONS]: A? | B?');
+
+  const bold = extractTopicTag('Answer.\n**[TOPIC]:** Work');
+  assertEquals(bold.topic, 'work');
+  assertEquals(bold.answer, 'Answer.');
+
+  const lower = extractTopicTag('Answer. [topic] taxes');
+  assertEquals(lower.topic, 'taxes');
+  assertEquals(lower.answer, 'Answer.');
+});
+
+Deno.test('extractTopicTag falls back to "other" for a missing or invalid label', () => {
+  const missing = extractTopicTag('Answer.\n[SUGGESTIONS]: A? | B?');
+  assertEquals(missing.topic, 'other');
+  assertEquals(missing.labelled, false);
+  assertEquals(missing.answer, 'Answer.\n[SUGGESTIONS]: A? | B?');
+
+  const invalid = extractTopicTag('Answer.\n[TOPIC]: السكن');
+  assertEquals(invalid.topic, 'other');
+  assertEquals(invalid.labelled, false);
+  assertEquals(invalid.answer, 'Answer.');
+
+  const empty = extractTopicTag('Answer.\n[TOPIC]:');
+  assertEquals(empty.topic, 'other');
+  assertEquals(empty.answer, 'Answer.');
+});
+
+Deno.test('extractTopicTag: the last tag wins and every tag is removed', () => {
+  const result = extractTopicTag('[TOPIC]: work\nAnswer.\n[TOPIC]: health');
+  assertEquals(result.topic, 'health');
+  assertEquals(result.answer, 'Answer.');
+});
+
+/** Run deltas through a fresh filter; return what the client would see. */
+function streamed(deltas: string[]): string {
+  const filter = createTopicTagFilter();
+  return deltas.map(d => filter.push(d)).join('') + filter.flush();
 }
 
-Deno.test('a follow-up with no topic words takes the topic of earlier context', () => {
+Deno.test('the stream filter forwards plain text unchanged', () => {
+  assertEquals(streamed(['Hello ', 'world.']), 'Hello world.');
+  // Brackets that are not the tag (markdown links, lists) pass through.
   assertEquals(
-    classifyTopic('How long does that usually take?', [
-      'How do I apply for a work permit?',
-    ]),
-    'immigration'
+    streamed(['See [IR', 'CC](https://ircc.canada.ca) and [', 'T]']),
+    'See [IRCC](https://ircc.canada.ca) and [T]'
   );
+  // A held partial tag at the very end is released by flush.
+  assertEquals(streamed(['Ends with [TO']), 'Ends with [TO');
 });
 
-Deno.test('context is used in order: the first one with a topic wins', () => {
-  assertEquals(
-    classifyTopic('And after that?', [
-      'Thanks!',
-      'How do I open a bank account?',
-      'How do I find an apartment?',
-    ]),
-    'money'
-  );
+Deno.test('the stream filter never forwards the tag, even split across chunks', () => {
+  const answer = 'Answer.\n[SUGGESTIONS]: A? | B?\n';
+  assertEquals(streamed([answer, '[TOPIC]: housing']), answer);
+  assertEquals(streamed([answer + '[', 'TO', 'PIC', ']: hou', 'sing']), answer);
+  assertEquals(streamed([answer + '[topic]: work']), answer);
+  // Text after the tag is held back too.
+  assertEquals(streamed(['Answer.[TOPIC]: money', ' more']), 'Answer.');
 });
 
-Deno.test('the question itself beats the earlier context', () => {
-  assertEquals(
-    classifyTopic('Do I need to file taxes?', ['How do I find an apartment?']),
-    'taxes'
-  );
-});
-
-Deno.test('a lesson title used as context labels an in-lesson question', () => {
-  assertEquals(
-    classifyTopic('What does this mean?', ['Opening a bank account']),
-    'money'
-  );
-});
-
-Deno.test('non-string input never throws and yields "other"', () => {
-  // deno-lint-ignore no-explicit-any
-  assertEquals(classifyTopic(undefined as any), 'other');
-  // deno-lint-ignore no-explicit-any
-  assertEquals(classifyTopic('???', [null as any, 42 as any]), 'other');
-});
-
-Deno.test('isTopic accepts only the fixed list', () => {
-  for (const topic of TOPICS) assert(isTopic(topic));
-  assert(!isTopic('Immigration'));
-  assert(!isTopic('newcomer_settlement'));
-  assert(!isTopic(undefined));
+Deno.test('the stream filter only holds back a possible tag start', () => {
+  const filter = createTopicTagFilter();
+  assertEquals(filter.push('Rent is due on the 1st ['), 'Rent is due on the 1st ');
+  assertEquals(filter.push('note]'), '[note]');
+  assertEquals(filter.flush(), '');
 });

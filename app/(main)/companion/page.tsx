@@ -50,6 +50,7 @@ export default function CompanionPage() {
     setSendError(null);
     try {
       let conversationIdentifier = activeId;
+      const isNewConversation = !conversationIdentifier;
       if (!conversationIdentifier) {
         const created = await createConversation.mutateAsync({
           firstMessage: text,
@@ -70,6 +71,7 @@ export default function CompanionPage() {
         conversationIdentifier,
         text,
         inputSource,
+        isNewConversation,
       });
     } catch (err) {
       // The daily free-tier cap surfaces as a typed ChatLimitError (rag-query

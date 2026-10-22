@@ -86,6 +86,9 @@ interface SendMessageInput {
   lessonContext?: LessonContext;
   /** How the user produced the message (companion_message_sent). */
   inputSource: CompanionInputSource;
+  /** True when this message starts the conversation (it was just created).
+   *  Lets turn_number be 1 without waiting for a history load. */
+  isNewConversation: boolean;
 }
 
 interface SendMessageContext {
@@ -117,6 +120,7 @@ export function useSendMessage() {
       text,
       lessonContext,
       inputSource,
+      isNewConversation,
     }) => {
       // Prior turns = persisted messages already in the cache. Optimistic
       // bubbles carry negative ids (see onMutate) so we drop them, then keep
@@ -126,8 +130,10 @@ export function useSendMessage() {
           messagesKey(conversationIdentifier),
         ) ?? [];
       // The cache already holds this send's optimistic bubble (onMutate runs
-      // first), so the first message of a conversation is turn 1.
-      const turnNumber = companionTurnNumber(cached);
+      // first), so the first message of a conversation is turn 1. Undefined
+      // (left out of the event) if an existing conversation's history has not
+      // loaded yet.
+      const turnNumber = companionTurnNumber(cached, isNewConversation);
       const history = cached
         .filter((m) => m.id >= 0)
         .slice(-10)

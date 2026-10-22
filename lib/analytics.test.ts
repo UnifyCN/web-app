@@ -188,6 +188,24 @@ describe("companion trackers", () => {
     });
   });
 
+  it("companion_message_sent leaves turn_number out when the turn is unknown", () => {
+    trackCompanionMessageSent({
+      messageLength: 42,
+      conversationId: "conv-1",
+      turnNumber: undefined,
+      inputSource: "typed",
+    });
+    expect(lastCall()).toEqual({
+      event: "companion_message_sent",
+      keys: ["conversation_id", "input_source", "message_length"],
+      props: {
+        message_length: 42,
+        conversation_id: "conv-1",
+        input_source: "typed",
+      },
+    });
+  });
+
   it("companion_response_received matches mobile's shape and adds topic", () => {
     trackCompanionResponseReceived({
       queryType: "immigration",

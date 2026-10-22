@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   COMPANION_TOPICS,
   companionTurnNumber,
+  isConversationHistoryLoaded,
   parseCompanionTopic,
 } from "./companionAnalytics";
 
@@ -36,25 +37,43 @@ describe("parseCompanionTopic", () => {
   });
 });
 
+describe("isConversationHistoryLoaded", () => {
+  it("is false until a saved (server) message is in the thread", () => {
+    expect(isConversationHistoryLoaded([])).toBe(false);
+    // Only this send's optimistic bubble: the load has not landed yet.
+    expect(isConversationHistoryLoaded([{ id: -1 }])).toBe(false);
+    expect(isConversationHistoryLoaded([{ id: 1 }, { id: -2 }])).toBe(true);
+  });
+});
+
 describe("companionTurnNumber", () => {
   const user = (id: number) => ({ id, role: "user" as const });
   const assistant = (id: number) => ({ id, role: "assistant" as const });
 
-  it("is 1 for the first message of a conversation (only its own optimistic bubble)", () => {
-    expect(companionTurnNumber([user(-1)])).toBe(1);
+  it("is 1 for the first message of a new conversation (only its own optimistic bubble)", () => {
+    expect(companionTurnNumber([user(-1)], true)).toBe(1);
   });
 
-  it("counts earlier user messages, not assistant replies", () => {
+  it("is undefined while an existing conversation's history has not loaded", () => {
+    // Same thread as a new conversation's first send, but the conversation
+    // already exists: its earlier messages are just not here yet.
+    expect(companionTurnNumber([user(-1)], false)).toBeUndefined();
+    expect(companionTurnNumber([], false)).toBeUndefined();
+  });
+
+  it("after the history loads: earlier user messages + 1, assistant replies not counted", () => {
     expect(
-      companionTurnNumber([user(1), assistant(2), user(3), assistant(4), user(-5)]),
+      companionTurnNumber([user(1), assistant(2), user(3), assistant(4), user(-5)], false),
     ).toBe(3);
   });
 
   it("counts a second send made before the first one finished", () => {
-    expect(companionTurnNumber([user(1), assistant(2), user(-3), user(-4)])).toBe(3);
+    expect(
+      companionTurnNumber([user(1), assistant(2), user(-3), user(-4)], false),
+    ).toBe(3);
   });
 
-  it("is never below 1", () => {
-    expect(companionTurnNumber([])).toBe(1);
+  it("is never below 1 for a new conversation", () => {
+    expect(companionTurnNumber([], true)).toBe(1);
   });
 });
