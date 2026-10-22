@@ -327,3 +327,37 @@ Deno.test({
     assertEquals(aiGenerationEvents()[0].topic, 'housing');
   },
 });
+
+Deno.test({
+  ...opts,
+  name: 'streaming: "[TOPIC]" in ordinary text is kept; a same-line tag keeps its line break',
+  fn: async () => {
+    modelReply =
+      'The form says [TOPIC] is optional.\nBring your lease. [TOPIC]: housing\n[SUGGESTIONS]: How much is a deposit? | Do I need a guarantor?';
+    setRoutes(routes);
+    const res = await handler(
+      request({ prompt: 'كيف أستأجر شقة؟', platform: 'web', stream: true })
+    );
+    modelReply = null;
+    const events = parseSse(await res.text());
+    const streamed = events
+      .filter(([name]) => name === 'token')
+      .map(([, data]) => data.delta)
+      .join('');
+    assertEquals(
+      streamed,
+      'The form says [TOPIC] is optional.\nBring your lease.\n[SUGGESTIONS]: How much is a deposit? | Do I need a guarantor?'
+    );
+    const complete = events.find(([name]) => name === 'complete')?.[1];
+    assert(complete, 'complete event sent');
+    assertEquals(
+      complete.cleanAnswer,
+      'The form says [TOPIC] is optional.\nBring your lease.'
+    );
+    assertEquals(complete.suggestedNextSteps, [
+      'How much is a deposit?',
+      'Do I need a guarantor?',
+    ]);
+    assertEquals(complete.topic, 'housing');
+  },
+});

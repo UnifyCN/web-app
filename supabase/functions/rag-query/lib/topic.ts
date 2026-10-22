@@ -11,7 +11,8 @@
  * model reads the question, the earlier turns and the lesson context, and no
  * extra model call is made. rag-query removes the tag from the answer
  * (extractTopicTag) and, when streaming, never forwards it to the client
- * (createTopicTagFilter). A missing or off-list label falls back to `other`.
+ * (createTopicTagFilter). An answer without a valid tag gets `other`; a
+ * `[TOPIC]:` with an off-list label is not a tag and stays in the text.
  */
 
 import { TOPICS, type Topic } from '../../_shared/topics.ts';
@@ -63,108 +64,180 @@ export function normalizeTopic(raw: unknown): Topic | null {
   return null;
 }
 
-/**
- * The tag and the markdown a model may wrap it in. It starts at the spaces
- * before it and the emphasis marks (`*`, `_`, backtick, `~`) touching
- * `[TOPIC]`, and runs through the end of its line, newline included: closing marks and
- * the label are on that line. Text before it on the line and every line after
- * it are kept.
+/*
+ * What counts as a tag (rule approved 2026-10-21, ticket #318 round 4):
+ * `[TOPIC]` (any case), a colon, then a label on the topic list, with optional
+ * emphasis marks / backticks / quotes around the pieces. Anything else that
+ * contains `[TOPIC]` (no colon, an off-list or translated label, a word that
+ * only starts like a label) is ordinary text and is kept as written.
+ *
+ * Removal:
+ * - alone on its line (nothing but spaces and emphasis marks around it): the
+ *   whole line goes, its newline included;
+ * - after text on the same line: the tag goes with the spaces and marks
+ *   touching it before; the rest of the line and its line break stay;
+ * - at the start of a line with text after it: the tag and the spaces after it.
+ * Two tags: both are removed and the first one sets the topic.
  */
-const TAG_OPEN = /[ \t]*[*_`~]*\[topic\]/i;
 
-/** A run at the end of a chunk that could still grow into TAG_OPEN. */
-const PARTIAL_TAG_OPEN = /[ \t]*[*_`~]*(?:\[(?:t(?:o(?:p(?:i(?:c)?)?)?)?)?)?$/i;
+/** Spaces and markdown marks that may sit around a tag. */
+const DECOR = ' \t*_`~';
+
+/** A tag, anchored at its `[`. Group 1 is the label: a topic from the list,
+ *  "settling_in" also written with a space or hyphen. */
+const TAG = new RegExp(
+  String.raw`^\[topic\][*_${'`'}~]{0,4}[ \t]{0,2}:[*_${'`'}~"' \t]{0,8}` +
+    `(${TOPICS.map(t => t.replace('_', '[ _-]')).join('|')})` +
+    String.raw`(?![a-z])[*_${'`'}~"']{0,4}`,
+  'i'
+);
+
+/** The longest a tag can be, plus room to see what follows it. A candidate
+ *  is decided once its line ends, the stream ends, or this many characters
+ *  of it have arrived. */
+const DECIDE_AT = 64;
+
+const OPEN = '[topic]';
+
+/** Index of the first `[` that is, or could still grow into, `[topic]`. */
+function findOpen(text: string): number {
+  const lower = text.toLowerCase();
+  for (let i = lower.indexOf('['); i !== -1; i = lower.indexOf('[', i + 1)) {
+    const head = lower.slice(i, i + OPEN.length);
+    if (head === OPEN || (i + OPEN.length > lower.length && OPEN.startsWith(head))) {
+      return i;
+    }
+  }
+  return -1;
+}
 
 /**
- * Streaming guard: forwards answer text as it arrives but removes each
- * `[TOPIC]` tag line, so the label never shows in the client's live bubble,
- * while the text after the tag keeps streaming. A possible tag start at the
- * end of a chunk ("**[TO") is held until the next chunk shows whether it is
- * the tag. Call `flush` once the stream ends to get any held text that turned
- * out not to be the tag. extractTopicTag runs the same filter, so the saved
- * answer matches what was streamed.
+ * Streaming guard: forwards answer text as it arrives and removes `[TOPIC]`
+ * tags (rules above), so the label never shows in the client's live bubble.
+ * Text that could still turn into a tag is held until it is decided, then
+ * either dropped (a tag) or forwarded unchanged. Call `flush` when the stream
+ * ends to decide and release whatever is held. extractTopicTag runs this same
+ * filter, so the saved answer is exactly the streamed text (trimmed).
  */
 export function createTopicTagFilter(): {
   push: (delta: string) => string;
   flush: () => string;
-  /** The label text of every tag seen so far, in order. */
+  /** The label of every tag removed so far, in order. */
   labels: () => readonly string[];
 } {
-  let held = '';
-  let inTag = false;
-  let label = '';
+  let pending = '';
+  /** Whether text has been forwarded since the last line break. */
+  let lineHasText = false;
+  /** After a tag that started a line: drop the spaces that follow it, even
+   *  when they arrive in later chunks. */
+  let skipSpaces = false;
   const labels: string[] = [];
 
-  const endTag = () => {
-    labels.push(label);
-    label = '';
-    inTag = false;
+  const run = (final: boolean): string => {
+    let out = '';
+    const emit = (text: string) => {
+      if (!text) return;
+      out += text;
+      const lineBreak = text.lastIndexOf('\n');
+      lineHasText = lineBreak === -1 ? true : lineBreak < text.length - 1;
+    };
+
+    for (;;) {
+      if (skipSpaces) {
+        pending = pending.replace(/^[ \t]+/, '');
+        if (!pending) return out;
+        skipSpaces = false;
+      }
+      const open = findOpen(pending);
+      if (open === -1) {
+        // Keep a trailing run of spaces/marks: it may be the start of a tag.
+        let keep = pending.length;
+        if (!final) while (keep > 0 && DECOR.includes(pending[keep - 1])) keep--;
+        emit(pending.slice(0, keep));
+        pending = pending.slice(keep);
+        return out;
+      }
+
+      // The spaces/marks right before the `[` belong to the candidate.
+      let start = open;
+      while (start > 0 && DECOR.includes(pending[start - 1])) start--;
+      emit(pending.slice(0, start));
+      const lead = pending.slice(start, open);
+      const candidate = pending.slice(open);
+
+      // Only the first DECIDE_AT characters are looked at, so the decision is
+      // a function of the text, not of how it was chunked: streaming and
+      // extractTopicTag always agree.
+      const seen = candidate.slice(0, DECIDE_AT);
+      const lineEnd = seen.indexOf('\n');
+      if (lineEnd === -1 && seen.length < DECIDE_AT && !final) {
+        pending = lead + candidate; // wait for more
+        return out;
+      }
+      const window = lineEnd !== -1 ? seen.slice(0, lineEnd) : seen;
+      const tag = TAG.exec(window);
+
+      if (!tag) {
+        // Ordinary text: forward up to and including this `[`, scan on.
+        emit(lead + '[');
+        pending = candidate.slice(1);
+        continue;
+      }
+
+      labels.push(tag[1]);
+      const after = candidate.slice(tag[0].length);
+      const restOfLine = window.slice(tag[0].length);
+      // The whole line is known when it ends, or the stream ends, within
+      // DECIDE_AT characters.
+      const lineComplete =
+        lineEnd !== -1 || (final && candidate.length < DECIDE_AT);
+      const aloneOnLine =
+        !lineHasText && lineComplete && /^[ \t*_`~"'\r]*$/.test(restOfLine);
+
+      if (aloneOnLine) {
+        // Drop the whole line, its newline included.
+        pending = lineEnd !== -1 ? candidate.slice(lineEnd + 1) : '';
+        skipSpaces = false;
+        continue;
+      }
+      // Drop the tag and the spaces/marks touching it before; keep the marks
+      // that close earlier text ("*b* [TOPIC]" keeps "*b*").
+      const touching = /[ \t]*[*_`~]*$/.exec(lead)!;
+      emit(lead.slice(0, touching.index));
+      pending = after;
+      skipSpaces = !lineHasText;
+    }
   };
 
   return {
-    push(delta: string): string {
-      let text = held + delta;
-      held = '';
-      let out = '';
-      while (text) {
-        if (inTag) {
-          const lineEnd = text.indexOf('\n');
-          if (lineEnd === -1) {
-            label += text;
-            return out;
-          }
-          label += text.slice(0, lineEnd);
-          text = text.slice(lineEnd + 1);
-          endTag();
-          continue;
-        }
-        const open = TAG_OPEN.exec(text);
-        if (open) {
-          out += text.slice(0, open.index);
-          text = text.slice(open.index + open[0].length);
-          inTag = true;
-          continue;
-        }
-        const partial = PARTIAL_TAG_OPEN.exec(text)!;
-        out += text.slice(0, partial.index);
-        held = text.slice(partial.index);
-        return out;
-      }
-      return out;
+    push: (delta: string) => {
+      pending += delta;
+      return run(false);
     },
-    flush(): string {
-      if (inTag) endTag();
-      const rest = held;
-      held = '';
-      return rest;
-    },
+    flush: () => run(true),
     labels: () => labels,
   };
 }
 
 /**
- * Take the `[TOPIC]` tag out of a model answer. Returns the answer without the
- * tag line (the `[SUGGESTIONS]` line is left for parseSuggestionsFromResponse)
- * and the label, falling back to `other` when the tag is missing or its label
- * is off the list. The last tag wins; every tag is removed. An answer with no
- * tag comes back unchanged.
+ * Take the `[TOPIC]` tag out of a model answer (rules above). Returns the
+ * answer without the tag (the `[SUGGESTIONS]` line is left for
+ * parseSuggestionsFromResponse) and the label of the first tag. No tag (none,
+ * or only `[TOPIC]` text that is not a tag): the answer comes back unchanged,
+ * byte for byte, and the topic is `other`.
  */
 export function extractTopicTag(answer: string): {
   answer: string;
   topic: Topic;
-  /** False when the model wrote no usable label (the topic is the fallback). */
+  /** False when the answer had no tag (the topic is the fallback). */
   labelled: boolean;
 } {
   const filter = createTopicTagFilter();
   const stripped = filter.push(answer) + filter.flush();
-  const labels = filter.labels();
-  if (labels.length === 0) {
+  const [first] = filter.labels();
+  const topic = normalizeTopic(first);
+  if (first === undefined || topic === null) {
     return { answer, topic: FALLBACK_TOPIC, labelled: false };
   }
-  const topic = normalizeTopic(labels[labels.length - 1]);
-  return {
-    answer: stripped.trim(),
-    topic: topic ?? FALLBACK_TOPIC,
-    labelled: topic !== null,
-  };
+  return { answer: stripped.trim(), topic, labelled: true };
 }

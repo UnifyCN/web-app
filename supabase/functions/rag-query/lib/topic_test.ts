@@ -10,6 +10,7 @@ import {
   normalizeTopic,
   TOPIC_INSTRUCTION,
   TOPICS,
+  type Topic,
 } from './topic.ts';
 
 Deno.test('the topic list is the approved one', () => {
@@ -59,107 +60,14 @@ Deno.test('normalizeTopic is null for anything off the list', () => {
   assertEquals(normalizeTopic(42), null);
 });
 
-Deno.test('extractTopicTag reads the label and strips the tag', () => {
-  const result = extractTopicTag(
-    'Bạn có thể thuê nhà qua các trang web.\n[SUGGESTIONS]: Tiền đặt cọc là bao nhiêu? | Tôi cần giấy tờ gì?\n[TOPIC]: housing'
-  );
-  assertEquals(result.topic, 'housing');
-  assertEquals(result.labelled, true);
-  assertEquals(
-    result.answer,
-    'Bạn có thể thuê nhà qua các trang web.\n[SUGGESTIONS]: Tiền đặt cọc là bao nhiêu? | Tôi cần giấy tờ gì?'
-  );
-});
-
-Deno.test('extractTopicTag reads every topic, not just one', () => {
-  for (const topic of TOPICS) {
-    const result = extractTopicTag(`Answer.\n[TOPIC]: ${topic}`);
-    assertEquals(result.topic, topic);
-    assertEquals(result.labelled, true);
-    assertEquals(result.answer, 'Answer.');
-  }
-});
-
-Deno.test('extractTopicTag removes only the tag line; text after it is kept', () => {
-  const mid = extractTopicTag('First.\n[TOPIC]: housing\nSecond sentence.');
-  assertEquals(mid.topic, 'housing');
-  assertEquals(mid.answer, 'First.\nSecond sentence.');
-
-  const before = extractTopicTag('Answer.\n[TOPIC]: money\n[SUGGESTIONS]: A? | B?');
-  assertEquals(before.topic, 'money');
-  assertEquals(before.answer, 'Answer.\n[SUGGESTIONS]: A? | B?');
-
-  const sameLine = extractTopicTag('Answer. [topic] taxes');
-  assertEquals(sameLine.topic, 'taxes');
-  assertEquals(sameLine.answer, 'Answer.');
-});
-
-Deno.test('extractTopicTag strips a wrapped tag whole, leaving no markdown behind', () => {
-  const cases: Array<[string, string, string]> = [
-    ['Answer.\n`[TOPIC]: housing`', 'housing', 'Answer.'],
-    ['Answer.\n**[TOPIC]: health**', 'health', 'Answer.'],
-    ['Answer.\n**[TOPIC]:** Work', 'work', 'Answer.'],
-    ['Answer.\n*[TOPIC]: taxes*', 'taxes', 'Answer.'],
-    ['Answer.\n_[TOPIC]: education_', 'education', 'Answer.'],
-    ['Answer.\n  **`[TOPIC]: settling_in`**  \n', 'settling_in', 'Answer.'],
-    ['First.\n`[TOPIC]: money`\nSecond.', 'money', 'First.\nSecond.'],
-    ['Answer.   \n\n[TOPIC]: transportation   \n\n', 'transportation', 'Answer.'],
-  ];
-  for (const [input, topic, answer] of cases) {
-    const result = extractTopicTag(input);
-    assertEquals(result.topic, topic, input);
-    assertEquals(result.answer, answer, input);
-    for (const mark of ['`', '**', '[TOPIC]', '[topic]']) {
-      assertEquals(result.answer.includes(mark), false, `${input} left ${mark}`);
-    }
-  }
-});
-
-Deno.test('extractTopicTag: a missing tag leaves the answer byte-for-byte unchanged', () => {
-  const answers = [
-    'Answer.\n[SUGGESTIONS]: A? | B?',
-    'See [IRCC](https://ircc.canada.ca) and **bold** and `code`.',
-    'Line one.\n\nLine two with [brackets] and [TO partial.',
-    '  Indented, with trailing spaces   \n\n',
-  ];
-  for (const answer of answers) {
-    const result = extractTopicTag(answer);
-    assertEquals(result.answer, answer);
-    assertEquals(result.topic, 'other');
-    assertEquals(result.labelled, false);
-  }
-});
-
-Deno.test('extractTopicTag falls back to "other" for an invalid label', () => {
-  const invalid = extractTopicTag('Answer.\n[TOPIC]: السكن');
-  assertEquals(invalid.topic, 'other');
-  assertEquals(invalid.labelled, false);
-  assertEquals(invalid.answer, 'Answer.');
-
-  const empty = extractTopicTag('Answer.\n[TOPIC]:');
-  assertEquals(empty.topic, 'other');
-  assertEquals(empty.labelled, false);
-  assertEquals(empty.answer, 'Answer.');
-
-  const unknown = extractTopicTag('Answer.\n[TOPIC]: banking');
-  assertEquals(unknown.topic, 'other');
-  assertEquals(unknown.answer, 'Answer.');
-});
-
-Deno.test('extractTopicTag: the last tag wins and every tag is removed', () => {
-  const result = extractTopicTag('[TOPIC]: work\nAnswer.\n[TOPIC]: health');
-  assertEquals(result.topic, 'health');
-  assertEquals(result.answer, 'Answer.');
-});
-
 /** Run deltas through a fresh filter; return what the client would see. */
 function streamed(deltas: string[]): string {
   const filter = createTopicTagFilter();
   return deltas.map(d => filter.push(d)).join('') + filter.flush();
 }
 
-/** Every way to cut `text` into two chunks, three chunks around the middle,
- *  and one character per chunk. */
+/** Every way to cut `text` into two chunks and three chunks, and one
+ *  character per chunk. */
 function splits(text: string): string[][] {
   const out: string[][] = [[text], [...text]];
   for (let i = 0; i <= text.length; i++) {
@@ -171,47 +79,132 @@ function splits(text: string): string[][] {
   return out;
 }
 
-/** The answer streams the same at every chunk boundary, and the streamed text
- *  is what extractTopicTag keeps (up to surrounding whitespace). */
-function assertStreamsAs(answer: string, expected: string): void {
+/**
+ * `answer` streams as `expected` at every chunk boundary, and extractTopicTag
+ * saves the same text (trimmed when a tag was removed, byte-for-byte when
+ * there was none) with `topic`.
+ */
+function check(answer: string, expected: string, topic: Topic | null): void {
   for (const deltas of splits(answer)) {
     assertEquals(streamed(deltas), expected, JSON.stringify(deltas));
   }
-  assertEquals(extractTopicTag(answer).answer.trim(), expected.trim(), answer);
+  const result = extractTopicTag(answer);
+  assertEquals(result.topic, topic ?? 'other', answer);
+  assertEquals(result.labelled, topic !== null, answer);
+  assertEquals(result.answer, topic === null ? answer : expected.trim(), answer);
 }
 
-Deno.test('the stream filter forwards plain text unchanged', () => {
-  for (const text of [
-    'Hello world.',
-    'See [IRCC](https://ircc.canada.ca) and [T]',
-    'Ends with [TO',
-    'Some **bold** and `code` and _it_ ',
-  ]) {
-    assertStreamsAs(text, text);
+Deno.test('a tag on its own line: the whole line goes, newline included', () => {
+  check('First.\n[TOPIC]: housing\nSecond sentence.', 'First.\nSecond sentence.', 'housing');
+  check(
+    'Answer.\n[SUGGESTIONS]: A? | B?\n[TOPIC]: housing',
+    'Answer.\n[SUGGESTIONS]: A? | B?\n',
+    'housing'
+  );
+  // Before the suggestions block.
+  check(
+    'Answer.\n[TOPIC]: money\n[SUGGESTIONS]: A? | B?',
+    'Answer.\n[SUGGESTIONS]: A? | B?',
+    'money'
+  );
+});
+
+Deno.test('a tag after text on the same line: only the tag goes, the line break stays', () => {
+  check('First. [TOPIC]: housing\nSecond sentence.', 'First.\nSecond sentence.', 'housing');
+  check(
+    'Done. [TOPIC]: housing\n[SUGGESTIONS]: A? | B?',
+    'Done.\n[SUGGESTIONS]: A? | B?',
+    'housing'
+  );
+  // At the end of the last sentence, no newline after it.
+  check('You can rent online. [TOPIC]: housing', 'You can rent online.', 'housing');
+  // Text after the tag on the same line stays.
+  check('First. [TOPIC]: housing Second.', 'First. Second.', 'housing');
+  // Emphasis that closes earlier text is not taken as the tag's wrapper.
+  check('A *b* [TOPIC]: taxes', 'A *b*', 'taxes');
+});
+
+Deno.test('a wrapped tag goes whole, wrappers included', () => {
+  check('Answer.\n`[TOPIC]: housing`', 'Answer.\n', 'housing');
+  check('Answer.\n**[TOPIC]: health**', 'Answer.\n', 'health');
+  check('Answer.\n**[TOPIC]:** Work\nMore.', 'Answer.\nMore.', 'work');
+  check('Answer.\n*[TOPIC]: taxes*', 'Answer.\n', 'taxes');
+  check('Answer.\n_[TOPIC]: education_', 'Answer.\n', 'education');
+  check('First.\n  **`[TOPIC]: settling_in`**  \nSecond.', 'First.\nSecond.', 'settling_in');
+  check('Answer.\n** [TOPIC]: housing', 'Answer.\n', 'housing');
+  check('Answer.\n[TOPIC]: "transportation"', 'Answer.\n', 'transportation');
+  check('Answer. `[TOPIC]: money`\nNext.', 'Answer.\nNext.', 'money');
+});
+
+Deno.test('CRLF line ends', () => {
+  check('First. [TOPIC]: housing\r\nSecond.', 'First.\r\nSecond.', 'housing');
+  check('First.\r\n[TOPIC]: work\r\nSecond.', 'First.\r\nSecond.', 'work');
+});
+
+Deno.test('label spelling: case, settling in', () => {
+  check('Answer.\n[topic]: work', 'Answer.\n', 'work');
+  check('Answer.\n[Topic]: Housing', 'Answer.\n', 'housing');
+  check('Answer.\n[TOPIC]: settling in', 'Answer.\n', 'settling_in');
+  check('Answer.\n[TOPIC]: Settling-In', 'Answer.\n', 'settling_in');
+});
+
+Deno.test('every topic is read from a valid tag', () => {
+  for (const topic of TOPICS) {
+    check(`Answer.\n[TOPIC]: ${topic}`, 'Answer.\n', topic);
   }
 });
 
-Deno.test('the stream filter removes only the tag line; text after it keeps streaming', () => {
-  assertStreamsAs('First.\n[TOPIC]: housing\nSecond sentence.', 'First.\nSecond sentence.');
-  assertStreamsAs(
-    'Answer.\n[SUGGESTIONS]: A? | B?\n[TOPIC]: housing',
-    'Answer.\n[SUGGESTIONS]: A? | B?\n'
-  );
-  assertStreamsAs('Answer.\n[topic]: work', 'Answer.\n');
-  assertStreamsAs('Answer.[TOPIC]: money\n more', 'Answer. more');
+Deno.test('two tags: both are removed and the first one wins', () => {
+  check('A.\n[TOPIC]: work\nB.\n[TOPIC]: health', 'A.\nB.\n', 'work');
+  check('A. [TOPIC]: money\nB. [TOPIC]: taxes', 'A.\nB.', 'money');
 });
 
-Deno.test('the stream filter strips a wrapped tag whole, at every chunk boundary', () => {
-  assertStreamsAs('Answer.\n`[TOPIC]: housing`', 'Answer.\n');
-  assertStreamsAs('Answer.\n**[TOPIC]: housing**', 'Answer.\n');
-  assertStreamsAs('Answer.\n**[TOPIC]:** Work\nMore.', 'Answer.\nMore.');
-  assertStreamsAs('First.\n  `[TOPIC]: money`  \nSecond.', 'First.\nSecond.');
-  assertStreamsAs('A *b* [TOPIC]: taxes', 'A *b*');
+Deno.test('[TOPIC] that is not a tag is ordinary text, unchanged', () => {
+  for (const text of [
+    'The form says [TOPIC] is optional.\nBring your lease.',
+    'Fill in [TOPIC] and [NAME].',
+    'Answer.\n[TOPIC] housing',
+    'Answer.\n[TOPIC]: banking',
+    'Answer.\n[TOPIC]: السكن',
+    'Answer.\n[TOPIC]: nhà ở',
+    'Answer. [TOPIC]: workshops near you\nMore.',
+    'Answer.\n[TOPIC]:',
+    'Ends with [TOP',
+    'Ends with **[topic]',
+    'Ends with [TOPIC]: hous',
+  ]) {
+    check(text, text, null);
+  }
 });
 
-Deno.test('the stream filter only holds back a possible tag start', () => {
+Deno.test('text with no tag streams and saves byte-for-byte unchanged', () => {
+  for (const text of [
+    'Hello world.',
+    'Answer.\n[SUGGESTIONS]: A? | B?',
+    'See [IRCC](https://ircc.canada.ca) and [T] and **bold** and `code` and _it_ ',
+    'Line one.\n\nLine two with [brackets] and [TO partial.',
+    '  Indented, with trailing spaces   \n\n',
+    'CRLF\r\nlines\r\n',
+  ]) {
+    check(text, text, null);
+  }
+});
+
+Deno.test('a long line is decided the same however it is chunked', () => {
+  const pad = ' '.repeat(70);
+  // Spaces run past DECIDE_AT, so the line is not known to be the tag's
+  // alone; the tag and the spaces after it still go.
+  check(`A.\n[TOPIC]: work${pad}`, 'A.\n', 'work');
+  check(`A.\n[TOPIC]: work${pad}\nB.`, 'A.\n\nB.', 'work');
+  const long = `A [TOPIC] note that runs on${'.'.repeat(60)}\nB.`;
+  check(long, long, null);
+});
+
+Deno.test('the stream filter holds back only a possible tag', () => {
   const filter = createTopicTagFilter();
-  assertEquals(filter.push('Rent is due on the 1st ['), 'Rent is due on the 1st');
-  assertEquals(filter.push('note]'), ' [note]');
+  assertEquals(filter.push('Rent is due on the 1st. '), 'Rent is due on the 1st.');
+  assertEquals(filter.push('It is'), ' It is');
+  assertEquals(filter.push(' [TOPIC] '), '');
+  assertEquals(filter.push('free.\n'), ' [TOPIC] free.\n');
   assertEquals(filter.flush(), '');
 });
