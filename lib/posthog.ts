@@ -78,6 +78,14 @@ export function initPostHog() {
     // `$pageview` manually on route change (see PostHogProvider).
     capture_pageview: false,
     capture_pageleave: true,
+    // Share one identity with the landing page (unifysocial.ca) through the
+    // `.unifysocial.ca` cookie. localStorage is per-origin, so by default a
+    // stale web-app id there beats the landing page's fresher cookie id and a
+    // landing visitor's sign-up never joins their landing history. Prefer the
+    // cookie on conflict (the landing page sets the same three options).
+    persistence: "localStorage+cookie",
+    cross_subdomain_cookie: true,
+    __preview_cookie_wins_on_conflict: true,
     // Session recording is off by default everywhere; it's started/stopped
     // per-route in PostHogProvider so only the resume + cover-letter features
     // are recorded (Savar asked to see how those two are actually used).
@@ -97,6 +105,19 @@ export function initPostHog() {
   });
   posthog.register(DEFAULT_PROPERTIES);
   initialized = true;
+}
+
+/**
+ * Whether a Supabase auth event with no session should reset PostHog. Only an
+ * identified PostHog user is reset: an anonymous visitor (e.g. arriving from
+ * the landing page on the shared `.unifysocial.ca` cookie) keeps their
+ * anonymous id, so `identify()` at sign-up merges their landing-page history.
+ */
+export function shouldResetPostHog(
+  event: string,
+  userState: unknown,
+): boolean {
+  return event === "SIGNED_OUT" || userState === "identified";
 }
 
 /**
