@@ -7,6 +7,8 @@ import {
   callOpenRouterStream,
 } from '../_shared/openrouter.ts';
 import { captureAiGeneration } from '../_shared/posthogCapture.ts';
+import { resolvePlatform } from '../_shared/platform.ts';
+import { classifyTopic } from './lib/topic.ts';
 
 // ============================================================================
 // CONSTANTS
@@ -685,6 +687,7 @@ Deno.serve(async (req: Request) => {
   let refundUsageOnce: () => Promise<void> = async () => {};
 
   try {
+    const requestBody = await req.json();
     const {
       prompt,
       conversationIdentifier,
@@ -692,18 +695,18 @@ Deno.serve(async (req: Request) => {
       userId: requestUserId,
       eval_profile: evalProfile,
       stream: streamRequested,
-      source: requestSource,
       lessonContext: rawLessonContext,
       responseLanguage,
-    } = await req.json();
+    } = requestBody;
 
     // In-Lesson Help — optional, sanitized; null for regular Companion chats.
     const lessonContext = parseLessonContext(rawLessonContext);
 
     const isStreaming = streamRequested === true;
-    // Platform tag for $ai_generation analytics. The web proxy sends
-    // source:"web"; mobile (and any other caller) defaults to "mobile".
-    const platform = requestSource === 'web' ? 'web' : 'mobile';
+    // Platform tag for $ai_generation analytics. Clients send `platform`
+    // (ios | android | web); old builds send nothing (-> "mobile") or the
+    // legacy source:"web" tag (-> "web").
+    const platform = resolvePlatform(requestBody, 'mobile');
 
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
       return new Response(JSON.stringify({ error: 'Prompt is required' }), {
@@ -751,6 +754,22 @@ Deno.serve(async (req: Request) => {
     // false negative fails open into the most-grounded path.
     const classifyStartedAt = performance.now();
     const queryType = classifyQueryHeuristic(prompt.trim());
+    // Analytics topic label (fixed list, never the question text). A follow-up
+    // with no topic words takes the topic of the latest earlier user question,
+    // then of the lesson being read. A greeting stays "other".
+    const topicContext =
+      queryType === 'general'
+        ? []
+        : [
+            ...(Array.isArray(messages) ? messages : [])
+              .filter(m => m?.role === 'user')
+              .map(m => m.message)
+              .reverse(),
+            lessonContext?.lessonTitle,
+            lessonContext?.submoduleTitle,
+            lessonContext?.moduleTitle,
+          ];
+    const topic = classifyTopic(prompt, topicContext);
     stageTimings.classify_ms = Math.round(
       performance.now() - classifyStartedAt
     );
@@ -898,7 +917,7 @@ Deno.serve(async (req: Request) => {
           })()
         : Promise.resolve(null);
 
-    console.log('Query classified as:', queryType);
+    console.log('Query classified as:', queryType, 'topic:', topic);
 
     // Determine if we need RAG (knowledge base search)
     const needsRAG =
@@ -1241,6 +1260,7 @@ Deno.serve(async (req: Request) => {
                 sse('metadata', {
                   sources: sources.length > 0 ? sources : undefined,
                   queryType,
+                  topic,
                   disclaimer,
                   lastVerified: lastVerified || undefined,
                 })
@@ -1326,6 +1346,7 @@ Deno.serve(async (req: Request) => {
                 feature_context: lessonContext ? 'in_lesson' : 'companion_tab',
                 lesson_id: lessonContext?.lessonId ?? undefined,
                 query_type: queryType,
+                topic,
                 has_sources: sources.length > 0,
                 response_time_ms: stageTimings.generation_ms,
               });
@@ -1495,6 +1516,7 @@ Deno.serve(async (req: Request) => {
         feature_context: lessonContext ? 'in_lesson' : 'companion_tab',
         lesson_id: lessonContext?.lessonId ?? undefined,
         query_type: queryType,
+        topic,
         has_sources: sources.length > 0,
         response_time_ms: stageTimings.generation_ms,
       });
@@ -1525,6 +1547,7 @@ Deno.serve(async (req: Request) => {
         answer: cleanAnswer,
         sources: sources.length > 0 ? sources : undefined,
         queryType,
+        topic,
         disclaimer,
         suggestedNextSteps: suggestions.length > 0 ? suggestions : undefined,
         lastVerified: lastVerified || undefined,

@@ -8,8 +8,13 @@ import { useTranslation } from "react-i18next";
 import * as companion from "@/services/companion";
 import {
   trackCompanionMessageSent,
+  trackCompanionResponseReceived,
   trackInLessonAiQuestionSent,
 } from "@/lib/analytics";
+import {
+  companionTurnNumber,
+  type CompanionInputSource,
+} from "@/lib/companionAnalytics";
 import type { ChatMessage, Conversation, LessonContext } from "@/types";
 
 /** React Query hooks for Companion (AI chat). */
@@ -79,6 +84,8 @@ interface SendMessageInput {
   /** In-Lesson Help — set when sending from the lesson-reader chat; scopes the
    *  rag-query answer to the lesson and swaps the analytics event. */
   lessonContext?: LessonContext;
+  /** How the user produced the message (companion_message_sent). */
+  inputSource: CompanionInputSource;
 }
 
 interface SendMessageContext {
@@ -105,7 +112,12 @@ export function useSendMessage() {
     SendMessageInput,
     SendMessageContext
   >({
-    mutationFn: async ({ conversationIdentifier, text, lessonContext }) => {
+    mutationFn: async ({
+      conversationIdentifier,
+      text,
+      lessonContext,
+      inputSource,
+    }) => {
       // Prior turns = persisted messages already in the cache. Optimistic
       // bubbles carry negative ids (see onMutate) so we drop them, then keep
       // the last 10 turns to bound the prompt size.
@@ -113,6 +125,9 @@ export function useSendMessage() {
         queryClient.getQueryData<ChatMessage[]>(
           messagesKey(conversationIdentifier),
         ) ?? [];
+      // The cache already holds this send's optimistic bubble (onMutate runs
+      // first), so the first message of a conversation is turn 1.
+      const turnNumber = companionTurnNumber(cached);
       const history = cached
         .filter((m) => m.id >= 0)
         .slice(-10)
@@ -125,7 +140,12 @@ export function useSendMessage() {
       });
       // The message is "sent" once persisted — track here so it counts even if
       // the reply generation below fails (onSuccess wouldn't fire then).
-      trackCompanionMessageSent({ messageLength: text.length });
+      trackCompanionMessageSent({
+        messageLength: text.length,
+        conversationId: conversationIdentifier,
+        turnNumber,
+        inputSource,
+      });
       if (lessonContext) {
         trackInLessonAiQuestionSent({
           moduleId: lessonContext.moduleId,
@@ -136,14 +156,25 @@ export function useSendMessage() {
 
       const responseLanguage =
         i18n.language && i18n.language !== "en" ? i18n.language : undefined;
-      const { answer, sources, suggestedNextSteps, disclaimerKind } =
-        await companion.generateReply({
-          conversationIdentifier,
-          prompt: text,
-          history,
-          lessonContext,
-          responseLanguage,
-        });
+      const replyStartedAt = performance.now();
+      const reply = await companion.generateReply({
+        conversationIdentifier,
+        prompt: text,
+        history,
+        lessonContext,
+        responseLanguage,
+      });
+      const { answer, sources, suggestedNextSteps, disclaimerKind } = reply;
+      trackCompanionResponseReceived({
+        queryType: reply.queryType,
+        topic: reply.topic,
+        hasSources: (sources?.length ?? 0) > 0,
+        promptTokens: reply.tokenUsage?.promptTokens,
+        completionTokens: reply.tokenUsage?.completionTokens,
+        totalTokens: reply.tokenUsage?.totalTokens,
+        estimatedCostUsd: reply.estimatedCostUsd ?? undefined,
+        responseTimeMs: Math.round(performance.now() - replyStartedAt),
+      });
 
       // rag-query returns the IRCC disclaimer as fixed English text; render it
       // from the locale files instead so it matches the answer's language.

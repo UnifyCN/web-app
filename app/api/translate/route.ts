@@ -85,8 +85,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // `platform` tags the $ai_generation analytics event (web vs iOS/Android).
   const { data, error } = await supabase.functions.invoke("translate-content", {
-    body,
+    body: { ...body, platform: "web" },
   });
 
   if (error) {

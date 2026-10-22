@@ -245,7 +245,8 @@ export async function explainTerm(
   const { data, error } = await supabase.functions.invoke<{
     explanation: string;
   }>("explain-term", {
-    body: { term, lessonContext },
+    // `platform` tags the $ai_generation analytics event (web vs iOS/Android).
+    body: { term, lessonContext, platform: "web" },
   });
 
   if (error) {

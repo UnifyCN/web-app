@@ -1,6 +1,10 @@
 import { isPostHogConfigured, posthog } from "@/lib/posthog";
 import type { PartnerCategory, PartnershipType } from "@/types";
 import type { TranslatableType } from "@/services/translations";
+import type {
+  CompanionInputSource,
+  CompanionTopic,
+} from "@/lib/companionAnalytics";
 
 /**
  * Typed PostHog product-event helpers for the web app. Each function mirrors the
@@ -49,8 +53,50 @@ export const trackOnboardingCompleted = () => capture("onboarding_completed");
 
 /* ---- Companion -------------------------------------------------------- */
 
-export const trackCompanionMessageSent = (p: { messageLength: number }) =>
-  capture("companion_message_sent", { message_length: p.messageLength });
+// Same names and properties as mobile (spec UnifyCN/mobile-app#314). Metadata
+// only: never the question or answer text.
+
+export const trackCompanionMessageSent = (p: {
+  messageLength: number;
+  conversationId: string;
+  /** 1 for the first user message in a conversation. */
+  turnNumber: number;
+  inputSource: CompanionInputSource;
+}) =>
+  capture("companion_message_sent", {
+    message_length: p.messageLength,
+    conversation_id: p.conversationId,
+    turn_number: p.turnNumber,
+    input_source: p.inputSource,
+  });
+
+/** One answer received from rag-query. Usage and `topic` are left out when the
+ *  response did not carry them (`topic` arrives only from a rag-query that
+ *  sets it). */
+export const trackCompanionResponseReceived = (p: {
+  queryType: string | null;
+  topic: CompanionTopic | null;
+  hasSources: boolean;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  estimatedCostUsd?: number;
+  responseTimeMs: number;
+}) =>
+  capture("companion_response_received", {
+    query_type: p.queryType || "unknown",
+    ...(p.topic ? { topic: p.topic } : {}),
+    has_sources: p.hasSources,
+    ...(p.promptTokens !== undefined ? { prompt_tokens: p.promptTokens } : {}),
+    ...(p.completionTokens !== undefined
+      ? { completion_tokens: p.completionTokens }
+      : {}),
+    ...(p.totalTokens !== undefined ? { total_tokens: p.totalTokens } : {}),
+    ...(p.estimatedCostUsd !== undefined
+      ? { estimated_cost_usd: p.estimatedCostUsd }
+      : {}),
+    response_time_ms: p.responseTimeMs,
+  });
 
 /* ---- Resume builder + Cover letter ------------------------------------- */
 // Product-usage events for the two AI generators (Savar's weekly-review ask).

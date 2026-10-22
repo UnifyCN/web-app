@@ -580,6 +580,8 @@ export async function requestPracticeFeedback(
         userAnswer: input.userAnswer,
         expectedAnswer: input.expectedAnswer,
         practiceTitle: input.practiceTitle,
+        // Tags the $ai_generation analytics event (web vs iOS/Android).
+        platform: "web",
       },
     },
   );

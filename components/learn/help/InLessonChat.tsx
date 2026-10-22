@@ -16,6 +16,7 @@ import {
   useSendMessage,
 } from "@/hooks/useCompanion";
 import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
+import type { CompanionInputSource } from "@/lib/companionAnalytics";
 import type { ChatMessage, LessonContext } from "@/types";
 
 function TypingIndicator() {
@@ -85,7 +86,7 @@ export function InLessonChat({
     t("learnWeb.help.chat.starterWhatNext"),
   ];
 
-  async function handleSend(text: string) {
+  async function handleSend(text: string, inputSource: CompanionInputSource) {
     // Guard the conversation-creation window: without this, a rapid second send
     // (e.g. double-tapping starter chips) fires createConversation twice and
     // spawns a duplicate conversation before the first id is set.
@@ -109,6 +110,7 @@ export function InLessonChat({
         conversationIdentifier: id,
         text,
         lessonContext,
+        inputSource,
       });
     } catch (err) {
       setSendError(
@@ -159,7 +161,7 @@ export function InLessonChat({
               <button
                 key={prompt}
                 type="button"
-                onClick={() => handleSend(prompt)}
+                onClick={() => handleSend(prompt, "starter_prompt")}
                 disabled={createConversation.isPending}
                 className="block w-full cursor-pointer rounded-full border border-teal-600/40 px-4 py-2 text-start text-sm text-teal-700 transition-colors hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -179,7 +181,7 @@ export function InLessonChat({
               groupedWithPrev={prev?.role === message.role}
               groupedWithNext={next?.role === message.role}
               isLast={index === messages.length - 1}
-              onSuggestionClick={handleSend}
+              onSuggestionClick={(text) => handleSend(text, "suggestion")}
             />
           );
         })}
@@ -201,7 +203,7 @@ export function InLessonChat({
           <ChatInput
             value={draft}
             onValueChange={setDraft}
-            onSend={handleSend}
+            onSend={(text) => handleSend(text, "typed")}
             placeholder={t("learnWeb.help.chat.inputPlaceholder")}
           />
           <FreeTierIndicator remaining={freeTierRemaining} />

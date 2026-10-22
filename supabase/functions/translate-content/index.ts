@@ -24,6 +24,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { callOpenRouter } from '../_shared/openrouter.ts';
 import { captureAiGeneration } from '../_shared/posthogCapture.ts';
+import { resolvePlatform } from '../_shared/platform.ts';
 import {
   cacheSelectColumns,
   extractSource,
@@ -350,6 +351,9 @@ Deno.serve(async req => {
       $ai_total_tokens: llmResult.usage.totalTokens,
       $ai_total_cost_usd: llmResult.usage.costUsd,
       feature: 'translate_content',
+      // Both apps call this function: the web proxy sends platform:"web", the
+      // mobile app ios/android; an old mobile build sends nothing -> "mobile".
+      platform: resolvePlatform(body, 'mobile'),
       content_type: type,
       target_language: targetLanguage,
       text_length: sourceText.length,

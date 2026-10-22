@@ -8,6 +8,7 @@ import { StarterPromptChips } from "./StarterPromptChips";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
 import { FreeTierIndicator } from "./FreeTierIndicator";
+import type { CompanionInputSource } from "@/lib/companionAnalytics";
 import type {
   ChatMessage,
   Conversation,
@@ -21,7 +22,7 @@ interface ChatPanelProps {
   freeTierRemaining: number;
   /** Non-blocking send error (e.g. daily-limit reached) shown above the input. */
   errorMessage?: string | null;
-  onSend: (text: string) => void;
+  onSend: (text: string, inputSource: CompanionInputSource) => void;
   onboarding: UserOnboardingProfile | null;
   /** Mobile master/detail: is the chat the visible pane (vs the list)? */
   mobileActive: boolean;
@@ -67,14 +68,14 @@ export function ChatPanel({
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, isTyping]);
 
-  function handleSubmit(text: string) {
-    onSend(text);
+  function handleSubmit(text: string, inputSource: CompanionInputSource) {
+    onSend(text, inputSource);
     setDraft("");
   }
 
   // A follow-up chip auto-sends immediately.
   function pickSuggestion(text: string) {
-    handleSubmit(text);
+    handleSubmit(text, "suggestion");
   }
 
   return (
@@ -144,7 +145,7 @@ export function ChatPanel({
               {t("companion.tryOneOfThese")}
             </p>
             <StarterPromptChips
-              onSelect={handleSubmit}
+              onSelect={(question) => handleSubmit(question, "starter_prompt")}
               onboarding={onboarding}
             />
           </div>
@@ -165,7 +166,7 @@ export function ChatPanel({
           <ChatInput
             value={draft}
             onValueChange={setDraft}
-            onSend={handleSubmit}
+            onSend={(text) => handleSubmit(text, "typed")}
             inputRef={inputRef}
           />
           <FreeTierIndicator remaining={freeTierRemaining} />

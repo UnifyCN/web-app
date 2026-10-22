@@ -19,6 +19,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { callOpenRouter } from '../_shared/openrouter.ts';
 import { captureAiGeneration } from '../_shared/posthogCapture.ts';
+import { resolvePlatform } from '../_shared/platform.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -582,8 +583,10 @@ Deno.serve(async req => {
         typeof body.traceId === 'string' && UUID_RE.test(body.traceId)
           ? body.traceId
           : crypto.randomUUID(),
-      // Separates web AI cost from mobile's in the shared PostHog project.
-      platform: 'web',
+      // Separates web AI cost from mobile's in the shared PostHog project. The
+      // /api/resume proxy sends platform:"web"; a request without one keeps
+      // "web" (web-only function).
+      platform: resolvePlatform(body, 'web'),
       prompt_limit: DAILY_MESSAGE_LIMIT,
       feature: 'resume_builder',
       mode: isImport ? 'import' : 'chat',

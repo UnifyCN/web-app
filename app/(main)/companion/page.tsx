@@ -16,6 +16,7 @@ import {
 } from "@/hooks/useCompanion";
 import { useCurrentUser } from "@/hooks/useProfile";
 import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
+import type { CompanionInputSource } from "@/lib/companionAnalytics";
 import type { ChatMessage } from "@/types";
 
 export default function CompanionPage() {
@@ -45,7 +46,7 @@ export default function CompanionPage() {
   const messageCount = usageQuery.data?.messageCount ?? 0;
   const freeTierRemaining = Math.max(0, FREE_TIER_DAILY_LIMIT - messageCount);
 
-  async function handleSend(text: string) {
+  async function handleSend(text: string, inputSource: CompanionInputSource) {
     setSendError(null);
     try {
       let conversationIdentifier = activeId;
@@ -65,7 +66,11 @@ export default function CompanionPage() {
         );
         setActiveId(conversationIdentifier);
       }
-      await sendMessage.mutateAsync({ conversationIdentifier, text });
+      await sendMessage.mutateAsync({
+        conversationIdentifier,
+        text,
+        inputSource,
+      });
     } catch (err) {
       // The daily free-tier cap surfaces as a typed ChatLimitError (rag-query
       // 429, relayed by the /api/companion proxy) — show localized limit copy;

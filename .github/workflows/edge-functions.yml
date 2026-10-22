@@ -80,5 +80,9 @@ jobs:
         # documented as "run with deno test" but nothing ran them, so a broken
         # one could land green. --no-check because `deno check` above already
         # type-checks the modules under test.
-        # (No --allow-* flags: these tests touch no file, net or env.)
-        run: deno test --no-check supabase/functions/
+        # The handler tests (`*/index_test.ts`) import a function's index.ts and
+        # with it supabase-js, whose npm dependencies need
+        # --node-modules-dir=auto (as in `deno check` above).
+        # (No --allow-* flags: these tests touch no file, net or env;
+        # _shared/testHarness.ts stubs fetch and Deno.env.)
+        run: deno test --no-check --node-modules-dir=auto supabase/functions/
