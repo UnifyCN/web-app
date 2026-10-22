@@ -40,9 +40,6 @@ other (greetings, small talk, anything else)
 Label the user's latest question; for a short follow-up, use the topic of the conversation or lesson it follows.
 Example: [TOPIC]: housing`;
 
-/** `[TOPIC]` with optional markdown emphasis around it, then the label. */
-const TOPIC_TAG = /\**\[topic\]\**\s*:?\**[ \t]*([^\n]*)/gi;
-
 /**
  * The label a model wrote, mapped onto the topic list, or null when it is not
  * on the list. Tolerates case, markdown, quotes, spaces or hyphens in place of
@@ -67,10 +64,90 @@ export function normalizeTopic(raw: unknown): Topic | null {
 }
 
 /**
+ * The tag and the markdown a model may wrap it in. It starts at the spaces
+ * before it and the emphasis marks (`*`, `_`, backtick, `~`) touching
+ * `[TOPIC]`, and runs through the end of its line, newline included: closing marks and
+ * the label are on that line. Text before it on the line and every line after
+ * it are kept.
+ */
+const TAG_OPEN = /[ \t]*[*_`~]*\[topic\]/i;
+
+/** A run at the end of a chunk that could still grow into TAG_OPEN. */
+const PARTIAL_TAG_OPEN = /[ \t]*[*_`~]*(?:\[(?:t(?:o(?:p(?:i(?:c)?)?)?)?)?)?$/i;
+
+/**
+ * Streaming guard: forwards answer text as it arrives but removes each
+ * `[TOPIC]` tag line, so the label never shows in the client's live bubble,
+ * while the text after the tag keeps streaming. A possible tag start at the
+ * end of a chunk ("**[TO") is held until the next chunk shows whether it is
+ * the tag. Call `flush` once the stream ends to get any held text that turned
+ * out not to be the tag. extractTopicTag runs the same filter, so the saved
+ * answer matches what was streamed.
+ */
+export function createTopicTagFilter(): {
+  push: (delta: string) => string;
+  flush: () => string;
+  /** The label text of every tag seen so far, in order. */
+  labels: () => readonly string[];
+} {
+  let held = '';
+  let inTag = false;
+  let label = '';
+  const labels: string[] = [];
+
+  const endTag = () => {
+    labels.push(label);
+    label = '';
+    inTag = false;
+  };
+
+  return {
+    push(delta: string): string {
+      let text = held + delta;
+      held = '';
+      let out = '';
+      while (text) {
+        if (inTag) {
+          const lineEnd = text.indexOf('\n');
+          if (lineEnd === -1) {
+            label += text;
+            return out;
+          }
+          label += text.slice(0, lineEnd);
+          text = text.slice(lineEnd + 1);
+          endTag();
+          continue;
+        }
+        const open = TAG_OPEN.exec(text);
+        if (open) {
+          out += text.slice(0, open.index);
+          text = text.slice(open.index + open[0].length);
+          inTag = true;
+          continue;
+        }
+        const partial = PARTIAL_TAG_OPEN.exec(text)!;
+        out += text.slice(0, partial.index);
+        held = text.slice(partial.index);
+        return out;
+      }
+      return out;
+    },
+    flush(): string {
+      if (inTag) endTag();
+      const rest = held;
+      held = '';
+      return rest;
+    },
+    labels: () => labels,
+  };
+}
+
+/**
  * Take the `[TOPIC]` tag out of a model answer. Returns the answer without the
- * tag (the `[SUGGESTIONS]` line is left for parseSuggestionsFromResponse) and
- * the label, falling back to `other` when the tag is missing or its label is
- * off the list. The last tag wins; every tag is removed.
+ * tag line (the `[SUGGESTIONS]` line is left for parseSuggestionsFromResponse)
+ * and the label, falling back to `other` when the tag is missing or its label
+ * is off the list. The last tag wins; every tag is removed. An answer with no
+ * tag comes back unchanged.
  */
 export function extractTopicTag(answer: string): {
   answer: string;
@@ -78,58 +155,16 @@ export function extractTopicTag(answer: string): {
   /** False when the model wrote no usable label (the topic is the fallback). */
   labelled: boolean;
 } {
-  let last: string | undefined;
-  const stripped = answer.replace(TOPIC_TAG, (_match, label: string) => {
-    last = label;
-    return '';
-  });
-  const topic = normalizeTopic(last);
+  const filter = createTopicTagFilter();
+  const stripped = filter.push(answer) + filter.flush();
+  const labels = filter.labels();
+  if (labels.length === 0) {
+    return { answer, topic: FALLBACK_TOPIC, labelled: false };
+  }
+  const topic = normalizeTopic(labels[labels.length - 1]);
   return {
-    answer: stripped.replace(/[ \t]+$/gm, '').trim(),
+    answer: stripped.trim(),
     topic: topic ?? FALLBACK_TOPIC,
     labelled: topic !== null,
-  };
-}
-
-const TAG_START = '[topic]';
-
-/**
- * Streaming guard: forwards answer text as it arrives but holds back anything
- * from a `[TOPIC]` tag on, so the label never shows in the client's live
- * bubble. A partial tag at the end of a chunk ("[TO") is held until the next
- * chunk shows whether it is the tag. Call `flush` once the stream ends to get
- * any held text that turned out not to be the tag.
- */
-export function createTopicTagFilter(): {
-  push: (delta: string) => string;
-  flush: () => string;
-} {
-  let held = '';
-  let suppressed = false;
-
-  return {
-    push(delta: string): string {
-      if (suppressed) return '';
-      const text = held + delta;
-      const lower = text.toLowerCase();
-      const at = lower.indexOf(TAG_START);
-      if (at !== -1) {
-        suppressed = true;
-        held = '';
-        return text.slice(0, at);
-      }
-      // Hold the longest tail that could still grow into the tag.
-      let keep = Math.min(TAG_START.length - 1, text.length);
-      while (keep > 0 && !TAG_START.startsWith(lower.slice(text.length - keep))) {
-        keep--;
-      }
-      held = text.slice(text.length - keep);
-      return text.slice(0, text.length - keep);
-    },
-    flush(): string {
-      const rest = suppressed ? '' : held;
-      held = '';
-      return rest;
-    },
   };
 }

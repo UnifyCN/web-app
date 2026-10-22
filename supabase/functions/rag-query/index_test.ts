@@ -28,6 +28,8 @@ const ANSWER = 'Here is how it works.\n[SUGGESTIONS]: How long does it take? | W
 
 /** What the stubbed answer model ends its reply with (the topic tag line). */
 let modelTail = '\n[TOPIC]: housing';
+/** When set, the stubbed model's whole reply (instead of ANSWER + modelTail). */
+let modelReply: string | null = null;
 
 function chatCalls(): FetchCall[] {
   return fetchLog.filter(
@@ -59,7 +61,7 @@ function routes(call: FetchCall): Response | undefined {
         total_tokens: 15,
         cost: 0.0001,
       };
-      const content = ANSWER + modelTail;
+      const content = modelReply ?? ANSWER + modelTail;
       if ((call.body as { stream?: boolean })?.stream) {
         // Split mid-tag, the way tokens really arrive.
         const cut = content.length - 9;
@@ -111,6 +113,7 @@ function parseSse(text: string): Array<[string, Record<string, unknown>]> {
 
 async function ask(body: Record<string, unknown>, tail = '\n[TOPIC]: housing') {
   modelTail = tail;
+  modelReply = null;
   setRoutes(routes);
   const res = await handler(request(body));
   const payload = await res.json();
@@ -259,6 +262,7 @@ Deno.test({
   name: 'streaming: topic is in the complete event and on $ai_generation; no token carries the tag',
   fn: async () => {
     modelTail = '\n[TOPIC]: health';
+    modelReply = null;
     setRoutes(routes);
     const res = await handler(
       request({
@@ -293,5 +297,33 @@ Deno.test({
     assertEquals(generations[0].platform, 'android');
     assertEquals(generations[0].topic, 'health');
     assertEquals(generations[0].feature, 'ai_companion');
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'streaming: a wrapped tag mid-answer is removed and the text after it still streams',
+  fn: async () => {
+    modelReply =
+      'First.\n`[TOPIC]: housing`\nSecond sentence.\n[SUGGESTIONS]: How much is a deposit? | Do I need a guarantor?';
+    setRoutes(routes);
+    const res = await handler(
+      request({ prompt: 'Làm sao để thuê nhà?', platform: 'ios', stream: true })
+    );
+    modelReply = null;
+    const events = parseSse(await res.text());
+    const streamed = events
+      .filter(([name]) => name === 'token')
+      .map(([, data]) => data.delta)
+      .join('');
+    assertEquals(
+      streamed,
+      'First.\nSecond sentence.\n[SUGGESTIONS]: How much is a deposit? | Do I need a guarantor?'
+    );
+    const complete = events.find(([name]) => name === 'complete')?.[1];
+    assert(complete, 'complete event sent');
+    assertEquals(complete.cleanAnswer, 'First.\nSecond sentence.');
+    assertEquals(complete.topic, 'housing');
+    assertEquals(aiGenerationEvents()[0].topic, 'housing');
   },
 });
