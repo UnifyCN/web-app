@@ -78,6 +78,14 @@ export function initPostHog() {
     // `$pageview` manually on route change (see PostHogProvider).
     capture_pageview: false,
     capture_pageleave: true,
+    // Share one identity with the landing page (unifysocial.ca) through the
+    // `.unifysocial.ca` cookie. localStorage is per-origin, so by default a
+    // stale web-app id there beats the landing page's fresher cookie id and a
+    // landing visitor's sign-up never joins their landing history. Prefer the
+    // cookie on conflict (the landing page sets the same three options).
+    persistence: "localStorage+cookie",
+    cross_subdomain_cookie: true,
+    __preview_cookie_wins_on_conflict: true,
     // Session recording is off by default everywhere; it's started/stopped
     // per-route in PostHogProvider so only the resume + cover-letter features
     // are recorded (Savar asked to see how those two are actually used).
