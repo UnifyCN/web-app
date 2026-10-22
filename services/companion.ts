@@ -15,6 +15,10 @@ import {
   mockMessagesByConversation,
 } from "@/lib/mock/conversations";
 import { isInternalSourceUrl } from "@/lib/utils";
+import {
+  parseCompanionTopic,
+  type CompanionTopic,
+} from "@/lib/companionAnalytics";
 
 /**
  * Companion (AI chat) data access — conversations, messages, daily usage, and
@@ -281,9 +285,17 @@ interface RagQueryResponse {
   answer: string;
   sources?: { document_id: number; document_title: string; url: string }[];
   queryType?: string;
+  /** Analytics topic label; absent from a rag-query that predates it. */
+  topic?: string;
   disclaimer?: string;
   suggestedNextSteps?: string[];
   lastVerified?: string;
+  tokenUsage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
+  estimatedCostUsd?: number;
 }
 
 // Local-dev / env-not-configured fallback (mirrors the other services). The
@@ -322,6 +334,32 @@ export interface GeneratedReply {
   sources: ChatSource[] | null;
   suggestedNextSteps: string[] | null;
   disclaimerKind: DisclaimerKind;
+  /* Analytics only (companion_response_received); null when absent. */
+  queryType: string | null;
+  topic: CompanionTopic | null;
+  tokenUsage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  } | null;
+  estimatedCostUsd: number | null;
+}
+
+function finiteNumber(raw: unknown): number | null {
+  return typeof raw === "number" && Number.isFinite(raw) ? raw : null;
+}
+
+function normalizeTokenUsage(
+  raw: RagQueryResponse["tokenUsage"],
+): GeneratedReply["tokenUsage"] {
+  if (!raw || typeof raw !== "object") return null;
+  const promptTokens = finiteNumber(raw.prompt_tokens);
+  const completionTokens = finiteNumber(raw.completion_tokens);
+  const totalTokens = finiteNumber(raw.total_tokens);
+  if (promptTokens === null || completionTokens === null || totalTokens === null) {
+    return null;
+  }
+  return { promptTokens, completionTokens, totalTokens };
 }
 
 /**
@@ -353,6 +391,10 @@ export async function generateReply(
       sources: null,
       suggestedNextSteps: null,
       disclaimerKind: null,
+      queryType: null,
+      topic: null,
+      tokenUsage: null,
+      estimatedCostUsd: null,
     };
   }
 
@@ -401,6 +443,10 @@ export async function generateReply(
     sources: normalizeSources(body.sources),
     suggestedNextSteps: normalizeSuggestions(body.suggestedNextSteps),
     disclaimerKind: classifyDisclaimer(body.disclaimer),
+    queryType: typeof body.queryType === "string" ? body.queryType : null,
+    topic: parseCompanionTopic(body.topic),
+    tokenUsage: normalizeTokenUsage(body.tokenUsage),
+    estimatedCostUsd: finiteNumber(body.estimatedCostUsd),
   };
 }
 

@@ -54,7 +54,9 @@ export async function getDailyTip(): Promise<DailyTip> {
   const supabase = createClient();
   const { data, error } = await supabase.functions.invoke<{ tip: RawDailyTip }>(
     "get-daily-tip",
-    { body: {} },
+    // `platform` tags AI analytics (web vs iOS/Android) when the function
+    // records them.
+    { body: { platform: "web" } },
   );
 
   if (error) throw error;

@@ -7,6 +7,12 @@ import {
   callOpenRouterStream,
 } from '../_shared/openrouter.ts';
 import { captureAiGeneration } from '../_shared/posthogCapture.ts';
+import { resolvePlatform } from '../_shared/platform.ts';
+import {
+  createTopicTagFilter,
+  extractTopicTag,
+  TOPIC_INSTRUCTION,
+} from './lib/topic.ts';
 
 // ============================================================================
 // CONSTANTS
@@ -621,7 +627,11 @@ function parseSuggestionsFromResponse(answer: string): {
   const suggestionsMatch = answer.match(/\[SUGGESTIONS\]:\s*([\s\S]*)$/im);
 
   if (suggestionsMatch) {
-    const suggestionsText = suggestionsMatch[1].trim();
+    // Stop at a [TOPIC] line the topic filter kept (an off-list label
+    // mid-answer), so it cannot fuse with the last suggestion and drop it.
+    const suggestionsText = suggestionsMatch[1]
+      .split(/\n[ \t*_`~]*\[topic\]/i)[0]
+      .trim();
     const rawSuggestions = suggestionsText
       .replace(/\n+/g, ' ')
       .split('|')
@@ -640,6 +650,19 @@ function parseSuggestionsFromResponse(answer: string): {
   }
 
   return { cleanAnswer: answer, suggestions: [] };
+}
+
+/**
+ * The analytics topic the model put on its answer, and the answer without the
+ * tag. An answer with no usable label gets the fallback topic (logged, so a
+ * prompt regression shows up in the function logs).
+ */
+function topicFromAnswer(rawAnswer: string) {
+  const result = extractTopicTag(rawAnswer);
+  if (!result.labelled) {
+    console.warn('rag-query: answer had no valid [TOPIC] label; using fallback');
+  }
+  return result;
 }
 
 // ============================================================================
@@ -685,6 +708,7 @@ Deno.serve(async (req: Request) => {
   let refundUsageOnce: () => Promise<void> = async () => {};
 
   try {
+    const requestBody = await req.json();
     const {
       prompt,
       conversationIdentifier,
@@ -692,18 +716,18 @@ Deno.serve(async (req: Request) => {
       userId: requestUserId,
       eval_profile: evalProfile,
       stream: streamRequested,
-      source: requestSource,
       lessonContext: rawLessonContext,
       responseLanguage,
-    } = await req.json();
+    } = requestBody;
 
     // In-Lesson Help — optional, sanitized; null for regular Companion chats.
     const lessonContext = parseLessonContext(rawLessonContext);
 
     const isStreaming = streamRequested === true;
-    // Platform tag for $ai_generation analytics. The web proxy sends
-    // source:"web"; mobile (and any other caller) defaults to "mobile".
-    const platform = requestSource === 'web' ? 'web' : 'mobile';
+    // Platform tag for $ai_generation analytics. Clients send `platform`
+    // (ios | android | web); old builds send nothing (-> "mobile") or the
+    // legacy source:"web" tag (-> "web").
+    const platform = resolvePlatform(requestBody, 'mobile');
 
     if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
       return new Response(JSON.stringify({ error: 'Prompt is required' }), {
@@ -1124,6 +1148,12 @@ Deno.serve(async (req: Request) => {
       fullSystemInstruction = `${fullSystemInstruction}\n\nRESPONSE LANGUAGE:\nRespond in ${responseLanguageName} only. Do not switch to English.`;
     }
 
+    // Analytics topic label (fixed list, never the question text). The answer
+    // model labels the question in this same call, so it works in every app
+    // language with no extra model call. Last, so it follows the
+    // response-language directive (the label itself stays in English).
+    fullSystemInstruction = `${fullSystemInstruction}${TOPIC_INSTRUCTION}`;
+
     // ========================================================================
     // STEP 5: BUILD REQUEST AND CALL OPENROUTER
     // ========================================================================
@@ -1144,8 +1174,9 @@ Deno.serve(async (req: Request) => {
     // When the client opts in via `stream: true`, return a text/event-stream
     // response. We emit:
     //   event: metadata    — sources/queryType/disclaimer/lastVerified
-    //   event: token       — incremental delta from OpenRouter
-    //   event: complete    — final cleanAnswer + suggestions + token usage
+    //   event: token       — incremental delta from OpenRouter (the trailing
+    //                        [TOPIC] tag is held back)
+    //   event: complete    — final cleanAnswer + suggestions + topic + usage
     //
     // Token tracking, PostHog capture, and chatbot_usage persistence still
     // run server-side at completion using the FINAL accumulated answer.
@@ -1208,6 +1239,8 @@ Deno.serve(async (req: Request) => {
       const responseStream = new ReadableStream<Uint8Array>({
         async start(controller) {
           let accumulatedAnswer = '';
+          // Holds the trailing [TOPIC] tag back from the live token stream.
+          const topicTagFilter = createTopicTagFilter();
           let finalUsage:
             | {
                 promptTokens: number;
@@ -1259,7 +1292,10 @@ Deno.serve(async (req: Request) => {
               }
               if (chunk.delta) {
                 accumulatedAnswer += chunk.delta;
-                if (!safeEnqueue(sse('token', { delta: chunk.delta }))) break;
+                const visible = topicTagFilter.push(chunk.delta);
+                if (visible && !safeEnqueue(sse('token', { delta: visible }))) {
+                  break;
+                }
               }
               if (chunk.usage) finalUsage = chunk.usage;
               if (chunk.model) resolvedModel = chunk.model;
@@ -1270,6 +1306,14 @@ Deno.serve(async (req: Request) => {
             // don't bill, don't capture analytics, don't emit `complete`, and
             // we refund the slot so an abandoned response costs the user nothing.
             if (clientDisconnected) {
+              logStageTimings('error');
+              await refundUsageOnce();
+              return;
+            }
+
+            // Text held back as a possible tag start that never became one.
+            const heldText = topicTagFilter.flush();
+            if (heldText && !safeEnqueue(sse('token', { delta: heldText }))) {
               logStageTimings('error');
               await refundUsageOnce();
               return;
@@ -1297,6 +1341,7 @@ Deno.serve(async (req: Request) => {
               total_tokens: finalUsage?.totalTokens ?? 0,
             };
             const estimatedCostUsd = finalUsage?.costUsd;
+            const { answer: untaggedAnswer, topic } = topicFromAnswer(rawAnswer);
 
             // PostHog $ai_generation capture — same shape as non-streaming.
             // $ai_input includes the full multi-turn conversation (last 10
@@ -1326,6 +1371,7 @@ Deno.serve(async (req: Request) => {
                 feature_context: lessonContext ? 'in_lesson' : 'companion_tab',
                 lesson_id: lessonContext?.lessonId ?? undefined,
                 query_type: queryType,
+                topic,
                 has_sources: sources.length > 0,
                 response_time_ms: stageTimings.generation_ms,
               });
@@ -1347,13 +1393,14 @@ Deno.serve(async (req: Request) => {
             }
 
             const { cleanAnswer, suggestions } =
-              parseSuggestionsFromResponse(rawAnswer);
+              parseSuggestionsFromResponse(untaggedAnswer);
 
             safeEnqueue(
               sse('complete', {
                 cleanAnswer,
                 suggestedNextSteps:
                   suggestions.length > 0 ? suggestions : undefined,
+                topic,
                 tokenUsage,
                 estimatedCostUsd,
                 model: resolvedModel,
@@ -1466,6 +1513,7 @@ Deno.serve(async (req: Request) => {
       total_tokens: llmResult.usage.totalTokens,
     };
     const estimatedCostUsd = llmResult.usage.costUsd;
+    const { answer: untaggedAnswer, topic } = topicFromAnswer(rawAnswer);
 
     // Send $ai_generation event to PostHog LLM analytics. effectiveUserId is
     // guaranteed non-null here — unauthenticated requests already 401'd above.
@@ -1495,6 +1543,7 @@ Deno.serve(async (req: Request) => {
         feature_context: lessonContext ? 'in_lesson' : 'companion_tab',
         lesson_id: lessonContext?.lessonId ?? undefined,
         query_type: queryType,
+        topic,
         has_sources: sources.length > 0,
         response_time_ms: stageTimings.generation_ms,
       });
@@ -1514,7 +1563,7 @@ Deno.serve(async (req: Request) => {
 
     // Parse out suggestions from the response
     const { cleanAnswer, suggestions } =
-      parseSuggestionsFromResponse(rawAnswer);
+      parseSuggestionsFromResponse(untaggedAnswer);
 
     // ========================================================================
     // STEP 6: RETURN RESPONSE
@@ -1525,6 +1574,7 @@ Deno.serve(async (req: Request) => {
         answer: cleanAnswer,
         sources: sources.length > 0 ? sources : undefined,
         queryType,
+        topic,
         disclaimer,
         suggestedNextSteps: suggestions.length > 0 ? suggestions : undefined,
         lastVerified: lastVerified || undefined,

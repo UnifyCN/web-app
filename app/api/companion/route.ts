@@ -8,8 +8,9 @@ import { createClient } from "@/lib/supabase/server";
  * The browser POSTs to this same-origin route, which does a server→server
  * `functions.invoke` (no preflight) while forwarding the user's JWT (from
  * cookies) so the function identifies the user, enforces the daily quota, and
- * logs usage. `source: "web"` tags the request so the function records the
- * platform on its $ai_generation analytics. Mirrors /api/moderation +
+ * logs usage. `platform: "web"` tags the request so the function records the
+ * platform on its $ai_generation analytics (`source: "web"` is the legacy tag
+ * that older deployed versions of rag-query read). Mirrors /api/moderation +
  * /api/storage (Node runtime).
  *
  * The 429 daily-limit response is preserved verbatim (status + error body) so
@@ -77,6 +78,7 @@ export async function POST(req: NextRequest) {
       prompt: body.prompt,
       conversationIdentifier: body.conversationIdentifier,
       messages: body.messages ?? [],
+      platform: "web",
       source: "web",
       ...(lessonContext ? { lessonContext } : {}),
       ...(typeof body.responseLanguage === "string" && body.responseLanguage

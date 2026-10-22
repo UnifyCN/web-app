@@ -87,6 +87,7 @@ export async function POST(req: NextRequest) {
         todayDate: body.todayDate ?? "",
         profile: body.profile ?? {},
         source: "web",
+        platform: "web",
       }
     : {
         message,
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
         todayDate: body.todayDate ?? "",
         profile: body.profile ?? {},
         source: "web",
+        platform: "web",
         ...(typeof body.traceId === "string" && UUID_RE.test(body.traceId)
           ? { traceId: body.traceId }
           : {}),

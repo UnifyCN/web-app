@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
         currentResume: body.currentResume ?? {},
         profile: body.profile ?? {},
         source: "web",
+        platform: "web",
       }
     : {
         message,
@@ -82,6 +83,7 @@ export async function POST(req: NextRequest) {
         currentResume: body.currentResume ?? {},
         profile: body.profile ?? {},
         source: "web",
+        platform: "web",
         ...(typeof body.traceId === "string" && UUID_RE.test(body.traceId)
           ? { traceId: body.traceId }
           : {}),
