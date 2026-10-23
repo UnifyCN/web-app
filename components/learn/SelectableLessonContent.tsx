@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { highlightRangeMatches } from "@/lib/learn/highlightRange";
 import { cn, escapeRegExp } from "@/lib/utils";
 import { PortableTextRenderer } from "./PortableTextRenderer";
 import { SelectionActionBubble } from "./SelectionActionBubble";
@@ -162,17 +163,29 @@ export function SelectableLessonContent({
     return map;
   }, [blockWords, highlightQuery]);
 
+  const validHighlights = useMemo(() => highlights.filter(h =>
+    h.lessonId === lessonId && h.pageKey === pageKey &&
+    highlightRangeMatches(blockWords[h.blockKey] ?? [], h.startWordIndex, h.endWordIndex, h.selectedText)
+  ), [highlights, blockWords, lessonId, pageKey]);
+
+  useEffect(() => {
+    if (selection && !highlightRangeMatches(blockWords[selection.blockKey] ?? [], selection.start, selection.end, selection.text)) {
+      window.getSelection()?.removeAllRanges();
+      setSelection(null);
+    }
+  }, [blockWords, selection]);
+
   // blockKey -> saved highlight ranges.
   const ranges = useMemo(() => {
     const map: Record<string, { start: number; end: number }[]> = {};
-    for (const h of highlights) {
+    for (const h of validHighlights) {
       (map[h.blockKey] ??= []).push({
         start: h.startWordIndex,
         end: h.endWordIndex,
       });
     }
     return map;
-  }, [highlights]);
+  }, [validHighlights]);
 
   function clearSelection() {
     window.getSelection()?.removeAllRanges();
@@ -272,7 +285,7 @@ export function SelectableLessonContent({
       startWordIndex: selection.start,
       endWordIndex: selection.end,
       selectedText: selection.text,
-      existingHighlights: highlights,
+      existingHighlights: validHighlights,
       allWordsInBlock: blockWords[selection.blockKey] ?? [],
       navContext: { moduleId, submoduleId, submoduleTitle, pageNum },
     });
@@ -281,7 +294,7 @@ export function SelectableLessonContent({
 
   function onRemove() {
     if (!selection) return;
-    const overlapping = highlights.filter(
+    const overlapping = validHighlights.filter(
       (h) =>
         h.blockKey === selection.blockKey &&
         h.startWordIndex <= selection.end &&
