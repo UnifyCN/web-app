@@ -413,6 +413,21 @@
       "remove": "ਹਟਾਓ",
       "highlight": "ਹਾਈਲਾਈਟ",
       "askAI": "AI ਤੋਂ ਪੁੱਛੋ"
+    },
+    "structured": {
+      "concept": "ਧਾਰਨਾ",
+      "example": "ਉਦਾਹਰਨ",
+      "visual": "ਦ੍ਰਿਸ਼ਟੀਗਤ ਉਦਾਹਰਨ",
+      "quickCheck": "ਤੁਰੰਤ ਜਾਂਚ",
+      "faq": "ਅਕਸਰ ਪੁੱਛੇ ਜਾਂਦੇ ਸਵਾਲ",
+      "citations": "ਸਰੋਤ",
+      "theory": "ਸਿਧਾਂਤ",
+      "practice": "ਅਮਲ ਵਿੱਚ",
+      "readingMinutes": "ਪੜ੍ਹਨ ਲਈ {{count}} ਮਿੰਟ",
+      "correct": "ਸਹੀ",
+      "tryAgain": "ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
+      "nextLesson": "ਅਗਲਾ ਪਾਠ",
+      "sections": "ਪਾਠ ਦੇ ਭਾਗ"
     }
   },
   "checklist": {

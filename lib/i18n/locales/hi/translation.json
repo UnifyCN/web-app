@@ -413,6 +413,21 @@
       "remove": "हटाएं",
       "highlight": "हाइलाइट",
       "askAI": "AI से पूछें"
+    },
+    "structured": {
+      "concept": "अवधारणा",
+      "example": "उदाहरण",
+      "visual": "दृश्य उदाहरण",
+      "quickCheck": "त्वरित जाँच",
+      "faq": "अक्सर पूछे जाने वाले प्रश्न",
+      "citations": "स्रोत",
+      "theory": "सिद्धांत",
+      "practice": "व्यवहार में",
+      "readingMinutes": "पढ़ने का समय {{count}} मिनट",
+      "correct": "सही",
+      "tryAgain": "फिर से प्रयास करें",
+      "nextLesson": "अगला पाठ",
+      "sections": "पाठ के खंड"
     }
   },
   "checklist": {

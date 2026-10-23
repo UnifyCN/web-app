@@ -382,6 +382,9 @@ export interface SanityBlock {
 
 /** A lesson body page (or ending page) — title + portable-text content. */
 export interface SanityLessonPage {
+  contentVersion?: 2;
+  sections?: import("./lessonSections").LessonSection[];
+  readingMinutes?: number;
   _key: string;
   _type: "page" | "endingPage";
   title?: string;

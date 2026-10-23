@@ -410,6 +410,21 @@
       "remove": "Retirer",
       "highlight": "Surligner",
       "askAI": "Demander à l'IA"
+    },
+    "structured": {
+      "concept": "Concept",
+      "example": "Exemple",
+      "visual": "Exemple visuel",
+      "quickCheck": "Vérification rapide",
+      "faq": "Questions fréquentes",
+      "citations": "Sources",
+      "theory": "Théorie",
+      "practice": "En pratique",
+      "readingMinutes": "{{count}} min de lecture",
+      "correct": "Bonne réponse",
+      "tryAgain": "Réessayez",
+      "nextLesson": "Leçon suivante",
+      "sections": "Sections de la leçon"
     }
   },
   "checklist": {
