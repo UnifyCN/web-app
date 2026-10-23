@@ -423,6 +423,21 @@
       "remove": "Xóa",
       "highlight": "Tô sáng",
       "askAI": "Hỏi AI"
+    },
+    "structured": {
+      "concept": "Khái niệm",
+      "example": "Ví dụ",
+      "visual": "Ví dụ trực quan",
+      "quickCheck": "Kiểm tra nhanh",
+      "faq": "Câu hỏi thường gặp",
+      "citations": "Nguồn tham khảo",
+      "theory": "Lý thuyết",
+      "practice": "Trong thực tế",
+      "readingMinutes": "{{count}} phút đọc",
+      "correct": "Chính xác",
+      "tryAgain": "Thử lại",
+      "nextLesson": "Bài học tiếp theo",
+      "sections": "Các phần của bài học"
     }
   },
   "checklist": {

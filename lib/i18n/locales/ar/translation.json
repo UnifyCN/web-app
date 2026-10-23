@@ -423,6 +423,21 @@
       "remove": "إزالة",
       "highlight": "تظليل",
       "askAI": "اسأل الذكاء الاصطناعي"
+    },
+    "structured": {
+      "concept": "المفهوم",
+      "example": "مثال",
+      "visual": "مثال مرئي",
+      "quickCheck": "اختبار سريع",
+      "faq": "الأسئلة الشائعة",
+      "citations": "المصادر",
+      "theory": "النظرية",
+      "practice": "في التطبيق",
+      "readingMinutes": "{{count}} دقائق للقراءة",
+      "correct": "صحيح",
+      "tryAgain": "حاول مرة أخرى",
+      "nextLesson": "الدرس التالي",
+      "sections": "أقسام الدرس"
     }
   },
   "checklist": {
