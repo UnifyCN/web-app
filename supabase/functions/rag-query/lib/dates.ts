@@ -35,14 +35,17 @@ export function parseUtcDate(value: unknown): UtcDate | null {
   const second = s === undefined ? 0 : Number(s);
   if (hour > 23 || minute > 59 || second > 59) return null;
 
-  const probe = new Date(Date.UTC(2000, month - 1, day));
-  probe.setUTCFullYear(year);
+  // Built in the input year (setUTCFullYear keeps years 0-99 as written), so
+  // the offset below moves the date through that year's own calendar.
+  const local = new Date(0);
+  local.setUTCFullYear(year, month - 1, day);
+  local.setUTCHours(hour, minute, second, 0);
   if (
     month < 1 ||
     month > 12 ||
-    probe.getUTCFullYear() !== year ||
-    probe.getUTCMonth() !== month - 1 ||
-    probe.getUTCDate() !== day
+    local.getUTCFullYear() !== year ||
+    local.getUTCMonth() !== month - 1 ||
+    local.getUTCDate() !== day
   ) {
     return null;
   }
@@ -57,13 +60,7 @@ export function parseUtcDate(value: unknown): UtcDate | null {
     offsetMinutes = sign * (offsetHours * 60 + offsetMins);
   }
 
-  const instant = new Date(
-    Date.UTC(2000, month - 1, day, hour, minute, second) -
-      offsetMinutes * 60_000
-  );
-  instant.setUTCFullYear(
-    instant.getUTCFullYear() + (year - 2000)
-  );
+  const instant = new Date(local.getTime() - offsetMinutes * 60_000);
   return {
     year: instant.getUTCFullYear(),
     month: instant.getUTCMonth() + 1,

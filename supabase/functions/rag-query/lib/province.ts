@@ -24,7 +24,7 @@ export const CANADIAN_PROVINCES = [
 
 export type CanadianProvince = (typeof CANADIAN_PROVINCES)[number];
 
-const PROVINCE_ALIASES: Record<string, CanadianProvince> = {
+const ALIAS_TABLE: Record<string, CanadianProvince> = {
   ab: 'Alberta',
   bc: 'British Columbia',
   mb: 'Manitoba',
@@ -50,7 +50,11 @@ const PROVINCE_ALIASES: Record<string, CanadianProvince> = {
   'yukon territory': 'Yukon',
 };
 
-const PROVINCE_BY_LOWER: Record<string, CanadianProvince> = Object.fromEntries(
+// Maps, not object lookups: a plain object also answers for inherited names
+// such as "constructor", which are not provinces.
+const PROVINCE_ALIASES = new Map(Object.entries(ALIAS_TABLE));
+
+const PROVINCE_BY_LOWER = new Map<string, CanadianProvince>(
   CANADIAN_PROVINCES.map(p => [p.toLowerCase(), p])
 );
 
@@ -59,5 +63,5 @@ export function canonicalProvince(value: unknown): CanadianProvince | null {
   if (typeof value !== 'string') return null;
   const key = value.trim().toLowerCase().replace(/\s+/g, ' ').replace(/\.$/, '');
   if (key === '') return null;
-  return PROVINCE_BY_LOWER[key] ?? PROVINCE_ALIASES[key] ?? null;
+  return PROVINCE_BY_LOWER.get(key) ?? PROVINCE_ALIASES.get(key) ?? null;
 }

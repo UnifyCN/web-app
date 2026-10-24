@@ -51,9 +51,9 @@ Deno.test('each chunk carries its own published date beside its own text', () =>
   ]);
   assertEquals(
     contextText,
-    '[Document: Express Entry Rounds] (as of 2026-10-14)\n' +
+    '[Document: Express Entry Rounds] (as of October 14, 2026)\n' +
       'Express Entry draw #450 on 2026-10-14: minimum CRS 520.\n\n' +
-      '[Document: Express Entry Rounds] (as of 2026-09-30)\n' +
+      '[Document: Express Entry Rounds] (as of September 30, 2026)\n' +
       'Express Entry draw #449 on 2026-09-30: minimum CRS 535.\n\n'
   );
 });
@@ -64,24 +64,25 @@ Deno.test('fetched_at is the fallback, read as its UTC date', () => {
     chunk(2, 3, 'B.', { published_at: 'not a date', fetched_at: '2026-10-19T04:00:00Z' }),
     chunk(3, 3, 'C.', { published_at: '', fetched_at: '2026-10-18' }),
   ]);
-  assertStringIncludes(contextText, '(as of 2026-10-21)\nA.');
-  assertStringIncludes(contextText, '(as of 2026-10-19)\nB.');
-  assertStringIncludes(contextText, '(as of 2026-10-18)\nC.');
+  assertStringIncludes(contextText, '(as of October 21, 2026)\nA.');
+  assertStringIncludes(contextText, '(as of October 19, 2026)\nB.');
+  assertStringIncludes(contextText, '(as of October 18, 2026)\nC.');
 });
 
 Deno.test('published_at wins over fetched_at when both are present', () => {
   const { contextText } = buildRetrievedContext([
     chunk(1, 3, 'A.', { published_at: '2026-10-14', fetched_at: '2026-10-22T08:00:00Z' }),
   ]);
-  assertStringIncludes(contextText, '(as of 2026-10-14)\nA.');
+  assertStringIncludes(contextText, '(as of October 14, 2026)\nA.');
   assert(!contextText.includes('2026-10-22'), contextText);
+  assert(!contextText.includes('October 22, 2026'), contextText);
 });
 
 Deno.test('a published timestamp is read as its UTC date', () => {
   const { contextText } = buildRetrievedContext([
     chunk(1, 3, 'A.', { published_at: '2026-10-20T23:30:00-05:00' }),
   ]);
-  assertStringIncludes(contextText, '(as of 2026-10-21)\nA.');
+  assertStringIncludes(contextText, '(as of October 21, 2026)\nA.');
 });
 
 Deno.test('without a source date the chunk says so; today is never invented', () => {
@@ -101,13 +102,14 @@ Deno.test('the document updated_at is not used as a source date', () => {
     chunk(1, 4, 'Text.', { updated_at: '2026-10-22T00:00:00Z' }),
   ]);
   assert(!contextText.includes('2026-10-22'), contextText);
+  assert(!contextText.includes('October 22, 2026'), contextText);
 });
 
 Deno.test('an untitled document is shown as Unknown', () => {
   const { contextText } = buildRetrievedContext([
     chunk(1, 4, 'Text.', { title: null, published_at: '2026-10-01' }),
   ]);
-  assertStringIncludes(contextText, '[Document: Unknown] (as of 2026-10-01)');
+  assertStringIncludes(contextText, '[Document: Unknown] (as of October 1, 2026)');
 });
 
 Deno.test('no chunks: empty context, no sources, no lastVerified', () => {
@@ -216,4 +218,19 @@ Deno.test('lastVerified is the newest document updated_at', () => {
     chunk(3, 3, 'C.', { updated_at: null }),
   ]);
   assertEquals(lastVerified, '2026-10-05T00:00:00Z');
+});
+
+Deno.test('every source date is written Month D, YYYY (never ISO), at the start and end of the year', () => {
+  const { contextText } = buildRetrievedContext([
+    chunk(1, 5, 'A.', { published_at: '2026-01-01' }),
+    chunk(2, 5, 'B.', { published_at: '2026-12-31' }),
+    chunk(3, 5, 'C.', { published_at: '2026-03-01T00:30:00+01:00' }),
+    chunk(4, 5, 'D.', { published_at: null, fetched_at: '2028-03-01T00:30:00+01:00' }),
+  ]);
+  assertStringIncludes(contextText, '(as of January 1, 2026)\nA.');
+  assertStringIncludes(contextText, '(as of December 31, 2026)\nB.');
+  // 00:30 at +01:00 on March 1 is February 28 (29 in a leap year) in UTC
+  assertStringIncludes(contextText, '(as of February 28, 2026)\nC.');
+  assertStringIncludes(contextText, '(as of February 29, 2028)\nD.');
+  assert(!/\d{4}-\d{2}-\d{2}\)/.test(contextText), contextText);
 });

@@ -50,11 +50,11 @@ Deno.test('a future arrival without a city says in Canada', () => {
   assert(!text.includes('destination province'), text);
 });
 
-Deno.test('a past arrival says arrived (province kept, date as UTC YYYY-MM-DD)', () => {
+Deno.test('a past arrival says arrived (province kept, date as Month D, YYYY)', () => {
   const text = context({ ...worker, arrival_date: '2024-01-15' });
   assertStringIncludes(
     text,
-    'You are speaking with a skilled worker who arrived in Toronto, Ontario on 2024-01-15.'
+    'You are speaking with a skilled worker who arrived in Toronto, Ontario on January 15, 2024.'
   );
   assert(!text.includes('plans to arrive'), text);
 });
@@ -62,17 +62,17 @@ Deno.test('a past arrival says arrived (province kept, date as UTC YYYY-MM-DD)',
 Deno.test('a past arrival with province only, and with persona only', () => {
   assertStringIncludes(
     context({ persona: 'international_student', province: 'Alberta', arrival_date: '2025-09-01' }),
-    'You are speaking with a international student in Alberta, who arrived on 2025-09-01.'
+    'You are speaking with a international student in Alberta, who arrived on September 1, 2025.'
   );
   assertStringIncludes(
     context({ persona: 'other', arrival_date: '2025-09-01' }),
-    'You are speaking with a other in Canada, who arrived on 2025-09-01.'
+    'You are speaking with a other in Canada, who arrived on September 1, 2025.'
   );
 });
 
 Deno.test('an alias province is shown by its canonical name', () => {
   const text = context({ ...worker, province: 'ON', arrival_date: '2024-01-15' });
-  assertStringIncludes(text, 'arrived in Toronto, Ontario on 2024-01-15');
+  assertStringIncludes(text, 'arrived in Toronto, Ontario on January 15, 2024');
 });
 
 Deno.test('UTC boundary: arrival on the UTC day of now has arrived; the next UTC day is planned', () => {
@@ -96,12 +96,12 @@ Deno.test('UTC boundary: a timestamp is read as its UTC date, whatever its offse
   // 23:30 at UTC-5 on Oct 23 is Oct 24 04:30 UTC: that UTC day is today.
   assertStringIncludes(
     context({ ...worker, arrival_date: '2026-10-23T23:30:00-05:00' }, now),
-    'arrived in Toronto, Ontario on 2026-10-24'
+    'arrived in Toronto, Ontario on October 24, 2026'
   );
   // 00:30 at UTC+2 on Oct 25 is Oct 24 22:30 UTC: today in UTC, not tomorrow.
   assertStringIncludes(
     context({ ...worker, arrival_date: '2026-10-25T00:30:00+02:00' }, now),
-    'arrived in Toronto, Ontario on 2026-10-24'
+    'arrived in Toronto, Ontario on October 24, 2026'
   );
   // 23:30 at UTC-5 on Oct 24 is Oct 25 04:30 UTC: tomorrow in UTC.
   assertStringIncludes(
@@ -115,7 +115,7 @@ Deno.test('UTC boundary: a timestamp is read as its UTC date, whatever its offse
   );
   assertStringIncludes(
     context({ ...worker, arrival_date: '2026-10-24T00:00:00.000Z' }, now),
-    'arrived in Toronto, Ontario on 2026-10-24'
+    'arrived in Toronto, Ontario on October 24, 2026'
   );
 });
 
@@ -178,8 +178,111 @@ Deno.test('the rest of the profile is preserved with a future arrival', () => {
 
 Deno.test('an empty profile gives no block; goals alone still give one', () => {
   assertEquals(context({}), '');
-  assertEquals(context({ arrival_date: '2026-11-03' }), '');
+  assertEquals(context({ arrival_date: 'soon', province: 'Atlantis' }), '');
   const text = context({ goals: ['get_pr'] });
   assertStringIncludes(text, 'Their goals: get pr.');
   assertNoArrival(text);
+});
+
+const NO_PERSONA = [null, undefined, '', '   ', 42];
+
+Deno.test('without a persona, a valid future arrival is kept and no persona is invented', () => {
+  for (const persona of NO_PERSONA) {
+    const text = context({
+      persona,
+      city: 'Toronto',
+      province: 'Ontario',
+      arrival_date: '2026-12-01',
+      goals: ['get_pr'],
+    });
+    assertStringIncludes(
+      text,
+      'You are speaking with a user who plans to arrive in Toronto on December 1, 2026. Their destination province is Ontario.'
+    );
+    assertStringIncludes(text, 'Their goals: get pr.');
+    assertStringIncludes(text, 'Refer to local resources in Toronto when relevant.');
+    assert(!text.includes('skilled'), text);
+    assert(!text.includes('arrived'), text);
+  }
+});
+
+Deno.test('without a persona, a current or past arrival says arrived, with and without a city', () => {
+  for (const persona of NO_PERSONA) {
+    assertStringIncludes(
+      context({ persona, city: 'Toronto', province: 'ON', arrival_date: '2026-10-23' }),
+      'You are speaking with a user who arrived in Toronto, Ontario on October 23, 2026.'
+    );
+    assertStringIncludes(
+      context({ persona, city: 'Toronto', province: 'Ontario', arrival_date: '2024-01-15' }),
+      'You are speaking with a user who arrived in Toronto, Ontario on January 15, 2024.'
+    );
+    assertStringIncludes(
+      context({ persona, province: 'Alberta', arrival_date: '2024-01-15' }),
+      'You are speaking with a user in Alberta, who arrived on January 15, 2024.'
+    );
+    assertStringIncludes(
+      context({ persona, arrival_date: '2024-01-15' }),
+      'You are speaking with a user in Canada, who arrived on January 15, 2024.'
+    );
+  }
+});
+
+Deno.test('without a persona or a city, a future arrival says Canada', () => {
+  const text = context({ province: 'Ontario', arrival_date: '2027-01-09' });
+  assertStringIncludes(
+    text,
+    'You are speaking with a user who plans to arrive in Canada on January 9, 2027. Their destination province is Ontario.'
+  );
+  assert(!text.includes('local resources'), text);
+  assertStringIncludes(
+    context({ arrival_date: '2027-01-09' }),
+    'You are speaking with a user who plans to arrive in Canada on January 9, 2027.'
+  );
+});
+
+Deno.test('without a persona, location alone is kept; invalid or missing dates stay omitted', () => {
+  assertStringIncludes(
+    context({ city: 'Toronto', province: 'Ontario' }),
+    'You are speaking with a user in Toronto, Ontario.'
+  );
+  assertStringIncludes(context({ city: 'Toronto' }), 'You are speaking with a user in Toronto.');
+  for (const arrival_date of [null, undefined, '', 'soon', '2026-02-30', '2026-11-03T25:00:00Z', 20261103]) {
+    const text = context({ city: 'Toronto', province: 'Ontario', goals: ['get_pr'], arrival_date });
+    assertNoArrival(text);
+    assertStringIncludes(text, 'You are speaking with a user in Toronto, Ontario.');
+    assertStringIncludes(text, 'Their goals: get pr.');
+  }
+  assertEquals(context({ persona: null, arrival_date: 'soon' }), '');
+});
+
+Deno.test('a city without a province keeps the city with a persona too', () => {
+  assertStringIncludes(
+    context({ persona: 'refugee', city: 'Halifax' }),
+    'You are speaking with a refugee in Halifax.'
+  );
+});
+
+Deno.test('a province that is not one of the 13 names behaves exactly like a null province', () => {
+  const unknown = ['Atlantis', 'constructor', '__proto__', 'toString', 'Ontario; drop table', '', '   ', 42, {}];
+  for (const province of unknown) {
+    for (const arrival_date of [null, '2026-12-01', '2024-01-15']) {
+      for (const persona of ['skilled_worker', null]) {
+        const withUnknown = context({ persona, city: 'Toronto', province, arrival_date, goals: ['get_pr'] });
+        const withNull = context({ persona, city: 'Toronto', province: null, arrival_date, goals: ['get_pr'] });
+        assertEquals(withUnknown, withNull, JSON.stringify({ province, arrival_date, persona }));
+        for (const word of ['Atlantis', 'constructor', '__proto__', 'toString', 'drop table', 'destination province']) {
+          assert(!withUnknown.includes(word), `${word} in: ${withUnknown}`);
+        }
+        // city, persona, goals and date facts stay
+        assertStringIncludes(withUnknown, 'Toronto');
+        assertStringIncludes(withUnknown, 'Their goals: get pr.');
+      }
+    }
+  }
+  // a province alone with an unknown name and nothing else is an empty profile
+  assertEquals(context({ province: 'Atlantis' }), '');
+  assertStringIncludes(
+    context({ persona: 'skilled_worker', province: 'Atlantis' }),
+    'You are speaking with a skilled worker in Canada.'
+  );
 });

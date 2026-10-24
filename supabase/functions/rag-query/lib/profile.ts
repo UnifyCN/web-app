@@ -3,7 +3,6 @@
 // which sources are retrieved.
 import {
   compareUtcDates,
-  formatIsoDate,
   formatLongDate,
   parseUtcDate,
   utcDateOf,
@@ -24,6 +23,10 @@ function words(values: unknown): string[] {
  * The persona and location sentence. Arrival wording depends on the UTC date
  * against `now`: a later date "plans to arrive", today or earlier "arrived".
  * A null or invalid date leaves the arrival out of the sentence altogether.
+ * Every part is optional and none depends on another: without a persona the
+ * subject is "a user" (no persona is invented), and a province that is not one
+ * of the 13 canonical names counts as no province. Dates are Month D, YYYY.
+ * Null when nothing about the person, place or arrival is known.
  */
 function personaSentence(
   profile: Record<string, unknown>,
@@ -31,26 +34,26 @@ function personaSentence(
 ): string | null {
   const persona = text(profile.persona)?.replace(/_/g, ' ') ?? null;
   const city = text(profile.city);
-  const rawProvince = text(profile.province);
-  const province = canonicalProvince(rawProvince) ?? rawProvince;
+  const province = canonicalProvince(profile.province);
   const arrival = parseUtcDate(profile.arrival_date);
 
-  if (!persona) return null;
-  const who = `You are speaking with a ${persona}`;
+  if (!persona && !city && !province && !arrival) return null;
+  const who = `You are speaking with a ${persona ?? 'user'}`;
 
   if (arrival && compareUtcDates(arrival, utcDateOf(now)) > 0) {
     const where = `${who} who plans to arrive in ${city ?? 'Canada'} on ${formatLongDate(arrival)}.`;
     return province ? `${where} Their destination province is ${province}.` : where;
   }
 
-  const day = arrival ? formatIsoDate(arrival) : null;
+  const day = arrival ? formatLongDate(arrival) : null;
   if (city && province) {
     return day
       ? `${who} who arrived in ${city}, ${province} on ${day}.`
       : `${who} in ${city}, ${province}.`;
   }
-  if (province) {
-    return `${who} in ${province}${day ? `, who arrived on ${day}` : ''}.`;
+  const place = city ?? province;
+  if (place) {
+    return `${who} in ${place}${day ? `, who arrived on ${day}` : ''}.`;
   }
   return `${who} in Canada${day ? `, who arrived on ${day}` : ''}.`;
 }

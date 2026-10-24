@@ -4,7 +4,7 @@
 // come from the SQL contract in mobile-app migrations 20261024044652 and
 // 20261024052950: knowledge_documents holds that chunk's published_at,
 // fetched_at and chunk_source_url next to the document's own columns.
-import { formatIsoDate, parseUtcDate } from './dates.ts';
+import { formatLongDate, parseUtcDate } from './dates.ts';
 
 export type Source = {
   document_id: number;
@@ -20,11 +20,11 @@ export type RetrievedContext = {
   lastVerified: string | undefined;
 };
 
-/** The chunk's source date (published_at, else fetched_at) as UTC YYYY-MM-DD, or null. */
+/** The chunk's source date (published_at, else fetched_at) as its UTC date, Month D, YYYY, or null. */
 function chunkDate(doc: Record<string, unknown>): string | null {
   for (const value of [doc.published_at, doc.fetched_at]) {
     const date = parseUtcDate(value);
-    if (date) return formatIsoDate(date);
+    if (date) return formatLongDate(date);
   }
   return null;
 }

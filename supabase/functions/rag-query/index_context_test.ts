@@ -204,13 +204,13 @@ Deno.test({
     const { system } = await ask('What is the latest Express Entry cutoff?');
     assertStringIncludes(
       system,
-      '[Document: Express Entry Rounds] (as of 2026-10-14)\nExpress Entry draw #450 on 2026-10-14: minimum CRS 520.'
+      '[Document: Express Entry Rounds] (as of October 14, 2026)\nExpress Entry draw #450 on 2026-10-14: minimum CRS 520.'
     );
     assertStringIncludes(
       system,
-      '[Document: Express Entry Rounds] (as of 2026-09-30)\nExpress Entry draw #449 on 2026-09-30: minimum CRS 535.'
+      '[Document: Express Entry Rounds] (as of September 30, 2026)\nExpress Entry draw #449 on 2026-09-30: minimum CRS 535.'
     );
-    assertStringIncludes(system, '[Document: IRCC Newsroom] (as of 2026-10-10)\n2026-10-09: Study permit changes.');
+    assertStringIncludes(system, '[Document: IRCC Newsroom] (as of October 10, 2026)\n2026-10-09: Study permit changes.');
     assertStringIncludes(system, '[Document: OINP] (source date unknown)\nOINP streams overview.');
     // persona, location, goals and interests still reach the answer prompt
     assertStringIncludes(system, 'USER PROFILE CONTEXT');
@@ -322,5 +322,152 @@ Deno.test({
     assertEquals(rpc, undefined, 'no retrieval on the general lane');
     assertStringIncludes(system, 'current data is not available');
     assertStringIncludes(system, 'from memory');
+  },
+});
+
+function profileBlock(system: string): string {
+  return system.split('USER PROFILE CONTEXT:')[1]?.split('PROVINCE IMMIGRATION POINTER:')[0] ?? '';
+}
+
+const ALIASES = [
+  'ab', 'bc', 'mb', 'nb', 'nl', 'nfld', 'newfoundland', 'nt', 'nwt', 'ns', 'nu', 'on',
+  'ont', 'pe', 'pei', 'qc', 'pq', 'québec', 'sk', 'sask', 'yt', 'yukon', 'yukon territory',
+];
+const REGIONS = [
+  'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 'Newfoundland and Labrador',
+  'Northwest Territories', 'Nova Scotia', 'Nunavut', 'Ontario', 'Prince Edward Island',
+  'Quebec', 'Saskatchewan', 'Yukon',
+];
+
+Deno.test({
+  ...opts,
+  name: 'dates: a source timestamp keeps its UTC date through the real handler, in a non-leap and a leap year',
+  fn: async () => {
+    profile = ONTARIO_WORKER;
+    for (const [published_at, label] of [
+      ['2026-03-01T00:30:00+01:00', 'February 28, 2026'],
+      ['2025-03-01T00:30:00+01:00', 'February 28, 2025'],
+      ['2024-03-01T00:30:00+01:00', 'February 29, 2024'],
+      ['2026-10-14', 'October 14, 2026'],
+    ]) {
+      chunks = [row(1, 7, 'A policy update.', { title: 'Policy', published_at })];
+      const { status, system } = await ask('What is the latest Express Entry cutoff?');
+      assertEquals(status, 200, published_at);
+      assertStringIncludes(system, `[Document: Policy] (as of ${label})\nA policy update.`);
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'dates: the model is told to write dates as Month D, YYYY, in every lane, with and without context',
+  fn: async () => {
+    profile = ONTARIO_WORKER;
+    for (const prompt of [
+      'What is the latest Express Entry cutoff?',
+      'Is it true that the PGWP fee is 255 dollars?',
+      'How do I fill out IMM 5710 and what is the fee?',
+      'hello',
+    ]) {
+      for (const rows of [KB_CHUNKS, []]) {
+        chunks = rows;
+        const { system } = await ask(prompt);
+        assertStringIncludes(system, 'Month D, YYYY', prompt);
+        assertStringIncludes(system, 'October 21, 2026', prompt);
+        assertStringIncludes(system, 'never write a date as 2026-10-21', prompt);
+      }
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'profile: a future arrival without a persona reaches the model; no persona is invented',
+  fn: async () => {
+    chunks = [];
+    profile = { id: 'user-1', persona: null, city: 'Toronto', province: 'Ontario', arrival_date: '2099-01-15', goals: ['get_pr'] };
+    const { status, system } = await ask('What is the latest Express Entry cutoff?');
+    assertEquals(status, 200);
+    const block = profileBlock(system);
+    assertStringIncludes(block, 'You are speaking with a user who plans to arrive in Toronto on January 15, 2099. Their destination province is Ontario.');
+    assertStringIncludes(block, 'Their goals: get pr.');
+    assert(!block.includes('skilled') && !block.includes('student') && !block.includes('refugee'), block);
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'profile: a past arrival and a future arrival without a city or persona reach the model',
+  fn: async () => {
+    chunks = [];
+    profile = { id: 'user-1', province: 'ON', arrival_date: '2020-02-01' };
+    assertStringIncludes(
+      profileBlock((await ask('What is the latest Express Entry cutoff?')).system),
+      'You are speaking with a user in Ontario, who arrived on February 1, 2020.'
+    );
+    profile = { id: 'user-1', persona: '', city: null, province: 'ON', arrival_date: '2099-03-01T00:30:00+01:00' };
+    const future = profileBlock((await ask('What is the latest Express Entry cutoff?')).system);
+    // 00:30 at +01:00 on March 1, 2099 is February 28 in UTC
+    assertStringIncludes(future, 'who plans to arrive in Canada on February 28, 2099. Their destination province is Ontario.');
+    profile = { id: 'user-1', city: 'Toronto', arrival_date: 'not a date' };
+    const invalid = profileBlock((await ask('What is the latest Express Entry cutoff?')).system);
+    assertStringIncludes(invalid, 'You are speaking with a user in Toronto.');
+    assert(!invalid.includes('arrive'), invalid);
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'province: an unmatched stored value is an explicit null with HTTP 200, no pointer and no raw text in the prompt',
+  fn: async () => {
+    chunks = [];
+    for (const province of [
+      'constructor', '__proto__', 'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf',
+      'Atlantis', 'Somewhere Else', 'Ontario; drop table', '', '   ', null,
+    ]) {
+      profile = { id: 'user-1', persona: 'skilled_worker', city: 'Toronto', province, arrival_date: '2099-01-15', goals: ['get_pr'] };
+      const { status, rpc, system, calls } = await ask('How do I apply for permanent residence?');
+      const label = String(province);
+      assertEquals(status, 200, label);
+      const body = rpc?.body as Record<string, unknown>;
+      assertEquals(Object.keys(JSON.parse(JSON.stringify(body))).sort(), ['filter_province', 'match_count', 'match_threshold', 'query_embedding'], label);
+      assertEquals(body.filter_province, null, label);
+      assertEquals([body.match_threshold, body.match_count], [0.3, 10], label);
+      assert(!system.includes('PROVINCE IMMIGRATION POINTER'), label);
+      const block = profileBlock(system);
+      for (const raw of ['constructor', '__proto__', 'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'Atlantis', 'Somewhere Else', 'drop table', 'destination province']) {
+        assert(!block.includes(raw), `${raw} in ${block}`);
+      }
+      // persona, city, goals and arrival stay
+      assertStringIncludes(block, 'You are speaking with a skilled worker who plans to arrive in Toronto on January 15, 2099.');
+      assertStringIncludes(block, 'Their goals: get pr.');
+      assert(!calls.some(c => c.url.pathname.endsWith('/rpc/refund_chatbot_message')), label);
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'province: all 13 names and all 23 aliases still filter and point to their own region',
+  fn: async () => {
+    chunks = [];
+    const cases: Array<[string, string | undefined]> = [
+      ...REGIONS.map((name): [string, string | undefined] => [name, name]),
+      ...ALIASES.map((alias): [string, string | undefined] => [alias, undefined]),
+    ];
+    const resolved = new Map<string, string>();
+    for (const [input, expected] of cases) {
+      profile = { id: 'user-1', persona: 'skilled_worker', province: ` ${input.toUpperCase()}. ` };
+      const { status, rpc, system } = await ask('What is the latest Express Entry cutoff?');
+      assertEquals(status, 200, input);
+      const name = (rpc?.body as { filter_province: string }).filter_province;
+      assert(REGIONS.includes(name), `${input} -> ${name}`);
+      if (expected) assertEquals(name, expected, input);
+      resolved.set(input, name);
+      assertStringIncludes(system, `The user's province is ${name}.`);
+      assertStringIncludes(profileBlock(system) + system, name);
+    }
+    assertEquals(resolved.size, 36);
+    assertEquals(new Set(ALIASES.map(a => resolved.get(a))).size, 13);
   },
 });
