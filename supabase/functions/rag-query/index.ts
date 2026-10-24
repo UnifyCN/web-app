@@ -13,6 +13,15 @@ import {
   extractTopicTag,
   TOPIC_INSTRUCTION,
 } from './lib/topic.ts';
+import { buildUserProfileContext } from './lib/profile.ts';
+import { buildRetrievalArgs } from './lib/retrieval.ts';
+import { buildRetrievedContext } from './lib/retrievedContext.ts';
+import { provinceImmigrationPointer } from './lib/provincePointer.ts';
+import {
+  CURRENT_FACTS_GENERAL,
+  CURRENT_FACTS_WITH_CONTEXT,
+  CURRENT_FACTS_WITHOUT_CONTEXT,
+} from './lib/currentFacts.ts';
 
 // ============================================================================
 // CONSTANTS
@@ -243,63 +252,6 @@ function sanitizeSuggestedNextSteps(suggestions: string[]): string[] {
     .slice(0, 3);
 }
 
-function buildUserProfileContext(profile: Record<string, unknown>): string {
-  const persona = profile.persona as string | null;
-  const city = profile.city as string | null;
-  const province = profile.province as string | null;
-  const arrivalDate = profile.arrival_date as string | null;
-  const goals = (profile.goals as string[] | null) ?? [];
-  const learningInterests =
-    (profile.learning_interests as string[] | null) ?? [];
-
-  const parts: string[] = [];
-
-  if (persona && city && province) {
-    parts.push(
-      `You are speaking with a ${persona.replace(/_/g, ' ')} who arrived in ${city}, ${province}${arrivalDate ? ` on ${arrivalDate.split('T')[0]}` : ''}.`
-    );
-  } else if (persona && province) {
-    parts.push(
-      `You are speaking with a ${persona.replace(/_/g, ' ')} in ${province}${arrivalDate ? `, who arrived on ${arrivalDate.split('T')[0]}` : ''}.`
-    );
-  } else if (persona) {
-    parts.push(
-      `You are speaking with a ${persona.replace(/_/g, ' ')} in Canada${arrivalDate ? `, who arrived on ${arrivalDate.split('T')[0]}` : ''}.`
-    );
-  }
-
-  if (goals.length > 0) {
-    parts.push(
-      `Their goals: ${goals.map(g => g.replace(/_/g, ' ')).join(', ')}.`
-    );
-  }
-
-  if (learningInterests.length > 0) {
-    parts.push(
-      `Their interests: ${learningInterests.map(i => i.replace(/_/g, ' ')).join(', ')}.`
-    );
-  }
-
-  if (parts.length === 0) return '';
-
-  parts.push(
-    `Tailor your responses to their specific situation, location, and goals.`
-  );
-
-  if (city) {
-    parts.push(`Refer to local resources in ${city} when relevant.`);
-  }
-
-  // Bias guard — research (EMNLP 2025, "Reading Between the Prompts") shows
-  // LLMs implicitly stereotype based on persona cues. Explicitly forbid
-  // extrapolating beyond stated facts.
-  parts.push(
-    `Do NOT assume cultural traits, religion, language fluency, family situation, education level, or financial status beyond what is stated above.`
-  );
-
-  return `\nUSER PROFILE CONTEXT:\n${parts.join(' ')}`;
-}
-
 type ProfileBundle = {
   text: string;
   raw: Record<string, unknown> | null;
@@ -485,7 +437,7 @@ Direct internationally-trained professionals to (a) the federal credential asses
 CRITICAL GUARDRAILS:
 1. **PERSONAL ELIGIBILITY**: For "Am I eligible?" or "Will I get approved?" questions — explain the general criteria, then say to verify with IRCC or a licensed immigration professional. Do not give a yes/no.
 2. **STABLE PUBLIC FACTS**: Common public knowledge IS answerable directly — citizenship test format (20 multiple-choice questions, pass mark 15/20), CRS components and how points are calculated, Express Entry vs PNP basics, study/work permit work-hour rules, what a SIN is, what a TFSA is, etc. Do NOT dodge these by pointing to IRCC for the answer.
-3. **NEVER QUOTE FEES OR PROCESSING TIMES FROM MEMORY**: Specific dollar amounts (PGWP fee, study permit fee, citizenship fee) and processing-time numbers change frequently. ONLY cite a fee or processing time if it appears in the KB context above. Otherwise say "check current fees and processing times on canada.ca/ircc" without naming a number.
+3. ${CURRENT_FACTS_WITH_CONTEXT} Specific dollar amounts (PGWP fee, study permit fee, citizenship fee) and processing-time numbers change frequently: ONLY cite a fee or processing time if it appears in the KB context above.
 4. **MANDATORY LAWYER/RCIC REFERRAL** for these topics: refugee/asylum claims, deportation/removal/inadmissibility, application denials, misrepresentation, criminality, sponsorship-application denials, overstay disclosure questions, judicial review. ALWAYS include the phrase "consult a licensed immigration lawyer or RCIC (Regulated Canadian Immigration Consultant)" in responses on these topics. Do NOT recommend specific lawyers or firms by name.
 5. **OFFICIAL SOURCES**: For changing/recent rules, point to IRCC (ircc.canada.ca). For provincial topics, point to the province-specific authority listed above.
 6. **CITE SOURCES**: Only include sources when directly using knowledge base information.${SUGGESTIONS_INSTRUCTION}`;
@@ -522,7 +474,7 @@ Direct internationally-trained professionals to the federal assessment service f
 CRITICAL GUARDRAILS:
 1. **PERSONAL ELIGIBILITY**: For "Am I eligible?" or "Will I get approved?" — explain general criteria, recommend verifying with IRCC or a licensed professional. No yes/no.
 2. **STABLE PUBLIC FACTS**: Citizenship test format (20 questions, pass mark 15/20), CRS components, study/work permit work-hour rules, what a SIN/TFSA is — answer directly. Do NOT dodge these.
-3. **NEVER QUOTE FEES OR PROCESSING TIMES FROM MEMORY**: Specific dollar amounts and processing times change. Without KB context, say "check current fees and processing times on canada.ca/ircc" instead of naming a number.
+3. ${CURRENT_FACTS_WITHOUT_CONTEXT} Specific dollar amounts (fees) and processing times change: say "check current fees and processing times on canada.ca/ircc" instead of naming a number.
 4. **MANDATORY LAWYER/RCIC REFERRAL** for: refugee/asylum, deportation/removal/inadmissibility, application denials, misrepresentation, criminality, sponsorship denials, overstay disclosure, judicial review. Always include "consult a licensed immigration lawyer or RCIC".
 5. **OFFICIAL SOURCES**: Point to IRCC (ircc.canada.ca) for changing rules; province-specific authority for provincial topics.${SUGGESTIONS_INSTRUCTION}`;
 }
@@ -562,7 +514,8 @@ Always provide a link to verify: "Check the official IRCC website: ircc.canada.c
 CRITICAL GUARDRAILS:
 1. If unsure, say so. Never guess on immigration matters.
 2. Always recommend checking official sources for the most current information.
-3. Note if rules have changed recently or are expected to change.${SUGGESTIONS_INSTRUCTION}`;
+3. Note if rules have changed recently or are expected to change.
+4. ${contextText ? CURRENT_FACTS_WITH_CONTEXT : CURRENT_FACTS_WITHOUT_CONTEXT}${SUGGESTIONS_INSTRUCTION}`;
 }
 
 /**
@@ -600,7 +553,10 @@ NEVER DO:
 - Tell them what to write in a field
 - Make decisions about their eligibility
 - Advise them to omit or include specific information
-- Provide legal interpretations of their situation${SUGGESTIONS_INSTRUCTION}`;
+- Provide legal interpretations of their situation
+
+CURRENT FACTS:
+${contextText ? CURRENT_FACTS_WITH_CONTEXT : CURRENT_FACTS_WITHOUT_CONTEXT}${SUGGESTIONS_INSTRUCTION}`;
 }
 
 /**
@@ -614,7 +570,7 @@ GUARDRAILS:
 2. **BE HELPFUL**: Answer general questions helpfully and conversationally.
 3. **STAY APPROPRIATE**: Keep responses appropriate and helpful.
 
-If the user asks about Canadian immigration or newcomer topics, let them know you can help with those questions and encourage them to ask.${SUGGESTIONS_INSTRUCTION}`;
+If the user asks about Canadian immigration or newcomer topics, let them know you can help with those questions and encourage them to ask. ${CURRENT_FACTS_GENERAL}${SUGGESTIONS_INSTRUCTION}`;
 }
 
 /**
@@ -987,15 +943,16 @@ Deno.serve(async (req: Request) => {
           performance.now() - embeddingStartedAt
         );
 
+        // The profile fetch has been in flight since the start of the request.
+        // Retrieval waits for it: its province decides which sources may be
+        // returned (national sources plus the user's own province).
+        const retrievalProfile = (await profilePromise).raw;
+
         // Search for similar chunks in database
         const vectorSearchStartedAt = performance.now();
         let { data: chunks, error: searchError } = await supabase.rpc(
           'match_chunks',
-          {
-            query_embedding: queryEmbedding,
-            match_threshold: 0.3,
-            match_count: 10,
-          }
+          buildRetrievalArgs(queryEmbedding, retrievalProfile)
         );
         stageTimings.vector_search_ms = Math.round(
           performance.now() - vectorSearchStartedAt
@@ -1008,65 +965,18 @@ Deno.serve(async (req: Request) => {
           chunks = [];
         }
 
-        // Build context from retrieved chunks
-        const sourcesMap = new Map<
-          number,
-          { document_id: number; document_title: string; url: string }
-        >();
-
-        const s3BucketName =
-          Deno.env.get('S3_BUCKET_NAME') || 'your-bucket-name';
-        const s3Region = Deno.env.get('S3_REGION');
-
+        // Build context from retrieved chunks: each chunk is dated on its own,
+        // and each distinct article address is cited.
         hasGoodKBHits = chunks && chunks.length > 0;
 
         if (hasGoodKBHits) {
-          // Track the most recent updated_at across all returned chunks
-          let mostRecentUpdate: string | undefined;
-
-          chunks.forEach((chunk: any) => {
-            const doc = chunk.knowledge_documents || {};
-            contextText += `[Document: ${doc.title || 'Unknown'}]\n${chunk.chunk_text}\n\n`;
-
-            // Track most recent document update for lastVerified
-            const docUpdatedAt = doc.updated_at;
-            if (
-              docUpdatedAt &&
-              (!mostRecentUpdate || docUpdatedAt > mostRecentUpdate)
-            ) {
-              mostRecentUpdate = docUpdatedAt;
-            }
-
-            if (!sourcesMap.has(chunk.document_id)) {
-              // Resolve a citable URL: prefer the doc's source_url, else an S3
-              // URL when storage is configured. A doc with neither is left
-              // unattributed — no generic IRCC fallback that would misattribute
-              // the content (e.g. SIN content -> IRCC).
-              const sourceUrl = doc.source_url;
-              const storagePath = doc.storage_path || '';
-              const hasSourceConfig =
-                !!s3BucketName &&
-                s3BucketName !== 'your-bucket-name' &&
-                !!s3Region &&
-                !!storagePath;
-              const s3Url = hasSourceConfig
-                ? `https://${s3BucketName}.s3.${s3Region}.amazonaws.com/${storagePath}`
-                : '';
-              const resolvedUrl = sourceUrl || s3Url;
-
-              if (resolvedUrl) {
-                sourcesMap.set(chunk.document_id, {
-                  document_id: chunk.document_id,
-                  document_title: doc.title || 'Unknown',
-                  url: resolvedUrl,
-                });
-              }
-            }
+          const retrieved = buildRetrievedContext(chunks, {
+            bucket: Deno.env.get('S3_BUCKET_NAME') || 'your-bucket-name',
+            region: Deno.env.get('S3_REGION'),
           });
-
-          lastVerified = mostRecentUpdate;
-
-          sources = Array.from(sourcesMap.values());
+          contextText = retrieved.contextText;
+          lastVerified = retrieved.lastVerified;
+          sources = retrieved.sources;
           disclaimer = STANDARD_DISCLAIMER;
         }
       }
@@ -1128,6 +1038,15 @@ Deno.serve(async (req: Request) => {
       : `${nameDirective}${systemInstruction}`;
     if (userProfileBundle.text) {
       fullSystemInstruction = `${fullSystemInstruction}\n\n${userProfileBundle.text}`;
+    }
+    // Official immigration page for the user's province (none without one).
+    if (needsRAG) {
+      const provincePointer = provinceImmigrationPointer(
+        userProfileBundle.raw?.province
+      );
+      if (provincePointer) {
+        fullSystemInstruction = `${fullSystemInstruction}\n${provincePointer}`;
+      }
     }
     if (lessonContext) {
       const lessonProgress = await lessonProgressPromise;
