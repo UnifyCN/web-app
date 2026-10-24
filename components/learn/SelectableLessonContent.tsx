@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import { useToast } from "@/components/ui/ToastProvider";
+import { highlightRangeMatches } from "@/lib/learn/highlightRange";
 import { cn, escapeRegExp } from "@/lib/utils";
 import { PortableTextRenderer } from "./PortableTextRenderer";
 import { SelectionActionBubble } from "./SelectionActionBubble";
@@ -111,9 +114,11 @@ export function SelectableLessonContent({
   highlightQuery,
   className,
 }: SelectableLessonContentProps) {
+  const { t } = useTranslation();
+  const toast = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
   const firstMatchRef = useRef<HTMLElement | null>(null);
-  const [selection, setSelection] = useState<ActiveSelection | null>(null);
+  const [rawSelection, setSelection] = useState<ActiveSelection | null>(null);
 
   const { data: highlights = [] } = usePageHighlights(lessonId, pageKey);
   const save = useSaveHighlight(lessonId, pageKey);
@@ -162,17 +167,30 @@ export function SelectableLessonContent({
     return map;
   }, [blockWords, highlightQuery]);
 
+  const validHighlights = useMemo(() => highlights.filter(h =>
+    h.lessonId === lessonId && h.pageKey === pageKey &&
+    highlightRangeMatches(blockWords[h.blockKey] ?? [], h.startWordIndex, h.endWordIndex, h.selectedText)
+  ), [highlights, blockWords, lessonId, pageKey]);
+
+  // Drop a live selection whose words changed under it (e.g. content swapped
+  // while the bubble was open), so it can't be saved against the new words.
+  const selection =
+    rawSelection &&
+    highlightRangeMatches(blockWords[rawSelection.blockKey] ?? [], rawSelection.start, rawSelection.end, rawSelection.text)
+      ? rawSelection
+      : null;
+
   // blockKey -> saved highlight ranges.
   const ranges = useMemo(() => {
     const map: Record<string, { start: number; end: number }[]> = {};
-    for (const h of highlights) {
+    for (const h of validHighlights) {
       (map[h.blockKey] ??= []).push({
         start: h.startWordIndex,
         end: h.endWordIndex,
       });
     }
     return map;
-  }, [highlights]);
+  }, [validHighlights]);
 
   function clearSelection() {
     window.getSelection()?.removeAllRanges();
@@ -272,16 +290,18 @@ export function SelectableLessonContent({
       startWordIndex: selection.start,
       endWordIndex: selection.end,
       selectedText: selection.text,
-      existingHighlights: highlights,
+      existingHighlights: validHighlights,
       allWordsInBlock: blockWords[selection.blockKey] ?? [],
       navContext: { moduleId, submoduleId, submoduleTitle, pageNum },
+    }, {
+      onError: () => toast.show(t("learn.selectionBubble.saveFailed"), "error"),
     });
     clearSelection();
   }
 
   function onRemove() {
     if (!selection) return;
-    const overlapping = highlights.filter(
+    const overlapping = validHighlights.filter(
       (h) =>
         h.blockKey === selection.blockKey &&
         h.startWordIndex <= selection.end &&

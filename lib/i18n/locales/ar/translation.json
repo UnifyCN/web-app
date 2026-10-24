@@ -422,7 +422,23 @@
     "selectionBubble": {
       "remove": "إزالة",
       "highlight": "تظليل",
-      "askAI": "اسأل الذكاء الاصطناعي"
+      "askAI": "اسأل الذكاء الاصطناعي",
+      "saveFailed": "تعذّر حفظ التمييز. يُرجى المحاولة مرة أخرى."
+    },
+    "structured": {
+      "concept": "المفهوم",
+      "example": "مثال",
+      "visual": "مثال مرئي",
+      "quickCheck": "اختبار سريع",
+      "faq": "الأسئلة الشائعة",
+      "citations": "المصادر",
+      "theory": "النظرية",
+      "practice": "في التطبيق",
+      "readingMinutes": "{{count}} دقائق للقراءة",
+      "correct": "صحيح",
+      "tryAgain": "حاول مرة أخرى",
+      "nextLesson": "الدرس التالي",
+      "sections": "أقسام الدرس"
     }
   },
   "checklist": {

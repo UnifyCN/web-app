@@ -422,7 +422,23 @@
     "selectionBubble": {
       "remove": "Remove",
       "highlight": "Highlight",
-      "askAI": "Ask AI"
+      "askAI": "Ask AI",
+      "saveFailed": "Couldn't save the highlight. Please try again."
+    },
+    "structured": {
+      "concept": "Concept",
+      "example": "Example",
+      "visual": "Visual example",
+      "quickCheck": "Quick check",
+      "faq": "FAQ",
+      "citations": "Citations",
+      "theory": "Theory",
+      "practice": "In practice",
+      "readingMinutes": "{{count}} min read",
+      "correct": "Correct",
+      "tryAgain": "Try again",
+      "nextLesson": "Next lesson",
+      "sections": "Lesson sections"
     }
   },
   "checklist": {

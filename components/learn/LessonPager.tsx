@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import {
+  StructuredLessonContent,
+  hasRenderableSections,
+} from "./StructuredLessonContent";
 import { SelectableLessonContent } from "@/components/learn/SelectableLessonContent";
 import { ExplainTermModal } from "@/components/learn/ExplainTermModal";
 import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
@@ -209,7 +213,10 @@ export function LessonPager({
       {moduleTitle && (isFirstLesson || isLastLesson) && (
         <div
           className="mt-4 flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium"
-          style={{ backgroundColor: "var(--color-primary-bg)", color: colorHex }}
+          style={{
+            backgroundColor: "var(--color-primary-bg)",
+            color: colorHex,
+          }}
         >
           <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {isFirstLesson
@@ -231,17 +238,38 @@ export function LessonPager({
               {currentPage.title}
             </h2>
           )}
-          <SelectableLessonContent
-            blocks={currentPage.content}
-            lessonId={lessonId}
-            pageKey={currentPage._key}
-            pageNum={currentPage.order}
-            moduleId={moduleId}
-            submoduleId={submoduleId}
-            submoduleTitle={submoduleTitle}
-            onAskAI={setAskTerm}
-            highlightQuery={highlightQuery}
-          />
+          {currentPage.contentVersion === 2 &&
+          hasRenderableSections(currentPage.sections) ? (
+            <StructuredLessonContent
+              key={currentPage._key}
+              sections={currentPage.sections}
+              renderRich={(blocks) => (
+                <SelectableLessonContent
+                  blocks={blocks}
+                  lessonId={lessonId}
+                  pageKey={currentPage._key}
+                  pageNum={currentPage.order}
+                  moduleId={moduleId}
+                  submoduleId={submoduleId}
+                  submoduleTitle={submoduleTitle}
+                  onAskAI={setAskTerm}
+                  highlightQuery={highlightQuery}
+                />
+              )}
+            />
+          ) : (
+            <SelectableLessonContent
+              blocks={currentPage.content}
+              lessonId={lessonId}
+              pageKey={currentPage._key}
+              pageNum={currentPage.order}
+              moduleId={moduleId}
+              submoduleId={submoduleId}
+              submoduleTitle={submoduleTitle}
+              onAskAI={setAskTerm}
+              highlightQuery={highlightQuery}
+            />
+          )}
         </section>
       )}
 
