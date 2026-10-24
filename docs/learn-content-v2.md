@@ -21,7 +21,7 @@ The types are in `types/lessonSections.ts`.
 
 ## Web reader
 
-`components/learn/LessonPager.tsx` uses `StructuredLessonContent` only when a page has `contentVersion === 2` and a nonempty `sections` array. Otherwise it renders `pages[].content` with `SelectableLessonContent`, as before.
+`components/learn/LessonPager.tsx` uses `StructuredLessonContent` only when a page has `contentVersion === 2` and `hasRenderableSections(sections)` is true, which means at least one section has a type this reader knows. Otherwise it renders `pages[].content` with `SelectableLessonContent`, as before. A page whose sections are all of unknown types therefore falls back to its legacy content instead of showing an empty reader.
 
 - Concept text, Example tabs, Visual text, and FAQ answers render through `SelectableLessonContent`. They keep selection, highlights, Ask AI, and search highlighting.
 - Example tabs, Quick check answers, and FAQ disclosure use local state. Quick checks give feedback and allow a retry. They do not write quiz progress and do not replace the scored `LessonQuiz`.
