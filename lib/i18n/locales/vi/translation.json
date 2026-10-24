@@ -422,7 +422,8 @@
     "selectionBubble": {
       "remove": "Xóa",
       "highlight": "Tô sáng",
-      "askAI": "Hỏi AI"
+      "askAI": "Hỏi AI",
+      "saveFailed": "Không thể lưu phần đánh dấu. Vui lòng thử lại."
     },
     "structured": {
       "concept": "Khái niệm",

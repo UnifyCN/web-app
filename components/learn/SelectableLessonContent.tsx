@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import { useToast } from "@/components/ui/ToastProvider";
 import { highlightRangeMatches } from "@/lib/learn/highlightRange";
 import { cn, escapeRegExp } from "@/lib/utils";
 import { PortableTextRenderer } from "./PortableTextRenderer";
@@ -112,9 +114,11 @@ export function SelectableLessonContent({
   highlightQuery,
   className,
 }: SelectableLessonContentProps) {
+  const { t } = useTranslation();
+  const toast = useToast();
   const containerRef = useRef<HTMLDivElement>(null);
   const firstMatchRef = useRef<HTMLElement | null>(null);
-  const [selection, setSelection] = useState<ActiveSelection | null>(null);
+  const [rawSelection, setSelection] = useState<ActiveSelection | null>(null);
 
   const { data: highlights = [] } = usePageHighlights(lessonId, pageKey);
   const save = useSaveHighlight(lessonId, pageKey);
@@ -168,12 +172,13 @@ export function SelectableLessonContent({
     highlightRangeMatches(blockWords[h.blockKey] ?? [], h.startWordIndex, h.endWordIndex, h.selectedText)
   ), [highlights, blockWords, lessonId, pageKey]);
 
-  useEffect(() => {
-    if (selection && !highlightRangeMatches(blockWords[selection.blockKey] ?? [], selection.start, selection.end, selection.text)) {
-      window.getSelection()?.removeAllRanges();
-      setSelection(null);
-    }
-  }, [blockWords, selection]);
+  // Drop a live selection whose words changed under it (e.g. content swapped
+  // while the bubble was open), so it can't be saved against the new words.
+  const selection =
+    rawSelection &&
+    highlightRangeMatches(blockWords[rawSelection.blockKey] ?? [], rawSelection.start, rawSelection.end, rawSelection.text)
+      ? rawSelection
+      : null;
 
   // blockKey -> saved highlight ranges.
   const ranges = useMemo(() => {
@@ -288,6 +293,8 @@ export function SelectableLessonContent({
       existingHighlights: validHighlights,
       allWordsInBlock: blockWords[selection.blockKey] ?? [],
       navContext: { moduleId, submoduleId, submoduleTitle, pageNum },
+    }, {
+      onError: () => toast.show(t("learn.selectionBubble.saveFailed"), "error"),
     });
     clearSelection();
   }

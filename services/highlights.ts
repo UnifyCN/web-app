@@ -131,9 +131,12 @@ export async function saveHighlight(
     navContext,
   } = input;
 
-  // No words to anchor to — bail rather than persist an empty highlight with a
-  // collapsed [0,0] range.
-  if (!highlightRangeMatches(allWordsInBlock, startWordIndex, endWordIndex, selectedText)) return null;
+  // The range must still identify the selected words (this also rejects an
+  // empty block, which would persist a collapsed [0,0] range). Throw, as
+  // mobile does, so the optimistic highlight rolls back and the user is told.
+  if (!highlightRangeMatches(allWordsInBlock, startWordIndex, endWordIndex, selectedText)) {
+    throw new Error("The selected text no longer matches the lesson content.");
+  }
 
   // Ignore optimistic (non-persisted) entries when checking overlaps.
   const realHighlights = existingHighlights.filter(

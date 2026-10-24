@@ -422,7 +422,8 @@
     "selectionBubble": {
       "remove": "ਹਟਾਓ",
       "highlight": "ਹਾਈਲਾਈਟ",
-      "askAI": "AI ਤੋਂ ਪੁੱਛੋ"
+      "askAI": "AI ਤੋਂ ਪੁੱਛੋ",
+      "saveFailed": "ਹਾਈਲਾਈਟ ਸੰਭਾਲੀ ਨਹੀਂ ਜਾ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
     },
     "structured": {
       "concept": "ਧਾਰਨਾ",

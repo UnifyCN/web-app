@@ -15,6 +15,12 @@ const labels = {
   lessonCitations: "citations",
 } as const;
 
+// Sanity omits empty arrays and may carry section types this reader predates,
+// so skip unknown types rather than render a blank, unlabelled section.
+function isKnownSection(section: LessonSection): boolean {
+  return section._type in labels;
+}
+
 export function StructuredLessonContent({
   sections,
   renderRich,
@@ -23,13 +29,14 @@ export function StructuredLessonContent({
   renderRich: (blocks: SanityBlock[]) => ReactNode;
 }) {
   const { t } = useTranslation();
+  const known = sections.filter(isKnownSection);
   return (
     <div className="min-w-0 space-y-8">
       <nav
         aria-label={t("learn.structured.sections")}
         className="flex gap-2 overflow-x-auto py-2"
       >
-        {sections.map((section) => (
+        {known.map((section) => (
           <a
             key={section._key}
             href={`#section-${section._key}`}
@@ -39,7 +46,7 @@ export function StructuredLessonContent({
           </a>
         ))}
       </nav>
-      {sections.map((section, index) => (
+      {known.map((section, index) => (
         <section
           key={section._key}
           id={`section-${section._key}`}
@@ -70,7 +77,7 @@ function SectionBody({
   const [answer, setAnswer] = useState<string | null>(null);
   switch (section._type) {
     case "lessonConcept":
-      return renderRich(section.content);
+      return renderRich(section.content ?? []);
     case "lessonExample":
       return (
         <div className="space-y-3">
@@ -88,7 +95,7 @@ function SectionBody({
             ))}
           </div>
           <div className="rounded-2xl bg-surface-card p-4">
-            {renderRich(section[tab])}
+            {renderRich(section[tab] ?? [])}
           </div>
         </div>
       );
@@ -96,21 +103,24 @@ function SectionBody({
       return (
         <div className="space-y-3 rounded-2xl bg-surface-card p-4">
           {section.content?.length ? renderRich(section.content) : null}
-          <PortableTextRenderer
-            value={[section.image as unknown as SanityBlock]}
-          />
+          {section.image?.asset ? (
+            <PortableTextRenderer
+              value={[section.image as unknown as SanityBlock]}
+            />
+          ) : null}
           {section.caption ? (
             <p className="text-sm text-ink-muted">{section.caption}</p>
           ) : null}
         </div>
       );
-    case "lessonQuickCheck":
+    case "lessonQuickCheck": {
+      const options = section.options ?? [];
       return (
         <fieldset className="min-w-0 space-y-3 rounded-2xl border border-border-card p-4">
           <legend className="max-w-full px-1 font-semibold text-ink-secondary">
             {section.question}
           </legend>
-          {section.options.map((option) => (
+          {options.map((option) => (
             <label
               key={option._key}
               className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-border-card p-3 text-sm"
@@ -128,7 +138,7 @@ function SectionBody({
             <div role="status">
               <p className="font-semibold">
                 {t(
-                  section.options.find((option) => option._key === answer)
+                  options.find((option) => option._key === answer)
                     ?.correct
                     ? "learn.structured.correct"
                     : "learn.structured.tryAgain",
@@ -141,10 +151,11 @@ function SectionBody({
           ) : null}
         </fieldset>
       );
+    }
     case "lessonFaq":
       return (
         <div className="space-y-3">
-          {section.items.map((item, index) => (
+          {(section.items ?? []).map((item, index) => (
             <details
               key={item._key}
               open={index === 0 ? true : undefined}
@@ -153,7 +164,7 @@ function SectionBody({
               <summary className="min-h-11 cursor-pointer font-semibold text-ink-secondary">
                 {item.question}
               </summary>
-              <div className="pt-3">{renderRich(item.answer)}</div>
+              <div className="pt-3">{renderRich(item.answer ?? [])}</div>
             </details>
           ))}
         </div>
@@ -161,14 +172,14 @@ function SectionBody({
     case "lessonCitations":
       return (
         <ol className="space-y-3">
-          {section.sources.map((source, index) => (
+          {(section.sources ?? []).map((source, index) => (
             <li key={source._key} className="flex gap-3 text-sm">
               <span className="text-ink-muted">[{index + 1}]</span>
               <div>
                 <p className="text-ink-muted">
                   {[source.publisher, source.year].filter(Boolean).join(" · ")}
                 </p>
-                {/^https?:\/\//i.test(source.url) ? (
+                {/^https?:\/\//i.test(source.url ?? "") ? (
                   <a
                     href={source.url}
                     target="_blank"
@@ -185,5 +196,7 @@ function SectionBody({
           ))}
         </ol>
       );
+    default:
+      return null;
   }
 }

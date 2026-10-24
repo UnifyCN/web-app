@@ -422,7 +422,8 @@
     "selectionBubble": {
       "remove": "إزالة",
       "highlight": "تظليل",
-      "askAI": "اسأل الذكاء الاصطناعي"
+      "askAI": "اسأل الذكاء الاصطناعي",
+      "saveFailed": "تعذّر حفظ التمييز. يُرجى المحاولة مرة أخرى."
     },
     "structured": {
       "concept": "المفهوم",

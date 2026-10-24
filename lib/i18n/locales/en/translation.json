@@ -422,7 +422,8 @@
     "selectionBubble": {
       "remove": "Remove",
       "highlight": "Highlight",
-      "askAI": "Ask AI"
+      "askAI": "Ask AI",
+      "saveFailed": "Couldn't save the highlight. Please try again."
     },
     "structured": {
       "concept": "Concept",

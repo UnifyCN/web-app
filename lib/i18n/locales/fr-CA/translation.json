@@ -422,7 +422,8 @@
     "selectionBubble": {
       "remove": "Retirer",
       "highlight": "Surligner",
-      "askAI": "Demander à l'IA"
+      "askAI": "Demander à l'IA",
+      "saveFailed": "Impossible d'enregistrer le surlignage. Veuillez réessayer."
     },
     "structured": {
       "concept": "Concept",

@@ -22,7 +22,7 @@ test('matching overlap still merges', async () => {
   await saveHighlight({lessonId:'lesson',pageKey:'page',blockKey:'block',startWordIndex:1,endWordIndex:2,selectedText:'costs vary',existingHighlights:[row],allWordsInBlock:['monthly','costs','vary']});
   expect(db.rpc).toHaveBeenCalledWith('merge_highlights',expect.objectContaining({p_ids_to_delete:['stored'],p_selected_text:'monthly costs vary'}));
 });
-test('changed selection performs no write', async () => {
-  const result=await saveHighlight({lessonId:'lesson',pageKey:'page',blockKey:'block',startWordIndex:0,endWordIndex:1,selectedText:'monthly costs',existingHighlights:[],allWordsInBlock:['travel','needs.']});
-  expect(result).toBeNull();expect(db.from).not.toHaveBeenCalled();expect(db.rpc).not.toHaveBeenCalled();
+test('changed selection is rejected without a write', async () => {
+  await expect(saveHighlight({lessonId:'lesson',pageKey:'page',blockKey:'block',startWordIndex:0,endWordIndex:1,selectedText:'monthly costs',existingHighlights:[],allWordsInBlock:['travel','needs.']})).rejects.toThrow();
+  expect(db.from).not.toHaveBeenCalled();expect(db.rpc).not.toHaveBeenCalled();
 });

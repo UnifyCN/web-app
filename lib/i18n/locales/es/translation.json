@@ -422,7 +422,8 @@
     "selectionBubble": {
       "remove": "Eliminar",
       "highlight": "Resaltar",
-      "askAI": "Preguntar a IA"
+      "askAI": "Preguntar a IA",
+      "saveFailed": "No se pudo guardar el resaltado. Inténtalo de nuevo."
     },
     "structured": {
       "concept": "Concepto",
