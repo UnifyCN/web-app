@@ -21,7 +21,7 @@ The types are in `types/lessonSections.ts`.
 
 ## Web reader
 
-`components/learn/LessonPager.tsx` uses `StructuredLessonContent` only when a page has `contentVersion === 2` and a nonempty `sections` array. Otherwise it renders `pages[].content` with `SelectableLessonContent`, as before.
+`components/learn/LessonPager.tsx` uses `StructuredLessonContent` only when a page has `contentVersion === 2` and `hasRenderableSections(sections)` is true, which means at least one section has a type this reader knows. Otherwise it renders `pages[].content` with `SelectableLessonContent`, as before. A page whose sections are all of unknown types therefore falls back to its legacy content instead of showing an empty reader.
 
 - Concept text, Example tabs, Visual text, and FAQ answers render through `SelectableLessonContent`. They keep selection, highlights, Ask AI, and search highlighting.
 - Example tabs, Quick check answers, and FAQ disclosure use local state. Quick checks give feedback and allow a retry. They do not write quiz progress and do not replace the scored `LessonQuiz`.
@@ -48,6 +48,8 @@ The migration adds one Concept section with each page's unchanged content. It do
 Keep legacy content until older mobile versions are no longer supported and all retrieval and search consumers read sections.
 
 ## Rollout order
+
+Steps 1 to 4 ran on 2026-10-24. The schema is deployed, and the migration added a Concept section to 2,227 pages in 1,087 lessons across all seven languages (386 lessons already had structured pages). A read-back export matched every lesson document, and a second dry run found no changes. Step 5 is editorial work.
 
 1. Merge the web and mobile readers. Deploy the Studio schema.
 2. Export the dataset and generate the migration patches.

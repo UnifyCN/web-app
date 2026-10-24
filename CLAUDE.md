@@ -187,6 +187,17 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   read and `tip_translations` is owner-scoped — a `using (true)` policy there would have
   leaked other users' tips.
 
+- **Learn structured lessons (content version 2, PR #180).** A lesson page with
+  `contentVersion: 2` and at least one known section renders through
+  `components/learn/StructuredLessonContent.tsx` (Concept, Example, Visual, Quick check,
+  FAQ, Citations); otherwise the page renders `pages[].content` as before. Rich text in
+  sections still goes through `SelectableLessonContent`, so highlights and Ask AI work.
+  Sanity omits empty arrays, so treat a missing `options` / `items` / `sources` as empty
+  and skip unknown section types. Keep `pages[].content` in sync (Studio's **Sync legacy
+  content** action): older mobile builds and search read it. A saved highlight shows only
+  while `lib/learn/highlightRange.ts` confirms its range still equals its saved text
+  (mobile uses the same check). The content contract and rollout record are in
+  `docs/learn-content-v2.md`; the production migration ran on 2026-10-24.
 - **Instant tabs (perf).** Opening a main tab should show content, not a skeleton.
   - **Images** render through `GET /api/storage/image?key=…&w=…` (`lib/supabase/imageUrl.ts`,
     `Avatar`, `StorageImage`). The storage edge function's signed URLs expire after 60 seconds
