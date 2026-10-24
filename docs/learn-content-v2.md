@@ -49,6 +49,8 @@ Keep legacy content until older mobile versions are no longer supported and all 
 
 ## Rollout order
 
+Steps 1 to 4 ran on 2026-10-24. The schema is deployed, and the migration added a Concept section to 2,227 pages in 1,087 lessons across all seven languages (386 lessons already had structured pages). A read-back export matched every lesson document, and a second dry run found no changes. Step 5 is editorial work.
+
 1. Merge the web and mobile readers. Deploy the Studio schema.
 2. Export the dataset and generate the migration patches.
 3. Review the preservation checks and language exceptions.
