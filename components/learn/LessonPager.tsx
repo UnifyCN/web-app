@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { StructuredLessonContent } from "./StructuredLessonContent";
+import {
+  StructuredLessonContent,
+  hasRenderableSections,
+} from "./StructuredLessonContent";
 import { SelectableLessonContent } from "@/components/learn/SelectableLessonContent";
 import { ExplainTermModal } from "@/components/learn/ExplainTermModal";
 import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
@@ -235,7 +238,8 @@ export function LessonPager({
               {currentPage.title}
             </h2>
           )}
-          {currentPage.contentVersion === 2 && currentPage.sections?.length ? (
+          {currentPage.contentVersion === 2 &&
+          hasRenderableSections(currentPage.sections) ? (
             <StructuredLessonContent
               key={currentPage._key}
               sections={currentPage.sections}

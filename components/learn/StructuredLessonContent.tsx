@@ -21,6 +21,14 @@ function isKnownSection(section: LessonSection): boolean {
   return section._type in labels;
 }
 
+/** True when at least one section can render; otherwise the page should use
+ * its legacy `content` projection instead of showing an empty reader. */
+export function hasRenderableSections(
+  sections: LessonSection[] | undefined,
+): sections is LessonSection[] {
+  return (sections ?? []).some(isKnownSection);
+}
+
 export function StructuredLessonContent({
   sections,
   renderRich,

@@ -1,7 +1,10 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { expect, test } from "vitest";
-import { StructuredLessonContent } from "./StructuredLessonContent";
+import {
+  StructuredLessonContent,
+  hasRenderableSections,
+} from "./StructuredLessonContent";
 import type { LessonSection } from "@/types/lessonSections";
 
 const render = (sections: unknown[]) =>
@@ -51,4 +54,17 @@ test("citation links only for http(s) URLs", () => {
   expect(html).toContain('href="https://canada.ca"');
   expect(html).not.toContain("javascript:");
   expect(html).toContain("<span>Missing</span>");
+});
+
+test("a page with only unknown section types falls back to legacy content", () => {
+  const unknownOnly = [{ _type: "lessonFuture", _key: "x" }] as unknown as LessonSection[];
+  expect(hasRenderableSections(unknownOnly)).toBe(false);
+  expect(hasRenderableSections([])).toBe(false);
+  expect(hasRenderableSections(undefined)).toBe(false);
+  expect(
+    hasRenderableSections([
+      ...unknownOnly,
+      { _type: "lessonConcept", _key: "c", content: [] },
+    ]),
+  ).toBe(true);
 });
