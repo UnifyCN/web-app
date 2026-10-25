@@ -2,6 +2,7 @@
 // only: persona, arrival date and the rest of the profile personalise the
 // ANSWER prompt, never the query vector or the filter. Province is the one
 // profile field that decides which sources may be returned.
+import { EMBEDDING_MODEL } from '../../_shared/embeddings.ts';
 import { canonicalProvince } from './province.ts';
 
 export const MATCH_THRESHOLD = 0.3;
@@ -13,6 +14,8 @@ export type RetrievalArgs = {
   match_count: number;
   /** One of the 13 canonical names, or an explicit null (national sources only). */
   filter_province: string | null;
+  /** Names the model that made the vector; the database matches only rows made by it. */
+  query_embedding_model: string;
 };
 
 export function buildRetrievalArgs(
@@ -24,5 +27,6 @@ export function buildRetrievalArgs(
     match_threshold: MATCH_THRESHOLD,
     match_count: MATCH_COUNT,
     filter_province: canonicalProvince(profile?.province),
+    query_embedding_model: EMBEDDING_MODEL,
   };
 }

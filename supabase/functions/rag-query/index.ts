@@ -1,7 +1,7 @@
 // @ts-nocheck We do not need the actual Deno import since it's used by supabase serverless functions so ignore
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-import { fetchWithRetry } from '../_shared/fetchWithRetry.ts';
+import { embedTexts } from '../_shared/embeddings.ts';
 import {
   callOpenRouter,
   callOpenRouterStream,
@@ -52,13 +52,6 @@ type QueryType =
   | 'general'
   | 'fact_check'
   | 'form_help';
-
-// Embeddings run through OpenRouter (same key as the chat completion). The
-// provider-prefixed `openai/text-embedding-3-small` proxies to OpenAI's
-// text-embedding-3-small (1536-dim), so query vectors stay compatible with the
-// vectors already stored in knowledge_chunks.
-const EMBEDDING_MODEL =
-  Deno.env.get('OPENROUTER_EMBEDDING_MODEL') || 'openai/text-embedding-3-small';
 
 // Optional per-request response-language override (web i18n). Maps a UI language
 // code to the language name used in the system-prompt directive. English is the
@@ -915,30 +908,11 @@ Deno.serve(async (req: Request) => {
         // question pulled generic study/work pages). Personalization stays in
         // the ANSWER prompt via the USER PROFILE CONTEXT block.
         const embeddingStartedAt = performance.now();
-        const embeddingResponse = await fetchWithRetry(
-          'https://openrouter.ai/api/v1/embeddings',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${openrouterApiKey}`,
-            },
-            body: JSON.stringify({
-              model: EMBEDDING_MODEL,
-              input: prompt,
-            }),
-          },
-          { timeoutMs: 15000, retries: 2, retryDelayMs: 400 }
-        );
-
-        if (!embeddingResponse.ok) {
-          throw new Error(
-            `OpenRouter embedding API error: ${embeddingResponse.statusText}`
-          );
-        }
-
-        const embeddingData = await embeddingResponse.json();
-        const queryEmbedding = embeddingData.data[0].embedding;
+        const [queryEmbedding] = await embedTexts([prompt], openrouterApiKey, {
+          timeoutMs: 15000,
+          retries: 2,
+          retryDelayMs: 400,
+        });
         stageTimings.embedding_ms = Math.round(
           performance.now() - embeddingStartedAt
         );

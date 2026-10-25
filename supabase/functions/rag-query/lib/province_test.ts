@@ -84,10 +84,10 @@ Deno.test('other unmatched, empty and non-text values resolve to null', () => {
   }
 });
 
-Deno.test('the serialized retrieval body always carries four keys, null for an unmatched value', () => {
+Deno.test('the serialized retrieval body always carries five keys, null for an unmatched value', () => {
   for (const input of [...INHERITED, 'Atlantis', '', null, undefined]) {
     const body = JSON.parse(JSON.stringify(buildRetrievalArgs([0.1], { province: input })));
-    assertEquals(Object.keys(body).sort(), ['filter_province', 'match_count', 'match_threshold', 'query_embedding'], String(input));
+    assertEquals(Object.keys(body).sort(), ['filter_province', 'match_count', 'match_threshold', 'query_embedding', 'query_embedding_model'], String(input));
     assertEquals(body.filter_province, null, String(input));
     assertEquals(body.match_threshold, 0.3);
     assertEquals(body.match_count, 10);
