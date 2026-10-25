@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import { cn } from "@/lib/utils";
 import type { SanityQuizQuestion } from "@/types";
+import { isNeutralQuestion } from "./grade";
 
 interface MultipleChoiceQuestionProps {
   question: SanityQuizQuestion;
@@ -16,7 +17,9 @@ interface MultipleChoiceQuestionProps {
 
 /** Single (`multiple_choice_single` / `true_false`) and multi-select
  * (`multiple_choice_multiple`) questions. Checkboxes mirror the mobile UI;
- * after submit, correct options turn green and wrong picks turn red. */
+ * after submit, correct options turn green and wrong picks turn red. A neutral
+ * question (reflection) keeps its selection after submit and is never coloured
+ * as correct or wrong. */
 export function MultipleChoiceQuestion({
   question,
   answer,
@@ -25,6 +28,7 @@ export function MultipleChoiceQuestion({
 }: MultipleChoiceQuestionProps) {
   const { t } = useTranslation();
   const multi = question.question_type === "multiple_choice_multiple";
+  const neutral = isNeutralQuestion(question);
   const isTrueFalse = question.question_type === "true_false";
   // Square indicator for multi-select and True/False (matches mobile); single
   // choice stays round. (Selection logic still uses `multi`.)
@@ -46,7 +50,7 @@ export function MultipleChoiceQuestion({
 
   return (
     <div>
-      {multi && (
+      {multi && !neutral && (
         <p className="mb-4 text-center text-sm font-medium text-ink-muted">
           {t("learnWeb.practice.selectAll")}
         </p>
@@ -54,9 +58,11 @@ export function MultipleChoiceQuestion({
       <div className="flex flex-col gap-3">
         {options.map((opt) => {
           const isSelected = selected.has(opt._key);
-          // Post-submit colouring.
-          const showCorrect = submitted && opt.is_correct;
-          const showWrong = submitted && isSelected && !opt.is_correct;
+          // Post-submit colouring. Never for a neutral question: its options
+          // carry no correct answer, so a selection is not a wrong pick.
+          const showCorrect = submitted && !neutral && opt.is_correct;
+          const showWrong =
+            submitted && !neutral && isSelected && !opt.is_correct;
 
           return (
             <button

@@ -17,9 +17,17 @@ import { QuizQuestion } from "./QuizQuestion";
 import { TakeABreakModal } from "./TakeABreakModal";
 import { PracticeFeedbackModal } from "./PracticeFeedbackModal";
 import { QuizResults } from "./QuizResults";
-import { computeScore, isAnswered } from "./grade";
+import {
+  hasNeutralQuestion,
+  isAnswered,
+  isNeutralQuestion,
+  scoreToSave,
+  summarizeKnowledge,
+} from "./grade";
 
-/** Free-text question types that get AI coach feedback on submit. */
+/** Free-text question types that get AI coach feedback on submit. Neutral
+ * questions (reflections, including `long_answer`) are skipped: the coach
+ * prompt judges what the learner got right, which does not fit a reflection. */
 const FREE_TEXT_TYPES = new Set([
   "short_answer",
   "fill_blank",
@@ -103,9 +111,19 @@ export function PracticeQuiz({
   const currentAnswer = (currentKey && answers[currentKey]) || [];
   const isSubmitted = !!(currentKey && submitted[currentKey]);
 
-  const finalScore = useMemo(
-    () => computeScore(questions.map((q) => q.question), answers),
-    [questions, answers],
+  const quizQuestions = useMemo(
+    () => questions.map((q) => q.question),
+    [questions],
+  );
+  // Knowledge result for the results screen. `total` stays the full question
+  // count for navigation and saving; this one counts knowledge questions only.
+  const knowledge = useMemo(
+    () => summarizeKnowledge(quizQuestions, answers),
+    [quizQuestions, answers],
+  );
+  const includesReflection = useMemo(
+    () => hasNeutralQuestion(quizQuestions),
+    [quizQuestions],
   );
 
   function persist(
@@ -121,7 +139,7 @@ export function PracticeQuiz({
       currentSubmitted,
       answers: ans,
       isCompleted: completed,
-      score: completed ? computeScore(questions.map((q) => q.question), ans) : null,
+      score: completed ? scoreToSave(quizQuestions, ans) : null,
       totalQuestions: total,
     });
   }
@@ -140,7 +158,11 @@ export function PracticeQuiz({
     // Free-text answers get AI coach feedback in a popup (mirrors mobile).
     const q = current.question;
     const userAnswer = (currentAnswer[0] ?? "").trim();
-    if (FREE_TEXT_TYPES.has(q.question_type) && userAnswer.length > 0) {
+    if (
+      FREE_TEXT_TYPES.has(q.question_type) &&
+      !isNeutralQuestion(q) &&
+      userAnswer.length > 0
+    ) {
       const accepted = q.correct_answer?.value ?? [];
       const expectedAnswer = accepted.length > 0 ? accepted.join(", ") : "";
       setFeedback({ status: "loading" });
@@ -225,8 +247,8 @@ export function PracticeQuiz({
   if (showResults) {
     return (
       <QuizResults
-        score={finalScore}
-        total={total}
+        knowledge={knowledge}
+        includesReflection={includesReflection}
         colorHex={colorHex}
         sectionHref={sectionHref}
         onRetake={handleRetake}

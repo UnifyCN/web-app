@@ -9,6 +9,7 @@ import { cn, RTL_FLIP } from "@/lib/utils";
 import { Collapse } from "@/components/ui/Collapse";
 import { LessonListRow } from "./LessonListRow";
 import { lessonReadMinutes } from "@/lib/learn/readTime";
+import { SavedPracticeScore } from "./practice/SavedPracticeScore";
 import type { LessonProgress, PracticeProgress, SanityLesson } from "@/types";
 
 export type SubmoduleState = "completed" | "in_progress" | "not_started";
@@ -71,8 +72,11 @@ export function SubmoduleTimelineRow({
   const lineDashed = state !== "completed";
 
   const practiceCompleted = !!practiceProgress?.isCompleted;
-  const practiceScore = practiceProgress?.score;
-  const practiceTotal = practiceProgress?.totalQuestions;
+  // A score is only worth the section-content lookup when one was saved.
+  const hasSavedScore = practiceCompleted || practiceProgress?.score != null;
+  const practiceFallback = practiceCompleted
+    ? t("common.done")
+    : t("learn.submodule.practiceTitle");
 
   const lineStyle = { borderColor: lineColor, opacity: lineDashed ? 0.45 : 1 };
 
@@ -218,11 +222,15 @@ export function SubmoduleTimelineRow({
                   {t("learn.submodule.practiceTitle")}
                 </span>
                 <span className="shrink-0 text-xs text-ink-placeholder">
-                  {practiceScore != null && practiceTotal
-                    ? `${practiceScore}/${practiceTotal}`
-                    : practiceCompleted
-                      ? t("common.done")
-                      : t("learn.submodule.practiceTitle")}
+                  {practiceProgress && hasSavedScore ? (
+                    <SavedPracticeScore
+                      submoduleId={submoduleId}
+                      progress={practiceProgress}
+                      fallback={practiceFallback}
+                    />
+                  ) : (
+                    practiceFallback
+                  )}
                 </span>
               </Link>
             )}

@@ -1,0 +1,4025 @@
+[
+  {
+    "_createdAt": "2026-02-22T04:03:45Z",
+    "_id": "4112da4b-9372-46a3-b02f-a1d18e95c454",
+    "_rev": "sckACfU4tqvXhuaarHJMBK",
+    "_system": {
+      "base": {
+        "id": "4112da4b-9372-46a3-b02f-a1d18e95c454",
+        "rev": "XNQh23oop7n7SfU9AXGJQ7"
+      }
+    },
+    "_type": "practice",
+    "_updatedAt": "2026-07-27T17:04:42Z",
+    "description": "Testing your memory about your main responsibilities as a permanent resident and the key rules you need to remember.",
+    "language": "en",
+    "order_number": 5,
+    "pages": [
+      {
+        "_key": "b04b2fdfbed0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "8d01beffbdf1",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "497d7ea7d648",
+                  "_type": "span",
+                  "text": "Thanks for checking your confidence level! No matter where you are right now, you are building a stronger understanding of how permanent residence works in Canada. Keep reviewing the key rules about time in Canada, time abroad, and travel documents, and you’ll feel more confident with each lesson!"
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "7cc0f58a6a9e",
+            "_type": "multiple_choice_multiple",
+            "options": [
+              {
+                "_key": "5c922d162909",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "353a90537c6d",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "43683f88d174",
+                        "_type": "span",
+                        "text": "You are still learning, and that is okay. We will reinforce the basics with more examples."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "71aa75f88740",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "469d3bcd3c80",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "Not Confident"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Not Confident"
+              },
+              {
+                "_key": "5c386c6f844d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "6042204ddb30",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "771efcd908d8",
+                        "_type": "span",
+                        "text": "You are making good progress. We will reinforce the basics with more examples."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "022df33885ba",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "048e1720bb05",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "Somewhat Confident"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Somewhat Confident"
+              },
+              {
+                "_key": "7b3510fa789d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "234e5f7b95a2",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "85f63dd88c76",
+                        "_type": "span",
+                        "text": "Great work. You have a solid grasp of the key PR rules."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "6602545c8ce3",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "aec6b32ea6c1",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "Very Confident"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Very Confident"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "719a430528f7",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "5fc672a2b600",
+                    "_type": "span",
+                    "text": "How confident do you feel about PR so far?"
+                  }
+                ],
+                "style": "normal"
+              }
+            ],
+            "gradingMode": "reflection"
+          }
+        ],
+        "order": 1,
+        "title": "Confidence Check"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "Activity: Your Responsibilities & PR Cheat Sheet"
+  },
+  {
+    "_createdAt": "2026-07-27T02:55:28Z",
+    "_id": "4112da4b-9372-46a3-b02f-a1d18e95c454-ar",
+    "_rev": "Ut2IjveUbUh1XPNXG3ujV6",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:33:36Z",
+    "description": "اختبر ما تتذكره عن مسؤولياتك الأساسية بصفتك مقيمًا دائمًا وعن القواعد المهمة التي عليك تذكّرها.",
+    "language": "ar",
+    "order_number": 5,
+    "pages": [
+      {
+        "_key": "b04b2fdfbed0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "8d01beffbdf1",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "497d7ea7d648",
+                  "_type": "span",
+                  "text": "شكرًا لك على تقييم مستوى ثقتك! أينما كنت الآن، فأنت تبني فهمًا أقوى لكيفية عمل الإقامة الدائمة في كندا. واصل مراجعة القواعد الأساسية المتعلقة بالوقت الذي تقضيه في كندا، والوقت خارجها، ووثائق السفر، وستشعر بثقة أكبر مع كل درس!"
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "7cc0f58a6a9e",
+            "_type": "multiple_choice_multiple",
+            "options": [
+              {
+                "_key": "5c922d162909",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "353a90537c6d",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "43683f88d174",
+                        "_type": "span",
+                        "text": "ما زلت تتعلم، ولا بأس بذلك. سنعزّز الأساسيات بمزيد من الأمثلة."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "71aa75f88740",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "469d3bcd3c80",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "غير واثق"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Not Confident"
+              },
+              {
+                "_key": "5c386c6f844d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "6042204ddb30",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "771efcd908d8",
+                        "_type": "span",
+                        "text": "أنت تحرز تقدمًا جيدًا. سنعزّز الأساسيات بمزيد من الأمثلة."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "022df33885ba",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "048e1720bb05",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "واثق إلى حدٍّ ما"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Somewhat Confident"
+              },
+              {
+                "_key": "7b3510fa789d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "234e5f7b95a2",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "85f63dd88c76",
+                        "_type": "span",
+                        "text": "عمل رائع. لديك فهم متين للقواعد الأساسية الخاصة بـ PR."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "6602545c8ce3",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "aec6b32ea6c1",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "واثق جدًا"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Very Confident"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "719a430528f7",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "5fc672a2b600",
+                    "_type": "span",
+                    "text": "ما مدى ثقتك بمعلوماتك عن PR حتى الآن؟"
+                  }
+                ],
+                "style": "normal"
+              }
+            ],
+            "gradingMode": "reflection"
+          }
+        ],
+        "order": 1,
+        "title": "قياس مدى ثقتك"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "نشاط: مسؤولياتك وورقة مراجعة سريعة عن PR"
+  },
+  {
+    "_createdAt": "2026-07-27T02:53:59Z",
+    "_id": "4112da4b-9372-46a3-b02f-a1d18e95c454-es",
+    "_rev": "Ut2IjveUbUh1XPNXG3ujV6",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:33:36Z",
+    "description": "Pon a prueba lo que recuerdas sobre tus principales responsabilidades como residente permanente y las reglas clave que debes tener presentes.",
+    "language": "es",
+    "order_number": 5,
+    "pages": [
+      {
+        "_key": "b04b2fdfbed0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "8d01beffbdf1",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "497d7ea7d648",
+                  "_type": "span",
+                  "text": "¡Gracias por evaluar tu nivel de confianza! Estés donde estés ahora mismo, cada paso te da una comprensión más sólida de cómo funciona la residencia permanente en Canadá. Sigue repasando las reglas clave sobre el tiempo en Canadá, el tiempo en el extranjero y los documentos de viaje: con cada lección te sentirás más seguro."
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "7cc0f58a6a9e",
+            "_type": "multiple_choice_multiple",
+            "options": [
+              {
+                "_key": "5c922d162909",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "353a90537c6d",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "43683f88d174",
+                        "_type": "span",
+                        "text": "Todavía estás aprendiendo, y eso está bien. Reforzaremos lo básico con más ejemplos."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "71aa75f88740",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "469d3bcd3c80",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "Poco seguro"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Not Confident"
+              },
+              {
+                "_key": "5c386c6f844d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "6042204ddb30",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "771efcd908d8",
+                        "_type": "span",
+                        "text": "Vas avanzando bien. Reforzaremos lo básico con más ejemplos."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "022df33885ba",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "048e1720bb05",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "Algo seguro"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Somewhat Confident"
+              },
+              {
+                "_key": "7b3510fa789d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "234e5f7b95a2",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "85f63dd88c76",
+                        "_type": "span",
+                        "text": "Excelente. Dominas bien las reglas clave de la PR."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "6602545c8ce3",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "aec6b32ea6c1",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "Muy seguro"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Very Confident"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "719a430528f7",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "5fc672a2b600",
+                    "_type": "span",
+                    "text": "¿Qué tan seguro te sientes con el tema de la PR hasta ahora?"
+                  }
+                ],
+                "style": "normal"
+              }
+            ],
+            "gradingMode": "reflection"
+          }
+        ],
+        "order": 1,
+        "title": "Comprobación de confianza"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "Actividad: Tus responsabilidades y guía rápida de PR"
+  },
+  {
+    "_createdAt": "2026-08-11T14:53:18Z",
+    "_id": "4112da4b-9372-46a3-b02f-a1d18e95c454-fr-CA",
+    "_rev": "Ut2IjveUbUh1XPNXG3ujV6",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:33:36Z",
+    "description": "Mettre à l’épreuve votre mémoire au sujet de vos principales responsabilités en tant que résident permanent et des règles clés à retenir.",
+    "language": "fr-CA",
+    "order_number": 5,
+    "pages": [
+      {
+        "_key": "b04b2fdfbed0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "8d01beffbdf1",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "497d7ea7d648",
+                  "_type": "span",
+                  "text": "Merci d’avoir évalué votre niveau de confiance! Peu importe où vous en êtes en ce moment, vous développez une meilleure compréhension du fonctionnement de la résidence permanente au Canada. Continuez de revoir les règles clés sur le temps passé au Canada, le temps passé à l’étranger et les titres de voyage, et vous vous sentirez plus confiant à chaque leçon!"
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "7cc0f58a6a9e",
+            "_type": "multiple_choice_multiple",
+            "options": [
+              {
+                "_key": "5c922d162909",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "353a90537c6d",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "43683f88d174",
+                        "_type": "span",
+                        "text": "Vous êtes encore en apprentissage, et c’est correct. Nous renforcerons les bases avec plus d’exemples."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "71aa75f88740",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "469d3bcd3c80",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "Pas confiant"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Not Confident"
+              },
+              {
+                "_key": "5c386c6f844d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "6042204ddb30",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "771efcd908d8",
+                        "_type": "span",
+                        "text": "Vous faites de bons progrès. Nous renforcerons les bases avec plus d’exemples."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "022df33885ba",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "048e1720bb05",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "Plutôt confiant"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Somewhat Confident"
+              },
+              {
+                "_key": "7b3510fa789d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "234e5f7b95a2",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "85f63dd88c76",
+                        "_type": "span",
+                        "text": "Excellent travail. Vous maîtrisez bien les règles clés de la RP."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "6602545c8ce3",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "aec6b32ea6c1",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "Très confiant"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Very Confident"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "719a430528f7",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "5fc672a2b600",
+                    "_type": "span",
+                    "text": "Dans quelle mesure vous sentez-vous confiant au sujet de la RP jusqu’à présent?"
+                  }
+                ],
+                "style": "normal"
+              }
+            ],
+            "gradingMode": "reflection"
+          }
+        ],
+        "order": 1,
+        "title": "Vérification de la confiance"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "Activité : Vos responsabilités et aide-mémoire sur la RP"
+  },
+  {
+    "_createdAt": "2026-07-27T02:55:28Z",
+    "_id": "4112da4b-9372-46a3-b02f-a1d18e95c454-hi",
+    "_rev": "Ut2IjveUbUh1XPNXG3ujV6",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:33:36Z",
+    "description": "स्थायी निवासी के रूप में अपनी मुख्य ज़िम्मेदारियों और याद रखने योग्य अहम नियमों के बारे में अपनी याददाश्त जाँचें।",
+    "language": "hi",
+    "order_number": 5,
+    "pages": [
+      {
+        "_key": "b04b2fdfbed0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "8d01beffbdf1",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "497d7ea7d648",
+                  "_type": "span",
+                  "text": "अपने आत्मविश्वास का स्तर जाँचने के लिए धन्यवाद! आप अभी जहाँ भी हैं, कनाडा में स्थायी निवास कैसे काम करता है, इसकी आपकी समझ लगातार मज़बूत हो रही है। कनाडा में बिताए समय, विदेश में बिताए समय और यात्रा दस्तावेज़ों से जुड़े अहम नियमों को दोहराते रहें — हर पाठ के साथ आप और भी आश्वस्त महसूस करेंगे!"
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "7cc0f58a6a9e",
+            "_type": "multiple_choice_multiple",
+            "options": [
+              {
+                "_key": "5c922d162909",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "353a90537c6d",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "43683f88d174",
+                        "_type": "span",
+                        "text": "आप अभी सीख ही रहे हैं, और यह बिलकुल ठीक है। हम और उदाहरणों के साथ बुनियादी बातें दोहराएँगे।"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "71aa75f88740",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "469d3bcd3c80",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "आश्वस्त नहीं"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Not Confident"
+              },
+              {
+                "_key": "5c386c6f844d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "6042204ddb30",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "771efcd908d8",
+                        "_type": "span",
+                        "text": "आप अच्छी प्रगति कर रहे हैं। हम और उदाहरणों के साथ बुनियादी बातें दोहराएँगे।"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "022df33885ba",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "048e1720bb05",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "कुछ हद तक आश्वस्त"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Somewhat Confident"
+              },
+              {
+                "_key": "7b3510fa789d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "234e5f7b95a2",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "85f63dd88c76",
+                        "_type": "span",
+                        "text": "बहुत बढ़िया। PR के अहम नियमों पर आपकी अच्छी पकड़ है।"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "6602545c8ce3",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "aec6b32ea6c1",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "बहुत आश्वस्त"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Very Confident"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "719a430528f7",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "5fc672a2b600",
+                    "_type": "span",
+                    "text": "अब तक PR के बारे में आप कितना आश्वस्त महसूस करते हैं?"
+                  }
+                ],
+                "style": "normal"
+              }
+            ],
+            "gradingMode": "reflection"
+          }
+        ],
+        "order": 1,
+        "title": "आत्मविश्वास जाँच"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "गतिविधि: आपकी ज़िम्मेदारियाँ और PR चीट शीट"
+  },
+  {
+    "_createdAt": "2026-09-18T06:48:20Z",
+    "_id": "4112da4b-9372-46a3-b02f-a1d18e95c454-pa",
+    "_rev": "rai2ntNSi7w3uCqGLlIyJa",
+    "_type": "practice",
+    "_updatedAt": "2026-09-25T04:27:33Z",
+    "description": "ਸਥਾਈ ਨਿਵਾਸੀ ਵਜੋਂ ਤੁਹਾਡੀਆਂ ਮੁੱਖ ਜ਼ਿੰਮੇਵਾਰੀਆਂ ਅਤੇ ਯਾਦ ਰੱਖਣ ਲਈ ਜ਼ਰੂਰੀ ਨਿਯਮਾਂ ਬਾਰੇ ਤੁਹਾਡੀ ਯਾਦਦਾਸ਼ਤ ਦੀ ਜਾਂਚ।",
+    "language": "pa",
+    "order_number": 5,
+    "pages": [
+      {
+        "_key": "b04b2fdfbed0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "8d01beffbdf1",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "497d7ea7d648",
+                  "_type": "span",
+                  "text": "ਆਪਣੇ ਭਰੋਸੇ ਦੇ ਪੱਧਰ ਦੀ ਜਾਂਚ ਕਰਨ ਲਈ ਧੰਨਵਾਦ! ਤੁਸੀਂ ਹੁਣ ਭਾਵੇਂ ਕਿਤੇ ਵੀ ਹੋ, ਤੁਸੀਂ ਇਸ ਬਾਰੇ ਇੱਕ ਮਜ਼ਬੂਤ ਸਮਝ ਬਣਾ ਰਹੇ ਹੋ ਕਿ ਕੈਨੇਡਾ ਵਿੱਚ ਸਥਾਈ ਨਿਵਾਸ ਕਿਵੇਂ ਕੰਮ ਕਰਦਾ ਹੈ। ਕੈਨੇਡਾ ਵਿੱਚ ਸਮਾਂ, ਵਿਦੇਸ਼ ਵਿੱਚ ਸਮਾਂ, ਅਤੇ ਯਾਤਰਾ ਦਸਤਾਵੇਜ਼ਾਂ ਬਾਰੇ ਮੁੱਖ ਨਿਯਮਾਂ ਦੀ ਸਮੀਖਿਆ ਕਰਦੇ ਰਹੋ, ਅਤੇ ਹਰ ਸਬਕ ਨਾਲ ਤੁਸੀਂ ਹੋਰ ਭਰੋਸੇਮੰਦ ਮਹਿਸੂਸ ਕਰੋਗੇ!"
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "7cc0f58a6a9e",
+            "_type": "multiple_choice_multiple",
+            "options": [
+              {
+                "_key": "5c922d162909",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "353a90537c6d",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "43683f88d174",
+                        "_type": "span",
+                        "text": "ਤੁਸੀਂ ਅਜੇ ਵੀ ਸਿੱਖ ਰਹੇ ਹੋ, ਅਤੇ ਇਹ ਠੀਕ ਹੈ। ਅਸੀਂ ਹੋਰ ਉਦਾਹਰਣਾਂ ਨਾਲ ਮੁੱਢਲੀਆਂ ਗੱਲਾਂ ਨੂੰ ਮਜ਼ਬੂਤ ਕਰਾਂਗੇ।"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "71aa75f88740",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "469d3bcd3c80",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "ਭਰੋਸੇਮੰਦ ਨਹੀਂ"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Not Confident"
+              },
+              {
+                "_key": "5c386c6f844d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "6042204ddb30",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "771efcd908d8",
+                        "_type": "span",
+                        "text": "ਤੁਸੀਂ ਵਧੀਆ ਤਰੱਕੀ ਕਰ ਰਹੇ ਹੋ। ਅਸੀਂ ਹੋਰ ਉਦਾਹਰਣਾਂ ਨਾਲ ਮੁੱਢਲੀਆਂ ਗੱਲਾਂ ਨੂੰ ਮਜ਼ਬੂਤ ਕਰਾਂਗੇ।"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "022df33885ba",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "048e1720bb05",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "ਕੁਝ ਹੱਦ ਤੱਕ ਭਰੋਸੇਮੰਦ"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Somewhat Confident"
+              },
+              {
+                "_key": "7b3510fa789d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "234e5f7b95a2",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "85f63dd88c76",
+                        "_type": "span",
+                        "text": "ਵਧੀਆ ਕੰਮ। ਤੁਹਾਨੂੰ ਮੁੱਖ PR ਨਿਯਮਾਂ ਦੀ ਪੱਕੀ ਸਮਝ ਹੈ।"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "6602545c8ce3",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "aec6b32ea6c1",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "ਬਹੁਤ ਭਰੋਸੇਮੰਦ"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Very Confident"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "719a430528f7",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "5fc672a2b600",
+                    "_type": "span",
+                    "text": "ਹੁਣ ਤੱਕ ਤੁਸੀਂ PR ਬਾਰੇ ਕਿੰਨਾ ਭਰੋਸੇਮੰਦ ਮਹਿਸੂਸ ਕਰਦੇ ਹੋ?"
+                  }
+                ],
+                "style": "normal"
+              }
+            ],
+            "gradingMode": "reflection"
+          }
+        ],
+        "order": 1,
+        "title": "ਭਰੋਸਾ ਜਾਂਚ"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "ਸਰਗਰਮੀ: ਤੁਹਾਡੀਆਂ ਜ਼ਿੰਮੇਵਾਰੀਆਂ ਅਤੇ PR ਚੀਟ ਸ਼ੀਟ"
+  },
+  {
+    "_createdAt": "2026-07-27T02:53:59Z",
+    "_id": "4112da4b-9372-46a3-b02f-a1d18e95c454-vi",
+    "_rev": "Ut2IjveUbUh1XPNXG3ujV6",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:33:36Z",
+    "description": "Kiểm tra xem bạn nhớ được bao nhiêu về những trách nhiệm chính của một thường trú nhân và các quy định quan trọng cần ghi nhớ.",
+    "language": "vi",
+    "order_number": 5,
+    "pages": [
+      {
+        "_key": "b04b2fdfbed0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "8d01beffbdf1",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "497d7ea7d648",
+                  "_type": "span",
+                  "text": "Cảm ơn bạn đã tự đánh giá mức độ tự tin của mình! Dù bạn đang ở đâu trên hành trình này, bạn vẫn đang hiểu ngày càng rõ hơn về cách thường trú nhân hoạt động ở Canada. Hãy tiếp tục ôn lại những quy định quan trọng về thời gian ở Canada, thời gian ở nước ngoài và giấy tờ đi lại — mỗi bài học sẽ giúp bạn tự tin hơn!"
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "7cc0f58a6a9e",
+            "_type": "multiple_choice_multiple",
+            "options": [
+              {
+                "_key": "5c922d162909",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "353a90537c6d",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "43683f88d174",
+                        "_type": "span",
+                        "text": "Bạn vẫn đang trong quá trình học, và điều đó hoàn toàn ổn. Chúng tôi sẽ củng cố lại những kiến thức cơ bản bằng thêm nhiều ví dụ."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "71aa75f88740",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "469d3bcd3c80",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "Chưa tự tin"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Not Confident"
+              },
+              {
+                "_key": "5c386c6f844d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "6042204ddb30",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "771efcd908d8",
+                        "_type": "span",
+                        "text": "Bạn đang tiến bộ tốt. Chúng tôi sẽ củng cố lại những kiến thức cơ bản bằng thêm nhiều ví dụ."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "022df33885ba",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "048e1720bb05",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "Tương đối tự tin"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Somewhat Confident"
+              },
+              {
+                "_key": "7b3510fa789d",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "234e5f7b95a2",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "85f63dd88c76",
+                        "_type": "span",
+                        "text": "Tuyệt vời. Bạn đã nắm chắc những quy định quan trọng về PR."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "6602545c8ce3",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "aec6b32ea6c1",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "Rất tự tin"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "Very Confident"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "719a430528f7",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "5fc672a2b600",
+                    "_type": "span",
+                    "text": "Đến giờ bạn cảm thấy tự tin đến mức nào về PR?"
+                  }
+                ],
+                "style": "normal"
+              }
+            ],
+            "gradingMode": "reflection"
+          }
+        ],
+        "order": 1,
+        "title": "Kiểm tra mức độ tự tin"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "Hoạt động: Trách nhiệm của bạn & Bản tóm tắt về PR"
+  },
+  {
+    "_createdAt": "2026-02-20T11:17:04Z",
+    "_id": "c56bfc62-4e35-428a-ad73-2f7882684957",
+    "_rev": "sckACfU4tqvXhuaarHJMBK",
+    "_type": "practice",
+    "_updatedAt": "2026-07-27T17:04:42Z",
+    "language": "en",
+    "order_number": 2,
+    "pages": [
+      {
+        "_key": "2cfce6820739",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "851ada5b6ba7",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "ae6e91c69676",
+                  "_type": "span",
+                  "text": "Your PR "
+                },
+                {
+                  "_key": "5db8c35b252e",
+                  "_type": "span",
+                  "marks": [
+                    "strong"
+                  ],
+                  "text": "status does not expire"
+                },
+                {
+                  "_key": "65d435ea756f",
+                  "_type": "span",
+                  "text": " with your PR card."
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "b0453e962c57",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "58daa4bafebc",
+                  "_type": "span",
+                  "text": "You only lose PR if:"
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "5195ca2cc225",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "e1e72eb94f05",
+                  "_type": "span",
+                  "text": "An official decision may end PR status after a residency-obligation review. Spending fewer than 730 qualifying days does not end status automatically."
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "657826d3ca34",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "0d527e70f38f",
+                  "_type": "span",
+                  "text": "You choose to give it up (renounce it)"
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "1ffe8f06f4ed",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "80cad60c5735",
+                  "_type": "span",
+                  "text": "A removal order against you comes into force. Becoming a Canadian citizen also ends PR status."
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "dd81b35834ed",
+            "_type": "two_options_question",
+            "options": [
+              {
+                "_key": "17da6ab91f94",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "09cbe36d8e7b",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "28f75c8b5d4f",
+                        "_type": "span",
+                        "text": "Good try! However, "
+                      }
+                    ],
+                    "style": "normal"
+                  },
+                  {
+                    "_key": "80991f94a6cf",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "563f55c9290e",
+                        "_type": "span",
+                        "text": "Your PR "
+                      },
+                      {
+                        "_key": "0885135296af",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "status does not expire"
+                      },
+                      {
+                        "_key": "01793f110d38",
+                        "_type": "span",
+                        "text": " with your PR card."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "fa4bd51323d7",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "d7f1c07862ed",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "TRUE"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "TRUE"
+              },
+              {
+                "_key": "fd0b08315c86",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "10d9be30e743",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "719ca89adb6d",
+                        "_type": "span",
+                        "text": "Correct! You do not lose PR if your PR Card expires."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "3fc4cda2ebfd",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "6c0a7993f8fc",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "FALSE"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "FALSE"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "9d8900fa5988",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "bf58d736d834",
+                    "_type": "span",
+                    "marks": [
+                      "strong"
+                    ],
+                    "text": "\"If my PR card expires, I lose PR.\""
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          },
+          {
+            "_key": "ab62474edeb2",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "4680f40e1a59",
+                "_type": "span",
+                "text": ""
+              }
+            ],
+            "style": "normal"
+          }
+        ],
+        "order": 1,
+        "title": "Quick Check: PR Card"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "Activity: PR Travel"
+  },
+  {
+    "_createdAt": "2026-07-27T02:58:18Z",
+    "_id": "c56bfc62-4e35-428a-ad73-2f7882684957-ar",
+    "_rev": "V5R0Sk6Br60hOiUrm4ef7W",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:41:49Z",
+    "language": "ar",
+    "order_number": 2,
+    "pages": [
+      {
+        "_key": "2cfce6820739",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "851ada5b6ba7",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "ae6e91c69676",
+                  "_type": "span",
+                  "text": "وضع PR الخاص بك "
+                },
+                {
+                  "_key": "5db8c35b252e",
+                  "_type": "span",
+                  "marks": [
+                    "strong"
+                  ],
+                  "text": "لا تنتهي صلاحيته"
+                },
+                {
+                  "_key": "65d435ea756f",
+                  "_type": "span",
+                  "text": " بانتهاء صلاحية بطاقة PR."
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "b0453e962c57",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "58daa4bafebc",
+                  "_type": "span",
+                  "text": "لا تفقد PR إلا في الحالات التالية:"
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "5195ca2cc225",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "e1e72eb94f05",
+                  "_type": "span",
+                  "text": "قد ينتهي الوضع بقرار رسمي بعد مراجعة التزام الإقامة. لا ينتهي تلقائياً لمجرد وجود أقل من 730 يوماً مؤهلاً."
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "657826d3ca34",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "0d527e70f38f",
+                  "_type": "span",
+                  "text": "تختار التخلي عنه (التنازل عنه رسميًا)"
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "1ffe8f06f4ed",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "80cad60c5735",
+                  "_type": "span",
+                  "text": "يدخل أمر إبعاد صادر ضدك حيز التنفيذ. كما ينتهي وضع الإقامة الدائمة عند اكتساب الجنسية الكندية."
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "dd81b35834ed",
+            "_type": "two_options_question",
+            "options": [
+              {
+                "_key": "17da6ab91f94",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "09cbe36d8e7b",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "28f75c8b5d4f",
+                        "_type": "span",
+                        "text": "محاولة جيدة! لكن، "
+                      }
+                    ],
+                    "style": "normal"
+                  },
+                  {
+                    "_key": "80991f94a6cf",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "563f55c9290e",
+                        "_type": "span",
+                        "text": "وضع PR الخاص بك "
+                      },
+                      {
+                        "_key": "0885135296af",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "لا تنتهي صلاحيته"
+                      },
+                      {
+                        "_key": "01793f110d38",
+                        "_type": "span",
+                        "text": " بانتهاء صلاحية بطاقة PR."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "fa4bd51323d7",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "d7f1c07862ed",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "صحيح"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "TRUE"
+              },
+              {
+                "_key": "fd0b08315c86",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "10d9be30e743",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "719ca89adb6d",
+                        "_type": "span",
+                        "text": "إجابة صحيحة! لا تفقد PR عند انتهاء صلاحية بطاقة PR."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "3fc4cda2ebfd",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "6c0a7993f8fc",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "خطأ"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "FALSE"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "9d8900fa5988",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "bf58d736d834",
+                    "_type": "span",
+                    "marks": [
+                      "strong"
+                    ],
+                    "text": "\"إذا انتهت صلاحية بطاقة PR الخاصة بي، أفقد PR.\""
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          },
+          {
+            "_key": "ab62474edeb2",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "4680f40e1a59",
+                "_type": "span",
+                "text": ""
+              }
+            ],
+            "style": "normal"
+          }
+        ],
+        "order": 1,
+        "title": "مراجعة سريعة: بطاقة PR"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "نشاط: السفر بصفة PR"
+  },
+  {
+    "_createdAt": "2026-07-27T02:57:03Z",
+    "_id": "c56bfc62-4e35-428a-ad73-2f7882684957-es",
+    "_rev": "V5R0Sk6Br60hOiUrm4ef7W",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:41:49Z",
+    "language": "es",
+    "order_number": 2,
+    "pages": [
+      {
+        "_key": "2cfce6820739",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "851ada5b6ba7",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "ae6e91c69676",
+                  "_type": "span",
+                  "text": "Tu estatus de PR "
+                },
+                {
+                  "_key": "5db8c35b252e",
+                  "_type": "span",
+                  "marks": [
+                    "strong"
+                  ],
+                  "text": "no vence"
+                },
+                {
+                  "_key": "65d435ea756f",
+                  "_type": "span",
+                  "text": " junto con tu tarjeta de PR."
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "b0453e962c57",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "58daa4bafebc",
+                  "_type": "span",
+                  "text": "Solo pierdes el PR si:"
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "5195ca2cc225",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "e1e72eb94f05",
+                  "_type": "span",
+                  "text": "Una decisión oficial puede terminar el estatus tras revisar la obligación de residencia. Tener menos de 730 días admisibles no termina el estatus automáticamente."
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "657826d3ca34",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "0d527e70f38f",
+                  "_type": "span",
+                  "text": "Decides renunciar a él (renunciarlo formalmente)"
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "1ffe8f06f4ed",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "80cad60c5735",
+                  "_type": "span",
+                  "text": "Una orden de expulsión en tu contra entra en vigor. Convertirte en ciudadano canadiense también termina el estatus de residente permanente."
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "dd81b35834ed",
+            "_type": "two_options_question",
+            "options": [
+              {
+                "_key": "17da6ab91f94",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "09cbe36d8e7b",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "28f75c8b5d4f",
+                        "_type": "span",
+                        "text": "¡Buen intento! Sin embargo, "
+                      }
+                    ],
+                    "style": "normal"
+                  },
+                  {
+                    "_key": "80991f94a6cf",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "563f55c9290e",
+                        "_type": "span",
+                        "text": "tu estatus de PR "
+                      },
+                      {
+                        "_key": "0885135296af",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "no vence"
+                      },
+                      {
+                        "_key": "01793f110d38",
+                        "_type": "span",
+                        "text": " junto con tu tarjeta de PR."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "fa4bd51323d7",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "d7f1c07862ed",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "VERDADERO"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "TRUE"
+              },
+              {
+                "_key": "fd0b08315c86",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "10d9be30e743",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "719ca89adb6d",
+                        "_type": "span",
+                        "text": "¡Correcto! No pierdes el PR si tu tarjeta de PR vence."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "3fc4cda2ebfd",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "6c0a7993f8fc",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "FALSO"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "FALSE"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "9d8900fa5988",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "bf58d736d834",
+                    "_type": "span",
+                    "marks": [
+                      "strong"
+                    ],
+                    "text": "\"Si mi tarjeta de PR vence, pierdo el PR.\""
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          },
+          {
+            "_key": "ab62474edeb2",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "4680f40e1a59",
+                "_type": "span",
+                "text": ""
+              }
+            ],
+            "style": "normal"
+          }
+        ],
+        "order": 1,
+        "title": "Repaso rápido: Tarjeta de PR"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "Actividad: Viajar con PR"
+  },
+  {
+    "_createdAt": "2026-08-11T14:51:40Z",
+    "_id": "c56bfc62-4e35-428a-ad73-2f7882684957-fr-CA",
+    "_rev": "V5R0Sk6Br60hOiUrm4ef7W",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:41:49Z",
+    "language": "fr-CA",
+    "order_number": 2,
+    "pages": [
+      {
+        "_key": "2cfce6820739",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "851ada5b6ba7",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "ae6e91c69676",
+                  "_type": "span",
+                  "text": "Votre statut de RP "
+                },
+                {
+                  "_key": "5db8c35b252e",
+                  "_type": "span",
+                  "marks": [
+                    "strong"
+                  ],
+                  "text": "n'expire pas"
+                },
+                {
+                  "_key": "65d435ea756f",
+                  "_type": "span",
+                  "text": " avec votre carte de RP."
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "b0453e962c57",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "58daa4bafebc",
+                  "_type": "span",
+                  "text": "Vous perdez seulement le statut de RP si :"
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "5195ca2cc225",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "e1e72eb94f05",
+                  "_type": "span",
+                  "text": "Une décision officielle peut mettre fin au statut après l’examen de l’obligation de résidence. Moins de 730 jours admissibles ne met pas automatiquement fin au statut."
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "657826d3ca34",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "0d527e70f38f",
+                  "_type": "span",
+                  "text": "Vous choisissez d'abandonner ce statut (y renoncer)"
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "1ffe8f06f4ed",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "80cad60c5735",
+                  "_type": "span",
+                  "text": "Une mesure de renvoi prise contre vous entre en vigueur. Devenir citoyen canadien met aussi fin au statut de résident permanent."
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "dd81b35834ed",
+            "_type": "two_options_question",
+            "options": [
+              {
+                "_key": "17da6ab91f94",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "09cbe36d8e7b",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "28f75c8b5d4f",
+                        "_type": "span",
+                        "text": "Bonne tentative! Cependant, "
+                      }
+                    ],
+                    "style": "normal"
+                  },
+                  {
+                    "_key": "80991f94a6cf",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "563f55c9290e",
+                        "_type": "span",
+                        "text": "Votre statut de RP "
+                      },
+                      {
+                        "_key": "0885135296af",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "n'expire pas"
+                      },
+                      {
+                        "_key": "01793f110d38",
+                        "_type": "span",
+                        "text": " avec votre carte de RP."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "fa4bd51323d7",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "d7f1c07862ed",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "VRAI"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "TRUE"
+              },
+              {
+                "_key": "fd0b08315c86",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "10d9be30e743",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "719ca89adb6d",
+                        "_type": "span",
+                        "text": "Exact! Vous ne perdez pas votre statut de RP si votre carte de RP expire."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "3fc4cda2ebfd",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "6c0a7993f8fc",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "FAUX"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "FALSE"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "9d8900fa5988",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "bf58d736d834",
+                    "_type": "span",
+                    "marks": [
+                      "strong"
+                    ],
+                    "text": "« Si ma carte de RP expire, je perds mon statut de RP. »"
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          },
+          {
+            "_key": "ab62474edeb2",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "4680f40e1a59",
+                "_type": "span",
+                "text": ""
+              }
+            ],
+            "style": "normal"
+          }
+        ],
+        "order": 1,
+        "title": "Vérification rapide : Carte de RP"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "Activité : Voyager en tant que résident permanent (RP)"
+  },
+  {
+    "_createdAt": "2026-07-27T02:58:18Z",
+    "_id": "c56bfc62-4e35-428a-ad73-2f7882684957-hi",
+    "_rev": "V5R0Sk6Br60hOiUrm4ef7W",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:41:49Z",
+    "language": "hi",
+    "order_number": 2,
+    "pages": [
+      {
+        "_key": "2cfce6820739",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "851ada5b6ba7",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "ae6e91c69676",
+                  "_type": "span",
+                  "text": "आपका PR "
+                },
+                {
+                  "_key": "5db8c35b252e",
+                  "_type": "span",
+                  "marks": [
+                    "strong"
+                  ],
+                  "text": "स्टेटस खत्म नहीं होता"
+                },
+                {
+                  "_key": "65d435ea756f",
+                  "_type": "span",
+                  "text": " — भले ही आपका PR कार्ड खत्म हो जाए।"
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "b0453e962c57",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "58daa4bafebc",
+                  "_type": "span",
+                  "text": "आप PR सिर्फ़ तब खोते हैं जब:"
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "5195ca2cc225",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "e1e72eb94f05",
+                  "_type": "span",
+                  "text": "निवास दायित्व की समीक्षा के बाद आधिकारिक निर्णय से दर्जा समाप्त हो सकता है। 730 से कम पात्र दिनों से दर्जा अपने आप समाप्त नहीं होता।"
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "657826d3ca34",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "0d527e70f38f",
+                  "_type": "span",
+                  "text": "आप खुद इसे छोड़ने का फ़ैसला करते हैं (औपचारिक रूप से त्याग देते हैं)"
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "1ffe8f06f4ed",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "80cad60c5735",
+                  "_type": "span",
+                  "text": "आपके विरुद्ध निष्कासन आदेश लागू होता है। कनाडाई नागरिक बनने पर भी स्थायी निवासी का दर्जा समाप्त होता है।"
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "dd81b35834ed",
+            "_type": "two_options_question",
+            "options": [
+              {
+                "_key": "17da6ab91f94",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "09cbe36d8e7b",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "28f75c8b5d4f",
+                        "_type": "span",
+                        "text": "अच्छी कोशिश! लेकिन, "
+                      }
+                    ],
+                    "style": "normal"
+                  },
+                  {
+                    "_key": "80991f94a6cf",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "563f55c9290e",
+                        "_type": "span",
+                        "text": "आपका PR "
+                      },
+                      {
+                        "_key": "0885135296af",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "स्टेटस खत्म नहीं होता"
+                      },
+                      {
+                        "_key": "01793f110d38",
+                        "_type": "span",
+                        "text": " — भले ही आपका PR कार्ड खत्म हो जाए।"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "fa4bd51323d7",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "d7f1c07862ed",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "सही"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "TRUE"
+              },
+              {
+                "_key": "fd0b08315c86",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "10d9be30e743",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "719ca89adb6d",
+                        "_type": "span",
+                        "text": "बिलकुल सही! अगर आपका PR कार्ड खत्म हो जाता है, तो भी आप PR नहीं खोते।"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "3fc4cda2ebfd",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "6c0a7993f8fc",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "गलत"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "FALSE"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "9d8900fa5988",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "bf58d736d834",
+                    "_type": "span",
+                    "marks": [
+                      "strong"
+                    ],
+                    "text": "\"अगर मेरा PR कार्ड खत्म हो जाए, तो मैं PR खो दूँगा।\""
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          },
+          {
+            "_key": "ab62474edeb2",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "4680f40e1a59",
+                "_type": "span",
+                "text": ""
+              }
+            ],
+            "style": "normal"
+          }
+        ],
+        "order": 1,
+        "title": "त्वरित जाँच: PR कार्ड"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "गतिविधि: PR के साथ यात्रा"
+  },
+  {
+    "_createdAt": "2026-09-18T06:45:40Z",
+    "_id": "c56bfc62-4e35-428a-ad73-2f7882684957-pa",
+    "_rev": "KidWlNQECa9E4LwdirVMwn",
+    "_type": "practice",
+    "_updatedAt": "2026-09-25T17:14:59Z",
+    "language": "pa",
+    "order_number": 2,
+    "pages": [
+      {
+        "_key": "2cfce6820739",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "851ada5b6ba7",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "ae6e91c69676",
+                  "_type": "span",
+                  "text": "ਤੁਹਾਡੀ PR "
+                },
+                {
+                  "_key": "5db8c35b252e",
+                  "_type": "span",
+                  "marks": [
+                    "strong"
+                  ],
+                  "text": "ਸਥਿਤੀ ਦੀ ਮਿਆਦ ਖਤਮ ਨਹੀਂ ਹੁੰਦੀ"
+                },
+                {
+                  "_key": "65d435ea756f",
+                  "_type": "span",
+                  "text": " ਤੁਹਾਡੇ PR ਕਾਰਡ ਨਾਲ।"
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "b0453e962c57",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "58daa4bafebc",
+                  "_type": "span",
+                  "text": "ਤੁਸੀਂ PR ਸਿਰਫ਼ ਇਹਨਾਂ ਹਾਲਾਤਾਂ ਵਿੱਚ ਗੁਆਉਂਦੇ ਹੋ:"
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "5195ca2cc225",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "e1e72eb94f05",
+                  "_type": "span",
+                  "text": "ਰਿਹਾਇਸ਼ ਦੀ ਜ਼ਿੰਮੇਵਾਰੀ ਦੀ ਸਮੀਖਿਆ ਤੋਂ ਬਾਅਦ ਅਧਿਕਾਰਤ ਫ਼ੈਸਲੇ ਨਾਲ ਦਰਜਾ ਖ਼ਤਮ ਹੋ ਸਕਦਾ ਹੈ। 730 ਤੋਂ ਘੱਟ ਯੋਗ ਦਿਨਾਂ ਨਾਲ ਦਰਜਾ ਆਪਣੇ ਆਪ ਖ਼ਤਮ ਨਹੀਂ ਹੁੰਦਾ।"
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "657826d3ca34",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "0d527e70f38f",
+                  "_type": "span",
+                  "text": "ਤੁਸੀਂ ਇਸਨੂੰ ਛੱਡਣ ਦਾ ਫੈਸਲਾ ਕਰਦੇ ਹੋ (ਇਸ ਨੂੰ ਤਿਆਗਣਾ)"
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "1ffe8f06f4ed",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "80cad60c5735",
+                  "_type": "span",
+                  "text": "ਤੁਹਾਡੇ ਵਿਰੁੱਧ ਹਟਾਉਣ ਦਾ ਹੁਕਮ ਲਾਗੂ ਹੁੰਦਾ ਹੈ। ਕੈਨੇਡੀਅਨ ਨਾਗਰਿਕ ਬਣਨ ਤੇ ਵੀ ਸਥਾਈ ਨਿਵਾਸੀ ਦਾ ਦਰਜਾ ਖ਼ਤਮ ਹੁੰਦਾ ਹੈ।"
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "dd81b35834ed",
+            "_type": "two_options_question",
+            "options": [
+              {
+                "_key": "17da6ab91f94",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "09cbe36d8e7b",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "28f75c8b5d4f",
+                        "_type": "span",
+                        "text": "ਚੰਗੀ ਕੋਸ਼ਿਸ਼! ਪਰ, "
+                      }
+                    ],
+                    "style": "normal"
+                  },
+                  {
+                    "_key": "80991f94a6cf",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "563f55c9290e",
+                        "_type": "span",
+                        "text": "ਤੁਹਾਡੀ PR "
+                      },
+                      {
+                        "_key": "0885135296af",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "ਸਥਿਤੀ ਦੀ ਮਿਆਦ ਖਤਮ ਨਹੀਂ ਹੁੰਦੀ"
+                      },
+                      {
+                        "_key": "01793f110d38",
+                        "_type": "span",
+                        "text": " ਤੁਹਾਡੇ PR ਕਾਰਡ ਨਾਲ।"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "fa4bd51323d7",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "d7f1c07862ed",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "ਸਹੀ"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "TRUE"
+              },
+              {
+                "_key": "fd0b08315c86",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "10d9be30e743",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "719ca89adb6d",
+                        "_type": "span",
+                        "text": "ਸਹੀ! ਜੇ ਤੁਹਾਡੇ PR ਕਾਰਡ ਦੀ ਮਿਆਦ ਖਤਮ ਹੋ ਜਾਂਦੀ ਹੈ ਤਾਂ ਤੁਸੀਂ PR ਨਹੀਂ ਗੁਆਉਂਦੇ।"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "3fc4cda2ebfd",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "6c0a7993f8fc2",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "ਗਲਤ"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "FALSE"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "9d8900fa5988",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "bf58d736d834",
+                    "_type": "span",
+                    "marks": [
+                      "strong"
+                    ],
+                    "text": "\"ਜੇ ਮੇਰੇ PR ਕਾਰਡ ਦੀ ਮਿਆਦ ਖਤਮ ਹੋ ਜਾਵੇ, ਤਾਂ ਮੈਂ PR ਗੁਆ ਦਿੰਦਾ/ਦਿੰਦੀ ਹਾਂ।\""
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          },
+          {
+            "_key": "ab62474edeb2",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "4680f40e1a59",
+                "_type": "span",
+                "text": ""
+              }
+            ],
+            "style": "normal"
+          }
+        ],
+        "order": 1,
+        "title": "ਤੁਰੰਤ ਜਾਂਚ: PR ਕਾਰਡ"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "ਸਰਗਰਮੀ: PR ਯਾਤਰਾ"
+  },
+  {
+    "_createdAt": "2026-07-27T02:57:03Z",
+    "_id": "c56bfc62-4e35-428a-ad73-2f7882684957-vi",
+    "_rev": "V5R0Sk6Br60hOiUrm4ef7W",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:41:49Z",
+    "language": "vi",
+    "order_number": 2,
+    "pages": [
+      {
+        "_key": "2cfce6820739",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "851ada5b6ba7",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "ae6e91c69676",
+                  "_type": "span",
+                  "text": "Tình trạng PR của bạn "
+                },
+                {
+                  "_key": "5db8c35b252e",
+                  "_type": "span",
+                  "marks": [
+                    "strong"
+                  ],
+                  "text": "không hết hạn"
+                },
+                {
+                  "_key": "65d435ea756f",
+                  "_type": "span",
+                  "text": " cùng với thẻ PR của bạn."
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "b0453e962c57",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "58daa4bafebc",
+                  "_type": "span",
+                  "text": "Bạn chỉ mất PR nếu:"
+                }
+              ],
+              "style": "normal"
+            },
+            {
+              "_key": "5195ca2cc225",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "e1e72eb94f05",
+                  "_type": "span",
+                  "text": "Quyết định chính thức có thể chấm dứt tư cách thường trú sau khi xét nghĩa vụ cư trú. Có ít hơn 730 ngày đủ điều kiện không tự động làm mất tư cách."
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "657826d3ca34",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "0d527e70f38f",
+                  "_type": "span",
+                  "text": "Bạn chủ động từ bỏ nó (tự nguyện từ bỏ)"
+                }
+              ],
+              "level": 1,
+              "listItem": "bullet",
+              "style": "normal"
+            },
+            {
+              "_key": "1ffe8f06f4ed",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "80cad60c5735",
+                  "_type": "span",
+                  "text": "Lệnh trục xuất đối với bạn có hiệu lực. Trở thành công dân Canada cũng chấm dứt tư cách thường trú."
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "dd81b35834ed",
+            "_type": "two_options_question",
+            "options": [
+              {
+                "_key": "17da6ab91f94",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "09cbe36d8e7b",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "28f75c8b5d4f",
+                        "_type": "span",
+                        "text": "Suýt đúng rồi! Tuy nhiên, "
+                      }
+                    ],
+                    "style": "normal"
+                  },
+                  {
+                    "_key": "80991f94a6cf",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "563f55c9290e",
+                        "_type": "span",
+                        "text": "tình trạng PR của bạn "
+                      },
+                      {
+                        "_key": "0885135296af",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "không hết hạn"
+                      },
+                      {
+                        "_key": "01793f110d38",
+                        "_type": "span",
+                        "text": " cùng với thẻ PR của bạn."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "fa4bd51323d7",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "d7f1c07862ed",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "ĐÚNG"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "TRUE"
+              },
+              {
+                "_key": "fd0b08315c86",
+                "_type": "option",
+                "explanation": [
+                  {
+                    "_key": "10d9be30e743",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "719ca89adb6d",
+                        "_type": "span",
+                        "text": "Chính xác! Bạn không mất PR khi thẻ PR của bạn hết hạn."
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "3fc4cda2ebfd",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "6c0a7993f8fc",
+                        "_type": "span",
+                        "marks": [
+                          "strong"
+                        ],
+                        "text": "SAI"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "FALSE"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "9d8900fa5988",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "bf58d736d834",
+                    "_type": "span",
+                    "marks": [
+                      "strong"
+                    ],
+                    "text": "\"Nếu thẻ PR của tôi hết hạn, tôi sẽ mất PR.\""
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          },
+          {
+            "_key": "ab62474edeb2",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "4680f40e1a59",
+                "_type": "span",
+                "text": ""
+              }
+            ],
+            "style": "normal"
+          }
+        ],
+        "order": 1,
+        "title": "Kiểm tra nhanh: Thẻ PR"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "Hoạt động: Đi lại với tư cách PR"
+  },
+  {
+    "_createdAt": "2026-02-20T11:19:23Z",
+    "_id": "ecca3ca9-7b4a-4d22-a88d-2efc10f7d843",
+    "_rev": "bofOzXmap664uwhfu6uv6j",
+    "_system": {
+      "base": {
+        "id": "ecca3ca9-7b4a-4d22-a88d-2efc10f7d843",
+        "rev": "vJwN2JbD1ckhplNrC95wyt"
+      }
+    },
+    "_type": "practice",
+    "_updatedAt": "2026-07-29T16:29:17Z",
+    "language": "en",
+    "order_number": 4,
+    "pages": [
+      {
+        "_key": "1eff8a0dc7b0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "db2245302725",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "8853168a640a",
+                  "_type": "span",
+                  "text": "No. Under the stated assumptions, one year is less than 730 qualifying days. This does not automatically end PR status. An officer must consider applicable law, including relevant humanitarian and compassionate factors. A formal decision and appeal rights may apply."
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "37e84248ec7e",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "578315f86a68",
+                "_type": "span",
+                "text": "Over a full 5 year period, Mina spent:"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "fabf298604dd",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "c67125ed124b",
+                "_type": "span",
+                "text": "1 year in Canada, and "
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "52c0564cf3fb",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b920f9e2f69c",
+                "_type": "span",
+                "text": "4 years outside Canada"
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "c97bd6df5931",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "a4f6bc582859",
+                "_type": "span",
+                "text": "Assume Mina has been a PR for at least five years. In the five years immediately before assessment, she spent only one year in Canada. None of her time abroad qualifies. Does she meet the 730-day requirement?"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "a17405817965",
+            "_type": "multiple_choice_single",
+            "options": [
+              {
+                "_key": "bb859070729e",
+                "_type": "option",
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "minab",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "minas",
+                        "_type": "span",
+                        "text": "Yes, she meets the 730-day requirement"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "yes"
+              },
+              {
+                "_key": "ca4d4664940e",
+                "_type": "option",
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "6fec96832a75",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "62de7d11f26f",
+                        "_type": "span",
+                        "text": "No, she does not meet the 730-day requirement"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "no"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "4f79d5336ac9",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "fcf185d383b3",
+                    "_type": "span",
+                    "text": "Assume Mina has been a PR for at least five years. In the five years immediately before assessment, she spent only one year in Canada. None of her time abroad qualifies. Does she meet the 730-day requirement?"
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          }
+        ],
+        "order": 1,
+        "title": "Quick Check: Did Mina keep PR?"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "Activity: Mina's Story"
+  },
+  {
+    "_createdAt": "2026-07-27T03:00:06Z",
+    "_id": "ecca3ca9-7b4a-4d22-a88d-2efc10f7d843-ar",
+    "_rev": "Ut2IjveUbUh1XPNXG3vvPZ",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:44:37Z",
+    "language": "ar",
+    "order_number": 4,
+    "pages": [
+      {
+        "_key": "1eff8a0dc7b0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "db2245302725",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "8853168a640a",
+                  "_type": "span",
+                  "text": "لا. وفق الافتراضات المذكورة، سنة واحدة أقل من 730 يوماً مؤهلاً. لا ينتهي وضع الإقامة الدائمة تلقائياً. يجب أن يطبق الموظف القانون وينظر في العوامل الإنسانية ذات الصلة. قد يلزم قرار رسمي وتنطبق حقوق استئناف."
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "37e84248ec7e",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "578315f86a68",
+                "_type": "span",
+                "text": "على مدى فترة كاملة من 5 سنوات، قضت مينا:"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "fabf298604dd",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "c67125ed124b",
+                "_type": "span",
+                "text": "1 سنة في Canada، و "
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "52c0564cf3fb",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b920f9e2f69c",
+                "_type": "span",
+                "text": "4 سنوات خارج Canada"
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "c97bd6df5931",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "a4f6bc582859",
+                "_type": "span",
+                "text": "افترض أن مينا مقيمة دائمة منذ خمس سنوات على الأقل. خلال السنوات الخمس السابقة للتقييم أمضت سنة واحدة فقط في كندا، ولا تتأهل أي فترة خارجها للاحتساب. هل تستوفي شرط 730 يوماً؟"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "a17405817965",
+            "_type": "multiple_choice_single",
+            "options": [
+              {
+                "_key": "bb859070729e",
+                "_type": "option",
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "minab",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "minas",
+                        "_type": "span",
+                        "text": "نعم، تستوفي شرط 730 يوماً"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "yes"
+              },
+              {
+                "_key": "ca4d4664940e",
+                "_type": "option",
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "6fec96832a75",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "62de7d11f26f",
+                        "_type": "span",
+                        "text": "لا، لا تستوفي شرط 730 يوماً"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "no"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "4f79d5336ac9",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "fcf185d383b3",
+                    "_type": "span",
+                    "text": "افترض أن مينا مقيمة دائمة منذ خمس سنوات على الأقل. خلال السنوات الخمس السابقة للتقييم أمضت سنة واحدة فقط في كندا، ولا تتأهل أي فترة خارجها للاحتساب. هل تستوفي شرط 730 يوماً؟"
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          }
+        ],
+        "order": 1,
+        "title": "تحقّق سريع: هل احتفظت مينا بـ PR؟"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "نشاط: قصة مينا"
+  },
+  {
+    "_createdAt": "2026-07-27T03:00:06Z",
+    "_id": "ecca3ca9-7b4a-4d22-a88d-2efc10f7d843-es",
+    "_rev": "Ut2IjveUbUh1XPNXG3vvPZ",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:44:37Z",
+    "language": "es",
+    "order_number": 4,
+    "pages": [
+      {
+        "_key": "1eff8a0dc7b0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "db2245302725",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "8853168a640a",
+                  "_type": "span",
+                  "text": "No. Según los supuestos, un año es menos de 730 días admisibles. Esto no termina automáticamente la residencia permanente. Un funcionario debe aplicar la ley y considerar los factores humanitarios pertinentes. Puede haber una decisión formal y derechos de apelación."
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "37e84248ec7e",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "578315f86a68",
+                "_type": "span",
+                "text": "A lo largo de un período completo de 5 años, Mina pasó:"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "fabf298604dd",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "c67125ed124b",
+                "_type": "span",
+                "text": "1 año en Canadá, y "
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "52c0564cf3fb",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b920f9e2f69c",
+                "_type": "span",
+                "text": "4 años fuera de Canadá"
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "c97bd6df5931",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "a4f6bc582859",
+                "_type": "span",
+                "text": "Supón que Mina lleva al menos cinco años como residente permanente. En los cinco años anteriores a la evaluación pasó solo un año en Canadá. Ningún tiempo en el extranjero es admisible. ¿Cumple el requisito de 730 días?"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "a17405817965",
+            "_type": "multiple_choice_single",
+            "options": [
+              {
+                "_key": "bb859070729e",
+                "_type": "option",
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "minab",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "minas",
+                        "_type": "span",
+                        "text": "Sí, cumple el requisito de 730 días"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "yes"
+              },
+              {
+                "_key": "ca4d4664940e",
+                "_type": "option",
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "6fec96832a75",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "62de7d11f26f",
+                        "_type": "span",
+                        "text": "No, no cumple el requisito de 730 días"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "no"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "4f79d5336ac9",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "fcf185d383b3",
+                    "_type": "span",
+                    "text": "Supón que Mina lleva al menos cinco años como residente permanente. En los cinco años anteriores a la evaluación pasó solo un año en Canadá. Ningún tiempo en el extranjero es admisible. ¿Cumple el requisito de 730 días?"
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          }
+        ],
+        "order": 1,
+        "title": "Comprobación rápida: ¿Mina conservó su PR?"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "Actividad: La historia de Mina"
+  },
+  {
+    "_createdAt": "2026-08-11T14:57:08Z",
+    "_id": "ecca3ca9-7b4a-4d22-a88d-2efc10f7d843-fr-CA",
+    "_rev": "Ut2IjveUbUh1XPNXG3vvPZ",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:44:37Z",
+    "language": "fr-CA",
+    "order_number": 4,
+    "pages": [
+      {
+        "_key": "1eff8a0dc7b0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "db2245302725",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "8853168a640a",
+                  "_type": "span",
+                  "text": "Non. Selon les hypothèses, un an représente moins de 730 jours admissibles. Le statut ne prend pas fin automatiquement. Un agent doit appliquer la loi et tenir compte des facteurs humanitaires pertinents. Une décision officielle et des droits d’appel peuvent s’appliquer."
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "37e84248ec7e",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "578315f86a68",
+                "_type": "span",
+                "text": "Sur une période complète de 5 ans, Mina a passé :"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "fabf298604dd",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "c67125ed124b",
+                "_type": "span",
+                "text": "1 an au Canada, et "
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "52c0564cf3fb",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b920f9e2f69c",
+                "_type": "span",
+                "text": "4 ans à l'extérieur du Canada"
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "c97bd6df5931",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "a4f6bc582859",
+                "_type": "span",
+                "text": "Supposez que Mina est résidente permanente depuis au moins cinq ans. Durant les cinq ans précédant l’évaluation, elle a passé seulement un an au Canada. Aucune période à l’étranger ne compte. Respecte-t-elle l’exigence de 730 jours?"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "a17405817965",
+            "_type": "multiple_choice_single",
+            "options": [
+              {
+                "_key": "bb859070729e",
+                "_type": "option",
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "minab",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "minas",
+                        "_type": "span",
+                        "text": "Oui, elle respecte l’exigence de 730 jours"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "yes"
+              },
+              {
+                "_key": "ca4d4664940e",
+                "_type": "option",
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "6fec96832a75",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "62de7d11f26f",
+                        "_type": "span",
+                        "text": "Non, elle ne respecte pas l’exigence de 730 jours"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "no"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "4f79d5336ac9",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "fcf185d383b3",
+                    "_type": "span",
+                    "text": "Supposez que Mina est résidente permanente depuis au moins cinq ans. Durant les cinq ans précédant l’évaluation, elle a passé seulement un an au Canada. Aucune période à l’étranger ne compte. Respecte-t-elle l’exigence de 730 jours?"
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          }
+        ],
+        "order": 1,
+        "title": "Vérification rapide : Mina a-t-elle conservé son statut de résident permanent (RP)?"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "Activité : L'histoire de Mina"
+  },
+  {
+    "_createdAt": "2026-07-27T03:00:06Z",
+    "_id": "ecca3ca9-7b4a-4d22-a88d-2efc10f7d843-hi",
+    "_rev": "Ut2IjveUbUh1XPNXG3vvPZ",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:44:37Z",
+    "language": "hi",
+    "order_number": 4,
+    "pages": [
+      {
+        "_key": "1eff8a0dc7b0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "db2245302725",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "8853168a640a",
+                  "_type": "span",
+                  "text": "नहीं। दिए तथ्यों के अनुसार एक साल 730 पात्र दिनों से कम है। इससे स्थायी निवासी का दर्जा अपने आप समाप्त नहीं होता। अधिकारी को लागू कानून और संबंधित मानवीय कारणों पर विचार करना होता है। औपचारिक निर्णय और अपील के अधिकार लागू हो सकते हैं।"
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "37e84248ec7e",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "578315f86a68",
+                "_type": "span",
+                "text": "पूरे 5 साल की अवधि में, मीना ने बिताए:"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "fabf298604dd",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "c67125ed124b",
+                "_type": "span",
+                "text": "1 साल Canada में, और "
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "52c0564cf3fb",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b920f9e2f69c",
+                "_type": "span",
+                "text": "4 साल Canada के बाहर"
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "c97bd6df5931",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "a4f6bc582859",
+                "_type": "span",
+                "text": "मान लें मीना कम से कम पाँच साल से स्थायी निवासी है। आकलन से ठीक पहले के पाँच साल में वह केवल एक साल कनाडा में रही। विदेश का कोई समय पात्र नहीं है। क्या वह 730 दिन की शर्त पूरी करती है?"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "a17405817965",
+            "_type": "multiple_choice_single",
+            "options": [
+              {
+                "_key": "bb859070729e",
+                "_type": "option",
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "minab",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "minas",
+                        "_type": "span",
+                        "text": "हाँ, वह 730 दिन की शर्त पूरी करती है"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "yes"
+              },
+              {
+                "_key": "ca4d4664940e",
+                "_type": "option",
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "6fec96832a75",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "62de7d11f26f",
+                        "_type": "span",
+                        "text": "नहीं, वह 730 दिन की शर्त पूरी नहीं करती"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "no"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "4f79d5336ac9",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "fcf185d383b3",
+                    "_type": "span",
+                    "text": "मान लें मीना कम से कम पाँच साल से स्थायी निवासी है। आकलन से ठीक पहले के पाँच साल में वह केवल एक साल कनाडा में रही। विदेश का कोई समय पात्र नहीं है। क्या वह 730 दिन की शर्त पूरी करती है?"
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          }
+        ],
+        "order": 1,
+        "title": "त्वरित जाँच: क्या मीना ने PR बरकरार रखा?"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "गतिविधि: मीना की कहानी"
+  },
+  {
+    "_createdAt": "2026-09-18T06:45:40Z",
+    "_id": "ecca3ca9-7b4a-4d22-a88d-2efc10f7d843-pa",
+    "_rev": "KidWlNQECa9E4LwdirVYXI",
+    "_type": "practice",
+    "_updatedAt": "2026-09-25T17:15:47Z",
+    "language": "pa",
+    "order_number": 4,
+    "pages": [
+      {
+        "_key": "1eff8a0dc7b0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "db2245302725",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "8853168a640a",
+                  "_type": "span",
+                  "text": "ਨਹੀਂ। ਦਿੱਤੇ ਤੱਥਾਂ ਅਨੁਸਾਰ ਇੱਕ ਸਾਲ 730 ਯੋਗ ਦਿਨਾਂ ਤੋਂ ਘੱਟ ਹੈ। ਇਸ ਨਾਲ ਸਥਾਈ ਨਿਵਾਸੀ ਦਾ ਦਰਜਾ ਆਪਣੇ ਆਪ ਖ਼ਤਮ ਨਹੀਂ ਹੁੰਦਾ। ਅਧਿਕਾਰੀ ਨੂੰ ਲਾਗੂ ਕਾਨੂੰਨ ਅਤੇ ਸੰਬੰਧਿਤ ਮਨੁੱਖਤਾਵਾਦੀ ਕਾਰਨ ਵੇਖਣੇ ਹੁੰਦੇ ਹਨ। ਰਸਮੀ ਫ਼ੈਸਲਾ ਅਤੇ ਅਪੀਲ ਦੇ ਹੱਕ ਲਾਗੂ ਹੋ ਸਕਦੇ ਹਨ।"
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "37e84248ec7e",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "578315f86a68",
+                "_type": "span",
+                "text": "ਪੂਰੇ 5 ਸਾਲ ਦੀ ਮਿਆਦ ਵਿੱਚ, ਮੀਨਾ ਨੇ ਬਿਤਾਇਆ:"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "fabf298604dd",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "c67125ed124b",
+                "_type": "span",
+                "text": "ਕੈਨੇਡਾ ਵਿੱਚ 1 ਸਾਲ, ਅਤੇ "
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "52c0564cf3fb",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b920f9e2f69c",
+                "_type": "span",
+                "text": "ਕੈਨੇਡਾ ਤੋਂ ਬਾਹਰ 4 ਸਾਲ"
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "c97bd6df5931",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "a4f6bc582859",
+                "_type": "span",
+                "text": "ਮੰਨੋ ਮੀਨਾ ਘੱਟੋ-ਘੱਟ ਪੰਜ ਸਾਲ ਤੋਂ ਸਥਾਈ ਨਿਵਾਸੀ ਹੈ। ਮੁਲਾਂਕਣ ਤੋਂ ਠੀਕ ਪਹਿਲਾਂ ਦੇ ਪੰਜ ਸਾਲਾਂ ਵਿੱਚ ਉਹ ਸਿਰਫ਼ ਇੱਕ ਸਾਲ ਕੈਨੇਡਾ ਵਿੱਚ ਰਹੀ। ਵਿਦੇਸ਼ ਦਾ ਕੋਈ ਸਮਾਂ ਯੋਗ ਨਹੀਂ ਹੈ। ਕੀ ਉਹ 730 ਦਿਨਾਂ ਦੀ ਸ਼ਰਤ ਪੂਰੀ ਕਰਦੀ ਹੈ?"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "a17405817965",
+            "_type": "multiple_choice_single",
+            "options": [
+              {
+                "_key": "bb859070729e",
+                "_type": "option",
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "minab",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "minas",
+                        "_type": "span",
+                        "text": "ਹਾਂ, ਉਹ 730 ਦਿਨਾਂ ਦੀ ਸ਼ਰਤ ਪੂਰੀ ਕਰਦੀ ਹੈ"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "yes"
+              },
+              {
+                "_key": "ca4d4664940e",
+                "_type": "option",
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "6fec96832a75",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "62de7d11f26f",
+                        "_type": "span",
+                        "text": "ਨਹੀਂ, ਉਹ 730 ਦਿਨਾਂ ਦੀ ਸ਼ਰਤ ਪੂਰੀ ਨਹੀਂ ਕਰਦੀ"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "no"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "4f79d5336ac9",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "fcf185d383b3",
+                    "_type": "span",
+                    "text": "ਮੰਨੋ ਮੀਨਾ ਘੱਟੋ-ਘੱਟ ਪੰਜ ਸਾਲ ਤੋਂ ਸਥਾਈ ਨਿਵਾਸੀ ਹੈ। ਮੁਲਾਂਕਣ ਤੋਂ ਠੀਕ ਪਹਿਲਾਂ ਦੇ ਪੰਜ ਸਾਲਾਂ ਵਿੱਚ ਉਹ ਸਿਰਫ਼ ਇੱਕ ਸਾਲ ਕੈਨੇਡਾ ਵਿੱਚ ਰਹੀ। ਵਿਦੇਸ਼ ਦਾ ਕੋਈ ਸਮਾਂ ਯੋਗ ਨਹੀਂ ਹੈ। ਕੀ ਉਹ 730 ਦਿਨਾਂ ਦੀ ਸ਼ਰਤ ਪੂਰੀ ਕਰਦੀ ਹੈ?"
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          }
+        ],
+        "order": 1,
+        "title": "ਤੁਰੰਤ ਜਾਂਚ: ਕੀ ਮੀਨਾ ਨੇ PR ਰੱਖਿਆ?"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "ਸਰਗਰਮੀ: ਮੀਨਾ ਦੀ ਕਹਾਣੀ"
+  },
+  {
+    "_createdAt": "2026-07-27T03:00:06Z",
+    "_id": "ecca3ca9-7b4a-4d22-a88d-2efc10f7d843-vi",
+    "_rev": "Ut2IjveUbUh1XPNXG3vvPZ",
+    "_type": "practice",
+    "_updatedAt": "2026-09-18T03:44:37Z",
+    "language": "vi",
+    "order_number": 4,
+    "pages": [
+      {
+        "_key": "1eff8a0dc7b0",
+        "_type": "activityPage",
+        "answer_box": {
+          "_type": "object",
+          "content": [
+            {
+              "_key": "db2245302725",
+              "_type": "block",
+              "children": [
+                {
+                  "_key": "8853168a640a",
+                  "_type": "span",
+                  "text": "Không. Theo các giả định đã nêu, một năm ít hơn 730 ngày đủ điều kiện. Điều này không tự động làm mất tư cách thường trú. Viên chức phải xét luật áp dụng, kể cả yếu tố nhân đạo liên quan. Có thể cần quyết định chính thức và quyền kháng cáo."
+                }
+              ],
+              "style": "normal"
+            }
+          ],
+          "showAfterSubmit": true
+        },
+        "instructions": [
+          {
+            "_key": "37e84248ec7e",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "578315f86a68",
+                "_type": "span",
+                "text": "Trong suốt 5 năm, Mina đã ở:"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "fabf298604dd",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "c67125ed124b",
+                "_type": "span",
+                "text": "1 năm ở Canada, và "
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "52c0564cf3fb",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b920f9e2f69c",
+                "_type": "span",
+                "text": "4 năm ở ngoài Canada"
+              }
+            ],
+            "level": 1,
+            "listItem": "bullet",
+            "style": "normal"
+          },
+          {
+            "_key": "c97bd6df5931",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "a4f6bc582859",
+                "_type": "span",
+                "text": "Giả sử Mina đã là thường trú nhân ít nhất năm năm. Trong năm năm ngay trước khi đánh giá, cô chỉ ở Canada một năm. Không có thời gian ở nước ngoài nào đủ điều kiện. Cô có đáp ứng yêu cầu 730 ngày không?"
+              }
+            ],
+            "style": "normal"
+          },
+          {
+            "_key": "a17405817965",
+            "_type": "multiple_choice_single",
+            "options": [
+              {
+                "_key": "bb859070729e",
+                "_type": "option",
+                "is_correct": false,
+                "text": [
+                  {
+                    "_key": "minab",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "minas",
+                        "_type": "span",
+                        "text": "Có, cô đáp ứng yêu cầu 730 ngày"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "yes"
+              },
+              {
+                "_key": "ca4d4664940e",
+                "_type": "option",
+                "is_correct": true,
+                "text": [
+                  {
+                    "_key": "6fec96832a75",
+                    "_type": "block",
+                    "children": [
+                      {
+                        "_key": "62de7d11f26f",
+                        "_type": "span",
+                        "text": "Không, cô không đáp ứng yêu cầu 730 ngày"
+                      }
+                    ],
+                    "style": "normal"
+                  }
+                ],
+                "value": "no"
+              }
+            ],
+            "question_text": [
+              {
+                "_key": "4f79d5336ac9",
+                "_type": "block",
+                "children": [
+                  {
+                    "_key": "fcf185d383b3",
+                    "_type": "span",
+                    "text": "Giả sử Mina đã là thường trú nhân ít nhất năm năm. Trong năm năm ngay trước khi đánh giá, cô chỉ ở Canada một năm. Không có thời gian ở nước ngoài nào đủ điều kiện. Cô có đáp ứng yêu cầu 730 ngày không?"
+                  }
+                ],
+                "style": "normal"
+              }
+            ]
+          }
+        ],
+        "order": 1,
+        "title": "Kiểm tra nhanh: Mina có giữ được PR không?"
+      }
+    ],
+    "practice_type": "activity",
+    "submodule": {
+      "_ref": "8d642532-1174-4c71-99a4-c2ad460d6dd7",
+      "_type": "reference"
+    },
+    "title": "Hoạt động: Câu chuyện của Mina"
+  }
+]

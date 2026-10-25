@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { trackQuizCompleted } from "@/lib/analytics";
 import type { LessonQuizProgress, SanityQuizQuestion } from "@/types";
 import { QuizQuestion } from "./QuizQuestion";
-import { computeScore, isAnswered } from "./grade";
+import { isAnswered, scoreToSave } from "./grade";
 
 interface LessonQuizProps {
   lessonId: string;
@@ -91,7 +91,7 @@ export function LessonQuiz({
       currentQuestionIndex: index,
       currentSubmitted,
       isCompleted: completed,
-      score: completed ? computeScore(questions, ans) : null,
+      score: completed ? scoreToSave(questions, ans) : null,
       totalQuestions: total,
     });
   }
@@ -134,7 +134,7 @@ export function LessonQuiz({
       );
       return;
     }
-    const score = computeScore(questions, answers);
+    const score = scoreToSave(questions, answers);
     try {
       await upsert.mutateAsync({
         lessonId,
