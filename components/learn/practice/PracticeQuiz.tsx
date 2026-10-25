@@ -17,7 +17,7 @@ import { QuizQuestion } from "./QuizQuestion";
 import { TakeABreakModal } from "./TakeABreakModal";
 import { PracticeFeedbackModal } from "./PracticeFeedbackModal";
 import { QuizResults } from "./QuizResults";
-import { displayKnowledgeScore } from "./savedScore";
+import { restoredKnowledgeScore } from "./savedScore";
 import {
   hasNeutralQuestion,
   isAnswered,
@@ -252,8 +252,8 @@ export function PracticeQuiz({
   }
 
   if (result) {
-    const savedScore = result.kind === "restored" && includesReflection
-      ? displayKnowledgeScore(quizQuestions, result.progress)
+    const savedScore = result.kind === "restored"
+      ? restoredKnowledgeScore(quizQuestions, result.progress)
       : undefined;
     const resultKnowledge = savedScore === undefined
       ? knowledge

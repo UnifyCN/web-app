@@ -97,6 +97,15 @@ export function displayKnowledgeScore(
       : null;
   }
 
+  return restoredKnowledgeScore(questions, progress);
+}
+
+/** Derive a completed result only from answers valid for the current content. */
+export function restoredKnowledgeScore(
+  questions: readonly SanityQuizQuestion[],
+  progress: SavedScoreInput,
+): KnowledgeScoreDisplay | null {
+  if (questions.length === 0) return null;
   if (!progress.isCompleted) return null;
   if (
     progress.totalQuestions != null &&

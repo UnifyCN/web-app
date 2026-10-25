@@ -174,6 +174,31 @@ function answerAndAdvance(h: Screen, selection: string[]) {
 
 describe("PracticeQuiz with the real confidence check", () => {
   test.each([
+    {label: "removed choice", answers: {...GOOD, [TF]: ["removed-option"]}, totalQuestions: 2},
+    {label: "missing answer", answers: {...GOOD, [TF]: []}, totalQuestions: 2},
+    {label: "changed count", answers: GOOD, totalQuestions: 3},
+  ])("restored knowledge-only results hide an unsafe score: $label", ({answers, totalQuestions}) => {
+    const h = practice({
+      questions: flatFor("en").filter(({question}) => question._key !== REFLECTION),
+      initialProgress: saved({isCompleted: true, currentQuestionIndex: 1,
+        currentSubmitted: true, score: 2, answers, totalQuestions}),
+    });
+    expect(only(h.tree, QuizResults).props.knowledge).toBeNull();
+    expect(only(h.tree, QuizResults).props.includesReflection).toBe(false);
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  test("restored knowledge-only results derive a valid score from current answers", () => {
+    const h = practice({
+      questions: flatFor("en").filter(({question}) => question._key !== REFLECTION),
+      initialProgress: saved({isCompleted: true, currentQuestionIndex: 1,
+        currentSubmitted: true, score: 0, answers: GOOD, totalQuestions: 2}),
+    });
+    expect(only(h.tree, QuizResults).props.knowledge).toEqual({correct: 2, total: 2});
+    expect(mocks.upsert).not.toHaveBeenCalled();
+  });
+
+  test.each([
     {label: "missing knowledge answer", answers: {...GOOD, [TF]: []}, totalQuestions: 3},
     {label: "stale knowledge choice", answers: {...GOOD, [TF]: ["removed-option"]}, totalQuestions: 3},
     {label: "missing reflection answer", answers: {...GOOD, [REFLECTION]: []}, totalQuestions: 3},
