@@ -18,7 +18,7 @@ import type { FlatQuestion } from "./PracticeQuiz";
  *   instruction.
  *
  * Either way the existing renderers (MultipleChoiceQuestion / MatchingQuestion /
- * FreeTextQuestion) and `gradeQuestion` handle the output unchanged.
+ * FreeTextQuestion) and `gradeAnswer` handle the output unchanged.
  */
 
 /** Activity instruction `_type` → the quiz `question_type` a renderer handles. */
@@ -84,6 +84,9 @@ export function flattenPractices(
           matching_pairs: ins.matching_pairs,
           order_number: order++,
           answer_box: page.answer_box ?? null,
+          // Carry the grading mode only when the content sets one, so
+          // knowledge questions keep their exact shape.
+          ...(ins.gradingMode ? { gradingMode: ins.gradingMode } : {}),
         };
         flat.push({ question, practiceTitle: heading });
         context = [];

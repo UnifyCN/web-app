@@ -17,9 +17,18 @@ import { QuizQuestion } from "./QuizQuestion";
 import { TakeABreakModal } from "./TakeABreakModal";
 import { PracticeFeedbackModal } from "./PracticeFeedbackModal";
 import { QuizResults } from "./QuizResults";
-import { computeScore, isAnswered } from "./grade";
+import { restoredKnowledgeScore } from "./savedScore";
+import {
+  hasNeutralQuestion,
+  isAnswered,
+  isNeutralQuestion,
+  scoreToSave,
+  summarizeKnowledge,
+} from "./grade";
 
-/** Free-text question types that get AI coach feedback on submit. */
+/** Free-text question types that get AI coach feedback on submit. Neutral
+ * questions (reflections, including `long_answer`) are skipped: the coach
+ * prompt judges what the learner got right, which does not fit a reflection. */
 const FREE_TEXT_TYPES = new Set([
   "short_answer",
   "fill_blank",
@@ -41,6 +50,10 @@ interface PracticeQuizProps {
   questions: FlatQuestion[];
   initialProgress: PracticeProgress | null;
 }
+
+type PracticeResult =
+  | {kind: "restored"; progress: PracticeProgress}
+  | {kind: "current"};
 
 export function PracticeQuiz({
   moduleId,
@@ -89,8 +102,10 @@ export function PracticeQuiz({
     }
     return init;
   });
-  const [showResults, setShowResults] = useState(
-    initialProgress?.isCompleted ?? false,
+  const [result, setResult] = useState<PracticeResult | null>(() =>
+    initialProgress?.isCompleted
+      ? {kind: "restored", progress: initialProgress}
+      : null,
   );
   const [breakOpen, setBreakOpen] = useState(false);
   // AI coach feedback for the current free-text answer (ephemeral — not
@@ -103,9 +118,19 @@ export function PracticeQuiz({
   const currentAnswer = (currentKey && answers[currentKey]) || [];
   const isSubmitted = !!(currentKey && submitted[currentKey]);
 
-  const finalScore = useMemo(
-    () => computeScore(questions.map((q) => q.question), answers),
-    [questions, answers],
+  const quizQuestions = useMemo(
+    () => questions.map((q) => q.question),
+    [questions],
+  );
+  // Knowledge result for the results screen. `total` stays the full question
+  // count for navigation and saving; this one counts knowledge questions only.
+  const knowledge = useMemo(
+    () => summarizeKnowledge(quizQuestions, answers),
+    [quizQuestions, answers],
+  );
+  const includesReflection = useMemo(
+    () => hasNeutralQuestion(quizQuestions),
+    [quizQuestions],
   );
 
   function persist(
@@ -121,7 +146,7 @@ export function PracticeQuiz({
       currentSubmitted,
       answers: ans,
       isCompleted: completed,
-      score: completed ? computeScore(questions.map((q) => q.question), ans) : null,
+      score: completed ? scoreToSave(quizQuestions, ans) : null,
       totalQuestions: total,
     });
   }
@@ -140,7 +165,11 @@ export function PracticeQuiz({
     // Free-text answers get AI coach feedback in a popup (mirrors mobile).
     const q = current.question;
     const userAnswer = (currentAnswer[0] ?? "").trim();
-    if (FREE_TEXT_TYPES.has(q.question_type) && userAnswer.length > 0) {
+    if (
+      FREE_TEXT_TYPES.has(q.question_type) &&
+      !isNeutralQuestion(q) &&
+      userAnswer.length > 0
+    ) {
       const accepted = q.correct_answer?.value ?? [];
       const expectedAnswer = accepted.length > 0 ? accepted.join(", ") : "";
       setFeedback({ status: "loading" });
@@ -178,7 +207,7 @@ export function PracticeQuiz({
     } else {
       // Done.
       persist(currentIndex, answers, true, true);
-      setShowResults(true);
+      setResult({kind: "current"});
     }
   }
 
@@ -194,7 +223,7 @@ export function PracticeQuiz({
     setAnswers({});
     setSubmitted({});
     setCurrentIndex(0);
-    setShowResults(false);
+    setResult(null);
     setFeedback(null);
     setFeedbackOpen(false);
     persist(0, {}, false, false);
@@ -222,11 +251,19 @@ export function PracticeQuiz({
     );
   }
 
-  if (showResults) {
+  if (result) {
+    const savedScore = result.kind === "restored"
+      ? restoredKnowledgeScore(quizQuestions, result.progress)
+      : undefined;
+    const resultKnowledge = savedScore === undefined
+      ? knowledge
+      : savedScore === null
+        ? null
+        : {correct: savedScore.correct, total: savedScore.total};
     return (
       <QuizResults
-        score={finalScore}
-        total={total}
+        knowledge={resultKnowledge}
+        includesReflection={includesReflection}
         colorHex={colorHex}
         sectionHref={sectionHref}
         onRetake={handleRetake}

@@ -1,12 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Check, ChevronDown, Circle, X } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Circle,
+  CircleDot,
+  Pencil,
+  X,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn, portableTextToPlain } from "@/lib/utils";
 import { Collapse } from "@/components/ui/Collapse";
 import { flattenPractices } from "./flattenPractices";
-import { gradeQuestion, isAnswered } from "./grade";
+import {
+  displayKnowledgeScore,
+  questionStatus,
+  wasSubmitted,
+} from "./savedScore";
 import type {
   PracticeProgress,
   QuizQuestionType,
@@ -31,8 +42,9 @@ interface PracticeQuestionListProps {
 
 /**
  * Expandable breakdown of a section's practice questions: type + a one-line
- * preview + per-question answered/correct status. Mirrors the lesson-list
- * expand pattern. Overall score stays on the Practice card above.
+ * preview + per-question status: not answered, draft (saved, not submitted),
+ * answered (reflection, not graded), correct or incorrect. Mirrors the
+ * lesson-list expand pattern. Overall score stays on the Practice card above.
  */
 export function PracticeQuestionList({
   practices,
@@ -44,8 +56,12 @@ export function PracticeQuestionList({
   if (flat.length === 0) return null;
 
   const answers = practiceProgress?.answers ?? {};
-  const score = practiceProgress?.score;
-  const total = practiceProgress?.totalQuestions;
+  // Knowledge questions only. Saved score and total count every question, so
+  // they are not shown as a ratio when the set has a reflection.
+  const savedScore = displayKnowledgeScore(
+    flat.map(({ question }) => question),
+    practiceProgress,
+  );
 
   return (
     <div className="mt-2">
@@ -57,9 +73,13 @@ export function PracticeQuestionList({
       >
         <span className="text-sm font-semibold text-ink-secondary">
           {t("learnWeb.practice.questionsCount", { count: flat.length })}
-          {score != null && total ? (
+          {savedScore ? (
             <span className="ml-1 font-normal text-ink-placeholder">
-              · {t("learnWeb.practice.scored", { score, total })}
+              ·{" "}
+              {t("learnWeb.practice.scored", {
+                score: savedScore.correct,
+                total: savedScore.total,
+              })}
             </span>
           ) : null}
         </span>
@@ -76,8 +96,11 @@ export function PracticeQuestionList({
         <ol className="mt-2 space-y-1.5">
           {flat.map(({ question }, i) => {
             const ans = answers[question._key];
-            const answered = isAnswered(question, ans);
-            const correct = answered && gradeQuestion(question, ans);
+            const status = questionStatus(
+              question,
+              ans,
+              wasSubmitted(i, practiceProgress),
+            );
             const preview = portableTextToPlain(question.question_text)
               .split("\n")[0]
               .slice(0, 90);
@@ -87,20 +110,28 @@ export function PracticeQuestionList({
                 className="flex items-start gap-3 rounded-md border border-border-card bg-surface px-3 py-2.5"
               >
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center">
-                  {answered ? (
-                    correct ? (
-                      <Check
-                        className="h-4 w-4 text-priority-optional"
-                        strokeWidth={3}
-                        aria-label={t("learnWeb.practice.correctAria")}
-                      />
-                    ) : (
-                      <X
-                        className="h-4 w-4 text-destructive"
-                        strokeWidth={3}
-                        aria-label={t("learnWeb.practice.incorrectAria")}
-                      />
-                    )
+                  {status === "correct" ? (
+                    <Check
+                      className="h-4 w-4 text-priority-optional"
+                      strokeWidth={3}
+                      aria-label={t("learnWeb.practice.correctAria")}
+                    />
+                  ) : status === "incorrect" ? (
+                    <X
+                      className="h-4 w-4 text-destructive"
+                      strokeWidth={3}
+                      aria-label={t("learnWeb.practice.incorrectAria")}
+                    />
+                  ) : status === "neutral" ? (
+                    <CircleDot
+                      className="h-4 w-4 text-ink-tertiary"
+                      aria-label={t("learnWeb.practice.reflectionAnsweredAria")}
+                    />
+                  ) : status === "draft" ? (
+                    <Pencil
+                      className="h-3.5 w-3.5 text-ink-placeholder"
+                      aria-label={t("learnWeb.practice.draftAria")}
+                    />
                   ) : (
                     <Circle
                       className="h-3.5 w-3.5 text-ink-placeholder"

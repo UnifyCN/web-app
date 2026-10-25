@@ -208,7 +208,8 @@ const QUIZ_QUESTION_FIELDS = `questions[] | order(order_number asc) {
     matching_pairs[] { _key, left_item, right_item, explanation },
     correct_answer { value, explanation, points },
     order_number,
-    answer_box { content, showAfterSubmit }
+    answer_box { content, showAfterSubmit },
+    gradingMode
   }`;
 
 /** Projection for an activity practice's `pages[]`. Same reuse rationale as

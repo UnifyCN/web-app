@@ -6,6 +6,9 @@ import type { SanityQuizQuestion } from "@/types";
  *   - choice / true-false → selected option `_key`s
  *   - matching            → `${pairKey}::${rightItem}` entries
  *   - free text           → a single-element `[text]`
+ *
+ * Grading is knowledge-only. A neutral question (see `isNeutralQuestion`) is
+ * answered and saved but is not part of any correct count or total.
  */
 
 export const MATCH_SEP = "::";
@@ -57,8 +60,28 @@ export function isAnswered(
   }
 }
 
-/** Whether the submitted answer is correct. Long-answer reflections always pass. */
-export function gradeQuestion(
+/**
+ * A question is neutral when it is answered and saved but never marked correct
+ * or incorrect: an explicit `gradingMode: "reflection"`, or the legacy
+ * `long_answer` type (an open reflection). Nothing else makes a question
+ * neutral. Option flags, titles and missing accepted answers never do.
+ */
+export function isNeutralQuestion(
+  q: Pick<SanityQuizQuestion, "question_type" | "gradingMode">,
+): boolean {
+  return q.gradingMode === "reflection" || q.question_type === "long_answer";
+}
+
+/**
+ * The outcome of one answer. `neutral` is its own case, so a caller cannot
+ * read a reflection as `correct: false` by falling back on a boolean.
+ */
+export type QuestionGrade =
+  | { kind: "neutral" }
+  | { kind: "knowledge"; correct: boolean };
+
+/** Whether a knowledge answer is correct. Never called for a neutral question. */
+function isKnowledgeCorrect(
   q: SanityQuizQuestion,
   answer: string[] | undefined,
 ): boolean {
@@ -79,9 +102,6 @@ export function gradeQuestion(
         pairs.length > 0 && pairs.every((p) => map.get(p._key) === p.right_item)
       );
     }
-    case "long_answer":
-      // Open reflection — any non-empty response counts as complete.
-      return (a[0]?.trim().length ?? 0) > 0;
     case "short_answer":
     case "fill_blank": {
       const accepted = (q.correct_answer?.value ?? []).map(norm);
@@ -95,13 +115,52 @@ export function gradeQuestion(
   }
 }
 
-/** Total correct over a question set for a given answers map. */
-export function computeScore(
-  questions: SanityQuizQuestion[],
+/** Grade one submitted answer. Neutral questions get no correctness result. */
+export function gradeAnswer(
+  q: SanityQuizQuestion,
+  answer: string[] | undefined,
+): QuestionGrade {
+  if (isNeutralQuestion(q)) return { kind: "neutral" };
+  return { kind: "knowledge", correct: isKnowledgeCorrect(q, answer) };
+}
+
+/** Knowledge result of a question set. Neutral questions are in neither number. */
+export interface KnowledgeSummary {
+  correct: number;
+  total: number;
+}
+
+export function summarizeKnowledge(
+  questions: readonly SanityQuizQuestion[],
   answers: Record<string, string[]>,
-): number {
-  return questions.reduce(
-    (n, q) => n + (gradeQuestion(q, answers[q._key]) ? 1 : 0),
-    0,
-  );
+): KnowledgeSummary {
+  let correct = 0;
+  let total = 0;
+  for (const q of questions) {
+    const grade = gradeAnswer(q, answers[q._key]);
+    if (grade.kind === "neutral") continue;
+    total += 1;
+    if (grade.correct) correct += 1;
+  }
+  return { correct, total };
+}
+
+export function hasNeutralQuestion(
+  questions: readonly SanityQuizQuestion[],
+): boolean {
+  return questions.some(isNeutralQuestion);
+}
+
+/**
+ * The `score` to save for a finished attempt. Stored `total_questions` is the
+ * full question count, so a knowledge-only count would read as a wrong ratio.
+ * An attempt that has a neutral question therefore saves `null`; the web view
+ * derives the knowledge score from content and answers instead.
+ */
+export function scoreToSave(
+  questions: readonly SanityQuizQuestion[],
+  answers: Record<string, string[]>,
+): number | null {
+  if (hasNeutralQuestion(questions)) return null;
+  return summarizeKnowledge(questions, answers).correct;
 }

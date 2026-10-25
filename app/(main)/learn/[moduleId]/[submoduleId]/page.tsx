@@ -7,7 +7,9 @@ import { useTranslation } from "react-i18next";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { Breadcrumb } from "@/components/learn/Breadcrumb";
 import { LessonListRow } from "@/components/learn/LessonListRow";
+import { flattenPractices } from "@/components/learn/practice/flattenPractices";
 import { PracticeQuestionList } from "@/components/learn/practice/PracticeQuestionList";
+import { displayKnowledgeScore } from "@/components/learn/practice/savedScore";
 import { lessonReadMinutes } from "@/lib/learn/readTime";
 import {
   useAllLessonProgresses,
@@ -89,12 +91,17 @@ export default function SubmoduleLandingPage({
     : practiceStarted
       ? t("learnWeb.section.resume")
       : t("common.start");
-  const practiceScore = practiceProgress?.score;
-  const practiceTotal = practiceProgress?.totalQuestions;
-  const practiceSubtitle =
-    practiceCompleted && practiceScore != null && practiceTotal
-      ? `${practiceScore}/${practiceTotal} · ${Math.round((practiceScore / practiceTotal) * 100)}%`
-      : t("learn.submodule.practiceDescription");
+  // Knowledge questions only. Saved score and total count every question, so
+  // the score is derived from current content and answers (see savedScore.ts).
+  const practiceScore = practiceCompleted
+    ? displayKnowledgeScore(
+        flattenPractices(practices).map(({ question }) => question),
+        practiceProgress,
+      )
+    : null;
+  const practiceSubtitle = practiceScore
+    ? `${practiceScore.correct}/${practiceScore.total} · ${practiceScore.percent}%`
+    : t("learn.submodule.practiceDescription");
 
   return (
     <div className="mx-auto max-w-[760px] px-6 py-8">

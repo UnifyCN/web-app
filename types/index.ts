@@ -473,6 +473,11 @@ export type QuizQuestionType =
   | "short_answer"
   | "long_answer";
 
+/** How a question is judged. `knowledge` (also the meaning of a missing value)
+ * is graded correct or incorrect. `reflection` is answered and saved but never
+ * graded, e.g. a confidence check. */
+export type QuizGradingMode = "knowledge" | "reflection";
+
 export interface SanityQuizOption {
   _key: string;
   text: SanityBlock[];
@@ -510,6 +515,8 @@ export interface SanityQuizQuestion {
   };
   order_number: number;
   answer_box?: SanityAnswerBox | null;
+  /** Optional. Only an explicit `reflection` makes the question ungraded. */
+  gradingMode?: QuizGradingMode;
 }
 
 /**
@@ -533,6 +540,8 @@ export interface SanityActivityInstruction {
   /** Present on `*_input_box` instructions. */
   label?: string;
   placeholder?: string;
+  /** Optional on choice instructions (see `SanityQuizQuestion`). */
+  gradingMode?: QuizGradingMode;
 }
 
 export interface SanityActivityPage {
