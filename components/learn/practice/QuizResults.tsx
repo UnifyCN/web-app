@@ -62,7 +62,7 @@ export function QuizResults({
             {t("learnWeb.practice.percentCorrect", { percent })}
           </p>
           {includesReflection && (
-            <p className="mt-1 text-xs text-ink-placeholder">
+            <p className="mt-1 text-xs text-ink-muted">
               {t("learnWeb.practice.reflectionNotScored")}
             </p>
           )}
