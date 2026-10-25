@@ -18,6 +18,7 @@ import {
   supabaseRoute,
   type FetchCall,
 } from '../_shared/testHarness.ts';
+import { embeddingsResponse } from '../_shared/testEmbeddingFixtures.ts';
 import { TOPIC_INSTRUCTION } from './lib/topic.ts';
 
 const takeHandler = captureServe();
@@ -52,7 +53,7 @@ function routes(call: FetchCall): Response | undefined {
   if (supabase) return supabase;
   if (call.url.hostname === 'openrouter.ai') {
     if (call.url.pathname.endsWith('/embeddings')) {
-      return json({ data: [{ embedding: [0.1, 0.2, 0.3] }] });
+      return embeddingsResponse((call.body as { input: unknown[] }).input.length);
     }
     if (call.url.pathname.endsWith('/chat/completions')) {
       const usage = {

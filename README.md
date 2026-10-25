@@ -125,7 +125,7 @@ sequenceDiagram
     Hook->>Proxy: POST prompt (source: "web")
     Proxy->>Fn: forward + JWT
     Fn->>DB: check_and_increment_chatbot_usage()
-    Fn->>OR: embed query (text-embedding-3-small)
+    Fn->>OR: embed query (qwen/qwen3-embedding-8b)
     OR-->>Fn: query vector
     Fn->>DB: match_chunks() vector search
     DB-->>Fn: top KB chunks

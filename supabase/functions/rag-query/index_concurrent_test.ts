@@ -18,6 +18,7 @@ import {
   supabaseRoute,
   testEnv,
 } from '../_shared/testHarness.ts';
+import { embeddingsResponse, storedVector } from '../_shared/testEmbeddingFixtures.ts';
 
 const takeHandler = captureServe();
 await import('./index.ts');
@@ -75,7 +76,7 @@ async function runPair(sizes: number[]) {
     }
     const supabase = supabaseRoute(call, { userId: 'user-1' });
     if (supabase) return supabase;
-    if (call.url.pathname.endsWith('/embeddings')) return json({ data: [{ embedding: [0.1] }] });
+    if (call.url.pathname.endsWith('/embeddings')) return embeddingsResponse((call.body as { input: unknown[] }).input.length);
     if (call.url.pathname.endsWith('/chat/completions')) {
       const body = call.body as { stream?: boolean };
       if (!body.stream) return openRouterCompletion(RAW);
@@ -148,8 +149,8 @@ Deno.test({
       assertEquals(provinces, ['British Columbia', 'Ontario'], label);
       for (const call of calls) {
         const body = call.body as Record<string, unknown>;
-        assertEquals(Object.keys(body).sort(), ['filter_province', 'match_count', 'match_threshold', 'query_embedding'], label);
-        assertEquals([body.match_count, body.match_threshold, body.query_embedding], [10, 0.3, [0.1]], label);
+        assertEquals(Object.keys(body).sort(), ['filter_province', 'match_count', 'match_threshold', 'query_embedding', 'query_embedding_model'], label);
+        assertEquals([body.match_count, body.match_threshold, body.query_embedding], [10, 0.3, storedVector(0)], label);
       }
 
       // each request's own model call carries its own province and the UTC source date

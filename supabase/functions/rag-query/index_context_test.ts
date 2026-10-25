@@ -15,6 +15,7 @@ import {
   supabaseRoute,
   type FetchCall,
 } from '../_shared/testHarness.ts';
+import { embeddingsResponse, storedVector } from '../_shared/testEmbeddingFixtures.ts';
 
 const takeHandler = captureServe();
 await import('./index.ts');
@@ -97,7 +98,7 @@ function routes(call: FetchCall): Response | undefined {
   if (supabase) return supabase;
   if (call.url.hostname === 'openrouter.ai') {
     if (call.url.pathname.endsWith('/embeddings')) {
-      return json({ data: [{ embedding: [0.1, 0.2, 0.3] }] });
+      return embeddingsResponse((call.body as { input: unknown[] }).input.length);
     }
     if (call.url.pathname.endsWith('/chat/completions')) {
       return json({
@@ -146,17 +147,18 @@ const ONTARIO_WORKER = {
 
 Deno.test({
   ...opts,
-  name: 'retrieval: an Ontario profile sends all four arguments, with threshold 0.3 and count 10',
+  name: 'retrieval: an Ontario profile sends all five arguments, with threshold 0.3 and count 10',
   fn: async () => {
     profile = ONTARIO_WORKER;
     chunks = KB_CHUNKS;
     const { status, rpc } = await ask('What is the latest Express Entry cutoff?');
     assertEquals(status, 200);
     assertEquals(rpc?.body, {
-      query_embedding: [0.1, 0.2, 0.3],
+      query_embedding: storedVector(0),
       match_threshold: 0.3,
       match_count: 10,
       filter_province: 'Ontario',
+      query_embedding_model: 'qwen/qwen3-embedding-8b',
     });
   },
 });
@@ -191,7 +193,7 @@ Deno.test({
   fn: async () => {
     profile = ONTARIO_WORKER;
     const { embedding } = await ask('What is the latest Express Entry cutoff?');
-    assertEquals((embedding?.body as { input: string }).input, 'What is the latest Express Entry cutoff?');
+    assertEquals((embedding?.body as { input: string[] }).input, ['What is the latest Express Entry cutoff?']);
   },
 });
 
@@ -430,7 +432,7 @@ Deno.test({
       const label = String(province);
       assertEquals(status, 200, label);
       const body = rpc?.body as Record<string, unknown>;
-      assertEquals(Object.keys(JSON.parse(JSON.stringify(body))).sort(), ['filter_province', 'match_count', 'match_threshold', 'query_embedding'], label);
+      assertEquals(Object.keys(JSON.parse(JSON.stringify(body))).sort(), ['filter_province', 'match_count', 'match_threshold', 'query_embedding', 'query_embedding_model'], label);
       assertEquals(body.filter_province, null, label);
       assertEquals([body.match_threshold, body.match_count], [0.3, 10], label);
       assert(!system.includes('PROVINCE IMMIGRATION POINTER'), label);

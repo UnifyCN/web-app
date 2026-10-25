@@ -14,12 +14,13 @@ function args(province: unknown) {
   return buildRetrievalArgs(VECTOR, { province });
 }
 
-Deno.test('Ontario: all four arguments, threshold 0.3 and count 10 unchanged', () => {
+Deno.test('Ontario: all five arguments, threshold 0.3 and count 10 unchanged', () => {
   assertEquals(args('Ontario'), {
     query_embedding: VECTOR,
     match_threshold: 0.3,
     match_count: 10,
     filter_province: 'Ontario',
+    query_embedding_model: 'qwen/qwen3-embedding-8b',
   });
 });
 
@@ -90,6 +91,7 @@ Deno.test('null, blank or missing province and a missing profile send an explici
       match_threshold: 0.3,
       match_count: 10,
       filter_province: null,
+      query_embedding_model: 'qwen/qwen3-embedding-8b',
     });
   }
 });
@@ -106,5 +108,6 @@ Deno.test('persona and arrival date are not retrieval arguments', () => {
     'match_count',
     'match_threshold',
     'query_embedding',
+    'query_embedding_model',
   ]);
 });

@@ -69,7 +69,10 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   renders the real RAG answer + sources (the canned reply is gone). The KB is seeded
   (32 docs / 350 chunks, 1536-dim) with RLS + grants. **Both embeddings and the chat
   completion go through OpenRouter** — the query vector uses
-  `openai/text-embedding-3-small` *proxied via OpenRouter* (`OPENROUTER_EMBEDDING_MODEL`),
+  `qwen/qwen3-embedding-8b` (the one fixed model; no env override or fallback), through the
+  shared adapter `_shared/embeddings.ts` (first 1536 of 4096 native values, scaled to length 1;
+  copied byte for byte from mobile-app, never edit it here), and `match_chunks` is called with
+  `query_embedding_model` so the database returns rows only for the model it serves,
   and answers run the shared Gemini-2.5-Flash → DeepSeek-v4-Flash fallback chain
   (`_shared/openrouter.ts`). So the only key required is **`OPENROUTER_API_KEY`** (a
   Supabase **edge-function secret**, not a Vercel env var); `OPENAI_API_KEY` is unused
