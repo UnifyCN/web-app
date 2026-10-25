@@ -7,7 +7,7 @@ import type { KnowledgeSummary } from "./grade";
 
 interface QuizResultsProps {
   /** Knowledge questions only. `total` 0 means every question was a reflection. */
-  knowledge: KnowledgeSummary;
+  knowledge: KnowledgeSummary | null;
   /** The set has at least one reflection, so the score covers part of it. */
   includesReflection: boolean;
   colorHex: string;
@@ -23,10 +23,14 @@ export function QuizResults({
   onRetake,
 }: QuizResultsProps) {
   const { t } = useTranslation();
-  const { correct, total } = knowledge;
+  const correct = knowledge?.correct ?? 0;
+  const total = knowledge?.total ?? 0;
   const graded = total > 0;
+  const reflectionOnly = knowledge?.total === 0;
   const percent = graded ? Math.round((correct / total) * 100) : 0;
-  const message = !graded
+  const message = knowledge === null
+    ? null
+    : !graded
     ? t("learnWeb.practice.reflectionSaved")
     : percent >= 80
       ? t("learnWeb.practice.resultGreat")
@@ -43,11 +47,11 @@ export function QuizResults({
         <Award className="h-8 w-8" aria-hidden />
       </span>
       <h1 className="mt-5 text-2xl font-bold text-ink-secondary">
-        {graded
-          ? t("learnWeb.practice.quizComplete")
-          : t("learnWeb.practice.reflectionComplete")}
+        {reflectionOnly
+          ? t("learnWeb.practice.reflectionComplete")
+          : t("learnWeb.practice.quizComplete")}
       </h1>
-      <p className="mt-2 text-sm text-ink-muted">{message}</p>
+      {message && <p className="mt-2 text-sm text-ink-muted">{message}</p>}
       {graded && (
         <>
           <p className="mt-6 text-4xl font-extrabold text-ink-secondary">

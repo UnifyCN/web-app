@@ -4,6 +4,7 @@ import type { PracticeProgress, SanityPractice } from "@/types";
 import { MultipleChoiceQuestion } from "./MultipleChoiceQuestion";
 import { PracticeQuestionList } from "./PracticeQuestionList";
 import { QuizResults } from "./QuizResults";
+import { QuizQuestion } from "./QuizQuestion";
 import {
   CONFIDENCE_OPTION_KEYS,
   REFLECTION_QUESTION_KEY,
@@ -40,6 +41,59 @@ vi.mock("@/components/ui/Collapse", () => ({
 const SELECTED_NEUTRAL = "border-ink bg-surface-gray";
 const CORRECT_COLOURS = ["priority-optional"];
 const WRONG_COLOURS = ["destructive"];
+
+describe("explicit reflection metadata in every renderer", () => {
+  test("matching preserves choices without correctness output", () => {
+    const question = makeQuestion("matching-reflection", "matching", {
+      gradingMode: "reflection",
+      matching_pairs: [
+        {_key: "p1", left_item: "L1", right_item: "R1"},
+        {_key: "p2", left_item: "L2", right_item: "R2"},
+      ],
+    });
+    const show = (mode: "reflection" | "knowledge") => renderIn(createElement(QuizQuestion, {
+      question: {...question, gradingMode: mode}, answer: ["p1::R1", "p2::R1"],
+      submitted: true, onChange: () => undefined,
+    }));
+    const neutral = show("reflection");
+    expect(neutral).not.toMatch(/priority-optional|destructive|Correct answer/);
+    expect(buttonsIn(neutral).filter((button) => button.includes('aria-pressed="true"'))).toHaveLength(2);
+    expect(buttonsIn(neutral).every((button) => button.includes('disabled=""'))).toBe(true);
+    const knowledge = show("knowledge");
+    expect(knowledge).toContain("priority-optional");
+    expect(knowledge).toContain("destructive");
+    expect(textIn(knowledge)).toContain("Correct answer");
+  });
+
+  test.each(["short_answer", "fill_blank"] as const)("%s reflections hide accepted answers", (question_type) => {
+    const question = makeQuestion("text-reflection", question_type, {
+      gradingMode: "reflection", correct_answer: {value: ["yes"]},
+      answer_box: {content: [block("Reflection guidance")], showAfterSubmit: true},
+    });
+    const show = (mode: "reflection" | "knowledge") => renderIn(createElement(QuizQuestion, {
+      question: {...question, gradingMode: mode}, answer: ["My reflection"],
+      submitted: true, onChange: () => undefined,
+    }));
+    const neutral = show("reflection");
+    expect(textIn(neutral)).not.toContain("Accepted answer");
+    expect(neutral).toContain("My reflection");
+    expect(neutral).toContain('rows="3"');
+    expect(neutral).toContain('disabled=""');
+    expect(textIn(neutral)).toContain("Reflection guidance");
+    expect(textIn(show("knowledge"))).toContain("Accepted answer");
+  });
+
+  test("unsafe restored results keep completion controls without a score message", () => {
+    const html = renderIn(createElement(QuizResults, {
+      knowledge: null, includesReflection: true, colorHex: "#f68b26",
+      sectionHref: "/learn/module/section", onRetake: () => undefined,
+    }));
+    expect(textIn(html)).toContain("Quiz complete");
+    expect(textIn(html)).not.toMatch(/\d+\s*\/\s*\d+|\d+%|Great job|Nice work|Keep practicing/);
+    expect(textIn(html)).toContain("Retake");
+    expect(html).toContain('/learn/module/section');
+  });
+});
 
 function reflection(lang: Parameters<typeof questionsFor>[0] = "en") {
   return questionByKey(questionsFor(lang), REFLECTION_QUESTION_KEY);

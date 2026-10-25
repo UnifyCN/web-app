@@ -17,6 +17,7 @@ import { QuizQuestion } from "./QuizQuestion";
 import { TakeABreakModal } from "./TakeABreakModal";
 import { PracticeFeedbackModal } from "./PracticeFeedbackModal";
 import { QuizResults } from "./QuizResults";
+import { displayKnowledgeScore } from "./savedScore";
 import {
   hasNeutralQuestion,
   isAnswered,
@@ -49,6 +50,10 @@ interface PracticeQuizProps {
   questions: FlatQuestion[];
   initialProgress: PracticeProgress | null;
 }
+
+type PracticeResult =
+  | {kind: "restored"; progress: PracticeProgress}
+  | {kind: "current"};
 
 export function PracticeQuiz({
   moduleId,
@@ -97,8 +102,10 @@ export function PracticeQuiz({
     }
     return init;
   });
-  const [showResults, setShowResults] = useState(
-    initialProgress?.isCompleted ?? false,
+  const [result, setResult] = useState<PracticeResult | null>(() =>
+    initialProgress?.isCompleted
+      ? {kind: "restored", progress: initialProgress}
+      : null,
   );
   const [breakOpen, setBreakOpen] = useState(false);
   // AI coach feedback for the current free-text answer (ephemeral — not
@@ -200,7 +207,7 @@ export function PracticeQuiz({
     } else {
       // Done.
       persist(currentIndex, answers, true, true);
-      setShowResults(true);
+      setResult({kind: "current"});
     }
   }
 
@@ -216,7 +223,7 @@ export function PracticeQuiz({
     setAnswers({});
     setSubmitted({});
     setCurrentIndex(0);
-    setShowResults(false);
+    setResult(null);
     setFeedback(null);
     setFeedbackOpen(false);
     persist(0, {}, false, false);
@@ -244,10 +251,18 @@ export function PracticeQuiz({
     );
   }
 
-  if (showResults) {
+  if (result) {
+    const savedScore = result.kind === "restored" && includesReflection
+      ? displayKnowledgeScore(quizQuestions, result.progress)
+      : undefined;
+    const resultKnowledge = savedScore === undefined
+      ? knowledge
+      : savedScore === null
+        ? null
+        : {correct: savedScore.correct, total: savedScore.total};
     return (
       <QuizResults
-        knowledge={knowledge}
+        knowledge={resultKnowledge}
         includesReflection={includesReflection}
         colorHex={colorHex}
         sectionHref={sectionHref}

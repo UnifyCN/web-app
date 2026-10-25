@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import { cn } from "@/lib/utils";
 import type { SanityQuizQuestion } from "@/types";
-import { encodeMatch, parseMatching } from "./grade";
+import { encodeMatch, isNeutralQuestion, parseMatching } from "./grade";
 
 interface MatchingQuestionProps {
   question: SanityQuizQuestion;
@@ -29,6 +29,7 @@ export function MatchingQuestion({
   const pairs = question.matching_pairs ?? [];
   const categories = [...new Set(pairs.map((p) => p.right_item))];
   const selected = parseMatching(answer);
+  const neutral = isNeutralQuestion(question);
 
   function choose(pairKey: string, category: string) {
     if (submitted) return;
@@ -42,8 +43,8 @@ export function MatchingQuestion({
       <div className="flex flex-col gap-3">
         {pairs.map((pair) => {
           const chosen = selected.get(pair._key);
-          const correct = submitted && chosen === pair.right_item;
-          const wrong = submitted && chosen !== undefined && !correct;
+          const correct = submitted && !neutral && chosen === pair.right_item;
+          const wrong = submitted && !neutral && chosen !== undefined && !correct;
           return (
             <div
               key={pair._key}

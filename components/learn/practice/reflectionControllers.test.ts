@@ -173,6 +173,34 @@ function answerAndAdvance(h: Screen, selection: string[]) {
 }
 
 describe("PracticeQuiz with the real confidence check", () => {
+  test.each([
+    {label: "missing knowledge answer", answers: {...GOOD, [TF]: []}, totalQuestions: 3},
+    {label: "stale knowledge choice", answers: {...GOOD, [TF]: ["removed-option"]}, totalQuestions: 3},
+    {label: "missing reflection answer", answers: {...GOOD, [REFLECTION]: []}, totalQuestions: 3},
+    {label: "changed question count", answers: GOOD, totalQuestions: 4},
+  ])("restored results hide an unsafe score: $label", ({answers, totalQuestions}) => {
+    const h = practice({initialProgress: saved({
+      isCompleted: true,
+      currentQuestionIndex: 2,
+      currentSubmitted: true,
+      score: 2,
+      answers,
+      totalQuestions,
+    })});
+    const results = only(h.tree, QuizResults);
+    expect(results.props.knowledge).toBeNull();
+    expect(results.props.includesReflection).toBe(true);
+    expect(mocks.upsert).not.toHaveBeenCalled();
+    h.act(() => call(results, "onRetake"));
+    expect(has(h.tree, QuizResults)).toBe(false);
+    answerAndAdvance(h, GOOD[TF]);
+    answerAndAdvance(h, GOOD[SINGLE]);
+    choose(h, [PICK]);
+    press(h, "Submit");
+    press(h, "Done");
+    expect(only(h.tree, QuizResults).props.knowledge).toEqual({correct: 2, total: 2});
+  });
+
   test("Submit, Next, Back, Done: payloads keep the full count, keys and indexes", () => {
     const h = practice();
     expect(shown(h)).toEqual({ key: TF, answer: [], submitted: false });
