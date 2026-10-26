@@ -152,6 +152,14 @@ Deno.test({ name: 'a full rollback stops every pending reminder; re-application 
   const downStart = await dbNow();
   await migrate('down');
   const downEnd = await dbNow();
+  // While rolled back, the archived rows already show every open reminder stopped.
+  const archived = Object.fromEntries((await sql`select row_data from companion_rollback_archive
+      where source = 'companion_task_reminders' and row_data->>'user_id' = ${a.id}`)
+    .map(r => [r.row_data.task_ref, [r.row_data.status, r.row_data.cancelled_reason]]));
+  assertEquals(archived['sanity:untouched'], ['cancelled', 'schema_rollback']);
+  assertEquals(archived['sanity:reopened'], ['cancelled', 'schema_rollback']);
+  assertEquals(archived['sanity:done-before'], ['cancelled', 'task_completed']);
+  assertEquals(archived['sanity:sent-before'], ['sent', null]);
   // An old client completes and reopens a task while rolled back.
   await a.client.from('user_tasks').update({ completed: true, completed_at: iso() }).eq('sanity_checklist_id', 'reopened');
   await a.client.from('user_tasks').update({ completed: false, completed_at: null }).eq('sanity_checklist_id', 'reopened');

@@ -142,6 +142,15 @@ Deno.test({ name: 'invalid payloads are 4xx, never 500, and write nothing', ...t
   assertEquals(badOp.status, 400);
   const badAction = await call(a, { contract_version: 1, client: { platform: 'ios' }, action: 'prepare', operations: [] });
   assertEquals([badAction.status, badAction.json.reason], [400, 'invalid_action']);
+  // Defence in depth: the SQL registry refuses an unregistered type even from a
+  // service-role caller that skipped the handler's parser.
+  for (const op of [{ type: 'task.remove', task_ref: ref, expected_revision: rev },
+                    { type: 'task.create_custom', title: 'x', priority: 'Do now' }]) {
+    const err = await sql`select public.companion_apply_actions(${a.id}::uuid, ${uuid()}::uuid, 1,
+        ${sql.json({ kind: 'ui_control' })}, ${sql.json([op])})`.then(() => null, e => e);
+    assertEquals([err?.code, err?.message], ['CA422', 'unsupported_operation'], JSON.stringify(op));
+  }
+  assertEquals(await receiptsOf(a), 0);
   // A long but valid reason is accepted; 500 characters exactly.
   assertEquals((await apply(a, [setState(ref, 'waiting', rev, 'y'.repeat(500))])).status, 200);
   assertEquals(await receiptsOf(a), 1);
