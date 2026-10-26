@@ -20,8 +20,8 @@ const FOCUSABLE =
  * backdrop close it, Tab stays inside, and focus returns to the control that
  * opened it. The conversation and the composer draft stay mounted beneath.
  *
- * Enter/exit motion and reduced motion come from the shared dialog pieces
- * (components/ui/Dialog.tsx). Focus and keys are keyed on `open` only, so a
+ * Enter/exit motion, reduced motion and the inert background come from the
+ * shared dialog pieces (components/ui/Dialog.tsx). Focus and keys are keyed on `open` only, so a
  * parent update never moves focus, and they never wait for the exit fade.
  */
 export function CompanionContextDrawer({
@@ -76,7 +76,7 @@ export function CompanionContextDrawer({
   }, [open]);
 
   return (
-    <DialogPresence open={open}>
+    <DialogPresence open={open} inertBackground>
       {context && (
         <div key="companion-context-drawer" className="fixed inset-0 z-50">
           <DialogOverlay

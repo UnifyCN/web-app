@@ -13,6 +13,8 @@
 // Proves, in a real browser: text contrast of the added UI against its actual
 // backgrounds, enter/exit motion and reduced motion, focus on open, Tab trap,
 // focus kept through a parent update, Escape and backdrop close, focus return,
+// an inert background while open (no script focus, not in Chromium's
+// accessibility tree) and its earlier state restored on close,
 // the composer draft kept for the same account and cleared for another, and
 // no prior-account context after an account change or access loss; RTL places
 // the drawer at the inline end.
@@ -43,6 +45,11 @@ const ar = JSON.parse(await readFile(join(root, "lib/i18n/locales/ar/translation
 const L = {
   en: { open: en.companion.context.openDetails, close: en.companion.context.closeAria },
   ar: { open: ar.companion.context.openDetails, close: ar.companion.context.closeAria },
+};
+// Background controls that an open modal must hide from focus and assistive tech.
+const BACKGROUND = {
+  en: [en.companion.messageInputAria, en.companion.searchChats],
+  ar: [ar.companion.messageInputAria, ar.companion.searchChats],
 };
 
 // ------------------------------------------------------------------ harness
@@ -274,6 +281,27 @@ const activeLabel = (page) =>
     href: document.activeElement?.getAttribute("href"),
     inDialog: Boolean(document.activeElement?.closest('[role="dialog"]')),
   }));
+/** Background controls Chromium still exposes in its accessibility tree. */
+async function exposedBackground(page, names) {
+  const cdp = await page.context().newCDPSession(page);
+  const { nodes } = await cdp.send("Accessibility.getFullAXTree");
+  await cdp.detach();
+  return nodes
+    .filter((n) => !n.ignored && names.includes(n.name?.value))
+    .map((n) => `${n.role?.value}: ${n.name?.value}`);
+}
+/** Try to focus each background control from script; report any that took focus. */
+const focusBackground = (page, names) =>
+  page.evaluate((names) => {
+    const took = [];
+    for (const el of document.querySelectorAll("textarea, input")) {
+      if (!names.includes(el.getAttribute("aria-label"))) continue;
+      el.focus();
+      if (document.activeElement === el) took.push(el.getAttribute("aria-label"));
+    }
+    return { took, inDialog: Boolean(document.activeElement?.closest('[role="dialog"]')) };
+  }, names);
+
 async function gone(page, ms = 1000) {
   const until = Date.now() + ms;
   while (Date.now() < until) {
@@ -296,6 +324,11 @@ async function run(browser) {
     }, { label: L.en.open });
     check("summary text contrast >= 4.5:1 (answer card)", summary.length > 0 && summary.every((r) => r.ok), summary.filter((r) => !r.ok));
 
+    // An element the app had already made inert must stay inert after the drawer closes.
+    await page.evaluate((label) => {
+      [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === label).inert = true;
+    }, en.companion.newConversation);
+
     const enter = await openAndSample(page, L.en.open);
     const firstSeen = enter.find(Boolean);
     check("drawer enters with motion (fades and moves in)", firstSeen && firstSeen.opacity < 1 && enter.some((f) => f && moved(f.transform)), enter.slice(0, 4));
@@ -305,10 +338,16 @@ async function run(browser) {
     const focus = await activeLabel(page);
     check("focus moves to Close on open", focus.label === L.en.close && focus.inDialog, focus);
 
+    const blocked = await focusBackground(page, BACKGROUND.en);
+    check("open drawer: background composer and search cannot take focus", blocked.took.length === 0 && blocked.inDialog, blocked);
+    const exposed = await exposedBackground(page, BACKGROUND.en);
+    check("open drawer: background controls are not in the accessibility tree", exposed.length === 0, exposed);
+
     const drawer = await page.evaluate(() => window.__t.contrast(document.querySelector('[role="dialog"]'), 4.5));
     check("drawer text contrast >= 4.5:1 (titles, publishers, addresses, times, sections)", drawer.length > 10 && drawer.every((r) => r.ok), drawer.filter((r) => !r.ok));
 
     const focusables = await page.locator('[role="dialog"] a[href], [role="dialog"] button').count();
+    await page.getByRole("button", { name: L.en.close }).focus();
     const trapped = [];
     for (let i = 0; i < focusables + 2; i++) {
       await page.keyboard.press("Tab");
@@ -327,6 +366,9 @@ async function run(browser) {
     const after = await activeLabel(page);
     check("a same-account update keeps focus on the same source link", after.href === before.href && after.inDialog, { before, after });
     check("a same-account update keeps the drawer open", (await dialogCount(page)) === 1);
+    const stillBlocked = await focusBackground(page, BACKGROUND.en);
+    await link.focus();
+    check("a same-account update keeps the background inert", stillBlocked.took.length === 0, stillBlocked);
 
     const exit = await page.evaluate(async () => {
       document.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
@@ -337,6 +379,16 @@ async function run(browser) {
     const back = await activeLabel(page);
     check("focus returns to the Sources and context control", back.label === L.en.open, back);
     check("the draft survives open, update and close", (await textbox.inputValue()) === "Keep my draft");
+    const restored = await focusBackground(page, BACKGROUND.en);
+    check("after close: the background can take focus again", restored.took.length === BACKGROUND.en.length, restored);
+    check("after close: background controls are back in the accessibility tree", (await exposedBackground(page, BACKGROUND.en)).length === BACKGROUND.en.length);
+    const keptInert = await page.evaluate((label) => {
+      const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === label);
+      const was = b.inert;
+      b.inert = false;
+      return was;
+    }, en.companion.newConversation);
+    check("after close: an element the app made inert before opening stays inert", keptInert === true);
 
     await page.getByRole("button", { name: L.en.open, exact: true }).first().click();
     await page.getByRole("dialog").waitFor();
@@ -351,6 +403,8 @@ async function run(browser) {
     check("account change: the open drawer closes", closedOnSwitch);
     check("account change: no prior-account context is shown", !/Social Insurance Number|Find a family doctor|Open a bank account/.test(body));
     check("account change: the prior account's draft is cleared", (await textbox.inputValue()) === "", await textbox.inputValue());
+    const afterSwitch = await focusBackground(page, BACKGROUND.en);
+    check("account change: the composer can take focus again", afterSwitch.took.includes(en.companion.messageInputAria), afterSwitch);
     await context.close();
   }
 
@@ -402,6 +456,8 @@ async function run(browser) {
     check("RTL: summary and drawer text contrast >= 4.5:1", [...summary, ...drawer].every((r) => r.ok), [...summary, ...drawer].filter((r) => !r.ok));
     const focus = await activeLabel(page);
     check("RTL: focus moves to Close on open", focus.label === L.ar.close, focus);
+    const blocked = await focusBackground(page, BACKGROUND.ar);
+    check("RTL: background cannot take focus and is not in the accessibility tree", blocked.took.length === 0 && (await exposedBackground(page, BACKGROUND.ar)).length === 0, blocked);
     await context.close();
   }
 }
