@@ -73,8 +73,15 @@ export function isPlanningQuestion(prompt: string): boolean {
   return PLANNING_PATTERN.test(prompt);
 }
 
+/**
+ * Locale-neutral arrival code: `tomorrow`, `this_week`, `next_week`,
+ * `next_month`, `in_days:<n>` or `in_weeks:<n>`. Clients translate it; the
+ * prompt spells it in English (arrivalWords).
+ */
+export type ArrivalCode = string;
+
 interface ArrivalPhrase {
-  phrase: string;
+  phrase: ArrivalCode;
   /** Days from today: the earliest and latest date the phrase can mean. */
   minDays: number;
   maxDays: number;
@@ -89,12 +96,13 @@ function arrivalPhrase(text: string): ArrivalPhrase | null {
   if (inN) {
     const n = Number(inN[1]);
     const days = inN[2].startsWith('week') ? n * 7 : n;
-    return { phrase: inN[0], minDays: Math.max(0, days - 3), maxDays: days + 3 };
+    const code = inN[2].startsWith('week') ? `in_weeks:${n}` : `in_days:${n}`;
+    return { phrase: code, minDays: Math.max(0, days - 3), maxDays: days + 3 };
   }
   if (/\btomorrow\b/.test(lower)) return { phrase: 'tomorrow', minDays: 1, maxDays: 1 };
-  if (/\bnext week\b/.test(lower)) return { phrase: 'next week', minDays: 1, maxDays: 14 };
-  if (/\bthis week\b/.test(lower)) return { phrase: 'this week', minDays: 0, maxDays: 7 };
-  if (/\bnext month\b/.test(lower)) return { phrase: 'next month', minDays: 14, maxDays: 62 };
+  if (/\bnext week\b/.test(lower)) return { phrase: 'next_week', minDays: 1, maxDays: 14 };
+  if (/\bthis week\b/.test(lower)) return { phrase: 'this_week', minDays: 0, maxDays: 7 };
+  if (/\bnext month\b/.test(lower)) return { phrase: 'next_month', minDays: 14, maxDays: 62 };
   return null;
 }
 
@@ -143,6 +151,13 @@ export function readConversationDetails(
     province: place.province,
     arrival,
   };
+}
+
+/** The English words for an arrival code, for the prompt. */
+export function arrivalWords(code: string): string {
+  const n = /^in_(days|weeks):(\d{1,2})$/.exec(code);
+  if (n) return `in ${n[2]} ${n[1]}`;
+  return code.replace('_', ' ');
 }
 
 const DAY_MS = 86_400_000;

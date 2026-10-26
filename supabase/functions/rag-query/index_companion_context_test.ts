@@ -390,7 +390,7 @@ Deno.test({
       fields: [
         { key: 'city', value: 'Vancouver' },
         { key: 'province', value: 'British Columbia' },
-        { key: 'arrival', value: 'next week' },
+        { key: 'arrival', value: 'next_week' },
       ],
     });
     assertEquals(items.find(i => i.kind === 'conversation'), {
@@ -676,7 +676,7 @@ Deno.test({
         kind: 'profile_conflict',
         field: 'arrival_date',
         profileValue: '2025-02-01',
-        conversationValue: 'next week',
+        conversationValue: 'next_week',
       });
     } finally {
       TORONTO.profile!.province = saved;

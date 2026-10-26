@@ -5,6 +5,7 @@
 // block and speak as an instruction.
 
 import type { CompanionContext } from './contract.ts';
+import { arrivalWords } from './conversationDetails.ts';
 
 const OPEN = '<<<DATA';
 const CLOSE = 'DATA>>>';
@@ -41,7 +42,8 @@ export function appContextBlock(context: CompanionContext): string {
       }
     } else if (item.kind === 'conversation_detail') {
       for (const field of item.fields) {
-        lines.push(`Stated in this conversation (not saved to the profile), ${field.key}: ${dataText(field.value, 80)}`);
+        const value = field.key === 'arrival' ? arrivalWords(field.value) : field.value;
+        lines.push(`Stated in this conversation (not saved to the profile), ${field.key}: ${dataText(value, 80)}`);
       }
     } else if (item.kind === 'checklist_task') {
       lines.push(
@@ -109,5 +111,6 @@ export function clarificationBlock(context: CompanionContext): string {
     return `\n\nCLARIFICATION NEEDED: The user's province is unknown. Ask which province or city they are in (or moving to) before giving province-specific steps.`;
   }
   const field = c.field === 'province' ? 'province' : 'arrival date';
-  return `\n\nCLARIFICATION NEEDED: The profile ${field} is "${dataText(c.profileValue, 60)}", but in this conversation the user said "${dataText(c.conversationValue, 60)}". Answer for what they said in this conversation, mention the difference in one short sentence, and ask whether it is still correct. The profile is not changed; do not say it was.`;
+  const stated = c.field === 'arrival_date' ? `they arrive ${arrivalWords(c.conversationValue)}` : c.conversationValue;
+  return `\n\nCLARIFICATION NEEDED: The profile ${field} is "${dataText(c.profileValue, 60)}", but in this conversation the user said "${dataText(stated, 60)}". Answer for what they said in this conversation, mention the difference in one short sentence, and ask whether it is still correct. The profile is not changed; do not say it was.`;
 }
