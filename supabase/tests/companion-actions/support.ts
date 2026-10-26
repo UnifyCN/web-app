@@ -20,12 +20,17 @@ if (!/^http:\/\/127\.0\.0\.1:/.test(API_URL) || !/@127\.0\.0\.1:/.test(DB_URL)) 
   throw new Error('refusing to run against a non-local stack');
 }
 
-// ACTIONS_MIGRATION_FILE / ACTIONS_ROLLBACK_FILE substitute a deliberately broken copy (mutation_check.py).
+// ACTIONS_MIGRATION_FILE / ACTIONS_ROLLBACK_FILE (#361) and ACTIONS_MIGRATION_363_FILE /
+// ACTIONS_ROLLBACK_363_FILE (#363) substitute a deliberately broken copy (mutation_check.py).
 const override = (k: string) => Deno.env.get(k) ? new URL(`file://${Deno.env.get(k)}`) : undefined;
 export const MIGRATION = override('ACTIONS_MIGRATION_FILE') ??
   new URL('../../migrations/20261025235536_companion_task_actions.sql', import.meta.url);
 export const ROLLBACK = override('ACTIONS_ROLLBACK_FILE') ??
   new URL('../../rollbacks/20261025235536_companion_task_actions.down.sql', import.meta.url);
+export const MIGRATION_363 = override('ACTIONS_MIGRATION_363_FILE') ??
+  new URL('../../migrations/20261026165156_companion_task_create.sql', import.meta.url);
+export const ROLLBACK_363 = override('ACTIONS_ROLLBACK_363_FILE') ??
+  new URL('../../rollbacks/20261026165156_companion_task_create.down.sql', import.meta.url);
 
 export const admin = createClient(API_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 export const sql = postgres(DB_URL, { max: 20, onnotice: () => {} });
@@ -83,15 +88,36 @@ export async function migrationApplied(): Promise<boolean> {
   return r.applied;
 }
 
-/** Applies the production migration or its rollback script in one transaction. */
+/**
+ * The full schema change: 'up' applies both production migrations in order (#361, then
+ * #363), each in one transaction; 'down' runs both rollback scripts in reverse order.
+ */
 export async function migrate(which: 'up' | 'down'): Promise<void> {
-  const text = await Deno.readTextFile(which === 'up' ? MIGRATION : ROLLBACK);
-  await sql.begin(tx => tx.unsafe(text));
-  await waitForSchemaCache(which);
+  if (which === 'up') {
+    await sql.begin(async tx => await tx.unsafe(await Deno.readTextFile(MIGRATION)));
+    await migrate363('up');
+  } else {
+    if (await migration363Applied()) await migrate363('down');
+    await sql.begin(async tx => await tx.unsafe(await Deno.readTextFile(ROLLBACK)));
+    await waitForSchemaCache('down');
+  }
+}
+
+/** Only the #363 migration or only its rollback script, in one transaction. */
+export async function migrate363(which: 'up' | 'down'): Promise<void> {
+  const text = await Deno.readTextFile(which === 'up' ? MIGRATION_363 : ROLLBACK_363);
+  await sql.begin(async tx => await tx.unsafe(text));
+  // Wait for what the file actually defines (a red run may use an empty placeholder).
+  await waitForSchemaCache(which === 'up' && text.includes('companion_prepare_proposal') ? 'up' : 'up361');
+}
+
+export async function migration363Applied(): Promise<boolean> {
+  const [r] = await sql`select to_regprocedure('public.companion_prepare_proposal(uuid,jsonb,jsonb)') is not null as applied`;
+  return r.applied;
 }
 
 /** PostgREST reloads its schema cache asynchronously after DDL; wait until it agrees. */
-export async function waitForSchemaCache(which: 'up' | 'down', timeoutMs = 15000): Promise<void> {
+export async function waitForSchemaCache(which: 'up' | 'up361' | 'down', timeoutMs = 15000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const res = await fetch(`${API_URL}/rest/v1/`, {
@@ -99,7 +125,10 @@ export async function waitForSchemaCache(which: 'up' | 'down', timeoutMs = 15000
     });
     const paths = Object.keys((await res.json()).paths ?? {});
     const seen = paths.includes('/companion_feature_gate') && paths.includes('/rpc/companion_apply_actions');
-    if (which === 'up' ? seen : !paths.some(p => p.includes('companion_') && !p.includes('rollback_archive'))) return;
+    const seen363 = paths.includes('/rpc/companion_prepare_proposal');
+    if (which === 'up' && seen && seen363) return;
+    if (which === 'up361' && seen && !seen363) return;
+    if (which === 'down' && !paths.some(p => p.includes('companion_') && !p.includes('rollback_archive'))) return;
     await sleep(100);
   }
   throw new Error(`PostgREST schema cache did not reflect '${which}' within ${timeoutMs}ms`);
@@ -148,6 +177,57 @@ export const undo = (
     receipt_operation_id,
     authorization: 'authorization' in opts ? opts.authorization : { kind: 'ui_control' },
   });
+
+export const prepare = (who: Account | null, operation: unknown, extra: Record<string, unknown> = {}, platform?: Platform) =>
+  call(who, { ...base(platform), action: 'prepare', operation, ...extra });
+export const proposalOf = (who: Account, proposal_id: string) =>
+  call(who, { ...base(), action: 'proposal', proposal_id });
+export const revise = (who: Account, proposal_id: string, proposal_revision: number, operation: unknown) =>
+  call(who, { ...base(), action: 'revise', proposal_id, proposal_revision, operation });
+export const cancel = (who: Account, proposal_id: string, proposal_revision: number) =>
+  call(who, { ...base(), action: 'cancel', proposal_id, proposal_revision });
+export const interpret = (who: Account, message_id: unknown) =>
+  call(who, { ...base(), action: 'interpret', message_id });
+export const conversationActions = (who: Account, conversation_id: string) =>
+  call(who, { ...base(), action: 'conversation_actions', conversation_id });
+
+export const createTask = (title: string, priority = 'Do soon') => ({ type: 'task.create_custom', title, priority });
+
+/** Approval evidence for a prepared proposal at the revision the user saw. */
+export const approved = (p: { proposal_id: string; proposal_revision: number }) => ({
+  kind: 'approved_proposal',
+  proposal_id: p.proposal_id,
+  proposal_revision: p.proposal_revision,
+});
+
+/** The caller's live custom tasks, as today's Checklist reads them (user JWT, RLS). */
+export async function checklistTitles(who: Account): Promise<string[]> {
+  const r = await who.client.from('custom_checklist_tasks').select('title').order('id');
+  if (r.error) throw r.error;
+  return (r.data ?? []).map(row => row.title as string);
+}
+
+/** A Companion conversation of `who` and one message in it, saved the way the clients do. */
+export async function conversationWith(who: Account, role: 'user' | 'assistant', content: string) {
+  const c = await who.client.from('conversations').insert({ user_id: who.id, title: 't' })
+    .select('id, conversation_identifier').single();
+  if (c.error) throw c.error;
+  const message_id = await messageIn(who, c.data.id, role, content);
+  return { conversation_id: c.data.conversation_identifier as string, conversationRow: c.data.id as number, message_id };
+}
+
+export async function messageIn(who: Account, conversationRow: number, role: 'user' | 'assistant', content: string): Promise<number> {
+  const m = await who.client.from('messages').insert({ conversation_id: conversationRow, role, content })
+    .select('id').single();
+  if (m.error) throw m.error;
+  return m.data.id as number;
+}
+
+/** The onboarding profile row, written the way the clients do (user JWT). */
+export async function setProfile(who: Account, fields: Record<string, unknown>): Promise<void> {
+  const r = await who.client.from('user_onboarding_profiles').upsert({ id: who.id, ...fields });
+  if (r.error) throw r.error;
+}
 
 export const setState = (task_ref: string, state: string, expected_revision: number, waiting_reason?: string) => ({
   type: 'task.set_state',

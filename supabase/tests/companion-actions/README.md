@@ -5,8 +5,8 @@ Tests for `supabase/functions/companion-actions` and the migration
 mirrors byte for byte from the mobile repo (the migration authority). This repo is
 the deploy authority for the function.
 
-They run against a disposable local Supabase stack (`project_id = unify-actions-361`,
-ports 59371-59374) that starts from a copy of the hosted schema
+They run against a disposable local Supabase stack (`project_id = unify-actions-363`,
+ports 60671-60674) that starts from a copy of the hosted schema
 (`supabase/migrations/20260101000000_hosted_baseline.sql`) and applies the
 production migration and rollback script itself. Every assertion goes through the
 public HTTP boundary with real JWTs of synthetic accounts, or through the legacy

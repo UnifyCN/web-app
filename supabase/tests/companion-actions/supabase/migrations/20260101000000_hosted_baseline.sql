@@ -125,3 +125,27 @@ create policy "Users can view own messages" on public.messages
   for select to authenticated using (conversation_id in (select id from public.conversations where user_id = (select auth.uid())));
 create policy "Users can insert own messages" on public.messages
   for insert to authenticated with check (conversation_id in (select id from public.conversations where user_id = (select auth.uid())));
+
+-- Hosted onboarding profile (mobile-app#363). The policies are the ones observed
+-- on hosted (hosted-access, 2026-10-25: role public, auth.uid() = id). Column types
+-- were not part of that read: the action service reads the row as JSON, so only the
+-- column names below matter. persona/stage/wants_reminders stand for the fields a
+-- task proposal does not depend on.
+create table public.user_onboarding_profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  persona text,
+  city text,
+  province text,
+  arrival_date timestamptz,
+  stage smallint not null default 0,
+  wants_reminders boolean,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.user_onboarding_profiles enable row level security;
+create policy "Users can view own onboarding profile" on public.user_onboarding_profiles
+  for select using (auth.uid() = id);
+create policy "Users can insert their own onboarding profile" on public.user_onboarding_profiles
+  for insert with check (auth.uid() = id);
+create policy "Users can update own onboarding profile" on public.user_onboarding_profiles
+  for update using (auth.uid() = id) with check (auth.uid() = id);

@@ -1,19 +1,19 @@
-# Local test stack for the Companion task actions endpoint (mobile-app#361).
+# Local test stack for the Companion task actions endpoint (mobile-app#361, #363).
 # Not the app's config: its own project id and ports, so it cannot touch the
 # default local stack, another worker's stack or any hosted project.
 # Started by ../run.sh, which copies the function source into supabase/functions.
-project_id = "unify-actions-361"
+project_id = "unify-actions-363"
 
 [api]
 enabled = true
-port = 59371
+port = 60671
 schemas = ["public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-port = 59372
-shadow_port = 59373
+port = 60672
+shadow_port = 60673
 major_version = 17
 
 [db.migrations]
@@ -45,7 +45,7 @@ enable_confirmations = false
 [edge_runtime]
 enabled = true
 policy = "per_worker"
-inspector_port = 59374
+inspector_port = 60674
 
 [functions.companion-actions]
 verify_jwt = true

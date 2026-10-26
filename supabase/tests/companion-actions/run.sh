@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the Companion task actions tests (mobile-app#361) against a disposable
+# Runs the Companion task actions tests (mobile-app#361, #363) against a disposable
 # local Supabase stack: Postgres 17, GoTrue, PostgREST, Kong and the edge runtime
 # serving the real supabase/functions/companion-actions source.
 #
@@ -15,6 +15,9 @@ functions_src="${ACTIONS_FUNCTIONS_SRC:-$here/../../functions}"
 
 # The edge runtime serves supabase/functions of this workdir. Copy the real
 # source (the function and the shared modules it imports) before every run.
+project_id=$(sed -n 's/^project_id = "\(.*\)"$/\1/p' supabase/config.toml)
+[ -n "$project_id" ] || { echo "no project_id in supabase/config.toml" >&2; exit 2; }
+
 rm -rf supabase/functions
 mkdir -p supabase/functions
 cp -R "$functions_src/companion-actions" supabase/functions/companion-actions
@@ -30,7 +33,7 @@ case "$ACTIONS_API_URL" in http://127.0.0.1:*) ;; *) echo "refusing non-local AP
 # answers "Database client error" until it reconnects, so restart it after each reset
 # and wait until several requests in a row succeed.
 rest_ready() {
-  docker restart supabase_rest_unify-actions-361 >/dev/null
+  docker restart supabase_rest_${project_id} >/dev/null
   local ok=0 code
   for _ in $(seq 1 60); do
     code=$(curl -s -o /dev/null -w '%{http_code}' "$ACTIONS_API_URL/rest/v1/user_tasks?select=user_task_id&limit=1" \
@@ -41,7 +44,7 @@ rest_ready() {
   exit 2
 }
 # Restart the edge runtime so it serves the copied source.
-docker restart supabase_edge_runtime_unify-actions-361 >/dev/null
+docker restart supabase_edge_runtime_${project_id} >/dev/null
 rest_ready
 
 if [ "${ACTIONS_KEEP:-0}" = "1" ]; then

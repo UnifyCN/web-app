@@ -5,7 +5,7 @@
 // This path never calls the AI-generation quota or a model: task controls, result
 // lookup and Undo stay available at the AI limit.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
-import { type ActionRequest, PLATFORMS, type Platform, parseAction, parseEnvelope } from './contract.ts';
+import { type ActionRequest, type Operation, PLATFORMS, type Platform, parseAction, parseEnvelope } from './contract.ts';
 
 export interface HandlerDeps {
   /** Service-role client. Used for the user lookup, the gate and the action SQL. */
@@ -18,7 +18,7 @@ export interface HandlerDeps {
 export interface ResultLine {
   event: 'companion_action_result';
   action: ActionRequest['action'] | 'unknown';
-  operation_type: 'task.set_state' | null;
+  operation_type: Operation['type'] | 'task.remove_created' | null;
   platform: Platform | null;
   http_status: number;
   outcome: string;
@@ -127,6 +127,43 @@ export function createHandler({ admin, log = line => console.log(JSON.stringify(
       return finish(json({ contract_version: version, tasks: data }), 'read');
     }
 
+    if (request.action === 'prepare') {
+      // A draft for review: writes only the proposal, never task progress.
+      operationType = request.operation.type;
+      const { data, error } = await admin.rpc('companion_prepare_proposal', {
+        p_user_id: userId,
+        p_operations: [request.operation],
+        p_source: request.source,
+      });
+      if (error) return finish(mapDbError(error), 'failed');
+      return finish(json({ proposal: data }), 'prepared');
+    }
+
+    if (request.action === 'proposal') {
+      const { data, error } = await admin.rpc('companion_get_proposal', {
+        p_user_id: userId,
+        p_proposal_id: request.proposal_id,
+      });
+      if (error) return finish(mapDbError(error), 'failed');
+      return finish(json({ proposal: data }), 'read');
+    }
+
+    if (request.action === 'revise') {
+      operationType = request.operation.type;
+      const { data, error } = await admin.rpc('companion_revise_proposal', {
+        p_user_id: userId,
+        p_proposal_id: request.proposal_id,
+        p_proposal_revision: request.proposal_revision,
+        p_operations: [request.operation],
+      });
+      if (error) return finish(mapDbError(error), 'failed');
+      const result = data as { changed?: boolean; proposal: unknown };
+      // The edit named an older revision (or the draft is no longer open): nothing
+      // changed, and the current proposal is returned for review.
+      if (result.changed) return finish(json({ error: 'proposal_changed', proposal: result.proposal }, 409), 'proposal_changed');
+      return finish(json({ proposal: result.proposal }), 'revised');
+    }
+
     if (request.action === 'status') {
       const { data, error } = await admin.rpc('companion_action_status', {
         p_user_id: userId,
@@ -146,7 +183,11 @@ export function createHandler({ admin, log = line => console.log(JSON.stringify(
         p_operations: request.operations,
       });
       if (error) return finish(mapDbError(error), error.code === 'CA409' ? 'conflict' : 'failed');
-      return finish(json(data), (data as { replayed: boolean }).replayed ? 'replayed' : 'applied');
+      const result = data as { replayed?: boolean; needs_review?: boolean; proposal?: unknown };
+      // Relevant context changed since review: nothing was written; the refreshed
+      // proposal needs a new approval.
+      if (result.needs_review) return finish(json({ error: 'needs_review', proposal: result.proposal }, 409), 'needs_review');
+      return finish(json(data), result.replayed ? 'replayed' : 'applied');
     }
 
     // undo
