@@ -353,6 +353,10 @@ async function ask(prompt: string, o: AskOptions = {}, s: Scenario = {}) {
       m => m.role === 'system'
     )?.content ?? '';
   const context = (o.stream ? metadata?.context : payload.context) as Record<string, any>;
+  if (res.status === 200) {
+    // A missing context is a contract failure, not a crash further down.
+    assert(context && typeof context === 'object', 'a 200 answer carries a context object');
+  }
   return { status: res.status, payload, metadata, events, context, calls, answerCall, system, startedAt, finishedAt };
 }
 
@@ -842,6 +846,7 @@ Deno.test({
       ]);
       const vanContext = sseEvents(await van.text()).find(e => e.name === 'metadata')!.data.context as Record<string, any>;
       const torContext = (await tor.json()).context as Record<string, any>;
+      assert(vanContext && torContext, 'both answers carry a context object');
 
       const ids = (c: Record<string, any>) =>
         (c.items as Array<Record<string, any>>).filter(i => i.kind === 'checklist_task').map(i => i.id);
