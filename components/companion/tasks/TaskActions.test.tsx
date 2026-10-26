@@ -927,3 +927,70 @@ describe("review corrections (web)", () => {
     expect(screen.queryByText("Waiting for: Bank letter")).toBeNull();
   });
 });
+
+// Corrections from the #361 Spec review round 2.
+describe("review r2 corrections (web)", () => {
+  it("F4: a save reply that arrives after newer typing keeps the newer waiting draft", async () => {
+    useServer(
+      scriptedServer({ "sanity:sin": { state: "waiting", reason: "Old reason" } }),
+    );
+    const base = globalThis.fetch;
+    let release: () => void = () => {};
+    let held = false;
+    globalThis.fetch = (async (...args: Parameters<typeof fetch>) => {
+      const body = JSON.parse(String(args[1]?.body));
+      const reply = await base(...args);
+      if (body.action === "apply") {
+        held = true;
+        await new Promise<void>((resolve) => (release = resolve));
+      }
+      return reply;
+    }) as typeof fetch;
+    mount(<ChecklistPage />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Task progress for Get a SIN" }),
+    );
+    const panel = await dialog();
+    const reason = (await within(panel).findByLabelText(
+      "What are you waiting for?",
+    )) as HTMLTextAreaElement;
+    await waitFor(() => expect(reason.value).toBe("Old reason"));
+    fireEvent.change(reason, { target: { value: "First saved reason" } });
+    const save = within(panel).getByRole("button", { name: "Save waiting reason" });
+    await waitFor(() => expect(isDisabled(save)).toBe(false));
+    fireEvent.click(save);
+    await waitFor(() => expect(held).toBe(true));
+    fireEvent.change(within(panel).getByLabelText("What are you waiting for?"), {
+      target: { value: "New unsaved reason typed during save" },
+    });
+    await act(async () => release());
+    await within(panel).findByText("Updated the waiting reason");
+    await waitFor(() => expect(isDisabled(radio(panel, "In progress"))).toBe(false));
+    expect(server.row("sanity:sin")?.reason).toBe("First saved reason");
+    expect(
+      (within(panel).getByLabelText("What are you waiting for?") as HTMLTextAreaElement).value,
+    ).toBe("New unsaved reason typed during save");
+  });
+
+  it("F5: a task opened before the drawer's first frame keeps focus on the task heading", async () => {
+    mount(<CompanionPage />);
+    const open = await screen.findByRole("button", { name: "Open" });
+    // Warm the task list, then reopen and pick the task in the same tick.
+    fireEvent.click(open);
+    await within(await dialog()).findByRole("button", { name: /Get a SIN/ });
+    fireEvent.click(within(await dialog()).getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    open.focus();
+    fireEvent.click(open);
+    const panel = screen.getByRole("dialog");
+    const row = within(panel).getByRole("button", { name: /Get a SIN/ });
+    row.focus();
+    fireEvent.click(row);
+    const heading = within(panel).getByRole("heading", { name: "Get a SIN" });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+    // Past the drawer's first frame, focus is still on the task heading.
+    await act(() => new Promise((r) => setTimeout(r, 50)));
+    expect(document.activeElement).toBe(heading);
+  });
+});

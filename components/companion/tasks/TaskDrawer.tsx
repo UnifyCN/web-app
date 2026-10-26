@@ -57,7 +57,13 @@ export function TaskDrawer({
   useEffect(() => {
     if (!open) return;
     openerRef.current = document.activeElement as HTMLElement | null;
-    const frame = requestAnimationFrame(() => headingRef.current?.focus());
+    // Initial focus on the heading, unless focus is already inside the panel
+    // (a task opened before this first frame keeps its own focus target).
+    const frame = requestAnimationFrame(() => {
+      const panel = panelRef.current;
+      if (panel && panel.contains(document.activeElement)) return;
+      headingRef.current?.focus();
+    });
 
     // The page behind the dialog is inert: no focus, no screen-reader reading.
     const inerted: Element[] = [];

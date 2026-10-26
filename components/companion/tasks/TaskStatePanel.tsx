@@ -116,11 +116,16 @@ export function TaskStatePanel({
   function saveReason() {
     if (!canWrite || !store || progress.state !== "waiting") return;
     // Keep the typed reason unless this exact save is confirmed applied: a
-    // refused, unknown or unsaved result must not replace it.
+    // refused, unknown or unsaved result must not replace it, and text typed
+    // while the save was in flight is newer than the saved reason.
+    const submitted = reasonValue;
     void store
-      .setState(setStateOperation(progress, "waiting", reasonValue))
+      .setState(setStateOperation(progress, "waiting", submitted))
       .then(() => {
-        if (store.get(taskRef).phase === "saved")
+        if (
+          store.get(taskRef).phase === "saved" &&
+          (store.draft(taskRef) ?? submitted) === submitted
+        )
           store.setDraft(taskRef, undefined);
       });
   }
