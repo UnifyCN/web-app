@@ -1,0 +1,226 @@
+// Test support for the Companion task actions endpoint (mobile-app#361).
+// Talks to the local stack started by run.sh only. Every behavioral assertion in
+// the tests goes through the public HTTP boundary or the legacy client path
+// (PostgREST with the user's JWT). Direct SQL is used for fixtures, lock holding,
+// gate edits, migration up/down and row counts that no public path exposes.
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
+import postgres from 'npm:postgres@3';
+
+const env = (k: string) => {
+  const v = Deno.env.get(`ACTIONS_${k}`);
+  if (!v) throw new Error(`ACTIONS_${k} missing: run via ./run.sh`);
+  return v;
+};
+
+export const API_URL = env('API_URL');
+export const ANON_KEY = env('ANON_KEY');
+export const SERVICE_ROLE_KEY = env('SERVICE_ROLE_KEY');
+export const DB_URL = env('DB_URL');
+if (!/^http:\/\/127\.0\.0\.1:/.test(API_URL) || !/@127\.0\.0\.1:/.test(DB_URL)) {
+  throw new Error('refusing to run against a non-local stack');
+}
+
+// ACTIONS_MIGRATION_FILE / ACTIONS_ROLLBACK_FILE substitute a deliberately broken copy (mutation_check.py).
+const override = (k: string) => Deno.env.get(k) ? new URL(`file://${Deno.env.get(k)}`) : undefined;
+export const MIGRATION = override('ACTIONS_MIGRATION_FILE') ??
+  new URL('../../migrations/20261025235536_companion_task_actions.sql', import.meta.url);
+export const ROLLBACK = override('ACTIONS_ROLLBACK_FILE') ??
+  new URL('../../rollbacks/20261025235536_companion_task_actions.down.sql', import.meta.url);
+
+export const admin = createClient(API_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+export const sql = postgres(DB_URL, { max: 20, onnotice: () => {} });
+
+export interface Account {
+  id: string;
+  email: string;
+  jwt: string;
+  client: SupabaseClient;
+}
+
+let counter = 0;
+/** A synthetic account, created through the admin API and signed in with a password. */
+export async function newAccount(label: string): Promise<Account> {
+  const email = `${label}-${Date.now()}-${counter++}@actions361.invalid`;
+  const password = 'actions-password-1';
+  const created = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+  if (created.error) throw created.error;
+  const client = createClient(API_URL, ANON_KEY, { auth: { persistSession: false } });
+  const signedIn = await client.auth.signInWithPassword({ email, password });
+  if (signedIn.error || !signedIn.data.session) throw signedIn.error;
+  return { id: created.data.user.id, email, jwt: signedIn.data.session.access_token, client };
+}
+
+export interface Reply {
+  status: number;
+  json: any;
+  headers: Headers;
+}
+
+/** The public request boundary: POST /functions/v1/companion-actions. */
+export async function call(who: Account | null, body: unknown, bearer?: string): Promise<Reply> {
+  const res = await fetch(`${API_URL}/functions/v1/companion-actions`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      apikey: ANON_KEY,
+      authorization: `Bearer ${bearer ?? (who ? who.jwt : ANON_KEY)}`,
+    },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
+  });
+  const text = await res.text();
+  let json: any = text;
+  try {
+    json = JSON.parse(text);
+  } catch { /* keep text */ }
+  return { status: res.status, json, headers: res.headers };
+}
+
+export const uuid = () => crypto.randomUUID();
+export const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+
+export async function migrationApplied(): Promise<boolean> {
+  const [r] = await sql`select to_regclass('public.companion_action_receipts') is not null as applied`;
+  return r.applied;
+}
+
+/** Applies the production migration or its rollback script in one transaction. */
+export async function migrate(which: 'up' | 'down'): Promise<void> {
+  const text = await Deno.readTextFile(which === 'up' ? MIGRATION : ROLLBACK);
+  await sql.begin(tx => tx.unsafe(text));
+  await waitForSchemaCache(which);
+}
+
+/** PostgREST reloads its schema cache asynchronously after DDL; wait until it agrees. */
+export async function waitForSchemaCache(which: 'up' | 'down', timeoutMs = 15000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const res = await fetch(`${API_URL}/rest/v1/`, {
+      headers: { apikey: SERVICE_ROLE_KEY, authorization: `Bearer ${SERVICE_ROLE_KEY}`, accept: 'application/openapi+json' },
+    });
+    const paths = Object.keys((await res.json()).paths ?? {});
+    const seen = paths.includes('/companion_feature_gate') && paths.includes('/rpc/companion_apply_actions');
+    if (which === 'up' ? seen : !paths.some(p => p.includes('companion_') && !p.includes('rollback_archive'))) return;
+    await sleep(100);
+  }
+  throw new Error(`PostgREST schema cache did not reflect '${which}' within ${timeoutMs}ms`);
+}
+
+/** Turns the feature on (the migration ships it off). */
+export async function openGate(patch: Record<string, unknown> = {}): Promise<void> {
+  await sql`update public.companion_feature_gate set enabled = true, min_contract_version = 1,
+    max_contract_version = 1, allowed_platforms = '{ios,android,web}'`;
+  if (Object.keys(patch).length) await sql`update public.companion_feature_gate set ${sql(patch)}`;
+}
+
+/** Brings the stack to "migration applied, feature on". */
+export async function ready(): Promise<void> {
+  if (!(await migrationApplied())) await migrate('up');
+  await openGate();
+}
+
+export type Platform = 'ios' | 'android' | 'web';
+const base = (platform: Platform = 'ios') => ({ contract_version: 1, client: { platform, app_version: '9.9.9' } });
+
+export const read = (who: Account, platform?: Platform) => call(who, { ...base(platform), action: 'read' });
+export const status = (who: Account, operation_id: string) =>
+  call(who, { ...base(), action: 'status', operation_id });
+export const apply = (
+  who: Account | null,
+  operations: unknown[],
+  opts: { operation_id?: string; authorization?: unknown; platform?: Platform } = {},
+) =>
+  call(who, {
+    ...base(opts.platform),
+    action: 'apply',
+    operation_id: opts.operation_id ?? uuid(),
+    authorization: 'authorization' in opts ? opts.authorization : { kind: 'ui_control' },
+    operations,
+  });
+export const undo = (
+  who: Account,
+  receipt_operation_id: string,
+  opts: { operation_id?: string; authorization?: unknown; platform?: Platform } = {},
+) =>
+  call(who, {
+    ...base(opts.platform),
+    action: 'undo',
+    operation_id: opts.operation_id ?? uuid(),
+    receipt_operation_id,
+    authorization: 'authorization' in opts ? opts.authorization : { kind: 'ui_control' },
+  });
+
+export const setState = (task_ref: string, state: string, expected_revision: number, waiting_reason?: string) => ({
+  type: 'task.set_state',
+  task_ref,
+  state,
+  expected_revision,
+  ...(waiting_reason === undefined ? {} : { waiting_reason }),
+});
+
+export async function taskOf(who: Account, ref: string, platform?: Platform): Promise<any | undefined> {
+  const r = await read(who, platform);
+  if (r.status !== 200) throw new Error(`read failed: ${r.status} ${JSON.stringify(r.json)}`);
+  return r.json.tasks.find((t: any) => t.task_ref === ref);
+}
+
+/** An existing custom task, created the way today's Checklist does (direct table insert). */
+export async function existingCustomTask(who: Account, title = 'Get a phone plan'): Promise<{ ref: string; id: number }> {
+  const r = await who.client.from('custom_checklist_tasks')
+    .insert({ user_id: who.id, title, description: '', priority: 'Do soon' })
+    .select('id').single();
+  if (r.error) throw r.error;
+  return { ref: `custom:${r.data.id}`, id: r.data.id };
+}
+
+/** An existing content-backed task row, written the way today's Checklist does. */
+export async function existingSanityTask(who: Account, sanityId: string, completed = false): Promise<string> {
+  const r = await who.client.from('user_tasks')
+    .upsert({ user_id: who.id, sanity_checklist_id: sanityId, completed, completed_at: completed ? new Date().toISOString() : null },
+      { onConflict: 'user_id,sanity_checklist_id' });
+  if (r.error) throw r.error;
+  return `sanity:${sanityId}`;
+}
+
+/** Waits until `n` other backends are blocked on a lock inside an action function. */
+export async function waitForBlocked(n: number, pattern = '%companion_%', timeoutMs = 4000): Promise<number> {
+  const deadline = Date.now() + timeoutMs;
+  let count = 0;
+  while (Date.now() < deadline) {
+    const [r] = await sql`select count(*)::int n from pg_stat_activity
+      where pid <> pg_backend_pid() and wait_event_type = 'Lock' and query ilike ${pattern}`;
+    count = r.n;
+    if (count >= n) return count;
+    await sleep(50);
+  }
+  return count;
+}
+
+/** Holds the operation lock of (user, operation) from a separate connection until release(). */
+export function holdOperationLock(userId: string, operationId: string): { ready: Promise<void>; release: () => Promise<void> } {
+  let release!: () => void;
+  const held = new Promise<void>(r => (release = r));
+  let markReady!: () => void;
+  const readyP = new Promise<void>(r => (markReady = r));
+  const tx = sql.begin(async t => {
+    await t`select pg_advisory_xact_lock(public.companion_op_lock_key(${userId}::uuid, ${operationId}::uuid))`;
+    markReady();
+    await held;
+  });
+  return { ready: readyP, release: async () => { release(); await tx; } };
+}
+
+/** Holds a task row lock from a separate connection until release(). */
+export function holdTaskRow(table: 'user_tasks' | 'custom_checklist_tasks', where: { column: string; value: string | number }) {
+  let release!: () => void;
+  const held = new Promise<void>(r => (release = r));
+  let markReady!: () => void;
+  const readyP = new Promise<void>(r => (markReady = r));
+  const tx = sql.begin(async t => {
+    await t`select 1 from ${t('public.' + table)} where ${t(where.column)} = ${String(where.value)} for update`;
+    markReady();
+    await held;
+  });
+  return { ready: readyP, release: async () => { release(); await tx; } };
+}
+
+export const testOpts = { sanitizeOps: false, sanitizeResources: false };

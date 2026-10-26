@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { PanelLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn, RTL_FLIP } from "@/lib/utils";
@@ -28,6 +28,8 @@ interface ChatPanelProps {
   mobileActive: boolean;
   /** Mobile-only: open the conversation list. */
   onOpenList: () => void;
+  /** Compact entry to saved task progress, shown above the conversation. */
+  taskEntry?: ReactNode;
 }
 
 function TypingIndicator() {
@@ -57,6 +59,7 @@ export function ChatPanel({
   onboarding,
   mobileActive,
   onOpenList,
+  taskEntry,
 }: ChatPanelProps) {
   const { t } = useTranslation();
   const endRef = useRef<HTMLDivElement>(null);
@@ -108,6 +111,8 @@ export function ChatPanel({
           </h1>
         </header>
       )}
+
+      {taskEntry}
 
       {conversation ? (
         <div className="scrollbar-thin flex-1 overflow-y-auto">

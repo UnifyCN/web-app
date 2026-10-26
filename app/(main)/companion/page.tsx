@@ -6,6 +6,10 @@ import { useTranslation } from "react-i18next";
 import { ConversationList } from "@/components/companion/ConversationList";
 import { ChatPanel } from "@/components/companion/ChatPanel";
 import {
+  CompanionTasksEntry,
+  TaskActionsDrawer,
+} from "@/components/companion/tasks/TaskActionsDrawer";
+import {
   messagesKey,
   useChatbotUsage,
   useConversationMessages,
@@ -28,6 +32,9 @@ export default function CompanionPage() {
   // Mobile-only master/detail: when true the conversation list is shown instead
   // of the chat (the two sit side-by-side only at md+). Ignored on desktop.
   const [mobileListOpen, setMobileListOpen] = useState(false);
+  // Direction B: task progress opens in an overlay drawer; the chat and its
+  // draft stay mounted behind it.
+  const [tasksOpen, setTasksOpen] = useState(false);
 
   const conversationsQuery = useConversations();
   const messagesQuery = useConversationMessages(activeId);
@@ -125,6 +132,12 @@ export default function CompanionPage() {
         onboarding={currentUser?.onboarding ?? null}
         mobileActive={!mobileListOpen}
         onOpenList={() => setMobileListOpen(true)}
+        taskEntry={<CompanionTasksEntry onOpen={() => setTasksOpen(true)} />}
+      />
+      <TaskActionsDrawer
+        open={tasksOpen}
+        onClose={() => setTasksOpen(false)}
+        surface="companion"
       />
     </div>
   );

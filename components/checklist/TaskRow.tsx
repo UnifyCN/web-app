@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { Check, EyeOff, GripVertical, Trash2 } from "lucide-react";
+import { Check, EyeOff, GripVertical, ListChecks, Trash2 } from "lucide-react";
 import type {
   DraggableAttributes,
   DraggableSyntheticListeners,
@@ -11,6 +11,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { fireTaskConfetti } from "@/lib/confetti";
 import type { ChecklistTask } from "@/types";
+import { useTaskProgressRows } from "./TaskProgressContext";
 
 interface TaskRowProps {
   task: ChecklistTask;
@@ -35,6 +36,15 @@ export function TaskRow({
   const { t } = useTranslation();
   const [pop, setPop] = useState(false);
   const checkboxRef = useRef<HTMLButtonElement>(null);
+  const progressRows = useTaskProgressRows();
+  const saved = progressRows?.stateOf(task) ?? null;
+  // Only the refinements of "not done" need a label; the checkbox already shows completion.
+  const savedLabel =
+    saved &&
+    !task.completed &&
+    (saved.state === "in_progress" || saved.state === "waiting")
+      ? t(`taskActions.state.${saved.state}`)
+      : null;
 
   function handleToggle() {
     if (!task.completed) {
@@ -86,6 +96,18 @@ export function TaskRow({
         >
           {task.title}
         </p>
+        {savedLabel && (
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+            <span className="rounded-full bg-primary-bg px-2 py-0.5 font-semibold text-ink-secondary">
+              {savedLabel}
+            </span>
+            {saved?.state === "waiting" && saved.waitingReason && (
+              <span className="min-w-0 break-words text-ink-muted">
+                {t("taskActions.waitingFor", { reason: saved.waitingReason })}
+              </span>
+            )}
+          </p>
+        )}
         {task.description && (
           <p
             className={cn(
@@ -105,6 +127,18 @@ export function TaskRow({
           </Link>
         )}
       </div>
+
+      {progressRows && (
+        <button
+          type="button"
+          onClick={() => progressRows.open(task)}
+          aria-label={t("taskActions.progressAria", { title: task.title })}
+          // A 28px target (WCAG 2.5.8) that keeps the 20px row rhythm.
+          className="-m-1 mt-[-2px] flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <ListChecks className="h-4 w-4" aria-hidden />
+        </button>
+      )}
 
       <button
         type="button"
