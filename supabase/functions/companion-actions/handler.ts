@@ -19,7 +19,7 @@ export interface HandlerDeps {
 export interface ResultLine {
   event: 'companion_action_result';
   action: ActionRequest['action'] | 'unknown';
-  operation_type: Operation['type'] | 'task.remove_created' | null;
+  operation_type: Operation['type'] | null;
   platform: Platform | null;
   http_status: number;
   outcome: string;
@@ -200,6 +200,27 @@ export function createHandler({ admin, log = line => console.log(JSON.stringify(
       }), 'interpret_create');
     }
 
+    if (request.action === 'conversation_actions') {
+      const { data, error } = await admin.rpc('companion_conversation_actions', {
+        p_user_id: userId,
+        p_conversation_id: request.conversation_id,
+      });
+      if (error) return finish(mapDbError(error), 'failed');
+      return finish(json(data), 'read');
+    }
+
+    if (request.action === 'cancel') {
+      const { data, error } = await admin.rpc('companion_cancel_proposal', {
+        p_user_id: userId,
+        p_proposal_id: request.proposal_id,
+        p_proposal_revision: request.proposal_revision,
+      });
+      if (error) return finish(mapDbError(error), 'failed');
+      const result = data as { changed?: boolean; proposal: unknown };
+      if (result.changed) return finish(json({ error: 'proposal_changed', proposal: result.proposal }, 409), 'proposal_changed');
+      return finish(json({ proposal: result.proposal }), 'cancelled');
+    }
+
     if (request.action === 'revise') {
       operationType = request.operation.type;
       const { data, error } = await admin.rpc('companion_revise_proposal', {
@@ -253,8 +274,7 @@ export function createHandler({ admin, log = line => console.log(JSON.stringify(
       return finish(json(data), result.replayed ? 'replayed' : 'applied');
     }
 
-    // undo
-    operationType = 'task.set_state';
+    // undo (the operation type is the receipt's; not known before the database reads it)
     const { data, error } = await admin.rpc('companion_undo_action', {
       p_user_id: userId,
       p_operation_id: request.operation_id,

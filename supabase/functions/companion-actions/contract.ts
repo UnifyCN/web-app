@@ -24,9 +24,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_REVISION = 999_999_999_999_999;
 
 /** Evidence of who authorized a write. A model can never produce either kind. */
+// removal_confirmed: the user confirmed a removal in the interface. Required for every
+// removal (the Undo of an added task and its reviewed compensating change).
 export type Authorization =
-  | { kind: 'ui_control' }
-  | { kind: 'approved_proposal'; proposal_id: string; proposal_revision: number }
+  | { kind: 'ui_control'; removal_confirmed?: true }
+  | { kind: 'approved_proposal'; proposal_id: string; proposal_revision: number; removal_confirmed?: true }
   /** The user's own saved message that is one clear command (resolved by commands.ts). */
   | { kind: 'direct_command'; message_id: number };
 export type AuthorizationKind = Authorization['kind'];
@@ -43,7 +45,13 @@ export interface CreateCustomOperation {
   title: string;
   priority: Priority;
 }
-export type Operation = SetStateOperation | CreateCustomOperation;
+/** The inverse of task.create_custom: soft-removes that task. Only as an Undo's reviewed change. */
+export interface RemoveCreatedOperation {
+  type: 'task.remove_created';
+  task_ref: string;
+  expected_revision: number;
+}
+export type Operation = SetStateOperation | CreateCustomOperation | RemoveCreatedOperation;
 
 export type Parsed<T> = { ok: true; value: T } | { ok: false; status: 400 | 403 | 422; reason: string };
 const ok = <T>(value: T): Parsed<T> => ({ ok: true, value });
@@ -149,9 +157,34 @@ const createCustom: OperationSpec<CreateCustomOperation> = {
   },
 };
 
+const removeCreated: OperationSpec<RemoveCreatedOperation> = {
+  type: 'task.remove_created',
+  version: 1,
+  access: 'owner',
+  classification: 'write',
+  // Only the reviewed compensating change of a conflicting Undo of the create; the
+  // database also checks that the proposal undoes the receipt that added this task.
+  approval: ['approved_proposal'],
+  revisionCheck: 'expected_revision',
+  idempotency: 'operation_id',
+  undo: 'recorded_inverse',
+  undoRemoves: false,
+  parse(raw) {
+    for (const key of Object.keys(raw)) {
+      if (!['type', 'task_ref', 'expected_revision'].includes(key)) return refuse(422, 'unknown_field');
+    }
+    if (typeof raw.task_ref !== 'string' || !TASK_REF.test(raw.task_ref) || !raw.task_ref.startsWith('custom:')) {
+      return refuse(422, 'invalid_task_ref');
+    }
+    if (!isPlainInt(raw.expected_revision)) return refuse(422, 'expected_revision_required');
+    return ok({ type: 'task.remove_created', task_ref: raw.task_ref, expected_revision: raw.expected_revision });
+  },
+};
+
 export const OPERATION_REGISTRY: { readonly [K in Operation['type']]: OperationSpec<Extract<Operation, { type: K }>> } = {
   'task.set_state': setState,
   'task.create_custom': createCustom,
+  'task.remove_created': removeCreated,
 };
 
 /** One operation through its registry entry, without authorization (prepare, revise). */
@@ -189,13 +222,20 @@ export function parseOperations(raw: unknown, authorization: Authorization): Par
 
 export function parseAuthorization(raw: unknown): Parsed<Authorization> {
   if (!isObject(raw)) return refuse(403, 'invalid_authorization');
-  if (raw.kind === 'ui_control') return ok({ kind: 'ui_control' });
+  const confirmed = raw.removal_confirmed === true ? { removal_confirmed: true as const } : {};
+  if (raw.removal_confirmed !== undefined && raw.removal_confirmed !== true) return refuse(403, 'invalid_authorization');
+  if (raw.kind === 'ui_control') return ok({ kind: 'ui_control', ...confirmed });
   if (raw.kind === 'approved_proposal') {
     if (typeof raw.proposal_id !== 'string' || !UUID.test(raw.proposal_id)) return refuse(403, 'invalid_authorization');
     if (!isPlainInt(raw.proposal_revision) || raw.proposal_revision > 2_147_483_647) {
       return refuse(403, 'invalid_authorization');
     }
-    return ok({ kind: 'approved_proposal', proposal_id: raw.proposal_id, proposal_revision: raw.proposal_revision });
+    return ok({
+      kind: 'approved_proposal',
+      proposal_id: raw.proposal_id,
+      proposal_revision: raw.proposal_revision,
+      ...confirmed,
+    });
   }
   if (raw.kind === 'direct_command') {
     if (Object.keys(raw).some(k => k !== 'kind' && k !== 'message_id')) return refuse(403, 'invalid_authorization');
@@ -222,6 +262,8 @@ export type ActionRequest =
   | { action: 'prepare'; operation: CreateCustomOperation; source: ProposalSource | null }
   | { action: 'proposal'; proposal_id: string }
   | { action: 'interpret'; message_id: number }
+  | { action: 'conversation_actions'; conversation_id: string }
+  | { action: 'cancel'; proposal_id: string; proposal_revision: number }
   | { action: 'revise'; proposal_id: string; proposal_revision: number; operation: CreateCustomOperation }
   | { action: 'status'; operation_id: string }
   | { action: 'apply'; operation_id: string; authorization: Authorization; operations: Operation[] }
@@ -252,6 +294,17 @@ export function parseAction(body: Record<string, unknown>): Parsed<ActionRequest
     case 'interpret':
       if (!isPlainInt(body.message_id) || body.message_id > 2_147_483_647) return refuse(400, 'invalid_message_id');
       return ok({ action: 'interpret', message_id: body.message_id });
+    case 'conversation_actions':
+      if (typeof body.conversation_id !== 'string' || !UUID.test(body.conversation_id)) {
+        return refuse(400, 'invalid_conversation_id');
+      }
+      return ok({ action: 'conversation_actions', conversation_id: body.conversation_id.toLowerCase() });
+    case 'cancel':
+      if (typeof body.proposal_id !== 'string' || !UUID.test(body.proposal_id)) return refuse(400, 'invalid_proposal_id');
+      if (!isPlainInt(body.proposal_revision) || body.proposal_revision > 2_147_483_647) {
+        return refuse(400, 'invalid_proposal_revision');
+      }
+      return ok({ action: 'cancel', proposal_id: body.proposal_id, proposal_revision: body.proposal_revision });
     case 'revise': {
       if (typeof body.proposal_id !== 'string' || !UUID.test(body.proposal_id)) return refuse(400, 'invalid_proposal_id');
       if (!isPlainInt(body.proposal_revision) || body.proposal_revision > 2_147_483_647) {

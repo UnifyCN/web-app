@@ -71,7 +71,8 @@ Deno.test({ name: 'forged or model-made approval is refused and writes nothing',
     ['unknown proposal', { ...good, proposal_id: uuid() }, operations, 403],
     ['model approval flag', { approved: true }, operations, 403],
     ['kind with approval flag', { kind: 'model', approved: true }, operations, 403],
-    ['direct command (not accepted in this slice)', { kind: 'direct_command', message_id: 1 }, operations, 403],
+    // #363 accepts direct commands only for task creation, never for a state change.
+    ['direct command for a state change', { kind: 'direct_command', message_id: 1 }, operations, 403],
     ['missing authorization', null, operations, 403],
   ];
   for (const [label, authorization, ops, expected] of cases) {
@@ -116,7 +117,8 @@ Deno.test({ name: 'invalid payloads are 4xx, never 500, and write nothing', ...t
   const rev = (await taskOf(a, ref)).revision;
   const bad: Array<[string, unknown[], number, string]> = [
     ['unimplemented operation', [{ type: 'task.remove', task_ref: ref, expected_revision: rev }], 422, 'unsupported_operation'],
-    ['create is not in this slice', [{ type: 'task.create_custom', title: 'x', priority: 'Do now' }], 422, 'unsupported_operation'],
+    // #363: a new task needs a reviewed proposal or a clear command, never a plain control.
+    ['create from a control', [{ type: 'task.create_custom', title: 'x', priority: 'Do now' }], 403, 'invalid_authorization'],
     // Names every JavaScript object inherits must not resolve to a registry entry.
     ...['constructor', 'toString', '__proto__', 'hasOwnProperty', 'valueOf'].map((type) =>
       [`inherited name ${type}`, [{ type, task_ref: ref, expected_revision: rev }], 422, 'unsupported_operation'] as
@@ -144,16 +146,25 @@ Deno.test({ name: 'invalid payloads are 4xx, never 500, and write nothing', ...t
   const badOp = await call(a, { contract_version: 1, client: { platform: 'ios' }, action: 'apply', operation_id: 'x',
     authorization: { kind: 'ui_control' }, operations: [setState(ref, 'waiting', rev)] });
   assertEquals(badOp.status, 400);
-  const badAction = await call(a, { contract_version: 1, client: { platform: 'ios' }, action: 'prepare', operations: [] });
+  // 'prepare' became an action in #363; a later ticket's action is still unknown here.
+  const badAction = await call(a, { contract_version: 1, client: { platform: 'ios' }, action: 'plan', operations: [] });
   assertEquals([badAction.status, badAction.json.reason], [400, 'invalid_action']);
   // Defence in depth: the SQL registry refuses an unregistered type even from a
   // service-role caller that skipped the handler's parser.
   for (const op of [{ type: 'task.remove', task_ref: ref, expected_revision: rev },
-                    { type: 'task.create_custom', title: 'x', priority: 'Do now' },
                     { type: 'constructor', task_ref: ref, expected_revision: rev }]) {
     const err = await sql`select public.companion_apply_actions(${a.id}::uuid, ${uuid()}::uuid, 1,
         ${sql.json({ kind: 'ui_control' })}, ${sql.json([op])})`.then(() => null, e => e);
     assertEquals([err?.code, err?.message], ['CA422', 'unsupported_operation'], JSON.stringify(op));
+  }
+  // #363 operations keep their own authorization rules there too.
+  for (const [op, message] of [
+    [{ type: 'task.create_custom', title: 'x', priority: 'Do now' }, 'invalid_authorization'],
+    [{ type: 'task.remove_created', task_ref: cref, expected_revision: 1 }, 'removal_requires_confirmation'],
+  ] as const) {
+    const err = await sql`select public.companion_apply_actions(${a.id}::uuid, ${uuid()}::uuid, 1,
+        ${sql.json({ kind: 'ui_control' })}, ${sql.json([op])})`.then(() => null, e => e);
+    assertEquals([err?.code, err?.message], ['CA403', message], JSON.stringify(op));
   }
   assertEquals(await receiptsOf(a), 0);
   // A long but valid reason is accepted; 500 characters exactly.

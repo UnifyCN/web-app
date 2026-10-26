@@ -144,6 +144,7 @@ export async function openGate(patch: Record<string, unknown> = {}): Promise<voi
 /** Brings the stack to "migration applied, feature on". */
 export async function ready(): Promise<void> {
   if (!(await migrationApplied())) await migrate('up');
+  else if (!(await migration363Applied())) await migrate363('up');
   await openGate();
 }
 

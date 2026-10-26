@@ -1,8 +1,9 @@
 #!/usr/bin/env python3 -I
-"""Breaks one mechanism at a time and runs the test that must catch it (mobile-app#361).
+"""Breaks one mechanism at a time and runs the test that must catch it (mobile-app#361, #363).
 
-Each mutation edits a temporary copy of the migration, the rollback script or the
-edge function, never the source. The run must fail with an assertion error. A pass
+Each mutation edits a temporary copy of a migration, a rollback script or the edge
+function, never the source. #363 replaces six #361 action functions (same signatures),
+so mutations of those mechanisms edit the #363 migration, where the running code is. The run must fail with an assertion error. A pass
 is SURVIVED (the test does not bind the mechanism). A failure without an assertion
 error (crash, stack failure, timeout) is UNRESOLVED. Exit 0 only when every line is RED.
 
@@ -18,22 +19,30 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 MIGRATION = os.path.join(ROOT, 'migrations', '20261025235536_companion_task_actions.sql')
 ROLLBACK = os.path.join(ROOT, 'rollbacks', '20261025235536_companion_task_actions.down.sql')
+MIGRATION_363 = os.path.join(ROOT, 'migrations', '20261026165156_companion_task_create.sql')
+ROLLBACK_363 = os.path.join(ROOT, 'rollbacks', '20261026165156_companion_task_create.down.sql')
+SQL_TARGETS = {
+    'up': (MIGRATION, 'ACTIONS_MIGRATION_FILE'),
+    'down': (ROLLBACK, 'ACTIONS_ROLLBACK_FILE'),
+    'up363': (MIGRATION_363, 'ACTIONS_MIGRATION_363_FILE'),
+    'down363': (ROLLBACK_363, 'ACTIONS_ROLLBACK_363_FILE'),
+}
 FUNCTIONS = os.path.join(ROOT, 'functions')
 
 # name, target, find, replace, test file, test-name fragment
 MUTATIONS = [
-    ('undo_forgets_reason', 'up',
+    ('undo_forgets_reason', 'up363',
      "'inverse', public.companion_set_state_op(v_ref, v_before_state, v_before_reason, v_after));",
      "'inverse', public.companion_set_state_op(v_ref, v_before_state, null, v_after));",
      'undo_test.ts', 'exact earlier state'),
-    ('undo_ignores_newer_edit', 'up',
+    ('undo_ignores_newer_edit', 'up363',
      "      v_conflict := true;\n", "      v_conflict := false;\n",
      'undo_test.ts', 'older receipt cannot reverse'),
-    ('receipt_always_current', 'up',
+    ('receipt_always_current', 'up363',
      "    'current', u.operation_id is null\n               and public.companion_task_revision(p_receipt.user_id, p_receipt.task_ref) = (r->>'after_revision')::bigint,",
      "    'current', true,",
      'undo_test.ts', 'legacy Checklist write after a receipt'),
-    ('approval_hash_unchecked', 'up',
+    ('approval_hash_unchecked', 'up363',
      "       and p.operations_hash = public.companion_ops_hash(p_ops) and p.status = 'draft'\n     returning p.id, p.undo_of",
      "       and p.status = 'draft'\n     returning p.id, p.undo_of",
      'boundary_test.ts', 'forged or model-made approval'),
@@ -41,7 +50,7 @@ MUTATIONS = [
      "  perform pg_advisory_xact_lock(public.companion_op_lock_key(p_user, p_op));",
      "  perform 1;",
      'boundary_test.ts', 'result lookup'),
-    ('custom_revision_unchecked', 'up',
+    ('custom_revision_unchecked', 'up363',
      "    if v_ct.removed_at is not null then\n      perform public.companion_fail('CA422', 'task_removed', jsonb_build_object('task_ref', v_ref));\n    end if;\n    if v_before <> v_expected then",
      "    if v_ct.removed_at is not null then\n      perform public.companion_fail('CA422', 'task_removed', jsonb_build_object('task_ref', v_ref));\n    end if;\n    if false then",
      'boundary_test.ts', 'stale revision'),
@@ -49,8 +58,8 @@ MUTATIONS = [
      "    perform public.companion_cancel_reminders(new.user_id, 'sanity:' || new.sanity_checklist_id, 'task_completed');",
      "    null;",
      'undo_test.ts', 'Undo of completion'),
-    ('registry_accepts_any_type', 'up',
-     "    if v_type is null or v_type <> 'task.set_state' then",
+    ('registry_accepts_any_type', 'up363',
+     "    if v_type is null or v_type not in ('task.set_state', 'task.create_custom', 'task.remove_created') then",
      "    if v_type is null then",
      'boundary_test.ts', 'invalid payloads'),
     ('rollback_keeps_pending', 'down',
@@ -61,6 +70,43 @@ MUTATIONS = [
      "    if (!userId) return finish(json({ error: 'unauthorized' }, 401), 'unauthorized');",
      "    if (!userId) return finish(json({ error: 'unauthorized' }, 401), 'unauthorized');\n    await admin.rpc('check_and_increment_chatbot_usage', { p_user_id: userId });",
      'boundary_test.ts', 'AI limit'),
+    # #363 task creation.
+    ('create_context_unchecked', 'up363',
+     "  if v_prop.context is not null and v_now = v_prop.context then",
+     "  if true then",
+     'create_test.ts', 'relevant profile change'),
+    ('command_reusable', 'up363',
+     "      perform public.companion_fail('CA412', 'command_already_used');",
+     "      null;",
+     'command_test.ts', 'clear command adds exactly'),
+    ('command_duplicate_title_unchecked', 'up363',
+     "    if jsonb_array_length(public.companion_same_title_tasks(p_user, p_ops->0->>'title')) > 0 then\n      perform public.companion_fail('CA413'",
+     "    if false then\n      perform public.companion_fail('CA413'",
+     'command_test.ts', 'already exists'),
+    ('undo_removal_unconfirmed', 'up363',
+     "  if v_removes and (jsonb_typeof(p_authorization->'removal_confirmed') is distinct from 'boolean'",
+     "  if false and (jsonb_typeof(p_authorization->'removal_confirmed') is distinct from 'boolean'",
+     'create_test.ts', 'only after confirmation'),
+    ('removal_of_any_task', 'up363',
+     "         and r.outcome->'results'->0->>'type' = 'task.create_custom'\n         and r.task_ref = p_ops->0->>'task_ref') then",
+     "         and r.outcome->'results'->0->>'type' = 'task.create_custom') then",
+     'create_test.ts', 'cannot remove any other task'),
+    ('proposal_cross_account', 'up363',
+     "  select * into v_prop from public.companion_proposals where id = p_proposal_id and user_id = p_user_id;\n  if not found then\n    perform public.companion_fail('CA404', 'proposal_not_found');",
+     "  select * into v_prop from public.companion_proposals where id = p_proposal_id;\n  if not found then\n    perform public.companion_fail('CA404', 'proposal_not_found');",
+     'create_test.ts', 'another account cannot'),
+    ('down_keeps_create_inverse', 'down363',
+     "update public.companion_action_receipts r set inverse = null",
+     "update public.companion_action_receipts r set inverse = inverse",
+     'create_rollback_test.ts', 'rolling back only'),
+    ('restored_draft_keeps_approval', 'up363',
+     "      revision = case when p.status = 'draft' and a.row_data->>'kind' = 'task_create' then p.revision + 1",
+     "      revision = case when false then p.revision + 1",
+     'create_rollback_test.ts', 'full rollback'),
+    ('handler_command_unchecked', 'handler',
+     "        if (!resolved || resolved.kind !== 'create' || op.type !== 'task.create_custom' ||\n            op.title !== resolved.title || op.priority !== 'Do soon') {",
+     "        if (!resolved || resolved.kind !== 'create') {",
+     'command_test.ts', 'clear command adds exactly'),
     ('handler_trusts_body_owner', 'handler',
      "    const parsed = parseAction(body as Record<string, unknown>);",
      "    const claimed = (body as Record<string, unknown>).user_id;\n    const userIdOverride = typeof claimed === 'string' ? claimed : null;\n    const parsed = parseAction(body as Record<string, unknown>);",
@@ -82,14 +128,14 @@ def mutate(text, find, replace, name):
 def run_one(m, tmp):
     name, target, find, replace, test_file, fragment = m
     env = dict(os.environ)
-    if target in ('up', 'down'):
-        src = MIGRATION if target == 'up' else ROLLBACK
+    if target in SQL_TARGETS:
+        src, var = SQL_TARGETS[target]
         out = os.path.join(tmp, f'{name}.sql')
         with open(src) as f:
             text = mutate(f.read(), find, replace, name)
         with open(out, 'w') as f:
             f.write(text)
-        env['ACTIONS_MIGRATION_FILE' if target == 'up' else 'ACTIONS_ROLLBACK_FILE'] = out
+        env[var] = out
     else:
         dst = os.path.join(tmp, name, 'functions')
         shutil.copytree(FUNCTIONS, dst)
