@@ -22,6 +22,17 @@ import {
   type FetchCall,
 } from '../_shared/testHarness.ts';
 import { embeddingsResponse } from '../_shared/testEmbeddingFixtures.ts';
+import vancouverFixture from './fixtures/rag-query-context-vancouver.json' with { type: 'json' };
+import vancouverStreamFixture from './fixtures/rag-query-context-vancouver.sse.json' with { type: 'json' };
+import provinceConflictFixture from './fixtures/rag-query-context-province-conflict.json' with { type: 'json' };
+import unavailableFixture from './fixtures/rag-query-context-unavailable.json' with { type: 'json' };
+
+const CLIENT_FIXTURES: Record<string, unknown> = {
+  'rag-query-context-vancouver': vancouverFixture,
+  'rag-query-context-vancouver.sse': vancouverStreamFixture,
+  'rag-query-context-province-conflict': provinceConflictFixture,
+  'rag-query-context-unavailable': unavailableFixture,
+};
 
 testEnv.SANITY_PROJECT_ID = 'testproject';
 testEnv.SANITY_DATASET = 'production';
@@ -326,8 +337,9 @@ async function ask(prompt: string, o: AskOptions = {}, s: Scenario = {}) {
   const calls = [...fetchLog];
   let payload: Record<string, unknown>;
   let metadata: Record<string, unknown> | undefined;
+  let events: Array<{ name: string; data: Record<string, unknown> }> = [];
   if (o.stream) {
-    const events = sseEvents(text);
+    events = sseEvents(text);
     metadata = events.find(e => e.name === 'metadata')?.data;
     payload = events.find(e => e.name === 'complete')?.data ?? {};
   } else {
@@ -341,7 +353,7 @@ async function ask(prompt: string, o: AskOptions = {}, s: Scenario = {}) {
       m => m.role === 'system'
     )?.content ?? '';
   const context = (o.stream ? metadata?.context : payload.context) as Record<string, any>;
-  return { status: res.status, payload, metadata, context, calls, answerCall, system, startedAt, finishedAt };
+  return { status: res.status, payload, metadata, events, context, calls, answerCall, system, startedAt, finishedAt };
 }
 
 /** Requests that could change saved data: any non-GET to a table, or a write RPC. */
@@ -360,6 +372,54 @@ function writeCalls(calls: FetchCall[]): FetchCall[] {
   });
 }
 
+// ---------------------------------------------------------------- client fixtures
+//
+// The rendered-client acceptance tests (web vitest, mobile Jest) consume the
+// exact bodies this handler returns, saved under ./fixtures. Each test below
+// compares the handler's response to its fixture, so a contract change fails
+// here until the fixture (and the clients reading it) are updated:
+//   UPDATE_CLIENT_FIXTURES=1 deno test -A --no-check --node-modules-dir=auto <this file>
+// Only volatile values are normalized: the per-request check time (after it is
+// proven to be this request's read time), the relative profile arrival date
+// and usage/cost numbers.
+
+const FIXED_CHECKED_AT = '2026-10-25T17:30:00.000Z';
+const FIXED_ARRIVAL_DATE = '2026-10-31';
+const VOLATILE_KEYS = new Set(['tokenUsage', 'estimatedCostUsd', 'usage', 'latencyMs', 'model', 'provider']);
+
+function clientFixture(value: unknown, window: { startedAt: number; finishedAt: number }): unknown {
+  if (Array.isArray(value)) return value.map(v => clientFixture(v, window));
+  if (!value || typeof value !== 'object') return value;
+  const out: Record<string, unknown> = {};
+  for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+    if (VOLATILE_KEYS.has(key) || v === undefined) continue;
+    if (key === 'checkedAt' && typeof v === 'string') {
+      const t = Date.parse(v);
+      assert(t >= window.startedAt && t <= window.finishedAt, `checkedAt ${v} is this request's read time`);
+      out[key] = FIXED_CHECKED_AT;
+    } else if (v === inDays(6)) {
+      out[key] = FIXED_ARRIVAL_DATE;
+    } else {
+      out[key] = clientFixture(v, window);
+    }
+  }
+  return out;
+}
+
+async function assertClientFixture(name: string, actual: unknown): Promise<void> {
+  const url = new URL(`./fixtures/${name}.json`, import.meta.url);
+  const update =
+    (await Deno.permissions.query({ name: 'env', variable: 'UPDATE_CLIENT_FIXTURES' })).state === 'granted' &&
+    Deno.env.toObject().UPDATE_CLIENT_FIXTURES === '1'; // Deno.env.get reads the stubbed testEnv
+  if (update) {
+    await Deno.writeTextFile(url, JSON.stringify(actual, null, 2) + '\n');
+    return;
+  }
+  const expected = CLIENT_FIXTURES[name];
+  assert(expected !== undefined, `no client fixture ${name}`);
+  assertEquals(actual, expected, `${name}: the handler response differs from the client fixture`);
+}
+
 const VANCOUVER_QUESTION = 'I arrive in Vancouver next week as a new permanent resident. What should I do first?';
 
 // ---------------------------------------------------------------- Vancouver fixture
@@ -368,7 +428,7 @@ Deno.test({
   ...opts,
   name: 'Vancouver arrival: the answer reads profile, Checklist, conversation and official pages, and returns them with ids, revisions and check times',
   fn: async () => {
-    const { status, context, calls, system, startedAt, finishedAt } = await ask(VANCOUVER_QUESTION);
+    const { status, payload, context, calls, system, startedAt, finishedAt } = await ask(VANCOUVER_QUESTION);
     assertEquals(status, 200);
     assertEquals(context.version, 1);
 
@@ -448,6 +508,8 @@ Deno.test({
 
     // No task write: only reads and the usage RPCs.
     assertEquals(writeCalls(calls).map(c => `${c.method} ${c.url.pathname}`), []);
+
+    await assertClientFixture('rag-query-context-vancouver', clientFixture(payload, { startedAt, finishedAt }));
   },
 });
 
@@ -469,6 +531,7 @@ Deno.test({
     assertEquals(streamed.payload.cleanAnswer, plain.payload.answer);
     assertEquals(streamed.payload.topic, 'settling_in');
     assertEquals(plain.payload.topic, 'settling_in');
+    await assertClientFixture('rag-query-context-vancouver.sse', clientFixture(streamed.events, streamed));
   },
 });
 
@@ -603,8 +666,11 @@ Deno.test({
     for (const [reason, s, searchStatus, before, after] of cases) {
       before();
       try {
-        const { status, context, system, calls } = await ask(VANCOUVER_QUESTION, {}, s);
+        const { status, payload, context, system, calls, startedAt, finishedAt } = await ask(VANCOUVER_QUESTION, {}, s);
         assertEquals(status, 200, reason);
+        if (reason === 'search_failed') {
+          await assertClientFixture('rag-query-context-unavailable', clientFixture(payload, { startedAt, finishedAt }));
+        }
         assertEquals(context.guidance.status, 'unavailable', reason);
         assertEquals(context.guidance.reason, reason);
         assert(
@@ -646,7 +712,7 @@ Deno.test({
   ...opts,
   name: 'conflict: a stated province that differs from the profile asks for clarification and never touches the profile',
   fn: async () => {
-    const { context, system, calls } = await ask(VANCOUVER_QUESTION, {
+    const { payload, context, system, calls, startedAt, finishedAt } = await ask(VANCOUVER_QUESTION, {
       jwt: 'Bearer jwt-toronto',
       conversationIdentifier: CONV_TOR,
     });
@@ -661,6 +727,7 @@ Deno.test({
     const profile = (context.items as Array<Record<string, any>>).find(i => i.kind === 'profile');
     assertEquals(profile?.fields.find((f: Record<string, string>) => f.key === 'province').value, 'Ontario');
     assertEquals(writeCalls(calls), []);
+    await assertClientFixture('rag-query-context-province-conflict', clientFixture(payload, { startedAt, finishedAt }));
   },
 });
 
