@@ -22,6 +22,7 @@ import { useCurrentUser } from "@/hooks/useProfile";
 import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
 import type { CompanionInputSource } from "@/lib/companionAnalytics";
 import type { ChatMessage } from "@/types";
+import { ownAccountWork, stillOwned } from "@/lib/accountSession";
 
 export default function CompanionPage() {
   const { t } = useTranslation();
@@ -69,6 +70,9 @@ export default function CompanionPage() {
 
   async function handleSend(text: string, inputSource: CompanionInputSource) {
     setSendError(null);
+    // Results of this send reach this page only while its account is signed
+    // in (#361): another account sees no conversation, message or error from it.
+    const owner = ownAccountWork();
     try {
       let conversationIdentifier = activeId;
       const isNewConversation = !conversationIdentifier;
@@ -76,6 +80,7 @@ export default function CompanionPage() {
         const created = await createConversation.mutateAsync({
           firstMessage: text,
         });
+        if (!stillOwned(owner)) return;
         conversationIdentifier = created.id;
         // Pre-seed an empty messages list for the new conversation. Without
         // this, useConversationMessages mounts and fires a server fetch that
@@ -83,7 +88,7 @@ export default function CompanionPage() {
         // onMutate (Supabase round-trip returns [] before the user-save lands,
         // wiping the optimistic message).
         queryClient.setQueryData<ChatMessage[]>(
-          messagesKey(conversationIdentifier),
+          messagesKey(conversationIdentifier, owner.accountId),
           [],
         );
         setActiveId(conversationIdentifier);
@@ -95,6 +100,7 @@ export default function CompanionPage() {
         isNewConversation,
       });
     } catch (err) {
+      if (!stillOwned(owner)) return;
       // The daily free-tier cap surfaces as a typed ChatLimitError (rag-query
       // 429, relayed by the /api/companion proxy) — show localized limit copy;
       // anything else gets a generic retry prompt instead of failing silently.

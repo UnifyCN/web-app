@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BookOpen } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
+import { ownAccountWork, stillOwned } from "@/lib/accountSession";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { MessageBubble } from "@/components/companion/MessageBubble";
 import { ChatInput } from "@/components/companion/ChatInput";
@@ -93,6 +94,8 @@ export function InLessonChat({
     if (createConversation.isPending) return;
     setSendError(null);
     setDraft("");
+    // Results reach this chat only while its account is signed in (#361).
+    const owner = ownAccountWork();
     try {
       let id = conversationId;
       const isNewConversation = !id;
@@ -101,10 +104,14 @@ export function InLessonChat({
           firstMessage: text,
           options: { source: "in-lesson", lessonId: lessonContext.lessonId },
         });
+        if (!stillOwned(owner)) return;
         id = created.id;
         // Pre-seed an empty messages list so the mount-time fetch can't race
         // the optimistic user bubble (same guard as the Companion page).
-        queryClient.setQueryData<ChatMessage[]>(messagesKey(id), []);
+        queryClient.setQueryData<ChatMessage[]>(
+          messagesKey(id, owner.accountId),
+          [],
+        );
         onConversationCreated(id);
       }
       await sendMessage.mutateAsync({
@@ -115,6 +122,7 @@ export function InLessonChat({
         isNewConversation,
       });
     } catch (err) {
+      if (!stillOwned(owner)) return;
       setSendError(
         err instanceof ChatLimitError
           ? t("companion.dailyLimitReachedToast")

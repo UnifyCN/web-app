@@ -16,30 +16,47 @@ import {
   type CompanionInputSource,
 } from "@/lib/companionAnalytics";
 import type { ChatMessage, Conversation, LessonContext } from "@/types";
+import { useAccountId } from "@/hooks/useAccountId";
+import { AUTH_USER_KEY } from "@/hooks/useAuthUser";
+import {
+  AccountChangedError,
+  ownAccountWork,
+  stillOwned,
+} from "@/lib/accountSession";
+import {
+  CONVERSATIONS_ROOT,
+  conversationsKey,
+  messagesKey,
+} from "@/lib/companion/conversationKeys";
 
 /** React Query hooks for Companion (AI chat). */
 
-const CONVERSATIONS_KEY = ["conversations"] as const;
 const CHATBOT_USAGE_KEY = ["chatbot-usage"] as const;
 
-export function messagesKey(conversationIdentifier: string) {
-  return ["conversation-messages", conversationIdentifier] as const;
-}
+export {
+  CONVERSATIONS_ROOT,
+  MESSAGES_ROOT,
+  conversationsKey,
+  messagesKey,
+} from "@/lib/companion/conversationKeys";
 
 export function useConversations() {
+  const accountId = useAccountId();
   return useQuery({
-    queryKey: CONVERSATIONS_KEY,
+    queryKey: conversationsKey(accountId),
     queryFn: companion.getConversations,
+    enabled: Boolean(accountId),
   });
 }
 
 export function useConversationMessages(
   conversationIdentifier: string | null,
 ) {
+  const accountId = useAccountId();
   return useQuery({
-    queryKey: messagesKey(conversationIdentifier ?? ""),
+    queryKey: messagesKey(conversationIdentifier ?? "", accountId),
     queryFn: () => companion.getMessages(conversationIdentifier as string),
-    enabled: !!conversationIdentifier,
+    enabled: !!conversationIdentifier && Boolean(accountId),
     // Keep the cache fresh for 30s so an optimistic message pushed by
     // useSendMessage isn't immediately overwritten by a mount-time refetch
     // (matches mobile's useConversationMessages staleTime).
@@ -62,16 +79,24 @@ export function useChatbotUsage() {
 export function useCreateConversation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       firstMessage,
       options,
     }: {
       firstMessage: string;
       options?: companion.CreateConversationOptions;
-    }) => companion.createConversation(firstMessage, options),
-    onSuccess: (created) => {
+    }) => {
+      const owner = ownAccountWork();
+      const created = await companion.createConversation(firstMessage, options);
+      // Another account signed in meanwhile: its list and page get nothing.
+      if (!stillOwned(owner)) throw new AccountChangedError();
+      return created;
+    },
+    // The account that asked for the conversation owns its list entry.
+    onMutate: () => ({ accountId: ownAccountWork().accountId }),
+    onSuccess: (created, _vars, context) => {
       queryClient.setQueryData<Conversation[]>(
-        CONVERSATIONS_KEY,
+        conversationsKey(context?.accountId),
         (prev) => [created, ...(prev ?? [])],
       );
     },
@@ -95,6 +120,11 @@ interface SendMessageContext {
   key: ReturnType<typeof messagesKey>;
 }
 
+/** Stops a send whose account is no longer signed in, before its next request. */
+function ensureOwned(owner: ReturnType<typeof ownAccountWork>) {
+  if (!stillOwned(owner)) throw new AccountChangedError();
+}
+
 /**
  * Persists the user message, asks the rag-query edge function for a reply, then
  * persists the assistant message with any citations. Optimistically appends the
@@ -110,7 +140,7 @@ export function useSendMessage() {
   // other languages.
   const { t, i18n } = useTranslation();
   return useMutation<
-    { conversationIdentifier: string },
+    { conversationIdentifier: string; accountId: string | null },
     Error,
     SendMessageInput,
     SendMessageContext
@@ -122,12 +152,15 @@ export function useSendMessage() {
       inputSource,
       isNewConversation,
     }) => {
+      // The account signed in when the send starts owns every request and
+      // cache write of this send (#361).
+      const owner = ownAccountWork();
       // Prior turns = persisted messages already in the cache. Optimistic
       // bubbles carry negative ids (see onMutate) so we drop them, then keep
       // the last 10 turns to bound the prompt size.
       const cached =
         queryClient.getQueryData<ChatMessage[]>(
-          messagesKey(conversationIdentifier),
+          messagesKey(conversationIdentifier, owner.accountId),
         ) ?? [];
       // The cache already holds this send's optimistic bubble (onMutate runs
       // first), so the first message of a conversation is turn 1. Undefined
@@ -144,6 +177,7 @@ export function useSendMessage() {
         role: "user",
         content: text,
       });
+      ensureOwned(owner);
       // The message is "sent" once persisted — track here so it counts even if
       // the reply generation below fails (onSuccess wouldn't fire then).
       trackCompanionMessageSent({
@@ -170,6 +204,7 @@ export function useSendMessage() {
         lessonContext,
         responseLanguage,
       });
+      ensureOwned(owner);
       const { answer, sources, suggestedNextSteps, disclaimerKind } = reply;
       trackCompanionResponseReceived({
         queryType: reply.queryType,
@@ -205,10 +240,10 @@ export function useSendMessage() {
         // sources and context. Never sent to analytics.
         companionContext: reply.contextRecord,
       });
-      return { conversationIdentifier };
+      return { conversationIdentifier, accountId: owner.accountId };
     },
     onMutate: async ({ conversationIdentifier, text }) => {
-      const key = messagesKey(conversationIdentifier);
+      const key = messagesKey(conversationIdentifier, ownAccountWork().accountId);
       await queryClient.cancelQueries({ queryKey: key });
       const optimisticUserMessage: ChatMessage = {
         // Negative ids avoid collision with the bigint server ids and read as
@@ -233,11 +268,11 @@ export function useSendMessage() {
         queryClient.invalidateQueries({ queryKey: context.key });
       }
     },
-    onSuccess: ({ conversationIdentifier }) => {
+    onSuccess: ({ conversationIdentifier, accountId }) => {
       queryClient.invalidateQueries({
-        queryKey: messagesKey(conversationIdentifier),
+        queryKey: messagesKey(conversationIdentifier, accountId),
       });
-      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: [CONVERSATIONS_ROOT] });
       // The edge function incremented chatbot_usage server-side — refetch so
       // the free-tier "remaining" counter reflects the new count.
       queryClient.invalidateQueries({ queryKey: CHATBOT_USAGE_KEY });
@@ -252,6 +287,7 @@ export function useSendMessage() {
  */
 export function useDeleteConversation() {
   const queryClient = useQueryClient();
+  const listKey = conversationsKey(useAccountId());
   return useMutation<
     void,
     Error,
@@ -261,12 +297,10 @@ export function useDeleteConversation() {
     mutationFn: (conversationIdentifier) =>
       companion.deleteConversation(conversationIdentifier),
     onMutate: async (conversationIdentifier) => {
-      await queryClient.cancelQueries({ queryKey: CONVERSATIONS_KEY });
-      const previous = queryClient.getQueryData<Conversation[]>(
-        CONVERSATIONS_KEY,
-      );
+      await queryClient.cancelQueries({ queryKey: listKey });
+      const previous = queryClient.getQueryData<Conversation[]>(listKey);
       queryClient.setQueryData<Conversation[]>(
-        CONVERSATIONS_KEY,
+        listKey,
         (prev) =>
           (prev ?? []).filter((c) => c.id !== conversationIdentifier),
       );
@@ -274,16 +308,16 @@ export function useDeleteConversation() {
     },
     onError: (_err, _id, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(CONVERSATIONS_KEY, context.previous);
+        queryClient.setQueryData(listKey, context.previous);
       }
     },
     onSuccess: (_data, conversationIdentifier) => {
       // Drop the message-thread cache only after the server confirms — on
       // error we keep it so a rolled-back row still has its thread intact.
       queryClient.removeQueries({
-        queryKey: messagesKey(conversationIdentifier),
+        queryKey: messagesKey(conversationIdentifier, listKey[1]),
       });
-      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
+      queryClient.invalidateQueries({ queryKey: [CONVERSATIONS_ROOT] });
     },
   });
 }
@@ -291,11 +325,15 @@ export function useDeleteConversation() {
 /** Warms the Companion tab: the conversation list and today's usage (same keys
  *  and fetchers as `useConversations` / `useChatbotUsage`). */
 export function prefetchCompanion(queryClient: QueryClient) {
+  // The list is prefetched only for a known account, under its own key.
+  const user = queryClient.getQueryData<{ id: string } | null>(AUTH_USER_KEY);
   return Promise.all([
-    queryClient.prefetchQuery({
-      queryKey: CONVERSATIONS_KEY,
-      queryFn: companion.getConversations,
-    }),
+    user
+      ? queryClient.prefetchQuery({
+          queryKey: conversationsKey(user.id),
+          queryFn: companion.getConversations,
+        })
+      : Promise.resolve(),
     queryClient.prefetchQuery({
       queryKey: CHATBOT_USAGE_KEY,
       queryFn: companion.getChatbotUsage,

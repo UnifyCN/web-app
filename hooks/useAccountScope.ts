@@ -3,6 +3,10 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { TASKS_KEY } from "@/hooks/useChecklist";
+import {
+  CONVERSATIONS_ROOT,
+  MESSAGES_ROOT,
+} from "@/lib/companion/conversationKeys";
 import { clearComposerDrafts } from "@/lib/companion/composerDrafts";
 import { TASK_PROGRESS_ROOT } from "@/lib/companionActions/queryKeys";
 import { clearTaskActionStores } from "@/lib/companionActions/taskActionStore";
@@ -12,7 +16,8 @@ import { clearTaskActionStores } from "@/lib/companionActions/taskActionStore";
  * Checklist and task-progress queries carry the account id in their keys, so a
  * view never reads another account's entry; this removes those entries, unsent
  * messages and unresolved task actions of every other account once the signed-in
- * account changes or signs out.
+ * account changes or signs out. Conversation lists and threads, also keyed by
+ * account, are dropped the same way.
  */
 export function useAccountScope(userId: string | null, ready = true) {
   const queryClient = useQueryClient();
@@ -28,5 +33,15 @@ export function useAccountScope(userId: string | null, ready = true) {
       queryKey: TASKS_KEY,
       predicate: (q) => q.queryKey[2] !== userId,
     });
+    for (const root of [CONVERSATIONS_ROOT, MESSAGES_ROOT]) {
+      void queryClient.cancelQueries({
+        queryKey: [root],
+        predicate: (q) => q.queryKey[1] !== userId,
+      });
+      queryClient.removeQueries({
+        queryKey: [root],
+        predicate: (q) => q.queryKey[1] !== userId,
+      });
+    }
   }, [userId, ready, queryClient]);
 }

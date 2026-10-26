@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { getSessionUser } from "@/services/auth";
+import { noteAccount } from "@/lib/accountSession";
 
 /**
  * The signed-in Supabase user (auth.users), or null when signed out. Read from
@@ -23,7 +24,9 @@ export function useAuthUser() {
     const supabase = createClient();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Work in flight for an earlier account stops at once (#361).
+      noteAccount(session?.user.id ?? null);
       queryClient.invalidateQueries({ queryKey: AUTH_USER_KEY });
     });
     return () => subscription.unsubscribe();
