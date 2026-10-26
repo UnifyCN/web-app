@@ -178,6 +178,8 @@ interface Scenario {
   search?: string[] | ((call: FetchCall) => Response | Promise<Response>);
   pages?: Pages;
   answer?: string;
+  /** Fault injection: the conversation ownership lookup fails this way. */
+  conversationLookup?: 'unavailable' | 'network';
 }
 
 let scenario: Scenario = {};
@@ -215,6 +217,12 @@ function supabase(call: FetchCall): Response | undefined {
     case '/rest/v1/custom_checklist_tasks':
       return json(account.customTasks);
     case '/rest/v1/conversations': {
+      if (scenario.conversationLookup === 'unavailable') {
+        return json({ code: 'XX000', message: 'database read unavailable' }, 503);
+      }
+      if (scenario.conversationLookup === 'network') {
+        return Promise.reject(new TypeError('network connection lost')) as unknown as Response;
+      }
       const wanted = call.url.searchParams.get('conversation_identifier')?.replace(/^eq\./, '');
       return json(account.conversations.filter(c => c.conversation_identifier === wanted));
     }
@@ -1015,5 +1023,165 @@ Deno.test({
       assertEquals(r.context.guidance.status, 'not_needed');
     }
     assertEquals(searched, [], 'definitions that searched anyway');
+  },
+});
+
+// ---------------------------------------------------------------- review corrections (spec review r2)
+
+Deno.test({
+  ...opts,
+  name: 'conversation access not established (lookup 503 or network failure): earlier turns are not used, shown, searched or sent; the current message still is',
+  fn: async () => {
+    const earlier = [{ role: 'user' as const, message: 'I am moving to Toronto tomorrow' }];
+    for (const fault of ['unavailable', 'network'] as const) {
+      const r = await ask(
+        'What should I do first?',
+        { conversationIdentifier: CONV_TOR, messages: earlier },
+        { conversationLookup: fault }
+      );
+      assertEquals(r.status, 200);
+      const read = r.context.reads.find((x: Record<string, string>) => x.capability === 'context.conversation').status;
+      assert(read !== 'ok', `${fault}: the lookup did not establish access (${read})`);
+      assert(
+        !(r.context.items as Array<Record<string, unknown>>).some(i => i.kind === 'conversation_detail'),
+        `${fault}: no detail from an unverified conversation`
+      );
+      assertEquals(r.context.clarification, null, `${fault}: no clarification from an unverified conversation`);
+      const sent = JSON.stringify((r.answerCall?.body as { messages: unknown }).messages);
+      assert(!sent.includes('Toronto'), `${fault}: the earlier turn does not reach the model`);
+      const search = r.calls.find(c => (c.body as { plugins?: unknown })?.plugins);
+      assert(!JSON.stringify(search?.body ?? '').includes('Ontario'), `${fault}: the earlier turn does not steer the search`);
+
+      // The current message is the user's own input and still counts.
+      const current = await ask(
+        'I am moving to Toronto tomorrow. What should I do first?',
+        { conversationIdentifier: CONV_TOR, messages: earlier },
+        { conversationLookup: fault }
+      );
+      const detail = (current.context.items as Array<Record<string, any>>).find(i => i.kind === 'conversation_detail');
+      assertEquals(detail?.fields.find((f: Record<string, string>) => f.key === 'province')?.value, 'Ontario', fault);
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'no conversation id: client-sent earlier turns are not used',
+  fn: async () => {
+    setRoutes(routes);
+    scenario = {};
+    const res = await handler(
+      new Request('http://localhost/rag-query', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer jwt-vancouver', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: 'What should I do first?',
+          messages: [{ role: 'user', message: 'I am moving to Toronto tomorrow' }],
+        }),
+      })
+    );
+    const body = await res.json();
+    assertEquals(res.status, 200);
+    assert(!(body.context.items as Array<Record<string, unknown>>).some(i => i.kind === 'conversation_detail'));
+    const answer = [...fetchLog].find(
+      c => c.url.pathname.endsWith('/chat/completions') && !(c.body as { plugins?: unknown })?.plugins
+    );
+    assert(!JSON.stringify((answer?.body as { messages: unknown }).messages).includes('Toronto'));
+  },
+});
+
+// The same stated destination in each supported language, in other scripts,
+// in spelling variants and in mixed-language questions. These prove the listed
+// phrasings and names (the Canadian cities and provinces the server knows),
+// not every way to name a place.
+const TORONTO_NEXT_WEEK: Array<[string, string]> = [
+  ['en', 'I arrive in Toronto next week. What should I do first?'],
+  ['fr-CA', 'J’arrive à Toronto la semaine prochaine. Que dois-je faire en premier ?'],
+  ['es', 'Llego a Toronto la próxima semana. ¿Qué debo hacer primero?'],
+  ['ar', 'سأصل إلى تورونتو الأسبوع المقبل. ماذا يجب أن أفعل أولاً؟'],
+  ['ar', 'سأصل إلى تورنتو الأسبوع القادم. ماذا أفعل أولاً؟'],
+  ['ar', 'سأنتقل لتورونتو الأسبوع المقبل، من أين أبدأ؟'],
+  ['hi', 'मैं अगले सप्ताह टोरंटो पहुँच रहा हूँ। मुझे पहले क्या करना चाहिए?'],
+  ['hi', 'मैं अगले हफ़्ते टोरोंटो पहुंच रही हूं, पहले क्या करूं?'],
+  ['pa', 'ਮੈਂ ਅਗਲੇ ਹਫ਼ਤੇ ਟੋਰਾਂਟੋ ਪਹੁੰਚ ਰਿਹਾ ਹਾਂ। ਮੈਨੂੰ ਪਹਿਲਾਂ ਕੀ ਕਰਨਾ ਚਾਹੀਦਾ ਹੈ?'],
+  ['pa', 'ਮੈਂ ਅਗਲੇ ਹਫ਼ਤੇ ਟਰਾਂਟੋ ਪਹੁੰਚ ਰਹੀ ਹਾਂ, ਪਹਿਲਾਂ ਕੀ ਕਰਾਂ?'],
+  ['vi', 'Tôi sẽ đến Toronto vào tuần tới. Tôi nên làm gì đầu tiên?'],
+  // Mixed-language questions.
+  ['hi', 'मैं next week टोरंटो पहुँच रहा हूँ, पहले क्या करूँ?'],
+  ['ar', 'I arrive in تورونتو next week، ماذا أفعل أولاً؟'],
+  ['pa', 'Main next week ਟੋਰਾਂਟੋ pahunch reha haan, pehle ki karna chahida?'],
+];
+
+Deno.test({
+  ...opts,
+  name: 'a stated destination in any supported language or script drives guidance and asks about the saved province',
+  fn: async () => {
+    const wrong: string[] = [];
+    for (const [lang, prompt] of TORONTO_NEXT_WEEK) {
+      // BC profile (account Vancouver) stating Toronto.
+      const r = await ask(prompt, { responseLanguage: lang }, { search: [OHIP_URL] });
+      const detail = (r.context.items as Array<Record<string, any>>).find(i => i.kind === 'conversation_detail');
+      const field = (key: string) => detail?.fields.find((f: Record<string, string>) => f.key === key)?.value;
+      const search = JSON.stringify(r.calls.find(c => (c.body as { plugins?: unknown })?.plugins)?.body ?? '');
+      const ohip = r.context.guidance.sources.find((x: Record<string, string>) => x.url === OHIP_URL);
+      const problems = [
+        field('city') !== 'Toronto' && `city ${field('city')}`,
+        field('province') !== 'Ontario' && `province ${field('province')}`,
+        field('arrival') !== 'next_week' && `arrival ${field('arrival')}`,
+        !(r.context.clarification?.kind === 'profile_conflict' && r.context.clarification.field === 'province' &&
+          r.context.clarification.conversationValue === 'Ontario') && 'no province clarification',
+        (!search.includes('Ontario') || search.includes('British Columbia')) && 'search not for Ontario',
+        ohip?.status !== 'checked' && `Ontario page ${ohip?.status}/${ohip?.reason}`,
+      ].filter(Boolean);
+      if (problems.length) wrong.push(`${lang}: ${prompt} -> ${problems.join(', ')}`);
+    }
+    assertEquals(wrong, [], 'stated Toronto not used');
+  },
+});
+
+const PROVINCE_NAMED: Array<[string, string, string, string]> = [
+  // [account, lang, prompt, expected province]
+  ['Bearer jwt-vancouver', 'ar', 'سأنتقل إلى أونتاريو الشهر المقبل. ماذا أفعل أولاً؟', 'Ontario'],
+  ['Bearer jwt-vancouver', 'hi', 'मैं अगले महीने ओंटारियो शिफ्ट हो रहा हूँ, पहले क्या करूँ?', 'Ontario'],
+  ['Bearer jwt-vancouver', 'pa', 'ਮੈਂ ਅਗਲੇ ਮਹੀਨੇ ਓਨਟਾਰੀਓ ਸ਼ਿਫਟ ਹੋ ਰਿਹਾ ਹਾਂ, ਪਹਿਲਾਂ ਕੀ ਕਰਾਂ?', 'Ontario'],
+  ['Bearer jwt-toronto', 'fr-CA', 'Je vais arriver en Colombie-Britannique la semaine prochaine. Que dois-je faire en premier ?', 'British Columbia'],
+  ['Bearer jwt-toronto', 'es', 'Me mudo a Columbia Británica la próxima semana, ¿qué hago primero?', 'British Columbia'],
+  ['Bearer jwt-toronto', 'ar', 'سأنتقل إلى كولومبيا البريطانية الأسبوع المقبل. من أين أبدأ؟', 'British Columbia'],
+  ['Bearer jwt-toronto', 'hi', 'मैं अगले सप्ताह ब्रिटिश कोलंबिया शिफ्ट हो रहा हूँ, पहले क्या करूँ?', 'British Columbia'],
+  ['Bearer jwt-toronto', 'pa', 'ਮੈਂ ਅਗਲੇ ਹਫ਼ਤੇ ਬ੍ਰਿਟਿਸ਼ ਕੋਲੰਬੀਆ ਸ਼ਿਫਟ ਹੋ ਰਿਹਾ ਹਾਂ, ਪਹਿਲਾਂ ਕੀ ਕਰਾਂ?', 'British Columbia'],
+];
+
+Deno.test({
+  ...opts,
+  name: 'a province named in another language or script is the stated province',
+  fn: async () => {
+    const wrong: string[] = [];
+    for (const [jwt, lang, prompt, province] of PROVINCE_NAMED) {
+      const r = await ask(prompt, { jwt, responseLanguage: lang, conversationIdentifier: jwt.includes('toronto') ? CONV_TOR : CONV_VAN });
+      const detail = (r.context.items as Array<Record<string, any>>).find(i => i.kind === 'conversation_detail');
+      const stated = detail?.fields.find((f: Record<string, string>) => f.key === 'province')?.value;
+      const c = r.context.clarification;
+      if (stated !== province || c?.kind !== 'profile_conflict' || c.conversationValue !== province) {
+        wrong.push(`${lang}: ${prompt} -> ${stated} / ${JSON.stringify(c)}`);
+      }
+    }
+    assertEquals(wrong, [], 'named province not used');
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'control: the saved city stated in another script agrees with the profile and asks nothing',
+  fn: async () => {
+    for (const [lang, prompt] of [
+      ['ar', 'سأصل إلى فانكوفر الأسبوع المقبل. ماذا يجب أن أفعل أولاً؟'],
+      ['hi', 'मैं अगले सप्ताह वैंकूवर पहुँच रहा हूँ। मुझे पहले क्या करना चाहिए?'],
+      ['pa', 'ਮੈਂ ਅਗਲੇ ਹਫ਼ਤੇ ਵੈਨਕੂਵਰ ਪਹੁੰਚ ਰਿਹਾ ਹਾਂ। ਮੈਨੂੰ ਪਹਿਲਾਂ ਕੀ ਕਰਨਾ ਚਾਹੀਦਾ ਹੈ?'],
+    ]) {
+      const r = await ask(prompt, { responseLanguage: lang });
+      const detail = (r.context.items as Array<Record<string, any>>).find(i => i.kind === 'conversation_detail');
+      assertEquals(detail?.fields.find((f: Record<string, string>) => f.key === 'province')?.value, 'British Columbia', lang);
+      assertEquals(r.context.clarification, null, lang);
+    }
   },
 });

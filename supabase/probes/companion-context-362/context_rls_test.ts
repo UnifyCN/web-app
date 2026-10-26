@@ -184,7 +184,18 @@ async function passthrough(call: FetchCall): Promise<Response> {
   return await realFetch(call.url, { method: call.method, headers: call.headers, body });
 }
 
+/** Fault injection: the conversation ownership lookup answers 503. */
+let conversationLookupFails = false;
+
 function routes(call: FetchCall): Response | undefined {
+  if (
+    conversationLookupFails &&
+    call.url.origin === LOCAL &&
+    call.url.pathname === '/rest/v1/conversations' &&
+    call.method === 'GET'
+  ) {
+    return json({ code: 'XX000', message: 'temporary database failure' }, 503);
+  }
   if (call.url.origin === LOCAL) return passthrough(call) as unknown as Response;
   if (call.url.hostname === 'testproject.apicdn.sanity.io') {
     return json({ result: CONTENT[call.url.searchParams.get('$stage') ?? ''] ?? [] });
@@ -476,6 +487,35 @@ Deno.test({
     );
     assertEquals(legacyRead.status, 200);
     assert(legacyRead.json.some((m: Record<string, unknown>) => m.content === 'legacy'));
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: "real JWT + injected lookup failure: another account's history is not used when access cannot be established",
+  fn: async () => {
+    // Real RLS hides B's conversation from A before the fault.
+    const foreign = await rest(
+      'GET',
+      `/rest/v1/conversations?select=conversation_identifier&conversation_identifier=eq.${convB.conversation_identifier}`,
+      undefined,
+      A.jwt
+    );
+    assertEquals(foreign.json, []);
+    conversationLookupFails = true;
+    try {
+      const r = await ask(A, 'What should I do first?', {
+        conversationIdentifier: convB.conversation_identifier,
+        messages: [{ role: 'user', message: 'I am moving to Toronto tomorrow' }],
+      });
+      assertEquals(r.status, 200);
+      assert(r.context.reads.find((x: Record<string, string>) => x.capability === 'context.conversation').status !== 'ok');
+      assertEquals(r.context.items.filter((i: Record<string, unknown>) => i.kind === 'conversation_detail'), []);
+      const sent = JSON.stringify((r.answer?.body as { messages: unknown }).messages);
+      assert(!sent.includes('Toronto'), 'the unverified earlier turn reaches the model');
+    } finally {
+      conversationLookupFails = false;
+    }
   },
 });
 

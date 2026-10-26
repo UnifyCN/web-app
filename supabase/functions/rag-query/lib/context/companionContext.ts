@@ -42,6 +42,10 @@ export interface CompanionReadRequest {
   evalProfile?: ProfileRow | null;
   conversationIdentifier: unknown;
   prompt: string;
+  /**
+   * Earlier user turns the client sent. Used only when this account's read of
+   * the conversation succeeds (or in eval mode, which has no account).
+   */
   earlierUserTurns: string[];
   lang: string;
   /** The question's lane uses retrieval (immigration, settlement, fact check, form help). */
@@ -55,7 +59,12 @@ export interface CompanionReads {
   /** Resolves first: retrieval waits for the province. */
   profile: Promise<ProfileRow | null>;
   /** Everything else. */
-  context: Promise<{ context: CompanionContext; evidence: Map<string, string>; conversationDenied: boolean }>;
+  context: Promise<{
+    context: CompanionContext;
+    evidence: Map<string, string>;
+    /** The client's earlier turns may be used: conversation access was established. */
+    historyAllowed: boolean;
+  }>;
 }
 
 const RAG_LANES = new Set(['immigration', 'newcomer_settlement', 'fact_check', 'form_help']);
@@ -98,13 +107,15 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
     : Promise.resolve({ status: 'skipped' } as const);
 
   const context = (async () => {
-    // Earlier turns belong to the conversation: when this account cannot read
-    // it, they are not this account's to use, so only the new message counts.
+    // Earlier turns belong to the conversation. They count only when this
+    // account's read of it succeeds: a denied, failed, timed-out or missing
+    // read is not permission, so only the new message counts. Eval mode has no
+    // account and no conversation to check.
     const [profileRow, conversation] = await Promise.all([profile, conversationOutcome]);
-    const conversationDenied = conversation.status === 'denied';
+    const historyAllowed = conversation.status === 'ok' || (!userClient && !userId);
     const details = readConversationDetails(
       request.prompt,
-      conversationDenied ? [] : request.earlierUserTurns
+      historyAllowed ? request.earlierUserTurns : []
     );
     const province = effectiveProvince(details, profileRow);
 
@@ -164,7 +175,7 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
     return {
       context: result,
       evidence: guidance?.evidence ?? new Map<string, string>(),
-      conversationDenied,
+      historyAllowed,
     };
   })().catch(error => {
     // A defect in assembling context must not cost the user the answer; the
@@ -179,7 +190,7 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
         clarification: null,
       },
       evidence: new Map<string, string>(),
-      conversationDenied: true,
+      historyAllowed: false,
     };
   });
 

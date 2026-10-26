@@ -1010,7 +1010,7 @@ Deno.serve(async (req: Request) => {
     );
 
     const recentMessages =
-      !companion.conversationDenied && messages && Array.isArray(messages)
+      companion.historyAllowed && messages && Array.isArray(messages)
         ? messages.slice(-10)
         : [];
 
