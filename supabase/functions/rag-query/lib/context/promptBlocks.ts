@@ -107,6 +107,10 @@ export function guidanceBlock(context: CompanionContext, evidence: Map<string, s
 export function clarificationBlock(context: CompanionContext): string {
   const c = context.clarification;
   if (!c) return '';
+  if (c.kind === 'place_unclear') {
+    const options = c.options.map(o => `"${dataText(o, 40)}"`).join(', ');
+    return `\n\nCLARIFICATION NEEDED: The user named more than one place they may be going to (${options}). Ask which one applies before giving province-specific steps. Until they answer, give only steps that apply everywhere in Canada. Do not assume their saved profile province.`;
+  }
   if (c.kind === 'missing') {
     return `\n\nCLARIFICATION NEEDED: The user's province is unknown. Ask which province or city they are in (or moving to) before giving province-specific steps.`;
   }

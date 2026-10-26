@@ -1185,3 +1185,146 @@ Deno.test({
     }
   },
 });
+
+// ---------------------------------------------------------------- review corrections (spec review r3)
+//
+// Where the user is going, when a message names more than one place: origins
+// ("from", "se", "ਤੋਂ", "من", "từ"), where they live or lived, places of
+// family or visits, and destinations ("to", "à", "a", "إلى", "đến",
+// "पहुँच", "ਪਹੁੰਚ"). A clear destination is used; two different destinations
+// are asked about. These prove the listed phrasings, not every sentence shape.
+
+const TO_TORONTO: Array<[string, string]> = [
+  ['en', 'I am moving from Vancouver to Toronto next week. What should I do first?'],
+  ['en', 'I am moving to Toronto from Vancouver next week. What should I do first?'],
+  ['en', 'I currently live in Vancouver and I am moving to Toronto next week. What should I do first?'],
+  ['en', 'I lived in Vancouver for two years, but next week I arrive in Toronto. What should I do first?'],
+  ['fr-CA', 'Je déménage de Vancouver à Toronto la semaine prochaine. Par où commencer ?'],
+  ['es', 'Me mudo de Vancouver a Toronto la próxima semana. ¿Qué hago primero?'],
+  ['ar', 'سأنتقل من فانكوفر إلى تورونتو الأسبوع المقبل. ماذا أفعل أولاً؟'],
+  ['hi', 'मैं अगले सप्ताह वैंकूवर से टोरंटो शिफ्ट हो रहा हूँ। पहले क्या करूँ?'],
+  ['pa', 'ਮੈਂ ਅਗਲੇ ਹਫ਼ਤੇ ਵੈਨਕੂਵਰ ਤੋਂ ਟੋਰਾਂਟੋ ਸ਼ਿਫਟ ਹੋ ਰਿਹਾ ਹਾਂ। ਪਹਿਲਾਂ ਕੀ ਕਰਾਂ?'],
+  ['vi', 'Tôi chuyển từ Vancouver đến Toronto vào tuần tới. Tôi nên làm gì trước?'],
+  ['en', 'I am moving from Vancouver to टोरंटो next week. What should I do first?'],
+  ['en', 'I am moving from Vancouver to ਟੋਰਾਂਟੋ next week. What should I do first?'],
+  ['hi', 'मैं Vancouver से टोरंटो अगले सप्ताह पहुँच रहा हूँ। पहले क्या करूँ?'],
+  ['en', 'My sister lives in Calgary. I arrive in Toronto next week. What should I do first?'],
+  ['en', 'I want to visit Montreal later, but I am moving to Toronto next week. What should I do first?'],
+  ['ar', 'أختي تعيش في كالغاري. سأصل إلى تورونتو الأسبوع المقبل. ماذا أفعل أولاً؟'],
+  ['hi', 'मेरी बहन कैलगरी में रहती है। मैं अगले सप्ताह टोरंटो पहुँच रहा हूँ। पहले क्या करूँ?'],
+];
+
+Deno.test({
+  ...opts,
+  name: 'origin and destination: a clear destination after or before an origin, a residence or a family/visit place is used',
+  fn: async () => {
+    const wrong: string[] = [];
+    for (const [lang, prompt] of TO_TORONTO) {
+      const r = await ask(prompt, { responseLanguage: lang }, { search: [SIN_URL, OHIP_URL] });
+      const detail = (r.context.items as Array<Record<string, any>>).find(i => i.kind === 'conversation_detail');
+      const field = (key: string) => detail?.fields.find((f: Record<string, string>) => f.key === key)?.value;
+      const search = JSON.stringify(r.calls.find(c => (c.body as { plugins?: unknown })?.plugins)?.body ?? '');
+      const ohip = r.context.guidance.sources.find((x: Record<string, string>) => x.url === OHIP_URL);
+      const c = r.context.clarification;
+      const problems = [
+        field('city') !== 'Toronto' && `city ${field('city')}`,
+        field('province') !== 'Ontario' && `province ${field('province')}`,
+        !(c?.kind === 'profile_conflict' && c.field === 'province' && c.conversationValue === 'Ontario') && `clarification ${JSON.stringify(c)}`,
+        (!search.includes('Ontario') || search.includes('British Columbia')) && 'search not for Ontario',
+        ohip?.status !== 'checked' && `Ontario page ${ohip?.status}/${ohip?.reason}`,
+      ].filter(Boolean);
+      if (problems.length) wrong.push(`${lang}: ${prompt} -> ${problems.join(', ')}`);
+    }
+    assertEquals(wrong, [], 'destination not used');
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'origin and destination: reversed routes and family mentions keep the saved place when it is the destination',
+  fn: async () => {
+    const wrong: string[] = [];
+    for (const [lang, prompt] of [
+      ['en', 'I am moving from Toronto to Vancouver next week. What should I do first?'],
+      ['en', 'I arrive in Vancouver next week; my brother lives in Toronto. What should I do first?'],
+      ['hi', 'मैं अगले सप्ताह टोरंटो से वैंकूवर पहुँच रहा हूँ। पहले क्या करूँ?'],
+      ['ar', 'سأنتقل من تورونتو إلى فانكوفر الأسبوع المقبل. ماذا أفعل أولاً؟'],
+    ]) {
+      const r = await ask(prompt, { responseLanguage: lang });
+      const detail = (r.context.items as Array<Record<string, any>>).find(i => i.kind === 'conversation_detail');
+      const province = detail?.fields.find((f: Record<string, string>) => f.key === 'province')?.value;
+      if (province !== 'British Columbia' || r.context.clarification !== null) {
+        wrong.push(`${lang}: ${prompt} -> ${province} / ${JSON.stringify(r.context.clarification)}`);
+      }
+    }
+    // The same reversed route for a saved Ontario profile is a conflict.
+    const tor = await ask('I am moving from Toronto to Vancouver next week. What should I do first?', {
+      jwt: 'Bearer jwt-toronto',
+      conversationIdentifier: CONV_TOR,
+    });
+    if (tor.context.clarification?.conversationValue !== 'British Columbia') {
+      wrong.push(`toronto profile -> ${JSON.stringify(tor.context.clarification)}`);
+    }
+    assertEquals(wrong, []);
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'origin and destination: two different destinations are asked about, not guessed from the order or the profile',
+  fn: async () => {
+    const wrong: string[] = [];
+    for (const [lang, prompt] of [
+      ['en', 'I am moving to Toronto or Calgary next week. What should I do first?'],
+      ['en', 'I might move to Toronto, or maybe Calgary, next month. What should I do first?'],
+      ['fr-CA', 'Je déménage à Toronto ou à Calgary la semaine prochaine. Par où commencer ?'],
+      ['hi', 'मैं अगले सप्ताह टोरंटो या कैलगरी शिफ्ट हो रहा हूँ, पहले क्या करूँ?'],
+      ['ar', 'سأنتقل إلى تورونتو أو كالغاري الأسبوع المقبل. ماذا أفعل أولاً؟'],
+    ]) {
+      const r = await ask(prompt, { responseLanguage: lang }, { search: [SIN_URL, OHIP_URL] });
+      const c = r.context.clarification;
+      const detail = (r.context.items as Array<Record<string, any>>).find(i => i.kind === 'conversation_detail');
+      const province = detail?.fields.find((f: Record<string, string>) => f.key === 'province')?.value;
+      const search = JSON.stringify(r.calls.find(x => (x.body as { plugins?: unknown })?.plugins)?.body ?? '');
+      const problems = [
+        !(c?.kind === 'place_unclear' && c.options.includes('Ontario') && c.options.includes('Alberta')) && `clarification ${JSON.stringify(c)}`,
+        province && `province ${province}`,
+        search.includes('British Columbia') && 'search used the saved province',
+        r.context.guidance.sources.some((s: Record<string, string>) => s.reason === 'different_province') && 'a page was excluded for a guessed province',
+      ].filter(Boolean);
+      if (problems.length) wrong.push(`${lang}: ${prompt} -> ${problems.join(', ')}`);
+    }
+    assertEquals(wrong, [], 'unclear destination not asked about');
+    const sent = (await ask('I am moving to Toronto or Calgary next week. What should I do first?')).system;
+    assertStringIncludes(sent, 'more than one place');
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'origin and destination: the current message comes before earlier turns, and an origin alone is no destination',
+  fn: async () => {
+    const own = { conversationIdentifier: CONV_VAN };
+    const current = await ask('I am moving from Vancouver to Toronto next week. What should I do first?', {
+      ...own,
+      messages: [{ role: 'user', message: 'I am moving to Calgary next month' }],
+    });
+    const p = (r: Awaited<ReturnType<typeof ask>>) =>
+      (r.context.items as Array<Record<string, any>>)
+        .find(i => i.kind === 'conversation_detail')
+        ?.fields.find((f: Record<string, string>) => f.key === 'province')?.value;
+    assertEquals(p(current), 'Ontario');
+    const earlier = await ask('What should I do first?', {
+      ...own,
+      messages: [{ role: 'user', message: 'I am moving from Vancouver to Toronto next week' }],
+    });
+    assertEquals(p(earlier), 'Ontario');
+    const unclearNow = await ask('Toronto or Calgary, I am not sure yet. What should I do first?', {
+      ...own,
+      messages: [{ role: 'user', message: 'I am moving to Toronto next week' }],
+    });
+    assertEquals(unclearNow.context.clarification?.kind, 'place_unclear');
+    const originOnly = await ask('I am moving from Vancouver next week. What should I do first?');
+    assertEquals(p(originOnly), undefined);
+  },
+});

@@ -12,7 +12,7 @@ Deno.test('placeIn: common words and lower-case Latin names are not places', () 
     'मैं सरेंडर नहीं करूँगा',
     'Tôi muốn mở tài khoản ngân hàng',
   ]) {
-    assertEquals(placeIn(text), { city: null, province: null }, text);
+    assertEquals(placeIn(text), { city: null, province: null, unclear: null }, text);
   }
 });
 

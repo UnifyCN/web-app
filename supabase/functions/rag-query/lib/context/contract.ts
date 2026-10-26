@@ -126,7 +126,9 @@ export type Clarification =
       profileValue: string;
       conversationValue: string;
     }
-  | { kind: 'missing'; field: 'province' };
+  | { kind: 'missing'; field: 'province' }
+  /** The message names two or more different destinations; ask which applies. */
+  | { kind: 'place_unclear'; field: 'province'; options: string[] };
 
 export interface CompanionContext {
   version: typeof CONTEXT_VERSION;

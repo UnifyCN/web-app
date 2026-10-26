@@ -27,15 +27,16 @@ const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
  * A name in a non-Latin script, matched on folded text as a whole word.
- * Arabic attaches short prefixes (wa-, fa-, bi-, li-, ka-) to the next word.
+ * Arabic attaches short prefixes (wa-, fa-, bi-, li-, ka-) to the next word;
+ * the prefix is captured so "li-" (to) can mark a destination.
  */
 function scriptName(name: string): RegExp {
-  return new RegExp(`(?<![\\p{L}\\p{M}])(?:[وف]?[بلك]?)${escape(foldScript(name))}(?![\\p{L}\\p{M}])`, 'u');
+  return new RegExp(`(?<![\\p{L}\\p{M}])([وف]?[بلك]?)${escape(foldScript(name))}(?![\\p{L}\\p{M}])`, 'gu');
 }
 
 /** A Latin-script city name, case-sensitive as written (Regina, not regina). */
 function latinCity(name: string): RegExp {
-  return new RegExp(`(^|[^\\p{L}])${escape(name)}(?![\\p{L}])`, 'u');
+  return new RegExp(`(?<![\\p{L}])()${escape(name)}(?![\\p{L}])`, 'gu');
 }
 
 interface City {
@@ -123,28 +124,186 @@ const PROVINCE_SCRIPT: Array<[CanadianProvince, string[]]> = [
   ['Nunavut', ['نونافوت', 'नुनावुत', 'ਨੂਨਾਵੁਤ']],
 ];
 
-const PROVINCE_SCRIPT_MATCHERS = PROVINCE_SCRIPT.map(
+
+// ---------------------------------------------------------------- destination
+//
+// A message can name several places: where the user comes from, where they
+// live or lived, where family lives or they will visit, and where they are
+// going. Each mention gets a role from the words right around it, in each
+// supported language; the destination is then chosen by role, never by the
+// order of the tables or of the sentence. Two different destinations (or two
+// places with no role at all) are reported as unclear, so the answer asks.
+
+interface Mention {
+  start: number;
+  end: number;
+  city: string | null;
+  province: CanadianProvince;
+  /** Arabic prefix glued to the name ("l" = to). */
+  prefix: string;
+}
+
+type Role = 'destination' | 'origin' | 'current' | 'other' | 'neutral';
+
+const global = (r: RegExp) => new RegExp(r.source, r.flags.includes('g') ? r.flags : r.flags + 'g');
+const PROVINCE_LATIN_G = PROVINCE_LATIN.map(([r, province]) => [global(r), province] as const);
+const PROVINCE_SCRIPT_G = PROVINCE_SCRIPT.map(
   ([province, names]) => [province, names.map(scriptName)] as const
 );
 
+function mentionsIn(folded: string): Mention[] {
+  const found: Mention[] = [];
+  const collect = (pattern: RegExp, city: string | null, province: CanadianProvince, prefixed: boolean) => {
+    for (const m of folded.matchAll(pattern)) {
+      const index = m.index ?? 0;
+      // Name matchers capture the glued Arabic prefix first; the province
+      // regexes may start with a space or bracket instead.
+      const prefix = prefixed ? m[1] ?? '' : '';
+      const lead = prefixed ? prefix.length : /^[\s(,]*/.exec(m[0])![0].length;
+      found.push({ start: index + lead, end: index + m[0].length, city, province, prefix });
+    }
+  };
+  for (const c of CITY_MATCHERS) for (const r of [...c.latin, ...c.script]) collect(r, c.city, c.province, true);
+  for (const [r, province] of PROVINCE_LATIN_G) collect(r, null, province, false);
+  for (const [province, patterns] of PROVINCE_SCRIPT_G) for (const r of patterns) collect(r, null, province, true);
+  // Overlaps ("Quebec City" and "Quebec"): keep the longer, earlier mention.
+  found.sort((x, y) => x.start - y.start || (y.end - y.start) - (x.end - x.start));
+  const kept: Mention[] = [];
+  for (const m of found) {
+    const last = kept[kept.length - 1];
+    if (last && m.start < last.end) continue;
+    kept.push(m);
+  }
+  return kept;
+}
+
+const CLAUSE_END = /[.;!?。،؛।\n]|(?<!\p{L})(but|mais|pero|لكن|लेकिन|ਪਰ|nhưng)(?!\p{L})/giu;
+
+function clauseBefore(folded: string, start: number): string {
+  let from = 0;
+  for (const m of folded.slice(0, start).matchAll(CLAUSE_END)) from = (m.index ?? 0) + m[0].length;
+  return folded.slice(from, start);
+}
+
+// Words right before a mention (prepositional languages) or right after it
+// (Hindi, Punjabi postpositions), on folded text.
+const OTHER_BEFORE: RegExp[] = [
+  /\b(sister|brother|mother|father|mom|dad|parents|family|friends?|cousins?|uncle|aunt|relatives|husband|wife|partner|son|daughter)\b.*\b(lives?|living|stays?|staying|is|are|works?)\s+(in|at)\s+$/i,
+  /\b(visit|visiting|see|trip to|vacation in|holiday in)\s+$/i,
+  /(sœur|frère|mère|père|parents|famille|ami|amie|amis).*(habite|habitent|vit|vivent|est|sont)\s+(à|en|au)\s+$/iu,
+  /(?<!\p{L})(visiter|rendre visite à|voir)\s+$/iu,
+  /(hermana|hermano|madre|padre|padres|familia|amigo|amiga|amigos).*(vive|viven|está|están)\s+en\s+$/iu,
+  /(?<!\p{L})(visitar|ver)\s+(a\s+)?$/iu,
+  /(اختي|اخي|امي|ابي|والدي|والداي|عائلتي|صديقي|صديقتي|اقاربي).*(تعيش|يعيش|يعيشون|تسكن|يسكن|يسكنون)\s+في\s*$/u,
+  /(زياره|ازور|لزياره)\s*$/u,
+  /(chị gái|anh trai|em gái|em trai|bố mẹ|gia đình|bạn tôi|bạn của tôi).*(sống ở|đang ở|ở tại)\s+$/iu,
+  /(?<!\p{L})(thăm|du lịch|đi chơi)\s+$/iu,
+];
+const FAMILY_HI_PA = /(बहन|भाई|मा|पिता|माता-पिता|परिवार|दोस्त|मित्र|रिश्तेदार|ਭੈਣ|ਭਰਾ|ਮਾ|ਪਿਤਾ|ਮਾਪੇ|ਪਰਿਵਾਰ|ਦੋਸਤ|ਰਿਸ਼ਤੇਦਾਰ)/u;
+const LIVES_AFTER_HI_PA = /^\s*(मे रह|ਵਿਚ ਰਹਿ|ਚ ਰਹਿ)/u;
+const VISIT_AFTER = /^\s*(घूमने|मिलने|ਘੁਮਣ|ਮਿਲਣ)/u;
+
+const ORIGIN_BEFORE: RegExp[] = [
+  /\b(from|leaving|left|out of|used to live in|lived in|was living in|grew up in)\s+$/i,
+  /(?<!\p{L})(de|d'|depuis|quitte|quitter|quitté|j'habitais à|j'ai vécu à|vécu à)\s*$/iu,
+  /(?<!\p{L})(de|desde|del|salgo de|viví en|vivía en)\s+$/iu,
+  /(?<!\p{L})(من|مغادرا)\s*$/u,
+  /(?<!\p{L})(từ|rời|rời khỏi|từng sống ở)\s+$/iu,
+];
+const ORIGIN_AFTER = /^\s*(से|ਤੋ)(?![\p{L}\p{M}])|^\s*(se|ton|toh)\b/iu;
+
+const DESTINATION_BEFORE: RegExp[] = [
+  /\b(will|'ll|plan to|planning to|going to|want to|intend to)\s+(live|settle|stay)\s+(in|at)\s+$/i,
+  /\b(to|into|towards|arrive in|arriving in|arrive at|land in|landing in|settle in|settling in)\s+$/i,
+];
+const DESTINATION_BEFORE_OTHER: RegExp[] = [
+  /(?<!\p{L})(à|au|aux|en|vers|pour|jusqu'à)\s+$/iu,
+  /(?<!\p{L})(a|al|hacia|para|hasta)\s+$/iu,
+  /(?<!\p{L})(الي|نحو)\s*$/u,
+  /(?<!\p{L})(đến|tới|sang|về|vào|qua)\s+$/iu,
+];
+const DESTINATION_AFTER = /^\s*(मे|को|पहुच|आ रह|शिफ्ट|जा रह|ਵਿਚ|ਚ|ਨੂ|ਪਹੁਚ|ਆ ਰਹ|ਸ਼ਿਫਟ|ਜਾ ਰਹ)(?![\p{L}\p{M}])|^\s*(mein|me|vich|pahunch\w*|shift|ja)\b/iu;
+
+const CURRENT_BEFORE: RegExp[] = [
+  /\b(live|living|lives|based|staying|reside|residing|currently|now)\s+(in|at)\s+$/i,
+  /(j'habite|je vis|habite|je suis)\s+(à|en|au)\s+$/iu,
+  /(vivo|estoy|resido)\s+en\s+$/iu,
+  /(اعيش|اسكن|اقيم)\s+في\s*$/u,
+  /(đang sống ở|sống ở|đang ở)\s+$/iu,
+];
+const CURRENT_AFTER = /^\s*(मे रह|ਵਿਚ ਰਹਿ|ਚ ਰਹਿ)/u;
+
+/** "or" (maybe) between two places: the second shares the first one's role. */
+const OR_BEFORE = /(?<!\p{L})(or|ou|o|hoặc|hay|او|या|ਜਾ|ya)\s+(?:(maybe|perhaps|peut-être|quizás|tal vez|có thể|शायद|ਸ਼ਾਇਦ)\s+)?(?:(to|à|a|in|en|الي|đến)\s+)?$/iu;
+
+/** The role of one mention from the words around it, ignoring "or". */
+function ownRole(m: Mention, folded: string): Role {
+  const clause = clauseBefore(folded, m.start);
+  const near = clause.slice(-60);
+  const after = folded.slice(m.end, m.end + 40);
+  if (OTHER_BEFORE.some(r => r.test(near))) return 'other';
+  if (FAMILY_HI_PA.test(clause) && LIVES_AFTER_HI_PA.test(after)) return 'other';
+  if (VISIT_AFTER.test(after)) return 'other';
+  if (ORIGIN_BEFORE.some(r => r.test(near)) || ORIGIN_AFTER.test(after)) return 'origin';
+  if (DESTINATION_BEFORE[0].test(near)) return 'destination';
+  if (CURRENT_BEFORE.some(r => r.test(near)) || CURRENT_AFTER.test(after)) return 'current';
+  if (m.prefix.endsWith('ل')) return 'destination';
+  if (DESTINATION_BEFORE.some(r => r.test(near)) || DESTINATION_BEFORE_OTHER.some(r => r.test(near))) return 'destination';
+  if (DESTINATION_AFTER.test(after)) return 'destination';
+  return 'neutral';
+}
+
 /**
- * The Canadian city and/or province a message names, in any supported
- * language. A city wins over a province name; within each, the table order.
+ * Roles for all mentions. Places joined by "or" ("Toronto or Calgary",
+ * "Toronto या कैलगरी") share one role: a destination if either is marked as
+ * one, else the first one's role.
  */
-export function placeIn(text: string): { city: string | null; province: CanadianProvince | null } {
-  const folded = foldScript(text);
-  for (const m of CITY_MATCHERS) {
-    if (m.latin.some(r => r.test(text)) || m.script.some(r => r.test(folded))) {
-      return { city: m.city, province: m.province };
+function rolesOf(mentions: Mention[], folded: string): Role[] {
+  const roles = mentions.map(m => ownRole(m, folded));
+  // Groups of mentions joined by "or".
+  let groupStart = 0;
+  const settle = (from: number, to: number) => {
+    const group = roles.slice(from, to + 1);
+    if (group.length < 2 || group.includes('other')) return;
+    const shared = group.includes('destination') ? 'destination' : group[0];
+    for (let k = from; k <= to; k++) roles[k] = shared;
+  };
+  for (let i = 1; i <= mentions.length; i++) {
+    const joined = i < mentions.length && OR_BEFORE.test(clauseBefore(folded, mentions[i].start).slice(-60));
+    if (!joined) {
+      settle(groupStart, i - 1);
+      groupStart = i;
     }
   }
-  for (const [pattern, province] of PROVINCE_LATIN) {
-    if (pattern.test(text)) return { city: null, province };
+  return roles;
+}
+
+export interface Place {
+  city: string | null;
+  province: CanadianProvince | null;
+  /** Two or more different provinces with no clear choice between them. */
+  unclear: CanadianProvince[] | null;
+}
+
+/**
+ * Where a message says the user is going, in any supported language: the
+ * destinations if any are marked, else places with no role, else where the
+ * user says they live now. Origins and family/visit places are never chosen.
+ */
+export function placeIn(text: string): Place {
+  const folded = foldScript(text);
+  const mentions = mentionsIn(folded);
+  const roleList = rolesOf(mentions, folded);
+  const roles = mentions.map((m, i) => ({ m, role: roleList[i] }));
+  for (const role of ['destination', 'neutral', 'current'] as const) {
+    const chosen = roles.filter(r => r.role === role).map(r => r.m);
+    if (chosen.length === 0) continue;
+    const provinces = [...new Set(chosen.map(m => m.province))];
+    if (provinces.length > 1) return { city: null, province: null, unclear: provinces.slice(0, 4) };
+    const cities = [...new Set(chosen.map(m => m.city).filter((c): c is string => c !== null))];
+    return { city: cities.length === 1 ? cities[0] : null, province: provinces[0], unclear: null };
   }
-  for (const [province, patterns] of PROVINCE_SCRIPT_MATCHERS) {
-    if (patterns.some(r => r.test(folded))) return { city: null, province };
-  }
-  return { city: null, province: null };
+  return { city: null, province: null, unclear: null };
 }
 
 // ---------------------------------------------------------------- arrival

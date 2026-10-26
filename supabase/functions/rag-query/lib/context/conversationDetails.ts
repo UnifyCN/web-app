@@ -19,7 +19,7 @@
 import type { Clarification, ConversationDetailItem } from './contract.ts';
 import { canonicalProvince, type CanadianProvince } from '../province.ts';
 import { parseUtcDate, formatIsoDate } from '../dates.ts';
-import { arrivalIn, placeIn, type ArrivalPhrase } from './placeNames.ts';
+import { arrivalIn, placeIn, type ArrivalPhrase, type Place } from './placeNames.ts';
 
 /**
  * Questions about what to do next, where settlement steps depend on place:
@@ -63,24 +63,28 @@ export interface ConversationDetails {
   item: ConversationDetailItem | null;
   /** Province the user stated in this conversation, if any. */
   province: CanadianProvince | null;
+  /** The latest message that names places names two or more different destinations. */
+  unclearProvinces: CanadianProvince[] | null;
   arrival: ArrivalPhrase | null;
 }
 
 /**
  * Details stated in the current message, else in the latest earlier user turn
- * that states one (the client sends the recent turns).
+ * that states one (the client sends the recent turns). A message whose places
+ * are unclear still counts as the latest statement: an earlier, clearer turn
+ * does not override it.
  */
 export function readConversationDetails(
   prompt: string,
   earlierUserTurns: string[]
 ): ConversationDetails {
   const turns = [prompt, ...earlierUserTurns.slice(-3).reverse()];
-  let place: { city: string | null; province: CanadianProvince | null } = { city: null, province: null };
+  let place: Place = { city: null, province: null, unclear: null };
   let arrival: ArrivalPhrase | null = null;
   for (const turn of turns) {
     if (typeof turn !== 'string') continue;
     const text = turn.slice(0, 2000);
-    if (!place.province) place = placeIn(text);
+    if (!place.province && !place.unclear) place = placeIn(text);
     if (!arrival) arrival = arrivalIn(text);
   }
   const fields: ConversationDetailItem['fields'] = [];
@@ -90,6 +94,7 @@ export function readConversationDetails(
   return {
     item: fields.length > 0 ? { kind: 'conversation_detail', saved: false, fields } : null,
     province: place.province,
+    unclearProvinces: place.unclear,
     arrival,
   };
 }
@@ -104,9 +109,9 @@ export function arrivalWords(code: string): string {
 const DAY_MS = 86_400_000;
 
 /**
- * What the answer must ask about: a stated province or arrival time that
- * differs from the profile, or a planning question with no province at all.
- * Province conflicts come first.
+ * What the answer must ask about: which of several stated destinations
+ * applies, a stated province or arrival time that differs from the profile,
+ * or a planning question with no province at all. Places come first.
  */
 export function clarificationFor(
   details: ConversationDetails,
@@ -114,6 +119,9 @@ export function clarificationFor(
   prompt: string,
   now: Date
 ): Clarification | null {
+  if (details.unclearProvinces) {
+    return { kind: 'place_unclear', field: 'province', options: details.unclearProvinces };
+  }
   const profileProvince = canonicalProvince(profile?.province);
   if (details.province && profileProvince && details.province !== profileProvince) {
     return {
@@ -143,10 +151,15 @@ export function clarificationFor(
   return null;
 }
 
-/** The province this answer is about: stated in the conversation, else the profile's. */
+/**
+ * The province this answer is about: stated in the conversation, else the
+ * profile's. None while the stated destination is unclear: the saved province
+ * is not used in place of an answer to the clarification.
+ */
 export function effectiveProvince(
   details: ConversationDetails,
   profile: Record<string, unknown> | null
 ): CanadianProvince | null {
+  if (details.unclearProvinces) return null;
   return details.province ?? canonicalProvince(profile?.province);
 }
