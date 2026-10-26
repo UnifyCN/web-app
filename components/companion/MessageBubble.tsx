@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { ChatMessage, ChatSource } from "@/types";
 import { Reveal } from "@/components/ui/Reveal";
+import { ContextSummary } from "./ContextSummary";
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -15,6 +16,8 @@ interface MessageBubbleProps {
   isLast?: boolean;
   /** Pre-fills the input with a follow-up suggestion (assistant chips). */
   onSuggestionClick?: (text: string) => void;
+  /** Opens the "Sources and context" drawer for an assistant answer. */
+  onOpenContext?: (message: ChatMessage) => void;
 }
 
 /** Host portion of a source URL ("www.canada.ca"), or "" if unparseable. */
@@ -88,10 +91,12 @@ function AssistantMessage({
   message,
   isLast,
   onSuggestionClick,
+  onOpenContext,
 }: {
   message: ChatMessage;
   isLast?: boolean;
   onSuggestionClick?: (text: string) => void;
+  onOpenContext?: (message: ChatMessage) => void;
 }) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
@@ -125,6 +130,11 @@ function AssistantMessage({
             {message.content}
           </p>
         </div>
+
+        <ContextSummary
+          context={message.companionContext}
+          onOpen={onOpenContext ? () => onOpenContext(message) : undefined}
+        />
 
         {message.sources && message.sources.length > 0 && (
           <SourceList sources={message.sources} />
@@ -192,6 +202,7 @@ export function MessageBubble(props: MessageBubbleProps) {
       message={props.message}
       isLast={props.isLast}
       onSuggestionClick={props.onSuggestionClick}
+      onOpenContext={props.onOpenContext}
     />
   );
 }

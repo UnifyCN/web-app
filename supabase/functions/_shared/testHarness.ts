@@ -20,6 +20,8 @@ export interface FetchCall {
   method: string;
   /** The JSON-parsed request body, or the raw string when it is not JSON. */
   body: unknown;
+  /** The request headers (Authorization tells two callers apart). */
+  headers: Headers;
 }
 
 export type Route = (call: FetchCall) => Response | undefined;
@@ -89,7 +91,9 @@ function installStubs(): void {
         // keep the raw string
       }
     }
-    const call: FetchCall = { url, method, body };
+    const headers = new Headers(request?.headers);
+    new Headers(init?.headers).forEach((value, key) => headers.set(key, value));
+    const call: FetchCall = { url, method, body, headers };
     fetchLog.push(call);
     return (
       route(call) ?? new Response(`unrouted: ${method} ${url}`, { status: 599 })

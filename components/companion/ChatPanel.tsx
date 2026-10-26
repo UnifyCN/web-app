@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
@@ -12,7 +13,6 @@ import { useTranslation } from "react-i18next";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import {
-  NEW_CONVERSATION,
   composerDraft,
   setComposerDraft,
   subscribeComposerDrafts,
@@ -21,6 +21,8 @@ import { StarterPromptChips } from "./StarterPromptChips";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
 import { FreeTierIndicator } from "./FreeTierIndicator";
+import { CompanionContextDrawer } from "./CompanionContextDrawer";
+import type { CompanionContext } from "@/lib/companionContext";
 import type { CompanionInputSource } from "@/lib/companionAnalytics";
 import type {
   ChatMessage,
@@ -77,19 +79,32 @@ export function ChatPanel({
   const { t } = useTranslation();
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  // The unsent message lives outside this panel, per account and conversation,
-  // so panels, navigation and resize keep it (#361).
+  // The unsent message lives outside this panel, per account, so panels,
+  // navigation, resize and losing access to a conversation keep it (#361).
   const accountId = useAuthUser().data?.id ?? null;
-  const conversationKey = conversation?.id ?? NEW_CONVERSATION;
   const draft = useSyncExternalStore(
     subscribeComposerDrafts,
-    () => composerDraft(accountId, conversationKey),
+    () => composerDraft(accountId),
     () => "",
   );
   const setDraft = useCallback(
-    (text: string) => setComposerDraft(accountId, conversationKey, text),
-    [accountId, conversationKey],
+    (text: string) => setComposerDraft(accountId, text),
+    [accountId],
   );
+  // The answer whose sources and context are open in the drawer. The drawer
+  // overlays the conversation, so the draft and scroll position stay put. It
+  // shows that answer only while it is still in this conversation: another
+  // account's conversation, a conversation this account can no longer read
+  // or one the user left closes it.
+  const [openContextFor, setOpenContextFor] = useState<{
+    conversationId: string;
+    messageId: number;
+  } | null>(null);
+  const openContext: CompanionContext | null =
+    openContextFor && conversation?.id === openContextFor.conversationId
+      ? (messages.find((m) => m.id === openContextFor.messageId)
+          ?.companionContext ?? null)
+      : null;
   const firstName = onboarding?.firstName?.trim();
 
   useEffect(() => {
@@ -153,6 +168,12 @@ export function ChatPanel({
                   groupedWithNext={next?.role === message.role}
                   isLast={index === messages.length - 1}
                   onSuggestionClick={pickSuggestion}
+                  onOpenContext={(m) =>
+                    setOpenContextFor({
+                      conversationId: conversation.id,
+                      messageId: m.id,
+                    })
+                  }
                 />
               );
             })}
@@ -205,6 +226,11 @@ export function ChatPanel({
           </p>
         </div>
       </div>
+
+      <CompanionContextDrawer
+        context={openContext}
+        onClose={() => setOpenContextFor(null)}
+      />
     </div>
   );
 }

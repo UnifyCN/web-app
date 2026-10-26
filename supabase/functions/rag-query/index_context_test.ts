@@ -125,7 +125,11 @@ async function ask(prompt: string) {
   const payload = await res.json();
   const calls = [...fetchLog];
   const rpc = calls.find(c => c.url.pathname === '/rest/v1/rpc/match_chunks');
-  const chat = calls.find(c => c.url.pathname.endsWith('/chat/completions'));
+  // The answer call. Planning and fact-check questions also make a guidance
+  // search call (it carries the web plugin), which is not the answer.
+  const chat = calls.find(
+    c => c.url.pathname.endsWith('/chat/completions') && !(c.body as { plugins?: unknown })?.plugins
+  );
   const embedding = calls.find(c => c.url.pathname.endsWith('/embeddings'));
   const system = (
     (chat?.body as { messages: Array<{ role: string; content: string }> } | undefined)?.messages ?? []
