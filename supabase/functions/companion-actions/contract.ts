@@ -26,7 +26,9 @@ const MAX_REVISION = 999_999_999_999_999;
 /** Evidence of who authorized a write. A model can never produce either kind. */
 export type Authorization =
   | { kind: 'ui_control' }
-  | { kind: 'approved_proposal'; proposal_id: string; proposal_revision: number };
+  | { kind: 'approved_proposal'; proposal_id: string; proposal_revision: number }
+  /** The user's own saved message that is one clear command (resolved by commands.ts). */
+  | { kind: 'direct_command'; message_id: number };
 export type AuthorizationKind = Authorization['kind'];
 
 export interface SetStateOperation {
@@ -195,7 +197,12 @@ export function parseAuthorization(raw: unknown): Parsed<Authorization> {
     }
     return ok({ kind: 'approved_proposal', proposal_id: raw.proposal_id, proposal_revision: raw.proposal_revision });
   }
-  // direct_command, a model-supplied `approved: true`, or anything else.
+  if (raw.kind === 'direct_command') {
+    if (Object.keys(raw).some(k => k !== 'kind' && k !== 'message_id')) return refuse(403, 'invalid_authorization');
+    if (!isPlainInt(raw.message_id) || raw.message_id > 2_147_483_647) return refuse(403, 'invalid_authorization');
+    return ok({ kind: 'direct_command', message_id: raw.message_id });
+  }
+  // A model-supplied `approved: true`, or anything else.
   return refuse(403, 'invalid_authorization');
 }
 
@@ -214,6 +221,7 @@ export type ActionRequest =
   | { action: 'read' }
   | { action: 'prepare'; operation: CreateCustomOperation; source: ProposalSource | null }
   | { action: 'proposal'; proposal_id: string }
+  | { action: 'interpret'; message_id: number }
   | { action: 'revise'; proposal_id: string; proposal_revision: number; operation: CreateCustomOperation }
   | { action: 'status'; operation_id: string }
   | { action: 'apply'; operation_id: string; authorization: Authorization; operations: Operation[] }
@@ -241,6 +249,9 @@ export function parseAction(body: Record<string, unknown>): Parsed<ActionRequest
     case 'proposal':
       if (typeof body.proposal_id !== 'string' || !UUID.test(body.proposal_id)) return refuse(400, 'invalid_proposal_id');
       return ok({ action: 'proposal', proposal_id: body.proposal_id });
+    case 'interpret':
+      if (!isPlainInt(body.message_id) || body.message_id > 2_147_483_647) return refuse(400, 'invalid_message_id');
+      return ok({ action: 'interpret', message_id: body.message_id });
     case 'revise': {
       if (typeof body.proposal_id !== 'string' || !UUID.test(body.proposal_id)) return refuse(400, 'invalid_proposal_id');
       if (!isPlainInt(body.proposal_revision) || body.proposal_revision > 2_147_483_647) {

@@ -6,6 +6,7 @@
 // lookup and Undo stay available at the AI limit.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import { type ActionRequest, type Operation, PLATFORMS, type Platform, parseAction, parseEnvelope } from './contract.ts';
+import { resolveCommand, titleKey } from './commands.ts';
 
 export interface HandlerDeps {
   /** Service-role client. Used for the user lookup, the gate and the action SQL. */
@@ -30,6 +31,8 @@ const SQLSTATE_TO_HTTP: Record<string, [number, string]> = {
   CA409: [409, 'revision_conflict'],
   CA410: [409, 'operation_id_reused'],
   CA411: [409, 'already_undone'],
+  CA412: [409, 'command_already_used'],
+  CA413: [409, 'needs_clarification'],
   CA422: [422, 'invalid_request'],
 };
 
@@ -68,6 +71,33 @@ async function userIdFrom(admin: SupabaseClient, req: Request): Promise<string |
   if (!token) return null;
   const { data, error } = await admin.auth.getUser(token);
   return error || !data.user ? null : data.user.id;
+}
+
+/** The caller's own saved user message, or null. Read by the service, never taken from the client. */
+async function ownUserMessage(admin: SupabaseClient, userId: string, messageId: number): Promise<string | null> {
+  const { data, error } = await admin
+    .from('messages')
+    .select('content, role, conversations!inner(user_id)')
+    .eq('id', messageId)
+    .eq('conversations.user_id', userId)
+    .eq('role', 'user')
+    .maybeSingle();
+  if (error || !data || typeof (data as { content?: unknown }).content !== 'string') return null;
+  return (data as { content: string }).content;
+}
+
+/** Live custom tasks of the caller with the same title (shown when a command is unclear). */
+async function sameTitleTasks(admin: SupabaseClient, userId: string, title: string) {
+  const { data, error } = await admin
+    .from('custom_checklist_tasks')
+    .select('id, title, revision')
+    .eq('user_id', userId)
+    .is('removed_at', null);
+  if (error) throw error;
+  const key = titleKey(title);
+  return (data ?? [])
+    .filter(row => titleKey(String(row.title)) === key)
+    .map(row => ({ task_ref: `custom:${row.id}`, revision: row.revision, title: row.title }));
 }
 
 export function createHandler({ admin, log = line => console.log(JSON.stringify(line)) }: HandlerDeps) {
@@ -148,6 +178,28 @@ export function createHandler({ admin, log = line => console.log(JSON.stringify(
       return finish(json({ proposal: data }), 'read');
     }
 
+    if (request.action === 'interpret') {
+      // Reads only. The message must be the caller's own user message.
+      const text = await ownUserMessage(admin, userId, request.message_id);
+      if (text === null) return finish(json({ error: 'not_found', reason: 'message_not_found' }, 404), 'rejected');
+      const resolved = resolveCommand(text);
+      if (resolved.kind !== 'create') return finish(json({ command: resolved }), `interpret_${resolved.kind}`);
+      operationType = 'task.create_custom';
+      let same;
+      try {
+        same = await sameTitleTasks(admin, userId, resolved.title);
+      } catch {
+        return finish(json({ error: 'internal' }, 500), 'failed');
+      }
+      return finish(json({
+        command: {
+          kind: 'create',
+          operation: { type: 'task.create_custom', title: resolved.title, priority: 'Do soon' },
+          same_title_tasks: same,
+        },
+      }), 'interpret_create');
+    }
+
     if (request.action === 'revise') {
       operationType = request.operation.type;
       const { data, error } = await admin.rpc('companion_revise_proposal', {
@@ -175,6 +227,17 @@ export function createHandler({ admin, log = line => console.log(JSON.stringify(
 
     if (request.action === 'apply') {
       operationType = request.operations[0].type;
+      if (request.authorization.kind === 'direct_command') {
+        // The command is read from the user's own saved message, here, and must resolve
+        // to exactly the submitted operation. A client or model cannot widen it.
+        const text = await ownUserMessage(admin, userId, request.authorization.message_id);
+        const resolved = text === null ? null : resolveCommand(text);
+        const op = request.operations[0];
+        if (!resolved || resolved.kind !== 'create' || op.type !== 'task.create_custom' ||
+            op.title !== resolved.title || op.priority !== 'Do soon') {
+          return finish(json({ error: 'forbidden', reason: 'invalid_authorization' }, 403), 'rejected');
+        }
+      }
       const { data, error } = await admin.rpc('companion_apply_actions', {
         p_user_id: userId,
         p_operation_id: request.operation_id,
