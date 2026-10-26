@@ -181,17 +181,14 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
     // A defect in assembling context must not cost the user the answer; the
     // answer goes ahead with no app context and says nothing was checked.
     console.error('[rag-query] context assembly failed', error instanceof Error ? error.message : 'unknown');
-    return {
-      context: {
-        version: CONTEXT_VERSION,
-        items: [],
-        reads: [{ capability: 'context.profile', status: 'error' } as ReadReport],
-        guidance: { status: 'unavailable', reason: 'read_failed', sources: [] } as GuidanceResult,
-        clarification: null,
-      },
-      evidence: new Map<string, string>(),
-      historyAllowed: false,
+    const empty: CompanionContext = {
+      version: CONTEXT_VERSION,
+      items: [],
+      reads: [{ capability: 'context.profile', status: 'error' } as ReadReport],
+      guidance: { status: 'unavailable', reason: 'read_failed', sources: [] } as GuidanceResult,
+      clarification: null,
     };
+    return { context: empty, evidence: new Map<string, string>(), historyAllowed: false };
   });
 
   return { profile, context };
