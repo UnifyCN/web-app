@@ -14,7 +14,9 @@
 // backgrounds, enter/exit motion and reduced motion, focus on open, Tab trap,
 // focus kept through a parent update, Escape and backdrop close, focus return,
 // an inert background while open (no script focus, not in Chromium's
-// accessibility tree) and its earlier state restored on close,
+// accessibility tree) and its earlier state restored on close, other shared
+// dialogs opened above the drawer (mounted closed earlier or mounted on open)
+// staying usable, and every hold released in either close order,
 // the composer draft kept for the same account and cleared for another, and
 // no prior-account context after an account change or access loss; RTL places
 // the drawer at the inline end.
@@ -117,6 +119,36 @@ import en from "@/lib/i18n/locales/en/translation.json";
 import ar from "@/lib/i18n/locales/ar/translation.json";
 import { motionCssVars } from "@/lib/motion";
 import CompanionPage from "@/app/(main)/companion/page";
+import { useState } from "react";
+import { DialogPanel, DialogPresence } from "@/components/ui/Dialog";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
+
+// Other shared dialogs on the same page, to check how they stack with the
+// drawer: a ConfirmModal and an inert-background DialogPresence that are
+// mounted closed from the start, and one mounted only when opened.
+function OtherDialogs() {
+  const [confirm, setConfirm] = useState(false);
+  const [upper, setUpper] = useState(false);
+  const [mountedUpper, setMountedUpper] = useState(false);
+  window.otherDialogs = { setConfirm, setUpper, setMountedUpper };
+  return (
+    <>
+      <ConfirmModal open={confirm} title="Other confirm" onCancel={() => setConfirm(false)} onConfirm={() => setConfirm(false)} />
+      <DialogPresence open={upper} inertBackground>
+        <DialogPanel role="dialog" aria-label="Upper dialog" className="fixed inset-10 z-[100] bg-surface">
+          <button type="button" onClick={() => setUpper(false)}>Close upper dialog</button>
+        </DialogPanel>
+      </DialogPresence>
+      {mountedUpper && (
+        <DialogPresence open inertBackground>
+          <DialogPanel role="dialog" aria-label="Mounted upper dialog" className="fixed inset-10 z-[100] bg-surface">
+            <button type="button" onClick={() => setMountedUpper(false)}>Close mounted upper dialog</button>
+          </DialogPanel>
+        </DialogPresence>
+      )}
+    </>
+  );
+}
 
 const lang = new URLSearchParams(location.search).get("lang") === "ar" ? "ar" : "en";
 document.documentElement.lang = lang;
@@ -129,7 +161,7 @@ const queryClient = new QueryClient();
 createRoot(document.getElementById("root")).render(
   <QueryClientProvider client={queryClient}>
     <MotionConfig reducedMotion="user">
-      <I18nextProvider i18n={i18n}><CompanionPage /></I18nextProvider>
+      <I18nextProvider i18n={i18n}><CompanionPage /><OtherDialogs /></I18nextProvider>
     </MotionConfig>
   </QueryClientProvider>,
 );
@@ -436,6 +468,74 @@ async function run(browser) {
     check("reduced motion: the drawer still fades in", frames.some((f) => f && f.opacity > 0 && f.opacity < 1), frames.slice(0, 3));
     await page.keyboard.press("Escape");
     check("reduced motion: Escape still closes", await gone(page));
+    await context.close();
+  }
+
+  // ---- other shared dialogs opened above the drawer
+  {
+    const { context, page } = await openPage(browser);
+    await page.getByRole("textbox").fill("Draft under dialogs");
+    // Elements the app made inert / not inert itself before any dialog opened.
+    await page.evaluate(() => {
+      for (const [id, inert] of [["app-inert", true], ["app-active", false]]) {
+        const b = document.createElement("button");
+        b.id = id;
+        b.textContent = id;
+        b.inert = inert;
+        document.body.append(b);
+      }
+    });
+    const tryFocus = (page, name) =>
+      page.evaluate((name) => {
+        const b = [...document.querySelectorAll("button")].find(
+          (x) => x.textContent.trim() === name || x.getAttribute("aria-label") === name,
+        );
+        if (!b) return { found: false };
+        b.focus();
+        return { found: true, took: document.activeElement === b, inInert: Boolean(b.closest("[inert]")) };
+      }, name);
+    const composerBlocked = async () => (await focusBackground(page, BACKGROUND.en)).took.length === 0;
+    const sourcesOpen = async () => {
+      await page.getByRole("button", { name: L.en.open, exact: true }).first().click();
+      await page.getByRole("dialog").waitFor();
+      await page.waitForTimeout(250);
+    };
+
+    await sourcesOpen();
+    for (const [label, open, close, button] of [
+      ["ConfirmModal mounted closed", "setConfirm", "setConfirm", "Cancel"],
+      ["inert DialogPresence mounted closed", "setUpper", "setUpper", "Close upper dialog"],
+      ["inert DialogPresence mounted when opened", "setMountedUpper", "setMountedUpper", "Close mounted upper dialog"],
+    ]) {
+      await page.evaluate((fn) => window.otherDialogs[fn](true), open);
+      await page.waitForTimeout(250);
+      const upper = await tryFocus(page, button);
+      check(`${label}, opened above the drawer: it takes focus and is not inert`, upper.found && upper.took && !upper.inInert, upper);
+      check(`${label}, opened above the drawer: it is in the accessibility tree`, (await exposedBackground(page, [button])).includes(`button: ${button}`));
+      check(`${label}, opened above the drawer: the page behind stays inert`, await composerBlocked());
+      await page.evaluate((fn) => window.otherDialogs[fn](false), close);
+      await page.waitForTimeout(250);
+      const back = await tryFocus(page, L.en.close);
+      check(`${label}, closed again: the drawer takes focus and the page behind stays inert`, back.took && !back.inInert && (await composerBlocked()), back);
+    }
+
+    // Close order: the drawer closes first while an upper dialog stays open.
+    await page.evaluate(() => window.otherDialogs.setUpper(true));
+    await page.waitForTimeout(250);
+    await page.evaluate(() => window.harness.switchAccount()); // closes the drawer underneath
+    await page.waitForTimeout(400);
+    const stillUpper = await tryFocus(page, "Close upper dialog");
+    check("drawer closed under an open upper dialog: the upper dialog stays usable and the page stays inert", stillUpper.took && !stillUpper.inInert && (await composerBlocked()), stillUpper);
+    await page.evaluate(() => window.otherDialogs.setUpper(false));
+    await page.waitForTimeout(400);
+    const after = await page.evaluate(() => ({
+      inert: [...document.querySelectorAll("[inert]")].map((e) => e.id || e.tagName),
+      appInert: document.getElementById("app-inert").inert,
+      appActive: document.getElementById("app-active").inert,
+    }));
+    check("all dialogs closed: only the element the app made inert is still inert", after.appInert && !after.appActive && after.inert.length === 1, after);
+    const composer = await focusBackground(page, BACKGROUND.en);
+    check("all dialogs closed: the composer and search take focus again", composer.took.length === BACKGROUND.en.length, composer);
     await context.close();
   }
 

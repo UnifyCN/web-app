@@ -37,61 +37,93 @@ export function BodyPresence({
   );
 }
 
-// How many open dialogs hold each background element inert, and its own
-// `inert` value from before the first one, so nested dialogs and elements the
-// app made inert itself come back exactly as they were.
-const inertHolds = new WeakMap<HTMLElement, { count: number; was: boolean }>();
+// Inert background: one registry of every mounted dialog layer, so a single
+// pass decides what is inert. The topmost open dialog that asked for an inert
+// background (latest opened) and every dialog opened after it stay usable;
+// everything else in <body> is inert, including dialog layers that are closed
+// or were opened earlier. Each held element gets back its own earlier `inert`
+// value when it is no longer held.
 
-function holdInert(el: HTMLElement) {
-  const hold = inertHolds.get(el);
-  if (hold) {
-    hold.count += 1;
-    return;
+interface LayerState {
+  open: boolean;
+  inertBackground: boolean;
+  /** Order in which the dialog opened; 0 while closed. */
+  openedAt: number;
+}
+
+const layers = new Map<HTMLElement, LayerState>();
+/** Elements this module made inert, with their `inert` value from before. */
+const held = new Map<HTMLElement, boolean>();
+let openCount = 0;
+let bodyObserver: MutationObserver | null = null;
+
+function applyInertBackground() {
+  let top = 0;
+  for (const state of layers.values()) {
+    if (state.open && state.inertBackground) top = Math.max(top, state.openedAt);
   }
-  inertHolds.set(el, { count: 1, was: el.inert });
-  el.inert = true;
+  const wanted = new Set<HTMLElement>();
+  if (top > 0) {
+    const usable = new Set<HTMLElement>();
+    for (const [layer, state] of layers) {
+      if (state.open && state.openedAt >= top) usable.add(layer);
+    }
+    for (const child of Array.from(document.body.children)) {
+      if (child instanceof HTMLElement && !usable.has(child)) wanted.add(child);
+    }
+  }
+  for (const [el, was] of held) {
+    if (wanted.has(el)) continue;
+    held.delete(el);
+    el.inert = was;
+  }
+  for (const el of wanted) {
+    if (held.has(el)) continue;
+    held.set(el, el.inert);
+    el.inert = true;
+  }
+  // Elements added to <body> while a dialog holds the page (a toast, a
+  // portal, another dialog layer) are sorted on arrival.
+  if (top > 0 && !bodyObserver) {
+    bodyObserver = new MutationObserver(applyInertBackground);
+    bodyObserver.observe(document.body, { childList: true });
+  } else if (top === 0 && bodyObserver) {
+    bodyObserver.disconnect();
+    bodyObserver = null;
+  }
 }
 
-function releaseInert(el: HTMLElement) {
-  const hold = inertHolds.get(el);
-  if (!hold) return;
-  hold.count -= 1;
-  if (hold.count > 0) return;
-  inertHolds.delete(el);
-  el.inert = hold.was;
-}
-
-/**
- * While `active`, makes everything in <body> except this dialog's own layer
- * inert: no focus, no pointer input, and out of the accessibility tree.
- * Elements added to <body> meanwhile (a toast, a portal) are covered too; a
- * dialog layer opened later on top is not. Released on close and on unmount.
- */
-function useInertBackground(active: boolean, layerRef: RefObject<HTMLElement | null>) {
+/** Registers this dialog's layer and keeps its open/inert state current. */
+function useDialogLayer(
+  layerRef: RefObject<HTMLElement | null>,
+  open: boolean,
+  inertBackground: boolean,
+  mounted: boolean,
+) {
   useLayoutEffect(() => {
     const layer = layerRef.current;
-    if (!active || !layer) return;
-    const held = new Set<HTMLElement>();
-    const hold = (node: Node) => {
-      if (!(node instanceof HTMLElement) || node === layer || held.has(node)) return;
-      holdInert(node);
-      held.add(node);
-    };
-    for (const child of Array.from(document.body.children)) hold(child);
-    const observer = new MutationObserver((records) => {
-      for (const record of records) {
-        record.addedNodes.forEach((node) => {
-          if (node instanceof HTMLElement && node.hasAttribute("data-dialog-layer")) return;
-          hold(node);
-        });
-      }
+    if (!layer) return;
+    const before = layers.get(layer);
+    layers.set(layer, {
+      open,
+      inertBackground,
+      openedAt: open ? (before?.open ? before.openedAt : ++openCount) : 0,
     });
-    observer.observe(document.body, { childList: true });
+    applyInertBackground();
+  }, [layerRef, open, inertBackground, mounted]);
+
+  useLayoutEffect(() => {
+    const layer = layerRef.current;
+    if (!layer) return;
     return () => {
-      observer.disconnect();
-      held.forEach(releaseInert);
+      layers.delete(layer);
+      if (held.has(layer)) {
+        layer.inert = held.get(layer)!;
+        held.delete(layer);
+      }
+      applyInertBackground();
     };
-  }, [active, layerRef]);
+  }, [layerRef, mounted]);
 }
 
 /**
@@ -104,6 +136,8 @@ function useInertBackground(active: boolean, layerRef: RefObject<HTMLElement | n
  * With `inertBackground`, the rest of the page is inert while the dialog is
  * open (a true modal for keyboard, pointer and assistive tech), and it gets
  * its earlier state back as soon as the dialog closes, before the exit fade.
+ * Any dialog opened later on top of it stays usable, whether it was mounted
+ * earlier (closed) or mounted on opening.
  *
  * Renders into <body> inside its own layer, so a `fixed` overlay always
  * covers the viewport and stacks above the nav whatever its ancestors do.
@@ -118,12 +152,12 @@ export function DialogPresence({
   children: ReactNode;
 }) {
   const layerRef = useRef<HTMLDivElement>(null);
-  useInertBackground(open && inertBackground, layerRef);
   const mounted = useSyncExternalStore(
     subscribe,
     () => true,
     () => false,
   );
+  useDialogLayer(layerRef, open, inertBackground, mounted);
   if (!mounted) return null;
   return createPortal(
     <div ref={layerRef} data-dialog-layer="" className="contents">
