@@ -10,6 +10,7 @@ import {
   getAuthUserId,
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
+import { assertOwned, type AccountOwner } from "@/lib/accountSession";
 import {
   mockConversations,
   mockMessagesByConversation,
@@ -138,10 +139,15 @@ export const FREE_TIER_DAILY_LIMIT = 6;
 
 /* ---- Conversations ---------------------------------------------------- */
 
-export async function getConversations(): Promise<Conversation[]> {
+/** The conversations of `owner`, read only while it is the signed-in account
+ *  (mobile-app#361). */
+export async function getConversations(
+  owner: AccountOwner,
+): Promise<Conversation[]> {
   if (!isSupabaseConfigured()) return mockConversations;
 
   const userId = await getAuthUserId();
+  assertOwned(owner, userId);
   if (!userId) return mockConversations;
 
   const supabase = createClient();
@@ -162,15 +168,18 @@ export interface CreateConversationOptions {
   lessonId?: string;
 }
 
+/** Each request of the creation is made only while `owner` is signed in. */
 export async function createConversation(
   firstMessage: string,
-  options: CreateConversationOptions = {},
+  options: CreateConversationOptions,
+  owner: AccountOwner,
 ): Promise<Conversation> {
   if (!isSupabaseConfigured()) {
     throw new Error("createConversation: Supabase not configured");
   }
   const userId = await getAuthUserId();
   if (!userId) throw new Error("createConversation: no auth session");
+  assertOwned(owner, userId);
 
   const supabase = createClient();
   // Fallback title — first 50 chars of the user's first message. Mobile
@@ -206,6 +215,7 @@ export async function createConversation(
         "falling back to an untagged insert (apply the source-tag migration).",
       error,
     );
+    assertOwned(owner);
     ({ data, error } = await supabase
       .from("conversations")
       .insert(baseRow)
@@ -221,11 +231,14 @@ export async function createConversation(
 
 export async function getMessages(
   conversationIdentifier: string,
+  /** The account whose thread this is (mobile-app#361). */
+  owner: AccountOwner,
 ): Promise<ChatMessage[]> {
   if (!isSupabaseConfigured()) {
     return mockMessagesByConversation[conversationIdentifier] ?? [];
   }
   const userId = await getAuthUserId();
+  assertOwned(owner, userId);
   if (!userId) {
     return mockMessagesByConversation[conversationIdentifier] ?? [];
   }
@@ -241,6 +254,7 @@ export async function getMessages(
       .order("created_at", { ascending: true });
   let { data, error } = await query(`${columns}, companion_context`);
   if (error && isMissingContextColumn(error)) {
+    assertOwned(owner);
     ({ data, error } = await query(columns));
   }
   if (error) throw error;
@@ -258,6 +272,9 @@ export interface SaveMessageInput {
   suggestedNextSteps?: string[] | null;
   /** The answer's context (ticket #362); saved when the column exists. */
   companionContext?: unknown;
+  /** The account that sends the message (mobile-app#361). Each request of the
+   *  save is made only while it is the signed-in account. */
+  owner: AccountOwner;
 }
 
 export async function saveMessage(input: SaveMessageInput): Promise<ChatMessage> {
@@ -266,6 +283,7 @@ export async function saveMessage(input: SaveMessageInput): Promise<ChatMessage>
   }
   const userId = await getAuthUserId();
   if (!userId) throw new Error("saveMessage: no auth session");
+  assertOwned(input.owner, userId);
 
   const supabase = createClient();
 
@@ -283,6 +301,7 @@ export async function saveMessage(input: SaveMessageInput): Promise<ChatMessage>
     );
   }
 
+  assertOwned(input.owner);
   const row = {
     conversation_id: (conv as { id: number }).id,
     role: input.role,
@@ -302,6 +321,7 @@ export async function saveMessage(input: SaveMessageInput): Promise<ChatMessage>
       : await insert(row, columns);
   if (error && input.companionContext != null && isMissingContextColumn(error)) {
     // Column not migrated yet: save the answer without its context.
+    assertOwned(input.owner);
     ({ data, error } = await insert(row, columns));
   }
   if (error) throw error;
@@ -357,6 +377,8 @@ export interface GenerateReplyInput {
   /** Web i18n — UI language code ("vi"/"es"/"hi"); rag-query replies in it.
    *  Omitted for English (the default) so backward compatibility is preserved. */
   responseLanguage?: string;
+  /** The account that asks (mobile-app#361): no request is made for another. */
+  owner: AccountOwner;
 }
 
 /**
@@ -461,6 +483,9 @@ export async function generateReply(
   // ChatLimitError. The IRCC disclaimer is classified (not appended) here so the
   // caller can render a localized version (the web UI has no separate disclaimer
   // slot like mobile).
+  // The proxy sends the session in the cookie: ask only while that session is
+  // the account that asks.
+  assertOwned(input.owner, await getAuthUserId());
   const res = await fetch("/api/companion", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -511,12 +536,14 @@ export async function generateReply(
 
 export async function deleteConversation(
   conversationIdentifier: string,
+  owner: AccountOwner,
 ): Promise<void> {
   if (!isSupabaseConfigured()) {
     throw new Error("deleteConversation: Supabase not configured");
   }
   const userId = await getAuthUserId();
   if (!userId) throw new Error("deleteConversation: no auth session");
+  assertOwned(owner, userId);
 
   const supabase = createClient();
   // RLS scopes the delete to the user's own rows and the messages.cascade

@@ -9,7 +9,12 @@ import {
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAccountScope } from "@/hooks/useAccountScope";
-import { useAuthUser } from "@/hooks/useAuthUser";
+import { useAccountId } from "@/hooks/useAccountId";
+import {
+  assertOwned,
+  ownAccountWork,
+  type AccountOwner,
+} from "@/lib/accountSession";
 import { TASKS_KEY } from "@/hooks/useChecklist";
 import { trackCompanionActionResult } from "@/lib/analytics";
 import {
@@ -35,31 +40,39 @@ import {
 
 export { TASK_PROGRESS_ROOT, taskProgressKey };
 
-const fetchTransport: Transport = async (body) => {
-  const res = await fetch("/api/companion/actions", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-    cache: "no-store",
-    signal: AbortSignal.timeout(15_000),
-  });
-  let parsed: unknown = null;
-  try {
-    parsed = await res.json();
-  } catch {
-    parsed = null;
-  }
-  return { status: res.status, body: parsed };
-};
+/**
+ * The proxy sends the session in the cookie, so a transport belongs to one
+ * account (#361): once another account signs in, it sends nothing, and the
+ * request rejects like an unanswered one, so the write stays unresolved for
+ * its own account.
+ */
+const transportFor =
+  (owner: AccountOwner): Transport =>
+  async (body) => {
+    assertOwned(owner);
+    const res = await fetch("/api/companion/actions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal: AbortSignal.timeout(15_000),
+    });
+    let parsed: unknown = null;
+    try {
+      parsed = await res.json();
+    } catch {
+      parsed = null;
+    }
+    return { status: res.status, body: parsed };
+  };
 
-let defaultClient: TaskActionClient | null = null;
-function activeClient(): TaskActionClient {
-  defaultClient ??= createTaskActionClient({
-    transport: fetchTransport,
+/** The task action client of `owner`'s account. */
+function clientFor(owner: AccountOwner): TaskActionClient {
+  return createTaskActionClient({
+    transport: transportFor(owner),
     platform: "web",
     appVersion: "web",
   });
-  return defaultClient;
 }
 
 export function useOnline(): boolean {
@@ -97,8 +110,10 @@ class ReadFailed extends Error {}
 
 /** Saved task progress of the signed-in account, from the shared action service. */
 export function useTaskProgress(): TaskProgressView {
-  const { data: user, isPending: authPending } = useAuthUser();
-  const userId = user?.id ?? null;
+  // Also records the account as the owner of new work (lib/accountSession.ts).
+  const accountId = useAccountId();
+  const authPending = accountId === undefined;
+  const userId = accountId ?? null;
   const online = useOnline();
 
   useAccountScope(userId, !authPending);
@@ -107,7 +122,10 @@ export function useTaskProgress(): TaskProgressView {
     queryKey: taskProgressKey(userId),
     enabled: Boolean(userId),
     queryFn: async (): Promise<Exclude<ReadResult, { kind: "unknown" }>> => {
-      const result = await activeClient().read();
+      // The read is made only as the account its entry belongs to.
+      const owner = ownAccountWork();
+      if (owner.accountId !== userId) throw new ReadFailed("account changed");
+      const result = await clientFor(owner).read();
       // An unreachable service keeps the last good data on screen, marked stale.
       if (result.kind === "unknown") throw new ReadFailed("unreachable");
       return result;
@@ -153,13 +171,14 @@ export function useTaskProgress(): TaskProgressView {
 export function useTaskActionStore(
   surface: TaskActionSurface,
 ): TaskActionStore | null {
-  const { data: user } = useAuthUser();
-  const userId = user?.id ?? null;
+  const userId = useAccountId() ?? null;
+  const { epoch } = ownAccountWork();
   const queryClient = useQueryClient();
   return useMemo(() => {
     if (!userId) return null;
     return taskActionStoreFor(userId, {
-      client: activeClient(),
+      // Its requests are made only while this account is signed in.
+      client: clientFor({ accountId: userId, epoch }),
       newOperationId: () => crypto.randomUUID(),
       onChanged: () => {
         void queryClient.invalidateQueries({
@@ -172,7 +191,7 @@ export function useTaskActionStore(
         if (props) trackCompanionActionResult(props);
       },
     });
-  }, [userId, queryClient, surface]);
+  }, [userId, epoch, queryClient, surface]);
 }
 
 const IDLE: TaskActionPhase = { phase: "idle" };

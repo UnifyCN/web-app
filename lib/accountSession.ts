@@ -35,3 +35,15 @@ export class AccountChangedError extends Error {
     this.name = "AccountChangedError";
   }
 }
+
+/**
+ * Stops `owner`'s work before its next request or result unless its account is
+ * still signed in and, when given, the session user the request would be made
+ * as (`userId`) is that account. Work started before the account was known has
+ * no owner and makes no authenticated request.
+ */
+export function assertOwned(owner: AccountOwner, userId?: string | null) {
+  if (!stillOwned(owner)) throw new AccountChangedError();
+  if (userId !== undefined && userId !== owner.accountId)
+    throw new AccountChangedError();
+}

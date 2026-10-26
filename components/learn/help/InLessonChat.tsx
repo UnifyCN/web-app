@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { BookOpen } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { ownAccountWork, stillOwned } from "@/lib/accountSession";
+import { useAccountGeneration } from "@/hooks/useAccountId";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { MessageBubble } from "@/components/companion/MessageBubble";
 import { ChatInput } from "@/components/companion/ChatInput";
@@ -44,16 +45,26 @@ function TypingIndicator() {
  * send carries `lessonContext` so rag-query scopes its answer to the lesson.
  * The parent owns `conversationId` so switching chooser views doesn't spawn a
  * new conversation per visit.
+ *
+ * The chat belongs to the signed-in account (#361): another account, or a
+ * sign-out, remounts it empty, without the previous account's unsent text,
+ * error, typing indicator or pending creation.
  */
-export function InLessonChat({
-  lessonContext,
-  conversationId,
-  onConversationCreated,
-}: {
+export function InLessonChat(props: InLessonChatProps) {
+  return <AccountLessonChat key={useAccountGeneration()} {...props} />;
+}
+
+interface InLessonChatProps {
   lessonContext: LessonContext;
   conversationId: string | null;
   onConversationCreated: (id: string) => void;
-}) {
+}
+
+function AccountLessonChat({
+  lessonContext,
+  conversationId,
+  onConversationCreated,
+}: InLessonChatProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const endRef = useRef<HTMLDivElement>(null);
@@ -103,6 +114,7 @@ export function InLessonChat({
         const created = await createConversation.mutateAsync({
           firstMessage: text,
           options: { source: "in-lesson", lessonId: lessonContext.lessonId },
+          owner,
         });
         if (!stillOwned(owner)) return;
         id = created.id;
@@ -120,6 +132,7 @@ export function InLessonChat({
         lessonContext,
         inputSource,
         isNewConversation,
+        owner,
       });
     } catch (err) {
       if (!stillOwned(owner)) return;

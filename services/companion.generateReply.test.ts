@@ -12,6 +12,7 @@ vi.mock("@/lib/supabase/client", () => ({
 }));
 
 import { generateReply } from "./companion";
+import { ownAccountWork } from "@/lib/accountSession";
 
 const fetchMock = vi.fn();
 
@@ -26,6 +27,7 @@ function reply(body: Record<string, unknown>) {
     conversationIdentifier: "conv-1",
     prompt: "How do I rent an apartment?",
     history: [],
+    owner: ownAccountWork(),
   });
 }
 

@@ -22,6 +22,7 @@ import {
   AccountChangedError,
   ownAccountWork,
   stillOwned,
+  type AccountOwner,
 } from "@/lib/accountSession";
 import {
   CONVERSATIONS_ROOT,
@@ -42,9 +43,11 @@ export {
 
 export function useConversations() {
   const accountId = useAccountId();
+  // The list is read only as the account its entry belongs to (#361).
+  const owner = ownAccountWork();
   return useQuery({
     queryKey: conversationsKey(accountId),
-    queryFn: companion.getConversations,
+    queryFn: () => companion.getConversations(owner),
     enabled: Boolean(accountId),
   });
 }
@@ -53,9 +56,11 @@ export function useConversationMessages(
   conversationIdentifier: string | null,
 ) {
   const accountId = useAccountId();
+  const owner = ownAccountWork();
   return useQuery({
     queryKey: messagesKey(conversationIdentifier ?? "", accountId),
-    queryFn: () => companion.getMessages(conversationIdentifier as string),
+    queryFn: () =>
+      companion.getMessages(conversationIdentifier as string, owner),
     enabled: !!conversationIdentifier && Boolean(accountId),
     // Keep the cache fresh for 30s so an optimistic message pushed by
     // useSendMessage isn't immediately overwritten by a mount-time refetch
@@ -82,21 +87,27 @@ export function useCreateConversation() {
     mutationFn: async ({
       firstMessage,
       options,
+      owner,
     }: {
       firstMessage: string;
       options?: companion.CreateConversationOptions;
+      /** The account the conversation is created for (#361). */
+      owner: AccountOwner;
     }) => {
-      const owner = ownAccountWork();
-      const created = await companion.createConversation(firstMessage, options);
+      const created = await companion.createConversation(
+        firstMessage,
+        options ?? {},
+        owner,
+      );
       // Another account signed in meanwhile: its list and page get nothing.
       if (!stillOwned(owner)) throw new AccountChangedError();
       return created;
     },
     // The account that asked for the conversation owns its list entry.
-    onMutate: () => ({ accountId: ownAccountWork().accountId }),
-    onSuccess: (created, _vars, context) => {
+    onSuccess: (created, { owner }) => {
+      if (!stillOwned(owner)) return;
       queryClient.setQueryData<Conversation[]>(
-        conversationsKey(context?.accountId),
+        conversationsKey(owner.accountId),
         (prev) => [created, ...(prev ?? [])],
       );
     },
@@ -114,6 +125,9 @@ interface SendMessageInput {
   /** True when this message starts the conversation (it was just created).
    *  Lets turn_number be 1 without waiting for a history load. */
   isNewConversation: boolean;
+  /** The account signed in when the user sent it (#361). It owns every request
+   *  and cache write of this send. */
+  owner: AccountOwner;
 }
 
 interface SendMessageContext {
@@ -121,7 +135,7 @@ interface SendMessageContext {
 }
 
 /** Stops a send whose account is no longer signed in, before its next request. */
-function ensureOwned(owner: ReturnType<typeof ownAccountWork>) {
+function ensureOwned(owner: AccountOwner) {
   if (!stillOwned(owner)) throw new AccountChangedError();
 }
 
@@ -151,10 +165,9 @@ export function useSendMessage() {
       lessonContext,
       inputSource,
       isNewConversation,
+      owner,
     }) => {
-      // The account signed in when the send starts owns every request and
-      // cache write of this send (#361).
-      const owner = ownAccountWork();
+      ensureOwned(owner);
       // Prior turns = persisted messages already in the cache. Optimistic
       // bubbles carry negative ids (see onMutate) so we drop them, then keep
       // the last 10 turns to bound the prompt size.
@@ -176,6 +189,7 @@ export function useSendMessage() {
         conversationIdentifier,
         role: "user",
         content: text,
+        owner,
       });
       ensureOwned(owner);
       // The message is "sent" once persisted — track here so it counts even if
@@ -203,6 +217,7 @@ export function useSendMessage() {
         history,
         lessonContext,
         responseLanguage,
+        owner,
       });
       ensureOwned(owner);
       const { answer, sources, suggestedNextSteps, disclaimerKind } = reply;
@@ -239,12 +254,15 @@ export function useSendMessage() {
         // Saved with the answer so a reopened conversation shows the same
         // sources and context. Never sent to analytics.
         companionContext: reply.contextRecord,
+        owner,
       });
       return { conversationIdentifier, accountId: owner.accountId };
     },
-    onMutate: async ({ conversationIdentifier, text }) => {
-      const key = messagesKey(conversationIdentifier, ownAccountWork().accountId);
+    onMutate: async ({ conversationIdentifier, text, owner }) => {
+      const key = messagesKey(conversationIdentifier, owner.accountId);
       await queryClient.cancelQueries({ queryKey: key });
+      // Another account signed in meanwhile: write nothing under the old one.
+      if (!stillOwned(owner)) return { key };
       const optimisticUserMessage: ChatMessage = {
         // Negative ids avoid collision with the bigint server ids and read as
         // "not yet persisted" anywhere keying on the value.
@@ -261,14 +279,15 @@ export function useSendMessage() {
       ]);
       return { key };
     },
-    onError: (_err, _vars, context) => {
+    onError: (_err, { owner }, context) => {
       // Partial failures (user-save ok, assistant-save not) leave a row on the
       // server the cache wouldn't otherwise show. Re-fetch to converge.
-      if (context) {
+      if (context && stillOwned(owner)) {
         queryClient.invalidateQueries({ queryKey: context.key });
       }
     },
-    onSuccess: ({ conversationIdentifier, accountId }) => {
+    onSuccess: ({ conversationIdentifier, accountId }, { owner }) => {
+      if (!stillOwned(owner)) return;
       queryClient.invalidateQueries({
         queryKey: messagesKey(conversationIdentifier, accountId),
       });
@@ -287,17 +306,21 @@ export function useSendMessage() {
  */
 export function useDeleteConversation() {
   const queryClient = useQueryClient();
-  const listKey = conversationsKey(useAccountId());
   return useMutation<
     void,
     Error,
-    string,
+    { conversationIdentifier: string; owner: AccountOwner },
     { previous: Conversation[] | undefined }
   >({
-    mutationFn: (conversationIdentifier) =>
-      companion.deleteConversation(conversationIdentifier),
-    onMutate: async (conversationIdentifier) => {
+    mutationFn: ({ conversationIdentifier, owner }) =>
+      companion.deleteConversation(conversationIdentifier, owner),
+    // The list of the account that deletes is the only one it changes, and
+    // only while that account is signed in (#361): a late failure never
+    // restores a list that was cleared when another account signed in.
+    onMutate: async ({ conversationIdentifier, owner }) => {
+      const listKey = conversationsKey(owner.accountId);
       await queryClient.cancelQueries({ queryKey: listKey });
+      if (!stillOwned(owner)) return { previous: undefined };
       const previous = queryClient.getQueryData<Conversation[]>(listKey);
       queryClient.setQueryData<Conversation[]>(
         listKey,
@@ -306,16 +329,20 @@ export function useDeleteConversation() {
       );
       return { previous };
     },
-    onError: (_err, _id, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(listKey, context.previous);
+    onError: (_err, { owner }, context) => {
+      if (context?.previous && stillOwned(owner)) {
+        queryClient.setQueryData(
+          conversationsKey(owner.accountId),
+          context.previous,
+        );
       }
     },
-    onSuccess: (_data, conversationIdentifier) => {
+    onSuccess: (_data, { conversationIdentifier, owner }) => {
+      if (!stillOwned(owner)) return;
       // Drop the message-thread cache only after the server confirms — on
       // error we keep it so a rolled-back row still has its thread intact.
       queryClient.removeQueries({
-        queryKey: messagesKey(conversationIdentifier, listKey[1]),
+        queryKey: messagesKey(conversationIdentifier, owner.accountId),
       });
       queryClient.invalidateQueries({ queryKey: [CONVERSATIONS_ROOT] });
     },
@@ -327,11 +354,12 @@ export function useDeleteConversation() {
 export function prefetchCompanion(queryClient: QueryClient) {
   // The list is prefetched only for a known account, under its own key.
   const user = queryClient.getQueryData<{ id: string } | null>(AUTH_USER_KEY);
+  const owner = ownAccountWork();
   return Promise.all([
-    user
+    user && owner.accountId === user.id
       ? queryClient.prefetchQuery({
           queryKey: conversationsKey(user.id),
-          queryFn: companion.getConversations,
+          queryFn: () => companion.getConversations(owner),
         })
       : Promise.resolve(),
     queryClient.prefetchQuery({

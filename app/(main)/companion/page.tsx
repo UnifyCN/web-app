@@ -79,6 +79,7 @@ export default function CompanionPage() {
       if (!conversationIdentifier) {
         const created = await createConversation.mutateAsync({
           firstMessage: text,
+          owner,
         });
         if (!stillOwned(owner)) return;
         conversationIdentifier = created.id;
@@ -98,6 +99,7 @@ export default function CompanionPage() {
         text,
         inputSource,
         isNewConversation,
+        owner,
       });
     } catch (err) {
       if (!stillOwned(owner)) return;
@@ -115,7 +117,10 @@ export default function CompanionPage() {
 
   async function handleDelete(conversationIdentifier: string) {
     try {
-      await deleteConversation.mutateAsync(conversationIdentifier);
+      await deleteConversation.mutateAsync({
+        conversationIdentifier,
+        owner: ownAccountWork(),
+      });
       if (conversationIdentifier === activeId) setActiveId(null);
     } catch (err) {
       console.error("Companion: failed to delete conversation", err);

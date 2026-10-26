@@ -92,6 +92,7 @@ vi.mock("@/lib/supabase/client", () => ({
 }));
 
 import { getMessages } from "@/services/companion";
+import { noteAccount, ownAccountWork } from "@/lib/accountSession";
 import { messagesKey, useSendMessage } from "@/hooks/useCompanion";
 import { MessageBubble } from "./MessageBubble";
 
@@ -124,6 +125,8 @@ async function askAndReopen(body: Body): Promise<ChatMessage> {
       }),
     ),
   );
+  // The session names the signed-in account, which owns the send (#361).
+  noteAccount("user-vancouver");
   const client = new QueryClient();
   client.setQueryData(messagesKey(CONV), []);
   await renderSendMessage(client).mutateAsync({
@@ -131,8 +134,9 @@ async function askAndReopen(body: Body): Promise<ChatMessage> {
     text: QUESTION,
     inputSource: "typed",
     isNewConversation: false,
+    owner: ownAccountWork(),
   });
-  const reopened = await getMessages(CONV);
+  const reopened = await getMessages(CONV, ownAccountWork());
   const answer = reopened.find((m) => m.role === "assistant");
   if (!answer) throw new Error("no assistant message saved");
   return answer;

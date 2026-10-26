@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { noteAccount } from "@/lib/accountSession";
 
@@ -14,4 +15,21 @@ export function useAccountId(): string | null | undefined {
   const id = user?.id ?? null;
   noteAccount(id);
   return id;
+}
+
+/**
+ * Counts changes of the signed-in account: another account or a sign-out. The
+ * first load of the session and a token refresh are not changes. Account-owned
+ * UI keyed on it remounts empty, so a new account never sees the previous
+ * account's unsent text, errors or pending sends (mobile-app#361).
+ */
+export function useAccountGeneration(): number {
+  const accountId = useAccountId();
+  const [seen, setSeen] = useState({ id: accountId, generation: 0 });
+  if (accountId !== undefined && accountId !== seen.id) {
+    const generation = seen.generation + (seen.id === undefined ? 0 : 1);
+    setSeen({ id: accountId, generation });
+    return generation;
+  }
+  return seen.generation;
 }
