@@ -33,6 +33,20 @@ export default function CompanionPage() {
   const messagesQuery = useConversationMessages(activeId);
   const usageQuery = useChatbotUsage();
   const currentUser = useCurrentUser().data;
+  // A different signed-in account (or sign-out) must not see the previous
+  // account's open conversation, sources drawer or unsent draft. The chat panel
+  // remounts on each account change; loading the first account is not one.
+  const accountId = currentUser?.id ?? null;
+  const [account, setAccount] = useState({ id: accountId, epoch: 0 });
+  if (accountId !== account.id) {
+    const changed = account.id !== null;
+    setAccount({ id: accountId, epoch: account.epoch + (changed ? 1 : 0) });
+    if (changed) {
+      setActiveId(null);
+      setSendError(null);
+      setMobileListOpen(false);
+    }
+  }
   const createConversation = useCreateConversation();
   const sendMessage = useSendMessage();
   const deleteConversation = useDeleteConversation();
@@ -116,6 +130,7 @@ export default function CompanionPage() {
         isDeleting={deleteConversation.isPending}
       />
       <ChatPanel
+        key={account.epoch}
         conversation={activeConversation}
         messages={messages}
         isTyping={sendMessage.isPending}

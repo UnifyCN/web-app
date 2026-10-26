@@ -104,7 +104,7 @@ export function ContextSummary({
             type="button"
             onClick={onOpen}
             aria-haspopup="dialog"
-            className="min-h-11 cursor-pointer text-xs font-semibold text-mention-blue underline-offset-2 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary sm:min-h-0"
+            className="min-h-11 cursor-pointer text-xs font-semibold text-context-link underline-offset-2 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary sm:min-h-0"
           >
             {t("companion.context.openDetails")}
           </button>

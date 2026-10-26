@@ -65,8 +65,19 @@ export function ChatPanel({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState("");
   // The answer whose sources and context are open in the drawer. The drawer
-  // overlays the conversation, so the draft and scroll position stay put.
-  const [openContext, setOpenContext] = useState<CompanionContext | null>(null);
+  // overlays the conversation, so the draft and scroll position stay put. It
+  // shows that answer only while it is still in this conversation: another
+  // account's conversation, a conversation this account can no longer read
+  // or one the user left closes it.
+  const [openContextFor, setOpenContextFor] = useState<{
+    conversationId: string;
+    messageId: number;
+  } | null>(null);
+  const openContext: CompanionContext | null =
+    openContextFor && conversation?.id === openContextFor.conversationId
+      ? (messages.find((m) => m.id === openContextFor.messageId)
+          ?.companionContext ?? null)
+      : null;
   const firstName = onboarding?.firstName?.trim();
 
   useEffect(() => {
@@ -128,7 +139,12 @@ export function ChatPanel({
                   groupedWithNext={next?.role === message.role}
                   isLast={index === messages.length - 1}
                   onSuggestionClick={pickSuggestion}
-                  onOpenContext={(m) => setOpenContext(m.companionContext ?? null)}
+                  onOpenContext={(m) =>
+                    setOpenContextFor({
+                      conversationId: conversation.id,
+                      messageId: m.id,
+                    })
+                  }
                 />
               );
             })}
@@ -184,7 +200,7 @@ export function ChatPanel({
 
       <CompanionContextDrawer
         context={openContext}
-        onClose={() => setOpenContext(null)}
+        onClose={() => setOpenContextFor(null)}
       />
     </div>
   );

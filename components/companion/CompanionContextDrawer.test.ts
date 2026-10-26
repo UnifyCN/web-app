@@ -4,15 +4,19 @@ import vancouver from "@/supabase/functions/rag-query/fixtures/rag-query-context
 import unavailable from "@/supabase/functions/rag-query/fixtures/rag-query-context-unavailable.json";
 import { renderIn, textIn } from "@/components/learn/practice/testing/renderHelpers";
 import { parseCompanionContext, type CompanionContext } from "@/lib/companionContext";
-import { CompanionContextDrawer } from "./CompanionContextDrawer";
+import { CompanionContextDrawer, CompanionContextPanel } from "./CompanionContextDrawer";
 
 // Ticket #362: the "Sources and context" drawer (direction B overlay) for one
 // answer, rendered from the exact rag-query context the handler test produces
-// (supabase/functions/rag-query/fixtures). Static markup: the first render,
-// without effects (focus and Escape handling are not exercised here).
+// (supabase/functions/rag-query/fixtures). Static markup of the drawer panel:
+// the first render, without effects. The drawer itself renders into <body>
+// only in a browser; focus, Escape, motion and contrast are exercised in a
+// real browser by scripts/verify-companion-context-drawer.mjs.
 
 const drawer = (context: CompanionContext | null, lang: Parameters<typeof renderIn>[1] = "en") =>
-  renderIn(createElement(CompanionContextDrawer, { context, onClose: () => undefined }), lang);
+  context
+    ? renderIn(createElement(CompanionContextPanel, { context, onClose: () => undefined }), lang)
+    : renderIn(createElement(CompanionContextDrawer, { context, onClose: () => undefined }), lang);
 
 const parsed = (raw: unknown) => {
   const context = parseCompanionContext(raw);

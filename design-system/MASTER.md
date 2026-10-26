@@ -66,6 +66,12 @@
 |---|---|
 | `destructive` | `#FF3B30` |
 | `mention-blue` | `#007AFF` |
+| `context-link` | `#2B5A9B` |
+
+`context-link` is scoped to Companion source links and the "Sources and
+context" control. It is the mobile `CONTEXT_LINK_COLOR` value: 6.06:1 on
+`surface-gray` and 6.91:1 on `surface`, where `mention-blue` gives 3.52:1 and
+4.02:1.
 
 ### Checklist Priority System
 
