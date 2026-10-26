@@ -24,11 +24,7 @@ import { FreeTierIndicator } from "./FreeTierIndicator";
 import { CompanionContextDrawer } from "./CompanionContextDrawer";
 import type { CompanionContext } from "@/lib/companionContext";
 import type { CompanionInputSource } from "@/lib/companionAnalytics";
-import type {
-  ChatMessage,
-  Conversation,
-  UserOnboardingProfile,
-} from "@/types";
+import type { ChatMessage, Conversation, UserOnboardingProfile } from "@/types";
 
 interface ChatPanelProps {
   conversation: Conversation | null;
@@ -45,6 +41,8 @@ interface ChatPanelProps {
   onOpenList: () => void;
   /** Compact entry to saved task progress, shown above the conversation. */
   taskEntry?: ReactNode;
+  /** Cards that belong to a message (#363 task drafts and command results). */
+  renderAfterMessage?: (message: ChatMessage) => ReactNode;
 }
 
 function TypingIndicator() {
@@ -75,6 +73,7 @@ export function ChatPanel({
   mobileActive,
   onOpenList,
   taskEntry,
+  renderAfterMessage,
 }: ChatPanelProps) {
   const { t } = useTranslation();
   const endRef = useRef<HTMLDivElement>(null);
@@ -161,20 +160,22 @@ export function ChatPanel({
               const prev = messages[index - 1];
               const next = messages[index + 1];
               return (
-                <MessageBubble
-                  key={message.id}
-                  message={message}
-                  groupedWithPrev={prev?.role === message.role}
-                  groupedWithNext={next?.role === message.role}
-                  isLast={index === messages.length - 1}
-                  onSuggestionClick={pickSuggestion}
-                  onOpenContext={(m) =>
-                    setOpenContextFor({
-                      conversationId: conversation.id,
-                      messageId: m.id,
-                    })
-                  }
-                />
+                <div key={message.id}>
+                  <MessageBubble
+                    message={message}
+                    groupedWithPrev={prev?.role === message.role}
+                    groupedWithNext={next?.role === message.role}
+                    isLast={index === messages.length - 1}
+                    onSuggestionClick={pickSuggestion}
+                    onOpenContext={(m) =>
+                      setOpenContextFor({
+                        conversationId: conversation.id,
+                        messageId: m.id,
+                      })
+                    }
+                  />
+                  {renderAfterMessage?.(message)}
+                </div>
               );
             })}
             {isTyping && <TypingIndicator />}

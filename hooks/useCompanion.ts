@@ -29,6 +29,15 @@ import {
   conversationsKey,
   messagesKey,
 } from "@/lib/companion/conversationKeys";
+import {
+  taskActionClientFor,
+  useTaskActionStore,
+} from "@/hooks/useTaskActions";
+import { conversationActionsKey } from "@/lib/companionActions/queryKeys";
+import {
+  TITLE_MAX,
+  createTaskOperation,
+} from "@/lib/companionActions/contract";
 
 /** React Query hooks for Companion (AI chat). */
 
@@ -52,9 +61,7 @@ export function useConversations() {
   });
 }
 
-export function useConversationMessages(
-  conversationIdentifier: string | null,
-) {
+export function useConversationMessages(conversationIdentifier: string | null) {
   const accountId = useAccountId();
   const owner = ownAccountWork();
   return useQuery({
@@ -153,6 +160,8 @@ export function useSendMessage() {
   // a module singleton); English is the server default so it's sent only for
   // other languages.
   const { t, i18n } = useTranslation();
+  // #363: a clear command in the message adds its task through the action store.
+  const store = useTaskActionStore("companion");
   return useMutation<
     { conversationIdentifier: string; accountId: string | null },
     Error,
@@ -185,7 +194,7 @@ export function useSendMessage() {
         .slice(-10)
         .map((m) => ({ role: m.role, message: m.content }));
 
-      await companion.saveMessage({
+      const savedUser = await companion.saveMessage({
         conversationIdentifier,
         role: "user",
         content: text,
@@ -206,6 +215,50 @@ export function useSendMessage() {
           lessonId: lessonContext.lessonId,
           messageLength: text.length,
         });
+      }
+
+      // #363: the action service reads the user's own saved message. A clear create
+      // command adds exactly its task (no AI answer, no allowance used); an unclear
+      // one gets a question and writes nothing. Otherwise the AI answers as before.
+      // An unavailable action service never blocks the answer.
+      const actions = taskActionClientFor(owner);
+      const interpreted = await actions.interpret(savedUser.id);
+      ensureOwned(owner);
+      if (interpreted.kind === "ok" && interpreted.command.kind !== "none") {
+        const command = interpreted.command;
+        if (command.kind === "create" && command.sameTitleTasks.length === 0) {
+          if (store) {
+            await store.applyOperation(
+              `command:${savedUser.id}`,
+              command.operation,
+              {
+                kind: "direct_command",
+                message_id: savedUser.id,
+              },
+            );
+          }
+          return { conversationIdentifier, accountId: owner.accountId };
+        }
+        const question =
+          command.kind === "create"
+            ? t("taskCreate.clarifyDuplicate", {
+                title: command.sameTitleTasks[0].title,
+              })
+            : t(
+                command.reason === "missing_title"
+                  ? "taskCreate.clarifyMissingTitle"
+                  : command.reason === "multiple"
+                    ? "taskCreate.clarifyMultiple"
+                    : "taskCreate.clarifyTooLong",
+                { max: TITLE_MAX },
+              );
+        await companion.saveMessage({
+          conversationIdentifier,
+          role: "assistant",
+          content: question,
+          owner,
+        });
+        return { conversationIdentifier, accountId: owner.accountId };
       }
 
       const responseLanguage =
@@ -245,7 +298,7 @@ export function useSendMessage() {
             : "";
       const content = disclaimer ? `${answer}\n\n${disclaimer}` : answer;
 
-      await companion.saveMessage({
+      const savedAnswer = await companion.saveMessage({
         conversationIdentifier,
         role: "assistant",
         content,
@@ -256,6 +309,16 @@ export function useSendMessage() {
         companionContext: reply.contextRecord,
         owner,
       });
+      ensureOwned(owner);
+      // #363: a suggested task becomes a server-owned draft for review, tied to this
+      // answer. Preparing writes no task; a failure only means no draft card.
+      if (reply.actionProposal) {
+        await actions.prepare(createTaskOperation(reply.actionProposal.title), {
+          conversationId: conversationIdentifier,
+          messageId: savedAnswer.id,
+        });
+        ensureOwned(owner);
+      }
       return { conversationIdentifier, accountId: owner.accountId };
     },
     onMutate: async ({ conversationIdentifier, text, owner }) => {
@@ -291,6 +354,9 @@ export function useSendMessage() {
       queryClient.invalidateQueries({
         queryKey: messagesKey(conversationIdentifier, accountId),
       });
+      queryClient.invalidateQueries({
+        queryKey: conversationActionsKey(accountId, conversationIdentifier),
+      });
       queryClient.invalidateQueries({ queryKey: [CONVERSATIONS_ROOT] });
       // The edge function incremented chatbot_usage server-side — refetch so
       // the free-tier "remaining" counter reflects the new count.
@@ -322,10 +388,8 @@ export function useDeleteConversation() {
       await queryClient.cancelQueries({ queryKey: listKey });
       if (!stillOwned(owner)) return { previous: undefined };
       const previous = queryClient.getQueryData<Conversation[]>(listKey);
-      queryClient.setQueryData<Conversation[]>(
-        listKey,
-        (prev) =>
-          (prev ?? []).filter((c) => c.id !== conversationIdentifier),
+      queryClient.setQueryData<Conversation[]>(listKey, (prev) =>
+        (prev ?? []).filter((c) => c.id !== conversationIdentifier),
       );
       return { previous };
     },

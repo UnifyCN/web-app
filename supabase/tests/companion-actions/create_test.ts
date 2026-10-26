@@ -59,7 +59,7 @@ Deno.test({
 
     // Another platform and a later read of the proposal see the same task and receipt.
     const web = await read(a, 'web');
-    const task = web.json.tasks.find((t: any) => t.task_ref === receipt.task_ref);
+    const task = web.json.tasks.find((t: { task_ref: unknown }) => t.task_ref === receipt.task_ref);
     assertEquals([task.title, task.state, task.removed], [PHONE, 'not_started', false]);
     assertEquals(task.last_receipt.operation_id, w.json.operation_id);
     const later = await proposalOf(a, draft.proposal_id);
@@ -253,7 +253,7 @@ Deno.test({
     const other = await existingCustomTask(a, '  set up  PHONE service ');
     const r = await apply(a, draft.operations, { authorization: approved(draft) });
     assertEquals([r.status, r.json.error], [409, 'needs_review'], JSON.stringify(r.json));
-    assertEquals(r.json.proposal.context.same_title_tasks.map((t: any) => t.task_ref), [other.ref]);
+    assertEquals(r.json.proposal.context.same_title_tasks.map((t: { task_ref: unknown }) => t.task_ref), [other.ref]);
     assertEquals(await liveTasks(a.id), 1);
     // The user saw it and still wants the task: approving the refreshed revision adds it.
     const ok = await apply(a, r.json.proposal.operations, { authorization: approved(r.json.proposal) });
@@ -290,7 +290,7 @@ Deno.test({
     assertEquals([u.json.receipt.kind, u.json.receipt.operation_type, u.json.receipt.undo_of], ['undo', 'task.remove_created', operation_id]);
     assertEquals(u.json.receipt.task_ref, receipt.task_ref);
     assertEquals(await checklistTitles(a), [], 'the legacy Checklist still shows the removed task');
-    const t = (await read(a)).json.tasks.find((x: any) => x.task_ref === receipt.task_ref);
+    const t = (await read(a)).json.tasks.find((x: { task_ref: unknown }) => x.task_ref === receipt.task_ref);
     assertEquals(t.removed, true);
 
     const replay = await undo(a, operation_id, { operation_id: undo_id, authorization: confirmedRemoval });
@@ -314,7 +314,7 @@ Deno.test({
     assertEquals(edit.status, 200, JSON.stringify(edit.json));
     const u = await undo(a, operation_id, { authorization: confirmedRemoval });
     assertEquals([u.status, u.json.error], [409, 'undo_conflict'], JSON.stringify(u.json));
-    assertEquals(u.json.current.map((c: any) => [c.task_ref, c.state]), [[receipt.task_ref, 'in_progress']]);
+    assertEquals(u.json.current.map((c: { task_ref: unknown; state: string }) => [c.task_ref, c.state]), [[receipt.task_ref, 'in_progress']]);
     const proposal = u.json.proposal;
     assertEquals(proposal.operations, [{ type: 'task.remove_created', task_ref: receipt.task_ref, expected_revision: edit.json.receipt.after_revision }]);
     assertEquals(await checklistTitles(a), [PHONE]);
@@ -346,12 +346,24 @@ Deno.test({
     assertEquals([stale.status, stale.json.error], [409, 'revision_conflict'], JSON.stringify(stale.json));
     assertEquals((await checklistTitles(a)).sort(), ['Find a family doctor', PHONE].sort());
 
-    const otherRev = (await read(a)).json.tasks.find((x: any) => x.task_ref === other.ref).revision;
+    const otherRev = (await read(a)).json.tasks.find((x: { task_ref: unknown; revision: number }) => x.task_ref === other.ref).revision;
     for (const auth of [confirmedRemoval, { ...approved(proposal), removal_confirmed: true }]) {
       const r = await apply(a, [{ type: 'task.remove_created', task_ref: other.ref, expected_revision: otherRev }],
         { authorization: auth });
       assertEquals(r.status, 403, `${JSON.stringify(auth)} -> ${JSON.stringify(r.json)}`);
     }
+    assertEquals((await checklistTitles(a)).length, 2);
+
+    // Defence in depth: even a draft that undoes this receipt (made here as a fixture,
+    // no public path can build one) cannot remove a task the receipt did not add.
+    const forgedOps = [{ type: 'task.remove_created', task_ref: other.ref, expected_revision: otherRev }];
+    const [forged] = await sql`insert into companion_proposals (user_id, operations, operations_hash, undo_of, kind)
+      values (${a.id}, ${sql.json(forgedOps)}, public.companion_ops_hash(${sql.json(forgedOps)}), ${operation_id}, 'compensation')
+      returning id`;
+    const r = await apply(a, forgedOps, {
+      authorization: { kind: 'approved_proposal', proposal_id: forged.id, proposal_revision: 1, removal_confirmed: true },
+    });
+    assertEquals(r.status, 403, JSON.stringify(r.json));
     assertEquals((await checklistTitles(a)).length, 2);
   },
 });
@@ -464,8 +476,8 @@ Deno.test({
 
     const r = await conversationActions(a, conv.conversation_id);
     assertEquals(r.status, 200, JSON.stringify(r.json));
-    assertEquals(r.json.proposals.map((x: any) => [x.proposal_id, x.status, x.source.message_id]), [[p.json.proposal.proposal_id, 'draft', assistant]]);
-    assertEquals(r.json.commands.map((x: any) => [x.message_id, x.receipt.title, x.receipt.current]), [[cmd, 'Buy a transit pass', false]]);
+    assertEquals(r.json.proposals.map((x: { proposal_id: unknown; status: string; source: { message_id: unknown } }) => [x.proposal_id, x.status, x.source.message_id]), [[p.json.proposal.proposal_id, 'draft', assistant]]);
+    assertEquals(r.json.commands.map((x: { message_id: unknown; receipt: { title: string; current: boolean } }) => [x.message_id, x.receipt.title, x.receipt.current]), [[cmd, 'Buy a transit pass', false]]);
 
     const other = await conversationWith(a, 'user', 'Another chat');
     const empty = await conversationActions(a, other.conversation_id);

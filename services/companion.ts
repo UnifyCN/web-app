@@ -190,7 +190,11 @@ export async function createConversation(
   const baseRow = { user_id: userId, title: fallbackTitle };
   const taggedRow =
     options.source != null
-      ? { ...baseRow, source: options.source, lesson_id: options.lessonId ?? null }
+      ? {
+          ...baseRow,
+          source: options.source,
+          lesson_id: options.lessonId ?? null,
+        }
       : baseRow;
 
   let { data, error } = await supabase
@@ -277,7 +281,9 @@ export interface SaveMessageInput {
   owner: AccountOwner;
 }
 
-export async function saveMessage(input: SaveMessageInput): Promise<ChatMessage> {
+export async function saveMessage(
+  input: SaveMessageInput,
+): Promise<ChatMessage> {
   if (!isSupabaseConfigured()) {
     throw new Error("saveMessage: Supabase not configured");
   }
@@ -311,7 +317,8 @@ export async function saveMessage(input: SaveMessageInput): Promise<ChatMessage>
   };
   const insert = (values: Record<string, unknown>, select: string) =>
     supabase.from("messages").insert(values).select(select).single();
-  const columns = "id, role, content, sources, suggested_next_steps, created_at";
+  const columns =
+    "id, role, content, sources, suggested_next_steps, created_at";
   let { data, error } =
     input.companionContext != null
       ? await insert(
@@ -319,14 +326,21 @@ export async function saveMessage(input: SaveMessageInput): Promise<ChatMessage>
           `${columns}, companion_context`,
         )
       : await insert(row, columns);
-  if (error && input.companionContext != null && isMissingContextColumn(error)) {
+  if (
+    error &&
+    input.companionContext != null &&
+    isMissingContextColumn(error)
+  ) {
     // Column not migrated yet: save the answer without its context.
     assertOwned(input.owner);
     ({ data, error } = await insert(row, columns));
   }
   if (error) throw error;
 
-  return rowToMessage(data as unknown as MessageRow, input.conversationIdentifier);
+  return rowToMessage(
+    data as unknown as MessageRow,
+    input.conversationIdentifier,
+  );
 }
 
 /* ---- AI reply generation (rag-query edge function) -------------------- */
@@ -351,6 +365,8 @@ interface RagQueryResponse {
   lastVerified?: string;
   /** Companion context (ticket #362); absent from an older rag-query. */
   context?: unknown;
+  /** One suggested task for review (ticket #363); absent when none. */
+  actionProposal?: unknown;
   tokenUsage?: {
     prompt_tokens?: number;
     completion_tokens?: number;
@@ -403,6 +419,9 @@ export interface GeneratedReply {
   /** The server's version-1 context object as received, for saving with the
    *  answer (the saved row is parsed again on read). Null when absent. */
   contextRecord: Record<string, unknown> | null;
+  /** A task the answer suggests for the user to review (#363). A suggestion only:
+   *  the action service prepares the reviewable draft; nothing is saved here. */
+  actionProposal: { type: "task.create_custom"; title: string } | null;
   /* Analytics only (companion_response_received); null when absent. */
   queryType: string | null;
   topic: CompanionTopic | null;
@@ -422,6 +441,18 @@ function savableContext(raw: unknown): Record<string, unknown> | null {
     : null;
 }
 
+/** Allowlisted fields only; anything else in the suggestion is dropped. */
+function parseActionProposal(raw: unknown): GeneratedReply["actionProposal"] {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  if (r.type !== "task.create_custom" || r.version !== 1) return null;
+  if (typeof r.title !== "string") return null;
+  const title = r.title.trim();
+  return title && title.length <= 200
+    ? { type: "task.create_custom", title }
+    : null;
+}
+
 function finiteNumber(raw: unknown): number | null {
   return typeof raw === "number" && Number.isFinite(raw) ? raw : null;
 }
@@ -433,7 +464,11 @@ function normalizeTokenUsage(
   const promptTokens = finiteNumber(raw.prompt_tokens);
   const completionTokens = finiteNumber(raw.completion_tokens);
   const totalTokens = finiteNumber(raw.total_tokens);
-  if (promptTokens === null || completionTokens === null || totalTokens === null) {
+  if (
+    promptTokens === null ||
+    completionTokens === null ||
+    totalTokens === null
+  ) {
     return null;
   }
   return { promptTokens, completionTokens, totalTokens };
@@ -470,6 +505,7 @@ export async function generateReply(
       disclaimerKind: null,
       context: null,
       contextRecord: null,
+      actionProposal: null,
       queryType: null,
       topic: null,
       tokenUsage: null,
@@ -527,6 +563,7 @@ export async function generateReply(
     disclaimerKind: classifyDisclaimer(body.disclaimer),
     context: parseCompanionContext(body.context),
     contextRecord: savableContext(body.context),
+    actionProposal: parseActionProposal(body.actionProposal),
     queryType: typeof body.queryType === "string" ? body.queryType : null,
     topic: parseCompanionTopic(body.topic),
     tokenUsage: normalizeTokenUsage(body.tokenUsage),

@@ -16,6 +16,7 @@ import {
   useTaskProgress,
 } from "@/hooks/useTaskActions";
 import { TaskDrawer } from "./TaskDrawer";
+import { TaskProposalPanel } from "./TaskProposalPanel";
 import { TaskStatePanel, progressFor } from "./TaskStatePanel";
 
 const STATE_ORDER: TaskState[] = [
@@ -31,6 +32,8 @@ interface TaskActionsDrawerProps {
   surface: TaskActionSurface;
   /** Open straight on one task (Checklist). Without it the drawer starts on the task list (Companion). */
   initialTaskId?: string | null;
+  /** Open on the review of one task draft (#363) instead of a task. */
+  proposalId?: string | null;
 }
 
 /** The task list and task controls inside the direction B drawer. */
@@ -39,6 +42,7 @@ export function TaskActionsDrawer({
   onClose,
   surface,
   initialTaskId = null,
+  proposalId = null,
 }: TaskActionsDrawerProps) {
   const { t } = useTranslation();
   const { data: tasks = [], isLoading } = useTasks();
@@ -67,6 +71,10 @@ export function TaskActionsDrawer({
   const selected = active.find((task) => task.id === selectedId) ?? null;
   const selectedRef = selected ? taskOrderKey(selected) : null;
   const phase = useTaskActionPhase(store, selectedRef);
+  const draftPhase = useTaskActionPhase(
+    store,
+    proposalId ? `proposal:${proposalId}` : null,
+  );
 
   const stateOf = (task: ChecklistTask): TaskState =>
     progressFor(taskOrderKey(task), view).state;
@@ -79,14 +87,22 @@ export function TaskActionsDrawer({
       open={open}
       onClose={onClose}
       title={
-        selected ? t("taskActions.drawerTitle") : t("taskActions.listTitle")
+        proposalId
+          ? t("taskCreate.drawerTitle")
+          : selected
+            ? t("taskActions.drawerTitle")
+            : t("taskActions.listTitle")
       }
       onBack={
-        selected && !initialTaskId ? () => setSelectedId(null) : undefined
+        selected && !initialTaskId && !proposalId
+          ? () => setSelectedId(null)
+          : undefined
       }
-      closeOnEscape={phase.phase !== "saving"}
+      closeOnEscape={phase.phase !== "saving" && draftPhase.phase !== "saving"}
     >
-      {view.status === "loading" || isLoading ? (
+      {proposalId ? (
+        <TaskProposalPanel proposalId={proposalId} view={view} store={store} />
+      ) : view.status === "loading" || isLoading ? (
         <p role="status" className="loading-delayed text-sm text-ink-muted">
           {t("taskActions.loading")}
         </p>

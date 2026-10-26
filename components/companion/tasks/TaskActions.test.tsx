@@ -714,7 +714,9 @@ describe("review corrections (web)", () => {
         <ChecklistPage />
       </Providers>,
     );
-    expect(await screen.findByText("Private description of account A")).toBeTruthy();
+    expect(
+      await screen.findByText("Private description of account A"),
+    ).toBeTruthy();
 
     view.rerender(
       <Providers queryClient={queryClient}>
@@ -727,7 +729,9 @@ describe("review corrections (web)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     const panel = await dialog();
     expect(
-      await within(panel).findByRole("button", { name: /Private health appointment/ }),
+      await within(panel).findByRole("button", {
+        name: /Private health appointment/,
+      }),
     ).toBeTruthy();
     fireEvent.click(within(panel).getByRole("button", { name: "Close" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
@@ -769,7 +773,9 @@ describe("review corrections (web)", () => {
     useServer(s);
     const { panel } = await openFromChecklist();
     fireEvent.click(radio(panel, "In progress"));
-    const retry = await within(panel).findByRole("button", { name: "Try again" });
+    const retry = await within(panel).findByRole("button", {
+      name: "Try again",
+    });
     expect(server.writes()).toHaveLength(1);
     act(() => setOnline(false));
     await within(panel).findByText(
@@ -777,21 +783,29 @@ describe("review corrections (web)", () => {
     );
     fireEvent.click(retry);
     expect(server.writes()).toHaveLength(1);
-    expect(isDisabled(within(panel).getByRole("button", { name: "Try again" }))).toBe(true);
+    expect(
+      isDisabled(within(panel).getByRole("button", { name: "Try again" })),
+    ).toBe(true);
 
     // Back online: the retry goes through; then a conflicting Undo offers a reviewed change.
     lookupNotApplied = false;
     act(() => setOnline(true));
     await waitFor(() =>
-      expect(isDisabled(within(panel).getByRole("button", { name: "Try again" }))).toBe(false),
+      expect(
+        isDisabled(within(panel).getByRole("button", { name: "Try again" })),
+      ).toBe(false),
     );
     fireEvent.click(within(panel).getByRole("button", { name: "Try again" }));
     await within(panel).findByText("Changed from Not started to In progress");
     server.editElsewhere("sanity:sin", "completed");
-    const undo = within(panel).getByRole("button", { name: "Undo this change" });
+    const undo = within(panel).getByRole("button", {
+      name: "Undo this change",
+    });
     await waitFor(() => expect(isDisabled(undo)).toBe(false));
     fireEvent.click(undo);
-    const apply = await within(panel).findByRole("button", { name: "Apply this change" });
+    const apply = await within(panel).findByRole("button", {
+      name: "Apply this change",
+    });
     const writes = server.writes().length;
     act(() => setOnline(false));
     await within(panel).findByText(
@@ -815,8 +829,12 @@ describe("review corrections (web)", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Open" }));
     const panel = await dialog();
-    fireEvent.click(await within(panel).findByRole("button", { name: /Get a SIN/ }));
-    fireEvent.click(within(panel).getByRole("link", { name: /Open in Checklist/ }));
+    fireEvent.click(
+      await within(panel).findByRole("button", { name: /Get a SIN/ }),
+    );
+    fireEvent.click(
+      within(panel).getByRole("link", { name: /Open in Checklist/ }),
+    );
     // The route change unmounts Companion and mounts Checklist, then the user returns.
     view.rerender(
       <Providers queryClient={queryClient}>
@@ -825,9 +843,13 @@ describe("review corrections (web)", () => {
     );
     await screen.findByRole("button", { name: "Task progress for Get a SIN" });
     view.rerender(companion);
-    expect((await screen.findByLabelText("Message Companion") as HTMLTextAreaElement).value).toBe(
-      "Keep my message through Checklist navigation",
-    );
+    expect(
+      (
+        (await screen.findByLabelText(
+          "Message Companion",
+        )) as HTMLTextAreaElement
+      ).value,
+    ).toBe("Keep my message through Checklist navigation");
   });
 
   it("F4: a refused waiting-reason save keeps the typed reason", async () => {
@@ -839,7 +861,10 @@ describe("review corrections (web)", () => {
             body.action === "apply" && body.operations[0].waiting_reason
               ? {
                   status: 422,
-                  body: { error: "invalid_request", reason: "invalid_waiting_reason" },
+                  body: {
+                    error: "invalid_request",
+                    reason: "invalid_waiting_reason",
+                  },
                 }
               : undefined,
         },
@@ -847,7 +872,9 @@ describe("review corrections (web)", () => {
     );
     mount(<ChecklistPage />);
     fireEvent.click(
-      await screen.findByRole("button", { name: "Task progress for Get a SIN" }),
+      await screen.findByRole("button", {
+        name: "Task progress for Get a SIN",
+      }),
     );
     const panel = await dialog();
     const reason = (await within(panel).findByLabelText(
@@ -857,15 +884,25 @@ describe("review corrections (web)", () => {
     fireEvent.change(reason, {
       target: { value: "Keep this failed waiting-reason draft" },
     });
-    const save = within(panel).getByRole("button", { name: "Save waiting reason" });
+    const save = within(panel).getByRole("button", {
+      name: "Save waiting reason",
+    });
     await waitFor(() => expect(isDisabled(save)).toBe(false));
     fireEvent.click(save);
     expect(
       await within(panel).findByText("Could not save. Nothing changed."),
     ).toBeTruthy();
-    await waitFor(() => expect(server.sent.filter((b) => b.action === "read").length).toBeGreaterThan(1));
+    await waitFor(() =>
+      expect(
+        server.sent.filter((b) => b.action === "read").length,
+      ).toBeGreaterThan(1),
+    );
     expect(
-      (within(panel).getByLabelText("What are you waiting for?") as HTMLTextAreaElement).value,
+      (
+        within(panel).getByLabelText(
+          "What are you waiting for?",
+        ) as HTMLTextAreaElement
+      ).value,
     ).toBe("Keep this failed waiting-reason draft");
   });
 
@@ -879,49 +916,70 @@ describe("review corrections (web)", () => {
     row.focus();
     fireEvent.click(row);
     // The pressed row is gone: focus moves to the open task's heading.
-    const heading = () => within(panel).getByRole("heading", { name: "Get a SIN" });
+    const heading = () =>
+      within(panel).getByRole("heading", { name: "Get a SIN" });
     await waitFor(() => expect(document.activeElement).toBe(heading()));
 
     // Back to the list returns focus to the task that was open.
     const back = within(panel).getByRole("button", { name: "Back to tasks" });
     back.focus();
     fireEvent.click(back);
-    const rowAgain = await within(panel).findByRole("button", { name: /Get a SIN/ });
+    const rowAgain = await within(panel).findByRole("button", {
+      name: /Get a SIN/,
+    });
     await waitFor(() => expect(document.activeElement).toBe(rowAgain));
 
     rowAgain.focus();
     fireEvent.click(rowAgain);
-    await waitFor(() => expect(isDisabled(radio(panel, "In progress"))).toBe(false));
+    await waitFor(() =>
+      expect(isDisabled(radio(panel, "In progress"))).toBe(false),
+    );
     fireEvent.click(radio(panel, "In progress"));
     await within(panel).findByText("Changed from Not started to In progress");
     server.editElsewhere("sanity:sin", "completed");
-    const undo = within(panel).getByRole("button", { name: "Undo this change" });
+    const undo = within(panel).getByRole("button", {
+      name: "Undo this change",
+    });
     await waitFor(() => expect(isDisabled(undo)).toBe(false));
     undo.focus();
     fireEvent.click(undo);
-    const apply = await within(panel).findByRole("button", { name: "Apply this change" });
+    const apply = await within(panel).findByRole("button", {
+      name: "Apply this change",
+    });
     apply.focus();
     fireEvent.click(apply);
-    await waitFor(() => expect(server.row("sanity:sin")?.state).toBe("not_started"));
-    await waitFor(() => expect(within(panel).queryByText("Saving…")).toBeNull());
+    await waitFor(() =>
+      expect(server.row("sanity:sin")?.state).toBe("not_started"),
+    );
+    await waitFor(() =>
+      expect(within(panel).queryByText("Saving…")).toBeNull(),
+    );
     await waitFor(() => expect(document.activeElement).toBe(heading()));
   });
 
   it("F6: completing a task in Checklist refreshes its progress before the controls allow a change", async () => {
     useServer(
-      scriptedServer({ "sanity:sin": { state: "waiting", reason: "Bank letter" } }),
+      scriptedServer({
+        "sanity:sin": { state: "waiting", reason: "Bank letter" },
+      }),
     );
     mount(<ChecklistPage />);
     await screen.findByText("Waiting for: Bank letter");
     fireEvent.click(screen.getByRole("checkbox", { name: "Mark as done" }));
-    await waitFor(() => expect(server.row("sanity:sin")?.state).toBe("completed"));
+    await waitFor(() =>
+      expect(server.row("sanity:sin")?.state).toBe("completed"),
+    );
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "Task progress for Get a SIN" }),
+      await screen.findByRole("button", {
+        name: "Task progress for Get a SIN",
+      }),
     );
     const panel = await dialog();
     await waitFor(() =>
-      expect(radio(panel, "Completed").getAttribute("aria-checked")).toBe("true"),
+      expect(radio(panel, "Completed").getAttribute("aria-checked")).toBe(
+        "true",
+      ),
     );
     expect(radio(panel, "Waiting").getAttribute("aria-checked")).toBe("false");
     expect(screen.queryByText("Waiting for: Bank letter")).toBeNull();
@@ -932,7 +990,9 @@ describe("review corrections (web)", () => {
 describe("review r2 corrections (web)", () => {
   it("F4: a save reply that arrives after newer typing keeps the newer waiting draft", async () => {
     useServer(
-      scriptedServer({ "sanity:sin": { state: "waiting", reason: "Old reason" } }),
+      scriptedServer({
+        "sanity:sin": { state: "waiting", reason: "Old reason" },
+      }),
     );
     const base = globalThis.fetch;
     let release: () => void = () => {};
@@ -948,7 +1008,9 @@ describe("review r2 corrections (web)", () => {
     }) as typeof fetch;
     mount(<ChecklistPage />);
     fireEvent.click(
-      await screen.findByRole("button", { name: "Task progress for Get a SIN" }),
+      await screen.findByRole("button", {
+        name: "Task progress for Get a SIN",
+      }),
     );
     const panel = await dialog();
     const reason = (await within(panel).findByLabelText(
@@ -956,19 +1018,30 @@ describe("review r2 corrections (web)", () => {
     )) as HTMLTextAreaElement;
     await waitFor(() => expect(reason.value).toBe("Old reason"));
     fireEvent.change(reason, { target: { value: "First saved reason" } });
-    const save = within(panel).getByRole("button", { name: "Save waiting reason" });
+    const save = within(panel).getByRole("button", {
+      name: "Save waiting reason",
+    });
     await waitFor(() => expect(isDisabled(save)).toBe(false));
     fireEvent.click(save);
     await waitFor(() => expect(held).toBe(true));
-    fireEvent.change(within(panel).getByLabelText("What are you waiting for?"), {
-      target: { value: "New unsaved reason typed during save" },
-    });
+    fireEvent.change(
+      within(panel).getByLabelText("What are you waiting for?"),
+      {
+        target: { value: "New unsaved reason typed during save" },
+      },
+    );
     await act(async () => release());
     await within(panel).findByText("Updated the waiting reason");
-    await waitFor(() => expect(isDisabled(radio(panel, "In progress"))).toBe(false));
+    await waitFor(() =>
+      expect(isDisabled(radio(panel, "In progress"))).toBe(false),
+    );
     expect(server.row("sanity:sin")?.reason).toBe("First saved reason");
     expect(
-      (within(panel).getByLabelText("What are you waiting for?") as HTMLTextAreaElement).value,
+      (
+        within(panel).getByLabelText(
+          "What are you waiting for?",
+        ) as HTMLTextAreaElement
+      ).value,
     ).toBe("New unsaved reason typed during save");
   });
 
@@ -978,7 +1051,9 @@ describe("review r2 corrections (web)", () => {
     // Warm the task list, then reopen and pick the task in the same tick.
     fireEvent.click(open);
     await within(await dialog()).findByRole("button", { name: /Get a SIN/ });
-    fireEvent.click(within(await dialog()).getByRole("button", { name: "Close" }));
+    fireEvent.click(
+      within(await dialog()).getByRole("button", { name: "Close" }),
+    );
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
     open.focus();

@@ -8,7 +8,11 @@ import {
   MESSAGES_ROOT,
 } from "@/lib/companion/conversationKeys";
 import { clearComposerDrafts } from "@/lib/companion/composerDrafts";
-import { TASK_PROGRESS_ROOT } from "@/lib/companionActions/queryKeys";
+import {
+  CONVERSATION_ACTIONS_ROOT,
+  TASK_PROGRESS_ROOT,
+  TASK_PROPOSAL_ROOT,
+} from "@/lib/companionActions/queryKeys";
 import { clearTaskActionStores } from "@/lib/companionActions/taskActionStore";
 
 /**
@@ -33,7 +37,13 @@ export function useAccountScope(userId: string | null, ready = true) {
       queryKey: TASKS_KEY,
       predicate: (q) => q.queryKey[2] !== userId,
     });
-    for (const root of [CONVERSATIONS_ROOT, MESSAGES_ROOT]) {
+    // Task drafts and conversation action results (#363) are private work too.
+    for (const root of [
+      CONVERSATIONS_ROOT,
+      MESSAGES_ROOT,
+      TASK_PROPOSAL_ROOT,
+      CONVERSATION_ACTIONS_ROOT,
+    ]) {
       void queryClient.cancelQueries({
         queryKey: [root],
         predicate: (q) => q.queryKey[1] !== userId,

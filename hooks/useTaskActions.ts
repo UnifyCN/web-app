@@ -29,9 +29,14 @@ import {
 } from "@/lib/companionActions/client";
 import type { TaskProgress } from "@/lib/companionActions/contract";
 import {
+  CONVERSATION_ACTIONS_ROOT,
   TASK_PROGRESS_ROOT,
+  TASK_PROPOSAL_ROOT,
+  conversationActionsKey,
   taskProgressKey,
+  taskProposalKey,
 } from "@/lib/companionActions/queryKeys";
+import type { TaskProposal } from "@/lib/companionActions/contract";
 import {
   taskActionStoreFor,
   type TaskActionPhase,
@@ -185,6 +190,13 @@ export function useTaskActionStore(
           queryKey: taskProgressKey(userId),
         });
         void queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+        // #363: drafts and command results shown in conversations.
+        void queryClient.invalidateQueries({
+          queryKey: [TASK_PROPOSAL_ROOT, userId],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: [CONVERSATION_ACTIONS_ROOT, userId],
+        });
       },
       onResult: (event) => {
         const props = buildTaskActionResultProperties(event, surface);
@@ -192,6 +204,59 @@ export function useTaskActionStore(
       },
     });
   }, [userId, epoch, queryClient, surface]);
+}
+
+/** The action client of the signed-in account (#363 proposal and command requests). */
+export function useTaskActionClient(): TaskActionClient | null {
+  const userId = useAccountId() ?? null;
+  const { epoch } = ownAccountWork();
+  return useMemo(
+    () => (userId ? clientFor({ accountId: userId, epoch }) : null),
+    [userId, epoch],
+  );
+}
+
+/** A client bound to `owner`, for work started by a send (#363). */
+export const taskActionClientFor = clientFor;
+
+/** One task draft, read from the action service. */
+export function useTaskProposal(proposalId: string | null) {
+  const userId = useAccountId() ?? null;
+  return useQuery({
+    queryKey: taskProposalKey(userId, proposalId),
+    enabled: Boolean(userId && proposalId),
+    queryFn: async (): Promise<TaskProposal> => {
+      const owner = ownAccountWork();
+      if (owner.accountId !== userId) throw new ReadFailed("account changed");
+      const result = await clientFor(owner).proposal(proposalId as string);
+      if (result.kind === "ok" || result.kind === "changed")
+        return result.proposal;
+      throw new ReadFailed(result.kind);
+    },
+    staleTime: 0,
+    retry: 1,
+    refetchOnReconnect: true,
+  });
+}
+
+/** The drafts and command results of one conversation, for its cards. */
+export function useConversationActions(conversationId: string | null) {
+  const userId = useAccountId() ?? null;
+  return useQuery({
+    queryKey: conversationActionsKey(userId, conversationId),
+    enabled: Boolean(userId && conversationId),
+    queryFn: async () => {
+      const owner = ownAccountWork();
+      if (owner.accountId !== userId) throw new ReadFailed("account changed");
+      const result = await clientFor(owner).conversationActions(
+        conversationId as string,
+      );
+      if (result.kind !== "ok") throw new ReadFailed(result.kind);
+      return result;
+    },
+    staleTime: 0,
+    refetchOnReconnect: true,
+  });
 }
 
 const IDLE: TaskActionPhase = { phase: "idle" };

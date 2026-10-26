@@ -7,9 +7,9 @@ import {
   Circle,
   CircleDot,
   Hourglass,
-  Undo2,
   WifiOff,
 } from "lucide-react";
+import { ReceiptBlock } from "./ReceiptBlock";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
@@ -81,7 +81,7 @@ export function TaskStatePanel({
   view,
   store,
 }: TaskStatePanelProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const ids = useId();
   const phase = useTaskActionPhase(store, taskRef);
   const progress = progressFor(taskRef, view);
@@ -93,14 +93,6 @@ export function TaskStatePanel({
   const writable = Boolean(store) && view.canWrite && !progress.removed;
   const canWrite = writable && !busy;
   const stateLabel = (s: TaskState) => t(`taskActions.state.${s}`);
-
-  const formatTime = (iso: string) =>
-    new Intl.DateTimeFormat(i18n.language, {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(new Date(iso));
 
   function choose(next: TaskState) {
     if (!canWrite || !store || next === progress.state) return;
@@ -129,21 +121,6 @@ export function TaskStatePanel({
           store.setDraft(taskRef, undefined);
       });
   }
-
-  // The result of this panel's last save stays on screen, but it stops reading as
-  // current once the saved task moves past the revision it produced (a newer
-  // change here or on another platform). Its Undo still names this receipt only.
-  // A reason-only save keeps the state: name what changed instead of
-  // "Waiting to Waiting".
-  const receiptText = (r: TaskReceipt) =>
-    r.kind === "undo"
-      ? t("taskActions.receiptUndo", { state: stateLabel(r.afterState) })
-      : r.beforeState === "waiting" && r.afterState === "waiting"
-        ? t("taskActions.receiptReason")
-        : t("taskActions.receiptChange", {
-            from: stateLabel(r.beforeState),
-            to: stateLabel(r.afterState),
-          });
 
   const receipt: TaskReceipt | null =
     phase.phase === "saved"
@@ -283,41 +260,20 @@ export function TaskStatePanel({
           phaseValue={phase}
         />
         {receipt && phase.phase !== "undo_review" && (
-          <div className="rounded-lg border border-border-card bg-surface-card px-3 py-2.5">
-            <p className="text-sm text-ink-secondary">{receiptText(receipt)}</p>
-            <p className="mt-0.5 text-xs text-ink-muted">
-              {formatTime(receipt.createdAt)}
-              {!receipt.current && ` · ${t("taskActions.receiptHistorical")}`}
-            </p>
-            {receipt.undoable && (
-              <button
-                type="button"
-                aria-disabled={!canWrite}
-                onClick={() =>
-                  canWrite &&
-                  store &&
-                  void store.undo(taskRef, receipt.operationId)
-                }
-                className={cn(
-                  "mt-1.5 inline-flex min-h-11 items-center gap-1.5 rounded text-sm font-semibold text-ink-secondary underline underline-offset-2",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                  canWrite
-                    ? "press cursor-pointer hover:text-ink"
-                    : "cursor-not-allowed opacity-60",
-                )}
-              >
-                <Undo2 className="h-4 w-4" aria-hidden />
-                {t("taskActions.undo")}
-              </button>
-            )}
-          </div>
+          <ReceiptBlock
+            receipt={receipt}
+            storeKey={taskRef}
+            store={store}
+            canWrite={canWrite}
+          />
         )}
       </div>
     </section>
   );
 }
 
-function PhaseMessage({
+/** The visible outcome of the last write of one store key (task, draft or command). */
+export function PhaseMessage({
   writable,
   phase,
   phaseValue,
@@ -361,6 +317,10 @@ function PhaseMessage({
       return line(t("taskActions.conflict"), "error");
     case "already_undone":
       return line(t("taskActions.alreadyUndone"));
+    case "command_used":
+      return line(t("taskCreate.commandUsed"));
+    case "needs_clarification":
+      return line(t("taskCreate.needsClarification"), "error");
     case "signed_out":
       return line(t("taskActions.signedOut"), "error");
     case "unavailable":
@@ -406,6 +366,44 @@ function PhaseMessage({
     case "undo_review": {
       if (phaseValue.phase !== "undo_review") return null;
       const proposed = phaseValue.proposal.operations[0];
+      if (proposed.type === "task.remove_created") {
+        // Undo of an added task met a newer edit: nothing was removed. Removing it
+        // now is a reviewed change; this button is the user's confirmation.
+        return (
+          <div className="rounded-lg border border-primary-subtle bg-primary-bg px-3 py-3">
+            <p className="text-sm text-ink-secondary">
+              {t("taskCreate.undoConflict")}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                aria-disabled={!writable}
+                className={cn(
+                  "bg-ink-secondary hover:bg-ink",
+                  !writable && "cursor-not-allowed opacity-60",
+                )}
+                onClick={() =>
+                  writable &&
+                  void store?.approveCompensation(taskRef, {
+                    removalConfirmed: true,
+                  })
+                }
+              >
+                {t("taskCreate.removeAnyway")}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => store?.dismiss(taskRef)}
+              >
+                {t("taskCreate.keep")}
+              </Button>
+            </div>
+          </div>
+        );
+      }
       return (
         <div className="rounded-lg border border-primary-subtle bg-primary-bg px-3 py-3">
           <p className="text-sm font-semibold text-ink-secondary">

@@ -9,6 +9,12 @@ import {
   CompanionTasksEntry,
   TaskActionsDrawer,
 } from "@/components/companion/tasks/TaskActionsDrawer";
+import { TaskActionCards } from "@/components/companion/tasks/TaskActionCards";
+import {
+  useConversationActions,
+  useTaskActionStore,
+  useTaskProgress,
+} from "@/hooks/useTaskActions";
 import {
   messagesKey,
   useChatbotUsage,
@@ -33,9 +39,14 @@ export default function CompanionPage() {
   // Mobile-only master/detail: when true the conversation list is shown instead
   // of the chat (the two sit side-by-side only at md+). Ignored on desktop.
   const [mobileListOpen, setMobileListOpen] = useState(false);
-  // Direction B: task progress opens in an overlay drawer; the chat and its
-  // draft stay mounted behind it.
-  const [tasksOpen, setTasksOpen] = useState(false);
+  // Direction B: task progress, a task draft (#363) or one task opens in an
+  // overlay drawer; the chat and its draft stay mounted behind it.
+  const [drawer, setDrawer] = useState<
+    | { kind: "tasks" }
+    | { kind: "proposal"; proposalId: string }
+    | { kind: "task"; taskId: string }
+    | null
+  >(null);
 
   const conversationsQuery = useConversations();
   const messagesQuery = useConversationMessages(activeId);
@@ -53,6 +64,7 @@ export default function CompanionPage() {
       setActiveId(null);
       setSendError(null);
       setMobileListOpen(false);
+      setDrawer(null);
     }
   }
   const createConversation = useCreateConversation();
@@ -61,6 +73,11 @@ export default function CompanionPage() {
 
   const conversations = conversationsQuery.data ?? [];
   const messages = messagesQuery.data ?? [];
+  // #363: drafts and command results of the open conversation, for its cards.
+  const actionsQuery = useConversationActions(activeId);
+  const actionStore = useTaskActionStore("companion");
+  const progress = useTaskProgress();
+  const actions = actionsQuery.data;
   const activeConversation = activeId
     ? (conversations.find((c) => c.id === activeId) ?? null)
     : null;
@@ -158,12 +175,34 @@ export default function CompanionPage() {
         onboarding={currentUser?.onboarding ?? null}
         mobileActive={!mobileListOpen}
         onOpenList={() => setMobileListOpen(true)}
-        taskEntry={<CompanionTasksEntry onOpen={() => setTasksOpen(true)} />}
+        taskEntry={
+          <CompanionTasksEntry onOpen={() => setDrawer({ kind: "tasks" })} />
+        }
+        renderAfterMessage={(message) => (
+          <TaskActionCards
+            message={message}
+            proposals={actions?.proposals ?? []}
+            commands={actions?.commands ?? []}
+            store={actionStore}
+            canWrite={progress.canWrite}
+            onReview={(proposalId) =>
+              setDrawer({ kind: "proposal", proposalId })
+            }
+            onViewTask={(taskRef) =>
+              setDrawer({
+                kind: "task",
+                taskId: taskRef.slice(taskRef.indexOf(":") + 1),
+              })
+            }
+          />
+        )}
       />
       <TaskActionsDrawer
-        open={tasksOpen}
-        onClose={() => setTasksOpen(false)}
+        open={drawer !== null}
+        onClose={() => setDrawer(null)}
         surface="companion"
+        initialTaskId={drawer?.kind === "task" ? drawer.taskId : null}
+        proposalId={drawer?.kind === "proposal" ? drawer.proposalId : null}
       />
     </div>
   );

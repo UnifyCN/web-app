@@ -63,7 +63,8 @@ function eventProps(name: string) {
 beforeEach(() => {
   vi.stubGlobal("window", {});
   mocks.capture.mockReset();
-  mocks.saveMessage.mockReset().mockResolvedValue(undefined);
+  // saveMessage returns the saved row; the send reads its id (#363).
+  mocks.saveMessage.mockReset().mockResolvedValue(message(101, "user"));
   mocks.generateReply.mockReset().mockResolvedValue({
     answer: "Look on rental sites.",
     sources: [{ title: "Renting", url: "https://example.org" }],

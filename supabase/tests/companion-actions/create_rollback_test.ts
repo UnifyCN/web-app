@@ -38,7 +38,7 @@ Deno.test({
     const { a, sin, added, draft, message_id } = await workInProgress('ana');
     await migrate363('down');
     await openGate();
-    const s = (await read(a)).json.tasks.find((t: any) => t.task_ref === sin);
+    const s = (await read(a)).json.tasks.find((t: { task_ref: unknown }) => t.task_ref === sin);
     assertEquals((await apply(a, [setState(sin, 'in_progress', s.revision)])).status, 200);
     const u = await undo(a, added.json.operation_id, { authorization: confirmedRemoval });
     assertEquals([u.status, u.json.reason], [422, 'not_undoable'], JSON.stringify(u.json));

@@ -114,7 +114,7 @@ Deno.test({
     const { message_id } = await conversationWith(a, 'user', 'add a task: set up phone service');
     const i = await interpret(a, message_id);
     assertEquals(i.json.command.kind, 'create');
-    assertEquals(i.json.command.same_title_tasks.map((t: any) => t.task_ref), [existing.ref]);
+    assertEquals(i.json.command.same_title_tasks.map((t: { task_ref: unknown }) => t.task_ref), [existing.ref]);
     const r = await apply(a, [i.json.command.operation], { authorization: command(message_id) });
     assertEquals([r.status, r.json.error], [409, 'needs_clarification']);
     assertEquals(await checklistTitles(a), ['Set up phone service']);
@@ -149,6 +149,34 @@ Deno.test({
     assertEquals(await checklistTitles(b), []);
     // The user's own command still works afterwards.
     assertEquals((await apply(a, [op], { authorization: command(pasted) })).status, 200);
+  },
+});
+
+
+Deno.test({
+  name: 'the command phrasing taught in each supported language adds exactly its task',
+  ...testOpts,
+  fn: async () => {
+    // Wrong if: an example the app shows a user (taskCreate.clarifyMissingTitle in every
+    // locale) is not a clear command, or resolves to a different title.
+    const examples: Array<[string, string]> = [
+      ['Add task: Set up phone service', 'Set up phone service'],
+      ['Ajoute une tâche : Obtenir un forfait cellulaire', 'Obtenir un forfait cellulaire'],
+      ['Añade una tarea: Contratar un plan de teléfono', 'Contratar un plan de teléfono'],
+      ['Thêm việc: Đăng ký gói điện thoại', 'Đăng ký gói điện thoại'],
+      ['कार्य जोड़ें: फ़ोन प्लान लें', 'फ़ोन प्लान लें'],
+      ['ਕੰਮ ਜੋੜੋ: ਫ਼ੋਨ ਪਲਾਨ ਲਓ', 'ਫ਼ੋਨ ਪਲਾਨ ਲਓ'],
+      ['أضف مهمة: الاشتراك في خطة هاتف', 'الاشتراك في خطة هاتف'],
+    ];
+    const a = await newAccount('ida');
+    for (const [text, title] of examples) {
+      const { message_id } = await conversationWith(a, 'user', text);
+      const i = await interpret(a, message_id);
+      assertEquals(i.json.command?.operation?.title, title, text);
+      const r = await apply(a, [i.json.command.operation], { authorization: command(message_id) });
+      assertEquals(r.status, 200, `${text} -> ${JSON.stringify(r.json)}`);
+    }
+    assertEquals((await checklistTitles(a)).length, examples.length);
   },
 });
 

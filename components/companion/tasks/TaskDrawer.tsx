@@ -109,7 +109,11 @@ export function TaskDrawer({
     let lastFocused: HTMLElement | null = null;
     const onFocusIn = (event: FocusEvent) => {
       const panel = panelRef.current;
-      if (panel && event.target instanceof HTMLElement && panel.contains(event.target))
+      if (
+        panel &&
+        event.target instanceof HTMLElement &&
+        panel.contains(event.target)
+      )
         lastFocused = event.target;
     };
     document.addEventListener("focusin", onFocusIn);

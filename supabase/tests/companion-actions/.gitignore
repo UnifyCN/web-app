@@ -2,3 +2,4 @@
 supabase/functions/
 supabase/.temp/
 supabase/.branches/
+__pycache__/
