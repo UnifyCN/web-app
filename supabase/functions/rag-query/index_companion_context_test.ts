@@ -297,6 +297,7 @@ interface AskOptions {
   conversationIdentifier?: string;
   stream?: boolean;
   messages?: Array<{ role: 'user' | 'assistant'; message: string }>;
+  responseLanguage?: string;
 }
 
 function request(prompt: string, o: AskOptions = {}): Request {
@@ -311,6 +312,7 @@ function request(prompt: string, o: AskOptions = {}): Request {
       conversationIdentifier: o.conversationIdentifier ?? CONV_VAN,
       messages: o.messages ?? [],
       ...(o.stream ? { stream: true } : {}),
+      ...(o.responseLanguage ? { responseLanguage: o.responseLanguage } : {}),
     }),
   });
 }
@@ -881,5 +883,137 @@ Deno.test({
     assert(!(next.context.items as Array<Record<string, unknown>>).some(i => i.kind === 'conversation_detail'));
     assert(!next.system.includes('Stated in this conversation'));
     assert(!next.system.includes('Vancouver'));
+  },
+});
+
+// ---------------------------------------------------------------- review corrections (spec review r1)
+
+Deno.test({
+  ...opts,
+  name: 'a denied conversation: details from its earlier turns are not used, shown or sent; the same turn in an own conversation is',
+  fn: async () => {
+    const earlier = [{ role: 'user' as const, message: 'I am moving to Toronto tomorrow' }];
+    const denied = await ask('What should I do first?', { conversationIdentifier: CONV_TOR, messages: earlier });
+    assertEquals(
+      denied.context.reads.find((r: Record<string, string>) => r.capability === 'context.conversation').status,
+      'denied'
+    );
+    assert(
+      !(denied.context.items as Array<Record<string, unknown>>).some(i => i.kind === 'conversation_detail'),
+      'no detail from a conversation the account cannot read'
+    );
+    assertEquals(denied.context.clarification, null);
+    assert(!denied.system.includes('Toronto'), 'the denied turn does not reach the model');
+    const search = denied.calls.find(c => (c.body as { plugins?: unknown })?.plugins);
+    assert(!JSON.stringify(search?.body ?? '').includes('Ontario'), 'the denied turn does not steer the search');
+
+    // Control: the same earlier turn in the caller's own conversation is used.
+    const own = await ask('What should I do first?', { conversationIdentifier: CONV_VAN, messages: earlier });
+    const detail = (own.context.items as Array<Record<string, any>>).find(i => i.kind === 'conversation_detail');
+    assertEquals(detail?.fields.find((f: Record<string, string>) => f.key === 'city')?.value, 'Toronto');
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: "Checklist context follows the Checklist's province rule: national and own-province tasks only",
+  fn: async () => {
+    const saved = { ...CONTENT };
+    CONTENT['"not_arrived"'] = [
+      ...saved['"not_arrived"'],
+      { _id: 'ohip-ontario-only', _rev: 'ohip-1', title: 'Apply for OHIP', class: 'do_now', province: 'Ontario' },
+      { _id: 'msp-bc-only', _rev: 'msp-1', title: 'Apply for MSP', class: 'do_now', province: 'British Columbia' },
+      { _id: 'national-blank', _rev: 'n-1', title: 'Get a phone plan', class: 'do_now', province: '' },
+    ];
+    CONTENT['"months_3_12"'] = [
+      ...saved['"months_3_12"'],
+      { _id: 'ohip-renew-ontario', _rev: 'o-2', title: 'Check your OHIP card', class: 'do_soon', province: 'Ontario' },
+      { _id: 'msp-renew-bc', _rev: 'm-2', title: 'Check your MSP enrolment', class: 'do_soon', province: 'British Columbia' },
+    ];
+    try {
+      const van = await ask(VANCOUVER_QUESTION);
+      const vanIds = (van.context.items as Array<Record<string, string>>)
+        .filter(i => i.kind === 'checklist_task')
+        .map(i => i.id);
+      assert(!vanIds.includes('sanity:ohip-ontario-only'), `Ontario-only task in a BC Checklist: ${vanIds}`);
+      assert(vanIds.includes('sanity:msp-bc-only'), 'own-province task kept');
+      assert(vanIds.includes('sanity:national-blank') && vanIds.includes('sanity:checklist-sin'), 'national tasks kept');
+      const cms = van.calls.find(c => c.url.hostname === 'testproject.apicdn.sanity.io');
+      assertEquals(cms?.url.searchParams.get('$province'), JSON.stringify('British Columbia'));
+
+      const tor = await ask('What should I do first to build credit?', {
+        jwt: 'Bearer jwt-toronto',
+        conversationIdentifier: CONV_TOR,
+      });
+      const torIds = (tor.context.items as Array<Record<string, string>>)
+        .filter(i => i.kind === 'checklist_task')
+        .map(i => i.id);
+      assert(torIds.includes('sanity:ohip-renew-ontario'), 'Ontario task kept for Ontario');
+      assert(!torIds.includes('sanity:msp-renew-bc'), `BC-only task in an Ontario Checklist: ${torIds}`);
+    } finally {
+      CONTENT['"not_arrived"'] = saved['"not_arrived"'];
+      CONTENT['"months_3_12"'] = saved['"months_3_12"'];
+    }
+  },
+});
+
+// Planning questions in each supported language, several phrasings each, plus
+// mixed-language questions. These prove the listed phrasings, not every way a
+// language can ask; the matching is a per-language word list.
+const PLANNING_BY_LANGUAGE: Array<[string, string]> = [
+  ['fr-CA', 'Je vais arriver à Vancouver la semaine prochaine. Que dois-je faire en premier ?'],
+  ['fr-CA', 'Quelles sont les prochaines étapes pour m’installer à Montréal ?'],
+  ['fr-CA', 'Par où commencer après mon déménagement au Canada ?'],
+  ['es', 'Llego a Vancouver la próxima semana. ¿Qué debo hacer primero?'],
+  ['es', '¿Cuáles son los primeros pasos al llegar a Canadá?'],
+  ['es', 'Me mudo a Toronto, ¿por dónde empiezo?'],
+  ['ar', 'سأصل إلى فانكوفر الأسبوع المقبل. ماذا يجب أن أفعل أولاً؟'],
+  ['ar', 'ما هي الخطوات الأولى بعد الوصول إلى كندا؟'],
+  ['ar', 'من أين أبدأ بعد انتقالي إلى تورنتو؟'],
+  ['hi', 'मैं अगले सप्ताह वैंकूवर पहुँच रहा हूँ। मुझे पहले क्या करना चाहिए?'],
+  ['hi', 'कनाडा पहुंचने के बाद अगले कदम क्या हैं?'],
+  ['hi', 'टोरंटो में बसने के लिए शुरुआत कहाँ से करूँ?'],
+  ['pa', 'ਮੈਂ ਅਗਲੇ ਹਫ਼ਤੇ ਵੈਨਕੂਵਰ ਪਹੁੰਚ ਰਿਹਾ ਹਾਂ। ਮੈਨੂੰ ਪਹਿਲਾਂ ਕੀ ਕਰਨਾ ਚਾਹੀਦਾ ਹੈ?'],
+  ['pa', 'ਕੈਨੇਡਾ ਪਹੁੰਚਣ ਤੋਂ ਬਾਅਦ ਅਗਲੇ ਕਦਮ ਕੀ ਹਨ?'],
+  ['vi', 'Tôi sẽ đến Vancouver vào tuần tới. Tôi nên làm gì đầu tiên?'],
+  ['vi', 'Các bước đầu tiên sau khi định cư ở Canada là gì?'],
+  ['vi', 'Tôi chuyển đến Toronto, nên bắt đầu từ đâu?'],
+  // Mixed-language questions.
+  ['es', 'I land in Vancouver la próxima semana, ¿qué hago primero?'],
+  ['hi', 'मैं next week Vancouver पहुँच रहा हूँ, पहले क्या करूँ?'],
+  ['pa', 'Main next week Vancouver pahunch reha haan, pehle ki karna chahida?'],
+  ['ar', 'I will arrive in Vancouver next week، ماذا يجب أن أفعل أولاً؟'],
+];
+
+const NOT_PLANNING_BY_LANGUAGE: Array<[string, string]> = [
+  ['fr-CA', "Qu'est-ce qu'un CELI ?"],
+  ['es', '¿Qué es una TFSA?'],
+  ['ar', 'ما هو حساب TFSA؟'],
+  ['hi', 'TFSA क्या है?'],
+  ['pa', 'TFSA ਕੀ ਹੈ?'],
+  ['vi', 'TFSA là gì?'],
+];
+
+Deno.test({
+  ...opts,
+  name: 'planning questions in every supported language check official guidance automatically; plain definitions do not',
+  fn: async () => {
+    const missed: string[] = [];
+    for (const [lang, prompt] of PLANNING_BY_LANGUAGE) {
+      const r = await ask(prompt, { responseLanguage: lang });
+      const searches = r.calls.filter(c => (c.body as { plugins?: unknown })?.plugins).length;
+      if (searches !== 1 || r.context.guidance.status !== 'checked') {
+        missed.push(`${lang}: ${prompt} -> ${searches} searches, ${r.context.guidance.status}`);
+      }
+    }
+    assertEquals(missed, [], 'planning questions without a guidance check');
+
+    const searched: string[] = [];
+    for (const [lang, prompt] of NOT_PLANNING_BY_LANGUAGE) {
+      const r = await ask(prompt, { responseLanguage: lang });
+      if (r.calls.some(c => (c.body as { plugins?: unknown })?.plugins)) searched.push(`${lang}: ${prompt}`);
+      assertEquals(r.context.guidance.status, 'not_needed');
+    }
+    assertEquals(searched, [], 'definitions that searched anyway');
   },
 });

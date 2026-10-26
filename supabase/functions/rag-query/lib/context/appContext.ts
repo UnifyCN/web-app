@@ -7,8 +7,9 @@
 // The Checklist read mirrors both clients (web services/checklist.ts, mobile
 // services/checklist/*): published `checklist` documents for the profile's
 // persona and stage, merged with the user's `user_tasks` progress rows and
-// their `custom_checklist_tasks`. Task keys are the shared `sanity:<id>` /
-// `custom:<id>` keys. `select('*')` keeps the read working before and after the
+// their `custom_checklist_tasks`. As on mobile, a published task with a
+// province shows only to accounts in that province; one without a province is
+// national. Task keys are the shared `sanity:<id>` / `custom:<id>` keys. `select('*')` keeps the read working before and after the
 // additive task-state migration (#360/#361): progress_state, revision and
 // removed_at are used when present.
 
@@ -135,11 +136,13 @@ const CHECKLIST_GROQ = `*[
   && (language == "en" || !defined(language))
   && $persona in personas
   && stage == $stage
+  && (!defined(province) || province == "" || province == $province)
 ] | order(class asc, class_order asc) {
   _id,
   _rev,
   title,
   class,
+  province,
   "i18n": select($lang != "en" => *[_type == "translation.metadata" && references(^._id)][0].translations[_key == $lang][0].value->{ title }, null)
 }`;
 
@@ -162,11 +165,19 @@ interface SanityChecklistDoc {
   title: string | null;
 }
 
+/** The mobile Checklist rule: no province means national, else that province only. */
+function shownInProvince(raw: unknown, province: string): boolean {
+  if (raw === undefined || raw === null || raw === '') return true;
+  const own = canonicalProvince(raw);
+  return own !== null && own === province;
+}
+
 async function fetchChecklistContent(
   sanity: SanityConfig,
   persona: string,
   stage: string,
   lang: string,
+  province: string,
   signal: AbortSignal
 ): Promise<SanityChecklistDoc[]> {
   const url = new URL(
@@ -176,6 +187,8 @@ async function fetchChecklistContent(
   url.searchParams.set('$persona', JSON.stringify(persona));
   url.searchParams.set('$stage', JSON.stringify(stage));
   url.searchParams.set('$lang', JSON.stringify(lang));
+  // Empty string: the account has no province, so national tasks only.
+  url.searchParams.set('$province', JSON.stringify(province));
   const res = await fetch(url, { signal, redirect: 'error' });
   if (!res.ok) throw new ReadUnavailableError(`checklist content ${res.status}`);
   const body = (await res.json()) as { result?: unknown };
@@ -184,6 +197,9 @@ async function fetchChecklistContent(
     if (!raw || typeof raw !== 'object') return [];
     const rec = raw as Record<string, unknown>;
     if (typeof rec._id !== 'string' || !/^[\w.-]{1,120}$/.test(rec._id)) return [];
+    // Also checked here, so a content response that ignores the filter cannot
+    // put another province's task in this account's context.
+    if (!shownInProvince(rec.province, province)) return [];
     const i18n = rec.i18n && typeof rec.i18n === 'object' ? (rec.i18n as Record<string, unknown>) : null;
     return [
       {
@@ -239,10 +255,11 @@ export async function readChecklist(
     ? profile.persona
     : null;
   const stage = STAGE_TO_SLUG[Number(profile?.stage)] ?? null;
+  const province = canonicalProvince(profile?.province) ?? '';
 
   const contentPromise: Promise<SanityChecklistDoc[] | null> =
     options.sanity && persona && stage
-      ? fetchChecklistContent(options.sanity, persona, stage, options.lang, signal).catch(() => null)
+      ? fetchChecklistContent(options.sanity, persona, stage, options.lang, province, signal).catch(() => null)
       : Promise.resolve(null);
 
   const [progressRes, customRes, content] = await Promise.all([

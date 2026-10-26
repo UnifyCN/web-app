@@ -8,9 +8,12 @@
 // planning question has no province at all, the answer asks instead of
 // guessing.
 //
-// Matching is deterministic and English-first: Canadian city and province
-// names in Latin script, and English arrival phrases. Other scripts and
-// phrasings produce no detail, so the answer falls back to the profile.
+// Matching is deterministic. Stated details are English-first: Canadian city
+// and province names in Latin script, and English arrival phrases. Other
+// scripts and phrasings produce no detail, so the answer falls back to the
+// profile. Planning questions (which trigger the official-guidance check) are
+// recognised in every supported app language from per-language word lists;
+// those lists cover common phrasings, not every way to ask.
 
 import type { Clarification, ConversationDetailItem } from './contract.ts';
 import { canonicalProvince, type CanadianProvince } from '../province.ts';
@@ -65,12 +68,35 @@ const PROVINCE_NAMES: Array<[RegExp, CanadianProvince]> = [
   [/\bNewfoundland\b/i, 'Newfoundland and Labrador'],
 ];
 
-/** Questions about what to do next, where settlement steps depend on place. */
-const PLANNING_PATTERN =
-  /\b(next steps?|first (week|weeks|days?|month|steps?)|plan|arriv\w*|land(ing)? in|moving to|settl\w*|what should i do|where (do|should) i start|get started|how (do|can|should) i (get|apply|open|register|sign up|find)|requirements?|documents? (do )?i need)\b/i;
+/**
+ * Questions about what to do next, where settlement steps depend on place:
+ * arriving or moving, first or next steps, where to start, how to apply or
+ * register, which documents are needed. One list per supported app language
+ * (en, fr, es, ar, hi, pa, vi) plus romanised Hindi/Punjabi, all checked on
+ * every question, so a mixed-language question matches too.
+ */
+const PLANNING_PATTERNS: RegExp[] = [
+  // English
+  /\b(next steps?|first (week|weeks|days?|month|steps?)|plan|arriv\w*|land(ing)? in|moving to|settl\w*|what should i do|where (do|should) i start|get started|how (do|can|should) i (get|apply|open|register|sign up|find)|requirements?|documents? (do )?i need)\b/i,
+  // French
+  /(?<!\p{L})(arriv\p{L}*|prochaines? étapes?|premières? étapes?|en premier|par où commencer|m['’]install\p{L}*|déménag\p{L}*|démarches?|que dois-je faire|comment (obtenir|demander|ouvrir|m['’]inscrire)|quels documents|exigences)(?!\p{L})/iu,
+  // Spanish
+  /(?<!\p{L})(lleg\p{L}*|mud(o|arme|ándome|aré|amos)|primeros pasos|próximos pasos|siguientes pasos|qué (debo|tengo que) hacer|qué hago primero|por dónde (empiezo|empezar)|cómo (solicito|obtengo|abro|me registro|consigo|tramito)|qué documentos|requisitos|establecerme|instalarme)(?!\p{L})/iu,
+  // Arabic (prefixes attach to words, so these match inside words)
+  /(سأصل|أصل إلى|نصل|الوصول|وصولي|وصلت|سأنتقل|أنتقل|انتقالي|الانتقال|ماذا يجب أن أفعل|ماذا أفعل أول|الخطوات الأولى|الخطوات التالية|من أين أبدأ|كيف أحصل|كيف أقدم|كيف أفتح|كيف أسجل|المستندات المطلوبة|الوثائق المطلوبة|الاستقرار)/u,
+  // Hindi
+  /(पहुँच|पहुंच|आ रहा हूँ|आ रही हूँ|आ रहा हूं|आ रही हूं|शिफ्ट|पहले क्या|अगले कदम|पहले कदम|शुरुआत कहाँ|शुरुआत कहां|कहाँ से शुरू|कहां से शुरू|कैसे आवेदन|कौन से दस्तावेज़|कौन से दस्तावेज|बसने)/u,
+  // Punjabi (Gurmukhi)
+  /(ਪਹੁੰਚ|ਆ ਰਿਹਾ|ਆ ਰਹੀ|ਸ਼ਿਫਟ|ਪਹਿਲਾਂ ਕੀ|ਅਗਲੇ ਕਦਮ|ਪਹਿਲੇ ਕਦਮ|ਸ਼ੁਰੂਆਤ ਕਿੱਥੋਂ|ਕਿੱਥੋਂ ਸ਼ੁਰੂ|ਕਿਵੇਂ ਅਪਲਾਈ|ਕਿਹੜੇ ਦਸਤਾਵੇਜ਼|ਵਸਣ)/u,
+  // Romanised Hindi / Punjabi
+  /\b(pahunch\w*|pohonch\w*|pehle kya|pehlan ki|pehle ki|agle kadam|shuru kahan)\b/i,
+  // Vietnamese
+  /(sẽ đến|đặt chân|chuyển đến|chuyển tới|chuyển sang|làm gì đầu tiên|làm gì trước|bước đầu tiên|bước tiếp theo|bắt đầu từ đâu|làm thế nào để (đăng ký|xin|mở|nhận)|cần những giấy tờ|giấy tờ gì|định cư|ổn định cuộc sống)/iu,
+];
 
 export function isPlanningQuestion(prompt: string): boolean {
-  return PLANNING_PATTERN.test(prompt);
+  const text = prompt.normalize('NFC');
+  return PLANNING_PATTERNS.some(pattern => pattern.test(text));
 }
 
 /**

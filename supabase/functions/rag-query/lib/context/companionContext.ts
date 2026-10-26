@@ -98,8 +98,14 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
     : Promise.resolve({ status: 'skipped' } as const);
 
   const context = (async () => {
-    const profileRow = await profile;
-    const details = readConversationDetails(request.prompt, request.earlierUserTurns);
+    // Earlier turns belong to the conversation: when this account cannot read
+    // it, they are not this account's to use, so only the new message counts.
+    const [profileRow, conversation] = await Promise.all([profile, conversationOutcome]);
+    const conversationDenied = conversation.status === 'denied';
+    const details = readConversationDetails(
+      request.prompt,
+      conversationDenied ? [] : request.earlierUserTurns
+    );
     const province = effectiveProvince(details, profileRow);
 
     const checklistOutcome = userClient && userId
@@ -129,11 +135,7 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
         )
       : Promise.resolve(null);
 
-    const [checklist, conversation, guidance] = await Promise.all([
-      checklistOutcome,
-      conversationOutcome,
-      guidancePromise,
-    ]);
+    const [checklist, guidance] = await Promise.all([checklistOutcome, guidancePromise]);
 
     reports.push({
       capability: 'context.checklist',
@@ -162,7 +164,7 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
     return {
       context: result,
       evidence: guidance?.evidence ?? new Map<string, string>(),
-      conversationDenied: conversation.status === 'denied',
+      conversationDenied,
     };
   })().catch(error => {
     // A defect in assembling context must not cost the user the answer; the
