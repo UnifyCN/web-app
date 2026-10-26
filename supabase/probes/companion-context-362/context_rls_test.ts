@@ -341,14 +341,15 @@ Deno.test({
   ...opts,
   name: 'real database: answering with stated details writes nothing to the profile, tasks or messages',
   fn: async () => {
-    const snapshot = async () =>
-      JSON.stringify(
-        await Promise.all(
-          ['user_onboarding_profiles', 'user_tasks', 'custom_checklist_tasks', 'messages', 'conversations'].map(
-            t => rest('GET', `/rest/v1/${t}?select=*&order=created_at.asc.nullslast`).then(r => r.json)
-          )
-        )
-      );
+    const snapshot = async () => {
+      const tables = ['user_onboarding_profiles', 'user_tasks', 'custom_checklist_tasks', 'messages', 'conversations'];
+      const rows = await Promise.all(tables.map(t => rest('GET', `/rest/v1/${t}?select=*`)));
+      rows.forEach((r, i) => {
+        assertEquals(r.status, 200, tables[i]);
+        assert(Array.isArray(r.json) && r.json.length > 0, `${tables[i]} has rows to compare`);
+      });
+      return JSON.stringify(rows.map(r => (r.json as unknown[]).map(row => JSON.stringify(row)).sort()));
+    };
     const before = await snapshot();
     const res = await ask(A, 'I am moving to Toronto in 2 weeks, remember that. What should I do first?', {
       conversationIdentifier: convA.conversation_identifier,
