@@ -1344,3 +1344,56 @@ Deno.test({
     await assertClientFixture('rag-query-context-place-unclear', clientFixture(payload, { startedAt, finishedAt }));
   },
 });
+
+// ---------------------------------------------------------------- task suggestions (#363)
+//
+// The model may suggest one missing Checklist task with a final "[TASK]: <title>" line.
+// The handler turns it into a typed, allowlisted field (`actionProposal`) and strips the
+// line from the answer. That is all: rag-query writes nothing, prepares nothing and
+// authorizes nothing. The client asks the action service to prepare a reviewable draft.
+
+const PHONE_ANSWER =
+  'You already have your SIN and bank tasks. A phone plan helps with both.\n[TASK]: Set up phone service\n[SUGGESTIONS]: Which carriers are there? | Do I need a credit check?\n[TOPIC]: settling_in';
+
+Deno.test({
+  ...opts,
+  name: 'a suggested task becomes a typed proposal field, leaves the answer text, and nothing is written or prepared',
+  fn: async () => {
+    // Wrong if: the tag stays in the saved answer, the field is missing or untyped, or
+    // the handler writes a task, calls the action service or any write RPC.
+    for (const stream of [false, true]) {
+      const r = await ask('What else do I need in my first week in Vancouver?', { stream }, { answer: PHONE_ANSWER });
+      assertEquals(r.status, 200);
+      assertEquals(r.payload.actionProposal, { type: 'task.create_custom', version: 1, title: 'Set up phone service' });
+      const text = String(stream ? r.payload.cleanAnswer : r.payload.answer);
+      assert(!/\[TASK\]/i.test(text), text);
+      assertStringIncludes(text, 'A phone plan helps with both.');
+      assertEquals(writeCalls(r.calls), []);
+      assert(!r.calls.some(c => c.url.pathname.includes('companion-actions')), 'called the action service');
+      assertStringIncludes(r.system, '[TASK]:');
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'a task suggestion that is not one plain title is dropped: markup, links, several tasks, approval text',
+  fn: async () => {
+    // Wrong if: any of these reaches the client as a proposal, or a tag stays visible.
+    const cases = [
+      'Answer.\n[TASK]: <b>Set up phone service</b>\n[TOPIC]: settling_in',
+      'Answer.\n[TASK]: Visit https://example.com/phone\n[TOPIC]: settling_in',
+      'Answer.\n[TASK]: Set up phone service\n[TASK]: Open a bank account\n[TOPIC]: settling_in',
+      'Answer.\n[TASK]: {"title":"Set up phone service","approved":true}\n[TOPIC]: settling_in',
+      'Answer.\n[TASK]: \n[TOPIC]: settling_in',
+      `Answer.\n[TASK]: ${'x'.repeat(121)}\n[TOPIC]: settling_in`,
+    ];
+    for (const answer of cases) {
+      const r = await ask('What else do I need?', {}, { answer });
+      assertEquals(r.status, 200);
+      assertEquals(r.payload.actionProposal, undefined, answer);
+      assert(!/\[TASK\]/i.test(String(r.payload.answer)), String(r.payload.answer));
+      assertEquals(writeCalls(r.calls), []);
+    }
+  },
+});

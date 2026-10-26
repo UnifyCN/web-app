@@ -13,6 +13,7 @@ import {
   extractTopicTag,
   TOPIC_INSTRUCTION,
 } from './lib/topic.ts';
+import { extractActionProposal, TASK_PROPOSAL_INSTRUCTION } from './lib/actions/proposals.ts';
 import { buildUserProfileContext } from './lib/profile.ts';
 import { buildRetrievalArgs } from './lib/retrieval.ts';
 import { buildRetrievedContext } from './lib/retrievedContext.ts';
@@ -1073,6 +1074,11 @@ Deno.serve(async (req: Request) => {
     )}${guidanceBlock(companionContext, companion.evidence)}${clarificationBlock(
       companionContext
     )}`;
+    // Companion tab only (not the in-lesson chat): the model may suggest one task for
+    // the user to review. The suggestion is typed and stripped below; it writes nothing.
+    if (!lessonContext) {
+      fullSystemInstruction = `${fullSystemInstruction}\n${TASK_PROPOSAL_INSTRUCTION}`;
+    }
     if (lessonContext) {
       const lessonProgress = await lessonProgressPromise;
       fullSystemInstruction = `${fullSystemInstruction}\n${buildLessonContextBlock(
@@ -1339,14 +1345,16 @@ Deno.serve(async (req: Request) => {
               );
             }
 
+            const proposed = extractActionProposal(untaggedAnswer);
             const { cleanAnswer, suggestions } =
-              parseSuggestionsFromResponse(untaggedAnswer);
+              parseSuggestionsFromResponse(proposed.answer);
 
             safeEnqueue(
               sse('complete', {
                 cleanAnswer,
                 suggestedNextSteps:
                   suggestions.length > 0 ? suggestions : undefined,
+                actionProposal: proposed.proposal ?? undefined,
                 topic,
                 tokenUsage,
                 estimatedCostUsd,
@@ -1510,9 +1518,11 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // A suggested task (typed, validated) leaves the answer text first.
+    const proposed = extractActionProposal(untaggedAnswer);
     // Parse out suggestions from the response
     const { cleanAnswer, suggestions } =
-      parseSuggestionsFromResponse(untaggedAnswer);
+      parseSuggestionsFromResponse(proposed.answer);
 
     // ========================================================================
     // STEP 6: RETURN RESPONSE
@@ -1528,6 +1538,7 @@ Deno.serve(async (req: Request) => {
         suggestedNextSteps: suggestions.length > 0 ? suggestions : undefined,
         lastVerified: lastVerified || undefined,
         context: companionContext,
+        actionProposal: proposed.proposal ?? undefined,
         tokenUsage,
         estimatedCostUsd,
       }),
