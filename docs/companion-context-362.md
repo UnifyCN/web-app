@@ -88,7 +88,7 @@ candidate first. The RED results are assertion failures, not crashes.
 
 | Finding | Change | Test and result |
 | --- | --- | --- |
-| Spec 2: a denied conversation still gave stated details from its earlier turns | Earlier turns count only when the conversation read is not denied (context, prompt and search) | Handler test "a denied conversation: details from its earlier turns..." with an own-conversation control. RED on `b59ef86`, GREEN now |
+| Spec 2: a denied conversation still gave stated details from its earlier turns | Earlier turns count only when the conversation read is not denied (context, prompt and search). Round 1 was partial: a failed lookup still counted as permission (spec r2 finding 1, fixed in round 2) | Handler test "a denied conversation: details from its earlier turns..." with an own-conversation control. RED on `b59ef86`, GREEN now |
 | Spec 3: Checklist context ignored the province | Same rule as the mobile Checklist: a task with a province shows only in that province, no province means national. GROQ filter plus a server-side check | Handler test "Checklist context follows the Checklist's province rule" (BC and Ontario accounts). RED, GREEN |
 | Spec 4: es/ar/hi/pa/vi planning questions made no guidance search | Planning questions are matched from one word list per supported language (en, fr, es, ar, hi, pa, vi, romanised Hindi/Punjabi), all checked on each question | Handler test: 21 planning questions (17 in single languages, 2 or 3 per language, plus 4 mixed-language) must search once and return `checked`; 6 definition questions must not search. RED (18 of 21 missed), GREEN |
 | Standards 1: source titles, addresses and the details control below 4.5:1 | New scoped token `context-link` `#2b5a9b` (the mobile value; 6.06:1 on `surface-gray`, 6.91:1 on `surface`), addresses `ink-muted` (5.13:1). Added to `design-system/MASTER.md` | Browser check measures every visible text run of the context line and drawer against its actual background, in English and Arabic. RED (3.52, 2.37, 4.02), GREEN |
@@ -123,8 +123,9 @@ page, a signed-in browser session or a native device.
 Limits of the corrections:
 
 - Language matching covers the listed phrasings, not every way to ask in each
-  language. Stated city, province and arrival time are still read from
-  English and Latin-script names only; in other scripts the profile is used.
+  language. At round 1, stated city, province and arrival time were still read
+  from English and Latin-script names only, and in other scripts the profile
+  was used. Spec review r2 rejected this (finding 2); see round 2.
 - Under reduced motion, the shared dialog motion holds the start transform
   for the first one or two frames while the panel is nearly transparent, then
   shows the panel in place. This is the same for every dialog that uses
@@ -132,3 +133,54 @@ Limits of the corrections:
 - The Checklist province rule matches mobile. The web Checklist page itself
   (`services/checklist.ts`) does not filter by province; that is outside this
   ticket.
+
+## Review corrections, round 2 (2026-10-25)
+
+Spec review r2 rejected three cases on `c861862`. Each new test was written
+first and run on the unchanged code. The RED results are assertion failures.
+
+| Finding | Change | Test and result |
+| --- | --- | --- |
+| r2-1 (P1): a conversation lookup that failed (503, network) still let the client's earlier turns into the context, the model prompt and the search | Earlier turns count only when this account's conversation read returns `ok`. Denied, failed, timed-out and missing reads are not permission. The current message still counts. Eval mode (secret-gated, no account) is unchanged | Handler tests: lookup 503 and network failure, each with a current-message control; no conversation id. Local probe on real GoTrue JWTs and RLS with only the ownership lookup replaced by a 503 (fault injection). All RED on `c861862`, GREEN now |
+| r2-2 (P2): Toronto stated in Arabic, Hindi or Punjabi kept the saved BC province, searched for BC, excluded the Ontario page and asked nothing | `lib/context/placeNames.ts` reads the 31 listed Canadian cities and 13 provinces/territories in Arabic, Devanagari and Gurmukhi script (spelling variants folded: vowel and nasal marks, nukta, alef forms, Arabic prefixes), French and Spanish province names, and arrival times (tomorrow, this/next week, next month, "in N days/weeks") per supported language. A stated destination then drives the search province and the province clarification, as in English | Handler tests: Toronto next week in en, fr, es, ar (3 spellings), hi (2), pa (2), vi and 3 mixed-language questions; Ontario and BC named in 8 language/script forms; control: Vancouver in ar/hi/pa asks nothing. RED (13 of 14 Toronto cases wrong; fr, es and vi only on the arrival time; all 8 named provinces wrong; the Vancouver control failed), GREEN |
+| r2-3 (P2): the open drawer trapped Tab but left the composer and search focusable and in the accessibility tree | `DialogPresence` (`components/ui/Dialog.tsx`) takes `inertBackground`. While open, every other `<body>` child is `inert`, including ones added meanwhile; a later dialog layer is not. Holds are counted per element and each element's earlier `inert` value is restored on close or unmount. The drawer turns it on | Browser checks: script focus on the composer and search stays in the drawer; Chromium's accessibility tree (CDP `Accessibility.getFullAXTree`) has neither; same after a same-account update; in Arabic. After close: both take focus and are back in the tree, the draft is kept, and an element the app had made inert stays inert. RED 4 failed on `c861862`, GREEN 33/33 |
+
+Runs on this branch (local, 2026-10-25):
+
+- `deno test ... supabase/functions/rag-query/`: 151 passed (handler file 23
+  tests, `placeNames_test.ts` 3). The spec reviewer's r1 and r2 handler
+  reproductions, copied in temporarily, pass (8).
+- Probe on a separate local stack (`PROBE_PROJECT_ID=unify-context-362-corrections
+  PROBE_PORT_BASE=59671 ./run.sh`): 9 passed, including the fault-injection
+  test; it failed 1 of 9 with the round-1 access code.
+- `npm run test:companion-drawer`: 33 passed. The reviewer's independent
+  inert-background script also passes against this branch (served on port
+  3012, output kept outside the review evidence folder).
+- `vitest run` 556 passed, `tsc --noEmit`, eslint on changed files,
+  `check-i18n`, `next build`: pass. `deno check` passes for the changed
+  context modules after a type-only fix to the existing empty-context
+  fallback (`08c558f`).
+
+Order of work: the handler, probe and browser tests above were written and
+run RED before their fixes. `placeNames_test.ts` (words that must not match)
+was written after `placeNames.ts`.
+
+Proof classes: handler tests use controlled Supabase, Sanity, OpenRouter and
+page fixtures. The probe uses a real local stack; its 503 is injected, not an
+observed outage. The browser checks use the actual page and components with
+fixture data hooks, in headless Chromium only. Nothing ran against the hosted
+project, a live search or page, or a native device.
+
+Limits of round 2:
+
+- Place recognition covers the listed cities and provinces and their listed
+  spellings. Other places, and other spellings that folding does not join,
+  produce no detail, and the answer then uses the saved province, as in
+  English. Arrival times in Hindi and Punjabi do not use "kal" (it means both
+  yesterday and tomorrow), so "kal" gives no arrival time.
+- `inertBackground` is used only by this drawer. Other dialogs keep their
+  earlier behaviour (they now render inside a `display: contents` layer).
+  Nested dialogs and elements added while open follow the counted holds; no
+  test opens a second dialog over the drawer.
+- Chromium's accessibility tree is the evidence for "not exposed". No
+  screen reader (VoiceOver, NVDA, TalkBack) was observed.
