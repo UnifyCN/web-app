@@ -184,3 +184,102 @@ Limits of round 2:
   test opens a second dialog over the drawer.
 - Chromium's accessibility tree is the evidence for "not exposed". No
   screen reader (VoiceOver, NVDA, TalkBack) was observed.
+
+## Review corrections, round 3 (2026-10-25)
+
+Spec review r3 on `805689c` left one ticket finding and recorded one shared
+dialog regression. They are separate below. Each new test was written first
+and failed on assertions against `805689c` before the fix.
+
+### Ticket finding: the origin won over the stated destination
+
+`placeIn` returned the first city in table order, so "moving from Vancouver to
+Toronto" used Vancouver (BC), searched for BC, excluded the Ontario page and
+asked nothing.
+
+Change (`lib/context/placeNames.ts`, `conversationDetails.ts`, `contract.ts`,
+`promptBlocks.ts`): every place mention is found with its position, and gets a
+role from the words right around it in each supported language: origin
+("from", "de", "desde", "من", "từ", Hindi "से", Punjabi "ਤੋਂ"), past or current
+residence, family or visit ("my sister lives in", "visit"), destination ("to",
+"à", "a", "إلى", the "li-" prefix, "đến", "पहुँच"/"शिफ्ट"/"में" after the name,
+Punjabi equivalents), or none. Places joined by "or" share one role. The
+destination is chosen by role: marked destinations, else places with no role,
+else where the user lives now. Origins and family/visit places are never
+chosen. When the chosen places are in two or more provinces, the context gets
+a new clarification `{ kind: "place_unclear", field: "province", options }`:
+the saved province is not used for the search, and the prompt tells the model
+to ask which place applies and give only Canada-wide steps until then. The
+current message still comes before earlier turns, and an unclear current
+message is not replaced by a clearer earlier one.
+
+Case range bound at the handler (`index_companion_context_test.ts`):
+
+| Cases | Expected | On `805689c` | Now |
+| --- | --- | --- | --- |
+| 17 "to Toronto" cases: from A to B, to B from A, currently A moving B, lived in A arriving B, fr/es/ar/hi/pa/vi routes, 3 mixed-script routes, family in Calgary (en, ar, hi), visit Montreal | Toronto/Ontario, Ontario search and page, province clarification | 13 used Vancouver (the 4 family/visit cases passed only because of table order) | pass |
+| Reversed routes and "my brother lives in Toronto" for a BC profile (en, hi, ar); reversed route for an Ontario profile | BC with no clarification; BC conflict for the Ontario profile | passed (table order) | pass (by role) |
+| 5 two-destination messages (en x2, fr, hi, ar) | `place_unclear` with Ontario and Alberta, no province, no BC search, no page excluded for a guessed province, prompt asks | fail | pass |
+| Current vs earlier turns; unclear current over clear earlier; origin only | current wins; unclear asks; origin alone gives no province | fail | pass |
+
+The spec reviewer's r1, r2 and r3 handler reproductions (18 tests), copied in
+temporarily, pass.
+
+Clients: a pinned handler fixture `rag-query-context-place-unclear.json`
+(drift-checked by the handler test) feeds new web drawer and mobile sheet
+tests. Both failed on the unchanged parsers (the clarification was dropped)
+and now show "You named more than one place you may be going to: Ontario,
+Alberta. Companion asked which one applies." New key
+`companion.context.clarifyPlace` in all seven locales in both repos.
+
+### Shared dialog regression (bounded, not a ticket blocker)
+
+A `ConfirmModal` or inert-background `DialogPresence` mounted closed before
+the drawer opened stayed inert when opened above it: the round-2 hold covered
+every existing layer. No current Sources control opens this nesting.
+
+Change (`components/ui/Dialog.tsx`): one registry of mounted dialog layers.
+Each change recomputes the inert set in one pass: the latest-opened dialog
+with `inertBackground`, and every dialog opened after it, stay usable;
+everything else in `<body>` (including closed layers and earlier dialogs) is
+inert, and each element gets back its own earlier `inert` value when
+released. A body observer covers children added while a dialog holds the page.
+
+Browser check (`npm run test:companion-drawer`, now 50 checks): for a
+`ConfirmModal` mounted closed, an inert `DialogPresence` mounted closed, and
+one mounted on opening, each opened above the drawer must take focus, be in
+Chromium's accessibility tree, keep the page behind inert, and give focus
+back to the drawer when closed; the drawer closing first under an open upper
+dialog; a body child added while open; and after all close, only the element
+the app made inert stays inert. On `805689c`: 4 failed (the two mounted-closed
+cases). Now 50/50. The reviewer's r3 browser script (29 checks), served on
+port 3012 with output kept outside the review folder, also passes.
+
+### Runs on this branch (local, 2026-10-25)
+
+- `deno test ... supabase/functions/rag-query/`: 156 passed.
+- Probe on my own stack (`unify-context-362-corrections`, ports 59671-59673):
+  9 passed; stack stopped afterwards.
+- `vitest run` 557, `tsc --noEmit`, eslint on changed files, `check-i18n`,
+  `next build`, `deno check` on the changed context modules: pass.
+
+Order of work: all tests above were written before their fixes. One test was
+corrected before the fix: the first RED run's "mounted on opening ... in the
+accessibility tree" check counted both the button and its text node; it now
+looks for the button role (that check passes on `805689c`, so it is not
+claimed as a regression). `placeNames_test.ts` was updated for the new return
+shape.
+
+Limits of round 3:
+
+- Roles come from fixed word lists next to the place name. They cover the
+  listed sentence shapes in each language, not every way to say where you
+  are going. A sentence the lists do not cover falls back to "places with no
+  role"; if those are in two provinces, Companion asks.
+- Hindi/Punjabi "kal" still gives no arrival time.
+- The shared dialog registry is exercised in Chromium with the actual
+  components and fixture data hooks. No screen reader was observed, and no
+  Safari or Firefox run was made.
+- Proof classes stay separate: handler tests (fixture providers), local
+  probe (real local auth and RLS), browser (actual components, fixture
+  hooks). No hosted, live-provider or native run.
