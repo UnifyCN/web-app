@@ -206,14 +206,22 @@ export function useTaskActionStore(
   }, [userId, epoch, queryClient, surface]);
 }
 
-/** The action client of the signed-in account (#363 proposal and command requests). */
-export function useTaskActionClient(): TaskActionClient | null {
+/**
+ * The action client of the signed-in account (#363 proposal requests) and the owner
+ * it is bound to: its requests are made only as that account and session, and a
+ * caller checks the same owner before it uses a result.
+ */
+export function useTaskActionClient(): {
+  client: TaskActionClient;
+  owner: AccountOwner;
+} | null {
   const userId = useAccountId() ?? null;
   const { epoch } = ownAccountWork();
-  return useMemo(
-    () => (userId ? clientFor({ accountId: userId, epoch }) : null),
-    [userId, epoch],
-  );
+  return useMemo(() => {
+    if (!userId) return null;
+    const owner = { accountId: userId, epoch };
+    return { client: clientFor(owner), owner };
+  }, [userId, epoch]);
 }
 
 /** A client bound to `owner`, for work started by a send (#363). */

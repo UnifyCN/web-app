@@ -10,7 +10,8 @@
     "check-i18n": "node scripts/check-i18n-parity.mjs",
     "test": "vitest run",
     "test:learning-navigation": "node scripts/verify-learning-navigation.mjs",
-    "test:companion-drawer": "node scripts/verify-companion-context-drawer.mjs"
+    "test:companion-drawer": "node scripts/verify-companion-context-drawer.mjs",
+    "test:companion-task-loading": "node scripts/verify-companion-task-loading.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

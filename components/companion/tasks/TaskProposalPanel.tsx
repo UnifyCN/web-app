@@ -23,7 +23,11 @@ import {
   useTaskProposal,
   type TaskProgressView,
 } from "@/hooks/useTaskActions";
-import { useAccountId } from "@/hooks/useAccountId";
+import { stillOwned, type AccountOwner } from "@/lib/accountSession";
+import type {
+  ProposalResult,
+  TaskActionClient,
+} from "@/lib/companionActions/client";
 import { ReceiptBlock } from "./ReceiptBlock";
 import { PhaseMessage } from "./TaskStatePanel";
 
@@ -56,17 +60,39 @@ export function TaskProposalPanel({
   const ids = useId();
   const key = `proposal:${proposalId}`;
   const queryClient = useQueryClient();
-  const userId = useAccountId() ?? null;
-  const client = useTaskActionClient();
-  const query = useTaskProposal(proposalId);
+  const bound = useTaskActionClient();
+  const client = bound?.client ?? null;
+  // The draft is the private work of the account and session the panel was opened
+  // in. The page closes the drawer only once the profile of a new account loads, so
+  // until then this panel shows and reads nothing for another account or session.
+  const [openedFor] = useState(() => bound?.owner ?? null);
+  const sameSession =
+    openedFor !== null &&
+    bound !== null &&
+    openedFor.accountId === bound.owner.accountId &&
+    openedFor.epoch === bound.owner.epoch;
+  const query = useTaskProposal(sameSession ? proposalId : null);
   const phase = useTaskActionPhase(store, key);
   const titleDraft = useSyncExternalStore(
     store?.subscribe ?? (() => () => {}),
     () => store?.draft(key),
     () => undefined,
   );
-  const [requestBusy, setRequestBusy] = useState(false);
-  const [requestFailed, setRequestFailed] = useState(false);
+  // A Save title or Not now request in flight, or its refusal. It belongs to the
+  // account and session it was made in, so it never shows for another one.
+  const [request, setRequest] = useState<{
+    owner: AccountOwner;
+    state: "busy" | "failed";
+  } | null>(null);
+  const ownRequest =
+    request &&
+    bound &&
+    request.owner.accountId === bound.owner.accountId &&
+    request.owner.epoch === bound.owner.epoch
+      ? request.state
+      : null;
+  const requestBusy = ownRequest === "busy";
+  const requestFailed = ownRequest === "failed";
 
   // A refreshed revision from a needs-review reply is newer than the last read.
   const proposal: TaskProposal | undefined =
@@ -75,6 +101,7 @@ export function TaskProposalPanel({
       ? phase.proposal
       : query.data;
 
+  if (!sameSession) return null;
   if (!proposal) {
     return query.isError ? (
       <p className="text-sm text-ink-muted">
@@ -100,37 +127,56 @@ export function TaskProposalPanel({
     !/[\n\r]/.test(title);
   const shownTitle = edited ? title.trim() : savedTitle;
   const receipt = phase.phase === "saved" ? phase.receipt : proposal.receipt;
+  // After a confirmed "not applied" nothing was written, so a changed title can still
+  // be saved as a new revision. While the outcome is unknown only a lookup is allowed.
+  const unknownOutcome = isUnresolved(phase) && phase.phase !== "not_applied";
+  const canSaveTitle =
+    writable && !requestBusy && !unknownOutcome && edited && titleValid;
+  // Retry repeats the reviewed operation: only while the draft shows that title.
+  const canRetry = writable && !requestBusy && !edited;
 
-  const keep = (next: TaskProposal) =>
-    queryClient.setQueryData(taskProposalKey(userId, proposalId), next);
-
+  /**
+   * One Save title or Not now intent, made as the account and session the panel
+   * shows. Its result, the cached draft and the panel state are written only while
+   * that session is still the signed-in one: after another account or a sign-out
+   * (even if the same account signs in again) the late reply is dropped.
+   */
   async function proposalRequest(
-    run: () => ReturnType<NonNullable<typeof client>["cancel"]>,
+    run: (c: TaskActionClient) => Promise<ProposalResult>,
   ) {
-    setRequestBusy(true);
-    setRequestFailed(false);
-    const result = await run();
-    setRequestBusy(false);
+    if (!bound || !stillOwned(bound.owner)) return null;
+    const { client: own, owner } = bound;
+    setRequest({ owner, state: "busy" });
+    const result = await run(own);
+    if (!stillOwned(owner)) return null;
     if (result.kind === "ok" || result.kind === "changed") {
-      keep(result.proposal);
+      setRequest(null);
+      queryClient.setQueryData<TaskProposal>(
+        taskProposalKey(owner.accountId, proposalId),
+        result.proposal,
+      );
       return result;
     }
-    setRequestFailed(true);
+    setRequest({ owner, state: "failed" });
     return null;
   }
 
   async function saveTitle() {
-    if (!canWrite || !client || !edited || !titleValid) return;
+    if (!canSaveTitle) return;
     const submitted = title;
-    const result = await proposalRequest(() =>
-      client.revise(
+    const result = await proposalRequest((c) =>
+      c.revise(
         proposal!.proposalId,
         proposal!.proposalRevision,
         createTaskOperation(submitted),
       ),
     );
+    if (result?.kind !== "ok") return;
+    // The saved title is a new revision: an approval that was confirmed not applied
+    // can no longer be retried; the new title needs its own approval.
+    store?.supersedeNotApplied(key);
     // Clear the typed title only when this edit is the saved one.
-    if (result?.kind === "ok" && (store?.draft(key) ?? submitted) === submitted)
+    if ((store?.draft(key) ?? submitted) === submitted)
       store?.setDraft(key, undefined);
   }
 
@@ -145,9 +191,9 @@ export function TaskProposalPanel({
   }
 
   function notNow() {
-    if (!canWrite || !client) return;
-    void proposalRequest(() =>
-      client.cancel(proposal!.proposalId, proposal!.proposalRevision),
+    if (!canWrite) return;
+    void proposalRequest((c) =>
+      c.cancel(proposal!.proposalId, proposal!.proposalRevision),
     );
   }
 
@@ -249,11 +295,8 @@ export function TaskProposalPanel({
               type="button"
               size="sm"
               variant="secondary"
-              aria-disabled={!canWrite || !edited || !titleValid}
-              className={cn(
-                (!canWrite || !edited || !titleValid) &&
-                  "cursor-not-allowed opacity-60",
-              )}
+              aria-disabled={!canSaveTitle}
+              className={cn(!canSaveTitle && "cursor-not-allowed opacity-60")}
               onClick={() => void saveTitle()}
             >
               {t("taskCreate.saveTitle")}
@@ -297,7 +340,7 @@ export function TaskProposalPanel({
         )}
         {phase.phase !== "saved" && phase.phase !== "needs_review" && (
           <PhaseMessage
-            writable={writable}
+            writable={canRetry}
             phase={phase.phase}
             phaseValue={phase}
             stateLabel={(s) => t(`taskActions.state.${s}`)}

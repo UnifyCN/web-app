@@ -15,6 +15,10 @@ import { isUnresolved } from "@/lib/companionActions/taskActionStore";
 import { useTaskActionPhase } from "@/hooks/useTaskActions";
 import type { ChatMessage } from "@/types";
 
+/** A write in flight: a loading state, shown only after the shared 300ms delay. */
+const isTransient = (phase: TaskActionPhase) =>
+  phase.phase === "saving" || phase.phase === "checking";
+
 /**
  * Compact cards under a conversation message (direction B, mobile-app#363): a task
  * draft the answer suggested, or the result of a clear command in the user's own
@@ -140,7 +144,14 @@ function DraftCard({
         <p className="break-words text-sm font-semibold text-ink-secondary">
           {title}
         </p>
-        <p className="text-xs text-ink-tertiary">{status}</p>
+        <p
+          className={cn(
+            "text-xs text-ink-tertiary",
+            !saved && isTransient(phase) && "loading-delayed",
+          )}
+        >
+          {status}
+        </p>
       </div>
       {/* One control that keeps its place when the draft is saved, so focus can return to it. */}
       <CardButton
@@ -238,7 +249,10 @@ function CommandCard({
   const text = commandText(t as never, phase);
   if (!text) return null;
   return (
-    <div className={CARD} role="status">
+    <div
+      className={cn(CARD, isTransient(phase) && "loading-delayed")}
+      role="status"
+    >
       <CardIcon />
       <p className="min-w-0 flex-1 break-words text-sm text-ink-tertiary">
         {text}

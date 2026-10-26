@@ -148,6 +148,11 @@ import CompanionPage from "@/app/(main)/companion/page";
 import { ChatLimitError } from "@/services/companion";
 import { clearTaskActionStores } from "@/lib/companionActions/taskActionStore";
 import { clearComposerDrafts } from "@/lib/companion/composerDrafts";
+import {
+  TASK_PROPOSAL_ROOT,
+  taskProposalKey,
+} from "@/lib/companionActions/queryKeys";
+import type { QueryClient } from "@tanstack/react-query";
 
 // ---------------------------------------------------------------- helpers
 let server: ReturnType<typeof scriptedServer>;
@@ -633,5 +638,338 @@ describe("Add one task through Companion (web)", () => {
       action: "command_create",
       outcome: "applied",
     });
+  });
+});
+
+// Save title and Not now replies that arrive after the account changed (#363 review
+// S363-1 / F2). Each intent belongs to the account and epoch it started in. The reply
+// is held at the transport after the stand-in answered, so it carries that account's
+// private draft. A late reply must not put it back after the account scope removed
+// it, nor write it under a later epoch of the same account; the same established
+// account keeps it.
+describe("late Save title and Not now replies stay with their account", () => {
+  const REVISED = "Private revised task A";
+  type Intent = "revise" | "cancel";
+  /** Cached drafts of one account (a disabled read with no draft id holds nothing). */
+  const proposalEntries = (client: QueryClient, id: string) =>
+    client
+      .getQueryCache()
+      .findAll({ queryKey: [TASK_PROPOSAL_ROOT, id] })
+      .filter((q) => q.state.data !== undefined || q.queryKey[2] !== null);
+
+  /** Opens the draft, starts `intent` and holds its reply after the stand-in answered. */
+  async function startHeld(intent: Intent, refused = false) {
+    server = scriptedServer();
+    globalThis.fetch = server.fetch as typeof fetch;
+    generateReply.mockResolvedValue(reply("Answer.", PHONE));
+    const { queryClient } = mount(<CompanionPage />);
+    const owner = account.id as string;
+    await send("Phone?");
+    const card = await screen.findByRole("article", {
+      name: `Suggested task: ${PHONE}`,
+    });
+    fireEvent.click(
+      within(card).getByRole("button", {
+        name: `Review the suggested task ${PHONE}`,
+      }),
+    );
+    const drawer = await screen.findByRole("dialog", {
+      name: "Review new task",
+    });
+    await waitFor(() =>
+      expect(
+        within(drawer)
+          .getByRole("button", { name: /^Add 1 task/ })
+          .getAttribute("aria-disabled"),
+      ).toBe("false"),
+    );
+    const proposalId = server.drafts()[0].proposal_id as string;
+    expect(
+      queryClient.getQueryData(taskProposalKey(owner, proposalId)),
+    ).toBeTruthy();
+    const transport = globalThis.fetch;
+    let release: (() => void) | null = null;
+    globalThis.fetch = (async (
+      input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => {
+      const answered = await transport(input, init);
+      if (JSON.parse(String(init?.body)).action !== intent) return answered;
+      await new Promise<void>((r) => (release = r));
+      return refused
+        ? new Response(JSON.stringify({ error: "forbidden" }), { status: 403 })
+        : answered;
+    }) as typeof fetch;
+    if (intent === "revise") {
+      fireEvent.change(within(drawer).getByLabelText("Task title"), {
+        target: { value: REVISED },
+      });
+      fireEvent.click(
+        within(drawer).getByRole("button", { name: "Save title" }),
+      );
+    } else {
+      fireEvent.click(within(drawer).getByRole("button", { name: "Not now" }));
+    }
+    await waitFor(() => expect(release).not.toBeNull());
+    return {
+      queryClient,
+      owner,
+      proposalId,
+      drawer,
+      release: () => act(async () => release!()),
+    };
+  }
+  const settle = async () => {
+    for (let i = 0; i < 5; i += 1) await act(async () => {});
+  };
+
+  for (const intent of ["revise", "cancel"] as const) {
+    it(`${intent}: a reply after another account signed in does not restore the draft`, async () => {
+      const { queryClient, owner, proposalId, release } =
+        await startHeld(intent);
+      const before = server.sent.length;
+      act(() => account.set("web-user-B"));
+      await waitFor(() =>
+        expect(proposalEntries(queryClient, owner)).toHaveLength(0),
+      );
+      await release();
+      await settle();
+      expect(
+        queryClient.getQueryData(taskProposalKey(owner, proposalId)),
+      ).toBeUndefined();
+      expect(proposalEntries(queryClient, owner)).toHaveLength(0);
+      expect(proposalEntries(queryClient, "web-user-B")).toHaveLength(0);
+      // The open review is A's: nothing reads A's draft as B.
+      expect(
+        server.sent.slice(before).filter((b) => b.action === "proposal"),
+      ).toEqual([]);
+      expect(screen.queryByText(REVISED)).toBeNull();
+      // The drawer closes (after its exit motion) for the new account.
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    });
+
+    it(`${intent}: a reply after sign-out does not restore the draft`, async () => {
+      const { queryClient, owner, proposalId, release } =
+        await startHeld(intent);
+      act(() => account.set(null));
+      await waitFor(() =>
+        expect(proposalEntries(queryClient, owner)).toHaveLength(0),
+      );
+      await release();
+      await settle();
+      expect(
+        queryClient.getQueryData(taskProposalKey(owner, proposalId)),
+      ).toBeUndefined();
+      expect(proposalEntries(queryClient, owner)).toHaveLength(0);
+      expect(screen.queryByText(REVISED)).toBeNull();
+    });
+
+    it(`${intent}: a reply after sign-out and the same account signing back in is not written under the new session`, async () => {
+      const { queryClient, owner, proposalId, release } =
+        await startHeld(intent);
+      const before = server.sent.length;
+      act(() => account.set(null));
+      await waitFor(() =>
+        expect(proposalEntries(queryClient, owner)).toHaveLength(0),
+      );
+      act(() => account.set(owner));
+      await release();
+      await settle();
+      expect(
+        queryClient.getQueryData(taskProposalKey(owner, proposalId)),
+      ).toBeUndefined();
+      expect(proposalEntries(queryClient, owner)).toHaveLength(0);
+      expect(
+        server.sent.slice(before).filter((b) => b.action === "proposal"),
+      ).toEqual([]);
+    });
+
+    it(`${intent}: the same established account keeps the reply and shows it`, async () => {
+      const { queryClient, owner, proposalId, drawer, release } =
+        await startHeld(intent);
+      act(() => account.set(owner));
+      await release();
+      if (intent === "revise") {
+        expect(
+          await within(drawer).findByRole("button", {
+            name: `Add 1 task to Checklist: ${REVISED}`,
+          }),
+        ).toBeTruthy();
+      } else {
+        expect(
+          await within(drawer).findByText(
+            "You closed this draft. Nothing was added.",
+          ),
+        ).toBeTruthy();
+      }
+      expect(
+        queryClient.getQueryData(taskProposalKey(owner, proposalId)),
+      ).toMatchObject(
+        intent === "revise"
+          ? { status: "draft", operation: { title: REVISED } }
+          : { status: "cancelled" },
+      );
+    });
+  }
+
+  it("a late refusal for the same established account is still shown", async () => {
+    const { drawer, release } = await startHeld("cancel", true);
+    await release();
+    expect(
+      await within(drawer).findByText("Could not save. Nothing changed."),
+    ).toBeTruthy();
+  });
+});
+
+// Retry of a draft's approval after the first apply never reached the server (#363
+// review F1). Retry repeats the reviewed operation with its own operation identity,
+// so it is allowed only while the draft still shows that reviewed title. A changed
+// title, saved or not, needs its own review: saving it makes a new revision whose
+// approval is a new change. An unknown outcome stays a lookup only.
+describe("Retry of an approved draft follows the shown title", () => {
+  const SIM = "Get a Canadian SIM card";
+  /** The first apply is lost before the server; then status answers `lookups` in order. */
+  function lostFirstApply(
+    lookups: Array<"not_applied" | "network-error"> = [],
+  ) {
+    let dropped = false;
+    server = scriptedServer(
+      {},
+      {
+        override: (body): TransportReply | "network-error" | undefined => {
+          if (body.action === "apply" && !dropped) {
+            dropped = true;
+            return "network-error";
+          }
+          if (body.action === "status" && lookups.length) {
+            const next = lookups.shift()!;
+            return next === "network-error"
+              ? "network-error"
+              : { status: 200, body: { status: next } };
+          }
+          return undefined;
+        },
+      },
+    );
+    globalThis.fetch = server.fetch as typeof fetch;
+  }
+  async function approvedThenLost() {
+    generateReply.mockResolvedValue(reply("Answer.", PHONE));
+    mount(<CompanionPage />);
+    await send("Phone?");
+    const card = await screen.findByRole("article", {
+      name: `Suggested task: ${PHONE}`,
+    });
+    fireEvent.click(
+      within(card).getByRole("button", {
+        name: `Review the suggested task ${PHONE}`,
+      }),
+    );
+    const drawer = await screen.findByRole("dialog");
+    const approve = await within(drawer).findByRole("button", {
+      name: `Add 1 task to Checklist: ${PHONE}`,
+    });
+    await waitFor(() =>
+      expect(approve.getAttribute("aria-disabled")).not.toBe("true"),
+    );
+    fireEvent.click(approve);
+    return drawer;
+  }
+  const disabled = (drawer: HTMLElement, name: string | RegExp) =>
+    within(drawer)
+      .getByRole("button", { name })
+      .getAttribute("aria-disabled") === "true";
+  const typeTitle = (drawer: HTMLElement, value: string) =>
+    fireEvent.change(within(drawer).getByLabelText("Task title"), {
+      target: { value },
+    });
+  const settle = async () => {
+    for (let i = 0; i < 8; i += 1) await act(async () => {});
+  };
+
+  it("an unsaved title edit after confirmed-not-applied cannot retry the old reviewed title", async () => {
+    lostFirstApply();
+    const drawer = await approvedThenLost();
+    const retry = await within(drawer).findByRole("button", {
+      name: "Try again",
+    });
+    await waitFor(() =>
+      expect(retry.getAttribute("aria-disabled")).not.toBe("true"),
+    );
+    typeTitle(drawer, SIM);
+    expect(disabled(drawer, /^Add 1 task/)).toBe(true);
+    expect(disabled(drawer, "Try again")).toBe(true);
+    fireEvent.click(within(drawer).getByRole("button", { name: "Try again" }));
+    await settle();
+    expect(server.customTasks()).toEqual([]);
+    expect(creates()).toHaveLength(1);
+  });
+
+  it("putting the reviewed title back allows Retry of the same operation", async () => {
+    lostFirstApply();
+    const drawer = await approvedThenLost();
+    await within(drawer).findByRole("button", { name: "Try again" });
+    typeTitle(drawer, SIM);
+    typeTitle(drawer, PHONE);
+    await waitFor(() => expect(disabled(drawer, "Try again")).toBe(false));
+    fireEvent.click(within(drawer).getByRole("button", { name: "Try again" }));
+    await within(drawer).findByText(`Added to Checklist: ${PHONE}`);
+    expect(creates()).toHaveLength(2);
+    expect(new Set(creates().map((b) => b.operation_id)).size).toBe(1);
+    expect(creates()[1].operations).toEqual(creates()[0].operations);
+    expect(server.customTasks().map((t) => t.title)).toEqual([PHONE]);
+  });
+
+  it("a saved title edit after confirmed-not-applied replaces the old approval with a review of the new title", async () => {
+    lostFirstApply();
+    const drawer = await approvedThenLost();
+    await within(drawer).findByRole("button", { name: "Try again" });
+    typeTitle(drawer, SIM);
+    await waitFor(() => expect(disabled(drawer, "Save title")).toBe(false));
+    fireEvent.click(within(drawer).getByRole("button", { name: "Save title" }));
+    const approve = await within(drawer).findByRole("button", {
+      name: `Add 1 task to Checklist: ${SIM}`,
+    });
+    await waitFor(() =>
+      expect(approve.getAttribute("aria-disabled")).toBe("false"),
+    );
+    expect(
+      within(drawer).queryByRole("button", { name: "Try again" }),
+    ).toBeNull();
+    expect(server.customTasks()).toEqual([]);
+    fireEvent.click(approve);
+    await within(drawer).findByText(`Added to Checklist: ${SIM}`);
+    expect(creates()).toHaveLength(2);
+    expect(creates()[1].operation_id).not.toBe(creates()[0].operation_id);
+    expect(creates()[1].operations[0].title).toBe(SIM);
+    expect(creates()[1].authorization).toMatchObject({
+      kind: "approved_proposal",
+      proposal_revision: 2,
+    });
+    expect(server.customTasks().map((t) => t.title)).toEqual([SIM]);
+  });
+
+  it("while the outcome is unknown an edit allows only Check again, never a write or a title save", async () => {
+    lostFirstApply(["network-error", "not_applied"]);
+    const drawer = await approvedThenLost();
+    await within(drawer).findByText(/could not check/i);
+    typeTitle(drawer, SIM);
+    expect(
+      within(drawer).queryByRole("button", { name: "Try again" }),
+    ).toBeNull();
+    expect(disabled(drawer, "Save title")).toBe(true);
+    expect(disabled(drawer, /^Add 1 task/)).toBe(true);
+    expect(disabled(drawer, "Check again")).toBe(false);
+    fireEvent.click(within(drawer).getByRole("button", { name: "Save title" }));
+    fireEvent.click(
+      within(drawer).getByRole("button", { name: "Check again" }),
+    );
+    await within(drawer).findByRole("button", { name: "Try again" });
+    expect(disabled(drawer, "Try again")).toBe(true);
+    fireEvent.click(within(drawer).getByRole("button", { name: "Try again" }));
+    await settle();
+    expect(creates()).toHaveLength(1);
+    expect(server.sent.filter((b) => b.action === "revise")).toHaveLength(0);
+    expect(server.customTasks()).toEqual([]);
   });
 });
