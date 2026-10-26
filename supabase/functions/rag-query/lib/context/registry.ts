@@ -115,7 +115,7 @@ export async function runRead<I, O>(
   if (input === null) return { status: 'skipped' };
 
   const controller = new AbortController();
-  let timer: number | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<'timeout'>(resolve => {
     timer = setTimeout(() => {
       controller.abort();
