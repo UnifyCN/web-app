@@ -134,7 +134,7 @@ export function TaskRow({
           onClick={() => progressRows.open(task)}
           aria-label={t("taskActions.progressAria", { title: task.title })}
           // A 28px target (WCAG 2.5.8) that keeps the 20px row rhythm.
-          className="-m-1 mt-[-2px] flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-ink-placeholder transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="press -m-1 mt-[-2px] flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-ink-placeholder hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <ListChecks className="h-4 w-4" aria-hidden />
         </button>

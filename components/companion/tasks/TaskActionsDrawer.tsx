@@ -75,7 +75,7 @@ export function TaskActionsDrawer({
       closeOnEscape={phase.phase !== "saving"}
     >
       {view.status === "loading" || isLoading ? (
-        <p role="status" className="text-sm text-ink-muted">
+        <p role="status" className="loading-delayed text-sm text-ink-muted">
           {t("taskActions.loading")}
         </p>
       ) : view.status === "signed_out" ? (
@@ -93,7 +93,7 @@ export function TaskActionsDrawer({
           {surface === "companion" && (
             <Link
               href="/checklist"
-              className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary hover:text-primary-dark"
+              className="press-dim inline-flex min-h-11 cursor-pointer items-center gap-1 rounded text-sm font-semibold text-ink-secondary underline underline-offset-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               {t("taskActions.openChecklist")}
               <ChevronRight className={cn("h-4 w-4", RTL_FLIP)} aria-hidden />
@@ -114,7 +114,7 @@ export function TaskActionsDrawer({
                 <button
                   type="button"
                   onClick={() => setSelectedId(task.id)}
-                  className="flex min-h-12 w-full cursor-pointer items-center gap-3 py-2.5 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                  className="press-dim flex min-h-12 w-full cursor-pointer items-center gap-3 rounded py-2.5 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block break-words text-sm font-medium text-ink-secondary">
@@ -161,7 +161,12 @@ export function CompanionTasksEntry({ onOpen }: { onOpen: () => void }) {
           <p className="text-sm font-semibold text-ink-secondary">
             {t("taskActions.entryTitle")}
           </p>
-          <p className="truncate text-xs text-ink-muted">
+          <p
+            className={cn(
+              "truncate text-xs text-ink-muted",
+              view.status === "loading" && "loading-delayed",
+            )}
+          >
             {view.status === "loading"
               ? t("taskActions.loading")
               : t("taskActions.entrySummary", {
@@ -173,7 +178,7 @@ export function CompanionTasksEntry({ onOpen }: { onOpen: () => void }) {
         <button
           type="button"
           onClick={onOpen}
-          className="inline-flex min-h-11 shrink-0 cursor-pointer items-center rounded-lg border border-border-card px-3 text-sm font-semibold text-ink-secondary hover:bg-surface-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="press inline-flex min-h-11 shrink-0 cursor-pointer items-center rounded-lg border border-border-card px-3 text-sm font-semibold text-ink-secondary hover:bg-surface-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           {t("taskActions.open")}
         </button>

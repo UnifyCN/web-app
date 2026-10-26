@@ -191,12 +191,14 @@ export function TaskStatePanel({
                 aria-disabled={!canWrite}
                 onClick={() => choose(s)}
                 className={cn(
-                  "flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-start text-sm font-medium transition-colors",
+                  "flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-start text-sm font-medium",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                   selected
                     ? "border-primary bg-primary-bg text-ink-secondary"
                     : "border-border-card bg-surface text-ink-tertiary hover:bg-surface-gray",
-                  !canWrite && "cursor-not-allowed opacity-70",
+                  canWrite
+                    ? "press cursor-pointer"
+                    : "cursor-not-allowed opacity-70",
                 )}
               >
                 <Icon
@@ -234,7 +236,7 @@ export function TaskStatePanel({
             className="mt-1.5 w-full resize-y rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink-secondary placeholder:text-ink-placeholder focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           />
           <div className="mt-2 flex items-center justify-between gap-3">
-            <span className="text-xs text-ink-placeholder">
+            <span className="text-xs text-ink-muted">
               {t("taskActions.charactersLeft", {
                 remaining: WAITING_REASON_MAX - reasonValue.length,
               })}
@@ -281,9 +283,11 @@ export function TaskStatePanel({
                   void store.undo(taskRef, receipt.operationId)
                 }
                 className={cn(
-                  "mt-1.5 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-dark",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded",
-                  !canWrite && "cursor-not-allowed opacity-60",
+                  "mt-1.5 inline-flex min-h-11 items-center gap-1.5 rounded text-sm font-semibold text-ink-secondary underline underline-offset-2",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  canWrite
+                    ? "press cursor-pointer hover:text-ink"
+                    : "cursor-not-allowed opacity-60",
                 )}
               >
                 <Undo2 className="h-4 w-4" aria-hidden />
@@ -401,9 +405,12 @@ function PhaseMessage({
             </p>
           )}
           <div className="mt-3 flex flex-wrap gap-2">
+            {/* Dark fill as in the reviewed prototype: white on the brand
+                orange is below 4.5:1. */}
             <Button
               type="button"
               size="sm"
+              className="bg-ink-secondary hover:bg-ink"
               onClick={() => void store?.approveCompensation(taskRef)}
             >
               {t("taskActions.applyCompensating")}

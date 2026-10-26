@@ -3,7 +3,11 @@
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, X } from "lucide-react";
-import { DialogOverlay, DialogPresence } from "@/components/ui/Dialog";
+import {
+  DialogOverlay,
+  DialogPanel,
+  DialogPresence,
+} from "@/components/ui/Dialog";
 import { cn, RTL_FLIP } from "@/lib/utils";
 
 const FOCUSABLE =
@@ -109,7 +113,7 @@ export function TaskDrawer({
           if (escapeRef.current) onClose();
         }}
       >
-        <div
+        <DialogPanel
           ref={panelRef}
           role="dialog"
           aria-modal="true"
@@ -126,7 +130,7 @@ export function TaskDrawer({
                 type="button"
                 onClick={onBack}
                 aria-label={t("taskActions.backToTasks")}
-                className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="press flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <ChevronLeft className={cn("h-5 w-5", RTL_FLIP)} aria-hidden />
               </button>
@@ -143,7 +147,7 @@ export function TaskDrawer({
               type="button"
               onClick={onClose}
               aria-label={t("taskActions.close")}
-              className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="press flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-ink-muted hover:bg-surface-gray hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <X className="h-5 w-5" aria-hidden />
             </button>
@@ -151,7 +155,7 @@ export function TaskDrawer({
           <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-5 py-5">
             {children}
           </div>
-        </div>
+        </DialogPanel>
       </DialogOverlay>
     </DialogPresence>
   );
