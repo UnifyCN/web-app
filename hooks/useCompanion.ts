@@ -201,6 +201,9 @@ export function useSendMessage() {
         content,
         sources,
         suggestedNextSteps,
+        // Saved with the answer so a reopened conversation shows the same
+        // sources and context. Never sent to analytics.
+        companionContext: reply.contextRecord,
       });
       return { conversationIdentifier };
     },

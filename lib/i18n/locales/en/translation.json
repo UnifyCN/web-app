@@ -260,7 +260,7 @@
       "people": "People",
       "groups": "Groups"
     },
-    "tabWithCount": "{{label}}\u00a0({{count}})",
+    "tabWithCount": "{{label}} ({{count}})",
     "clear": "Clear search",
     "resultsFor": "Results for “{{term}}”",
     "error": "Search didn't load. Please try again."
@@ -619,7 +619,56 @@
       "transitQ": "How do I get around using public transit in my city?",
       "transitTopic": "Transit"
     },
-    "welcomeTitleNamed": "Ask me anything, {{name}}."
+    "welcomeTitleNamed": "Ask me anything, {{name}}.",
+    "context": {
+      "openDetails": "Sources and context",
+      "drawerTitle": "Sources and context",
+      "closeAria": "Close sources and context",
+      "usedAria": "Context used for this answer",
+      "tasksUsed": "Checklist tasks used: {{number}}",
+      "arrivingChip": "Arriving {{when}}",
+      "checkedAt": "Official pages checked {{time}}",
+      "unavailable": "Official guidance could not be checked for this answer. Confirm on the government website before you act.",
+      "conflict": "The official pages found are for a different province. Companion asked which province applies.",
+      "clarifyProvince": "Your profile says {{profile}}, but in this conversation you said {{conversation}}. Your profile was not changed.",
+      "clarifyArrival": "Your profile arrival date is {{profile}}, but in this conversation you said you arrive {{conversation}}. Your profile was not changed.",
+      "missingProvince": "Companion does not know your province, so it asked you.",
+      "checklistUnreadable": "Your Checklist could not be read for this answer.",
+      "profileUnreadable": "Your profile could not be read for this answer.",
+      "sectionPages": "Official pages",
+      "sectionAccount": "From your profile",
+      "sectionConversation": "From this conversation (not saved)",
+      "sectionTasks": "From your Checklist",
+      "noPages": "No official page was checked for this answer.",
+      "pageChecked": "Checked {{time}}",
+      "pageFailed": "Could not be read. Not used.",
+      "pageExcluded": "For {{province}}. Not used.",
+      "opensNewTab": "(opens in a new tab)",
+      "untitledTask": "Untitled task",
+      "readOnlyNote": "Companion read this information to answer. It did not change your Checklist, profile or saved details.",
+      "field": {
+        "persona": "Situation",
+        "city": "City",
+        "province": "Province",
+        "arrival_date": "Arrival date",
+        "arrival": "Arrival"
+      },
+      "taskState": {
+        "not_started": "Not started",
+        "in_progress": "In progress",
+        "waiting": "Waiting",
+        "completed": "Completed"
+      },
+      "arrival": {
+        "tomorrow": "tomorrow",
+        "this_week": "this week",
+        "next_week": "next week",
+        "next_month": "next month",
+        "inOneWeek": "in about a week",
+        "days": "in {{number}} days",
+        "weeks": "in {{number}} weeks"
+      }
+    }
   },
   "home": {
     "forYou": "For You",

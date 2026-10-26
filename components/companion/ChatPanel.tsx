@@ -8,6 +8,8 @@ import { StarterPromptChips } from "./StarterPromptChips";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
 import { FreeTierIndicator } from "./FreeTierIndicator";
+import { CompanionContextDrawer } from "./CompanionContextDrawer";
+import type { CompanionContext } from "@/lib/companionContext";
 import type { CompanionInputSource } from "@/lib/companionAnalytics";
 import type {
   ChatMessage,
@@ -62,6 +64,9 @@ export function ChatPanel({
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [draft, setDraft] = useState("");
+  // The answer whose sources and context are open in the drawer. The drawer
+  // overlays the conversation, so the draft and scroll position stay put.
+  const [openContext, setOpenContext] = useState<CompanionContext | null>(null);
   const firstName = onboarding?.firstName?.trim();
 
   useEffect(() => {
@@ -123,6 +128,7 @@ export function ChatPanel({
                   groupedWithNext={next?.role === message.role}
                   isLast={index === messages.length - 1}
                   onSuggestionClick={pickSuggestion}
+                  onOpenContext={(m) => setOpenContext(m.companionContext ?? null)}
                 />
               );
             })}
@@ -175,6 +181,11 @@ export function ChatPanel({
           </p>
         </div>
       </div>
+
+      <CompanionContextDrawer
+        context={openContext}
+        onClose={() => setOpenContext(null)}
+      />
     </div>
   );
 }

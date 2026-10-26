@@ -19,6 +19,10 @@ import {
   parseCompanionTopic,
   type CompanionTopic,
 } from "@/lib/companionAnalytics";
+import {
+  parseCompanionContext,
+  type CompanionContext,
+} from "@/lib/companionContext";
 
 /**
  * Companion (AI chat) data access — conversations, messages, daily usage, and
@@ -42,6 +46,8 @@ interface MessageRow {
   content: string;
   sources: unknown;
   suggested_next_steps: unknown;
+  /** Absent until the additive companion_context migration is applied. */
+  companion_context?: unknown;
   created_at: string;
 }
 
@@ -66,8 +72,24 @@ function rowToMessage(row: MessageRow, conversationId: string): ChatMessage {
     content: row.content,
     sources: normalizeSources(row.sources),
     suggestedNextSteps: normalizeSuggestions(row.suggested_next_steps),
+    companionContext: parseCompanionContext(row.companion_context),
     createdAt: row.created_at,
   };
+}
+
+/**
+ * True when PostgREST rejects `messages.companion_context` because the
+ * additive migration is not applied yet (42703 / PGRST204 / schema cache).
+ * Callers then retry without the column, so chat keeps working.
+ */
+function isMissingContextColumn(error: unknown): boolean {
+  const e = error as { code?: string; message?: string } | null;
+  if (!e) return false;
+  return (
+    e.code === "42703" ||
+    e.code === "PGRST204" ||
+    /companion_context/i.test(e.message ?? "")
+  );
 }
 
 /** Coerce raw suggestions into a clean string[] (non-empty, trimmed) or null. */
@@ -209,16 +231,21 @@ export async function getMessages(
   }
 
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("messages")
-    .select(
-      "id, role, content, sources, suggested_next_steps, created_at, conversations!inner(conversation_identifier)",
-    )
-    .eq("conversations.conversation_identifier", conversationIdentifier)
-    .order("created_at", { ascending: true });
+  const columns =
+    "id, role, content, sources, suggested_next_steps, created_at, conversations!inner(conversation_identifier)";
+  const query = (select: string) =>
+    supabase
+      .from("messages")
+      .select(select)
+      .eq("conversations.conversation_identifier", conversationIdentifier)
+      .order("created_at", { ascending: true });
+  let { data, error } = await query(`${columns}, companion_context`);
+  if (error && isMissingContextColumn(error)) {
+    ({ data, error } = await query(columns));
+  }
   if (error) throw error;
 
-  return (data as MessageRow[]).map((row) =>
+  return (data as unknown as MessageRow[]).map((row) =>
     rowToMessage(row, conversationIdentifier),
   );
 }
@@ -229,6 +256,8 @@ export interface SaveMessageInput {
   content: string;
   sources?: ChatSource[] | null;
   suggestedNextSteps?: string[] | null;
+  /** The answer's context (ticket #362); saved when the column exists. */
+  companionContext?: unknown;
 }
 
 export async function saveMessage(input: SaveMessageInput): Promise<ChatMessage> {
@@ -254,20 +283,30 @@ export async function saveMessage(input: SaveMessageInput): Promise<ChatMessage>
     );
   }
 
-  const { data, error } = await supabase
-    .from("messages")
-    .insert({
-      conversation_id: (conv as { id: number }).id,
-      role: input.role,
-      content: input.content,
-      sources: input.sources ?? null,
-      suggested_next_steps: input.suggestedNextSteps ?? null,
-    })
-    .select("id, role, content, sources, suggested_next_steps, created_at")
-    .single();
+  const row = {
+    conversation_id: (conv as { id: number }).id,
+    role: input.role,
+    content: input.content,
+    sources: input.sources ?? null,
+    suggested_next_steps: input.suggestedNextSteps ?? null,
+  };
+  const insert = (values: Record<string, unknown>, select: string) =>
+    supabase.from("messages").insert(values).select(select).single();
+  const columns = "id, role, content, sources, suggested_next_steps, created_at";
+  let { data, error } =
+    input.companionContext != null
+      ? await insert(
+          { ...row, companion_context: input.companionContext },
+          `${columns}, companion_context`,
+        )
+      : await insert(row, columns);
+  if (error && input.companionContext != null && isMissingContextColumn(error)) {
+    // Column not migrated yet: save the answer without its context.
+    ({ data, error } = await insert(row, columns));
+  }
   if (error) throw error;
 
-  return rowToMessage(data as MessageRow, input.conversationIdentifier);
+  return rowToMessage(data as unknown as MessageRow, input.conversationIdentifier);
 }
 
 /* ---- AI reply generation (rag-query edge function) -------------------- */
@@ -290,6 +329,8 @@ interface RagQueryResponse {
   disclaimer?: string;
   suggestedNextSteps?: string[];
   lastVerified?: string;
+  /** Companion context (ticket #362); absent from an older rag-query. */
+  context?: unknown;
   tokenUsage?: {
     prompt_tokens?: number;
     completion_tokens?: number;
@@ -334,6 +375,12 @@ export interface GeneratedReply {
   sources: ChatSource[] | null;
   suggestedNextSteps: string[] | null;
   disclaimerKind: DisclaimerKind;
+  /** What the answer read and checked; null from an older rag-query. Never
+   *  passed to analytics. */
+  context: CompanionContext | null;
+  /** The server's version-1 context object as received, for saving with the
+   *  answer (the saved row is parsed again on read). Null when absent. */
+  contextRecord: Record<string, unknown> | null;
   /* Analytics only (companion_response_received); null when absent. */
   queryType: string | null;
   topic: CompanionTopic | null;
@@ -343,6 +390,14 @@ export interface GeneratedReply {
     totalTokens: number;
   } | null;
   estimatedCostUsd: number | null;
+}
+
+/** The raw context object when it is version 1 and small enough to save. */
+function savableContext(raw: unknown): Record<string, unknown> | null {
+  if (!parseCompanionContext(raw)) return null;
+  return JSON.stringify(raw).length <= 30_000
+    ? (raw as Record<string, unknown>)
+    : null;
 }
 
 function finiteNumber(raw: unknown): number | null {
@@ -391,6 +446,8 @@ export async function generateReply(
       sources: null,
       suggestedNextSteps: null,
       disclaimerKind: null,
+      context: null,
+      contextRecord: null,
       queryType: null,
       topic: null,
       tokenUsage: null,
@@ -443,6 +500,8 @@ export async function generateReply(
     sources: normalizeSources(body.sources),
     suggestedNextSteps: normalizeSuggestions(body.suggestedNextSteps),
     disclaimerKind: classifyDisclaimer(body.disclaimer),
+    context: parseCompanionContext(body.context),
+    contextRecord: savableContext(body.context),
     queryType: typeof body.queryType === "string" ? body.queryType : null,
     topic: parseCompanionTopic(body.topic),
     tokenUsage: normalizeTokenUsage(body.tokenUsage),
