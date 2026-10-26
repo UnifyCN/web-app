@@ -6,7 +6,7 @@ project_id = "unify-context-362"
 [api]
 enabled = true
 port = 59471
-schemas = ["public"]
+schemas = ["public", "probe_audit"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 

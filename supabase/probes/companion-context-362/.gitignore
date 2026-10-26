@@ -1,3 +1,4 @@
 supabase/.branches
 supabase/.temp
 supabase/migrations/20261026120000_messages_companion_context.sql
+.run/

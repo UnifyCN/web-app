@@ -9,7 +9,8 @@
 // published checklist content and the official pages. Nothing here proves
 // hosted behaviour or live-source content.
 //
-// RUN: ./run.sh            (starts the stack on 127.0.0.1:59471-59473)
+// RUN: ./run.sh            (starts the stack on 127.0.0.1:59471-59473; run.sh
+//      takes PROBE_PROJECT_ID and PROBE_PORT_BASE for a separate stack)
 
 import { assert, assertEquals } from 'jsr:@std/assert@1';
 
@@ -22,7 +23,8 @@ const env = (k: string) => {
 const API_URL = env('API_URL');
 const ANON_KEY = env('ANON_KEY');
 const SERVICE_ROLE_KEY = env('SERVICE_ROLE_KEY');
-if (!/^http:\/\/(127\.0\.0\.1|localhost):59471$/.test(API_URL)) {
+// Local stacks only (run.sh picks the port; default 59471).
+if (!/^http:\/\/(127\.0\.0\.1|localhost):\d{4,5}$/.test(API_URL)) {
   throw new Error(`probe refuses to run against ${API_URL}`);
 }
 
@@ -74,6 +76,37 @@ async function rest(
   }
   return { status: res.status, json: parsed };
 }
+
+// ---------------------------------------------------------------- write attempts
+//
+// supabase/migrations/…_probe_write_audit.sql (probe only) records every
+// INSERT/UPDATE/DELETE statement on the profile, task, conversation and message
+// tables, including writes that leave rows unchanged or match no row.
+
+interface WriteAttempt {
+  id: number;
+  table_name: string;
+  operation: string;
+  request_role: string | null;
+}
+
+async function writeAttemptsAfter(id: number): Promise<WriteAttempt[]> {
+  const res = await realFetch(
+    `${API_URL}/rest/v1/write_attempts?select=id,table_name,operation,request_role&id=gt.${id}&order=id`,
+    { headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${SERVICE_ROLE_KEY}`, 'Accept-Profile': 'probe_audit' } }
+  );
+  const body = await res.json();
+  if (res.status !== 200 || !Array.isArray(body)) throw new Error(`write audit unreadable: ${res.status}`);
+  return body as WriteAttempt[];
+}
+
+async function lastWriteAttempt(): Promise<number> {
+  const all = await writeAttemptsAfter(0);
+  return all.length ? all[all.length - 1].id : 0;
+}
+
+/** Every write attempt made while an answer was being produced, across this file. */
+const writesDuringAnswers: Array<WriteAttempt & { prompt: string }> = [];
 
 interface Account {
   id: string;
@@ -190,13 +223,16 @@ function req(who: Account | { jwt: string }, prompt: string, extra: Record<strin
 
 async function ask(who: Account | { jwt: string }, prompt: string, extra: Record<string, unknown> = {}) {
   setRoutes(routes);
+  const mark = await lastWriteAttempt();
   const res = await handler(req(who, prompt, extra));
   const body = await res.json();
+  const writes = await writeAttemptsAfter(mark);
+  writesDuringAnswers.push(...writes.map(w => ({ ...w, prompt })));
   const calls = [...fetchLog];
   const answer = calls.find(
     c => c.url.pathname.endsWith('/chat/completions') && !(c.body as { plugins?: unknown }).plugins
   );
-  return { status: res.status, body, context: body.context as Record<string, any>, answer, calls };
+  return { status: res.status, body, context: body.context as Record<string, any>, answer, calls, writes };
 }
 
 const tasksOf = (context: Record<string, any>) =>
@@ -306,6 +342,7 @@ Deno.test({
   name: 'real RLS: simultaneous requests from two accounts stay isolated',
   fn: async () => {
     setRoutes(routes);
+    const mark = await lastWriteAttempt();
     const results = await Promise.all(
       Array.from({ length: 6 }, (_, i) =>
         handler(
@@ -334,6 +371,9 @@ Deno.test({
         assertEquals(context.items.find((c: Record<string, unknown>) => c.kind === 'conversation').id, convB.conversation_identifier);
       }
     }
+    const writes = await writeAttemptsAfter(mark);
+    writesDuringAnswers.push(...writes.map(w => ({ ...w, prompt: 'simultaneous' })));
+    assertEquals(writes, [], 'simultaneous answers attempt no write');
   },
 });
 
@@ -350,12 +390,28 @@ Deno.test({
       });
       return JSON.stringify(rows.map(r => (r.json as unknown[]).map(row => JSON.stringify(row)).sort()));
     };
+    // Control: the audit sees a write that stores the value already there.
+    const mark = await lastWriteAttempt();
+    const same = await rest(
+      'PATCH',
+      `/rest/v1/user_onboarding_profiles?id=eq.${A.id}`,
+      { city: 'Vancouver' },
+      A.jwt
+    );
+    assertEquals(same.status, 200);
+    const control = await writeAttemptsAfter(mark);
+    assertEquals(control.map(w => `${w.table_name}:${w.operation}:${w.request_role}`), [
+      'user_onboarding_profiles:UPDATE:authenticated',
+    ]);
+
     const before = await snapshot();
     const res = await ask(A, 'I am moving to Toronto in 2 weeks, remember that. What should I do first?', {
       conversationIdentifier: convA.conversation_identifier,
     });
     assertEquals(res.status, 200);
     assertEquals(res.context.clarification?.kind, 'profile_conflict');
+    // No write attempt at all, not only unchanged rows.
+    assertEquals(res.writes, [], 'the answer attempted a write');
     const after = await snapshot();
     assertEquals(after, before);
   },
@@ -420,5 +476,14 @@ Deno.test({
     );
     assertEquals(legacyRead.status, 200);
     assert(legacyRead.json.some((m: Record<string, unknown>) => m.content === 'legacy'));
+  },
+});
+
+Deno.test({
+  ...opts,
+  // Last: every ask() above recorded the write attempts made during its answer.
+  name: 'real database: no answer in this file attempted any write',
+  fn: () => {
+    assertEquals(writesDuringAnswers, []);
   },
 });
