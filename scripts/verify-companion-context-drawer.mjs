@@ -502,6 +502,16 @@ async function run(browser) {
     };
 
     await sourcesOpen();
+    // A child added to <body> while the drawer is open is held too, then released.
+    await page.evaluate(() => {
+      const b = document.createElement("button");
+      b.id = "added-while-open";
+      b.textContent = "added-while-open";
+      document.body.append(b);
+    });
+    await page.waitForTimeout(100);
+    const added = await tryFocus(page, "added-while-open");
+    check("a <body> child added while the drawer is open is inert", added.found && !added.took && added.inInert, added);
     for (const [label, open, close, button] of [
       ["ConfirmModal mounted closed", "setConfirm", "setConfirm", "Cancel"],
       ["inert DialogPresence mounted closed", "setUpper", "setUpper", "Close upper dialog"],
@@ -534,6 +544,8 @@ async function run(browser) {
       appActive: document.getElementById("app-active").inert,
     }));
     check("all dialogs closed: only the element the app made inert is still inert", after.appInert && !after.appActive && after.inert.length === 1, after);
+    const addedAfter = await tryFocus(page, "added-while-open");
+    check("all dialogs closed: the child added while open takes focus", addedAfter.took && !addedAfter.inInert, addedAfter);
     const composer = await focusBackground(page, BACKGROUND.en);
     check("all dialogs closed: the composer and search take focus again", composer.took.length === BACKGROUND.en.length, composer);
     await context.close();
