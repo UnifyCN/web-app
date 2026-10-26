@@ -212,6 +212,13 @@ describe("Checklist task progress (web)", () => {
       expected_revision: 1,
       waiting_reason: "A letter from Service Canada",
     });
+    // A reason-only save names what changed, not "Waiting to Waiting".
+    expect(
+      await within(panel).findByText("Updated the waiting reason"),
+    ).toBeTruthy();
+    expect(within(panel).queryByText("Changed from Waiting to Waiting")).toBe(
+      null,
+    );
 
     // Focus stays inside the drawer after the update; Escape closes it and
     // returns focus to the control that opened it.
