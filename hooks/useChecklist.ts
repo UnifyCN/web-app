@@ -11,6 +11,8 @@ import {
 } from "@/lib/analytics";
 import type { ChecklistTask, Priority } from "@/types";
 import { useLanguage } from "@/hooks/useLanguage";
+import { AUTH_USER_KEY, useAuthUser } from "@/hooks/useAuthUser";
+import { TASK_PROGRESS_ROOT } from "@/lib/companionActions/queryKeys";
 
 /** Rebuild the full task list in priority order, replacing one bucket's order. */
 function rebuildWithBucket(
@@ -31,22 +33,40 @@ function rebuildWithBucket(
 
 export const TASKS_KEY = ["tasks"] as const;
 
-/** Exact (language-aware) tasks cache key: `["tasks", lang]`. Sanity checklist
+/** Exact tasks cache key: `["tasks", lang, accountId]`. Sanity checklist
  * content is localized, so the key carries the language AFTER the prefix —
  * `TASKS_KEY` prefix invalidations/cancellations still match, while
- * getQueryData/setQueryData (exact-key) use this. */
+ * getQueryData/setQueryData (exact-key) use this. The rows hold the account's
+ * own progress and custom tasks, so the key also names the account: after an
+ * account change no view can read the previous account's rows (#361). */
+export const tasksKey = (language: string, accountId: string | null) =>
+  [...TASKS_KEY, language, accountId] as const;
+
 function useTasksKey() {
   const { currentLanguage } = useLanguage();
-  return [...TASKS_KEY, currentLanguage] as const;
+  const { data: user } = useAuthUser();
+  return tasksKey(currentLanguage, user?.id ?? null);
 }
 
 export function useTasks() {
   const { currentLanguage } = useLanguage();
-  return useQuery({
-    queryKey: [...TASKS_KEY, currentLanguage],
+  const { data: user, isPending: authPending } = useAuthUser();
+  const query = useQuery({
+    queryKey: tasksKey(currentLanguage, user?.id ?? null),
     queryFn: () => checklist.getTasks(currentLanguage),
     staleTime: 60_000,
+    // Wait for the account, so its rows are never stored under another key.
+    enabled: !authPending,
   });
+  return authPending ? { ...query, isLoading: true } : query;
+}
+
+/** Legacy Checklist writes can change shared task progress too: re-read both. */
+function invalidateTasksAndProgress(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
+    queryClient.invalidateQueries({ queryKey: [TASK_PROGRESS_ROOT] }),
+  ]);
 }
 
 /**
@@ -112,8 +132,9 @@ export function useToggleTask() {
       if (!input.completed) trackChecklistTaskCompleted(props);
       else trackChecklistTaskUncompleted(props);
     },
-    // Settle against the server after success AND error.
-    onSettled: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
+    // Settle against the server after success AND error. Completion moves the
+    // shared task state too (#361), so task progress is re-read as well.
+    onSettled: () => invalidateTasksAndProgress(queryClient),
   });
 }
 
@@ -196,7 +217,7 @@ export function useDeleteCustomTask() {
         queryClient.setQueryData(context.tasksKey, context.previous);
       }
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
+    onSettled: () => invalidateTasksAndProgress(queryClient),
   });
 }
 
@@ -232,15 +253,18 @@ export function useSetSuggestedTaskDismissed() {
         queryClient.setQueryData(context.tasksKey, context.previous);
       }
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: TASKS_KEY }),
+    onSettled: () => invalidateTasksAndProgress(queryClient),
   });
 }
 
 /** Warms the Checklist tab (same key and fetcher as `useTasks`). */
 export function prefetchChecklist(queryClient: QueryClient, language: string) {
   const lang = language as Parameters<typeof checklist.getTasks>[0];
+  // Only for a known account, under that account's key.
+  const user = queryClient.getQueryData<{ id: string } | null>(AUTH_USER_KEY);
+  if (!user) return Promise.resolve();
   return queryClient.prefetchQuery({
-    queryKey: [...TASKS_KEY, language],
+    queryKey: tasksKey(language, user.id),
     queryFn: () => checklist.getTasks(lang),
     staleTime: 60_000,
   });

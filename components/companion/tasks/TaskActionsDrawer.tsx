@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { ChevronRight } from "lucide-react";
@@ -45,11 +45,23 @@ export function TaskActionsDrawer({
   const view = useTaskProgress();
   const store = useTaskActionStore(surface);
   const [selectedId, setSelectedId] = useState<string | null>(initialTaskId);
+  // The task last opened from the list: focus returns to its row on Back.
+  const [returnId, setReturnId] = useState<string | null>(null);
   const [lastOpen, setLastOpen] = useState(open);
   if (open !== lastOpen) {
     setLastOpen(open);
-    if (open) setSelectedId(initialTaskId);
+    if (open) {
+      setSelectedId(initialTaskId);
+      setReturnId(null);
+    }
   }
+
+  // Progress may have changed elsewhere (Checklist completion, another
+  // platform): read it again on every opening. Controls stay off until it arrives.
+  const { refetch } = view;
+  useEffect(() => {
+    if (open) refetch();
+  }, [open, refetch]);
 
   const active = tasks.filter((task) => !task.dismissedAt);
   const selected = active.find((task) => task.id === selectedId) ?? null;
@@ -113,7 +125,11 @@ export function TaskActionsDrawer({
               <li key={`${task.isCustom ? "c" : "s"}-${task.id}`}>
                 <button
                   type="button"
-                  onClick={() => setSelectedId(task.id)}
+                  data-drawer-focus={task.id === returnId ? "" : undefined}
+                  onClick={() => {
+                    setSelectedId(task.id);
+                    setReturnId(task.id);
+                  }}
                   className="press-dim flex min-h-12 w-full cursor-pointer items-center gap-3 rounded py-2.5 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <span className="min-w-0 flex-1">

@@ -113,8 +113,10 @@ export function parseOperations(raw: unknown, authorization: Authorization): Par
   const out: Operation[] = [];
   for (const item of raw) {
     if (!isObject(item)) return refuse(422, 'invalid_operations');
-    const spec = typeof item.type === 'string'
-      ? (OPERATION_REGISTRY as Record<string, OperationSpec<Operation> | undefined>)[item.type]
+    // Own entries only: a name every object inherits (constructor, toString,
+    // __proto__) is an unsupported type, not a registry entry.
+    const spec = typeof item.type === 'string' && Object.hasOwn(OPERATION_REGISTRY, item.type)
+      ? (OPERATION_REGISTRY as Record<string, OperationSpec<Operation>>)[item.type]
       : undefined;
     if (!spec) return refuse(422, 'unsupported_operation');
     if (!spec.approval.includes(authorization.kind)) return refuse(403, 'invalid_authorization');

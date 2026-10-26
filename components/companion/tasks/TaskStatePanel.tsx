@@ -88,8 +88,10 @@ export function TaskStatePanel({
   const draft = useDraft(store, taskRef);
   const reasonValue = draft ?? progress.waitingReason ?? "";
   const busy = isUnresolved(phase);
-  const canWrite =
-    Boolean(store) && view.canWrite && !progress.removed && !busy;
+  // Every write, including a retry or an approved compensating change, needs a
+  // connection and a fresh read; offline nothing is sent or queued.
+  const writable = Boolean(store) && view.canWrite && !progress.removed;
+  const canWrite = writable && !busy;
   const stateLabel = (s: TaskState) => t(`taskActions.state.${s}`);
 
   const formatTime = (iso: string) =>
@@ -113,9 +115,14 @@ export function TaskStatePanel({
 
   function saveReason() {
     if (!canWrite || !store || progress.state !== "waiting") return;
+    // Keep the typed reason unless this exact save is confirmed applied: a
+    // refused, unknown or unsaved result must not replace it.
     void store
       .setState(setStateOperation(progress, "waiting", reasonValue))
-      .then(() => store.setDraft(taskRef, undefined));
+      .then(() => {
+        if (store.get(taskRef).phase === "saved")
+          store.setDraft(taskRef, undefined);
+      });
   }
 
   // The result of this panel's last save stays on screen, but it stops reading as
@@ -150,9 +157,12 @@ export function TaskStatePanel({
         <p className="text-xs font-medium text-ink-muted">
           {t("taskActions.existingTask")}
         </p>
+        {/* Where focus goes when the control that had it is replaced. */}
         <h3
           id={`${ids}-title`}
-          className="mt-0.5 break-words text-lg font-semibold text-ink-secondary"
+          tabIndex={-1}
+          data-drawer-focus=""
+          className="mt-0.5 break-words text-lg font-semibold text-ink-secondary focus-visible:outline-none"
         >
           {title}
         </h3>
@@ -260,6 +270,7 @@ export function TaskStatePanel({
 
       <div aria-live="polite" role="status" className="space-y-3">
         <PhaseMessage
+          writable={writable}
           phase={phase.phase}
           stateLabel={stateLabel}
           store={store}
@@ -302,12 +313,14 @@ export function TaskStatePanel({
 }
 
 function PhaseMessage({
+  writable,
   phase,
   phaseValue,
   stateLabel,
   store,
   taskRef,
 }: {
+  writable: boolean;
   phase: string;
   phaseValue: ReturnType<typeof useTaskActionPhase>;
   stateLabel: (s: TaskState) => string;
@@ -377,7 +390,9 @@ function PhaseMessage({
             type="button"
             size="sm"
             variant="secondary"
-            onClick={() => void store?.retry(taskRef)}
+            aria-disabled={!writable}
+            onClick={() => writable && void store?.retry(taskRef)}
+            className={cn(!writable && "cursor-not-allowed opacity-60")}
           >
             {t("taskActions.retry")}
           </Button>
@@ -410,8 +425,14 @@ function PhaseMessage({
             <Button
               type="button"
               size="sm"
-              className="bg-ink-secondary hover:bg-ink"
-              onClick={() => void store?.approveCompensation(taskRef)}
+              aria-disabled={!writable}
+              className={cn(
+                "bg-ink-secondary hover:bg-ink",
+                !writable && "cursor-not-allowed opacity-60",
+              )}
+              onClick={() =>
+                writable && void store?.approveCompensation(taskRef)
+              }
             >
               {t("taskActions.applyCompensating")}
             </Button>

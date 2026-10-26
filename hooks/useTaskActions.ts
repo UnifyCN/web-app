@@ -7,11 +7,8 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import {
-  useQuery,
-  useQueryClient,
-  type QueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAccountScope } from "@/hooks/useAccountScope";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { TASKS_KEY } from "@/hooks/useChecklist";
 import { trackCompanionActionResult } from "@/lib/analytics";
@@ -27,16 +24,16 @@ import {
 } from "@/lib/companionActions/client";
 import type { TaskProgress } from "@/lib/companionActions/contract";
 import {
-  clearTaskActionStores,
+  TASK_PROGRESS_ROOT,
+  taskProgressKey,
+} from "@/lib/companionActions/queryKeys";
+import {
   taskActionStoreFor,
   type TaskActionPhase,
   type TaskActionStore,
 } from "@/lib/companionActions/taskActionStore";
 
-/** Root of every task-progress query. Each key carries the account id. */
-export const TASK_PROGRESS_ROOT = "companion-task-actions" as const;
-export const taskProgressKey = (userId: string | null) =>
-  [TASK_PROGRESS_ROOT, userId] as const;
+export { TASK_PROGRESS_ROOT, taskProgressKey };
 
 const fetchTransport: Transport = async (body) => {
   const res = await fetch("/api/companion/actions", {
@@ -103,9 +100,8 @@ export function useTaskProgress(): TaskProgressView {
   const { data: user, isPending: authPending } = useAuthUser();
   const userId = user?.id ?? null;
   const online = useOnline();
-  const queryClient = useQueryClient();
 
-  useTaskActionAccountScope(userId, queryClient);
+  useAccountScope(userId, !authPending);
 
   const query = useQuery({
     queryKey: taskProgressKey(userId),
@@ -151,20 +147,6 @@ export function useTaskProgress(): TaskProgressView {
     canWrite: status === "ready" && !stale && !query.isFetching,
     refetch: useCallback(() => void refetch(), [refetch]),
   };
-}
-
-/** Removes another account's private task work from memory and the query cache. */
-function useTaskActionAccountScope(
-  userId: string | null,
-  queryClient: QueryClient,
-) {
-  useEffect(() => {
-    clearTaskActionStores(userId);
-    queryClient.removeQueries({
-      queryKey: [TASK_PROGRESS_ROOT],
-      predicate: (q) => q.queryKey[1] !== userId,
-    });
-  }, [userId, queryClient]);
 }
 
 /** The account's action store, wired to this page's surface for analytics. */

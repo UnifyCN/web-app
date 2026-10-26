@@ -15,6 +15,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+import { onlineManager } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   PROPOSAL_ID,
@@ -53,22 +54,36 @@ vi.mock("@/lib/posthog", () => ({
   posthog: { capture: (...args: unknown[]) => capture(...args) },
 }));
 vi.mock("@/lib/confetti", () => ({ fireTaskConfetti: () => {} }));
+// Checklist rows per account. The default account sees one content-backed task;
+// a test can give an account its own private rows.
+const sinTask = () => ({
+  id: "sin",
+  priority: "Do now",
+  title: "Get a SIN",
+  description: "",
+  completed: legacyCompleted.has("sin"),
+  completedAt: null,
+  dismissedAt: null,
+  isCustom: false,
+});
+const tasksByAccount = new Map<string, unknown[]>();
+const legacyCompleted = new Set<string>();
 vi.mock("@/services/checklist", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/checklist")>();
   return {
     ...actual,
-    getTasks: vi.fn(async () => [
-      {
-        id: "sin",
-        priority: "Do now",
-        title: "Get a SIN",
-        description: "",
-        completed: false,
-        completedAt: null,
-        dismissedAt: null,
-        isCustom: false,
-      },
-    ]),
+    getTasks: vi.fn(async () => tasksByAccount.get(account.id) ?? [sinTask()]),
+    // The legacy Checklist completion path. The database maps it onto the
+    // shared task state (proven by the local-stack suites); here the scripted
+    // service records the same change.
+    toggleTask: vi.fn(async (input: { id: string; completed: boolean }) => {
+      if (input.completed) legacyCompleted.delete(input.id);
+      else legacyCompleted.add(input.id);
+      server.editElsewhere(
+        `sanity:${input.id}`,
+        input.completed ? "not_started" : "completed",
+      );
+    }),
   };
 });
 // Conversation, generation and allowance hooks are not under test here.
@@ -153,6 +168,10 @@ function setOnline(online: boolean) {
 let accountCounter = 0;
 beforeEach(() => {
   account.id = `web-user-${++accountCounter}`;
+  tasksByAccount.clear();
+  legacyCompleted.clear();
+  // A test that ends offline leaves React Query's global online state behind.
+  onlineManager.setOnline(true);
   capture.mockReset();
   generate.mockReset();
   messageCount = 0;
@@ -664,5 +683,247 @@ describe("Companion task entry and drawer (web)", () => {
       entry_surface: "companion",
       outcome: "applied",
     });
+  });
+});
+
+// Corrections from the #361 Spec review (F1-F6). Each test names the failing
+// condition it was written against.
+describe("review corrections (web)", () => {
+  const composer = () =>
+    screen.getByLabelText("Message Companion") as HTMLTextAreaElement;
+  const privateTask = {
+    id: "9",
+    priority: "Do now",
+    title: "Private health appointment",
+    description: "Private description of account A",
+    completed: false,
+    completedAt: null,
+    dismissedAt: null,
+    isCustom: true,
+  };
+
+  it("F1: after an account change, neither Checklist nor Companion shows the previous account's tasks or message draft", async () => {
+    const a = account.id;
+    tasksByAccount.set(a, [privateTask]);
+    tasksByAccount.set("account-b", []);
+    useServer(scriptedServer({ "custom:9": { state: "waiting" } }));
+
+    const queryClient = newQueryClient();
+    const view = render(
+      <Providers queryClient={queryClient}>
+        <ChecklistPage />
+      </Providers>,
+    );
+    expect(await screen.findByText("Private description of account A")).toBeTruthy();
+
+    view.rerender(
+      <Providers queryClient={queryClient}>
+        <CompanionPage />
+      </Providers>,
+    );
+    fireEvent.change(await screen.findByLabelText("Message Companion"), {
+      target: { value: "Private draft of account A" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    const panel = await dialog();
+    expect(
+      await within(panel).findByRole("button", { name: /Private health appointment/ }),
+    ).toBeTruthy();
+    fireEvent.click(within(panel).getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    act(() => account.set("account-b"));
+    await waitFor(() => expect(composer().value).toBe(""));
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    const panelB = await dialog();
+    expect(
+      await within(panelB).findByText("Your Checklist has no tasks yet."),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Private health appointment/)).toBeNull();
+
+    view.rerender(
+      <Providers queryClient={queryClient}>
+        <ChecklistPage />
+      </Providers>,
+    );
+    await waitFor(() =>
+      expect(screen.queryByText(/Private health appointment/)).toBeNull(),
+    );
+    expect(screen.queryByText("Private description of account A")).toBeNull();
+  });
+
+  it("F2: offline, Try again and Apply this change send nothing", async () => {
+    let lookupNotApplied = true;
+    const s = scriptedServer(
+      {},
+      {
+        override: (body) => {
+          if (body.action === "apply" && lookupNotApplied)
+            return "network-error";
+          if (body.action === "status" && lookupNotApplied)
+            return { status: 200, body: { status: "not_applied" } };
+          return undefined;
+        },
+      },
+    );
+    useServer(s);
+    const { panel } = await openFromChecklist();
+    fireEvent.click(radio(panel, "In progress"));
+    const retry = await within(panel).findByRole("button", { name: "Try again" });
+    expect(server.writes()).toHaveLength(1);
+    act(() => setOnline(false));
+    await within(panel).findByText(
+      "You are offline. The progress shown may be out of date, and changes are turned off.",
+    );
+    fireEvent.click(retry);
+    expect(server.writes()).toHaveLength(1);
+    expect(isDisabled(within(panel).getByRole("button", { name: "Try again" }))).toBe(true);
+
+    // Back online: the retry goes through; then a conflicting Undo offers a reviewed change.
+    lookupNotApplied = false;
+    act(() => setOnline(true));
+    await waitFor(() =>
+      expect(isDisabled(within(panel).getByRole("button", { name: "Try again" }))).toBe(false),
+    );
+    fireEvent.click(within(panel).getByRole("button", { name: "Try again" }));
+    await within(panel).findByText("Changed from Not started to In progress");
+    server.editElsewhere("sanity:sin", "completed");
+    const undo = within(panel).getByRole("button", { name: "Undo this change" });
+    await waitFor(() => expect(isDisabled(undo)).toBe(false));
+    fireEvent.click(undo);
+    const apply = await within(panel).findByRole("button", { name: "Apply this change" });
+    const writes = server.writes().length;
+    act(() => setOnline(false));
+    await within(panel).findByText(
+      "You are offline. The progress shown may be out of date, and changes are turned off.",
+    );
+    fireEvent.click(apply);
+    expect(server.writes()).toHaveLength(writes);
+    expect(server.row("sanity:sin")?.state).toBe("completed");
+  });
+
+  it("F3: the composer draft survives opening Checklist from the drawer and coming back", async () => {
+    const queryClient = newQueryClient();
+    const companion = (
+      <Providers queryClient={queryClient}>
+        <CompanionPage />
+      </Providers>
+    );
+    const view = render(companion);
+    fireEvent.change(await screen.findByLabelText("Message Companion"), {
+      target: { value: "Keep my message through Checklist navigation" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    const panel = await dialog();
+    fireEvent.click(await within(panel).findByRole("button", { name: /Get a SIN/ }));
+    fireEvent.click(within(panel).getByRole("link", { name: /Open in Checklist/ }));
+    // The route change unmounts Companion and mounts Checklist, then the user returns.
+    view.rerender(
+      <Providers queryClient={queryClient}>
+        <ChecklistPage />
+      </Providers>,
+    );
+    await screen.findByRole("button", { name: "Task progress for Get a SIN" });
+    view.rerender(companion);
+    expect((await screen.findByLabelText("Message Companion") as HTMLTextAreaElement).value).toBe(
+      "Keep my message through Checklist navigation",
+    );
+  });
+
+  it("F4: a refused waiting-reason save keeps the typed reason", async () => {
+    useServer(
+      scriptedServer(
+        { "sanity:sin": { state: "waiting", reason: "Old saved reason" } },
+        {
+          override: (body) =>
+            body.action === "apply" && body.operations[0].waiting_reason
+              ? {
+                  status: 422,
+                  body: { error: "invalid_request", reason: "invalid_waiting_reason" },
+                }
+              : undefined,
+        },
+      ),
+    );
+    mount(<ChecklistPage />);
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Task progress for Get a SIN" }),
+    );
+    const panel = await dialog();
+    const reason = (await within(panel).findByLabelText(
+      "What are you waiting for?",
+    )) as HTMLTextAreaElement;
+    await waitFor(() => expect(reason.value).toBe("Old saved reason"));
+    fireEvent.change(reason, {
+      target: { value: "Keep this failed waiting-reason draft" },
+    });
+    const save = within(panel).getByRole("button", { name: "Save waiting reason" });
+    await waitFor(() => expect(isDisabled(save)).toBe(false));
+    fireEvent.click(save);
+    expect(
+      await within(panel).findByText("Could not save. Nothing changed."),
+    ).toBeTruthy();
+    await waitFor(() => expect(server.sent.filter((b) => b.action === "read").length).toBeGreaterThan(1));
+    expect(
+      (within(panel).getByLabelText("What are you waiting for?") as HTMLTextAreaElement).value,
+    ).toBe("Keep this failed waiting-reason draft");
+  });
+
+  it("F5: focus stays inside the drawer after keyboard task selection and after a compensating change", async () => {
+    mount(<CompanionPage />);
+    const open = await screen.findByRole("button", { name: "Open" });
+    open.focus();
+    fireEvent.click(open);
+    const panel = await dialog();
+    const row = await within(panel).findByRole("button", { name: /Get a SIN/ });
+    row.focus();
+    fireEvent.click(row);
+    // The pressed row is gone: focus moves to the open task's heading.
+    const heading = () => within(panel).getByRole("heading", { name: "Get a SIN" });
+    await waitFor(() => expect(document.activeElement).toBe(heading()));
+
+    // Back to the list returns focus to the task that was open.
+    const back = within(panel).getByRole("button", { name: "Back to tasks" });
+    back.focus();
+    fireEvent.click(back);
+    const rowAgain = await within(panel).findByRole("button", { name: /Get a SIN/ });
+    await waitFor(() => expect(document.activeElement).toBe(rowAgain));
+
+    rowAgain.focus();
+    fireEvent.click(rowAgain);
+    await waitFor(() => expect(isDisabled(radio(panel, "In progress"))).toBe(false));
+    fireEvent.click(radio(panel, "In progress"));
+    await within(panel).findByText("Changed from Not started to In progress");
+    server.editElsewhere("sanity:sin", "completed");
+    const undo = within(panel).getByRole("button", { name: "Undo this change" });
+    await waitFor(() => expect(isDisabled(undo)).toBe(false));
+    undo.focus();
+    fireEvent.click(undo);
+    const apply = await within(panel).findByRole("button", { name: "Apply this change" });
+    apply.focus();
+    fireEvent.click(apply);
+    await waitFor(() => expect(server.row("sanity:sin")?.state).toBe("not_started"));
+    await waitFor(() => expect(within(panel).queryByText("Saving…")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(heading()));
+  });
+
+  it("F6: completing a task in Checklist refreshes its progress before the controls allow a change", async () => {
+    useServer(
+      scriptedServer({ "sanity:sin": { state: "waiting", reason: "Bank letter" } }),
+    );
+    mount(<ChecklistPage />);
+    await screen.findByText("Waiting for: Bank letter");
+    fireEvent.click(screen.getByRole("checkbox", { name: "Mark as done" }));
+    await waitFor(() => expect(server.row("sanity:sin")?.state).toBe("completed"));
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Task progress for Get a SIN" }),
+    );
+    const panel = await dialog();
+    await waitFor(() =>
+      expect(radio(panel, "Completed").getAttribute("aria-checked")).toBe("true"),
+    );
+    expect(radio(panel, "Waiting").getAttribute("aria-checked")).toBe("false");
+    expect(screen.queryByText("Waiting for: Bank letter")).toBeNull();
   });
 });

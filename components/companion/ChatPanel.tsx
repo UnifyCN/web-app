@@ -1,9 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { PanelLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn, RTL_FLIP } from "@/lib/utils";
+import { useAuthUser } from "@/hooks/useAuthUser";
+import {
+  NEW_CONVERSATION,
+  composerDraft,
+  setComposerDraft,
+  subscribeComposerDrafts,
+} from "@/lib/companion/composerDrafts";
 import { StarterPromptChips } from "./StarterPromptChips";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
@@ -64,7 +77,19 @@ export function ChatPanel({
   const { t } = useTranslation();
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [draft, setDraft] = useState("");
+  // The unsent message lives outside this panel, per account and conversation,
+  // so panels, navigation and resize keep it (#361).
+  const accountId = useAuthUser().data?.id ?? null;
+  const conversationKey = conversation?.id ?? NEW_CONVERSATION;
+  const draft = useSyncExternalStore(
+    subscribeComposerDrafts,
+    () => composerDraft(accountId, conversationKey),
+    () => "",
+  );
+  const setDraft = useCallback(
+    (text: string) => setComposerDraft(accountId, conversationKey, text),
+    [accountId, conversationKey],
+  );
   const firstName = onboarding?.firstName?.trim();
 
   useEffect(() => {

@@ -117,6 +117,10 @@ Deno.test({ name: 'invalid payloads are 4xx, never 500, and write nothing', ...t
   const bad: Array<[string, unknown[], number, string]> = [
     ['unimplemented operation', [{ type: 'task.remove', task_ref: ref, expected_revision: rev }], 422, 'unsupported_operation'],
     ['create is not in this slice', [{ type: 'task.create_custom', title: 'x', priority: 'Do now' }], 422, 'unsupported_operation'],
+    // Names every JavaScript object inherits must not resolve to a registry entry.
+    ...['constructor', 'toString', '__proto__', 'hasOwnProperty', 'valueOf'].map((type) =>
+      [`inherited name ${type}`, [{ type, task_ref: ref, expected_revision: rev }], 422, 'unsupported_operation'] as
+        [string, unknown[], number, string]),
     ['padded custom ref', [setState(cref.replace('custom:', 'custom:0'), 'waiting', 1)], 422, 'invalid_task_ref'],
     ['draft sanity ref', [setState('sanity:drafts.sin', 'waiting', 1)], 422, 'invalid_task_ref'],
     ['null state', [{ type: 'task.set_state', task_ref: ref, state: null, expected_revision: rev }], 422, 'invalid_state'],
@@ -145,7 +149,8 @@ Deno.test({ name: 'invalid payloads are 4xx, never 500, and write nothing', ...t
   // Defence in depth: the SQL registry refuses an unregistered type even from a
   // service-role caller that skipped the handler's parser.
   for (const op of [{ type: 'task.remove', task_ref: ref, expected_revision: rev },
-                    { type: 'task.create_custom', title: 'x', priority: 'Do now' }]) {
+                    { type: 'task.create_custom', title: 'x', priority: 'Do now' },
+                    { type: 'constructor', task_ref: ref, expected_revision: rev }]) {
     const err = await sql`select public.companion_apply_actions(${a.id}::uuid, ${uuid()}::uuid, 1,
         ${sql.json({ kind: 'ui_control' })}, ${sql.json([op])})`.then(() => null, e => e);
     assertEquals([err?.code, err?.message], ['CA422', 'unsupported_operation'], JSON.stringify(op));
