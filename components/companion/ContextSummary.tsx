@@ -16,7 +16,7 @@ import { useContextLabels } from "./contextLabels";
  * anything. Uses text and an icon, not colour alone.
  */
 export function ContextNotice({ context }: { context: CompanionContext }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const labels = useContextLabels();
   const notes: string[] = [];
   const c = context.clarification;
@@ -32,6 +32,12 @@ export function ContextNotice({ context }: { context: CompanionContext }) {
       t("companion.context.clarifyArrival", {
         profile: labels.fieldValue("arrival_date", c.profileValue),
         conversation: labels.arrival(c.conversationValue),
+      }),
+    );
+  } else if (c?.kind === "place_unclear") {
+    notes.push(
+      t("companion.context.clarifyPlace", {
+        places: c.options.join(i18n.dir() === "rtl" ? "، " : ", "),
       }),
     );
   } else if (c?.kind === "missing") {

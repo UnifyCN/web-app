@@ -26,12 +26,14 @@ import vancouverFixture from './fixtures/rag-query-context-vancouver.json' with 
 import vancouverStreamFixture from './fixtures/rag-query-context-vancouver.sse.json' with { type: 'json' };
 import provinceConflictFixture from './fixtures/rag-query-context-province-conflict.json' with { type: 'json' };
 import unavailableFixture from './fixtures/rag-query-context-unavailable.json' with { type: 'json' };
+import placeUnclearFixture from './fixtures/rag-query-context-place-unclear.json' with { type: 'json' };
 
 const CLIENT_FIXTURES: Record<string, unknown> = {
   'rag-query-context-vancouver': vancouverFixture,
   'rag-query-context-vancouver.sse': vancouverStreamFixture,
   'rag-query-context-province-conflict': provinceConflictFixture,
   'rag-query-context-unavailable': unavailableFixture,
+  'rag-query-context-place-unclear': placeUnclearFixture,
 };
 
 testEnv.SANITY_PROJECT_ID = 'testproject';
@@ -1326,5 +1328,19 @@ Deno.test({
     assertEquals(unclearNow.context.clarification?.kind, 'place_unclear');
     const originOnly = await ask('I am moving from Vancouver next week. What should I do first?');
     assertEquals(p(originOnly), undefined);
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'client fixture: two possible destinations (place_unclear) as the clients receive it',
+  fn: async () => {
+    const { payload, startedAt, finishedAt, context } = await ask(
+      'I am moving to Toronto or Calgary next week. What should I do first?',
+      {},
+      { search: [SIN_URL] }
+    );
+    assertEquals(context.clarification, { kind: 'place_unclear', field: 'province', options: ['Ontario', 'Alberta'] });
+    await assertClientFixture('rag-query-context-place-unclear', clientFixture(payload, { startedAt, finishedAt }));
   },
 });

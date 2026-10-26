@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { describe, expect, it } from "vitest";
 import vancouver from "@/supabase/functions/rag-query/fixtures/rag-query-context-vancouver.json";
 import unavailable from "@/supabase/functions/rag-query/fixtures/rag-query-context-unavailable.json";
+import placeUnclear from "@/supabase/functions/rag-query/fixtures/rag-query-context-place-unclear.json";
 import { renderIn, textIn } from "@/components/learn/practice/testing/renderHelpers";
 import { parseCompanionContext, type CompanionContext } from "@/lib/companionContext";
 import { CompanionContextDrawer, CompanionContextPanel } from "./CompanionContextDrawer";
@@ -104,5 +105,19 @@ describe("CompanionContextDrawer", () => {
   it("a context version the client does not know is not shown", () => {
     expect(parseCompanionContext({ ...vancouver.context, version: 2 })).toBeNull();
     expect(drawer(null)).toBe("");
+  });
+
+  it("two possible destinations: the notice names both and says Companion asked, in every locale", () => {
+    const context = parsed(placeUnclear.context);
+    expect(context.clarification).toEqual({ kind: "place_unclear", field: "province", options: ["Ontario", "Alberta"] });
+    const text = textIn(drawer(context));
+    expect(text).toContain("You named more than one place you may be going to: Ontario, Alberta. Companion asked which one applies.");
+    for (const lang of ["ar", "es", "fr-CA", "hi", "pa", "vi"] as const) {
+      const html = drawer(context, lang);
+      expect(html).toContain("Ontario");
+      expect(html).toContain("Alberta");
+      expect(html).not.toContain("companion.context.");
+      expect(textIn(html)).not.toContain("You named more than one place");
+    }
   });
 });
