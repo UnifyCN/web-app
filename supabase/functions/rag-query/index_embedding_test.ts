@@ -385,8 +385,18 @@ for (const model of ACCEPTED_MODELS) {
       else assertEquals(keys, canonicalAnswerKeys, 'the answer has the canonical shape');
       // The handler's existing success fields: no hits, so no sources or date,
       // and the stub's one-letter suggestions are dropped by the sanitizer.
-      assertEquals(keys, ['answer', 'disclaimer', 'estimatedCostUsd', 'queryType', 'tokenUsage', 'topic']);
+      // `context` is the Companion context contract (mobile-app#362).
+      assertEquals(keys, ['answer', 'context', 'disclaimer', 'estimatedCostUsd', 'queryType', 'tokenUsage', 'topic']);
       assertEquals([payload.answer, payload.topic], ['Answer.', 'immigration']);
+      // The search above ran and found nothing: the context reports the knowledge
+      // read as done and names no app content.
+      assertEquals(Object.keys(payload.context).sort(), ['clarification', 'guidance', 'items', 'reads', 'version']);
+      assertEquals(payload.context.version, 1);
+      assertEquals(
+        payload.context.reads.filter((r: { capability: string }) => r.capability === 'content.knowledge'),
+        [{ capability: 'content.knowledge', status: 'ok' }]
+      );
+      assertEquals(payload.context.items.filter((i: { kind: string }) => i.kind === 'app_content'), []);
 
       const diag = diagnostics(lines);
       assertEquals(diag.map(d => d.event), ['embedding_identity', 'embedding_checked']);
