@@ -27,7 +27,9 @@ its published Checklist document; the edge function reads it from
 `COMPANION_CONTENT_QUERY_URL`, which `run.sh` points at the tests' stand-in
 (`support.ts` `contentStub`) on `ACTIONS_CONTENT_PORT` (default 60675; the edge runtime
 reaches it as `host.docker.internal`). The secret is set when the stack starts, so set
-the port before `supabase start`. `scripts/verify-companion-task-steps.mjs` is the
+the port before `supabase start`. `steps_parent_race_test.ts` (#366 F1) and
+`steps_context_race_test.ts` (#366 F3) hold locks from separate connections and read
+`pg_stat_activity` to order concurrent requests. `scripts/verify-companion-task-steps.mjs` is the
 real-browser check of the web step controls against this stack (same port).
 
 Results, test order and proof limits: mobile repo `DOCS/companion-actions/361-task-actions.md`.
