@@ -55,7 +55,7 @@ const plan: PlanView = {
   proposalId: null,
   items: [],
   receipt,
-  review: null,
+  reviews: [],
   updatedAt: "2026-10-27T00:00:00Z",
 };
 const compensation: PlanProposal = {

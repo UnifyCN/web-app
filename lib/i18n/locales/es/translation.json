@@ -3293,6 +3293,7 @@
     "receiptReviewedReused": "Se usa la tarea que ya tienes: {{titles}}.",
     "receiptLeftOut": "Excluida tras tu revisión: {{titles}}.",
     "retryReviewTitle": "Revisa el cambio pendiente",
+    "retryReviewNamed": "Revisa el cambio pendiente: {{titles}}",
     "retryReviewSkip": "Guardar sin añadirla",
     "receiptHistory": "Guardado el {{date}}. Los títulos se muestran como eran entonces.",
     "undo": "Deshacer el cambio del plan",

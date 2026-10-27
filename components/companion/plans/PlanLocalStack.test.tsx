@@ -545,6 +545,87 @@ describeStack("Settlement plans against the real local stack (web)", () => {
     expect(JSON.stringify(capture.mock.calls)).not.toContain(PHONE);
   });
 
+  it("two unfinished retry reviews both stay reachable after a reload; closing one keeps the other and focus in the drawer", { timeout: 120_000 }, async () => {
+    // Wrong if: after a reload either review is missing, Retry is offered for an addition
+    // waiting in a review, Not now on one review closes or changes the other or drops
+    // focus out of the drawer, the closed addition does not return to Retry, keeping the
+    // user's own task adds a task, or the typed message is lost.
+    if (!DB_CONTAINER) throw new Error("ACTIONS_DB_CONTAINER must name the local stack's database container.");
+    const psql = (sqlText: string) =>
+      execFileSync("docker", ["exec", "-i", DB_CONTAINER, "psql", "-v", "ON_ERROR_STOP=1", "-qtA", "-U", "postgres", "-d", "postgres"],
+        { input: sqlText, encoding: "utf8" }).trim();
+    const LIBRARY = "Get a library card";
+    const fault = (titles: string[]) =>
+      psql(`create or replace function public.test364_web_fault2() returns trigger language plpgsql as $f$
+              begin if new.title in (${titles.map((x) => `'${x}'`).join(", ") || "null"}) then raise exception 'injected fault'; end if; return new; end $f$;`);
+    const acc = await newAccount("web-plan-g");
+    account.set(acc.id);
+    fault([PHONE, LIBRARY]);
+    psql(`create trigger test364_web_fault2 before insert on custom_checklist_tasks
+            for each row execute function public.test364_web_fault2();`);
+    try {
+      const p = await actions(acc.jwt, { action: "plan_prepare", goal: GOAL, items: [...SUGGESTION.items, { kind: "new", title: LIBRARY }] });
+      const draft = p.json.plan_proposal;
+      const saved = await actions(acc.jwt, {
+        action: "plan_apply", operation_id: crypto.randomUUID(),
+        authorization: { kind: "approved_proposal", proposal_id: draft.plan_proposal_id, proposal_revision: draft.proposal_revision },
+        items: draft.items,
+      });
+      expect(saved.json.receipt.results.map((r: { outcome: string }) => r.outcome)).toEqual(["reused", "reused", "failed", "failed"]);
+      checklistFixture = tasksFromPlan(saved.json.plan.items);
+      fault([LIBRARY]);
+      const mine = await http("/rest/v1/custom_checklist_tasks", {
+        method: "POST", jwt: acc.jwt, body: JSON.stringify({ user_id: acc.id, title: PHONE, description: "", priority: "Do soon" }),
+      });
+      expect(mine.status).toBeLessThan(300);
+
+      mount();
+      fireEvent.change(screen.getByRole("textbox", { name: /message/i }), { target: { value: "Keep this question" } });
+      fireEvent.click(await screen.findByRole("button", { name: new RegExp(`Your plan, ${GOAL}`) }, { timeout: 10_000 }));
+      let drawer = await screen.findByRole("dialog", { name: "Your plan" });
+      fireEvent.click(await enabledButton(within(drawer), "Try adding 2 tasks again"));
+      await within(drawer).findByRole("checkbox", { name: `Add ${PHONE}` }, { timeout: 10_000 });
+      // The library card failed again; a relevant change opens a separate review for it.
+      await http(`/rest/v1/user_onboarding_profiles?id=eq.${acc.id}`, { method: "PATCH", jwt: acc.jwt, body: JSON.stringify({ city: "Surrey" }) });
+      fireEvent.click(await enabledButton(within(drawer), "Try adding 1 task again"));
+      await within(drawer).findByRole("checkbox", { name: `Add ${LIBRARY}` }, { timeout: 10_000 });
+      fault([]);
+
+      // A reload: new query client, no store state. Both reviews are reached from the entry.
+      cleanup();
+      clearPlanStores(null);
+      mount();
+      fireEvent.click(await screen.findByRole("button", { name: new RegExp(`Your plan, ${GOAL}, .*needs your review`) }, { timeout: 10_000 }));
+      drawer = await screen.findByRole("dialog", { name: "Your plan" });
+      await within(drawer).findByRole("checkbox", { name: `Add ${LIBRARY}` }, { timeout: 10_000 });
+      expect(within(drawer).queryByRole("checkbox", { name: `Add ${PHONE}` }), "the first unfinished review has no route after a reload").not.toBeNull();
+      expect(within(drawer).queryByRole("button", { name: /Try adding/ })).toBeNull();
+      const phoneReview = within(drawer).getByRole("region", { name: `Review the remaining change: ${PHONE}` });
+      const libraryReview = within(drawer).getByRole("region", { name: `Review the remaining change: ${LIBRARY}` });
+
+      // Not now on the library-card review, from the keyboard: the phone review stays as it
+      // was, focus stays in the drawer, and the library card goes back to Retry.
+      const notNow = await enabledButton(within(libraryReview), "Not now");
+      notNow.focus();
+      fireEvent.click(notNow, { detail: 0 });
+      await within(drawer).findByRole("button", { name: "Try adding 1 task again" }, { timeout: 10_000 });
+      await waitFor(() => expect(within(drawer).queryByRole("checkbox", { name: `Add ${LIBRARY}` })).toBeNull());
+      await waitFor(() => expect(drawer.contains(document.activeElement)).toBe(true));
+      expect((within(phoneReview).getByRole("checkbox", { name: `Add ${PHONE}` }) as HTMLInputElement).checked).toBe(true);
+      expect(within(phoneReview).getByText(`You may already have this task: ${PHONE}`)).toBeTruthy();
+
+      // The phone review: the user keeps their own task instead of adding another.
+      fireEvent.click(await enabledButton(within(drawer), "Use the task I have"));
+      fireEvent.click(await enabledButton(within(drawer), "Save without adding it"));
+      expect(await within(drawer).findByText(`Using the task you already have: ${PHONE}.`, {}, { timeout: 10_000 })).toBeTruthy();
+      expect((await customTasks(acc.jwt)).map((t) => t.title)).toEqual([PHONE]);
+      expect(within(drawer).queryByRole("button", { name: /Approve and add|Save without adding/ })).toBeNull();
+      expect((screen.getByRole("textbox", { name: /message/i }) as HTMLTextAreaElement).value).toBe("Keep this question");
+    } finally {
+      psql("drop trigger if exists test364_web_fault2 on custom_checklist_tasks; drop function if exists public.test364_web_fault2();");
+    }
+  });
+
   it("an account change closes the previous account's plan and shows none of it", { timeout: 60_000 }, async () => {
     const a = await newAccount("web-plan-d1");
     const b = await newAccount("web-plan-d2");

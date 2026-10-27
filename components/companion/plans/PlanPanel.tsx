@@ -36,7 +36,7 @@ import {
   usePlanStore,
 } from "@/hooks/usePlans";
 import { useTaskProgress } from "@/hooks/useTaskActions";
-import { planReceiptSummary, recordedTitles } from "./planText";
+import { planReceiptSummary, recordedTitles, reviewTitles } from "./planText";
 import type { PlanTarget } from "./PlanEntry";
 
 const BUTTON =
@@ -413,12 +413,16 @@ function SavedPlan({
   const added = receipt?.results.filter((r) => r.outcome === "created") ?? [];
   const failed =
     receipt?.results.filter((r) => r.outcome === "failed" && receipt.retryable.includes(r.key ?? "")) ?? [];
-  const review = plan?.review ?? null;
-  // Once its revised review is approved, the earlier "needs review" retry line is superseded.
+  const reviews = plan?.reviews ?? [];
+  // Two reviews open at once are each named by what they would add.
+  const named = reviews.filter((r) => r.status === "draft").length > 1;
+  // Once the revised reviews it opened are approved, a "needs review" retry line is superseded.
   const retried =
     phase.phase === "saved" &&
     phase.reply.receipt.kind === "plan_retry" &&
-    !(review?.status === "applied" && phase.reply.receipt.results.every((r) => r.outcome === "needs_review"))
+    !phase.reply.receipt.results.every(
+      (r) => r.outcome === "needs_review" && reviews.some((v) => v.id === r.planProposalId && v.status === "applied"),
+    )
       ? phase.reply.receipt
       : null;
   const stateLabel = (s: TaskState) => t(`taskActions.state.${s}`);
@@ -451,7 +455,10 @@ function SavedPlan({
               {planReceiptSummary(t, receipt)}
             </p>
             {retried && <p className="text-sm text-ink-secondary">{planReceiptSummary(t, retried)}</p>}
-            {review && !receipt.undoneBy && <RetryReview review={review} store={store} instant={instantRetry} />}
+            {!receipt.undoneBy &&
+              reviews.map((review) => (
+                <RetryReview key={review.id} review={review} store={store} instant={instantRetry} named={named} />
+              ))}
             {failed.length > 0 && (
               <p className="text-sm text-destructive-label">{t("plans.receiptFailed", { titles: recordedTitles(failed, t) })}</p>
             )}
@@ -559,16 +566,20 @@ function SavedPlan({
  * something they depend on changed. It lives in the saved plan (the persistent entry
  * reaches it after a restart), shows the remaining change with the approved and current
  * context through the same review as a draft, and needs its own approval. Once approved
- * it keeps saying what that approval actually saved.
+ * it keeps saying what that approval actually saved. Several can be open at once (separate
+ * Retries); each keeps its own revision, request and result, keyed by its id.
  */
 function RetryReview({
   review,
   store,
   instant,
+  named,
 }: {
   review: PlanProposal;
   store: PlanStore | null;
   instant: boolean;
+  /** More than one review is open: the heading names what this one would add. */
+  named: boolean;
 }) {
   const { t } = useTranslation();
   const query = usePlanProposal(review.id);
@@ -591,7 +602,7 @@ function RetryReview({
         className="space-y-3 rounded-lg border border-primary-subtle bg-primary-bg p-3"
       >
         <h4 id={`plan-review-${latest.id}`} className="text-sm font-semibold text-ink">
-          {t("plans.retryReviewTitle")}
+          {named ? t("plans.retryReviewNamed", { titles: reviewTitles(latest, t) }) : t("plans.retryReviewTitle")}
         </h4>
         <DraftReview proposal={latest} store={store} phase={phase} embedded />
       </section>

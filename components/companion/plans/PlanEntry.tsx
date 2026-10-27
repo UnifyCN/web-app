@@ -50,7 +50,7 @@ export function PlanEntry({ onOpen }: { onOpen: (target: PlanTarget) => void }) 
   // A Retry found a change: the remaining addition waits for the user's new approval.
   const summary = draft
     ? t("plans.entryReview")
-    : plan!.review?.status === "draft"
+    : plan!.reviews.some((r) => r.status === "draft")
       ? t("plans.entryNeedsReview", { progress })
       : progress;
   const goal = draft ? draft.goal : plan!.goal;
