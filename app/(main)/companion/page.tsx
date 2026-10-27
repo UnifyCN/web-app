@@ -25,6 +25,8 @@ import {
   useSendMessage,
 } from "@/hooks/useCompanion";
 import { useCurrentUser } from "@/hooks/useProfile";
+import { useTasks } from "@/hooks/useChecklist";
+import { taskOrderKey } from "@/services/checklist";
 import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
 import type { CompanionInputSource } from "@/lib/companionAnalytics";
 import type { ChatMessage } from "@/types";
@@ -44,6 +46,7 @@ export default function CompanionPage() {
   const [drawer, setDrawer] = useState<
     | { kind: "tasks" }
     | { kind: "proposal"; proposalId: string }
+    | { kind: "steps"; proposalId: string }
     | { kind: "task"; taskId: string }
     | null
   >(null);
@@ -78,6 +81,12 @@ export default function CompanionPage() {
   const actionStore = useTaskActionStore("companion");
   const progress = useTaskProgress();
   const actions = actionsQuery.data;
+  // #366: the card names the Checklist task suggested steps are for.
+  const { data: checklistTasks = [] } = useTasks();
+  const taskTitleOf = (taskRef: string) =>
+    checklistTasks.find(
+      (task) => !task.dismissedAt && taskOrderKey(task) === taskRef,
+    )?.title ?? null;
   const activeConversation = activeId
     ? (conversations.find((c) => c.id === activeId) ?? null)
     : null;
@@ -194,6 +203,11 @@ export default function CompanionPage() {
                 taskId: taskRef.slice(taskRef.indexOf(":") + 1),
               })
             }
+            stepProposals={actions?.stepProposals ?? []}
+            onReviewSteps={(proposalId) =>
+              setDrawer({ kind: "steps", proposalId })
+            }
+            taskTitleOf={taskTitleOf}
           />
         )}
       />
@@ -203,6 +217,7 @@ export default function CompanionPage() {
         surface="companion"
         initialTaskId={drawer?.kind === "task" ? drawer.taskId : null}
         proposalId={drawer?.kind === "proposal" ? drawer.proposalId : null}
+        stepProposalId={drawer?.kind === "steps" ? drawer.proposalId : null}
       />
     </div>
   );

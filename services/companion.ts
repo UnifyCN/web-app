@@ -1,3 +1,4 @@
+import { parseSuggestedSteps } from "@/lib/companionActions/contract";
 import type {
   ChatMessage,
   ChatSource,
@@ -419,9 +420,13 @@ export interface GeneratedReply {
   /** The server's version-1 context object as received, for saving with the
    *  answer (the saved row is parsed again on read). Null when absent. */
   contextRecord: Record<string, unknown> | null;
-  /** A task the answer suggests for the user to review (#363). A suggestion only:
-   *  the action service prepares the reviewable draft; nothing is saved here. */
-  actionProposal: { type: "task.create_custom"; title: string } | null;
+  /** A task (#363) or steps for one Checklist task (#366) the answer suggests for
+   *  the user to review. A suggestion only: the action service prepares the
+   *  reviewable draft; nothing is saved here. */
+  actionProposal:
+    | { type: "task.create_custom"; title: string }
+    | { type: "step.create"; taskRef: string; titles: string[] }
+    | null;
   /* Analytics only (companion_response_received); null when absent. */
   queryType: string | null;
   topic: CompanionTopic | null;
@@ -445,6 +450,12 @@ function savableContext(raw: unknown): Record<string, unknown> | null {
 function parseActionProposal(raw: unknown): GeneratedReply["actionProposal"] {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
+  if (r.type === "step.create") {
+    const steps = parseSuggestedSteps(raw);
+    return steps
+      ? { type: "step.create", taskRef: steps.taskRef, titles: steps.titles }
+      : null;
+  }
   if (r.type !== "task.create_custom" || r.version !== 1) return null;
   if (typeof r.title !== "string") return null;
   const title = r.title.trim();
