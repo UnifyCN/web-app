@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding
+link: </>; rel=preconnect; crossorigin="", </_next/static/media/inter-latin.0q-301v4kxxnr.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/inter-vietnamese.067x_6k0k23tk.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/noto-sans-arabic-arabic.0p-f7yd42daun.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2", </_next/static/media/noto-sans-gurmukhi-gurmukhi.0_pmoeof9fjg0.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2"
+X-Powered-By: Next.js
+Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate
+Content-Type: text/html; charset=utf-8
+Date: Tue, 27 Oct 2026 22:08:44 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
