@@ -291,9 +291,11 @@ export function PhaseMessage({
   const { t } = useTranslation();
   const line = (text: string, tone: "neutral" | "error" = "neutral") => (
     <p
+      key={phase}
       className={cn(
         "text-sm",
         tone === "error" ? "text-destructive-label" : "text-ink-tertiary",
+        (phase === "saving" || phase === "checking") && "loading-delayed",
       )}
     >
       {text}

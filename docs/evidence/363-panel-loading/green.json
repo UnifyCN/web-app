@@ -1,0 +1,773 @@
+{
+  "results": [
+    {
+      "name": "no-preference: simultaneous shared control hidden",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Saving…",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "no-preference: panel saving waits 300ms",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Saving…",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "no-preference: panel saving has status role immediately",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Saving…",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "no-preference: command card remains delayed",
+      "ok": true,
+      "detail": {
+        "text": "Adding “Set up phone service” to Checklist…",
+        "present": true,
+        "opacity": 0,
+        "animated": {
+          "name": "loading-appear",
+          "delay": "0.3s"
+        },
+        "status": true
+      }
+    },
+    {
+      "name": "no-preference: command card status exists immediately",
+      "ok": true,
+      "detail": {
+        "text": "Adding “Set up phone service” to Checklist…",
+        "present": true,
+        "opacity": 0,
+        "animated": {
+          "name": "loading-appear",
+          "delay": "0.3s"
+        },
+        "status": true
+      }
+    },
+    {
+      "name": "no-preference: draft card remains delayed",
+      "ok": true,
+      "detail": {
+        "text": "Checking whether the change saved…",
+        "present": true,
+        "opacity": 0,
+        "animated": {
+          "name": "loading-appear",
+          "delay": "0.3s"
+        },
+        "status": false
+      }
+    },
+    {
+      "name": "no-preference: draft title is immediate",
+      "ok": true,
+      "detail": {
+        "text": "Set up phone service",
+        "present": true,
+        "opacity": 1,
+        "animated": null,
+        "status": false
+      }
+    },
+    {
+      "name": "no-preference: positive control becomes visible",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Saving…",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "no-preference: panel saving becomes visible",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Saving…",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "no-preference: cards become visible",
+      "ok": true,
+      "detail": [
+        {
+          "text": "Adding “Set up phone service” to Checklist…",
+          "present": true,
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        {
+          "text": "Checking whether the change saved…",
+          "present": true,
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        }
+      ]
+    },
+    {
+      "name": "no-preference: lookup control starts hidden",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Checking whether the change saved…",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "no-preference: panel checking waits 300ms",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Checking whether the change saved…",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "no-preference: panel checking has status role immediately",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Checking whether the change saved…",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "no-preference: lookup control becomes visible",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Checking whether the change saved…",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "no-preference: panel checking becomes visible",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Checking whether the change saved…",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "no-preference: panel saved receipt immediate",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Added to Checklist: Set up phone service",
+          "opacity": 1,
+          "animated": null,
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "no-preference: refusal immediate",
+      "ok": true,
+      "detail": {
+        "text": "Could not save. Nothing changed.",
+        "present": true,
+        "opacity": 1,
+        "animated": null,
+        "status": true
+      }
+    },
+    {
+      "name": "reduce: simultaneous shared control hidden",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Saving…",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "reduce: panel saving waits 300ms",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Saving…",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "reduce: panel saving has status role immediately",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Saving…",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "reduce: command card remains delayed",
+      "ok": true,
+      "detail": {
+        "text": "Adding “Set up phone service” to Checklist…",
+        "present": true,
+        "opacity": 0,
+        "animated": {
+          "name": "loading-appear",
+          "delay": "0.3s"
+        },
+        "status": true
+      }
+    },
+    {
+      "name": "reduce: command card status exists immediately",
+      "ok": true,
+      "detail": {
+        "text": "Adding “Set up phone service” to Checklist…",
+        "present": true,
+        "opacity": 0,
+        "animated": {
+          "name": "loading-appear",
+          "delay": "0.3s"
+        },
+        "status": true
+      }
+    },
+    {
+      "name": "reduce: draft card remains delayed",
+      "ok": true,
+      "detail": {
+        "text": "Checking whether the change saved…",
+        "present": true,
+        "opacity": 0,
+        "animated": {
+          "name": "loading-appear",
+          "delay": "0.3s"
+        },
+        "status": false
+      }
+    },
+    {
+      "name": "reduce: draft title is immediate",
+      "ok": true,
+      "detail": {
+        "text": "Set up phone service",
+        "present": true,
+        "opacity": 1,
+        "animated": null,
+        "status": false
+      }
+    },
+    {
+      "name": "reduce: positive control becomes visible",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Saving…",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "reduce: panel saving becomes visible",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Saving…",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "reduce: cards become visible",
+      "ok": true,
+      "detail": [
+        {
+          "text": "Adding “Set up phone service” to Checklist…",
+          "present": true,
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        {
+          "text": "Checking whether the change saved…",
+          "present": true,
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        }
+      ]
+    },
+    {
+      "name": "reduce: lookup control starts hidden",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Checking whether the change saved…",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "reduce: panel checking waits 300ms",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Checking whether the change saved…",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "reduce: panel checking has status role immediately",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Checking whether the change saved…",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 0,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "reduce: lookup control becomes visible",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Checking whether the change saved…",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "reduce: panel checking becomes visible",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Checking whether the change saved…",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "reduce: panel saved receipt immediate",
+      "ok": true,
+      "detail": {
+        "panel": {
+          "present": true,
+          "text": "Added to Checklist: Set up phone service",
+          "opacity": 1,
+          "animated": null,
+          "status": true
+        },
+        "control": {
+          "present": true,
+          "text": "Loading control",
+          "opacity": 1,
+          "animated": {
+            "name": "loading-appear",
+            "delay": "0.3s"
+          },
+          "status": false
+        },
+        "visibility": "visible"
+      }
+    },
+    {
+      "name": "reduce: refusal immediate",
+      "ok": true,
+      "detail": {
+        "text": "Could not save. Nothing changed.",
+        "present": true,
+        "opacity": 1,
+        "animated": null,
+        "status": true
+      }
+    }
+  ],
+  "errors": []
+}

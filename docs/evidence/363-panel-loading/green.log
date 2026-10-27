@@ -1,0 +1,36 @@
+PASS  no-preference: simultaneous shared control hidden
+PASS  no-preference: panel saving waits 300ms
+PASS  no-preference: panel saving has status role immediately
+PASS  no-preference: command card remains delayed
+PASS  no-preference: command card status exists immediately
+PASS  no-preference: draft card remains delayed
+PASS  no-preference: draft title is immediate
+PASS  no-preference: positive control becomes visible
+PASS  no-preference: panel saving becomes visible
+PASS  no-preference: cards become visible
+PASS  no-preference: lookup control starts hidden
+PASS  no-preference: panel checking waits 300ms
+PASS  no-preference: panel checking has status role immediately
+PASS  no-preference: lookup control becomes visible
+PASS  no-preference: panel checking becomes visible
+PASS  no-preference: panel saved receipt immediate
+PASS  no-preference: refusal immediate
+PASS  reduce: simultaneous shared control hidden
+PASS  reduce: panel saving waits 300ms
+PASS  reduce: panel saving has status role immediately
+PASS  reduce: command card remains delayed
+PASS  reduce: command card status exists immediately
+PASS  reduce: draft card remains delayed
+PASS  reduce: draft title is immediate
+PASS  reduce: positive control becomes visible
+PASS  reduce: panel saving becomes visible
+PASS  reduce: cards become visible
+PASS  reduce: lookup control starts hidden
+PASS  reduce: panel checking waits 300ms
+PASS  reduce: panel checking has status role immediately
+PASS  reduce: lookup control becomes visible
+PASS  reduce: panel checking becomes visible
+PASS  reduce: panel saved receipt immediate
+PASS  reduce: refusal immediate
+
+34 passed, 0 failed, 0 errors

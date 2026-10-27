@@ -1,8 +1,8 @@
-// Real-browser check that the Companion task cards (ticket #363) wait 300ms before
+// Real-browser check that the Companion task cards and draft panel (ticket #363) wait 300ms before
 // they show a transient loading message (design-system/MASTER.md: "Loading states
 // wait 300ms before they show"), and that results and errors show at once.
 //
-// Bundles the actual TaskActionCards, the actual TaskActionStore and the
+// Bundles the actual TaskActionCards, TaskProposalPanel, TaskActionStore and the
 // useTaskActionPhase hook, the real English translations, the real Tailwind CSS
 // (app/globals.css) and the motion config, and measures computed styles in
 // headless Chromium. The action client is an in-page stand-in whose replies the
@@ -13,7 +13,8 @@
 // Proves, in a real browser: a command card that is adding its task and a draft
 // card's status line while its approval is saving are invisible at first, carry
 // the shared `loading-appear` delay and then appear; their text and status role
-// are in the page from the start; the saved result and a refusal show at once.
+// are in the page from the start; Saving and Checking each restart the delay in
+// the draft panel; the saved result and a refusal show at once.
 // Does not prove: the Next.js app, real requests, Safari/Firefox, screen-reader
 // timing or native apps.
 //
@@ -38,6 +39,7 @@ const TITLE = "Set up phone service";
 const T = {
   adding: en.taskCreate.commandAdding.replace("{{title}}", TITLE),
   checking: en.taskActions.checking,
+  saving: en.taskActions.saving,
   added: en.taskCreate.added.replace("{{title}}", TITLE),
   refused: en.taskActions.refused,
 };
@@ -54,6 +56,9 @@ import { I18nextProvider, initReactI18next } from "react-i18next";
 import en from "@/lib/i18n/locales/en/translation.json";
 import { motionCssVars } from "@/lib/motion";
 import { TaskActionCards } from "@/components/companion/tasks/TaskActionCards";
+import { TaskProposalPanel } from "@/components/companion/tasks/TaskProposalPanel";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { taskProposalKey } from "@/lib/companionActions/queryKeys";
 import { TaskActionStore } from "@/lib/companionActions/taskActionStore";
 import { parseTaskProposal } from "@/lib/companionActions/contract";
 
@@ -69,13 +74,21 @@ const receipt = {
 const held = [];
 const client = {
   apply: () => new Promise((resolve) => held.push(resolve)),
-  status: () => new Promise(() => {}),
+  status: () => new Promise((resolve) => held.push(resolve)),
 };
 const store = new TaskActionStore({ client, newOperationId: () => crypto.randomUUID(), onChanged: () => {} });
-const proposal = parseTaskProposal({
+const rawProposal = {
   proposal_id: "7e1f1f6c-2222-4222-8222-000000000001", proposal_revision: 1, status: "draft",
   operations: [op], context: null, source: { conversation_id: "c1", message_id: 101 },
-});
+};
+const proposal = parseTaskProposal(rawProposal);
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+queryClient.setQueryData(taskProposalKey("fixture-owner", proposal.proposalId), proposal);
+window.fetch = async (url, options) => {
+  const body = JSON.parse(options.body);
+  if (url !== "/api/companion/actions" || body.action !== "proposal") throw new Error("Unexpected external request: " + url);
+  return new Response(JSON.stringify({ proposal: rawProposal }), {status: 200});
+};
 const messages = [
   { id: 100, role: "user", content: "Add task: " + TITLE },
   { id: 101, role: "assistant", content: "Answer." },
@@ -87,16 +100,19 @@ const i18n = createInstance();
 i18n.use(initReactI18next).init({ lng: "en", resources: { en: { translation: en } }, interpolation: { escapeValue: false }, initImmediate: false });
 
 function App() {
-  const [control, setControl] = useState(false);
+  const [control, setControl] = useState(0);
   window.fixture = {
     // The positive control and both loading states start in one commit.
     start: () => flushSync(() => {
-      setControl(true);
+      setControl(1);
       void store.applyOperation("command:100", op, { kind: "direct_command", message_id: 100 });
-      void store.applyOperation("proposal:" + proposal.proposalId, op, {
-        kind: "approved_proposal", proposal_id: proposal.proposalId, proposal_revision: 1,
-      });
+      document.querySelector('#panel button[aria-label]').click();
     }),
+    check: async () => {
+      flushSync(() => setControl(2));
+      held.splice(0).forEach((resolve) => resolve({ kind: "unknown" }));
+      await new Promise((r) => setTimeout(r, 0));
+    },
     // The first two writes save; a third is refused at once.
     finish: async () => {
       held.splice(0).forEach((resolve) => resolve({ kind: "applied", replayed: false, receipt }));
@@ -109,7 +125,7 @@ function App() {
     },
   };
   return (
-    <I18nextProvider i18n={i18n}>
+    <QueryClientProvider client={queryClient}><I18nextProvider i18n={i18n}>
       <MotionConfig reducedMotion="user">
         <div style={{ padding: 24, maxWidth: 480 }}>
           {messages.map((m) => (
@@ -118,10 +134,12 @@ function App() {
                 canWrite onReview={() => {}} onViewTask={() => {}} />
             </div>
           ))}
-          {control && <p id="control" className="loading-delayed text-sm">Loading control</p>}
+          <div id="panel"><TaskProposalPanel proposalId={proposal.proposalId} store={store}
+            view={{ status: "ready", byRef: new Map(), stale: false, canWrite: true, refetch: () => {} }} /></div>
+          {control > 0 && <p key={control} id="control" className="loading-delayed text-sm">Loading control</p>}
         </div>
       </MotionConfig>
-    </I18nextProvider>
+    </I18nextProvider></QueryClientProvider>
   );
 }
 createRoot(document.getElementById("root")).render(<App />);
@@ -131,6 +149,18 @@ async function build() {
   const js = await esbuild.build({
     stdin: { contents: ENTRY, resolveDir: root, loader: "tsx", sourcefile: "fixture.tsx" },
     bundle: true,
+    plugins: [{
+      name: "task-loading-fixture-adapters",
+      setup(build) {
+        build.onResolve({ filter: /^@\/(hooks\/useAuthUser|lib\/posthog)$/ }, ({ path }) => ({ path, namespace: "task-loading-fixture" }));
+        build.onLoad({ filter: /.*/, namespace: "task-loading-fixture" }, ({ path }) => ({
+          contents: path.endsWith("useAuthUser")
+            ? 'export const AUTH_USER_KEY = ["auth-user"]; export const useAuthUser = () => ({data:{id:"fixture-owner"},isPending:false});'
+            : 'export const isPostHogConfigured = () => false; export const posthog = {capture(){}};',
+          loader: "js",
+        }));
+      },
+    }],
     write: false,
     format: "iife",
     platform: "browser",
@@ -177,34 +207,52 @@ const check = (name, ok, detail) => results.push({ name, ok: Boolean(ok), detail
 const delayed = (m) => m.present && m.opacity === 0 && m.animated?.name === "loading-appear" && m.animated.delay === "0.3s";
 
 async function run(browser, reducedMotion) {
-  const label = reducedMotion === "reduce" ? " (reduced motion)" : "";
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion });
+  const label = reducedMotion;
+  const context = await browser.newContext({viewport:{width:390,height:844},reducedMotion});
   const page = await context.newPage();
-  page.setDefaultTimeout(5000);
   await page.goto(origin);
-  await page.waitForFunction(() => Boolean(window.fixture));
-
-  // Start and measure in the same task, before any frame could reveal them.
-  const [control, adding, checking, draftTitle] = await measure(
-    page, ["Loading control", T.adding, T.checking, TITLE], true,
-  );
-  check(`control${label}: a shared loading-delayed line is hidden at first (the CSS is live)`, delayed(control), control);
-  check(`command card${label}: "adding" waits for the shared delay`, delayed(adding), adding);
-  check(`command card${label}: "adding" is in a status region from the start`, adding.present && adding.status, adding);
-  check(`draft card${label}: its "checking" status waits for the shared delay`, delayed(checking), checking);
-  check(`draft card${label}: the draft's own title shows at once`, draftTitle.present && draftTitle.opacity === 1, draftTitle);
-
+  await page.waitForFunction(() => Boolean(window.fixture) && document.querySelector('#panel button[aria-label]'));
+  const panelMeasure = async (text, start = false, checking = false) => page.evaluate(async ({text,start,checking}) => {
+    if (start) window.fixture.start();
+    if (checking) await window.fixture.check();
+    const measure = (el) => {
+      if (!el) return {present:false};
+      let opacity=1, animated=null;
+      for(let n=el;n;n=n.parentElement) { const c=getComputedStyle(n); opacity*=Number(c.opacity); if(!animated && c.animationName!=="none") animated={name:c.animationName,delay:c.animationDelay}; }
+      return {present:true,text:el.textContent,opacity,animated,status:Boolean(el.closest('[role="status"]'))};
+    };
+    const p=[...document.querySelectorAll('#panel p')].find(p=>p.textContent.trim()===text);
+    return {panel:measure(p),control:measure(document.querySelector('#control')),visibility:document.visibilityState};
+  },{text,start,checking});
+  const first = await panelMeasure(en.taskActions.saving,true);
+  check(label+": simultaneous shared control hidden",delayed(first.control),first);
+  check(label+": panel saving waits 300ms",delayed(first.panel),first);
+  check(label+": panel saving has status role immediately",first.panel.present && first.panel.status,first);
+  const [adding, cardChecking, draftTitle] = await measure(page,[T.adding,T.checking,TITLE]);
+  check(label+": command card remains delayed",delayed(adding),adding);
+  check(label+": command card status exists immediately",adding.present && adding.status,adding);
+  check(label+": draft card remains delayed",delayed(cardChecking),cardChecking);
+  check(label+": draft title is immediate",draftTitle.present && draftTitle.opacity===1,draftTitle);
   await page.waitForTimeout(700);
-  const later = await measure(page, ["Loading control", T.adding, T.checking]);
-  check(`after the delay${label}: the control and both loading lines show`, later.every((m) => m.present && m.opacity === 1), later);
-
-  await page.evaluate(() => window.fixture.finish());
-  const [added] = await measure(page, [T.added]);
-  check(`result${label}: the saved receipt shows at once, not delayed`, added.present && added.opacity === 1 && !added.animated, added);
-
-  await page.evaluate(() => window.fixture.refuse());
-  const [refused] = await measure(page, [T.refused]);
-  check(`error${label}: a refusal shows at once, not delayed`, refused.present && refused.opacity === 1 && !refused.animated, refused);
+  const later = await panelMeasure(en.taskActions.saving);
+  check(label+": positive control becomes visible",later.control.opacity===1,later);
+  check(label+": panel saving becomes visible",later.panel.present && later.panel.opacity===1,later);
+  const visibleCards = await measure(page,[T.adding,T.checking]);
+  check(label+": cards become visible",visibleCards.every(m=>m.present && m.opacity===1),visibleCards);
+  const checking = await panelMeasure(T.checking,false,true);
+  check(label+": lookup control starts hidden",delayed(checking.control),checking);
+  check(label+": panel checking waits 300ms",delayed(checking.panel),checking);
+  check(label+": panel checking has status role immediately",checking.panel.present && checking.panel.status,checking);
+  await page.waitForTimeout(700);
+  const afterCheckDelay = await panelMeasure(T.checking);
+  check(label+": lookup control becomes visible",afterCheckDelay.control.opacity===1,afterCheckDelay);
+  check(label+": panel checking becomes visible",afterCheckDelay.panel.present && afterCheckDelay.panel.opacity===1,afterCheckDelay);
+  await page.evaluate(()=>window.fixture.finish());
+  const saved = await panelMeasure(T.added);
+  check(label+": panel saved receipt immediate",saved.panel.present && saved.panel.opacity===1 && !saved.panel.animated,saved);
+  await page.evaluate(()=>window.fixture.refuse());
+  const [refused] = await measure(page,[T.refused]);
+  check(label+": refusal immediate",refused.present && refused.opacity===1 && !refused.animated,refused);
   await context.close();
 }
 
