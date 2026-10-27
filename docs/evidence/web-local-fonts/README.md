@@ -41,7 +41,9 @@ not the values next/font/google used.
   `assets/download-records.json`: 18 of 18 HTTP 200, `font/woff2`, size equal to
   `Content-Length`, `wOF2` signature, SHA-256 recorded.
 - `assets/font-metadata.json`: family name, version, copyright and license URL
-  from each file's name table. The copyright lines match the `OFL.txt` files.
+  from each file's name table. All seven Inter binaries report copyright 2016;
+  the pinned `OFL-Inter.txt` reports 2020. The files match their official sources,
+  and the original notices remain unchanged.
 - License files: `google/fonts` at commit `ddf386ba1b9fbc6b2c818f1ddcd9148f54ced94b`
   (`assets/google-fonts-commit.txt`), `ofl/<family>/OFL.txt`, byte-equal to `main`
   at download time. `METADATA.pb` for each family gives `license: "OFL"`.
@@ -177,17 +179,32 @@ stack ar cannot fail when the Arabic file is aborted; direct ar does fail. This
 change keeps that behavior because the scope is preservation. A fix (for
 example a `unicode-range` on the fallback faces) is a separate visual change.
 
-## Gates on the candidate
+## Original implementation gates
 
 - `npm test`: 53 files, 635 tests passed (`gates/npm-test.log`).
-- `app/fonts/fonts.test.ts`: before the implementation the suite failed
-  (`fonts.css` missing, `gates/red-unit-test.log`); after it 7 of 7 passed.
-- `npx tsc --noEmit`: exit 0. `eslint` on the changed files: exit 0.
-- `npm run lint`: exit 1, 12 errors, all `no-explicit-any` in 3 files this
-  change does not touch: `supabase/probes/companion-context-362/context_rls_test.ts`,
+- `app/fonts/fonts.test.ts`: the first run failed during module setup
+  (`fonts.css` missing, `gates/red-unit-test.log`) and ran zero tests. It is not
+  assertion-level red evidence. After the implementation, 7 of 7 passed.
+- `npx tsc --noEmit`: exit 0. Focused product/verifier lint exited 0. That check
+  did not cover the added inspection script under `docs/evidence/`.
+- The retained `npm run lint` log reports 12 errors, all `no-explicit-any` in
+  three files this change does not touch:
+  `supabase/probes/companion-context-362/context_rls_test.ts`,
   `supabase/tests/companion-actions/rollback_test.ts`,
   `supabase/tests/companion-actions/support.ts` (`gates/lint.log`).
+- Independent review of the final original commit `1c704c1f` found 15 errors:
+  those 12 plus three import errors in the added `inspect-fonts.cjs`. The earlier
+  lint log did not qualify that final tree.
 - `npm run build`, network on: exit 0. With the blocker: exit 0.
+
+## Review corrections
+
+The inspection entrypoint is now `tools/inspect-fonts.mjs`. It has zero focused
+lint errors and produces the same metadata bytes for all 18 fonts as the original
+script. Full lint reports 12 errors in the same three unchanged Supabase files.
+The final tree adds no lint error. Current `npm test` passes 635 tests in 53 files,
+and the normal production build exits 0. See `corrections-r1/README.md` for exact
+commands, raw logs, counts, source equality and proof limits.
 
 ## What each part proves
 

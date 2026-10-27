@@ -1,6 +1,8 @@
 // Read name table, axes and cmap coverage of each downloaded font.
-const fs = require("fs"), path = require("path");
-const fk = require(path.resolve("node_modules/next/dist/compiled/@next/font/dist/fontkit")).default;
+import fs from "node:fs";
+import path from "node:path";
+import fontkit from "next/dist/compiled/@next/font/dist/fontkit/index.js";
+const fk = fontkit.default;
 const create = fk.default || fk;
 const dir = process.argv[2];
 const faces = JSON.parse(process.argv[3] ? fs.readFileSync(process.argv[3], "utf8") : "[]");
