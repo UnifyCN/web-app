@@ -270,6 +270,7 @@ export function StepProposalPanel({
               stateLabel={(s) => t(`taskActions.state.${s}`)}
               store={store}
               taskRef={key}
+              steps={view.stepsByRef.get(proposal.operation.task_ref)}
             />
           )
         )}

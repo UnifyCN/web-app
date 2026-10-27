@@ -21,6 +21,7 @@ import {
   type TaskProgress,
   type TaskReceipt,
   type TaskState,
+  type TaskStep,
 } from "@/lib/companionActions/contract";
 import {
   isUnresolved,
@@ -267,6 +268,7 @@ export function TaskStatePanel({
           stateLabel={stateLabel}
           store={store}
           taskRef={taskRef}
+          steps={view.stepsByRef.get(taskRef)}
           phaseValue={phase}
         />
         {receipt && phase.phase !== "undo_review" && (
@@ -290,6 +292,7 @@ export function PhaseMessage({
   stateLabel,
   store,
   taskRef,
+  steps = [],
 }: {
   writable: boolean;
   phase: string;
@@ -297,6 +300,7 @@ export function PhaseMessage({
   stateLabel: (s: TaskState) => string;
   store: TaskActionStore | null;
   taskRef: string;
+  steps?: readonly TaskStep[];
 }) {
   const { t } = useTranslation();
   const line = (text: string, tone: "neutral" | "error" = "neutral") => (
@@ -382,6 +386,19 @@ export function PhaseMessage({
         // #366: Undo of a step change met a newer edit. Nothing changed; the offered
         // change needs approval, and a removal also its confirmation (this button).
         const removes = isRemoval(proposed);
+        const targets = proposed.type === "step.remove_created"
+          ? proposed.steps
+          : proposed.type === "step.remove"
+            ? [{ step_id: proposed.step_id, expected_revision: proposed.expected_revision }]
+            : [];
+        const currentTargets = targets.map(target => ({
+          ...target,
+          current: steps.find(step => step.stepId === target.step_id),
+        }));
+        const detailsMatch = currentTargets.length > 0 && currentTargets.every(
+          target => target.current?.revision === target.expected_revision
+        );
+        const canApprove = writable && (!removes || detailsMatch);
         return (
           <div className="rounded-lg border border-primary-subtle bg-primary-bg px-3 py-3">
             <p className="text-sm text-ink-secondary">
@@ -394,17 +411,31 @@ export function PhaseMessage({
                 {t("taskSteps.proposedText", { title: proposed.title })}
               </p>
             )}
+            {removes && (
+              <div className="mt-2 space-y-1">
+                {currentTargets.map(target => target.current && (
+                  <p key={target.step_id} className="whitespace-pre-wrap break-words text-sm text-ink-secondary">
+                    {target.current.title}
+                  </p>
+                ))}
+                {!detailsMatch && (
+                  <p className="text-sm text-destructive-label">
+                    {t("taskSteps.removalNeedsRefresh", { keep: t("taskActions.keepCurrent"), undo: t("taskSteps.undo") })}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
                 type="button"
                 size="sm"
-                aria-disabled={!writable}
+                aria-disabled={!canApprove}
                 className={cn(
                   "bg-ink-secondary hover:bg-ink",
-                  !writable && "cursor-not-allowed opacity-60",
+                  !canApprove && "cursor-not-allowed opacity-60",
                 )}
                 onClick={() =>
-                  writable &&
+                  canApprove &&
                   void store?.approveCompensation(taskRef, {
                     removalConfirmed: removes,
                   })

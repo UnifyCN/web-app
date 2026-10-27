@@ -206,8 +206,9 @@ export function TaskStepsSection({
         <StepPhase
           store={store}
           storeKey={stepsKey(taskRef)}
-          writable={writable}
+          writable={canEdit}
           draft={newStep}
+          steps={steps}
         />
       </div>
     </section>
@@ -442,6 +443,7 @@ function StepRow({
           storeKey={stepKey(step.stepId)}
           writable={canEdit}
           draft={edit}
+          steps={[step]}
         />
       </div>
     </li>
@@ -454,11 +456,13 @@ function StepPhase({
   storeKey,
   writable,
   draft,
+  steps,
 }: {
   store: TaskActionStore | null;
   storeKey: string;
   writable: boolean;
   draft?: string;
+  steps: readonly TaskStep[];
 }) {
   const { t } = useTranslation();
   const phase = useTaskActionPhase(store, storeKey);
@@ -496,6 +500,7 @@ function StepPhase({
           stateLabel={(s) => t(`taskActions.state.${s}`)}
           store={store}
           taskRef={storeKey}
+          steps={steps}
         />
       )}
       {phase.phase === "saved" && (
