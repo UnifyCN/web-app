@@ -153,7 +153,8 @@ import { clearComposerDrafts } from "@/lib/companion/composerDrafts";
 let server: ReturnType<typeof scriptedServer>;
 /** Per test: answers a request differently (a dropped reply, a pending lookup). */
 let override:
-  ((body: Body) => TransportReply | "network-error" | undefined) | null = null;
+  | ((body: Body) => TransportReply | "network-error" | undefined)
+  | null = null;
 const realFetch = globalThis.fetch;
 function useServer(s: ReturnType<typeof scriptedServer>) {
   server = s;
@@ -652,4 +653,197 @@ describe("Task steps (web)", () => {
       /Secret step title|0000-4000-8000/,
     );
   });
+  it.each(["rename", "add"] as const)(
+    "%s: a changed draft needs a new authorized intent after not_applied",
+    async (kind) => {
+      const type = kind === "rename" ? "step.update" : "step.create";
+      let drop = true;
+      override = (body) =>
+        body.action === "apply" && body.operations?.[0]?.type === type && drop
+          ? "network-error"
+          : undefined;
+      mount(<ChecklistPage />);
+      const { panel } = await openSteps();
+      if (kind === "rename") {
+        await addStep(panel, "Original title");
+        const edit = within(panel).getByRole("button", {
+          name: "Edit step: Original title",
+        });
+        await waitFor(() => expect(isDisabled(edit)).toBe(false));
+        fireEvent.click(edit);
+      }
+      const field = within(panel).getByRole("textbox", {
+        name: kind === "rename" ? "Step text" : "New step",
+      });
+      const save = () =>
+        within(panel).getByRole("button", {
+          name: kind === "rename" ? "Save step" : "Add step",
+        });
+      fireEvent.change(field, { target: { value: "First authorized title" } });
+      fireEvent.click(save());
+      const retry = await within(panel).findByRole("button", {
+        name: "Try again",
+      });
+      expect(
+        stepApplies().filter((w) => w.operations[0].type === type),
+      ).toHaveLength(1);
+      fireEvent.change(field, { target: { value: "New visible draft" } });
+      expect(isDisabled(retry)).toBe(true);
+      fireEvent.click(retry);
+      expect(
+        stepApplies().filter((w) => w.operations[0].type === type),
+      ).toHaveLength(1);
+      drop = false;
+      await waitFor(() => expect(isDisabled(save())).toBe(false));
+      fireEvent.click(save());
+      expect(
+        await within(panel).findByRole("checkbox", {
+          name: "New visible draft",
+        }),
+      ).toBeTruthy();
+      expect(
+        within(panel).queryByRole("checkbox", {
+          name: "First authorized title",
+        }),
+      ).toBeNull();
+      const writes = stepApplies().filter((w) => w.operations[0].type === type);
+      expect(writes).toHaveLength(2);
+      expect(writes[1].operation_id).not.toBe(writes[0].operation_id);
+    },
+  );
+
+  it.each(["rename", "add"] as const)(
+    "%s: an unchanged or restored draft retries the exact original operation",
+    async (kind) => {
+      const type = kind === "rename" ? "step.update" : "step.create";
+      let drop = true;
+      override = (body) =>
+        body.action === "apply" && body.operations?.[0]?.type === type && drop
+          ? "network-error"
+          : undefined;
+      mount(<ChecklistPage />);
+      const { panel } = await openSteps();
+      if (kind === "rename") {
+        await addStep(panel, "Original title");
+        const edit = within(panel).getByRole("button", {
+          name: "Edit step: Original title",
+        });
+        await waitFor(() => expect(isDisabled(edit)).toBe(false));
+        fireEvent.click(edit);
+      }
+      const field = within(panel).getByRole("textbox", {
+        name: kind === "rename" ? "Step text" : "New step",
+      });
+      fireEvent.change(field, { target: { value: "First authorized title" } });
+      fireEvent.click(
+        within(panel).getByRole("button", {
+          name: kind === "rename" ? "Save step" : "Add step",
+        }),
+      );
+      const retry = await within(panel).findByRole("button", {
+        name: "Try again",
+      });
+      fireEvent.change(field, { target: { value: "Unsaved alternate" } });
+      fireEvent.change(field, { target: { value: "First authorized title" } });
+      expect(isDisabled(retry)).toBe(false);
+      drop = false;
+      fireEvent.click(retry);
+      expect(
+        await within(panel).findByRole("checkbox", {
+          name: "First authorized title",
+        }),
+      ).toBeTruthy();
+      const writes = stepApplies().filter((w) => w.operations[0].type === type);
+      expect(writes).toHaveLength(2);
+      expect(writes[1].operation_id).toBe(writes[0].operation_id);
+      expect(writes[1].operations).toEqual(writes[0].operations);
+    },
+  );
+
+  it.each(["rename", "add"] as const)(
+    "%s: editing cannot replace an unknown write before confirmed non-application",
+    async (kind) => {
+      const type = kind === "rename" ? "step.update" : "step.create";
+      let pending = true;
+      override = (body) => {
+        if (body.action === "apply" && body.operations?.[0]?.type === type)
+          return "network-error";
+        if (body.action === "status" && pending)
+          return { status: 200, body: { status: "pending" } };
+        return undefined;
+      };
+      mount(<ChecklistPage />);
+      const { panel } = await openSteps();
+      if (kind === "rename") {
+        await addStep(panel, "Original title");
+        const edit = within(panel).getByRole("button", {
+          name: "Edit step: Original title",
+        });
+        await waitFor(() => expect(isDisabled(edit)).toBe(false));
+        fireEvent.click(edit);
+      }
+      const field = within(panel).getByRole("textbox", {
+        name: kind === "rename" ? "Step text" : "New step",
+      });
+      const save = () =>
+        within(panel).getByRole("button", {
+          name: kind === "rename" ? "Save step" : "Add step",
+        });
+      fireEvent.change(field, { target: { value: "First authorized title" } });
+      fireEvent.click(save());
+      const lookup = await within(panel).findByRole("button", {
+        name: "Check again",
+      });
+      fireEvent.change(field, { target: { value: "New visible draft" } });
+      expect(isDisabled(save())).toBe(true);
+      expect(
+        within(panel).queryByRole("button", { name: "Try again" }),
+      ).toBeNull();
+      fireEvent.click(save());
+      expect(
+        stepApplies().filter((w) => w.operations[0].type === type),
+      ).toHaveLength(1);
+      pending = false;
+      fireEvent.click(lookup);
+      expect(
+        isDisabled(
+          await within(panel).findByRole("button", { name: "Try again" }),
+        ),
+      ).toBe(true);
+      expect(isDisabled(save())).toBe(false);
+      expect((field as HTMLInputElement).value).toBe("New visible draft");
+    },
+  );
+
+  it.each(["edit", "remove"] as const)(
+    "%s disclosure animates for pointer activation and opens immediately from the keyboard",
+    async (kind) => {
+      mount(<ChecklistPage />);
+      const { panel } = await openSteps();
+      await addStep(panel, "Disclosure step");
+      const trigger = () =>
+        within(panel).getByRole("button", {
+          name: `${kind === "edit" ? "Edit" : "Remove"} step: Disclosure step`,
+        });
+      await waitFor(() => expect(isDisabled(trigger())).toBe(false));
+      fireEvent.click(trigger(), { detail: 1 });
+      const disclosure = () =>
+        (kind === "edit"
+          ? within(panel)
+              .getByRole("textbox", { name: "Step text" })
+              .closest(".pb-2")
+          : within(panel)
+              .getByRole("button", { name: "Remove step" })
+              .closest(".mb-2")) as HTMLElement;
+      expect(disclosure().style.opacity).toBe("0");
+      fireEvent.click(
+        within(panel).getByRole("button", {
+          name: kind === "edit" ? "Cancel" : "Keep step",
+        }),
+      );
+      fireEvent.click(trigger(), { detail: 0 });
+      expect(disclosure().style.opacity).not.toBe("0");
+      expect(disclosure().style.transform).not.toContain("-4");
+    },
+  );
 });

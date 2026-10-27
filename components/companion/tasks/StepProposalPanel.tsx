@@ -209,7 +209,7 @@ export function StepProposalPanel({
             <label
               className={cn(
                 "flex min-h-11 items-center gap-3 py-1",
-                canWrite ? "cursor-pointer" : "cursor-not-allowed",
+                canWrite ? "press-dim cursor-pointer" : "cursor-not-allowed",
               )}
             >
               <input

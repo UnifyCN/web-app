@@ -6,6 +6,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { ReceiptBlock } from "./ReceiptBlock";
 import { PhaseMessage } from "./TaskStatePanel";
 import { Button } from "@/components/ui/Button";
+import { Reveal } from "@/components/ui/Reveal";
 import { cn } from "@/lib/utils";
 import {
   STEP_TITLE_MAX,
@@ -72,8 +73,18 @@ export function TaskStepsSection({
   const done = steps.filter((s) => s.done).length;
   const completed = progress.state === "completed";
   const canEdit = writable && !completed;
+  const failedAdd =
+    listPhase.phase === "not_applied" &&
+    listPhase.write.kind === "apply" &&
+    listPhase.write.operation?.type === "step.create"
+      ? listPhase.write.operation
+      : null;
+  const changedAdd =
+    failedAdd?.titles.length === 1 && newStep.trim() !== failedAdd.titles[0];
   const canAdd =
-    canEdit && !isUnresolved(listPhase) && newStep.trim().length > 0;
+    canEdit &&
+    (!isUnresolved(listPhase) || changedAdd) &&
+    newStep.trim().length > 0;
   const allDone = steps.length > 0 && done === steps.length;
   const canComplete = canEdit && !isUnresolved(taskPhase);
   const stateLabel = (s: TaskState) => t(`taskActions.state.${s}`);
@@ -81,6 +92,7 @@ export function TaskStepsSection({
   function add() {
     if (!canAdd || !store) return;
     const submitted = newStep;
+    if (changedAdd) store.supersedeNotApplied(stepsKey(taskRef));
     void store
       .applyOperation(
         stepsKey(taskRef),
@@ -195,6 +207,7 @@ export function TaskStepsSection({
           store={store}
           storeKey={stepsKey(taskRef)}
           writable={writable}
+          draft={newStep}
         />
       </div>
     </section>
@@ -218,10 +231,24 @@ function StepRow({
   const listPhase = useTaskActionPhase(store, stepsKey(taskRef));
   const edit = useTaskActionDraft(store, editDraftKey(step.stepId));
   const [confirming, setConfirming] = useState(false);
+  const [instantEdit, setInstantEdit] = useState(false);
+  const [instantConfirm, setInstantConfirm] = useState(false);
   const canWrite = canEdit && !isUnresolved(phase);
   const editing = edit !== undefined;
   const editChanged =
     editing && edit.trim().length > 0 && edit.trim() !== step.title;
+  const failedUpdate =
+    phase.phase === "not_applied" &&
+    phase.write.kind === "apply" &&
+    phase.write.operation?.type === "step.update"
+      ? phase.write.operation
+      : null;
+  const changedUpdate =
+    failedUpdate !== null &&
+    edit !== undefined &&
+    edit.trim() !== failedUpdate.title;
+  const canSaveEdit =
+    canEdit && editChanged && (!isUnresolved(phase) || changedUpdate);
 
   function toggle() {
     if (!canWrite || !store) return;
@@ -233,8 +260,9 @@ function StepRow({
   }
 
   function saveEdit() {
-    if (!canWrite || !store || !editChanged) return;
+    if (!canSaveEdit || !store || edit === undefined) return;
     const submitted = edit;
+    if (changedUpdate) store.supersedeNotApplied(stepKey(step.stepId));
     void store
       .applyOperation(
         stepKey(step.stepId),
@@ -267,7 +295,7 @@ function StepRow({
           htmlFor={`${ids}-check`}
           className={cn(
             "flex min-h-11 min-w-0 flex-1 items-center gap-3 py-1",
-            canWrite ? "cursor-pointer" : "cursor-not-allowed",
+            canWrite ? "press-dim cursor-pointer" : "cursor-not-allowed",
           )}
         >
           <input
@@ -302,11 +330,17 @@ function StepRow({
               type="button"
               aria-label={t("taskSteps.editA11y", { title: step.title })}
               aria-disabled={!canWrite}
-              onClick={() =>
-                canWrite &&
-                store?.setDraft(editDraftKey(step.stepId), step.title)
-              }
-              className={cn(iconButton, !canWrite && "opacity-60")}
+              onClick={(event) => {
+                if (!canWrite) return;
+                setInstantEdit(event.detail === 0);
+                store?.setDraft(editDraftKey(step.stepId), step.title);
+              }}
+              className={cn(
+                iconButton,
+                canWrite
+                  ? "press cursor-pointer"
+                  : "cursor-not-allowed opacity-60",
+              )}
             >
               <Pencil className="h-4 w-4" aria-hidden />
             </button>
@@ -314,8 +348,17 @@ function StepRow({
               type="button"
               aria-label={t("taskSteps.removeA11y", { title: step.title })}
               aria-disabled={!canWrite}
-              onClick={() => canWrite && setConfirming(true)}
-              className={cn(iconButton, !canWrite && "opacity-60")}
+              onClick={(event) => {
+                if (!canWrite) return;
+                setInstantConfirm(event.detail === 0);
+                setConfirming(true);
+              }}
+              className={cn(
+                iconButton,
+                canWrite
+                  ? "press cursor-pointer"
+                  : "cursor-not-allowed opacity-60",
+              )}
             >
               <Trash2 className="h-4 w-4" aria-hidden />
             </button>
@@ -323,83 +366,82 @@ function StepRow({
         )}
       </div>
 
-      {editing && (
-        <div className="space-y-2 pb-2">
-          <input
-            type="text"
-            aria-label={t("taskSteps.editLabel")}
-            value={edit}
-            maxLength={STEP_TITLE_MAX}
-            onChange={(e) =>
-              store?.setDraft(editDraftKey(step.stepId), e.target.value)
+      <Reveal open={editing} instant={instantEdit} className="space-y-2 pb-2">
+        <input
+          type="text"
+          aria-label={t("taskSteps.editLabel")}
+          value={edit}
+          maxLength={STEP_TITLE_MAX}
+          onChange={(e) =>
+            store?.setDraft(editDraftKey(step.stepId), e.target.value)
+          }
+          className="min-h-11 w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        />
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            aria-disabled={!canSaveEdit}
+            onClick={saveEdit}
+            className={cn(!canSaveEdit && "cursor-not-allowed opacity-60")}
+          >
+            {t("taskSteps.save")}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() =>
+              store?.setDraft(editDraftKey(step.stepId), undefined)
             }
-            className="min-h-11 w-full rounded-lg border border-border-card bg-surface px-3 py-2 text-base text-ink-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          />
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              aria-disabled={!canWrite || !editChanged}
-              onClick={saveEdit}
-              className={cn(
-                (!canWrite || !editChanged) && "cursor-not-allowed opacity-60",
-              )}
-            >
-              {t("taskSteps.save")}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() =>
-                store?.setDraft(editDraftKey(step.stepId), undefined)
-              }
-            >
-              {t("taskSteps.cancelEdit")}
-            </Button>
-          </div>
+          >
+            {t("taskSteps.cancelEdit")}
+          </Button>
         </div>
-      )}
+      </Reveal>
 
-      {confirming && (
-        <div className="mb-2 rounded-lg border border-primary-subtle bg-primary-bg px-3 py-3">
-          <p className="break-words text-sm font-semibold text-ink-secondary">
-            {t("taskSteps.confirmRemove", { title: step.title })}
-          </p>
-          <p className="mt-1 text-sm text-ink-tertiary">
-            {t("taskSteps.confirmRemoveBody")}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button
-              type="button"
-              size="sm"
-              aria-disabled={!canWrite}
-              onClick={remove}
-              className={cn(
-                "bg-ink-secondary hover:bg-ink",
-                !canWrite && "cursor-not-allowed opacity-60",
-              )}
-            >
-              {t("taskSteps.remove")}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => setConfirming(false)}
-            >
-              {t("taskSteps.keep")}
-            </Button>
-          </div>
+      <Reveal
+        open={confirming}
+        instant={instantConfirm}
+        className="mb-2 rounded-lg border border-primary-subtle bg-primary-bg px-3 py-3"
+      >
+        <p className="break-words text-sm font-semibold text-ink-secondary">
+          {t("taskSteps.confirmRemove", { title: step.title })}
+        </p>
+        <p className="mt-1 text-sm text-ink-tertiary">
+          {t("taskSteps.confirmRemoveBody")}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            aria-disabled={!canWrite}
+            onClick={remove}
+            className={cn(
+              "bg-ink-secondary hover:bg-ink",
+              !canWrite && "cursor-not-allowed opacity-60",
+            )}
+          >
+            {t("taskSteps.remove")}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => setConfirming(false)}
+          >
+            {t("taskSteps.keep")}
+          </Button>
         </div>
-      )}
+      </Reveal>
 
       <div aria-live="polite" role="status" className="space-y-2">
         <StepPhase
           store={store}
           storeKey={stepKey(step.stepId)}
           writable={canEdit}
+          draft={edit}
         />
       </div>
     </li>
@@ -411,13 +453,26 @@ function StepPhase({
   store,
   storeKey,
   writable,
+  draft,
 }: {
   store: TaskActionStore | null;
   storeKey: string;
   writable: boolean;
+  draft?: string;
 }) {
   const { t } = useTranslation();
   const phase = useTaskActionPhase(store, storeKey);
+  const operation =
+    phase.phase === "not_applied" && phase.write.kind === "apply"
+      ? phase.write.operation
+      : undefined;
+  const matchesDraft =
+    draft === undefined ||
+    (operation?.type === "step.update"
+      ? draft.trim() === operation.title
+      : operation?.type === "step.create"
+        ? operation.titles.length === 1 && draft.trim() === operation.titles[0]
+        : true);
   if (phase.phase === "idle") return null;
   const stepMessage =
     phase.phase === "conflict"
@@ -435,7 +490,7 @@ function StepPhase({
         <p className="text-sm text-destructive-label">{stepMessage}</p>
       ) : (
         <PhaseMessage
-          writable={writable}
+          writable={writable && matchesDraft}
           phase={phase.phase}
           phaseValue={phase}
           stateLabel={(s) => t(`taskActions.state.${s}`)}
