@@ -5,9 +5,9 @@
 // advice or an audience rule. Each test names the observation that would prove the
 // behavior wrong.
 import { assert, assertEquals } from 'jsr:@std/assert@1';
-import { draftFor, draftItems, GOAL, journeyItems, PHONE, vancouverArrival } from './planSupport.ts';
+import { draftFor, draftItems, GOAL, PHONE, vancouverArrival } from './planSupport.ts';
 import {
-  type Account, call, conversationWith, customRows, existingCustomTask, existingItem, existingSanityTask, newAccount,
+  type Account, call, conversationWith, customRows, existingCustomTask, existingItem, existingSanityTask,
   newItem, planApply, planCancel, planPrepare, planProposal, planRevise, plansOf, read, ready, setProfile, setState, sql, testOpts, uuid,
 } from './support.ts';
 
