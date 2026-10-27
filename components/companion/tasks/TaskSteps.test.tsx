@@ -847,3 +847,46 @@ describe("Task steps (web)", () => {
     },
   );
 });
+
+it.each(["approve", "keep"] as const)(
+  "a conflicting rename Undo shows its exact proposed text before %s",
+  async (choice) => {
+    // Wrong if approval can restore an undisclosed title, or Keep sends a write.
+    expect(server.handle({
+      action: "apply", operation_id: crypto.randomUUID(),
+      authorization: { kind: "ui_control" },
+      operations: [{ type: "step.create", task_ref: "sanity:sin", titles: ["Gather the original papers"] }],
+    }).status).toBe(200);
+    mount(<ChecklistPage />);
+    const { panel } = await openSteps();
+    const edit = within(panel).getByRole("button", { name: "Edit step: Gather the original papers" });
+    await waitFor(() => expect(isDisabled(edit)).toBe(false));
+    fireEvent.click(edit);
+    fireEvent.change(within(panel).getByRole("textbox", { name: "Step text" }), { target: { value: "Call the service centre" } });
+    fireEvent.click(within(panel).getByRole("button", { name: "Save step" }));
+    const undo = await within(panel).findByRole("button", { name: "Undo “Renamed step “Gather the original papers” to “Call the service centre””" });
+    await waitFor(() => expect(isDisabled(undo)).toBe(false));
+    const step = server.steps()[0];
+    expect(server.handle({
+      action: "apply", operation_id: crypto.randomUUID(),
+      authorization: { kind: "ui_control" },
+      operations: [{ type: "step.update", step_id: step.step_id, title: "Keep the newer instructions", expected_revision: step.revision }],
+    }).status).toBe(200);
+    fireEvent.click(undo);
+    const approve = await within(panel).findByRole("button", { name: "Apply this change" });
+    await waitFor(() => expect(isDisabled(approve)).toBe(false));
+    expect(within(panel).getByRole("checkbox", { name: "Keep the newer instructions" })).toBeTruthy();
+    expect(within(panel).getByText("Proposed step text: Gather the original papers")).toBeTruthy();
+    const writesBefore = stepApplies().length;
+    if (choice === "keep") {
+      fireEvent.click(within(panel).getByRole("button", { name: "Keep current" }));
+      expect(stepApplies()).toHaveLength(writesBefore);
+      expect(server.steps()[0].title).toBe("Keep the newer instructions");
+    } else {
+      fireEvent.click(approve);
+      await within(panel).findByRole("checkbox", { name: "Gather the original papers" });
+      expect(stepApplies()).toHaveLength(writesBefore + 1);
+      expect(stepApplies().at(-1)?.operations[0].title).toBe("Gather the original papers");
+    }
+  },
+);

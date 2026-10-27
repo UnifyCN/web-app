@@ -389,6 +389,11 @@ export function PhaseMessage({
                 ? t("taskSteps.undoConflictRemove")
                 : t("taskSteps.undoConflict")}
             </p>
+            {proposed.type === "step.update" && (
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm text-ink-secondary">
+                {t("taskSteps.proposedText", { title: proposed.title })}
+              </p>
+            )}
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
                 type="button"
