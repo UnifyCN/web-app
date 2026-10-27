@@ -31,6 +31,11 @@ export const MIGRATION_363 = override('ACTIONS_MIGRATION_363_FILE') ??
   new URL('../../migrations/20261026165156_companion_task_create.sql', import.meta.url);
 export const ROLLBACK_363 = override('ACTIONS_ROLLBACK_363_FILE') ??
   new URL('../../rollbacks/20261026165156_companion_task_create.down.sql', import.meta.url);
+// #366 task steps (ACTIONS_MIGRATION_366_FILE / ACTIONS_ROLLBACK_366_FILE for mutation runs).
+export const MIGRATION_366 = override('ACTIONS_MIGRATION_366_FILE') ??
+  new URL('../../migrations/20261027183644_companion_task_steps.sql', import.meta.url);
+export const ROLLBACK_366 = override('ACTIONS_ROLLBACK_366_FILE') ??
+  new URL('../../rollbacks/20261027183644_companion_task_steps.down.sql', import.meta.url);
 
 export const admin = createClient(API_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 export const sql = postgres(DB_URL, { max: 20, onnotice: () => {} });
@@ -89,14 +94,16 @@ export async function migrationApplied(): Promise<boolean> {
 }
 
 /**
- * The full schema change: 'up' applies both production migrations in order (#361, then
- * #363), each in one transaction; 'down' runs both rollback scripts in reverse order.
+ * The full schema change: 'up' applies the production migrations in order (#361, #363,
+ * #366), each in one transaction; 'down' runs the rollback scripts in reverse order.
  */
 export async function migrate(which: 'up' | 'down'): Promise<void> {
   if (which === 'up') {
     await sql.begin(async tx => await tx.unsafe(await Deno.readTextFile(MIGRATION)));
     await migrate363('up');
+    await migrate366('up');
   } else {
+    if (await migration366Applied()) await migrate366('down');
     if (await migration363Applied()) await migrate363('down');
     await sql.begin(async tx => await tx.unsafe(await Deno.readTextFile(ROLLBACK)));
     await waitForSchemaCache('down');
@@ -111,13 +118,25 @@ export async function migrate363(which: 'up' | 'down'): Promise<void> {
   await waitForSchemaCache(which === 'up' && text.includes('companion_prepare_proposal') ? 'up' : 'up361');
 }
 
+/** Only the #366 migration or only its rollback script, in one transaction. */
+export async function migrate366(which: 'up' | 'down'): Promise<void> {
+  const text = await Deno.readTextFile(which === 'up' ? MIGRATION_366 : ROLLBACK_366);
+  await sql.begin(async tx => await tx.unsafe(text));
+  await waitForSchemaCache(which === 'up' && text.includes('companion_read_steps') ? 'up366' : 'up');
+}
+
+export async function migration366Applied(): Promise<boolean> {
+  const [r] = await sql`select to_regprocedure('public.companion_read_steps(uuid)') is not null as applied`;
+  return r.applied;
+}
+
 export async function migration363Applied(): Promise<boolean> {
   const [r] = await sql`select to_regprocedure('public.companion_prepare_proposal(uuid,jsonb,jsonb)') is not null as applied`;
   return r.applied;
 }
 
 /** PostgREST reloads its schema cache asynchronously after DDL; wait until it agrees. */
-export async function waitForSchemaCache(which: 'up' | 'up361' | 'down', timeoutMs = 15000): Promise<void> {
+export async function waitForSchemaCache(which: 'up' | 'up361' | 'up366' | 'down', timeoutMs = 15000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const res = await fetch(`${API_URL}/rest/v1/`, {
@@ -127,6 +146,7 @@ export async function waitForSchemaCache(which: 'up' | 'up361' | 'down', timeout
     const seen = paths.includes('/companion_feature_gate') && paths.includes('/rpc/companion_apply_actions');
     const seen363 = paths.includes('/rpc/companion_prepare_proposal');
     if (which === 'up' && seen && seen363) return;
+    if (which === 'up366' && seen && seen363 && paths.includes('/rpc/companion_read_steps')) return;
     if (which === 'up361' && seen && !seen363) return;
     if (which === 'down' && !paths.some(p => p.includes('companion_') && !p.includes('rollback_archive'))) return;
     await sleep(100);
@@ -144,7 +164,10 @@ export async function openGate(patch: Record<string, unknown> = {}): Promise<voi
 /** Brings the stack to "migration applied, feature on". */
 export async function ready(): Promise<void> {
   if (!(await migrationApplied())) await migrate('up');
-  else if (!(await migration363Applied())) await migrate363('up');
+  else {
+    if (!(await migration363Applied())) await migrate363('up');
+    if (!(await migration366Applied())) await migrate366('up');
+  }
   await openGate();
 }
 
@@ -305,3 +328,50 @@ export function holdTaskRow(table: 'user_tasks' | 'custom_checklist_tasks', wher
 }
 
 export const testOpts = { sanitizeOps: false, sanitizeResources: false };
+
+// ------------------------------------------------------------------ #366 task steps
+export const stepCreate = (task_ref: string, titles: string[]) => ({ type: 'step.create', task_ref, titles });
+export const stepUpdate = (step_id: string, title: string, expected_revision: number) =>
+  ({ type: 'step.update', step_id, title, expected_revision });
+export const stepDone = (step_id: string, done: boolean, expected_revision: number) =>
+  ({ type: 'step.set_done', step_id, done, expected_revision });
+export const stepRemove = (step_id: string, expected_revision: number) => ({ type: 'step.remove', step_id, expected_revision });
+export const confirmedRemoval = { kind: 'ui_control', removal_confirmed: true };
+
+/** The caller's live steps of one task, as the read action returns them, in order. */
+export async function stepsOf(who: Account, ref: string, platform?: Platform): Promise<any[]> {
+  const r = await read(who, platform);
+  if (r.status !== 200) throw new Error(`read failed: ${r.status} ${JSON.stringify(r.json)}`);
+  if (!Array.isArray(r.json.steps)) throw new Error(`read returned no steps: ${JSON.stringify(r.json)}`);
+  return r.json.steps.filter((s: { task_ref: string }) => s.task_ref === ref);
+}
+
+/** Every step row of an account, removed ones included (no public path exposes those). */
+export async function stepRows(userId: string): Promise<any[]> {
+  return [...await sql`select id::text, task_ref, title, completed, removed_at is not null as removed, revision
+    from companion_task_steps where user_id = ${userId} order by position, created_at`];
+}
+
+/**
+ * Stand-in for the published Checklist content read of the action service. The edge
+ * runtime asks it whether a content-backed task exists (run.sh points
+ * COMPANION_CONTENT_QUERY_URL here). `published` lists the existing document ids; `fail`
+ * makes it answer 503. Counts every request.
+ */
+export const contentStub = { published: new Set<string>(['sin-number', 'bank-account']), fail: false, requests: 0 };
+let contentServer: Deno.HttpServer | null = null;
+export function startContentStub(): void {
+  if (contentServer) return;
+  const port = Number(Deno.env.get('ACTIONS_CONTENT_PORT') ?? '60675');
+  contentServer = Deno.serve({ hostname: '127.0.0.1', port, onListen: () => {} }, req => {
+    contentStub.requests++;
+    if (contentStub.fail) return new Response('unavailable', { status: 503 });
+    const url = new URL(req.url);
+    let id: unknown = null;
+    try {
+      id = JSON.parse(url.searchParams.get('$id') ?? 'null');
+    } catch { /* not a JSON parameter */ }
+    const found = typeof id === 'string' && contentStub.published.has(id) ? id : null;
+    return Response.json({ result: found });
+  });
+}

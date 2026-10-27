@@ -22,6 +22,9 @@ rm -rf supabase/functions
 mkdir -p supabase/functions
 cp -R "$functions_src/companion-actions" supabase/functions/companion-actions
 
+# The published-content read of the function goes to the tests' stand-in (#366).
+export ACTIONS_CONTENT_PORT="${ACTIONS_CONTENT_PORT:-60675}"
+export ACTIONS_CONTENT_QUERY_URL="http://host.docker.internal:${ACTIONS_CONTENT_PORT}/content"
 if ! supabase status --workdir . >/dev/null 2>&1; then
   supabase start --workdir . >/dev/null
 fi
