@@ -27,7 +27,7 @@ import {
   type PlanStore,
 } from "@/lib/companionActions/planStore";
 import type { TaskState } from "@/lib/companionActions/contract";
-import { planProposalKey } from "@/lib/companionActions/queryKeys";
+import { planProposalKey, plansKey } from "@/lib/companionActions/queryKeys";
 import {
   usePlanClient,
   usePlanPhase,
@@ -118,10 +118,13 @@ function DraftReview({
   proposal,
   store,
   phase,
+  embedded = false,
 }: {
   proposal: PlanProposal;
   store: PlanStore | null;
   phase: PlanPhase;
+  /** Shown inside a saved plan (a revised retry review): the plan's header is above it. */
+  embedded?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const key = proposalKey(proposal.id);
@@ -153,6 +156,8 @@ function DraftReview({
     if (result.kind === "ok" || result.kind === "changed") {
       setRequest(null);
       queryClient.setQueryData(planProposalKey(owner.accountId, proposal.id), result.proposal);
+      // A retry review lives in the saved plan: closing it gives the addition back to Retry.
+      if (proposal.kind === "retry") void queryClient.invalidateQueries({ queryKey: plansKey(owner.accountId) });
       // A saved edit is a new revision: an earlier not-applied approval cannot apply.
       store?.supersedeNotApplied(key);
       store?.dismiss(key);
@@ -182,14 +187,18 @@ function DraftReview({
   const approveLabel =
     proposal.changeCount > 0
       ? t("plans.approve", { count: proposal.changeCount })
-      : t("plans.saveExisting");
+      : proposal.kind === "retry"
+        ? t("plans.retryReviewSkip")
+        : t("plans.saveExisting");
 
   return (
     <div className="space-y-5">
-      <div>
-        <p className="text-xs text-ink-muted">{t("plans.draftBadge")}</p>
-        <h3 className="mt-1 break-words text-lg font-semibold text-ink">{proposal.goal}</h3>
-      </div>
+      {!embedded && (
+        <div>
+          <p className="text-xs text-ink-muted">{t("plans.draftBadge")}</p>
+          <h3 className="mt-1 break-words text-lg font-semibold text-ink">{proposal.goal}</h3>
+        </div>
+      )}
       {view.stale && <Notice>{t("taskActions.offline")}</Notice>}
       {reviewNote && (
         <p className="rounded-lg border border-primary-subtle bg-primary-bg p-3 text-sm text-ink">{reviewNote}</p>
@@ -221,40 +230,42 @@ function DraftReview({
         )}
       </section>
 
-      <section className="space-y-1">
-        <h4 className="text-xs font-semibold text-ink">{t("plans.existingSection")}</h4>
-        <ul className="divide-y divide-border-card">
-          {proposal.items.map((item, index) => {
-            if (item.kind !== "existing") return null;
-            const now = tasks.get(item.taskRef);
-            const title = (now && planTaskTitle(now)) ?? item.label ?? t("plans.untitledTask");
-            const removed = now?.removed ?? false;
-            return (
-              <li key={item.taskRef} className="flex items-center gap-3 py-2">
-                <span className="min-w-0 flex-1">
-                  <span className="block break-words text-sm font-medium text-ink">{title}</span>
-                  <span className={cn("block text-xs", removed ? "text-destructive-label" : "text-ink-muted")}>
-                    {removed
-                      ? t("plans.removedFromChecklist")
-                      : t("plans.alreadyInChecklist", { state: stateLabel(now?.state ?? "not_started") })}
+      {(proposal.kind !== "retry" || proposal.items.some((i) => i.kind === "existing")) && (
+        <section className="space-y-1">
+          <h4 className="text-xs font-semibold text-ink">{t("plans.existingSection")}</h4>
+          <ul className="divide-y divide-border-card">
+            {proposal.items.map((item, index) => {
+              if (item.kind !== "existing") return null;
+              const now = tasks.get(item.taskRef);
+              const title = (now && planTaskTitle(now)) ?? item.label ?? t("plans.untitledTask");
+              const removed = now?.removed ?? false;
+              return (
+                <li key={item.taskRef} className="flex items-center gap-3 py-2">
+                  <span className="min-w-0 flex-1">
+                    <span className="block break-words text-sm font-medium text-ink">{title}</span>
+                    <span className={cn("block text-xs", removed ? "text-destructive-label" : "text-ink-muted")}>
+                      {removed
+                        ? t("plans.removedFromChecklist")
+                        : t("plans.alreadyInChecklist", { state: stateLabel(now?.state ?? "not_started") })}
+                    </span>
                   </span>
-                </span>
-                {removed && (
-                  <button
-                    type="button"
-                    className={BUTTON}
-                    aria-label={t("plans.dropA11y", { title })}
-                    aria-disabled={!canEdit}
-                    onClick={() => replaceItem(index, [])}
-                  >
-                    {t("plans.dropFromPlan")}
-                  </button>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+                  {removed && (
+                    <button
+                      type="button"
+                      className={BUTTON}
+                      aria-label={t("plans.dropA11y", { title })}
+                      aria-disabled={!canEdit}
+                      onClick={() => replaceItem(index, [])}
+                    >
+                      {t("plans.dropFromPlan")}
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {proposal.items.some((i) => i.kind === "new") && (
         <section className="space-y-1">
@@ -385,6 +396,7 @@ function SavedPlan({
   const [confirming, setConfirming] = useState(false);
   const [instantUndo, setInstantUndo] = useState(false);
   const [instantReview, setInstantReview] = useState(true);
+  const [instantRetry, setInstantRetry] = useState(false);
   const busy = isPlanUnresolved(phase) || isPlanUnresolved(compPhase);
   const writable = Boolean(store) && view.canWrite && !busy;
 
@@ -401,7 +413,14 @@ function SavedPlan({
   const added = receipt?.results.filter((r) => r.outcome === "created") ?? [];
   const failed =
     receipt?.results.filter((r) => r.outcome === "failed" && receipt.retryable.includes(r.key ?? "")) ?? [];
-  const retried = phase.phase === "saved" && phase.reply.receipt.kind === "plan_retry" ? phase.reply.receipt : null;
+  const review = plan?.review ?? null;
+  // Once its revised review is approved, the earlier "needs review" retry line is superseded.
+  const retried =
+    phase.phase === "saved" &&
+    phase.reply.receipt.kind === "plan_retry" &&
+    !(review?.status === "applied" && phase.reply.receipt.results.every((r) => r.outcome === "needs_review"))
+      ? phase.reply.receipt
+      : null;
   const stateLabel = (s: TaskState) => t(`taskActions.state.${s}`);
 
   return (
@@ -432,6 +451,7 @@ function SavedPlan({
               {planReceiptSummary(t, receipt)}
             </p>
             {retried && <p className="text-sm text-ink-secondary">{planReceiptSummary(t, retried)}</p>}
+            {review && !receipt.undoneBy && <RetryReview review={review} store={store} instant={instantRetry} />}
             {failed.length > 0 && (
               <p className="text-sm text-destructive-label">{t("plans.receiptFailed", { titles: recordedTitles(failed, t) })}</p>
             )}
@@ -441,7 +461,11 @@ function SavedPlan({
                   type="button"
                   className={BUTTON}
                   aria-disabled={!writable}
-                  onClick={() => writable && void store?.retryFailed(receipt.operationId)}
+                  onClick={(event) => {
+                    if (!writable) return;
+                    setInstantRetry(event.detail === 0);
+                    void store?.retryFailed(receipt.operationId);
+                  }}
                 >
                   {t("plans.retryFailed", { count: failed.length })}
                 </button>
@@ -527,6 +551,51 @@ function SavedPlan({
         ) : null}
       </div>
     </div>
+  );
+}
+
+/**
+ * The revised review of a saved plan's failed additions, opened when a Retry found that
+ * something they depend on changed. It lives in the saved plan (the persistent entry
+ * reaches it after a restart), shows the remaining change with the approved and current
+ * context through the same review as a draft, and needs its own approval. Once approved
+ * it keeps saying what that approval actually saved.
+ */
+function RetryReview({
+  review,
+  store,
+  instant,
+}: {
+  review: PlanProposal;
+  store: PlanStore | null;
+  instant: boolean;
+}) {
+  const { t } = useTranslation();
+  const query = usePlanProposal(review.id);
+  const phase = usePlanPhase(store, proposalKey(review.id));
+  const fromPhase = phase.phase === "needs_review" || phase.phase === "changed" ? phase.proposal : null;
+  // The newest revision wins; at the same revision a closed or approved state wins.
+  const latest = [query.data, fromPhase].reduce<PlanProposal>(
+    (best, next) =>
+      next && (next.revision > best.revision || (next.revision === best.revision && next.status !== "draft"))
+        ? next
+        : best,
+    review,
+  );
+  const result = phase.phase === "saved" ? phase.reply.receipt : latest.status === "applied" ? latest.receipt : null;
+  if (result) return <p className="text-sm font-semibold text-ink">{planReceiptSummary(t, result)}</p>;
+  return (
+    <Reveal open={latest.status === "draft"} instant={instant}>
+      <section
+        aria-labelledby={`plan-review-${latest.id}`}
+        className="space-y-3 rounded-lg border border-primary-subtle bg-primary-bg p-3"
+      >
+        <h4 id={`plan-review-${latest.id}`} className="text-sm font-semibold text-ink">
+          {t("plans.retryReviewTitle")}
+        </h4>
+        <DraftReview proposal={latest} store={store} phase={phase} embedded />
+      </section>
+    </Reveal>
   );
 }
 

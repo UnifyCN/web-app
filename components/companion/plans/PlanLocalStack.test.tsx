@@ -12,6 +12,7 @@
 // Runs only when ACTIONS_API_URL, ACTIONS_ANON_KEY and ACTIONS_SERVICE_ROLE_KEY point at
 // the disposable 127.0.0.1 stack (supabase/tests/companion-actions/run.sh, ACTIONS_KEEP=1).
 import { useSyncExternalStore } from "react";
+import { execFileSync } from "node:child_process";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -25,6 +26,9 @@ const API_URL = process.env.ACTIONS_API_URL ?? "";
 const ANON_KEY = process.env.ACTIONS_ANON_KEY ?? "";
 const SERVICE_KEY = process.env.ACTIONS_SERVICE_ROLE_KEY ?? "";
 const enabled = /^http:\/\/127\.0\.0\.1:\d+$/.test(API_URL) && Boolean(ANON_KEY && SERVICE_KEY);
+// The retry-review case installs a test-only write fault in the named local database
+// container. There is no default container selection.
+const DB_CONTAINER = process.env.ACTIONS_DB_CONTAINER?.trim() ?? "";
 const realFetch = globalThis.fetch;
 const jwts = new Map<string, string>();
 
@@ -469,6 +473,76 @@ describeStack("Settlement plans against the real local stack (web)", () => {
     expect(await within(drawer).findByText("Added 1 task. Reused 2 tasks you already had.", {}, { timeout: 10_000 })).toBeTruthy();
     expect(applies).toBe(1);
     expect((await customTasks(acc.jwt)).length).toBe(1);
+  });
+
+  it("a retry after a relevant profile change asks for a new approval of the remaining addition, still reachable after a reload; approving adds exactly one task", { timeout: 90_000 }, async () => {
+    // Wrong if: the needs-review result is not shown, the same Retry is offered again,
+    // the review is missing the remaining addition or its before/current context, it is
+    // gone after a reload, a second change is approved under the first review, approval
+    // adds zero or two tasks, or the reused tasks change.
+    if (!DB_CONTAINER) throw new Error("ACTIONS_DB_CONTAINER must name the local stack's database container.");
+    const psql = (sqlText: string) =>
+      execFileSync("docker", ["exec", "-i", DB_CONTAINER, "psql", "-v", "ON_ERROR_STOP=1", "-qtA", "-U", "postgres", "-d", "postgres"],
+        { input: sqlText, encoding: "utf8" }).trim();
+    const acc = await newAccount("web-plan-e");
+    account.set(acc.id);
+    psql(`create function public.test364_web_fault() returns trigger language plpgsql as $f$
+            begin if new.title = '${PHONE}' then raise exception 'injected fault'; end if; return new; end $f$;
+          create trigger test364_web_fault before insert on custom_checklist_tasks
+            for each row execute function public.test364_web_fault();`);
+    let saved: { status: string; plan: { items: { task_ref: string; source: string; title: string | null; label: string | null }[] } };
+    try {
+      saved = await savedPlanFor(acc);
+    } finally {
+      psql("drop trigger test364_web_fault on custom_checklist_tasks; drop function public.test364_web_fault();");
+    }
+    expect(saved.status).toBe("partial");
+    checklistFixture = tasksFromPlan(saved.plan.items);
+    const reused = () =>
+      psql(`select string_agg(sanity_checklist_id || ':' || coalesce(revision, 0) || ':' || completed, ',' order by sanity_checklist_id)
+              from user_tasks where user_id = '${acc.id}';`);
+    const reusedBefore = reused();
+    const setCity = (city: string) =>
+      http(`/rest/v1/user_onboarding_profiles?id=eq.${acc.id}`, { method: "PATCH", jwt: acc.jwt, body: JSON.stringify({ city }) });
+
+    mount();
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`Your plan, ${GOAL}`) }, { timeout: 10_000 }));
+    let drawer = await screen.findByRole("dialog", { name: "Your plan" });
+    expect(await within(drawer).findByText(`Could not add: ${PHONE}. Everything else is saved.`)).toBeTruthy();
+    await setCity("Surrey");
+    fireEvent.click(await enabledButton(within(drawer), "Try adding 1 task again"));
+    expect(await within(drawer).findByText(`Not added, because something changed: ${PHONE}.`, {}, { timeout: 10_000 })).toBeTruthy();
+    const review = await within(drawer).findByRole("region", { name: "Review the remaining change" }, { timeout: 10_000 });
+    expect(within(review).getByText("City: Surrey")).toBeTruthy();
+    expect(within(review).getByText("Before: Vancouver")).toBeTruthy();
+    expect((within(review).getByRole("checkbox", { name: `Add ${PHONE}` }) as HTMLInputElement).checked).toBe(true);
+    await enabledButton(within(review), "Approve and add 1 task");
+    expect(within(drawer).queryByRole("button", { name: "Try adding 1 task again" })).toBeNull();
+    expect(await customTasks(acc.jwt)).toEqual([]);
+
+    // A reload: new query client, no store state. The entry says a review is waiting.
+    cleanup();
+    clearPlanStores(null);
+    mount();
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`Your plan, ${GOAL}, .*needs your review`) }, { timeout: 10_000 }));
+    drawer = await screen.findByRole("dialog", { name: "Your plan" });
+    expect(await within(drawer).findByText("City: Surrey", {}, { timeout: 10_000 })).toBeTruthy();
+    // It changes again before approval: nothing is written and the refreshed review shows it.
+    await setCity("Burnaby");
+    fireEvent.click(await enabledButton(within(drawer), "Approve and add 1 task"));
+    expect(await within(drawer).findByText("City: Burnaby", {}, { timeout: 10_000 })).toBeTruthy();
+    expect(within(drawer).getByText("Before: Surrey")).toBeTruthy();
+    expect(await customTasks(acc.jwt)).toEqual([]);
+    const approve = await enabledButton(within(drawer), "Approve and add 1 task");
+    fireEvent.click(approve);
+    fireEvent.click(approve);
+    expect(await within(drawer).findByText(`Added after your review: ${PHONE}.`, {}, { timeout: 10_000 })).toBeTruthy();
+    expect((await customTasks(acc.jwt)).map((t) => t.title)).toEqual([PHONE]);
+    expect(reused()).toBe(reusedBefore);
+    expect(within(drawer).queryByRole("button", { name: /Approve and add/ })).toBeNull();
+    expect(await within(drawer).findByRole("button", { name: `${PHONE}, Not started` }, { timeout: 10_000 })).toBeTruthy();
+    await waitFor(() => expect(drawer.contains(document.activeElement)).toBe(true));
+    expect(JSON.stringify(capture.mock.calls)).not.toContain(PHONE);
   });
 
   it("an account change closes the previous account's plan and shows none of it", { timeout: 60_000 }, async () => {

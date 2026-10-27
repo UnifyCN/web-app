@@ -35,9 +35,12 @@ const receipt: PlanReceipt = {
       outcome: "created",
       reason: null,
       itemOperationId: "item-op",
+      planProposalId: null,
     },
   ],
   retryable: [],
+  retryOf: null,
+  planProposalId: null,
   undoneBy: null,
   undoable: true,
   removalCount: 1,
@@ -52,6 +55,7 @@ const plan: PlanView = {
   proposalId: null,
   items: [],
   receipt,
+  review: null,
   updatedAt: "2026-10-27T00:00:00Z",
 };
 const compensation: PlanProposal = {
@@ -67,6 +71,7 @@ const compensation: PlanProposal = {
   reviewReason: null,
   source: null,
   undoOf: "plan-op",
+  retryOf: null,
   changeCount: 0,
   unresolved: [],
   tasks: [],

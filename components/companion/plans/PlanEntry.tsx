@@ -43,12 +43,16 @@ export function PlanEntry({ onOpen }: { onOpen: (target: PlanTarget) => void }) 
   const plan = plans[0];
   if (!draft && !plan) return null;
   const live = plan ? plan.items.filter((i) => !i.removed) : [];
+  const progress = t("plans.entryProgress", {
+    done: live.filter((i) => i.state === "completed").length,
+    total: live.length,
+  });
+  // A Retry found a change: the remaining addition waits for the user's new approval.
   const summary = draft
     ? t("plans.entryReview")
-    : t("plans.entryProgress", {
-        done: live.filter((i) => i.state === "completed").length,
-        total: live.length,
-      });
+    : plan!.review?.status === "draft"
+      ? t("plans.entryNeedsReview", { progress })
+      : progress;
   const goal = draft ? draft.goal : plan!.goal;
   const label = draft
     ? t("plans.entryDraftA11y", { goal })
