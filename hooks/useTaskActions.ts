@@ -30,6 +30,9 @@ import {
 import type { TaskProgress } from "@/lib/companionActions/contract";
 import {
   CONVERSATION_ACTIONS_ROOT,
+  CONVERSATION_PLANS_ROOT,
+  PLANS_ROOT,
+  PLAN_PROPOSAL_ROOT,
   TASK_PROGRESS_ROOT,
   TASK_PROPOSAL_ROOT,
   conversationActionsKey,
@@ -197,6 +200,10 @@ export function useTaskActionStore(
         void queryClient.invalidateQueries({
           queryKey: [CONVERSATION_ACTIONS_ROOT, userId],
         });
+        // Plans join current shared progress and must refresh after a task save.
+        for (const root of [PLANS_ROOT, PLAN_PROPOSAL_ROOT, CONVERSATION_PLANS_ROOT]) {
+          void queryClient.invalidateQueries({ queryKey: [root, userId] });
+        }
       },
       onResult: (event) => {
         const props = buildTaskActionResultProperties(event, surface);

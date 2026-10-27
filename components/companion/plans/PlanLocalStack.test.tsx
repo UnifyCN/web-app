@@ -19,6 +19,7 @@ import { createInstance } from "i18next";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import en from "@/lib/i18n/locales/en/translation.json";
 import { newQueryClient } from "../tasks/taskActionsTestHarness";
+import type { ChecklistTask } from "@/types";
 
 const API_URL = process.env.ACTIONS_API_URL ?? "";
 const ANON_KEY = process.env.ACTIONS_ANON_KEY ?? "";
@@ -51,6 +52,7 @@ vi.mock("@/hooks/useAuthUser", () => ({
 }));
 vi.mock("@/hooks/useLanguage", () => ({ useLanguage: () => ({ currentLanguage: "en" }) }));
 const capture = vi.fn();
+let checklistFixture: ChecklistTask[] = [];
 vi.mock("@/lib/posthog", () => ({
   isPostHogConfigured: () => true,
   posthog: { capture: (...args: unknown[]) => capture(...args) },
@@ -58,7 +60,7 @@ vi.mock("@/lib/posthog", () => ({
 vi.mock("@/lib/confetti", () => ({ fireTaskConfetti: () => {} }));
 vi.mock("@/services/checklist", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/services/checklist")>();
-  return { ...actual, getTasks: vi.fn(async () => []) };
+  return { ...actual, getTasks: vi.fn(async () => checklistFixture) };
 });
 
 async function rest(path: string, init: { method: string; body?: unknown; prefer?: string }) {
@@ -315,6 +317,7 @@ beforeEach(() => {
   generateReply.mockReset();
   capture.mockReset();
   hook = null;
+  checklistFixture = [];
   Object.defineProperty(navigator, "onLine", { configurable: true, get: () => true });
   installProxy();
 });
@@ -325,6 +328,38 @@ afterEach(() => {
 
 const describeStack = enabled ? describe : describe.skip;
 describeStack("Settlement plans against the real local stack (web)", () => {
+  it("a saved task completion reconciles the plan entry without reopening the page", { timeout: 60_000 }, async () => {
+    const acc = await newAccount("plan-progress");
+    account.set(acc.id);
+    const saved = await savedPlanFor(acc);
+    checklistFixture = tasksFromPlan(saved.plan.items);
+    mount();
+    const entry = await screen.findByRole("button", { name: new RegExp(`Your plan, ${GOAL}, 0 of 3 done`) }, { timeout: 10_000 });
+    fireEvent.change(screen.getByRole("textbox", { name: /message/i }), { target: { value: "Keep this question" } });
+    fireEvent.click(entry);
+    fireEvent.click(await within(screen.getByRole("dialog")).findByRole("button", { name: `${PHONE}, Not started` }));
+    await waitFor(() => expect(within(screen.getByRole("dialog")).getByRole("radio", { name: "Completed" }).getAttribute("aria-disabled")).not.toBe("true"));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("radio", { name: "Completed" }));
+    await within(screen.getByRole("dialog")).findByText("Changed from Not started to Completed", {}, { timeout: 10_000 });
+    const current = await actions(acc.jwt, { action: "read" });
+    const phoneRef = saved.receipt.results[2].task_ref;
+    expect(current.json.tasks.find((row: { task_ref: string }) => row.task_ref === phoneRef).state).toBe("completed");
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await screen.findByRole("button", { name: new RegExp(`Your plan, ${GOAL}, 1 of 3 done`) }, { timeout: 10_000 });
+    expect((screen.getByRole("textbox", { name: /message/i }) as HTMLTextAreaElement).value).toBe("Keep this question");
+  });
+  it("a saved plan task opens its controls directly in the same drawer", { timeout: 60_000 }, async () => {
+    const acc = await newAccount("plan-navigation");
+    account.set(acc.id);
+    const saved = await savedPlanFor(acc);
+    checklistFixture = tasksFromPlan(saved.plan.items);
+    mount();
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`Your plan, ${GOAL}`) }, { timeout: 10_000 }));
+    fireEvent.click(await within(screen.getByRole("dialog")).findByRole("button", { name: `${PHONE}, Not started` }));
+    await waitFor(() => expect(within(screen.getByRole("dialog")).getByRole("radiogroup")).toBeTruthy(), { timeout: 10_000 });
+    expect(within(screen.getByRole("dialog")).getByRole("heading", { name: PHONE })).toBeTruthy();
+  });
   it("reviews a suggested plan in the drawer: two reused tasks, one addition, an exclusion that changes the count, one approval, focus and draft kept", { timeout: 60_000 }, async () => {
     const acc = await newAccount("web-plan-a");
     account.set(acc.id);
@@ -451,6 +486,16 @@ describeStack("Settlement plans against the real local stack (web)", () => {
     expect(screen.queryByRole("button", { name: /Your plan/ })).toBeNull();
   });
 });
+
+function tasksFromPlan(items: { task_ref: string; source: string; title: string | null; label: string | null }[]): ChecklistTask[] {
+  return items.map(item => ({
+    id: item.task_ref.slice(item.task_ref.indexOf(":") + 1),
+    isCustom: item.source === "custom",
+    title: item.title ?? item.label ?? "Task",
+    priority: "Do soon", description: "", completed: false,
+    completedAt: null, dismissedAt: null,
+  }));
+}
 
 if (!enabled) {
   it("local stack checks are skipped: ACTIONS_API_URL, ACTIONS_ANON_KEY and ACTIONS_SERVICE_ROLE_KEY are not set", () => {

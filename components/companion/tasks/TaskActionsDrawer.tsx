@@ -60,8 +60,10 @@ export function TaskActionsDrawer({
   // The task last opened from the list: focus returns to its row on Back.
   const [returnId, setReturnId] = useState<string | null>(null);
   const [lastOpen, setLastOpen] = useState(open);
-  if (open !== lastOpen) {
+  const [lastInitialTaskId, setLastInitialTaskId] = useState(initialTaskId);
+  if (open !== lastOpen || initialTaskId !== lastInitialTaskId) {
     setLastOpen(open);
+    setLastInitialTaskId(initialTaskId);
     if (open) {
       setSelectedId(initialTaskId);
       setReturnId(null);
@@ -73,7 +75,7 @@ export function TaskActionsDrawer({
   const { refetch } = view;
   useEffect(() => {
     if (open) refetch();
-  }, [open, refetch]);
+  }, [open, initialTaskId, refetch]);
 
   const active = tasks.filter((task) => !task.dismissedAt);
   const selected = active.find((task) => task.id === selectedId) ?? null;
