@@ -14,7 +14,26 @@ export interface TaskCreateProposal {
   title: string;
 }
 
-export type ActionProposal = TaskCreateProposal;
+/** A reused Checklist task (by the key the model was shown) or a missing task to add. */
+export type PlanProposalItem =
+  | { kind: 'existing'; task_ref: string; label: string }
+  | { kind: 'new'; title: string; candidates?: string[] };
+
+/** A settlement plan for review (mobile-app#364). Never a write. */
+export interface PlanProposal {
+  type: 'plan';
+  version: 1;
+  goal: string;
+  items: PlanProposalItem[];
+}
+
+export type ActionProposal = TaskCreateProposal | PlanProposal;
+
+/** A Checklist task this answer actually read for this account (the plan may reuse only these). */
+export interface ReadChecklistTask {
+  id: string;
+  title: string | null;
+}
 
 export interface ProposalCapabilitySpec<P extends ActionProposal> {
   type: P['type'];
@@ -47,6 +66,69 @@ const taskCreate: ProposalCapabilitySpec<TaskCreateProposal> = {
 
 export const PROPOSAL_CAPABILITIES = { 'task.create_custom': taskCreate } as const;
 
+const PLAN_GOAL_MAX = 120;
+const PLAN_ITEMS_MAX = 12;
+const PLAN_NEW_MAX = 5;
+const PLAN_KEY = /^(sanity:[A-Za-z0-9][A-Za-z0-9._-]{0,127}|custom:[1-9][0-9]{0,17})$/;
+const titleKey = (t: string) => t.trim().replace(/\s+/gu, ' ').toLowerCase();
+const plainValue = (value: string, max: number): string | null => {
+  const v = value.trim().replace(/\s+/g, ' ').replace(/^["“]|["”]$/g, '').trim();
+  return v.length >= TITLE_MIN && v.length <= max && !NOT_PLAIN.test(v) ? v : null;
+};
+
+export const PLAN_PROPOSAL_INSTRUCTION = `
+PLAN SUGGESTION:
+When the user asks for help planning several settlement steps (for example their first week), you may suggest a plan for them to review instead of a single task. Write it at the end, before any [SUGGESTIONS] line, one item per line:
+[PLAN]: <short plan name in plain text, in the language of your answer>
+[PLAN_TASK]: <the exact task key of a Checklist task listed above, for example sanity:abc or custom:12>
+[PLAN_NEW]: <short title of a missing task in plain text, in the language of your answer>
+Use [PLAN_TASK] for every listed Checklist task the plan reuses, in the order to do them, and [PLAN_NEW] only for tasks the Checklist does not have (at most 5). Never invent a task key. The app shows the plan as a draft that only the user can approve; never say that a plan or task was saved. When you write a plan, write no [TASK] line.`;
+
+/**
+ * The plan lines of an answer, validated against the Checklist tasks this answer read.
+ * Anything not exactly valid drops the whole plan: a partial plan could misstate what
+ * the model suggested.
+ */
+function parsePlan(lines: Array<{ tag: string; value: string }>, read: ReadChecklistTask[]): PlanProposal | null {
+  const goals = lines.filter(l => l.tag === 'PLAN');
+  if (goals.length !== 1) return null;
+  const goal = plainValue(goals[0].value, PLAN_GOAL_MAX);
+  if (!goal) return null;
+  const byKey = new Map(read.map(t => [t.id, t]));
+  const items: PlanProposalItem[] = [];
+  const seen = new Set<string>();
+  let added = 0;
+  for (const line of lines) {
+    if (line.tag === 'PLAN_TASK') {
+      const key = line.value.trim();
+      const task = PLAN_KEY.test(key) ? byKey.get(key) : undefined;
+      if (!task || seen.has(key)) return null;
+      seen.add(key);
+      items.push({ kind: 'existing', task_ref: key, label: task.title ?? '' });
+    } else if (line.tag === 'PLAN_NEW') {
+      const title = plainValue(line.value, TITLE_MAX);
+      if (!title || seen.has(`new:${titleKey(title)}`)) return null;
+      seen.add(`new:${titleKey(title)}`);
+      added++;
+      // A listed content task with the same title is offered as a possible match for
+      // review, never merged. (Custom-task matches are found by the action service.)
+      const candidates = read
+        .filter(t => t.id.startsWith('sanity:') && t.title && titleKey(t.title) === titleKey(title) && !seen.has(t.id))
+        .map(t => t.id)
+        .slice(0, 3);
+      items.push({ kind: 'new', title, ...(candidates.length ? { candidates } : {}) });
+    }
+  }
+  if (items.length === 0 || items.length > PLAN_ITEMS_MAX || added > PLAN_NEW_MAX) return null;
+  // Labels are display text from the Checklist read; drop an empty one rather than invent it.
+  return {
+    type: 'plan',
+    version: 1,
+    goal,
+    items: items.map(i => (i.kind === 'existing' && !i.label ? { kind: 'existing', task_ref: i.task_ref } as PlanProposalItem : i)),
+  };
+}
+
 export const TASK_PROPOSAL_INSTRUCTION = `
 TASK SUGGESTION:
 You cannot add or change tasks. When the user asks for help with one concrete settlement step that is not already in their Checklist above, you may suggest ONE new Checklist task for them to review. Write it on its own line before any [SUGGESTIONS] line, as:
@@ -54,18 +136,28 @@ You cannot add or change tasks. When the user asks for help with one concrete se
 The app shows it as a draft that only the user can approve. Never say that a task was added or saved. Do not suggest a task that the Checklist already has. Write no [TASK] line in any other case.`;
 
 /**
- * Removes every "[TASK]: ..." line from the answer and returns the suggestion when the
- * answer has exactly one valid one. Two or more, or an invalid value, give none.
+ * Removes every "[TASK]: ..." and plan line from the answer. Returns a plan when the
+ * answer has exactly one valid plan (checked against `read`, the Checklist tasks this
+ * answer read for the account), else the one valid task suggestion, else none.
  */
-export function extractActionProposal(answer: string): { answer: string; proposal: ActionProposal | null } {
+export function extractActionProposal(
+  answer: string,
+  read: ReadChecklistTask[] = [],
+): { answer: string; proposal: ActionProposal | null } {
   const spec = PROPOSAL_CAPABILITIES['task.create_custom'];
-  const line = new RegExp(`^[ \\t*_\`~]*\\[${spec.tag}\\]:[ \\t]*(.*)$`, 'gim');
+  const line = new RegExp(`^[ \\t*_\`~]*\\[(${spec.tag}|PLAN|PLAN_TASK|PLAN_NEW)\\]:[ \\t]*(.*)$`, 'gim');
   const values: string[] = [];
-  const stripped = answer.replace(line, (_m, value: string) => {
-    values.push(value);
+  const planLines: Array<{ tag: string; value: string }> = [];
+  const stripped = answer.replace(line, (_m, tag: string, value: string) => {
+    const t = tag.toUpperCase();
+    if (t === spec.tag) values.push(value);
+    else planLines.push({ tag: t, value });
     return '';
   });
-  if (values.length === 0) return { answer, proposal: null };
+  if (values.length === 0 && planLines.length === 0) return { answer, proposal: null };
   const cleaned = stripped.replace(/\n{3,}/g, '\n\n').trim();
+  if (planLines.length > 0) {
+    return { answer: cleaned, proposal: parsePlan(planLines, read) };
+  }
   return { answer: cleaned, proposal: values.length === 1 ? spec.parse(values[0]) : null };
 }

@@ -1397,3 +1397,107 @@ Deno.test({
     }
   },
 });
+
+// ---------------------------------------------------------------- plan suggestions (#364)
+//
+// The model may suggest a settlement plan: a goal line, the Checklist tasks it reuses
+// (by the task key it was shown) and up to five missing tasks. The handler checks every
+// reused key against the Checklist it actually read for this account, turns the lines
+// into one typed field and strips them. A plan is data for review only: nothing is
+// written, prepared or authorized here.
+
+const PLAN_ANSWER = [
+  'You already have your SIN and bank tasks. A phone plan helps with both.',
+  '[PLAN]: Your first week in Vancouver',
+  '[PLAN_TASK]: sanity:checklist-sin',
+  '[PLAN_TASK]: sanity:checklist-bank',
+  '[PLAN_NEW]: Set up phone service',
+  '[SUGGESTIONS]: Which carriers are there? | Do I need a credit check?',
+  '[TOPIC]: settling_in',
+].join('\n');
+
+Deno.test({
+  ...opts,
+  name: 'a suggested plan becomes one typed proposal of reused task keys and new titles; nothing is written',
+  fn: async () => {
+    // Wrong if: a plan tag stays in the answer, a reused task loses its stable key, a
+    // label comes from the model instead of the Checklist read, or anything is written.
+    for (const stream of [false, true]) {
+      const r = await ask('I arrive in Vancouver next week. Help me plan my first week.', { stream, jwt: 'Bearer jwt-vancouver' },
+        { answer: PLAN_ANSWER });
+      assertEquals(r.status, 200);
+      assertEquals(r.payload.actionProposal, {
+        type: 'plan',
+        version: 1,
+        goal: 'Your first week in Vancouver',
+        items: [
+          { kind: 'existing', task_ref: 'sanity:checklist-sin', label: 'Get your SIN' },
+          { kind: 'existing', task_ref: 'sanity:checklist-bank', label: 'Open a bank account' },
+          { kind: 'new', title: 'Set up phone service' },
+        ],
+      });
+      const text = String(stream ? r.payload.cleanAnswer : r.payload.answer);
+      assert(!/\[PLAN/i.test(text), text);
+      assertStringIncludes(text, 'A phone plan helps with both.');
+      assertEquals(writeCalls(r.calls), []);
+      assert(!r.calls.some(c => c.url.pathname.includes('companion-actions')), 'called the action service');
+      assertStringIncludes(r.system, '[PLAN]:');
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'a new plan task named like a listed Checklist task carries it as a possible match, not a merge',
+  fn: async () => {
+    // Wrong if: similar text is turned into a reuse of the existing task, or the match
+    // is not offered for review.
+    const answer = 'Plan.\n[PLAN]: First week\n[PLAN_TASK]: sanity:checklist-bank\n[PLAN_NEW]: get your  SIN\n[TOPIC]: settling_in';
+    const r = await ask('Plan my first week', { jwt: 'Bearer jwt-vancouver' }, { answer });
+    assertEquals((r.payload.actionProposal as { items: unknown[] }).items, [
+      { kind: 'existing', task_ref: 'sanity:checklist-bank', label: 'Open a bank account' },
+      { kind: 'new', title: 'get your SIN', candidates: ['sanity:checklist-sin'] },
+    ]);
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'a plan that names a task this account was not shown, or is not plain, is dropped whole',
+  fn: async () => {
+    // Wrong if: any of these reaches the client as a proposal, or a tag stays visible.
+    const head = 'Answer.\n[PLAN]: First week\n';
+    const cases = [
+      `${head}[PLAN_TASK]: sanity:checklist-transit\n[PLAN_NEW]: Set up phone service`, // removed by this account
+      `${head}[PLAN_TASK]: sanity:checklist-credit\n[PLAN_NEW]: Set up phone service`, // another stage, not read
+      `${head}[PLAN_TASK]: custom:77\n[PLAN_NEW]: Set up phone service`, // another account's task
+      `${head}[PLAN_TASK]: Get your SIN\n[PLAN_NEW]: Set up phone service`, // a title, not a key
+      `${head}[PLAN_TASK]: sanity:checklist-sin\n[PLAN_NEW]: <b>Phone</b>`,
+      `${head}[PLAN_TASK]: sanity:checklist-sin\n[PLAN_NEW]: Visit https://example.com`,
+      `${head}[PLAN_TASK]: sanity:checklist-sin\n[PLAN_TASK]: sanity:checklist-sin`,
+      `${head}${Array.from({ length: 6 }, (_, i) => `[PLAN_NEW]: Task number ${i + 1}`).join('\n')}`,
+      'Answer.\n[PLAN]: \n[PLAN_TASK]: sanity:checklist-sin',
+      'Answer.\n[PLAN]: First week',
+      'Answer.\n[PLAN]: First week\n[PLAN]: Second week\n[PLAN_TASK]: sanity:checklist-sin',
+      'Answer.\n[PLAN_TASK]: sanity:checklist-sin\n[PLAN_NEW]: Set up phone service',
+    ];
+    for (const answer of cases) {
+      const r = await ask('Plan my first week', { jwt: 'Bearer jwt-vancouver' }, { answer: `${answer}\n[TOPIC]: settling_in` });
+      assertEquals(r.status, 200);
+      assertEquals(r.payload.actionProposal, undefined, answer);
+      assert(!/\[PLAN/i.test(String(r.payload.answer)), String(r.payload.answer));
+      assertEquals(writeCalls(r.calls), []);
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'with a plan in the answer a single-task line is not offered separately',
+  fn: async () => {
+    // Wrong if: two competing drafts reach the client, or the task tag stays visible.
+    const r = await ask('Plan my first week', { jwt: 'Bearer jwt-vancouver' }, { answer: `${PLAN_ANSWER}\n[TASK]: Buy a transit pass` });
+    assertEquals((r.payload.actionProposal as { type: string }).type, 'plan');
+    assert(!/\[TASK\]/i.test(String(r.payload.answer)));
+  },
+});
