@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { WifiOff } from "lucide-react";
 import { PhaseMessage } from "./TaskStatePanel";
+import { ReceiptBlock } from "./ReceiptBlock";
 import { progressFor } from "./TaskStatePanel";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -96,11 +97,15 @@ export function StepProposalPanel({
   const writable =
     Boolean(store && bound) &&
     view.canWrite &&
-    proposal.status === "draft" &&
     !parent.removed &&
     parent.state !== "completed";
-  const canWrite = writable && !isUnresolved(phase) && !requestBusy;
-  const receipt = phase.phase === "saved" ? phase.receipt : proposal.receipt;
+  const canWrite =
+    writable && proposal.status === "draft" && !isUnresolved(phase) && !requestBusy;
+  const savedReceipt = phase.phase === "saved" ? phase.receipt : null;
+  const receipt =
+    savedReceipt && savedReceipt.operationId !== proposal.receipt?.operationId
+      ? savedReceipt
+      : proposal.receipt ?? savedReceipt;
   const task = taskTitle ?? t("taskSteps.cardTitleUnknownTask");
 
   /** A Not now or selection change, made and shown only as the session that opened it. */
@@ -246,7 +251,7 @@ export function StepProposalPanel({
         {proposal.status === "cancelled" && (
           <p className="text-sm text-ink-tertiary">{t("taskSteps.closed")}</p>
         )}
-        {receipt && (
+        {receipt?.operationType === "step.create" && (
           <p className="text-sm font-semibold text-ink-secondary">
             {t("taskSteps.added", { count: receipt.steps?.length ?? 0 })}
           </p>
@@ -267,6 +272,16 @@ export function StepProposalPanel({
               taskRef={key}
             />
           )
+        )}
+        {receipt && (
+          <ReceiptBlock
+            receipt={receipt}
+            storeKey={key}
+            store={store}
+            canWrite={
+              writable && !isUnresolved(phase) && !requestBusy && phase.phase !== "undo_review"
+            }
+          />
         )}
       </div>
 

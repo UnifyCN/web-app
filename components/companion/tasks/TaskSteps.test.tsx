@@ -848,6 +848,73 @@ describe("Task steps (web)", () => {
   );
 });
 
+it.each(["normal", "lost_reply", "not_applied"] as const)("an approved suggestion offers receipt-specific Undo (%s), confirms removal and keeps a later unrelated step", async requestCase => {
+  // Wrong if Undo is absent, writes before confirmation, or removes another action's step.
+  let retryAllowed = false;
+  let lookup: "pending" | "failed" | "not_applied" = "pending";
+  override = body => {
+    if (body.action === "undo" && requestCase === "lost_reply") {
+      server.handle(body);
+      return "network-error";
+    }
+    if (body.action === "undo" && requestCase === "not_applied" && !retryAllowed) return "network-error";
+    if (body.action === "status" && requestCase === "not_applied") {
+      if (lookup === "failed") return { status: 500, body: { error: "internal" } };
+      return { status: 200, body: { status: lookup } };
+    }
+    return undefined;
+  };
+  generateReply.mockResolvedValueOnce(stepReply("Preparation steps.", ["Bring two IDs", "Choose a bank"]));
+  mount(<CompanionPage />);
+  await send("How do I prepare for my SIN?");
+  const card = await screen.findByTestId("step-draft-card");
+  fireEvent.click(await within(card).findByRole("button", { name: "Review suggested steps for Get a SIN" }));
+  const panel = await dialog();
+  const approve = await within(panel).findByRole("button", { name: "Add selected steps (2)" });
+  await waitFor(() => expect(isDisabled(approve)).toBe(false));
+  fireEvent.click(approve);
+  await within(panel).findByText("Steps added to this task: 2");
+  const added = stepApplies()[0];
+  expect(server.handle({
+    action: "apply", operation_id: crypto.randomUUID(), authorization: { kind: "ui_control" },
+    operations: [{ type: "step.create", task_ref: "sanity:sin", titles: ["Call a translator"] }],
+  }).status).toBe(200);
+  const undo = await within(panel).findByRole("button", { name: "Undo “Steps added: 2”" });
+  await waitFor(() => expect(isDisabled(undo)).toBe(false));
+  fireEvent.click(undo);
+  await within(panel).findByText("Remove these 2 steps?");
+  expect(server.sent.filter(b => b.action === "undo")).toHaveLength(0);
+  fireEvent.click(within(panel).getByRole("button", { name: "Keep step" }));
+  expect(server.steps()).toHaveLength(3);
+  expect(server.sent.filter(b => b.action === "undo")).toHaveLength(0);
+  fireEvent.click(within(panel).getByRole("button", { name: "Undo “Steps added: 2”" }));
+  const remove = await within(panel).findByRole("button", { name: "Remove step" });
+  await waitFor(() => expect(isDisabled(remove)).toBe(false));
+  fireEvent.click(remove);
+  if (requestCase === "not_applied") {
+    await within(panel).findByText("The change is still being saved. Check again in a moment.");
+    expect(server.sent.filter(b => b.action === "undo")).toHaveLength(1);
+    lookup = "failed";
+    fireEvent.click(within(panel).getByRole("button", { name: "Check again" }));
+    await within(panel).findByText("We could not check the result. The change may or may not have saved.");
+    expect(server.steps().filter(s => !s.removed)).toHaveLength(3);
+    lookup = "not_applied";
+    fireEvent.click(within(panel).getByRole("button", { name: "Check again" }));
+    const retry = await within(panel).findByRole("button", { name: "Try again" });
+    await waitFor(() => expect(isDisabled(retry)).toBe(false));
+    retryAllowed = true;
+    fireEvent.click(retry);
+  }
+  await within(panel).findByText("Steps removed: 2");
+  expect(within(panel).queryByText("Steps added to this task: 2")).toBeNull();
+  expect(server.steps().filter(s => !s.removed).map(s => s.title)).toEqual(["Call a translator"]);
+  const undos = server.sent.filter(b => b.action === "undo");
+  expect(undos).toHaveLength(requestCase === "not_applied" ? 2 : 1);
+  expect(undos.at(-1)?.operation_id).toBe(undos[0].operation_id);
+  expect(undos[0].receipt_operation_id).toBe(added.operation_id);
+  expect(undos[0].authorization).toEqual({ kind: "ui_control", removal_confirmed: true });
+});
+
 it.each(["approve", "keep"] as const)(
   "a conflicting rename Undo shows its exact proposed text before %s",
   async (choice) => {
@@ -890,3 +957,59 @@ it.each(["approve", "keep"] as const)(
     }
   },
 );
+
+it("a reopened suggested-step receipt reflects a newer edit and keeps it through a refused Undo", async () => {
+  // Wrong if the old receipt stays current, or Undo overwrites the newer step without review.
+  generateReply.mockResolvedValueOnce(stepReply("Preparation steps.", ["Bring two IDs"]));
+  mount(<CompanionPage />);
+  await send("How do I prepare for my SIN?");
+  const card = await screen.findByTestId("step-draft-card");
+  fireEvent.click(await within(card).findByRole("button", { name: "Review suggested steps for Get a SIN" }));
+  let panel = await dialog();
+  const approve = await within(panel).findByRole("button", { name: "Add selected steps (1)" });
+  await waitFor(() => expect(isDisabled(approve)).toBe(false));
+  fireEvent.click(approve);
+  await within(panel).findByRole("button", { name: "Undo “Added step: Bring two IDs”" });
+  const step = server.steps()[0];
+  expect(server.handle({ action: "apply", operation_id: crypto.randomUUID(), authorization: { kind: "ui_control" },
+    operations: [{ type: "step.update", step_id: step.step_id, title: "Check the newer ID requirements", expected_revision: step.revision }] }).status).toBe(200);
+  fireEvent.click(within(panel).getByRole("button", { name: "Close" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  fireEvent.click(await within(screen.getByTestId("step-draft-card")).findByRole("button", { name: "View" }));
+  panel = await dialog();
+  await within(panel).findByText(/This task changed after this/);
+  const undo = within(panel).getByRole("button", { name: "Undo “Added step: Bring two IDs”" });
+  await waitFor(() => expect(isDisabled(undo)).toBe(false));
+  fireEvent.click(undo);
+  const remove = await within(panel).findByRole("button", { name: "Remove step" });
+  await waitFor(() => expect(isDisabled(remove)).toBe(false));
+  fireEvent.click(remove);
+  await within(panel).findByText("This step changed after it was added. Nothing was removed. Remove it now?");
+  const compensate = await within(panel).findByRole("button", { name: "Remove step" });
+  await waitFor(() => expect(isDisabled(compensate)).toBe(false));
+  expect(server.steps().filter(s => !s.removed).map(s => s.title)).toEqual(["Check the newer ID requirements"]);
+  const writes = stepApplies().length;
+  fireEvent.click(within(panel).getByRole("button", { name: "Keep current" }));
+  expect(stepApplies()).toHaveLength(writes);
+  expect(server.steps().filter(s => !s.removed).map(s => s.title)).toEqual(["Check the newer ID requirements"]);
+});
+
+it.each([1, 0] as const)("suggested-step Undo confirmation uses shared reveal for click detail %s", async detail => {
+  // Wrong if pointer activation is instant, or keyboard activation is hidden.
+  generateReply.mockResolvedValueOnce(stepReply("Preparation steps.", ["Bring two IDs"]));
+  mount(<CompanionPage />);
+  await send("How do I prepare for my SIN?");
+  const card = await screen.findByTestId("step-draft-card");
+  fireEvent.click(await within(card).findByRole("button", { name: "Review suggested steps for Get a SIN" }));
+  const panel = await dialog();
+  const approve = await within(panel).findByRole("button", { name: "Add selected steps (1)" });
+  await waitFor(() => expect(isDisabled(approve)).toBe(false));
+  fireEvent.click(approve);
+  const undo = await within(panel).findByRole("button", { name: "Undo “Added step: Bring two IDs”" });
+  await waitFor(() => expect(isDisabled(undo)).toBe(false));
+  fireEvent.click(undo, { detail });
+  const text = await within(panel).findByText("Remove “Bring two IDs”?");
+  const disclosure = text.closest(".mt-2") as HTMLElement;
+  if (detail === 1) expect(disclosure.parentElement?.style.opacity).toBe("0");
+  else expect(disclosure.parentElement?.style.opacity).not.toBe("0");
+});

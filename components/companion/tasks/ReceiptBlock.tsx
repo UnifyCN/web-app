@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Reveal } from "@/components/ui/Reveal";
 import { cn } from "@/lib/utils";
 import type { TaskReceipt, TaskState } from "@/lib/companionActions/contract";
 import type { TaskActionStore } from "@/lib/companionActions/taskActionStore";
@@ -30,6 +31,7 @@ export function ReceiptBlock({
 }: ReceiptBlockProps) {
   const { t, i18n } = useTranslation();
   const [confirming, setConfirming] = useState(false);
+  const [instant, setInstant] = useState(false);
   const stateLabel = (s: TaskState) => t(`taskActions.state.${s}`);
   const title = receipt.title ?? "";
   const steps = receipt.steps ?? [];
@@ -129,7 +131,10 @@ export function ReceiptBlock({
                 : undefined
           }
           data-drawer-focus=""
-          onClick={undo}
+          onClick={(event) => {
+            setInstant(event.detail === 0);
+            undo();
+          }}
           className={cn(
             "mt-1.5 inline-flex min-h-11 items-center gap-1.5 rounded text-sm font-semibold text-ink-secondary underline underline-offset-2",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
@@ -146,7 +151,7 @@ export function ReceiptBlock({
               : t("taskActions.undo")}
         </button>
       )}
-      {confirming && (
+      <Reveal open={confirming} instant={instant}>
         <div className="mt-2 rounded-lg border border-primary-subtle bg-primary-bg px-3 py-3">
           <p className="break-words text-sm font-semibold text-ink-secondary">
             {confirmTitle}
@@ -187,7 +192,7 @@ export function ReceiptBlock({
             </Button>
           </div>
         </div>
-      )}
+      </Reveal>
     </div>
   );
 }
