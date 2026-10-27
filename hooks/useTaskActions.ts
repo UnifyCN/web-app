@@ -226,6 +226,8 @@ export function useTaskActionClient(): {
 
 /** A client bound to `owner`, for work started by a send (#363). */
 export const taskActionClientFor = clientFor;
+/** The account-bound transport, for the plan client (#364). */
+export const companionActionsTransportFor = transportFor;
 
 /** One task draft, read from the action service. */
 export function useTaskProposal(proposalId: string | null) {

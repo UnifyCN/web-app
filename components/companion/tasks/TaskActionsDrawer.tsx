@@ -18,6 +18,8 @@ import {
 import { TaskDrawer } from "./TaskDrawer";
 import { TaskProposalPanel } from "./TaskProposalPanel";
 import { TaskStatePanel, progressFor } from "./TaskStatePanel";
+import { PlanPanel } from "../plans/PlanPanel";
+import type { PlanTarget } from "../plans/PlanEntry";
 
 const STATE_ORDER: TaskState[] = [
   "in_progress",
@@ -34,6 +36,10 @@ interface TaskActionsDrawerProps {
   initialTaskId?: string | null;
   /** Open on the review of one task draft (#363) instead of a task. */
   proposalId?: string | null;
+  /** Open on a settlement plan draft or saved plan (#364). */
+  plan?: PlanTarget | null;
+  /** A task row of the plan was opened (#364). */
+  onOpenTask?: (taskRef: string) => void;
 }
 
 /** The task list and task controls inside the direction B drawer. */
@@ -43,6 +49,8 @@ export function TaskActionsDrawer({
   surface,
   initialTaskId = null,
   proposalId = null,
+  plan = null,
+  onOpenTask,
 }: TaskActionsDrawerProps) {
   const { t } = useTranslation();
   const { data: tasks = [], isLoading } = useTasks();
@@ -87,20 +95,26 @@ export function TaskActionsDrawer({
       open={open}
       onClose={onClose}
       title={
-        proposalId
+        plan
+          ? "proposalId" in plan
+            ? t("plans.reviewTitle")
+            : t("plans.planTitle")
+          : proposalId
           ? t("taskCreate.drawerTitle")
           : selected
             ? t("taskActions.drawerTitle")
             : t("taskActions.listTitle")
       }
       onBack={
-        selected && !initialTaskId && !proposalId
+        selected && !initialTaskId && !proposalId && !plan
           ? () => setSelectedId(null)
           : undefined
       }
       closeOnEscape={phase.phase !== "saving" && draftPhase.phase !== "saving"}
     >
-      {proposalId ? (
+      {plan ? (
+        <PlanPanel target={plan} onOpenTask={(taskRef) => onOpenTask?.(taskRef)} />
+      ) : proposalId ? (
         <TaskProposalPanel proposalId={proposalId} view={view} store={store} />
       ) : view.status === "loading" || isLoading ? (
         <p role="status" className="loading-delayed text-sm text-ink-muted">
