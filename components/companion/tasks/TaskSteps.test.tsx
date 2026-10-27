@@ -372,7 +372,7 @@ describe("Task steps (web)", () => {
       ).toBeNull(),
     );
     const undo = within(panel).getByRole("button", {
-      name: "Undo this step change",
+      name: "Undo “Removed step: Bring two IDs”",
     });
     await waitFor(() => expect(isDisabled(undo)).toBe(false));
     fireEvent.click(undo);

@@ -123,7 +123,7 @@ export function ReceiptBlock({
           aria-disabled={!canWrite}
           aria-label={
             isStep
-              ? t("taskSteps.undoA11y")
+              ? t("taskSteps.undoA11y", { change: text })
               : removes
                 ? t("taskCreate.undoA11y", { title })
                 : undefined
