@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { CheckCircle2, Circle, CloudOff } from "lucide-react";
+import { Reveal } from "@/components/ui/Reveal";
 import { cn } from "@/lib/utils";
 import { stillOwned, type AccountOwner } from "@/lib/accountSession";
 import {
@@ -382,6 +383,8 @@ function SavedPlan({
   const compensation = phase.phase === "undo_review" ? phase.proposal : null;
   const compPhase = usePlanPhase(store, compensation ? proposalKey(compensation.id) : null);
   const [confirming, setConfirming] = useState(false);
+  const [instantUndo, setInstantUndo] = useState(false);
+  const [instantReview, setInstantReview] = useState(true);
   const busy = isPlanUnresolved(phase) || isPlanUnresolved(compPhase);
   const writable = Boolean(store) && view.canWrite && !busy;
 
@@ -448,13 +451,17 @@ function SavedPlan({
                   type="button"
                   className={BUTTON}
                   aria-disabled={!writable}
-                  onClick={() => writable && setConfirming(true)}
+                  onClick={(event) => {
+                    if (!writable) return;
+                    setInstantUndo(event.detail === 0);
+                    setConfirming(true);
+                  }}
                 >
                   {t("plans.undo")}
                 </button>
               )}
             </div>
-            {confirming && (
+            <Reveal open={confirming} instant={instantUndo}>
               <div role="group" className="space-y-2 rounded-lg border border-primary-subtle bg-primary-bg p-3">
                 <p className="text-sm text-ink">
                   {receipt.removalCount > 0
@@ -466,8 +473,9 @@ function SavedPlan({
                     type="button"
                     className={PRIMARY}
                     aria-disabled={!writable}
-                    onClick={() => {
+                    onClick={(event) => {
                       if (!writable) return;
+                      setInstantReview(event.detail === 0);
                       setConfirming(false);
                       // The confirmation above is the user's explicit removal confirmation.
                       void store?.undo(receipt.operationId, { removalConfirmed: receipt.removalCount > 0 });
@@ -480,33 +488,35 @@ function SavedPlan({
                   </button>
                 </div>
               </div>
-            )}
-            {compensation && compPhase.phase !== "saved" && (
-              <div role="group" className="space-y-2 rounded-lg border border-primary-subtle bg-primary-bg p-3">
-                <p className="text-sm text-ink">
-                  {t("plans.undoConflict", {
-                    titles: (phase.phase === "undo_review" ? phase.current : [])
-                      .map((c) => c.title ?? t("plans.untitledTask"))
-                      .join(", "),
-                  })}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className={PRIMARY}
-                    aria-disabled={!writable}
-                    onClick={() =>
-                      writable && void store?.approve(compensation, { removalConfirmed: compensation.changeCount > 0 })
-                    }
-                  >
-                    {t("plans.undoTheRest")}
-                  </button>
-                  <button type="button" className={BUTTON} onClick={() => undoKey && store?.dismiss(undoKey)}>
-                    {t("plans.keepPlan")}
-                  </button>
+            </Reveal>
+            <Reveal open={Boolean(compensation) && compPhase.phase !== "saved"} instant={instantReview}>
+              {compensation && (
+                <div role="group" className="space-y-2 rounded-lg border border-primary-subtle bg-primary-bg p-3">
+                  <p className="text-sm text-ink">
+                    {t("plans.undoConflict", {
+                      titles: (phase.phase === "undo_review" ? phase.current : [])
+                        .map((c) => c.title ?? t("plans.untitledTask"))
+                        .join(", "),
+                    })}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className={PRIMARY}
+                      aria-disabled={!writable}
+                      onClick={() =>
+                        writable && void store?.approve(compensation, { removalConfirmed: compensation.changeCount > 0 })
+                      }
+                    >
+                      {t("plans.undoTheRest")}
+                    </button>
+                    <button type="button" className={BUTTON} onClick={() => undoKey && store?.dismiss(undoKey)}>
+                      {t("plans.keepPlan")}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </Reveal>
             <PhaseLine
               phase={compensation ? compPhase : phase}
               store={store}
