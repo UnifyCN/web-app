@@ -97,6 +97,7 @@ Deno.test({
 const NEEDS: [string, string][] = [
   ['Remember that I need an interpreter for work permit appointments', 'I need an interpreter for work permit appointments'],
   ['Remember that I need help with my study permit application', 'I need help with my study permit application'],
+  ['Remember that I have a work permit appointment on Friday', 'I have a work permit appointment on Friday'],
   ['Souviens-toi que j’ai besoin d’un interprète pour les rendez-vous de permis de travail', 'j’ai besoin d’un interprète pour les rendez-vous de permis de travail'],
   ['Recuerda que necesito un intérprete para las citas del permiso de trabajo', 'necesito un intérprete para las citas del permiso de trabajo'],
   ['Hãy nhớ rằng tôi cần phiên dịch cho các cuộc hẹn về giấy phép lao động', 'tôi cần phiên dịch cho các cuộc hẹn về giấy phép lao động'],
