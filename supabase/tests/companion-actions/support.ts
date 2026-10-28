@@ -178,8 +178,12 @@ export async function migrate366(which: 'up' | 'down'): Promise<void> {
   );
 }
 
-/** Only the #365 migration or only its rollback script, in one transaction. */
+/**
+ * Only the #365 migration or only its rollback script, in one transaction. The #370
+ * rollback runs first when #370 is applied (it is the newest migration).
+ */
 export async function migrate365(which: 'up' | 'down'): Promise<void> {
+  if (which === 'down' && await migration370Applied()) await migrate370('down');
   const text = await Deno.readTextFile(which === 'up' ? MIGRATION_365 : ROLLBACK_365);
   await sql.begin(async tx => await tx.unsafe(text));
   // Wait for what the file actually defines (a red run may use an empty placeholder).
@@ -196,7 +200,8 @@ export async function migration365Applied(): Promise<boolean> {
 export async function migrate370(which: 'up' | 'down'): Promise<void> {
   const text = await Deno.readTextFile(which === 'up' ? MIGRATION_370 : ROLLBACK_370);
   await sql.begin(async tx => await tx.unsafe(text));
-  await waitForSchemaCache(which === 'up' && text.includes('companion_read_details') ? 'up370' : 'up366');
+  // #370 builds on #365: its rollback returns to the #365 schema.
+  await waitForSchemaCache(which === 'up' && text.includes('companion_read_details') ? 'up370' : 'up365');
 }
 
 export async function migration370Applied(): Promise<boolean> {
@@ -227,14 +232,14 @@ export async function waitForSchemaCache(which: 'up' | 'up364' | 'up361' | 'up36
     const seen364 = paths.includes('/rpc/companion_plan_prepare');
     const seen365 = paths.includes('/rpc/companion_prepare_edit');
     const seen366 = paths.includes('/rpc/companion_read_steps');
-    if (which === 'up365' && seen && seen363 && seen366 && seen365) return;
+    const seen370 = paths.includes('/rpc/companion_read_details') && paths.includes('/companion_saved_details');
+    if (which === 'up365' && seen && seen363 && seen366 && seen365 && !seen370) return;
     if (which === 'up364' && seen && seen363 && seen364) return;
     if (which === 'up' && seen && seen363 && !seen364 && !seen365) return;
     if (which === 'up366' && seen && seen363 && seen366 && !seen365) return;
     if ((which === 'down366' || which === 'down366WithPlans') && seen && seen363 && !seen366
       && !seen365 && seen364 === (which === 'down366WithPlans')) return;
-    if (which === 'up370' && seen && seen363 && seen366 && paths.includes('/rpc/companion_read_details') &&
-        paths.includes('/companion_saved_details')) return;
+    if (which === 'up370' && seen && seen363 && seen366 && seen365 && seen370) return;
     if (which === 'up361' && seen && !seen363) return;
     if (which === 'down' && !paths.some(p => p.includes('companion_') && !p.includes('rollback_archive'))) return;
     await sleep(100);
