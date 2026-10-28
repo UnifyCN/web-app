@@ -470,3 +470,57 @@ it("a waiting reason change names the reason before and after on the command car
   expect(capture.mock.calls.length).toBeGreaterThan(0);
   expect(JSON.stringify(capture.mock.calls)).not.toContain("Appointment on");
 });
+
+// #365 + #370 composition (post-merge acceptance, written after the merge): one
+// conversation uses both command families through the same send hook and cards.
+it("in one conversation, a waiting command, an ambiguous edit, a remember command and a repeated one each get their own saved result or question", async () => {
+  // Wrong if: one family's command is answered by the model, an ambiguous edit loses its
+  // #365 question, a remember command does not save exactly its detail, a repeated one
+  // saves twice, a card shows the other family's result, or analytics gets private text.
+  server.addCustomTask(SIN);
+  mount(<CompanionPage />);
+  await send(`Mark task "${PHONE}" as waiting: Appointment on Friday`);
+  const edit = await screen.findByRole("article", {
+    name: `${PHONE}: Not started → Waiting`,
+  });
+  expect(
+    within(edit).getByText("Waiting for: (empty) → “Appointment on Friday”"),
+  ).toBeTruthy();
+
+  server.addCustomTask(PHONE);
+  await send(`Set priority of task "${PHONE}" to Do now`);
+  expect(
+    await screen.findByText(
+      `2 tasks are called “${PHONE}”, so I did not change any of them. Open the one you mean in Checklist and change it there.`,
+    ),
+  ).toBeTruthy();
+
+  await send("Remember that I can attend appointments on Fridays");
+  const detail = await screen.findByRole("article", { name: "Saved details" });
+  expect(
+    await within(detail).findByText(
+      "Saved: “I can attend appointments on Fridays”.",
+    ),
+  ).toBeTruthy();
+  await send("Remember that I can attend appointments on Fridays");
+  expect(
+    await screen.findByText(
+      "That detail is already saved. You can see it under Saved details.",
+    ),
+  ).toBeTruthy();
+
+  expect(screen.getAllByRole("article", { name: "Saved details" })).toHaveLength(1);
+  expect(writes().map((b) => b.operations[0].type)).toEqual([
+    "task.set_state",
+    "detail.create",
+  ]);
+  expect(server.details().map((d) => d.text)).toEqual([
+    "I can attend appointments on Fridays",
+  ]);
+  expect(server.row(phoneRef)).toMatchObject({
+    state: "waiting",
+    reason: "Appointment on Friday",
+  });
+  expect(generateReply).not.toHaveBeenCalled();
+  expect(JSON.stringify(capture.mock.calls)).not.toMatch(/Appointment on|Fridays/);
+});
