@@ -1102,3 +1102,127 @@ it.each(["ready", "stale", "missing"] as const)("bulk removal verifies every cur
   expect(server.steps().filter(s => !s.removed).map(s => s.title)).toEqual(["Unrelated step"]);
   expect(stepApplies().at(-1)?.operations[0].steps).toEqual(originals.map(step => ({ step_id: step.step_id, expected_revision: 2 })));
 });
+
+it("a direct step receipt keeps its original text and becomes historical after a newer edit", async () => {
+  const mounted = mount(<ChecklistPage />);
+  const { panel } = await openSteps();
+  await addStep(panel, "Original direct step");
+  // Wrong if a fresh step read leaves its previous receipt labelled current.
+  const undoName = "Undo “Added step: Original direct step”";
+  await waitFor(() =>
+    expect(
+      isDisabled(within(panel).getByRole("button", { name: undoName })),
+    ).toBe(false),
+  );
+  expect(within(panel).queryByText(/This task changed after this/)).toBeNull();
+  const step = server.steps()[0];
+  expect(
+    server.handle({
+      action: "apply",
+      operation_id: crypto.randomUUID(),
+      authorization: { kind: "ui_control" },
+      operations: [
+        {
+          type: "step.update",
+          step_id: step.step_id,
+          title: "Current direct step",
+          expected_revision: step.revision,
+        },
+      ],
+    }).status,
+  ).toBe(200);
+  await act(async () => {
+    await mounted.queryClient.refetchQueries({
+      queryKey: ["companion-task-actions"],
+    });
+  });
+  await within(panel).findByRole("checkbox", { name: "Current direct step" });
+  expect(
+    within(panel).getByText("Added step: Original direct step"),
+  ).toBeTruthy();
+  expect(within(panel).getByText(/This task changed after this/)).toBeTruthy();
+});
+
+it("a checked-step receipt stays historical when a later client restores the same checkbox value", async () => {
+  // Wrong if matching text and checkbox values hide later revisions.
+  const mounted = mount(<ChecklistPage />);
+  const { panel } = await openSteps();
+  await addStep(panel, "Prepare the papers");
+  const box = await within(panel).findByRole("checkbox", {
+    name: "Prepare the papers",
+  });
+  await waitFor(() => expect(isDisabled(box)).toBe(false));
+  fireEvent.click(box);
+  await within(panel).findByText("Checked step: Prepare the papers");
+  await waitFor(() =>
+    expect(
+      within(panel).getAllByText(/This task changed after this/),
+    ).toHaveLength(1),
+  );
+  const step = server.steps()[0];
+  for (const [index, done] of [false, true].entries()) {
+    expect(
+      server.handle({
+        action: "apply",
+        operation_id: crypto.randomUUID(),
+        authorization: { kind: "ui_control" },
+        operations: [
+          {
+            type: "step.set_done",
+            step_id: step.step_id,
+            done,
+            expected_revision: step.revision + index,
+          },
+        ],
+      }).status,
+    ).toBe(200);
+  }
+  await act(async () => {
+    await mounted.queryClient.refetchQueries({
+      queryKey: ["companion-task-actions"],
+    });
+  });
+  expect(checked(
+    within(panel).getByRole("checkbox", { name: "Prepare the papers" }),
+  )).toBe(true);
+  expect(
+    within(panel).getByText("Checked step: Prepare the papers"),
+  ).toBeTruthy();
+  await waitFor(() => expect(
+    within(panel).getAllByText(/This task changed after this/),
+  ).toHaveLength(2));
+});
+
+it("an unrelated added step does not make the direct receipt historical", async () => {
+  // Wrong if another step's revision changes the recorded result of this one.
+  const mounted = mount(<ChecklistPage />);
+  const { panel } = await openSteps();
+  await addStep(panel, "Prepare the papers");
+  await within(panel).findByText("Added step: Prepare the papers");
+  expect(
+    server.handle({
+      action: "apply",
+      operation_id: crypto.randomUUID(),
+      authorization: { kind: "ui_control" },
+      operations: [
+        {
+          type: "step.create",
+          task_ref: "sanity:sin",
+          titles: ["Ask about service hours"],
+        },
+      ],
+    }).status,
+  ).toBe(200);
+  await act(async () => {
+    await mounted.queryClient.refetchQueries({
+      queryKey: ["companion-task-actions"],
+    });
+  });
+  await within(panel).findByRole("checkbox", {
+    name: "Ask about service hours",
+  });
+  expect(
+    within(panel).getByText("Added step: Prepare the papers"),
+  ).toBeTruthy();
+  expect(within(panel).queryByText(/This task changed after this/)).toBeNull();
+});

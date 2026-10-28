@@ -466,6 +466,22 @@ function StepPhase({
 }) {
   const { t } = useTranslation();
   const phase = useTaskActionPhase(store, storeKey);
+  const receipt =
+    phase.phase === "saved"
+      ? {
+          ...phase.receipt,
+          current:
+            phase.receipt.current &&
+            (phase.receipt.steps ?? []).every((recorded) => {
+              const current = steps.find(
+                (step) => step.stepId === recorded.stepId,
+              );
+              return recorded.removed
+                ? !current
+                : current?.revision === recorded.afterRevision;
+            }),
+        }
+      : null;
   const operation =
     phase.phase === "not_applied" && phase.write.kind === "apply"
       ? phase.write.operation
@@ -503,9 +519,9 @@ function StepPhase({
           steps={steps}
         />
       )}
-      {phase.phase === "saved" && (
+      {receipt && (
         <ReceiptBlock
-          receipt={phase.receipt}
+          receipt={receipt}
           storeKey={storeKey}
           store={store}
           canWrite={writable}
