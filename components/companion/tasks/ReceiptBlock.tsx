@@ -8,6 +8,11 @@ import { Reveal } from "@/components/ui/Reveal";
 import { cn } from "@/lib/utils";
 import type { TaskReceipt, TaskState } from "@/lib/companionActions/contract";
 import type { TaskActionStore } from "@/lib/companionActions/taskActionStore";
+import {
+  editReceiptText,
+  receiptChanges,
+  receiptChangeText,
+} from "./editText";
 
 interface ReceiptBlockProps {
   receipt: TaskReceipt;
@@ -16,14 +21,14 @@ interface ReceiptBlockProps {
   store: TaskActionStore | null;
   /** A connection, a fresh read and no unresolved write. */
   canWrite: boolean;
-  /** #367: the Checklist title, for a content-backed task the receipt does not name. */
+  /** The task's title, for a receipt that does not record one (#365, #367). */
   taskTitle?: string | null;
 }
 
 /**
  * The exact saved result of one action and the Undo of that receipt only
- * (mobile-app#361, #363). An added task's Undo removes it, so it asks first; Keep
- * sends nothing.
+ * (mobile-app#361, #363, #365, #366, #367). An added task's Undo removes it, so it asks first;
+ * Keep sends nothing. An edit names each changed field with its recorded before and after.
  */
 export function ReceiptBlock({
   receipt,
@@ -78,21 +83,23 @@ export function ReceiptBlock({
         ? title
           ? t("taskRemove.receiptRestored", { title })
           : t("taskRemove.receiptRestoredUnknown")
-    : receipt.operationType === "task.create_custom"
-      ? t("taskCreate.added", { title })
-      : receipt.operationType === "task.remove_created"
-        ? t("taskCreate.removed", { title })
-        : receipt.kind === "undo"
-          ? t("taskActions.receiptUndo", {
-              state: stateLabel(receipt.afterState),
-            })
-          : receipt.beforeState === "waiting" &&
-              receipt.afterState === "waiting"
-            ? t("taskActions.receiptReason")
-            : t("taskActions.receiptChange", {
-                from: stateLabel(receipt.beforeState),
-                to: stateLabel(receipt.afterState),
-              });
+    : receipt.operationType === "task.edit_details"
+      ? editReceiptText(t as never, receipt, receipt.title ?? taskTitle ?? "")
+      : receipt.operationType === "task.create_custom"
+        ? t("taskCreate.added", { title })
+        : receipt.operationType === "task.remove_created"
+          ? t("taskCreate.removed", { title })
+          : receipt.kind === "undo"
+            ? t("taskActions.receiptUndo", {
+                state: stateLabel(receipt.afterState),
+              })
+            : receipt.beforeState === "waiting" &&
+                receipt.afterState === "waiting"
+              ? t("taskActions.receiptReason")
+              : t("taskActions.receiptChange", {
+                  from: stateLabel(receipt.beforeState),
+                  to: stateLabel(receipt.afterState),
+                });
   const time = new Intl.DateTimeFormat(i18n.language, {
     month: "short",
     day: "numeric",
@@ -121,6 +128,14 @@ export function ReceiptBlock({
   return (
     <div className="rounded-lg border border-border-card bg-surface-card px-3 py-2.5">
       <p className="break-words text-sm text-ink-secondary">{text}</p>
+      {receiptChanges(receipt).map((change) => (
+        <p
+          key={change.field}
+          className="break-words text-sm text-ink-secondary"
+        >
+          {receiptChangeText(t as never, change)}
+        </p>
+      ))}
       {removal && (
         <p className="mt-0.5 text-xs text-ink-muted">
           {t("taskRemove.receiptEffects", {

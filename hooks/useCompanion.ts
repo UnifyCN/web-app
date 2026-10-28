@@ -39,11 +39,41 @@ import { conversationActionsKey } from "@/lib/companionActions/queryKeys";
 import {
   TITLE_MAX,
   createTaskOperation,
+  editDraftOf,
+  type CommandResult,
   titleKey,
 } from "@/lib/companionActions/contract";
 import * as checklist from "@/services/checklist";
 import { tasksKey } from "@/hooks/useChecklist";
 import { useLanguage } from "@/hooks/useLanguage";
+
+/** The question for a command that was not clear enough to change anything (#363, #365, #367). */
+function clarifyQuestion(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  command: Extract<CommandResult, { kind: "clarify" }>,
+): string {
+  if (command.intent === "remove")
+    return t(
+      command.reason === "multiple"
+        ? "taskRemove.clarifyMultiple"
+        : "taskRemove.clarifyMissingTitle",
+    );
+  switch (command.reason) {
+    case "missing_title":
+      return t("taskCreate.clarifyMissingTitle");
+    case "multiple":
+      return t("taskCreate.clarifyMultiple");
+    case "too_long":
+      return t("taskCreate.clarifyTooLong", { max: TITLE_MAX });
+    case "task_ambiguous":
+      return t("taskEdit.clarify.task_ambiguous", {
+        title: command.candidates[0]?.title ?? "",
+        number: command.candidates.length,
+      });
+    default:
+      return t(`taskEdit.clarify.${command.reason}`);
+  }
+}
 
 /** React Query hooks for Companion (AI chat). */
 
@@ -277,7 +307,12 @@ export function useSendMessage() {
             });
           return { conversationIdentifier, accountId: owner.accountId };
         }
-        if (command.kind === "create" && command.sameTitleTasks.length === 0) {
+        if (
+          (command.kind === "create" && command.sameTitleTasks.length === 0) ||
+          command.kind === "edit"
+        ) {
+          // A clear command makes exactly its one change (#365 edits too). Its card
+          // shows the saved receipt, never assistant text.
           if (store) {
             await store.applyOperation(
               `command:${savedUser.id}`,
@@ -295,20 +330,7 @@ export function useSendMessage() {
             ? t("taskCreate.clarifyDuplicate", {
                 title: command.sameTitleTasks[0].title,
               })
-            : command.intent === "remove"
-              ? t(
-                  command.reason === "multiple"
-                    ? "taskRemove.clarifyMultiple"
-                    : "taskRemove.clarifyMissingTitle",
-                )
-              : t(
-                command.reason === "missing_title"
-                  ? "taskCreate.clarifyMissingTitle"
-                  : command.reason === "multiple"
-                    ? "taskCreate.clarifyMultiple"
-                    : "taskCreate.clarifyTooLong",
-                { max: TITLE_MAX },
-              );
+            : clarifyQuestion(t as never, command);
         await companion.saveMessage({
           conversationIdentifier,
           role: "assistant",
@@ -384,6 +406,17 @@ export function useSendMessage() {
           conversationId: conversationIdentifier,
           messageId: savedAnswer.id,
         });
+        ensureOwned(owner);
+      }
+      // #365: a suggested change to a listed task becomes a server-owned draft too.
+      const editDraft = reply.actionEdit ? editDraftOf(reply.actionEdit) : null;
+      if (editDraft) {
+        await actions.prepare(
+          editDraft,
+          { conversationId: conversationIdentifier, messageId: savedAnswer.id },
+          // The app language is one of the content languages; the service checks it.
+          { language: i18n.language },
+        );
         ensureOwned(owner);
       }
       // #366: suggested steps for one Checklist task become a server-owned draft

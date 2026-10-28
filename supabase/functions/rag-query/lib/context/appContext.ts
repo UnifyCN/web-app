@@ -237,6 +237,12 @@ export interface ChecklistRead {
   items: ChecklistContextItem[];
   /** False when published task content could not be read (titles missing). */
   contentAvailable: boolean;
+  /**
+   * True when `items` holds every live task: the profile needs no published content, or
+   * that content was read. False when published tasks may exist but were not read (no
+   * content configuration, or the content read failed).
+   */
+  complete: boolean;
 }
 
 /**
@@ -248,7 +254,7 @@ export async function readChecklist(
   client: UserClient,
   userId: string,
   profile: ProfileRow | null,
-  options: { sanity: SanityConfig | null; lang: string; prompt: string },
+  options: { sanity: SanityConfig | null; lang: string; prompt: string; limit?: number },
   signal: AbortSignal
 ): Promise<ChecklistRead> {
   const persona = typeof profile?.persona === 'string' && PERSONA_PATTERN.test(profile.persona)
@@ -315,8 +321,9 @@ export async function readChecklist(
   }
 
   return {
-    items: rankTasks(tasks, options.prompt).slice(0, CHECKLIST_ITEM_LIMIT),
+    items: rankTasks(tasks, options.prompt).slice(0, options.limit ?? CHECKLIST_ITEM_LIMIT),
     contentAvailable: content !== null || !options.sanity || !persona || !stage,
+    complete: content !== null || !persona || !stage,
   };
 }
 

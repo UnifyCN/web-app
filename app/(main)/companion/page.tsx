@@ -10,6 +10,8 @@ import {
   TaskActionsDrawer,
 } from "@/components/companion/tasks/TaskActionsDrawer";
 import { TaskActionCards } from "@/components/companion/tasks/TaskActionCards";
+import { useTasks } from "@/hooks/useChecklist";
+import { taskOrderKey } from "@/services/checklist";
 import { PlanEntry, type PlanTarget } from "@/components/companion/plans/PlanEntry";
 import { PlanCards } from "@/components/companion/plans/PlanCards";
 import { useConversationPlans, usePlanStore } from "@/hooks/usePlans";
@@ -28,8 +30,6 @@ import {
   useSendMessage,
 } from "@/hooks/useCompanion";
 import { useCurrentUser } from "@/hooks/useProfile";
-import { useTasks } from "@/hooks/useChecklist";
-import { taskOrderKey } from "@/services/checklist";
 import { progressFor } from "@/components/companion/tasks/TaskStatePanel";
 import type { RemovalProposal } from "@/lib/companionActions/contract";
 import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
@@ -50,7 +50,11 @@ export default function CompanionPage() {
   // overlay drawer; the chat and its draft stay mounted behind it.
   const [drawer, setDrawer] = useState<
     | { kind: "tasks" }
-    | { kind: "proposal"; proposalId: string }
+    | {
+        kind: "proposal";
+        proposalId: string;
+        proposalKind: "task_create" | "task_edit";
+      }
     | { kind: "steps"; proposalId: string }
     | { kind: "task"; taskId: string }
     | { kind: "plan"; target: PlanTarget }
@@ -220,8 +224,8 @@ export default function CompanionPage() {
             commands={actions?.commands ?? []}
             store={actionStore}
             canWrite={progress.canWrite}
-            onReview={(proposalId) =>
-              setDrawer({ kind: "proposal", proposalId })
+            onReview={(proposalId, proposalKind) =>
+              setDrawer({ kind: "proposal", proposalId, proposalKind })
             }
             onViewTask={(taskRef) =>
               setDrawer({
@@ -256,6 +260,9 @@ export default function CompanionPage() {
         plan={drawer?.kind === "plan" ? drawer.target : null}
         onOpenTask={openTaskRef}
         stepProposalId={drawer?.kind === "steps" ? drawer.proposalId : null}
+        proposalKind={
+          drawer?.kind === "proposal" ? drawer.proposalKind : undefined
+        }
       />
     </div>
   );

@@ -41,6 +41,11 @@ export const MIGRATION_366 = override('ACTIONS_MIGRATION_366_FILE') ??
   new URL('../../migrations/20261027183644_companion_task_steps.sql', import.meta.url);
 export const ROLLBACK_366 = override('ACTIONS_ROLLBACK_366_FILE') ??
   new URL('../../rollbacks/20261027183644_companion_task_steps.down.sql', import.meta.url);
+// #365 task edits: ACTIONS_MIGRATION_365_FILE / ACTIONS_ROLLBACK_365_FILE likewise.
+export const MIGRATION_365 = override('ACTIONS_MIGRATION_365_FILE') ??
+  new URL('../../migrations/20261028001530_companion_task_edit.sql', import.meta.url);
+export const ROLLBACK_365 = override('ACTIONS_ROLLBACK_365_FILE') ??
+  new URL('../../rollbacks/20261028001530_companion_task_edit.down.sql', import.meta.url);
 // #367 task removal (ACTIONS_MIGRATION_367_FILE / ACTIONS_ROLLBACK_367_FILE for mutation runs).
 export const MIGRATION_367 = override('ACTIONS_MIGRATION_367_FILE') ??
   new URL('../../migrations/20261028025026_companion_task_remove.sql', import.meta.url);
@@ -104,8 +109,9 @@ export async function migrationApplied(): Promise<boolean> {
 }
 
 /**
- * The full schema change: 'up' applies the production migrations in order (#361, #363,
- * #364, #366, #367), each in one transaction; 'down' runs the rollback scripts in reverse order.
+ * The full schema change: 'up' applies the production migrations in timestamp order
+ * (#361, #363, #364, #366, #365, #367), each in one transaction; 'down' runs the rollback
+ * scripts in reverse order.
  */
 export async function migrate(which: 'up' | 'down'): Promise<void> {
   if (which === 'up') {
@@ -113,9 +119,11 @@ export async function migrate(which: 'up' | 'down'): Promise<void> {
     await migrate363('up');
     await migrate364('up');
     await migrate366('up');
+    await migrate365('up');
     await migrate367('up');
   } else {
     if (await migration367Applied()) await migrate367('down');
+    if (await migration365Applied()) await migrate365('down');
     if (await migration366Applied()) await migrate366('down');
     if (await migration363Applied()) await migrate363('down');
     await sql.begin(async tx => await tx.unsafe(await Deno.readTextFile(ROLLBACK)));
@@ -123,9 +131,12 @@ export async function migrate(which: 'up' | 'down'): Promise<void> {
   }
 }
 
-/** Only the #363 migration or only its rollback script, in one transaction. A #364 schema
- * on top is rolled back first, as the operator order requires. */
+/**
+ * Only the #363 migration or only its rollback script, in one transaction. Newer schema
+ * on top (#365, then #364) is rolled back first, as the operator order requires.
+ */
 export async function migrate363(which: 'up' | 'down'): Promise<void> {
+  if (which === 'down' && await migration365Applied()) await migrate365('down');
   if (which === 'down' && await migration364Applied()) await migrate364('down');
   const text = await Deno.readTextFile(which === 'up' ? MIGRATION_363 : ROLLBACK_363);
   await sql.begin(async tx => await tx.unsafe(text));
@@ -133,8 +144,12 @@ export async function migrate363(which: 'up' | 'down'): Promise<void> {
   await waitForSchemaCache(which === 'up' && text.includes('companion_prepare_proposal') ? 'up' : 'up361');
 }
 
-/** Only the #364 migration or only its rollback script, in one transaction. */
+/**
+ * Only the #364 migration or only its rollback script, in one transaction. The #365
+ * rollback runs first when #365 is applied (it is the newest migration).
+ */
 export async function migrate364(which: 'up' | 'down'): Promise<void> {
+  if (which === 'down' && await migration365Applied()) await migrate365('down');
   const text = await Deno.readTextFile(which === 'up' ? MIGRATION_364 : ROLLBACK_364);
   await sql.begin(async tx => await tx.unsafe(text));
   // Wait for what the file actually defines (a red run may use an empty placeholder).
@@ -148,10 +163,13 @@ export async function migration364Applied(): Promise<boolean> {
   return r.applied;
 }
 
-/** Only the #366 migration or only its rollback script, in one transaction. A #367 schema
- * on top is rolled back first, as the operator order requires. */
+/**
+ * Only the #366 migration or only its rollback script, in one transaction. The #365
+ * rollback (and before it #367) runs first when applied (rollback order: #367, #365,
+ * #366, #364, #363, #361).
+ */
 export async function migrate366(which: 'up' | 'down'): Promise<void> {
-  if (which === 'down' && await migration367Applied()) await migrate367('down');
+  if (which === 'down' && await migration365Applied()) await migrate365('down');
   const text = await Deno.readTextFile(which === 'up' ? MIGRATION_366 : ROLLBACK_366);
   await sql.begin(async tx => await tx.unsafe(text));
   // After rollback, the step RPC must be absent and any #364 schema below must stay.
@@ -162,10 +180,30 @@ export async function migrate366(which: 'up' | 'down'): Promise<void> {
 }
 
 /**
+ * Only the #365 migration or only its rollback script, in one transaction. A #367 schema
+ * on top is rolled back first (#367 is newer).
+ */
+export async function migrate365(which: 'up' | 'down'): Promise<void> {
+  if (which === 'down' && await migration367Applied()) await migrate367('down');
+  const text = await Deno.readTextFile(which === 'up' ? MIGRATION_365 : ROLLBACK_365);
+  await sql.begin(async tx => await tx.unsafe(text));
+  // Wait for what the file actually defines (a red run may use an empty placeholder).
+  const defines = text.includes('companion_prepare_edit');
+  await waitForSchemaCache(which === 'up' ? (defines ? 'up365' : 'up366') : (defines ? 'up366' : 'up365'));
+}
+
+export async function migration365Applied(): Promise<boolean> {
+  const [r] = await sql`select to_regprocedure('public.companion_prepare_edit(uuid,jsonb,jsonb,text)') is not null as applied`;
+  return r.applied;
+}
+
+/**
  * Only the #367 migration or only its rollback script, in one transaction. It replaces
  * shared function bodies and adds no RPC name, so PostgREST needs no schema reload.
+ * It is applied after #365 (timestamp order): an older schema gets #365 first.
  */
 export async function migrate367(which: 'up' | 'down'): Promise<void> {
+  if (which === 'up' && !(await migration365Applied())) await migrate365('up');
   await sql.begin(async tx => await tx.unsafe(await Deno.readTextFile(which === 'up' ? MIGRATION_367 : ROLLBACK_367)));
 }
 
@@ -186,7 +224,7 @@ export async function migration363Applied(): Promise<boolean> {
 }
 
 /** PostgREST reloads its schema cache asynchronously after DDL; wait until it agrees. */
-export async function waitForSchemaCache(which: 'up' | 'up364' | 'up361' | 'up366' | 'down366' | 'down366WithPlans' | 'down', timeoutMs = 15000): Promise<void> {
+export async function waitForSchemaCache(which: 'up' | 'up364' | 'up361' | 'up366' | 'up365' | 'down366' | 'down366WithPlans' | 'down', timeoutMs = 15000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const res = await fetch(`${API_URL}/rest/v1/`, {
@@ -196,12 +234,14 @@ export async function waitForSchemaCache(which: 'up' | 'up364' | 'up361' | 'up36
     const seen = paths.includes('/companion_feature_gate') && paths.includes('/rpc/companion_apply_actions');
     const seen363 = paths.includes('/rpc/companion_prepare_proposal');
     const seen364 = paths.includes('/rpc/companion_plan_prepare');
+    const seen365 = paths.includes('/rpc/companion_prepare_edit');
     const seen366 = paths.includes('/rpc/companion_read_steps');
+    if (which === 'up365' && seen && seen363 && seen366 && seen365) return;
     if (which === 'up364' && seen && seen363 && seen364) return;
-    if (which === 'up' && seen && seen363 && !seen364) return;
-    if (which === 'up366' && seen && seen363 && seen366) return;
+    if (which === 'up' && seen && seen363 && !seen364 && !seen365) return;
+    if (which === 'up366' && seen && seen363 && seen366 && !seen365) return;
     if ((which === 'down366' || which === 'down366WithPlans') && seen && seen363 && !seen366
-      && seen364 === (which === 'down366WithPlans')) return;
+      && !seen365 && seen364 === (which === 'down366WithPlans')) return;
     if (which === 'up361' && seen && !seen363) return;
     if (which === 'down' && !paths.some(p => p.includes('companion_') && !p.includes('rollback_archive'))) return;
     await sleep(100);
@@ -223,6 +263,7 @@ export async function ready(): Promise<void> {
     if (!(await migration363Applied())) await migrate363('up');
     if (!(await migration364Applied())) await migrate364('up');
     if (!(await migration366Applied())) await migrate366('up');
+    if (!(await migration365Applied())) await migrate365('up');
     if (!(await migration367Applied())) await migrate367('up');
   }
   await openGate();

@@ -10,7 +10,8 @@
 //
 // Runs only when ACTIONS_API_URL, ACTIONS_ANON_KEY and ACTIONS_SERVICE_ROLE_KEY point at
 // the disposable 127.0.0.1 stack (supabase/tests/companion-actions/run.sh, ACTIONS_KEEP=1)
-// with the #361-#367 migrations applied (chronological; see beforeAll), and
+// with the #361-#367 migrations applied (timestamp order: #361, #363, #364, #366, #365,
+// #367; see beforeAll), and
 // ACTIONS_DB_CONTAINER names its database container.
 import { useSyncExternalStore } from "react";
 import { execFileSync } from "node:child_process";
@@ -345,6 +346,7 @@ describeStack("Task removal against the real local stack (web, #367)", () => {
       ["companion_prepare_proposal(uuid,jsonb,jsonb)", "20261026165156_companion_task_create.sql"],
       ["companion_plans_read(uuid)", "20261027183338_companion_settlement_plan.sql"],
       ["companion_read_steps(uuid)", "20261027183644_companion_task_steps.sql"],
+      ["companion_prepare_edit(uuid,jsonb,jsonb,text)", "20261028001530_companion_task_edit.sql"],
       ["companion_remove_prepare(uuid,text,jsonb)", "20261028025026_companion_task_remove.sql"],
     ];
     const present = chain.map(([sig]) => has(sig));

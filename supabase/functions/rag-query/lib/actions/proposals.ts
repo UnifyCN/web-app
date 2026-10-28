@@ -1,4 +1,5 @@
-// Typed registry of the changes the answer model may suggest (mobile-app#363).
+// Typed registry of the changes the answer model may suggest (mobile-app#363 new task,
+// #365 edit of a listed task).
 //
 // A suggestion is data for the user to review, never a write: rag-query does not call
 // the action service, prepare a proposal or build authorization evidence. The client
@@ -35,7 +36,20 @@ export interface StepCreateProposal {
   titles: string[];
 }
 
-export type ActionProposal = TaskCreateProposal | PlanProposal | StepCreateProposal;
+/**
+ * One change to one Checklist task the answer was shown (#365). `waiting` sets Waiting
+ * with that reason. Title, description and priority only for a custom task: a published
+ * task's are shared content.
+ */
+export interface TaskEditProposal {
+  type: 'task.edit';
+  version: 1;
+  task_ref: string;
+  field: 'state' | 'waiting' | 'title' | 'description' | 'priority';
+  value: string;
+}
+
+export type ActionProposal = TaskCreateProposal | PlanProposal | StepCreateProposal | TaskEditProposal;
 
 /** A Checklist task this answer actually read for this account (the plan may reuse only these). */
 export interface ReadChecklistTask {
@@ -50,8 +64,11 @@ export interface ProposalCapabilitySpec<P extends ActionProposal> {
   classification: 'propose';
   /** The line tag the model writes, alone on its line: "[TAG]: value". */
   tag: string;
-  /** The value as written by the model, or null when it is not exactly one plain value. */
-  parse(value: string): P | null;
+  /**
+   * The value as written by the model, or null when it is not exactly one plain value.
+   * `shownTasks`: the Checklist task ids this answer was shown; nothing else is a target.
+   */
+  parse(value: string, shownTasks?: ReadonlySet<string>): P | null;
 }
 
 const TITLE_MIN = 3;
@@ -72,7 +89,42 @@ const taskCreate: ProposalCapabilitySpec<TaskCreateProposal> = {
   },
 };
 
-export const PROPOSAL_CAPABILITIES = { 'task.create_custom': taskCreate } as const;
+const STATES = ['not_started', 'in_progress', 'waiting', 'completed'];
+const PRIORITIES = ['Do now', 'Do soon', 'Explore and connect', 'Optional / later'];
+const EDIT_FIELDS: TaskEditProposal['field'][] = ['state', 'waiting', 'title', 'description', 'priority'];
+const TASK_REF = /^(sanity:(?!drafts\.|versions\.)[A-Za-z0-9][A-Za-z0-9._-]{0,127}|custom:[1-9][0-9]{0,17})$/;
+const plain = (value: string, max: number) => {
+  const text = value.trim().replace(/\s+/g, ' ').replace(/^["“]|["”]$/g, '').trim();
+  return text && text.length <= max && !NOT_PLAIN.test(text) ? text : null;
+};
+
+const taskEdit: ProposalCapabilitySpec<TaskEditProposal> = {
+  type: 'task.edit',
+  version: 1,
+  classification: 'propose',
+  tag: 'EDIT',
+  parse(value, shownTasks) {
+    const parts = value.split('|').map(part => part.trim());
+    if (parts.length !== 3) return null;
+    const [task_ref, field, raw] = parts;
+    if (!TASK_REF.test(task_ref) || !shownTasks?.has(task_ref)) return null;
+    if (!(EDIT_FIELDS as string[]).includes(field)) return null;
+    const edit = (v: string | null): TaskEditProposal | null =>
+      v === null ? null : { type: 'task.edit', version: 1, task_ref, field: field as TaskEditProposal['field'], value: v };
+    if (field === 'state') return edit(STATES.includes(raw) ? raw : null);
+    if (field === 'waiting') return edit(plain(raw, 200));
+    // Shared published content is never edited for one account.
+    if (!task_ref.startsWith('custom:')) return null;
+    if (field === 'priority') return edit(PRIORITIES.includes(raw) ? raw : null);
+    if (field === 'title') {
+      const title = plain(raw, TITLE_MAX);
+      return edit(title && title.length >= TITLE_MIN ? title : null);
+    }
+    return edit(plain(raw, 300));
+  },
+};
+
+export const PROPOSAL_CAPABILITIES = { 'task.create_custom': taskCreate, 'task.edit': taskEdit } as const;
 
 const PLAN_GOAL_MAX = 120;
 const PLAN_ITEMS_MAX = 12;
@@ -90,7 +142,7 @@ When the user asks for help planning several settlement steps (for example their
 [PLAN]: <short plan name in plain text, in the language of your answer>
 [PLAN_TASK]: <the exact task key of a Checklist task listed above, for example sanity:abc or custom:12>
 [PLAN_NEW]: <short title of a missing task in plain text, in the language of your answer>
-Use [PLAN_TASK] for every listed Checklist task the plan reuses, in the order to do them, and [PLAN_NEW] only for tasks the Checklist does not have (at most 5). Never invent a task key. The app shows the plan as a draft that only the user can approve; never say that a plan or task was saved. When you write a plan, write no [TASK] line.`;
+Use [PLAN_TASK] for every listed Checklist task the plan reuses, in the order to do them, and [PLAN_NEW] only for tasks the Checklist does not have (at most 5). Never invent a task key. The app shows the plan as a draft that only the user can approve; never say that a plan or task was saved. When you write a plan, write no [TASK] or [EDIT] line.`;
 
 /**
  * The plan lines of an answer, validated against the Checklist tasks this answer read.
@@ -172,14 +224,21 @@ The app shows it as a draft that only the user can approve. Never say that a tas
 STEP SUGGESTION:
 When the user asks how to do one task that is listed in their Checklist above, and no [TASK] line is written, you may suggest up to 5 short preparation steps for that one task. Write each on its own line before any [SUGGESTIONS] line, as:
 [STEP <task id>]: <short step in plain text, at most 80 characters, in the language of your answer>
-Use the exact task id shown for that Checklist task. The app shows the steps as a draft that only the user can approve. Never say that a step was added, saved or done. Steps never complete the task. Write no [STEP] line in any other case.`;
+Use the exact task id shown for that Checklist task. The app shows the steps as a draft that only the user can approve. Never say that a step was added, saved or done. Steps never complete the task. Write no [STEP] line in any other case.
+
+TASK CHANGE SUGGESTION:
+When what the user says clearly changes one Checklist task listed above, you may instead suggest ONE change to it for them to review, on its own line before any [SUGGESTIONS] line, as:
+[EDIT]: <task id from the list> | <field> | <value>
+Fields: state (value: not_started, in_progress, waiting or completed), waiting (value: what the task is waiting for, in plain text), and only for a task whose id starts with custom: also title, description (plain text) or priority (value: Do now, Do soon, Explore and connect or Optional / later). Suggest completed only when the user says the whole task is done; finished preparation is not completion. The app shows the change as a draft that only the user can approve. Never say that it was changed or saved. Write at most one [TASK] or [EDIT] line in an answer, and no [STEP] line with it.`;
 
 /**
- * Removes every "[TASK]: ...", plan and "[STEP <id>]: ..." line from the answer.
- * Returns a plan when the answer has exactly one valid plan (checked against `read`,
- * the Checklist tasks this answer read for the account), else the one valid task
- * suggestion, else steps (#366): valid lines for one task in `readTaskRefs`, the
- * Checklist tasks this answer read. Two or more tasks, or an invalid value, give none.
+ * Removes every "[TASK]: ...", "[EDIT]: ...", plan and "[STEP <id>]: ..." line from the
+ * answer. Returns a plan when the answer has plan lines and exactly one valid plan
+ * (checked against `read`, the Checklist tasks this answer read for the account). Else a
+ * task or an edit (#365): exactly one valid "[TASK]" or "[EDIT]" line (two or more of
+ * them, or an invalid value, give none); an edit names a task in `readTaskRefs`. Steps
+ * (#366), only when none of those was written: valid lines for one task in
+ * `readTaskRefs`, the Checklist tasks this answer read.
  */
 export function extractActionProposal(
   answer: string,
@@ -187,15 +246,16 @@ export function extractActionProposal(
   readTaskRefs: ReadonlySet<string> = new Set(),
 ): { answer: string; proposal: ActionProposal | null } {
   const spec = PROPOSAL_CAPABILITIES['task.create_custom'];
-  const line = new RegExp(`^[ \\t*_\`~]*\\[(${spec.tag}|PLAN|PLAN_TASK|PLAN_NEW)\\]:[ \\t]*(.*)$`, 'gim');
+  const edit = PROPOSAL_CAPABILITIES['task.edit'];
+  const line = new RegExp(`^[ \\t*_\`~]*\\[(${spec.tag}|${edit.tag}|PLAN|PLAN_TASK|PLAN_NEW)\\]:[ \\t]*(.*)$`, 'gim');
   const stepLine = /^[ \t*_`~]*\[STEP(?:[ \t]+([^\]\s]*))?[ \t]*\]:[ \t]*(.*)$/gim;
-  const values: string[] = [];
+  const values: { tag: string; value: string }[] = [];
   const planLines: Array<{ tag: string; value: string }> = [];
   const steps: { ref: string; value: string }[] = [];
   const stripped = answer
     .replace(line, (_m, tag: string, value: string) => {
       const t = tag.toUpperCase();
-      if (t === spec.tag) values.push(value);
+      if (t === spec.tag || t === edit.tag) values.push({ tag: t, value });
       else planLines.push({ tag: t, value });
       return '';
     })
@@ -208,6 +268,10 @@ export function extractActionProposal(
   if (planLines.length > 0) {
     return { answer: cleaned, proposal: parsePlan(planLines, read) };
   }
-  if (values.length > 0) return { answer: cleaned, proposal: values.length === 1 ? spec.parse(values[0]) : null };
+  if (values.length > 0) {
+    if (values.length !== 1) return { answer: cleaned, proposal: null };
+    const [{ tag, value }] = values;
+    return { answer: cleaned, proposal: tag === edit.tag ? edit.parse(value, readTaskRefs) : spec.parse(value) };
+  }
   return { answer: cleaned, proposal: stepCreate.parse(steps, readTaskRefs) };
 }

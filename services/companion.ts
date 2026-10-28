@@ -8,6 +8,10 @@ import type {
 } from "@/types";
 import { parseSuggestedPlan } from "@/lib/companionActions/planContract";
 import {
+  parseSuggestedEdit,
+  type SuggestedEdit,
+} from "@/lib/companionActions/contract";
+import {
   createClient,
   getAuthUserId,
   isSupabaseConfigured,
@@ -428,6 +432,9 @@ export interface GeneratedReply {
     | { type: "task.create_custom"; title: string }
     | { type: "step.create"; taskRef: string; titles: string[] }
     | null;
+  /** A change to one listed task the answer suggests (#365). A suggestion only, like
+   *  actionProposal: the action service prepares the draft; nothing is saved here. */
+  actionEdit: SuggestedEdit | null;
   /** A settlement plan the answer suggests for review (#364), allowlisted fields only.
    *  The action service prepares the draft and checks every reused task again. */
   planProposal: ReturnType<typeof parseSuggestedPlan>;
@@ -521,6 +528,7 @@ export async function generateReply(
       context: null,
       contextRecord: null,
       actionProposal: null,
+      actionEdit: null,
       planProposal: null,
       queryType: null,
       topic: null,
@@ -580,6 +588,7 @@ export async function generateReply(
     context: parseCompanionContext(body.context),
     contextRecord: savableContext(body.context),
     actionProposal: parseActionProposal(body.actionProposal),
+    actionEdit: parseSuggestedEdit(body.actionProposal),
     planProposal: parseSuggestedPlan(body.actionProposal),
     queryType: typeof body.queryType === "string" ? body.queryType : null,
     topic: parseCompanionTopic(body.topic),

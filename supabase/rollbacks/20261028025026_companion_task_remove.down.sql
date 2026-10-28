@@ -1,10 +1,13 @@
 -- Rollback of migrations/20261028025026_companion_task_remove.sql (mobile-app#367).
 -- Not a migration: an operator runs it by hand, in one transaction, after the feature
--- gate is off and action traffic has stopped, and before the #366 rollback script when
--- both are rolled back. Mirrored byte for byte in the web repo.
---   * The #366 versions of the shared action functions return, copied verbatim. Task
---     controls, creation, plans, steps, receipts, Undo and the reminder policy are
---     unchanged. The #366 registry refuses task.remove and task.restore until re-application.
+-- gate is off and action traffic has stopped, and before the #365 rollback script when
+-- both are rolled back (#367 is applied after #365, so it is rolled back first). Mirrored
+-- byte for byte in the web repo.
+--   * The versions of the shared action functions that were current before this migration
+--     return, copied verbatim: #365 for the six that #365 replaced, #366 for
+--     companion_prepare_proposal and companion_recheck_proposal. Task controls, creation,
+--     edits, plans, steps, receipts, Undo and the reminder policy are unchanged. The
+--     earlier registry refuses task.remove and task.restore until re-application.
 --   * Removed tasks stay removed: dismissed_at and removed_at are #361 columns, and no
 --     task row, step, plan reference or reminder changes here. No reminder is restarted.
 --   * Removal receipts, removal drafts and reviewed restores of a removal Undo are archived
@@ -36,9 +39,11 @@ delete from public.companion_action_receipts r where r.outcome->'results'->0->>'
 
 alter table public.companion_proposals drop constraint companion_proposals_kind_check;
 alter table public.companion_proposals add constraint companion_proposals_kind_check
-  check (kind is null or kind in ('compensation', 'task_create', 'step_create'));
+  check (kind is null or kind in ('compensation', 'task_create', 'step_create', 'task_edit'));
 
--- #366 versions, copied verbatim from 20261027183644_companion_task_steps.sql.
+-- #365 versions, copied verbatim from 20261028001530_companion_task_edit.sql
+-- (validate_operations, check_authorization, apply_one, receipt_summary, undo_action,
+-- conversation_actions), and #366 versions of prepare_proposal and recheck_proposal.
 create or replace function public.companion_validate_operations(p_ops jsonb) returns void
 language plpgsql as $$
 declare
@@ -58,8 +63,41 @@ begin
       perform public.companion_step_validate(v_op);
       continue;
     end if;
-    if v_type is null or v_type not in ('task.set_state', 'task.create_custom', 'task.remove_created') then
+    if v_type is null or v_type not in ('task.set_state', 'task.create_custom', 'task.remove_created', 'task.edit_details') then
       perform public.companion_fail('CA422', 'unsupported_operation', jsonb_build_object('type', v_type));
+    end if;
+    if v_type = 'task.edit_details' then
+      -- Title, description and priority of one custom task. Only the given fields change.
+      for v_key in select jsonb_object_keys(v_op) loop
+        if v_key not in ('type', 'task_ref', 'expected_revision', 'title', 'description', 'priority') then
+          perform public.companion_fail('CA422', 'unknown_field', jsonb_build_object('field', v_key));
+        end if;
+      end loop;
+      v_ref := case when jsonb_typeof(v_op->'task_ref') = 'string' then v_op->>'task_ref' end;
+      if v_ref is null or not public.companion_task_ref_valid(v_ref) then
+        perform public.companion_fail('CA422', 'invalid_task_ref');
+      end if;
+      -- A content-backed task's title, description and priority are shared content.
+      if v_ref like 'sanity:%' then
+        perform public.companion_fail('CA422', 'shared_task_field', jsonb_build_object('task_ref', v_ref));
+      end if;
+      if public.companion_nonneg_int(v_op->'expected_revision', 15) is null then
+        perform public.companion_fail('CA422', 'expected_revision_required');
+      end if;
+      if not (v_op ? 'title' or v_op ? 'description' or v_op ? 'priority') then
+        perform public.companion_fail('CA422', 'invalid_operations');
+      end if;
+      if v_op ? 'title' and not public.companion_valid_title(v_op->'title') then
+        perform public.companion_fail('CA422', 'invalid_title');
+      end if;
+      if v_op ? 'description' and not public.companion_valid_description(v_op->'description') then
+        perform public.companion_fail('CA422', 'invalid_description');
+      end if;
+      if v_op ? 'priority' and (jsonb_typeof(v_op->'priority') is distinct from 'string'
+         or (v_op->>'priority') not in ('Do now', 'Do soon', 'Explore and connect', 'Optional / later')) then
+        perform public.companion_fail('CA422', 'invalid_priority');
+      end if;
+      continue;
     end if;
     if v_type = 'task.create_custom' then
       for v_key in select jsonb_object_keys(v_op) loop
@@ -125,6 +163,7 @@ declare
   v_kind text := case when jsonb_typeof(p_auth) = 'object' and jsonb_typeof(p_auth->'kind') = 'string' then p_auth->>'kind' end;
   v_creates boolean := exists (select 1 from jsonb_array_elements(p_ops) o where o->>'type' = 'task.create_custom');
   v_removes boolean := exists (select 1 from jsonb_array_elements(p_ops) o where o->>'type' = 'task.remove_created');
+  v_edits boolean := exists (select 1 from jsonb_array_elements(p_ops) o where o->>'type' = 'task.edit_details');
   v_rev bigint;
   v_msg bigint;
   v_prop uuid;
@@ -151,13 +190,17 @@ begin
     perform public.companion_fail('CA403', 'removal_requires_confirmation');
   end if;
   if v_kind = 'ui_control' then
-    if v_creates then
+    if v_creates or v_edits then
       perform public.companion_fail('CA403', 'invalid_authorization');
     end if;
     return null;
   elsif v_kind = 'direct_command' then
     v_msg := public.companion_nonneg_int(p_auth->'message_id', 9);
-    if v_msg is null or not v_creates
+    -- A command makes one task change of a type the action service resolves from
+    -- message text: an added task, a details edit or a state change (#365).
+    if v_msg is null
+       or exists (select 1 from jsonb_array_elements(p_ops) o
+                   where o->>'type' not in ('task.create_custom', 'task.edit_details', 'task.set_state'))
        or exists (select 1 from jsonb_object_keys(p_auth) k where k not in ('kind', 'message_id'))
        or not exists (select 1 from public.messages m join public.conversations c on c.id = m.conversation_id
                        where m.id = v_msg::int and c.user_id = p_user and m.role = 'user') then
@@ -169,7 +212,7 @@ begin
     exception when unique_violation then
       perform public.companion_fail('CA412', 'command_already_used');
     end;
-    if jsonb_array_length(public.companion_same_title_tasks(p_user, p_ops->0->>'title')) > 0 then
+    if v_creates and jsonb_array_length(public.companion_same_title_tasks(p_user, p_ops->0->>'title')) > 0 then
       perform public.companion_fail('CA413', 'needs_clarification',
         jsonb_build_object('same_title_tasks', public.companion_same_title_tasks(p_user, p_ops->0->>'title')));
     end if;
@@ -234,11 +277,55 @@ declare
   v_before_state text;
   v_before_reason text;
   v_id bigint;
+  v_old jsonb;
+  v_changes jsonb := '[]'::jsonb;
+  v_inverse jsonb;
+  v_field text;
 begin
   -- #366: a step operation is executed by the step domain.
   if p_op->>'type' like 'step.%' then
     return public.companion_apply_step(p_user, p_op);
   end if;
+  if p_op->>'type' = 'task.edit_details' then
+    -- Title, description and priority of one custom task, at the revision the caller saw.
+    -- Only changed fields are written; history keeps what each was before.
+    select * into v_ct from public.custom_checklist_tasks where id = v_key::bigint and user_id = p_user for update;
+    if not found then
+      perform public.companion_fail('CA404', 'task_not_found', jsonb_build_object('task_ref', v_ref));
+    end if;
+    if v_ct.removed_at is not null then
+      perform public.companion_fail('CA422', 'task_removed', jsonb_build_object('task_ref', v_ref));
+    end if;
+    if v_ct.revision <> v_expected then
+      perform public.companion_fail('CA409', 'revision_conflict',
+        jsonb_build_object('task_ref', v_ref, 'expected', v_expected, 'actual', v_ct.revision));
+    end if;
+    v_old := jsonb_build_object('title', v_ct.title, 'description', v_ct.description, 'priority', v_ct.priority);
+    v_inverse := jsonb_build_object('type', 'task.edit_details', 'task_ref', v_ref);
+    foreach v_field in array array['title', 'description', 'priority'] loop
+      if p_op ? v_field and p_op->>v_field is distinct from v_old->>v_field then
+        v_changes := v_changes || jsonb_build_array(jsonb_build_object(
+          'field', v_field, 'before', v_old->v_field, 'after', p_op->v_field));
+        v_inverse := v_inverse || jsonb_build_object(v_field, v_old->v_field);
+      end if;
+    end loop;
+    if jsonb_array_length(v_changes) = 0 then
+      perform public.companion_fail('CA422', 'no_change', jsonb_build_object('task_ref', v_ref));
+    end if;
+    update public.custom_checklist_tasks
+       set title = coalesce(p_op->>'title', title),
+           description = coalesce(p_op->>'description', description),
+           priority = coalesce(p_op->>'priority', priority)
+     where id = v_ct.id returning * into v_ct;
+    v_before_state := public.companion_task_state(v_ct.completed, v_ct.progress_state);
+    -- The title the task has after this change: the receipt keeps naming it (history).
+    return jsonb_build_object(
+      'type', 'task.edit_details', 'task_ref', v_ref, 'title', v_ct.title, 'changes', v_changes,
+      'before_state', v_before_state, 'state', v_before_state,
+      'before_revision', v_expected, 'after_revision', v_ct.revision,
+      'inverse', v_inverse || jsonb_build_object('expected_revision', v_ct.revision));
+  end if;
+
   if p_op->>'type' = 'task.remove_created' then
     -- Soft removal (removed_at): hidden from every Checklist read, pending reminders
     -- stopped by the trigger in the same transaction, history kept.
@@ -333,9 +420,12 @@ begin
     perform public.companion_fail('CA422', 'invalid_task_ref');
   end if;
 
+  -- #365: the waiting reason before and after is part of what a state change saved, so its
+  -- receipt names it (a reason-only change would otherwise read Waiting to Waiting).
   return jsonb_build_object(
     'type', 'task.set_state', 'task_ref', v_ref,
     'before_state', v_before_state, 'state', v_state,
+    'before_waiting_reason', v_before_reason, 'after_waiting_reason', v_reason,
     'before_revision', v_before, 'after_revision', v_after,
     'inverse', public.companion_set_state_op(v_ref, v_before_state, v_before_reason, v_after))
     -- #366: a completion records the steps as they were: how many were done of how many.
@@ -365,6 +455,14 @@ language sql stable security definer set search_path = public, pg_temp as $$
     'undoable', p_receipt.inverse is not null and u.operation_id is null)
     || case when r->>'type' in ('task.create_custom', 'task.remove_created') then
          jsonb_build_object('title', r->>'title')
+       when r->>'type' = 'task.edit_details' then
+         jsonb_build_object('title', r->>'title', 'changes', r->'changes')
+       else '{}'::jsonb end
+    -- #365: a state change saved with its waiting reasons names them. A receipt saved
+    -- before they were recorded has neither field, not invented ones.
+    || case when r ? 'after_waiting_reason' then
+         jsonb_build_object('before_waiting_reason', r->'before_waiting_reason',
+                            'after_waiting_reason', r->'after_waiting_reason')
        else '{}'::jsonb end
     -- #366: a completion names how many steps were done; a step receipt names its steps
     -- as they were saved and is current while every one of them is unchanged.
@@ -444,13 +542,14 @@ begin
       if not found then
         perform public.companion_fail('CA404', 'task_not_found', jsonb_build_object('task_ref', v_ref));
       end if;
-      if v_inv->>'type' = 'task.remove_created' and v_ct.removed_at is not null then
+      if v_inv->>'type' in ('task.remove_created', 'task.edit_details') and v_ct.removed_at is not null then
         perform public.companion_fail('CA422', 'task_removed', jsonb_build_object('task_ref', v_ref));
       end if;
       v_rev := v_ct.revision;
       v_current := v_current || jsonb_build_array(jsonb_build_object('task_ref', v_ref, 'revision', v_rev,
         'state', public.companion_task_state(v_ct.completed, v_ct.progress_state),
-        'waiting_reason', v_ct.waiting_reason, 'removed', v_ct.removed_at is not null));
+        'waiting_reason', v_ct.waiting_reason, 'removed', v_ct.removed_at is not null,
+        'title', v_ct.title, 'description', v_ct.description, 'priority', v_ct.priority));
     end if;
     if v_rev <> (v_inv->>'expected_revision')::bigint then
       v_conflict := true;
@@ -458,6 +557,8 @@ begin
     if v_inv->>'type' = 'task.remove_created' then
       v_ops := v_ops || jsonb_build_array(jsonb_build_object(
         'type', 'task.remove_created', 'task_ref', v_ref, 'expected_revision', v_rev));
+    elsif v_inv->>'type' = 'task.edit_details' then
+      v_ops := v_ops || jsonb_build_array(v_inv || jsonb_build_object('expected_revision', v_rev));
     else
       v_ops := v_ops || jsonb_build_array(public.companion_set_state_op(
         v_ref, v_inv->>'state', v_inv->>'waiting_reason', v_rev));
@@ -570,7 +671,7 @@ begin
   return jsonb_build_object(
     'proposals', (select coalesce(jsonb_agg(public.companion_proposal_view(p) order by p.created_at), '[]'::jsonb)
                     from public.companion_proposals p
-                   where p.user_id = p_user_id and p.kind in ('task_create', 'step_create')
+                   where p.user_id = p_user_id and p.kind in ('task_create', 'step_create', 'task_edit')
                      and p.source->>'conversation_id' = p_conversation_id::text),
     'commands', (select coalesce(jsonb_agg(jsonb_build_object(
                           'message_id', u.message_id, 'operation_id', u.operation_id,

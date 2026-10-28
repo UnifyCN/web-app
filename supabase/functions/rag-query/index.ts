@@ -1091,8 +1091,8 @@ Deno.serve(async (req: Request) => {
     if (!lessonContext) {
       fullSystemInstruction = `${fullSystemInstruction}\n${TASK_PROPOSAL_INSTRUCTION}\n${PLAN_PROPOSAL_INSTRUCTION}`;
     }
-    // #366: steps may be suggested only for a Checklist task this answer read (its own
-    // account's context). Outside the Companion tab nothing is suggested.
+    // #366: steps, and #365 edits, may be suggested only for a Checklist task this answer
+    // read (its own account's context). Outside the Companion tab nothing is suggested.
     const readTaskRefs = new Set<string>(
       lessonContext ? [] : companionContext.items.filter(i => i.kind === 'checklist_task').map(i => i.id)
     );

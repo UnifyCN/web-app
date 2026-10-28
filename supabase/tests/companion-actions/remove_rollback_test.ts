@@ -1,10 +1,10 @@
 // Rollback and re-application of the #367 task removal migration, through the public
-// request boundary. Operator order: the #367 rollback runs first (before #366's). Direct
+// request boundary. Operator order: the #367 rollback runs first (before #365's). Direct
 // SQL is used only for the migration scripts and the function sources no public path
 // exposes. Each test names the observation that would prove the behavior wrong.
 import { assertEquals } from 'jsr:@std/assert@1';
 import {
-  apply, confirmedApproval, existingCustomTask, migrate, migrate367, MIGRATION_366, newAccount, openGate,
+  apply, confirmedApproval, existingCustomTask, migrate, migrate367, MIGRATION_365, MIGRATION_366, newAccount, openGate,
   pendingReminder, prepare, proposalOf, ready, reminderRow, setState, sql, taskOf, taskRemove, testOpts, undo,
   approved,
 } from './support.ts';
@@ -16,11 +16,19 @@ const SHARED = [
   'companion_undo_action', 'companion_prepare_proposal', 'companion_recheck_proposal', 'companion_conversation_actions',
 ];
 
-/** The function bodies as the accepted #366 migration defines them. */
-async function bodies366(): Promise<Record<string, string>> {
-  const text = await Deno.readTextFile(MIGRATION_366);
+/** #365 (applied just before #367) replaced six of them; the other two are still #366's. */
+const REPLACED_365 = new Set([
+  'companion_validate_operations', 'companion_check_authorization', 'companion_apply_one', 'companion_receipt_summary',
+  'companion_undo_action', 'companion_conversation_actions',
+]);
+
+/** The function bodies current before #367: the #365 migration's, else the #366 migration's. */
+async function bodiesBefore367(): Promise<Record<string, string>> {
+  const text365 = await Deno.readTextFile(MIGRATION_365);
+  const text366 = await Deno.readTextFile(MIGRATION_366);
   const out: Record<string, string> = {};
   for (const name of SHARED) {
+    const text = REPLACED_365.has(name) ? text365 : text366;
     const start = text.indexOf(`create or replace function public.${name}(`);
     const open = text.indexOf('$$', start) + 2;
     const close = text.indexOf('$$;', open);
@@ -48,7 +56,7 @@ async function removedOnce(label: string) {
 }
 
 Deno.test({
-  name: 'rolling back #367 alone keeps removed tasks removed and restores the #366 functions; re-applying restores receipts and reviews',
+  name: 'rolling back #367 alone keeps removed tasks removed and restores the earlier (#365, #366) functions; re-applying restores receipts and reviews',
   ...testOpts,
   fn: async () => {
     // Wrong if: the rollback changes a task, restarts a reminder or leaves a #367 body in
@@ -57,7 +65,7 @@ Deno.test({
     const { a, ref, other, reminder, removal, open } = await removedOnce('rb');
     await migrate367('down');
     try {
-      assertEquals(await liveBodies(), await bodies366());
+      assertEquals(await liveBodies(), await bodiesBefore367());
       assertEquals((await taskOf(a, ref)).removed, true);
       assertEquals((await taskOf(a, ref)).last_receipt, null);
       assertEquals(await reminderRow(reminder), { status: 'cancelled', cancelled_reason: 'task_removed' });
