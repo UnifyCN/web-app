@@ -25,6 +25,9 @@ cp -R "$functions_src/companion-actions" supabase/functions/companion-actions
 # #365: the function reads the caller's Checklist through the rag-query context module.
 cp -R "$functions_src/rag-query/lib" supabase/functions/rag-query/lib
 
+# The published-content read of the function goes to the tests' stand-in (#366).
+export ACTIONS_CONTENT_PORT="${ACTIONS_CONTENT_PORT:-60675}"
+export ACTIONS_CONTENT_QUERY_URL="http://host.docker.internal:${ACTIONS_CONTENT_PORT}/content"
 if ! supabase status --workdir . >/dev/null 2>&1; then
   supabase start --workdir . >/dev/null
 fi

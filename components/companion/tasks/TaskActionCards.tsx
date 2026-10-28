@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
+  StepProposal,
   TaskProposal,
   TaskReceipt,
 } from "@/lib/companionActions/contract";
@@ -36,8 +37,11 @@ interface CardsProps {
   canWrite: boolean;
   onReview: (proposalId: string, kind: TaskProposal["kind"]) => void;
   onViewTask: (taskRef: string) => void;
-  /** The account's Checklist title of a task (#365 edits name existing tasks). */
-  titleFor?: (taskRef: string) => string | null;
+  /** #366: suggested-step drafts of the conversation, and how to open one. */
+  stepProposals?: StepProposal[];
+  onReviewSteps?: (proposalId: string) => void;
+  /** The current title of a Checklist task, or null when this account has no such task. */
+  taskTitleOf?: (taskRef: string) => string | null;
 }
 
 export function TaskActionCards({
@@ -48,9 +52,14 @@ export function TaskActionCards({
   canWrite,
   onReview,
   onViewTask,
-  titleFor = () => null,
+  stepProposals = [],
+  onReviewSteps,
+  taskTitleOf,
 }: CardsProps) {
   const mine = proposals.filter((p) => p.source?.messageId === message.id);
+  const mySteps = stepProposals.filter(
+    (p) => p.source?.messageId === message.id,
+  );
   const command = commands.find((c) => c.messageId === message.id) ?? null;
   return (
     <>
@@ -60,7 +69,7 @@ export function TaskActionCards({
             key={p.proposalId}
             proposal={p}
             store={store}
-            title={p.task?.title ?? titleFor(p.operation.task_ref) ?? null}
+            title={p.task?.title ?? taskTitleOf?.(p.operation.task_ref) ?? null}
             onReview={() => onReview(p.proposalId, p.kind)}
           />
         ) : (
@@ -72,6 +81,15 @@ export function TaskActionCards({
           />
         ),
       )}
+      {mySteps.map((p) => (
+        <StepDraftCard
+          key={p.proposalId}
+          proposal={p}
+          store={store}
+          taskTitle={taskTitleOf?.(p.operation.task_ref) ?? null}
+          onReview={() => onReviewSteps?.(p.proposalId)}
+        />
+      ))}
       {message.role === "user" && (
         <CommandCard
           messageId={message.id}
@@ -79,7 +97,7 @@ export function TaskActionCards({
           store={store}
           canWrite={canWrite}
           onViewTask={onViewTask}
-          titleFor={titleFor}
+          titleFor={taskTitleOf ?? (() => null)}
         />
       )}
     </>
@@ -121,6 +139,73 @@ function CardButton({
     >
       {label}
     </button>
+  );
+}
+
+/** #366: suggested steps for one task. Says it is not saved; opens the drawer for review. */
+function StepDraftCard({
+  proposal,
+  store,
+  taskTitle,
+  onReview,
+}: {
+  proposal: StepProposal;
+  store: TaskActionStore | null;
+  taskTitle: string | null;
+  onReview: () => void;
+}) {
+  const { t } = useTranslation();
+  const phase = useTaskActionPhase(store, `proposal:${proposal.proposalId}`);
+  const saved = phase.phase === "saved" ? phase.receipt : proposal.receipt;
+  const draft = proposal.status === "draft" && !saved;
+  const task = taskTitle ?? t("taskSteps.cardTitleUnknownTask");
+  const heading = taskTitle
+    ? t("taskSteps.cardTitle", { task: taskTitle })
+    : t("taskSteps.cardTitleUnknownTask");
+  const status = saved
+    ? t("taskSteps.added", { count: saved.steps?.length ?? 0 })
+    : proposal.status === "cancelled"
+      ? t("taskSteps.closed")
+      : isUnresolved(phase)
+        ? t("taskActions.checking")
+        : t("taskSteps.draftBadge");
+  return (
+    <article
+      data-testid="step-draft-card"
+      aria-label={heading}
+      className={cn(CARD, draft && "border-dashed")}
+    >
+      <CardIcon />
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium text-ink-muted">
+          {t("taskSteps.cardEyebrow")}
+        </p>
+        <p className="break-words text-sm font-semibold text-ink-secondary">
+          {heading}
+        </p>
+        {draft && (
+          <p className="text-xs text-ink-tertiary">
+            {t("taskSteps.cardCount", {
+              count: proposal.operation.titles.length,
+            })}
+          </p>
+        )}
+        <p
+          role="status"
+          className={cn(
+            "text-xs text-ink-tertiary",
+            !saved && isTransient(phase) && "loading-delayed",
+          )}
+        >
+          {status}
+        </p>
+      </div>
+      <CardButton
+        label={draft ? t("taskSteps.review") : t("taskSteps.view")}
+        name={draft ? t("taskSteps.reviewA11y", { task }) : t("taskSteps.view")}
+        onClick={onReview}
+      />
+    </article>
   );
 }
 

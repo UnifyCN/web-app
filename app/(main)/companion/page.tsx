@@ -50,15 +50,10 @@ export default function CompanionPage() {
         proposalId: string;
         proposalKind: "task_create" | "task_edit";
       }
+    | { kind: "steps"; proposalId: string }
     | { kind: "task"; taskId: string }
     | null
   >(null);
-
-  // #365: names the task of an edit card or receipt from the account's Checklist.
-  const { data: checklistTasks = [] } = useTasks();
-  const titleFor = (taskRef: string) =>
-    checklistTasks.find((task) => taskOrderKey(task) === taskRef)?.title ??
-    null;
 
   const conversationsQuery = useConversations();
   const messagesQuery = useConversationMessages(activeId);
@@ -90,6 +85,12 @@ export default function CompanionPage() {
   const actionStore = useTaskActionStore("companion");
   const progress = useTaskProgress();
   const actions = actionsQuery.data;
+  // #366: the card names the Checklist task suggested steps are for.
+  const { data: checklistTasks = [] } = useTasks();
+  const taskTitleOf = (taskRef: string) =>
+    checklistTasks.find(
+      (task) => !task.dismissedAt && taskOrderKey(task) === taskRef,
+    )?.title ?? null;
   const activeConversation = activeId
     ? (conversations.find((c) => c.id === activeId) ?? null)
     : null;
@@ -200,13 +201,17 @@ export default function CompanionPage() {
             onReview={(proposalId, proposalKind) =>
               setDrawer({ kind: "proposal", proposalId, proposalKind })
             }
-            titleFor={titleFor}
             onViewTask={(taskRef) =>
               setDrawer({
                 kind: "task",
                 taskId: taskRef.slice(taskRef.indexOf(":") + 1),
               })
             }
+            stepProposals={actions?.stepProposals ?? []}
+            onReviewSteps={(proposalId) =>
+              setDrawer({ kind: "steps", proposalId })
+            }
+            taskTitleOf={taskTitleOf}
           />
         )}
       />
@@ -216,6 +221,7 @@ export default function CompanionPage() {
         surface="companion"
         initialTaskId={drawer?.kind === "task" ? drawer.taskId : null}
         proposalId={drawer?.kind === "proposal" ? drawer.proposalId : null}
+        stepProposalId={drawer?.kind === "steps" ? drawer.proposalId : null}
         proposalKind={
           drawer?.kind === "proposal" ? drawer.proposalKind : undefined
         }

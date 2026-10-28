@@ -1,6 +1,6 @@
 // Companion actions contract, version 1 (mobile-app#361; decided in #360; task
-// creation and proposals added in #363, task edits in #365, within the same version:
-// new actions, operation types and fields only, which version 1 clients ignore).
+// creation and proposals added in #363, task steps in #366, task edits in #365, within the
+// same version: new actions, operations and fields only, which version 1 clients ignore).
 // Typed request parsing and the domain operation registry. Pure: no I/O, so the
 // handler validates every request before it reaches the database. The database
 // validates again (companion_validate_operations) as defence in depth.
@@ -53,6 +53,51 @@ export interface RemoveCreatedOperation {
   task_ref: string;
   expected_revision: number;
 }
+/** #366: one level of steps under one task. A parent is always a task ref, never a step. */
+export const STEP_TITLES_MAX = 10;
+export interface StepCreateOperation {
+  type: 'step.create';
+  task_ref: string;
+  /** One title from a direct control; up to STEP_TITLES_MAX from a reviewed suggestion. */
+  titles: string[];
+}
+export interface StepUpdateOperation {
+  type: 'step.update';
+  step_id: string;
+  title: string;
+  expected_revision: number;
+}
+export interface StepSetDoneOperation {
+  type: 'step.set_done';
+  step_id: string;
+  done: boolean;
+  expected_revision: number;
+}
+export interface StepRemoveOperation {
+  type: 'step.remove';
+  step_id: string;
+  expected_revision: number;
+}
+/** The inverse of a removal. Only as an Undo's reviewed change. */
+export interface StepRestoreOperation {
+  type: 'step.restore';
+  step_id: string;
+  expected_revision: number;
+}
+/** The inverse of added steps: removes them. Only as an Undo's reviewed change. */
+export interface StepRemoveCreatedOperation {
+  type: 'step.remove_created';
+  task_ref: string;
+  steps: { step_id: string; expected_revision: number }[];
+}
+export type StepOperation =
+  | StepCreateOperation
+  | StepUpdateOperation
+  | StepSetDoneOperation
+  | StepRemoveOperation
+  | StepRestoreOperation
+  | StepRemoveCreatedOperation;
+
 /**
  * Title, description or priority of one custom task (#365). Only the given fields change.
  * A content-backed task's title, description and priority are shared content: refused.
@@ -65,7 +110,12 @@ export interface EditDetailsOperation {
   description?: string;
   priority?: Priority;
 }
-export type Operation = SetStateOperation | CreateCustomOperation | RemoveCreatedOperation | EditDetailsOperation;
+export type Operation =
+  | SetStateOperation
+  | CreateCustomOperation
+  | RemoveCreatedOperation
+  | StepOperation
+  | EditDetailsOperation;
 /** An edit for review, before the server binds it to the task's current revision (#365). */
 export type EditDraft =
   | Omit<SetStateOperation, 'expected_revision'>
@@ -93,7 +143,7 @@ export interface OperationSpec<Op extends Operation> {
    * revision is a conflict. proposal_context: an approved proposal's relevant
    * context (profile fields, same-title tasks) is read again before the write.
    */
-  revisionCheck: 'expected_revision' | 'proposal_context';
+  revisionCheck: 'expected_revision' | 'proposal_context' | 'parent_live';
   /** Same operation id and payload replays the recorded receipt. */
   idempotency: 'operation_id';
   /** Undo applies the recorded inverse when the task is still at the receipt's revision. */
@@ -200,6 +250,116 @@ const removeCreated: OperationSpec<RemoveCreatedOperation> = {
   },
 };
 
+// ------------------------------------------------------------------ #366 steps
+const plainTitle = (raw: unknown): string | null => {
+  if (typeof raw !== 'string') return null;
+  const title = raw.trim();
+  return title && title.length <= TITLE_MAX && !CONTROL.test(title) ? title : null;
+};
+const onlyKeys = (raw: Record<string, unknown>, keys: string[]) => Object.keys(raw).every(k => keys.includes(k));
+const stepTitleKey = (t: string) => t.trim().replace(/\s+/g, ' ').toLowerCase();
+
+/** One step of this account at the revision the caller saw (update, set_done, remove, restore). */
+function oneStep<T extends StepUpdateOperation | StepSetDoneOperation | StepRemoveOperation | StepRestoreOperation>(
+  type: T['type'],
+  extra: string[],
+  approval: readonly AuthorizationKind[],
+  undoRemoves: boolean,
+  build: (raw: Record<string, unknown>, base: { step_id: string; expected_revision: number }) => Parsed<T>,
+): OperationSpec<T> {
+  return {
+    type,
+    version: 1,
+    access: 'owner',
+    classification: 'write',
+    approval,
+    revisionCheck: 'expected_revision',
+    idempotency: 'operation_id',
+    undo: 'recorded_inverse',
+    undoRemoves,
+    parse(raw) {
+      if (!onlyKeys(raw, ['type', 'step_id', 'expected_revision', ...extra])) return refuse(422, 'unknown_field');
+      if (typeof raw.step_id !== 'string' || !UUID.test(raw.step_id)) return refuse(422, 'invalid_step_id');
+      if (!isPlainInt(raw.expected_revision)) return refuse(422, 'expected_revision_required');
+      return build(raw, { step_id: raw.step_id.toLowerCase(), expected_revision: raw.expected_revision });
+    },
+  };
+}
+
+const stepCreate: OperationSpec<StepCreateOperation> = {
+  type: 'step.create',
+  version: 1,
+  access: 'owner',
+  classification: 'write',
+  // ui_control: the user typed exactly one step in the task's own control. A suggestion
+  // (several steps) is a reviewed draft. The database checks the parent is live.
+  approval: ['ui_control', 'approved_proposal'],
+  revisionCheck: 'parent_live',
+  idempotency: 'operation_id',
+  undo: 'recorded_inverse',
+  undoRemoves: true,
+  parse(raw) {
+    if (!onlyKeys(raw, ['type', 'task_ref', 'titles'])) return refuse(422, 'unknown_field');
+    if (typeof raw.task_ref !== 'string' || !TASK_REF.test(raw.task_ref)) return refuse(422, 'invalid_task_ref');
+    if (!Array.isArray(raw.titles) || raw.titles.length < 1 || raw.titles.length > STEP_TITLES_MAX) {
+      return refuse(422, 'invalid_titles');
+    }
+    const titles: string[] = [];
+    for (const t of raw.titles) {
+      const title = plainTitle(t);
+      if (!title) return refuse(422, 'invalid_title');
+      if (titles.some(x => stepTitleKey(x) === stepTitleKey(title))) return refuse(422, 'invalid_titles');
+      titles.push(title);
+    }
+    return ok({ type: 'step.create', task_ref: raw.task_ref, titles });
+  },
+};
+
+const stepUpdate = oneStep<StepUpdateOperation>('step.update', ['title'], ['ui_control', 'approved_proposal'], false,
+  (raw, base) => {
+    const title = plainTitle(raw.title);
+    return title ? ok({ type: 'step.update', step_id: base.step_id, title, expected_revision: base.expected_revision })
+      : refuse(422, 'invalid_title');
+  });
+const stepSetDone = oneStep<StepSetDoneOperation>('step.set_done', ['done'], ['ui_control', 'approved_proposal'], false,
+  (raw, base) =>
+    typeof raw.done === 'boolean'
+      ? ok({ type: 'step.set_done', step_id: base.step_id, done: raw.done, expected_revision: base.expected_revision })
+      : refuse(422, 'invalid_done'));
+// Every removal needs removal_confirmed (checked with the authorization).
+const stepRemove = oneStep<StepRemoveOperation>('step.remove', [], ['ui_control', 'approved_proposal'], false,
+  (_raw, base) => ok({ type: 'step.remove', ...base }));
+const stepRestore = oneStep<StepRestoreOperation>('step.restore', [], ['approved_proposal'], true,
+  (_raw, base) => ok({ type: 'step.restore', ...base }));
+
+const stepRemoveCreated: OperationSpec<StepRemoveCreatedOperation> = {
+  type: 'step.remove_created',
+  version: 1,
+  access: 'owner',
+  classification: 'write',
+  approval: ['approved_proposal'],
+  revisionCheck: 'expected_revision',
+  idempotency: 'operation_id',
+  undo: 'recorded_inverse',
+  undoRemoves: false,
+  parse(raw) {
+    if (!onlyKeys(raw, ['type', 'task_ref', 'steps'])) return refuse(422, 'unknown_field');
+    if (typeof raw.task_ref !== 'string' || !TASK_REF.test(raw.task_ref)) return refuse(422, 'invalid_task_ref');
+    if (!Array.isArray(raw.steps) || raw.steps.length < 1 || raw.steps.length > STEP_TITLES_MAX) {
+      return refuse(422, 'invalid_steps');
+    }
+    const steps: StepRemoveCreatedOperation['steps'] = [];
+    for (const s of raw.steps) {
+      if (!isObject(s) || !onlyKeys(s, ['step_id', 'expected_revision']) || typeof s.step_id !== 'string' ||
+          !UUID.test(s.step_id) || !isPlainInt(s.expected_revision)) {
+        return refuse(422, 'invalid_steps');
+      }
+      steps.push({ step_id: s.step_id.toLowerCase(), expected_revision: s.expected_revision });
+    }
+    return ok({ type: 'step.remove_created', task_ref: raw.task_ref, steps });
+  },
+};
+
 // Several lines are allowed in a description; other control characters are refused.
 // deno-lint-ignore no-control-regex
 const DESCRIPTION_CONTROL = /[\u0000-\u0009\u000b-\u001f\u007f]/;
@@ -263,6 +423,12 @@ export const OPERATION_REGISTRY: { readonly [K in Operation['type']]: OperationS
   'task.set_state': setState,
   'task.create_custom': createCustom,
   'task.remove_created': removeCreated,
+  'step.create': stepCreate,
+  'step.update': stepUpdate,
+  'step.set_done': stepSetDone,
+  'step.remove': stepRemove,
+  'step.restore': stepRestore,
+  'step.remove_created': stepRemoveCreated,
   'task.edit_details': editDetails,
 };
 
@@ -280,6 +446,12 @@ export function parseEditDraft(raw: unknown): Parsed<EditDraft> {
   const { expected_revision: _r, ...draft } = parsed.value;
   return ok(draft);
 }
+
+
+/** The operations a draft can be prepared and revised for. */
+export type PreparableOperation = CreateCustomOperation | StepCreateOperation;
+const isPreparable = (op: Operation): op is PreparableOperation =>
+  op.type === 'task.create_custom' || op.type === 'step.create';
 
 /** One operation through its registry entry, without authorization (prepare, revise). */
 export function parseOperation(raw: unknown): Parsed<Operation> {
@@ -309,6 +481,10 @@ export function parseOperations(raw: unknown, authorization: Authorization): Par
     if (!spec.approval.includes(authorization.kind)) return refuse(403, 'invalid_authorization');
     const parsed = spec.parse(item);
     if (!parsed.ok) return parsed;
+    // A direct control adds exactly the one step the user typed.
+    if (parsed.value.type === 'step.create' && authorization.kind === 'ui_control' && parsed.value.titles.length !== 1) {
+      return refuse(403, 'invalid_authorization');
+    }
     out.push(parsed.value);
   }
   return ok(out);
@@ -353,14 +529,14 @@ export interface ProposalSource {
 
 export type ActionRequest =
   | { action: 'read' }
-  | { action: 'prepare'; operation: CreateCustomOperation; source: ProposalSource | null }
+  | { action: 'prepare'; operation: PreparableOperation; source: ProposalSource | null }
   /** #365: an edit of one existing task, for review. `language`: of the shown task title. */
   | { action: 'prepare_edit'; draft: EditDraft; source: ProposalSource | null; language: ContentLanguage }
   | { action: 'proposal'; proposal_id: string }
   | { action: 'interpret'; message_id: number }
   | { action: 'conversation_actions'; conversation_id: string }
   | { action: 'cancel'; proposal_id: string; proposal_revision: number }
-  | { action: 'revise'; proposal_id: string; proposal_revision: number; operation: CreateCustomOperation }
+  | { action: 'revise'; proposal_id: string; proposal_revision: number; operation: PreparableOperation }
   | { action: 'status'; operation_id: string }
   | { action: 'apply'; operation_id: string; authorization: Authorization; operations: Operation[] }
   | { action: 'undo'; operation_id: string; receipt_operation_id: string; authorization: Authorization };
@@ -387,8 +563,8 @@ export function parseAction(body: Record<string, unknown>): Parsed<ActionRequest
       }
       const op = parseOperation(body.operation);
       if (!op.ok) return op;
-      // Only a new task can be prepared for review in this slice.
-      if (op.value.type !== 'task.create_custom') return refuse(422, 'unsupported_operation');
+      // Only a new task (#363) or suggested steps (#366) can be prepared for review.
+      if (!isPreparable(op.value)) return refuse(422, 'unsupported_operation');
       const source = parseSource(body.source);
       if (!source.ok) return source;
       return ok({ action: 'prepare', operation: op.value, source: source.value });
@@ -417,7 +593,7 @@ export function parseAction(body: Record<string, unknown>): Parsed<ActionRequest
       }
       const op = parseOperation(body.operation);
       if (!op.ok) return op;
-      if (op.value.type !== 'task.create_custom') return refuse(422, 'unsupported_operation');
+      if (!isPreparable(op.value)) return refuse(422, 'unsupported_operation');
       return ok({
         action: 'revise',
         proposal_id: body.proposal_id,

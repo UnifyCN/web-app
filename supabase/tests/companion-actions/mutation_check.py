@@ -37,8 +37,8 @@ FUNCTIONS = os.path.join(ROOT, 'functions')
 # name, target, find, replace, test file, test-name fragment
 MUTATIONS = [
     ('undo_forgets_reason', 'up365',
-     "'inverse', public.companion_set_state_op(v_ref, v_before_state, v_before_reason, v_after));",
-     "'inverse', public.companion_set_state_op(v_ref, v_before_state, null, v_after));",
+     "'inverse', public.companion_set_state_op(v_ref, v_before_state, v_before_reason, v_after))\n",
+     "'inverse', public.companion_set_state_op(v_ref, v_before_state, null, v_after))\n",
      'undo_test.ts', 'exact earlier state'),
     ('undo_ignores_newer_edit', 'up365',
      "      v_conflict := true;\n", "      v_conflict := false;\n",

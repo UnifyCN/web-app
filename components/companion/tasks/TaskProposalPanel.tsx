@@ -7,6 +7,7 @@ import { WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
+  isStepProposal,
   TITLE_MAX,
   createTaskOperation,
   type ProposalContext,
@@ -101,6 +102,7 @@ export function TaskProposalPanel({
   // A refreshed revision from a needs-review reply is newer than the last read.
   const proposal: TaskProposal | undefined =
     phase.phase === "needs_review" &&
+    !isStepProposal(phase.proposal) &&
     phase.proposal.proposalRevision >= (query.data?.proposalRevision ?? 0)
       ? phase.proposal
       : query.data;

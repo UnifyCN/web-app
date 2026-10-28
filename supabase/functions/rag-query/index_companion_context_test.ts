@@ -1398,6 +1398,82 @@ Deno.test({
   },
 });
 
+// ---------------------------------------------------------------- step suggestions (#366)
+//
+// For one task in this answer's own Checklist context the model may suggest up to five
+// preparation steps, one "[STEP <task id>]: <title>" line each. The handler turns them into
+// a typed `actionProposal` for the client to prepare as a reviewable draft. A task id the
+// answer did not read (another account's, invented, or unlisted) gives no suggestion.
+
+const SIN_STEPS_ANSWER = [
+  'For your SIN, start with the official requirements.',
+  '[STEP sanity:checklist-sin]: Review the official requirements',
+  '[STEP sanity:checklist-sin]: Prepare the required documents',
+  '[STEP sanity:checklist-sin]: Submit the application yourself',
+  '[TOPIC]: settling_in',
+].join('\n');
+
+Deno.test({
+  ...opts,
+  name: 'suggested steps for a task this answer read become one typed proposal and leave the answer text; nothing is written',
+  fn: async () => {
+    // Wrong if: a step tag stays visible, the proposal names another task or loses a step,
+    // or the handler writes or calls the action service.
+    for (const stream of [false, true]) {
+      const r = await ask('How do I get my SIN?', { stream }, { answer: SIN_STEPS_ANSWER });
+      assertEquals(r.status, 200);
+      assertEquals(r.payload.actionProposal, {
+        type: 'step.create',
+        version: 1,
+        task_ref: 'sanity:checklist-sin',
+        titles: ['Review the official requirements', 'Prepare the required documents', 'Submit the application yourself'],
+      });
+      const text = String(stream ? r.payload.cleanAnswer : r.payload.answer);
+      assert(!/\[STEP/i.test(text), text);
+      assertStringIncludes(text, 'start with the official requirements');
+      assertEquals(writeCalls(r.calls), []);
+      assert(!r.calls.some(c => c.url.pathname.includes('companion-actions')), 'called the action service');
+      assertStringIncludes(r.system, '[STEP <task id>]:');
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'step suggestions are dropped unless they name one task this answer read: unknown ids, mixed tasks, too many, markup',
+  fn: async () => {
+    // Wrong if: any of these reaches the client as a proposal, or a tag stays visible.
+    const cases = [
+      'Answer.\n[STEP sanity:someone-elses-task]: Review requirements\n[TOPIC]: settling_in',
+      'Answer.\n[STEP custom:999999]: Review requirements\n[TOPIC]: settling_in',
+      'Answer.\n[STEP sanity:checklist-sin]: Review requirements\n[STEP sanity:checklist-bank]: Choose a bank\n[TOPIC]: settling_in',
+      `Answer.\n${Array.from({ length: 6 }, (_, i) => `[STEP sanity:checklist-sin]: Step number ${i + 1}`).join('\n')}\n[TOPIC]: settling_in`,
+      'Answer.\n[STEP sanity:checklist-sin]: <b>Bold step</b>\n[TOPIC]: settling_in',
+      'Answer.\n[STEP]: No task named\n[TOPIC]: settling_in',
+      'Answer.\n[STEP sanity:checklist-sin]: Same step\n[STEP sanity:checklist-sin]: same  step\n[TOPIC]: settling_in',
+    ];
+    for (const answer of cases) {
+      const r = await ask('How do I get my SIN?', {}, { answer });
+      assertEquals(r.status, 200);
+      assertEquals(r.payload.actionProposal, undefined, answer);
+      assert(!/\[STEP/i.test(String(r.payload.answer)), String(r.payload.answer));
+      assertEquals(writeCalls(r.calls), []);
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'an answer with a task suggestion keeps the #363 task proposal and drops its step lines',
+  fn: async () => {
+    // Wrong if: a step proposal replaces the task proposal, or a step tag stays visible.
+    const answer = 'Answer.\n[TASK]: Set up phone service\n[STEP sanity:checklist-sin]: Review requirements\n[TOPIC]: settling_in';
+    const r = await ask('What else do I need?', {}, { answer });
+    assertEquals(r.payload.actionProposal, { type: 'task.create_custom', version: 1, title: 'Set up phone service' });
+    assert(!/\[STEP|\[TASK\]/i.test(String(r.payload.answer)), String(r.payload.answer));
+  },
+});
+
 // ---------------------------------------------------------------- edit suggestions (#365)
 //
 // The model may suggest one change to a Checklist task it was shown, with a line

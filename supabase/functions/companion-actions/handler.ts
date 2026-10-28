@@ -9,6 +9,13 @@ import { type ActionRequest, type Operation, PLATFORMS, type Platform, parseActi
 import { type CommandResolution, resolveCommand, titleKey } from './commands.ts';
 import type { ListTasks } from './targets.ts';
 
+/**
+ * Whether a published Checklist document exists (#366): true, false, or null when the
+ * content read failed. A new step under a content-backed task needs it, so a step can
+ * never be saved under a content id that does not exist.
+ */
+export type ContentTaskLookup = (sanityId: string) => Promise<boolean | null>;
+
 export interface HandlerDeps {
   /** Service-role client. Used for the user lookup, the gate and the action SQL. */
   admin: SupabaseClient;
@@ -17,6 +24,8 @@ export interface HandlerDeps {
    * published tasks cannot be named, so an edit that needs them is unclear, never guessed.
    */
   listTasks?: ListTasks;
+  /** Published Checklist content read. Absent: content-backed parents cannot be checked. */
+  contentTaskExists?: ContentTaskLookup | null;
   /** Allowlisted, content-free result line for operational metrics. */
   log?: (line: ResultLine) => void;
 }
@@ -106,6 +115,50 @@ async function sameTitleTasks(admin: SupabaseClient, userId: string, title: stri
     .map(row => ({ task_ref: `custom:${row.id}`, revision: row.revision, title: row.title }));
 }
 
+const CONTENT_QUERY = '*[_type == "checklist" && _id == $id][0]._id';
+
+/** The published-content read from the function environment (the rag-query Sanity settings). */
+export function contentLookupFromEnv(get: (key: string) => string | undefined): ContentTaskLookup | null {
+  // Test stacks point this at a local stand-in; production derives the Sanity CDN URL.
+  const override = get('COMPANION_CONTENT_QUERY_URL')?.trim();
+  const projectId = get('SANITY_PROJECT_ID')?.trim() ?? '';
+  const dataset = get('SANITY_DATASET')?.trim() || 'production';
+  const base = override ||
+    (/^[a-z0-9]{1,32}$/.test(projectId) && /^[\w-]{1,64}$/.test(dataset)
+      ? `https://${projectId}.apicdn.sanity.io/v2024-01-01/data/query/${dataset}`
+      : '');
+  if (!base) return null;
+  return async sanityId => {
+    try {
+      const url = new URL(base);
+      url.searchParams.set('query', CONTENT_QUERY);
+      url.searchParams.set('$id', JSON.stringify(sanityId));
+      const res = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(5000) });
+      if (!res.ok) return null;
+      const body = (await res.json()) as { result?: unknown };
+      if (body.result === null) return false;
+      return body.result === sanityId ? true : null;
+    } catch {
+      return null;
+    }
+  };
+}
+
+/** A new step under a content-backed task: its published document must exist. */
+async function contentParentRefusal(
+  lookup: ContentTaskLookup | null | undefined,
+  op: Operation,
+): Promise<Response | null> {
+  if (op.type !== 'step.create' || !op.task_ref.startsWith('sanity:')) return null;
+  const exists = lookup ? await lookup(op.task_ref.slice('sanity:'.length)) : null;
+  if (exists === true) return null;
+  if (exists === false) {
+    return json({ error: 'not_found', reason: 'task_not_found', detail: { task_ref: op.task_ref } }, 404);
+  }
+  // Nothing was written; the client may look the operation up and send it again.
+  return json({ error: 'content_unavailable' }, 503, { 'retry-after': '1' });
+}
+
 /** What a clear edit command resolves to against the account's live Checklist (#365). */
 type EditResolution =
   | {
@@ -127,7 +180,9 @@ const withoutRevision = (op: unknown) => {
   return JSON.stringify(Object.keys(rest).sort().map(k => [k, rest[k]]));
 };
 
-export function createHandler({ admin, listTasks, log = line => console.log(JSON.stringify(line)) }: HandlerDeps) {
+export function createHandler(
+  { admin, contentTaskExists, listTasks, log = line => console.log(JSON.stringify(line)) }: HandlerDeps,
+) {
   /**
    * Names the one live task a command means, by its title, among every task the
    * account's Checklist shows (in the command's language), and builds the exact operation
@@ -249,12 +304,18 @@ export function createHandler({ admin, listTasks, log = line => console.log(JSON
     if (request.action === 'read') {
       const { data, error } = await admin.rpc('companion_read_tasks', { p_user_id: userId });
       if (error) return finish(mapDbError(error), 'failed');
-      return finish(json({ contract_version: version, tasks: data }), 'read');
+      // #366: the live steps of every task, read after the tasks. After a rollback of the
+      // step migration the read function is gone: the tasks are still served, without steps.
+      const steps = await admin.rpc('companion_read_steps', { p_user_id: userId });
+      if (steps.error && steps.error.code !== 'PGRST202') return finish(mapDbError(steps.error), 'failed');
+      return finish(json({ contract_version: version, tasks: data, ...(steps.error ? {} : { steps: steps.data }) }), 'read');
     }
 
     if (request.action === 'prepare') {
       // A draft for review: writes only the proposal, never task progress.
       operationType = request.operation.type;
+      const parentRefusal = await contentParentRefusal(contentTaskExists, request.operation);
+      if (parentRefusal) return finish(parentRefusal, 'rejected');
       const { data, error } = await admin.rpc('companion_prepare_proposal', {
         p_user_id: userId,
         p_operations: [request.operation],
@@ -423,6 +484,8 @@ export function createHandler({ admin, listTasks, log = line => console.log(JSON
           return finish(json({ error: 'forbidden', reason: 'invalid_authorization' }, 403), 'rejected');
         }
       }
+      const parentRefusal = await contentParentRefusal(contentTaskExists, request.operations[0]);
+      if (parentRefusal) return finish(parentRefusal, parentRefusal.status === 404 ? 'rejected' : 'unavailable');
       const { data, error } = await admin.rpc('companion_apply_actions', {
         p_user_id: userId,
         p_operation_id: request.operation_id,

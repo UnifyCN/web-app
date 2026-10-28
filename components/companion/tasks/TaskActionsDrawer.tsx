@@ -17,6 +17,8 @@ import {
 } from "@/hooks/useTaskActions";
 import { TaskDrawer } from "./TaskDrawer";
 import { TaskProposalPanel } from "./TaskProposalPanel";
+import { StepProposalPanel } from "./StepProposalPanel";
+import { useStepProposal } from "@/hooks/useTaskActions";
 import { TaskStatePanel, progressFor } from "./TaskStatePanel";
 
 const STATE_ORDER: TaskState[] = [
@@ -34,6 +36,8 @@ interface TaskActionsDrawerProps {
   initialTaskId?: string | null;
   /** Open on the review of one task draft (#363) instead of a task. */
   proposalId?: string | null;
+  /** #366: open on the review of suggested steps for one task. */
+  stepProposalId?: string | null;
   /** #365: the draft is a change to an existing task, not a new task. */
   proposalKind?: "task_create" | "task_edit";
 }
@@ -45,6 +49,7 @@ export function TaskActionsDrawer({
   surface,
   initialTaskId = null,
   proposalId = null,
+  stepProposalId = null,
   proposalKind = "task_create",
 }: TaskActionsDrawerProps) {
   const { t } = useTranslation();
@@ -74,10 +79,17 @@ export function TaskActionsDrawer({
   const selected = active.find((task) => task.id === selectedId) ?? null;
   const selectedRef = selected ? taskOrderKey(selected) : null;
   const phase = useTaskActionPhase(store, selectedRef);
+  const draftId = proposalId ?? stepProposalId;
   const draftPhase = useTaskActionPhase(
     store,
-    proposalId ? `proposal:${proposalId}` : null,
+    draftId ? `proposal:${draftId}` : null,
   );
+  const stepDraft = useStepProposal(stepProposalId);
+  const stepTask = stepDraft.data
+    ? (active.find(
+        (task) => taskOrderKey(task) === stepDraft.data.operation.task_ref,
+      ) ?? null)
+    : null;
 
   const stateOf = (task: ChecklistTask): TaskState =>
     progressFor(taskOrderKey(task), view).state;
@@ -90,7 +102,9 @@ export function TaskActionsDrawer({
       open={open}
       onClose={onClose}
       title={
-        proposalId
+        stepProposalId
+          ? t("taskSteps.reviewTitle")
+          : proposalId
           ? proposalKind === "task_edit"
             ? t("taskEdit.drawerTitle")
             : t("taskCreate.drawerTitle")
@@ -99,13 +113,20 @@ export function TaskActionsDrawer({
             : t("taskActions.listTitle")
       }
       onBack={
-        selected && !initialTaskId && !proposalId
+        selected && !initialTaskId && !proposalId && !stepProposalId
           ? () => setSelectedId(null)
           : undefined
       }
       closeOnEscape={phase.phase !== "saving" && draftPhase.phase !== "saving"}
     >
-      {proposalId ? (
+      {stepProposalId ? (
+        <StepProposalPanel
+          proposalId={stepProposalId}
+          view={view}
+          store={store}
+          taskTitle={stepTask?.title ?? null}
+        />
+      ) : proposalId ? (
         <TaskProposalPanel
           proposalId={proposalId}
           view={view}
