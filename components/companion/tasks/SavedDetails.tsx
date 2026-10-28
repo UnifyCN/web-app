@@ -31,8 +31,6 @@ import {
 /** Store keys (#370): one saved detail's own changes, and its edit text. */
 export const detailKey = (detailId: string) => `detail:${detailId}`;
 const editDraftKey = (detailId: string) => `detail-edit:${detailId}`;
-/** The text of a detail being removed, so its receipt and states can still name it. */
-const removedTextKey = (storeKey: string) => `detail-text:${storeKey}`;
 
 type T = (key: string, options?: Record<string, unknown>) => string;
 
@@ -188,7 +186,6 @@ export function DetailReceipt({
           storeKey={storeKey}
           store={store}
           view={view}
-          text={d.text}
         />
       )}
     </div>
@@ -201,13 +198,11 @@ export function DetailPhase({
   storeKey,
   store,
   view,
-  text,
 }: {
   phase: TaskActionPhase;
   storeKey: string;
   store: TaskActionStore | null;
   view: TaskProgressView;
-  text: string;
 }) {
   const { t } = useTranslation();
   const [confirming, setConfirming] = useState(false);
@@ -398,7 +393,6 @@ function DetailRow({
   function remove() {
     if (!canWrite || !store) return;
     setConfirming(false);
-    store.setDraft(removedTextKey(key), detail.text);
     void store.applyOperation(key, detailRemoveOperation(detail), {
       kind: "ui_control",
       removal_confirmed: true,
@@ -495,13 +489,7 @@ function DetailRow({
             view={view}
           />
         ) : (
-          <DetailPhase
-            phase={phase}
-            storeKey={key}
-            store={store}
-            view={view}
-            text={detail.text}
-          />
+          <DetailPhase phase={phase} storeKey={key} store={store} view={view} />
         )}
       </div>
     </li>
@@ -519,7 +507,6 @@ function RemovedDetail({
   view: TaskProgressView;
 }) {
   const phase = useTaskActionPhase(store, storeKey);
-  const text = useTaskActionDraft(store, removedTextKey(storeKey)) ?? "";
   return (
     <li aria-live="polite" role="status" className="space-y-2 py-3">
       {phase.phase === "saved" ? (
@@ -535,7 +522,6 @@ function RemovedDetail({
           storeKey={storeKey}
           store={store}
           view={view}
-          text={text}
         />
       )}
     </li>
@@ -678,13 +664,7 @@ export function DetailProposalPanel({
             {t("savedDetails.notSaved")}
           </p>
         ) : (
-          <DetailPhase
-            phase={phase}
-            storeKey={key}
-            store={store}
-            view={view}
-            text={text}
-          />
+          <DetailPhase phase={phase} storeKey={key} store={store} view={view} />
         )}
       </div>
       {saved ? (
