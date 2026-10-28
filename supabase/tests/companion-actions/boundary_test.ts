@@ -116,7 +116,8 @@ Deno.test({ name: 'invalid payloads are 4xx, never 500, and write nothing', ...t
   const { ref: cref } = await existingCustomTask(a);
   const rev = (await taskOf(a, ref)).revision;
   const bad: Array<[string, unknown[], number, string]> = [
-    ['unimplemented operation', [{ type: 'task.remove', task_ref: ref, expected_revision: rev }], 422, 'unsupported_operation'],
+    // #367 registered task.remove; reminder.schedule (#368) is still unimplemented.
+    ['unimplemented operation', [{ type: 'reminder.schedule', task_ref: ref, expected_revision: rev }], 422, 'unsupported_operation'],
     // #363: a new task needs a reviewed proposal or a clear command, never a plain control.
     ['create from a control', [{ type: 'task.create_custom', title: 'x', priority: 'Do now' }], 403, 'invalid_authorization'],
     // Names every JavaScript object inherits must not resolve to a registry entry.
@@ -151,7 +152,7 @@ Deno.test({ name: 'invalid payloads are 4xx, never 500, and write nothing', ...t
   assertEquals([badAction.status, badAction.json.reason], [400, 'invalid_action']);
   // Defence in depth: the SQL registry refuses an unregistered type even from a
   // service-role caller that skipped the handler's parser.
-  for (const op of [{ type: 'task.remove', task_ref: ref, expected_revision: rev },
+  for (const op of [{ type: 'reminder.schedule', task_ref: ref, expected_revision: rev },
                     { type: 'constructor', task_ref: ref, expected_revision: rev }]) {
     const err = await sql`select public.companion_apply_actions(${a.id}::uuid, ${uuid()}::uuid, 1,
         ${sql.json({ kind: 'ui_control' })}, ${sql.json([op])})`.then(() => null, e => e);
@@ -161,6 +162,8 @@ Deno.test({ name: 'invalid payloads are 4xx, never 500, and write nothing', ...t
   for (const [op, message] of [
     [{ type: 'task.create_custom', title: 'x', priority: 'Do now' }, 'invalid_authorization'],
     [{ type: 'task.remove_created', task_ref: cref, expected_revision: 1 }, 'removal_requires_confirmation'],
+    // #367: a removal is only the approved review of it.
+    [{ type: 'task.remove', task_ref: cref, expected_revision: 1 }, 'invalid_authorization'],
   ] as const) {
     const err = await sql`select public.companion_apply_actions(${a.id}::uuid, ${uuid()}::uuid, 1,
         ${sql.json({ kind: 'ui_control' })}, ${sql.json([op])})`.then(() => null, e => e);

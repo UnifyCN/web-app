@@ -30,6 +30,8 @@ import {
 import { useCurrentUser } from "@/hooks/useProfile";
 import { useTasks } from "@/hooks/useChecklist";
 import { taskOrderKey } from "@/services/checklist";
+import { progressFor } from "@/components/companion/tasks/TaskStatePanel";
+import type { RemovalProposal } from "@/lib/companionActions/contract";
 import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
 import type { CompanionInputSource } from "@/lib/companionAnalytics";
 import type { ChatMessage } from "@/types";
@@ -96,6 +98,17 @@ export default function CompanionPage() {
     checklistTasks.find(
       (task) => !task.dismissedAt && taskOrderKey(task) === taskRef,
     )?.title ?? null;
+  // #367: a removal request's card opens the task's drawer on that removal review.
+  const openRemoval = (proposal: RemovalProposal) => {
+    if (proposal.status === "draft")
+      actionStore?.requestRemoval(
+        proposal.operation.task_ref,
+        proposal.proposalId,
+      );
+    openTaskRef(proposal.operation.task_ref);
+  };
+  const isRemovedNow = (taskRef: string) =>
+    progress.status === "ready" && progressFor(taskRef, progress).removed;
   const activeConversation = activeId
     ? (conversations.find((c) => c.id === activeId) ?? null)
     : null;
@@ -221,6 +234,9 @@ export default function CompanionPage() {
               setDrawer({ kind: "steps", proposalId })
             }
             taskTitleOf={taskTitleOf}
+            removalProposals={actions?.removalProposals ?? []}
+            onReviewRemoval={openRemoval}
+            isRemovedNow={isRemovedNow}
           />
           <PlanCards
             message={message}

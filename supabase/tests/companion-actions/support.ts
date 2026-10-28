@@ -41,6 +41,11 @@ export const MIGRATION_366 = override('ACTIONS_MIGRATION_366_FILE') ??
   new URL('../../migrations/20261027183644_companion_task_steps.sql', import.meta.url);
 export const ROLLBACK_366 = override('ACTIONS_ROLLBACK_366_FILE') ??
   new URL('../../rollbacks/20261027183644_companion_task_steps.down.sql', import.meta.url);
+// #367 task removal (ACTIONS_MIGRATION_367_FILE / ACTIONS_ROLLBACK_367_FILE for mutation runs).
+export const MIGRATION_367 = override('ACTIONS_MIGRATION_367_FILE') ??
+  new URL('../../migrations/20261028025026_companion_task_remove.sql', import.meta.url);
+export const ROLLBACK_367 = override('ACTIONS_ROLLBACK_367_FILE') ??
+  new URL('../../rollbacks/20261028025026_companion_task_remove.down.sql', import.meta.url);
 
 export const admin = createClient(API_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 export const sql = postgres(DB_URL, { max: 20, onnotice: () => {} });
@@ -100,7 +105,7 @@ export async function migrationApplied(): Promise<boolean> {
 
 /**
  * The full schema change: 'up' applies the production migrations in order (#361, #363,
- * #364, #366), each in one transaction; 'down' runs the rollback scripts in reverse order.
+ * #364, #366, #367), each in one transaction; 'down' runs the rollback scripts in reverse order.
  */
 export async function migrate(which: 'up' | 'down'): Promise<void> {
   if (which === 'up') {
@@ -108,7 +113,9 @@ export async function migrate(which: 'up' | 'down'): Promise<void> {
     await migrate363('up');
     await migrate364('up');
     await migrate366('up');
+    await migrate367('up');
   } else {
+    if (await migration367Applied()) await migrate367('down');
     if (await migration366Applied()) await migrate366('down');
     if (await migration363Applied()) await migrate363('down');
     await sql.begin(async tx => await tx.unsafe(await Deno.readTextFile(ROLLBACK)));
@@ -141,8 +148,10 @@ export async function migration364Applied(): Promise<boolean> {
   return r.applied;
 }
 
-/** Only the #366 migration or only its rollback script, in one transaction. */
+/** Only the #366 migration or only its rollback script, in one transaction. A #367 schema
+ * on top is rolled back first, as the operator order requires. */
 export async function migrate366(which: 'up' | 'down'): Promise<void> {
+  if (which === 'down' && await migration367Applied()) await migrate367('down');
   const text = await Deno.readTextFile(which === 'up' ? MIGRATION_366 : ROLLBACK_366);
   await sql.begin(async tx => await tx.unsafe(text));
   // After rollback, the step RPC must be absent and any #364 schema below must stay.
@@ -150,6 +159,20 @@ export async function migrate366(which: 'up' | 'down'): Promise<void> {
     which === 'up' && text.includes('companion_read_steps') ? 'up366'
       : await migration364Applied() ? 'down366WithPlans' : 'down366',
   );
+}
+
+/**
+ * Only the #367 migration or only its rollback script, in one transaction. It replaces
+ * shared function bodies and adds no RPC name, so PostgREST needs no schema reload.
+ */
+export async function migrate367(which: 'up' | 'down'): Promise<void> {
+  await sql.begin(async tx => await tx.unsafe(await Deno.readTextFile(which === 'up' ? MIGRATION_367 : ROLLBACK_367)));
+}
+
+/** The #367 marker: the removal-effects reader exists. */
+export async function migration367Applied(): Promise<boolean> {
+  const [r] = await sql`select to_regprocedure('public.companion_remove_effects(uuid,text)') is not null as applied`;
+  return r.applied;
 }
 
 export async function migration366Applied(): Promise<boolean> {
@@ -200,6 +223,7 @@ export async function ready(): Promise<void> {
     if (!(await migration363Applied())) await migrate363('up');
     if (!(await migration364Applied())) await migrate364('up');
     if (!(await migration366Applied())) await migrate366('up');
+    if (!(await migration367Applied())) await migrate367('up');
   }
   await openGate();
 }
@@ -472,4 +496,38 @@ export function startContentStub(): void {
     const found = typeof id === 'string' && contentStub.published.has(id) ? id : null;
     return Response.json({ result: found });
   });
+}
+
+// ------------------------------------------------------------------ #367 task removal
+export const taskRemove = (task_ref: string, expected_revision: number) => ({ type: 'task.remove', task_ref, expected_revision });
+
+/** Approval evidence of a reviewed removal, with the user's confirmation. */
+export const confirmedApproval = (p: { proposal_id: string; proposal_revision: number }) => ({
+  ...approved(p), removal_confirmed: true,
+});
+
+/** A pending reminder row (no reminder schedule exists in this slice; fixture only). */
+export async function pendingReminder(userId: string, task_ref: string): Promise<string> {
+  const [r] = await sql`insert into companion_task_reminders (user_id, task_ref, remind_at, time_zone)
+    values (${userId}, ${task_ref}, now() + interval '2 days', 'America/Vancouver') returning id::text`;
+  return r.id as string;
+}
+
+export async function reminderRow(id: string): Promise<{ status: string; cancelled_reason: string | null }> {
+  const [r] = await sql`select status, cancelled_reason from companion_task_reminders where id = ${id}::uuid`;
+  return { status: r.status as string, cancelled_reason: (r.cancelled_reason ?? null) as string | null };
+}
+
+/** Holds the parent lock (#366) of one task of one account from another connection. */
+export function holdParentLock(userId: string, task_ref: string): { ready: Promise<void>; release: () => Promise<void> } {
+  let release!: () => void;
+  const held = new Promise<void>(r => (release = r));
+  let markReady!: () => void;
+  const readyP = new Promise<void>(r => (markReady = r));
+  const tx = sql.begin(async t => {
+    await t`select pg_advisory_xact_lock(hashtextextended(${userId + ':' + task_ref}, 366))`;
+    markReady();
+    await held;
+  });
+  return { ready: readyP, release: async () => { release(); await tx; } };
 }

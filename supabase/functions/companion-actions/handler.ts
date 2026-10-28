@@ -255,6 +255,7 @@ export function createHandler({ admin, contentTaskExists, log = line => console.
       const text = await ownUserMessage(admin, userId, request.message_id);
       if (text === null) return finish(json({ error: 'not_found', reason: 'message_not_found' }, 404), 'rejected');
       const resolved = resolveCommand(text);
+      // A removal request (#367) only names a task to review; the client opens its review.
       if (resolved.kind !== 'create') return finish(json({ command: resolved }), `interpret_${resolved.kind}`);
       operationType = 'task.create_custom';
       let same;

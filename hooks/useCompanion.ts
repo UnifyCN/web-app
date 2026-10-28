@@ -39,7 +39,11 @@ import { conversationActionsKey } from "@/lib/companionActions/queryKeys";
 import {
   TITLE_MAX,
   createTaskOperation,
+  titleKey,
 } from "@/lib/companionActions/contract";
+import * as checklist from "@/services/checklist";
+import { tasksKey } from "@/hooks/useChecklist";
+import { useLanguage } from "@/hooks/useLanguage";
 
 /** React Query hooks for Companion (AI chat). */
 
@@ -164,6 +168,8 @@ export function useSendMessage() {
   const { t, i18n } = useTranslation();
   // #363: a clear command in the message adds its task through the action store.
   const store = useTaskActionStore("companion");
+  // #367: a removal request names a task by its Checklist title (in this language).
+  const { currentLanguage } = useLanguage();
   return useMutation<
     { conversationIdentifier: string; accountId: string | null },
     Error,
@@ -228,6 +234,49 @@ export function useSendMessage() {
       ensureOwned(owner);
       if (interpreted.kind === "ok" && interpreted.command.kind !== "none") {
         const command = interpreted.command;
+        if (command.kind === "remove") {
+          // #367: a removal request opens a review (never a removal) of the one live
+          // task with that title. No match or several: a reply, and nothing is prepared.
+          const tasks = await queryClient.ensureQueryData({
+            queryKey: tasksKey(currentLanguage, owner.accountId),
+            queryFn: () => checklist.getTasks(currentLanguage),
+            staleTime: 60_000,
+          });
+          ensureOwned(owner);
+          const key = titleKey(command.title);
+          const matches = tasks.filter(
+            (task) => !task.dismissedAt && titleKey(task.title) === key,
+          );
+          let reply: string | null = null;
+          if (matches.length === 1) {
+            const prepared = await actions.prepareRemoval(
+              {
+                type: "task.remove",
+                task_ref: checklist.taskOrderKey(matches[0]),
+                expected_revision: 0,
+              },
+              { conversationId: conversationIdentifier, messageId: savedUser.id },
+            );
+            ensureOwned(owner);
+            if (prepared.kind !== "ok" && prepared.kind !== "changed")
+              reply = t("taskRemove.commandFailed", { title: command.title });
+          } else {
+            reply = t(
+              matches.length === 0
+                ? "taskRemove.commandNoMatch"
+                : "taskRemove.commandSeveral",
+              { title: command.title },
+            );
+          }
+          if (reply)
+            await companion.saveMessage({
+              conversationIdentifier,
+              role: "assistant",
+              content: reply,
+              owner,
+            });
+          return { conversationIdentifier, accountId: owner.accountId };
+        }
         if (command.kind === "create" && command.sameTitleTasks.length === 0) {
           if (store) {
             await store.applyOperation(
@@ -246,7 +295,13 @@ export function useSendMessage() {
             ? t("taskCreate.clarifyDuplicate", {
                 title: command.sameTitleTasks[0].title,
               })
-            : t(
+            : command.intent === "remove"
+              ? t(
+                  command.reason === "multiple"
+                    ? "taskRemove.clarifyMultiple"
+                    : "taskRemove.clarifyMissingTitle",
+                )
+              : t(
                 command.reason === "missing_title"
                   ? "taskCreate.clarifyMissingTitle"
                   : command.reason === "multiple"

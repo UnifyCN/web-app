@@ -16,6 +16,8 @@ interface ReceiptBlockProps {
   store: TaskActionStore | null;
   /** A connection, a fresh read and no unresolved write. */
   canWrite: boolean;
+  /** #367: the Checklist title, for a content-backed task the receipt does not name. */
+  taskTitle?: string | null;
 }
 
 /**
@@ -28,12 +30,16 @@ export function ReceiptBlock({
   storeKey,
   store,
   canWrite,
+  taskTitle = null,
 }: ReceiptBlockProps) {
   const { t, i18n } = useTranslation();
   const [confirming, setConfirming] = useState(false);
   const [instant, setInstant] = useState(false);
   const stateLabel = (s: TaskState) => t(`taskActions.state.${s}`);
-  const title = receipt.title ?? "";
+  const title = receipt.title ?? taskTitle ?? "";
+  // #367: a removal and its restore name the task (a custom title, else the Checklist one).
+  const removal = receipt.operationType === "task.remove";
+  const restore = receipt.operationType === "task.restore";
   const steps = receipt.steps ?? [];
   const first = steps[0];
   const isStep = receipt.operationType.startsWith("step.");
@@ -64,6 +70,14 @@ export function ReceiptBlock({
   };
   const text = isStep
     ? stepText()
+    : removal
+      ? title
+        ? t("taskRemove.receiptRemoved", { title })
+        : t("taskRemove.receiptRemovedUnknown")
+      : restore
+        ? title
+          ? t("taskRemove.receiptRestored", { title })
+          : t("taskRemove.receiptRestoredUnknown")
     : receipt.operationType === "task.create_custom"
       ? t("taskCreate.added", { title })
       : receipt.operationType === "task.remove_created"
@@ -107,6 +121,15 @@ export function ReceiptBlock({
   return (
     <div className="rounded-lg border border-border-card bg-surface-card px-3 py-2.5">
       <p className="break-words text-sm text-ink-secondary">{text}</p>
+      {removal && (
+        <p className="mt-0.5 text-xs text-ink-muted">
+          {t("taskRemove.receiptEffects", {
+            plans: receipt.plans?.length ?? 0,
+            steps: receipt.stepsKept ?? 0,
+            reminders: receipt.remindersStopped ?? 0,
+          })}
+        </p>
+      )}
       {receipt.stepsTotal !== null && receipt.stepsTotal > 0 && (
         <p className="mt-0.5 text-xs text-ink-muted">
           {t("taskSteps.receiptAtCompletion", {
@@ -124,7 +147,9 @@ export function ReceiptBlock({
           type="button"
           aria-disabled={!canWrite}
           aria-label={
-            isStep
+            removal
+              ? t("taskRemove.undoRemovalA11y", { change: text })
+              : isStep
               ? t("taskSteps.undoA11y", { change: text })
               : removes
                 ? t("taskCreate.undoA11y", { title })
@@ -144,7 +169,9 @@ export function ReceiptBlock({
           )}
         >
           <Undo2 className="h-4 w-4" aria-hidden />
-          {isStep
+          {removal
+            ? t("taskRemove.undoRemoval")
+            : isStep
             ? t("taskSteps.undo")
             : removes
               ? t("taskCreate.undo")

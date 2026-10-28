@@ -1,9 +1,10 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { ListChecks } from "lucide-react";
+import { ListChecks, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
+  RemovalProposal,
   StepProposal,
   TaskProposal,
   TaskReceipt,
@@ -40,6 +41,11 @@ interface CardsProps {
   onReviewSteps?: (proposalId: string) => void;
   /** The current title of a Checklist task, or null when this account has no such task. */
   taskTitleOf?: (taskRef: string) => string | null;
+  /** #367: removal reviews a removal request in this conversation opened, and how to open one. */
+  removalProposals?: RemovalProposal[];
+  onReviewRemoval?: (proposal: RemovalProposal) => void;
+  /** #367: whether a task is removed now (on this or another device). */
+  isRemovedNow?: (taskRef: string) => boolean;
 }
 
 export function TaskActionCards({
@@ -53,9 +59,15 @@ export function TaskActionCards({
   stepProposals = [],
   onReviewSteps,
   taskTitleOf,
+  removalProposals = [],
+  onReviewRemoval,
+  isRemovedNow,
 }: CardsProps) {
   const mine = proposals.filter((p) => p.source?.messageId === message.id);
   const mySteps = stepProposals.filter(
+    (p) => p.source?.messageId === message.id,
+  );
+  const myRemovals = removalProposals.filter(
     (p) => p.source?.messageId === message.id,
   );
   const command = commands.find((c) => c.messageId === message.id) ?? null;
@@ -76,6 +88,16 @@ export function TaskActionCards({
           store={store}
           taskTitle={taskTitleOf?.(p.operation.task_ref) ?? null}
           onReview={() => onReviewSteps?.(p.proposalId)}
+        />
+      ))}
+      {myRemovals.map((p) => (
+        <RemovalCard
+          key={p.proposalId}
+          proposal={p}
+          store={store}
+          title={p.effects.title ?? taskTitleOf?.(p.operation.task_ref) ?? null}
+          removedNow={isRemovedNow?.(p.operation.task_ref) ?? false}
+          onReview={() => onReviewRemoval?.(p)}
         />
       ))}
       {message.role === "user" && (
@@ -126,6 +148,80 @@ function CardButton({
     >
       {label}
     </button>
+  );
+}
+
+/**
+ * #367: a removal request in the user's own message. It only opened a review; the card
+ * says nothing is removed until the user confirms in the drawer. A task removed
+ * elsewhere turns the card historical, with no control that could act on it.
+ */
+function RemovalCard({
+  proposal,
+  store,
+  title,
+  removedNow,
+  onReview,
+}: {
+  proposal: RemovalProposal;
+  store: TaskActionStore | null;
+  title: string | null;
+  removedNow: boolean;
+  onReview: () => void;
+}) {
+  const { t } = useTranslation();
+  const phase = useTaskActionPhase(store, proposal.operation.task_ref);
+  const saved =
+    phase.phase === "saved" && phase.receipt.operationType === "task.remove"
+      ? phase.receipt
+      : proposal.receipt;
+  const name = title ?? t("taskRemove.unknownTask");
+  const open = proposal.status === "draft" && !saved && !removedNow;
+  const status = saved
+    ? t("taskRemove.cardRemoved")
+    : removedNow
+      ? t("taskActions.removed")
+      : isUnresolved(phase)
+        ? t("taskActions.checking")
+        : t("taskRemove.cardDraft");
+  return (
+    <article
+      data-testid="task-removal-card"
+      aria-label={t("taskRemove.cardEyebrow")}
+      className={cn(CARD, open && "border-dashed")}
+    >
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-bg">
+        <Trash2 className="h-4 w-4 text-ink-secondary" aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium text-ink-muted">
+          {t("taskRemove.cardEyebrow")}
+        </p>
+        <p className="break-words text-sm font-semibold text-ink-secondary">
+          {name}
+        </p>
+        <p
+          role="status"
+          className={cn(
+            "text-xs text-ink-tertiary",
+            !saved && isTransient(phase) && "loading-delayed",
+          )}
+        >
+          {status}
+        </p>
+      </div>
+      {(open || saved) && (
+        <CardButton
+          label={open ? t("taskRemove.cardReview") : t("taskCreate.view")}
+          name={
+            open
+              ? t("taskRemove.cardReviewA11y", { title: name })
+              : t("taskCreate.view")
+          }
+          onClick={onReview}
+        />
+      )}
+    </article>
   );
 }
 

@@ -7,6 +7,7 @@ import { WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
+  isRemovalProposal,
   isStepProposal,
   TITLE_MAX,
   createTaskOperation,
@@ -99,6 +100,7 @@ export function TaskProposalPanel({
   const proposal: TaskProposal | undefined =
     phase.phase === "needs_review" &&
     !isStepProposal(phase.proposal) &&
+    !isRemovalProposal(phase.proposal) &&
     phase.proposal.proposalRevision >= (query.data?.proposalRevision ?? 0)
       ? phase.proposal
       : query.data;
