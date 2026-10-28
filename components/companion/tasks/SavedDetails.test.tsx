@@ -592,6 +592,7 @@ describe("the reviewed change of a conflicting detail Undo is bound to the serve
     ["absent", () => undefined],
     ["a different detail", (v: Record<string, unknown>) => ({ ...v, detail_id: "e1000000-0000-4000-8000-000000000999" })],
     ["an older revision", (v: Record<string, unknown>) => ({ ...v, revision: Number(v.revision) - 1 })],
+    ["a newer revision", (v: Record<string, unknown>) => ({ ...v, revision: Number(v.revision) + 1 })],
     ["a removed detail", (v: Record<string, unknown>) => ({ ...v, removed: true })],
     ["malformed text", (v: Record<string, unknown>) => ({ ...v, text: 42 })],
   ])("current_detail %s: approval stays unavailable and nothing is removed", async (_name, transform) => {
