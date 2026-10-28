@@ -1074,6 +1074,10 @@ Deno.serve(async (req: Request) => {
     )}${guidanceBlock(companionContext, companion.evidence)}${clarificationBlock(
       companionContext
     )}`;
+    // #365: an edit suggestion may name only a Checklist task this answer was shown.
+    const shownTaskIds = new Set(
+      companionContext.items.filter(item => item.kind === 'checklist_task').map(item => item.id)
+    );
     // Companion tab only (not the in-lesson chat): the model may suggest one task for
     // the user to review. The suggestion is typed and stripped below; it writes nothing.
     if (!lessonContext) {
@@ -1345,7 +1349,7 @@ Deno.serve(async (req: Request) => {
               );
             }
 
-            const proposed = extractActionProposal(untaggedAnswer);
+            const proposed = extractActionProposal(untaggedAnswer, shownTaskIds);
             const { cleanAnswer, suggestions } =
               parseSuggestionsFromResponse(proposed.answer);
 
@@ -1519,7 +1523,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // A suggested task (typed, validated) leaves the answer text first.
-    const proposed = extractActionProposal(untaggedAnswer);
+    const proposed = extractActionProposal(untaggedAnswer, shownTaskIds);
     // Parse out suggestions from the response
     const { cleanAnswer, suggestions } =
       parseSuggestionsFromResponse(proposed.answer);

@@ -37,7 +37,31 @@ import { conversationActionsKey } from "@/lib/companionActions/queryKeys";
 import {
   TITLE_MAX,
   createTaskOperation,
+  editDraftOf,
+  type CommandResult,
 } from "@/lib/companionActions/contract";
+
+/** The question for a command that was not clear enough to change anything (#363, #365). */
+function clarifyQuestion(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  command: Extract<CommandResult, { kind: "clarify" }>,
+): string {
+  switch (command.reason) {
+    case "missing_title":
+      return t("taskCreate.clarifyMissingTitle");
+    case "multiple":
+      return t("taskCreate.clarifyMultiple");
+    case "too_long":
+      return t("taskCreate.clarifyTooLong", { max: TITLE_MAX });
+    case "task_ambiguous":
+      return t("taskEdit.clarify.task_ambiguous", {
+        title: command.candidates[0]?.title ?? "",
+        number: command.candidates.length,
+      });
+    default:
+      return t(`taskEdit.clarify.${command.reason}`);
+  }
+}
 
 /** React Query hooks for Companion (AI chat). */
 
@@ -226,7 +250,12 @@ export function useSendMessage() {
       ensureOwned(owner);
       if (interpreted.kind === "ok" && interpreted.command.kind !== "none") {
         const command = interpreted.command;
-        if (command.kind === "create" && command.sameTitleTasks.length === 0) {
+        if (
+          (command.kind === "create" && command.sameTitleTasks.length === 0) ||
+          command.kind === "edit"
+        ) {
+          // A clear command makes exactly its one change (#365 edits too). Its card
+          // shows the saved receipt, never assistant text.
           if (store) {
             await store.applyOperation(
               `command:${savedUser.id}`,
@@ -244,14 +273,7 @@ export function useSendMessage() {
             ? t("taskCreate.clarifyDuplicate", {
                 title: command.sameTitleTasks[0].title,
               })
-            : t(
-                command.reason === "missing_title"
-                  ? "taskCreate.clarifyMissingTitle"
-                  : command.reason === "multiple"
-                    ? "taskCreate.clarifyMultiple"
-                    : "taskCreate.clarifyTooLong",
-                { max: TITLE_MAX },
-              );
+            : clarifyQuestion(t as never, command);
         await companion.saveMessage({
           conversationIdentifier,
           role: "assistant",
@@ -311,11 +333,23 @@ export function useSendMessage() {
       });
       ensureOwned(owner);
       // #363: a suggested task becomes a server-owned draft for review, tied to this
-      // answer. Preparing writes no task; a failure only means no draft card.
+      // answer. #365: so does a suggested change to a listed task. Preparing writes no
+      // task; a failure only means no draft card.
+      const editDraft = reply.actionEdit ? editDraftOf(reply.actionEdit) : null;
+      const source = {
+        conversationId: conversationIdentifier,
+        messageId: savedAnswer.id,
+      };
       if (reply.actionProposal) {
-        await actions.prepare(createTaskOperation(reply.actionProposal.title), {
-          conversationId: conversationIdentifier,
-          messageId: savedAnswer.id,
+        await actions.prepare(
+          createTaskOperation(reply.actionProposal.title),
+          source,
+        );
+        ensureOwned(owner);
+      } else if (editDraft) {
+        await actions.prepare(editDraft, source, {
+          // The app language is one of the content languages; the service checks it.
+          language: i18n.language,
         });
         ensureOwned(owner);
       }

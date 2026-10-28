@@ -6,6 +6,10 @@ import type {
   LessonContext,
 } from "@/types";
 import {
+  parseSuggestedEdit,
+  type SuggestedEdit,
+} from "@/lib/companionActions/contract";
+import {
   createClient,
   getAuthUserId,
   isSupabaseConfigured,
@@ -422,6 +426,9 @@ export interface GeneratedReply {
   /** A task the answer suggests for the user to review (#363). A suggestion only:
    *  the action service prepares the reviewable draft; nothing is saved here. */
   actionProposal: { type: "task.create_custom"; title: string } | null;
+  /** A change to one listed task the answer suggests (#365). A suggestion only, like
+   *  actionProposal: the action service prepares the draft; nothing is saved here. */
+  actionEdit: SuggestedEdit | null;
   /* Analytics only (companion_response_received); null when absent. */
   queryType: string | null;
   topic: CompanionTopic | null;
@@ -506,6 +513,7 @@ export async function generateReply(
       context: null,
       contextRecord: null,
       actionProposal: null,
+      actionEdit: null,
       queryType: null,
       topic: null,
       tokenUsage: null,
@@ -564,6 +572,7 @@ export async function generateReply(
     context: parseCompanionContext(body.context),
     contextRecord: savableContext(body.context),
     actionProposal: parseActionProposal(body.actionProposal),
+    actionEdit: parseSuggestedEdit(body.actionProposal),
     queryType: typeof body.queryType === "string" ? body.queryType : null,
     topic: parseCompanionTopic(body.topic),
     tokenUsage: normalizeTokenUsage(body.tokenUsage),

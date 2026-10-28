@@ -1,6 +1,6 @@
 // Companion actions contract, version 1 (mobile-app#361; decided in #360; task
-// creation and proposals added in #363 within the same version: new actions and
-// fields only, which version 1 clients ignore).
+// creation and proposals added in #363, task edits in #365, within the same version:
+// new actions, operation types and fields only, which version 1 clients ignore).
 // Typed request parsing and the domain operation registry. Pure: no I/O, so the
 // handler validates every request before it reaches the database. The database
 // validates again (companion_validate_operations) as defence in depth.
@@ -15,6 +15,8 @@ export type Platform = (typeof PLATFORMS)[number];
 
 export const WAITING_REASON_MAX = 500;
 export const TITLE_MAX = 200;
+/** Longest custom task description an edit stores (#365). */
+export const DESCRIPTION_MAX = 2000;
 export const PRIORITIES = ['Do now', 'Do soon', 'Explore and connect', 'Optional / later'] as const;
 export type Priority = (typeof PRIORITIES)[number];
 
@@ -51,7 +53,23 @@ export interface RemoveCreatedOperation {
   task_ref: string;
   expected_revision: number;
 }
-export type Operation = SetStateOperation | CreateCustomOperation | RemoveCreatedOperation;
+/**
+ * Title, description or priority of one custom task (#365). Only the given fields change.
+ * A content-backed task's title, description and priority are shared content: refused.
+ */
+export interface EditDetailsOperation {
+  type: 'task.edit_details';
+  task_ref: string;
+  expected_revision: number;
+  title?: string;
+  description?: string;
+  priority?: Priority;
+}
+export type Operation = SetStateOperation | CreateCustomOperation | RemoveCreatedOperation | EditDetailsOperation;
+/** An edit for review, before the server binds it to the task's current revision (#365). */
+export type EditDraft =
+  | Omit<SetStateOperation, 'expected_revision'>
+  | Omit<EditDetailsOperation, 'expected_revision'>;
 
 export type Parsed<T> = { ok: true; value: T } | { ok: false; status: 400 | 403 | 422; reason: string };
 const ok = <T>(value: T): Parsed<T> => ({ ok: true, value });
@@ -93,7 +111,8 @@ const setState: OperationSpec<SetStateOperation> = {
   version: 1,
   access: 'owner',
   classification: 'write',
-  approval: ['ui_control', 'approved_proposal'],
+  // direct_command: the user's own clear command names this exact state (#365).
+  approval: ['ui_control', 'approved_proposal', 'direct_command'],
   revisionCheck: 'expected_revision',
   idempotency: 'operation_id',
   undo: 'recorded_inverse',
@@ -181,11 +200,86 @@ const removeCreated: OperationSpec<RemoveCreatedOperation> = {
   },
 };
 
+// Several lines are allowed in a description; other control characters are refused.
+// deno-lint-ignore no-control-regex
+const DESCRIPTION_CONTROL = /[\u0000-\u0009\u000b-\u001f\u007f]/;
+
+const editDetails: OperationSpec<EditDetailsOperation> = {
+  type: 'task.edit_details',
+  version: 1,
+  access: 'owner',
+  classification: 'write',
+  // Never ui_control in this slice: a details edit comes from a reviewed proposal or the
+  // user's own clear command. Undo applies the recorded earlier values.
+  approval: ['approved_proposal', 'direct_command'],
+  // A proposal binds to the values of the fields it changes (re-read before the write);
+  // a command or an Undo binds to the task revision.
+  revisionCheck: 'proposal_context',
+  idempotency: 'operation_id',
+  undo: 'recorded_inverse',
+  undoRemoves: false,
+  parse(raw) {
+    for (const key of Object.keys(raw)) {
+      if (!['type', 'task_ref', 'expected_revision', 'title', 'description', 'priority'].includes(key)) {
+        return refuse(422, 'unknown_field');
+      }
+    }
+    if (typeof raw.task_ref !== 'string' || !TASK_REF.test(raw.task_ref)) return refuse(422, 'invalid_task_ref');
+    // Shared published content is never edited for one account.
+    if (raw.task_ref.startsWith('sanity:')) return refuse(422, 'shared_task_field');
+    if (!isPlainInt(raw.expected_revision)) return refuse(422, 'expected_revision_required');
+    if (raw.title === undefined && raw.description === undefined && raw.priority === undefined) {
+      return refuse(422, 'invalid_operations');
+    }
+    const op: EditDetailsOperation = {
+      type: 'task.edit_details',
+      task_ref: raw.task_ref,
+      expected_revision: raw.expected_revision,
+    };
+    if (raw.title !== undefined) {
+      // Exactly the reviewed text: not trimmed or rewritten here.
+      if (typeof raw.title !== 'string' || raw.title !== raw.title.trim() || !raw.title ||
+          raw.title.length > TITLE_MAX || CONTROL.test(raw.title)) return refuse(422, 'invalid_title');
+      op.title = raw.title;
+    }
+    if (raw.description !== undefined) {
+      if (typeof raw.description !== 'string' || raw.description !== raw.description.trim() ||
+          raw.description.length > DESCRIPTION_MAX || DESCRIPTION_CONTROL.test(raw.description)) {
+        return refuse(422, 'invalid_description');
+      }
+      op.description = raw.description;
+    }
+    if (raw.priority !== undefined) {
+      if (typeof raw.priority !== 'string' || !(PRIORITIES as readonly string[]).includes(raw.priority)) {
+        return refuse(422, 'invalid_priority');
+      }
+      op.priority = raw.priority as Priority;
+    }
+    return ok(op);
+  },
+};
+
 export const OPERATION_REGISTRY: { readonly [K in Operation['type']]: OperationSpec<Extract<Operation, { type: K }>> } = {
   'task.set_state': setState,
   'task.create_custom': createCustom,
   'task.remove_created': removeCreated,
+  'task.edit_details': editDetails,
 };
+
+/**
+ * An edit for review (#365): a state change or a details edit of one task, without a
+ * revision. The server binds it to the task's current revision when it prepares the draft.
+ */
+export function parseEditDraft(raw: unknown): Parsed<EditDraft> {
+  if (!isObject(raw)) return refuse(422, 'invalid_operations');
+  if (raw.type !== 'task.set_state' && raw.type !== 'task.edit_details') return refuse(422, 'unsupported_operation');
+  if (raw.expected_revision !== undefined) return refuse(422, 'unknown_field');
+  const parsed = (OPERATION_REGISTRY[raw.type] as OperationSpec<SetStateOperation | EditDetailsOperation>)
+    .parse({ ...raw, expected_revision: 0 });
+  if (!parsed.ok) return parsed;
+  const { expected_revision: _r, ...draft } = parsed.value;
+  return ok(draft);
+}
 
 /** One operation through its registry entry, without authorization (prepare, revise). */
 export function parseOperation(raw: unknown): Parsed<Operation> {
@@ -260,6 +354,8 @@ export interface ProposalSource {
 export type ActionRequest =
   | { action: 'read' }
   | { action: 'prepare'; operation: CreateCustomOperation; source: ProposalSource | null }
+  /** #365: an edit of one existing task, for review. `language`: of the shown task title. */
+  | { action: 'prepare_edit'; draft: EditDraft; source: ProposalSource | null; language: ContentLanguage }
   | { action: 'proposal'; proposal_id: string }
   | { action: 'interpret'; message_id: number }
   | { action: 'conversation_actions'; conversation_id: string }
@@ -280,6 +376,15 @@ export function parseAction(body: Record<string, unknown>): Parsed<ActionRequest
     case 'read':
       return ok({ action: 'read' });
     case 'prepare': {
+      // #365: an edit draft carries a task_ref and no revision.
+      if (isObject(body.operation) &&
+          (body.operation.type === 'task.set_state' || body.operation.type === 'task.edit_details')) {
+        const draft = parseEditDraft(body.operation);
+        if (!draft.ok) return draft;
+        const source = parseSource(body.source);
+        if (!source.ok) return source;
+        return ok({ action: 'prepare_edit', draft: draft.value, source: source.value, language: contentLanguage(body.language) });
+      }
       const op = parseOperation(body.operation);
       if (!op.ok) return op;
       // Only a new task can be prepared for review in this slice.
@@ -351,6 +456,13 @@ export function parseAction(body: Record<string, unknown>): Parsed<ActionRequest
       return refuse(400, 'invalid_action');
   }
 }
+
+/** Languages of the published Checklist content (the app's supported locales). */
+export const CONTENT_LANGUAGES = ['en', 'vi', 'es', 'hi', 'ar', 'fr-CA', 'pa'] as const;
+export type ContentLanguage = (typeof CONTENT_LANGUAGES)[number];
+/** A display language from the client; anything else is English. Never authorization. */
+export const contentLanguage = (raw: unknown): ContentLanguage =>
+  typeof raw === 'string' && (CONTENT_LANGUAGES as readonly string[]).includes(raw) ? raw as ContentLanguage : 'en';
 
 function parseSource(raw: unknown): Parsed<ProposalSource | null> {
   if (raw === undefined || raw === null) return ok(null);

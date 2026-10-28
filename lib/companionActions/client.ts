@@ -1,5 +1,5 @@
 /**
- * Versioned client for the Companion task actions endpoint (mobile-app#361).
+ * Versioned client for the Companion task actions endpoint (mobile-app#361, #363, #365).
  * Each call names an outcome the interface can show truthfully:
  *   - a recorded result, or a definite refusal (nothing was written);
  *   - `unknown` when the request may have reached the server (network error,
@@ -12,6 +12,7 @@ import {
   type CompensatingProposal,
   type CreateTaskOperation,
   type CurrentTaskValue,
+  type EditDraft,
   type Operation,
   type TaskProgress,
   type TaskProposal,
@@ -148,10 +149,14 @@ export interface TaskActionClient {
   status(operationId: string): Promise<StatusResult>;
   /** Reads only: what the user's own saved message asks for (#363). */
   interpret(messageId: number): Promise<InterpretResult>;
-  /** A server-owned draft of one new task. Writes no task. */
+  /**
+   * A server-owned draft of one new task, or of one change to an existing task (#365).
+   * Writes no task. `language`: of the task title the draft shows (display only).
+   */
   prepare(
-    operation: CreateTaskOperation,
+    operation: CreateTaskOperation | EditDraft,
     source: { conversationId: string; messageId?: number } | null,
+    options?: { language?: string },
   ): Promise<ProposalResult>;
   proposal(proposalId: string): Promise<ProposalResult>;
   revise(
@@ -350,10 +355,11 @@ export function createTaskActionClient(opts: {
         : refused(reply);
     },
 
-    prepare(operation, source) {
+    prepare(operation, source, options = {}) {
       return proposalCall({
         action: "prepare",
         operation,
+        ...(options.language ? { language: options.language } : {}),
         ...(source
           ? {
               source: {

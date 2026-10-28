@@ -10,6 +10,8 @@ import {
   TaskActionsDrawer,
 } from "@/components/companion/tasks/TaskActionsDrawer";
 import { TaskActionCards } from "@/components/companion/tasks/TaskActionCards";
+import { useTasks } from "@/hooks/useChecklist";
+import { taskOrderKey } from "@/services/checklist";
 import {
   useConversationActions,
   useTaskActionStore,
@@ -43,10 +45,20 @@ export default function CompanionPage() {
   // overlay drawer; the chat and its draft stay mounted behind it.
   const [drawer, setDrawer] = useState<
     | { kind: "tasks" }
-    | { kind: "proposal"; proposalId: string }
+    | {
+        kind: "proposal";
+        proposalId: string;
+        proposalKind: "task_create" | "task_edit";
+      }
     | { kind: "task"; taskId: string }
     | null
   >(null);
+
+  // #365: names the task of an edit card or receipt from the account's Checklist.
+  const { data: checklistTasks = [] } = useTasks();
+  const titleFor = (taskRef: string) =>
+    checklistTasks.find((task) => taskOrderKey(task) === taskRef)?.title ??
+    null;
 
   const conversationsQuery = useConversations();
   const messagesQuery = useConversationMessages(activeId);
@@ -185,9 +197,10 @@ export default function CompanionPage() {
             commands={actions?.commands ?? []}
             store={actionStore}
             canWrite={progress.canWrite}
-            onReview={(proposalId) =>
-              setDrawer({ kind: "proposal", proposalId })
+            onReview={(proposalId, proposalKind) =>
+              setDrawer({ kind: "proposal", proposalId, proposalKind })
             }
+            titleFor={titleFor}
             onViewTask={(taskRef) =>
               setDrawer({
                 kind: "task",
@@ -203,6 +216,9 @@ export default function CompanionPage() {
         surface="companion"
         initialTaskId={drawer?.kind === "task" ? drawer.taskId : null}
         proposalId={drawer?.kind === "proposal" ? drawer.proposalId : null}
+        proposalKind={
+          drawer?.kind === "proposal" ? drawer.proposalKind : undefined
+        }
       />
     </div>
   );
