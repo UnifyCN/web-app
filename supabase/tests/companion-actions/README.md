@@ -36,4 +36,12 @@ the port before `supabase start`. `steps_parent_race_test.ts` (#366 F1) and
 `pg_stat_activity` to order concurrent requests. `scripts/verify-companion-task-steps.mjs` is the
 real-browser check of the web step controls against this stack (same port).
 
-Results, test order and proof limits: mobile repo `DOCS/companion-actions/361-task-actions.md`.
+#367 task removal: `remove_test.ts`, `remove_rollback_test.ts` and
+`remove_plan_race_test.ts` also apply `20261028025026_companion_task_remove.sql`, after
+#365 (timestamp order #361, #363, #364, #366, #365, #367; `support.ts` rolls back in
+reverse). `remove_plan_race_test.ts` pauses one write of a fixture account with a
+test-installed trigger and reads `pg_stat_activity` to show that a plan approval naming a
+task and that task's removal wait for each other, in both orders.
+
+Results, test order and proof limits: mobile repo `DOCS/companion-actions/361-task-actions.md`
+(and `367-task-remove.md` for #367).

@@ -4,7 +4,7 @@
 // exposes. Each test names the observation that would prove the behavior wrong.
 import { assertEquals } from 'jsr:@std/assert@1';
 import {
-  apply, confirmedApproval, existingCustomTask, migrate, migrate367, MIGRATION_365, MIGRATION_366, newAccount, openGate,
+  apply, confirmedApproval, existingCustomTask, migrate, migrate367, MIGRATION_364, MIGRATION_365, MIGRATION_366, newAccount, openGate,
   pendingReminder, prepare, proposalOf, ready, reminderRow, setState, sql, taskOf, taskRemove, testOpts, undo,
   approved,
 } from './support.ts';
@@ -14,6 +14,7 @@ await ready();
 const SHARED = [
   'companion_validate_operations', 'companion_check_authorization', 'companion_apply_one', 'companion_receipt_summary',
   'companion_undo_action', 'companion_prepare_proposal', 'companion_recheck_proposal', 'companion_conversation_actions',
+  'companion_plan_apply',
 ];
 
 /** #365 (applied just before #367) replaced six of them; the other two are still #366's. */
@@ -22,14 +23,18 @@ const REPLACED_365 = new Set([
   'companion_undo_action', 'companion_conversation_actions',
 ]);
 
-/** The function bodies current before #367: the #365 migration's, else the #366 migration's. */
+/**
+ * The function bodies current before #367: the #365 migration's, the #364 migration's for
+ * the plan writer (#367 adds its plan-reference lock), else the #366 migration's.
+ */
 async function bodiesBefore367(): Promise<Record<string, string>> {
+  const text364 = await Deno.readTextFile(MIGRATION_364);
   const text365 = await Deno.readTextFile(MIGRATION_365);
   const text366 = await Deno.readTextFile(MIGRATION_366);
   const out: Record<string, string> = {};
   for (const name of SHARED) {
-    const text = REPLACED_365.has(name) ? text365 : text366;
-    const start = text.indexOf(`create or replace function public.${name}(`);
+    const text = name === 'companion_plan_apply' ? text364 : REPLACED_365.has(name) ? text365 : text366;
+    const start = text.search(new RegExp(`create (or replace )?function public\\.${name}\\(`));
     const open = text.indexOf('$$', start) + 2;
     const close = text.indexOf('$$;', open);
     out[name] = text.slice(open, close);
@@ -66,6 +71,9 @@ Deno.test({
     await migrate367('down');
     try {
       assertEquals(await liveBodies(), await bodiesBefore367());
+      const [helpers] = await sql`select to_regprocedure('public.companion_plan_items_lock(uuid,jsonb)') is null
+        and to_regprocedure('public.companion_plan_ref_key(uuid,text)') is null as gone`;
+      assertEquals(helpers.gone, true, 'the plan-reference lock helpers outlived the rollback');
       assertEquals((await taskOf(a, ref)).removed, true);
       assertEquals((await taskOf(a, ref)).last_receipt, null);
       assertEquals(await reminderRow(reminder), { status: 'cancelled', cancelled_reason: 'task_removed' });
