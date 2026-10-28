@@ -7,7 +7,7 @@ import { assert, assertEquals } from 'jsr:@std/assert@1';
 import {
   type Account, MIGRATION, apply, command, conversationActions, conversationWith, detailRows, detailsOf, interpret,
   messageIn, migrate, migrate363, migrate364, migrate365, migrate366, migrate370, migration370Applied, newAccount,
-  openGate, prepare, ready, rememberedBy, sql, status, testOpts, waitForSchemaCache,
+  openGate, prepare, ready, sql, status, testOpts, waitForSchemaCache,
 } from './support.ts';
 
 await ready();
@@ -31,6 +31,14 @@ function differences(a: Record<string, string>, b: Record<string, string>): stri
 }
 
 const reasons = (r: Record<string, unknown> | undefined) => [r?.before_waiting_reason, r?.after_waiting_reason];
+
+/** Saves a detail through the user's own clear remember command, asserting the reply. */
+async function remember(who: Account, text: string) {
+  const m = await conversationWith(who, 'user', `Remember that ${text}`);
+  const w = await apply(who, [{ type: 'detail.create', text }], { authorization: command(m.message_id) });
+  assertEquals(w.status, 200, `remember: ${JSON.stringify(w.json)}`);
+  return { ...m, receipt: w.json.receipt, operation_id: w.json.operation_id as string };
+}
 
 /** Runs a migration step and returns its error text, or null (an assertion, not a crash). */
 const attempt = (step: () => Promise<void>) => step().then(() => null, (e: unknown) => String(e).slice(0, 400));
@@ -83,7 +91,7 @@ Deno.test({
     const editDraft = await prepare(a, { type: 'task.edit_details', task_ref: ref, priority: 'Do now' },
       { source: { conversation_id, message_id: answer } });
     assertEquals(editDraft.status, 200, `prepare edit draft: ${JSON.stringify(editDraft.json)}`);
-    const remembered = await rememberedBy(a, 'I can attend appointments on Fridays');
+    const remembered = await remember(a, 'I can attend appointments on Fridays');
     const detailDraft = await prepare(a, { type: 'detail.create', text: 'I need an interpreter' },
       { source: { conversation_id, message_id: answer } });
     assertEquals(detailDraft.status, 200, `prepare detail draft: ${JSON.stringify(detailDraft.json)}`);

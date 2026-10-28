@@ -1755,5 +1755,9 @@ Deno.test({
     assertEquals(need.payload.actionProposal, { type: 'detail.create', version: 1, text: 'I need an interpreter for work permit appointments' });
     const both = await ask('What else?', {}, { answer: 'Answer.\n[TASK]: Set up phone service\n[REMEMBER]: I can attend appointments on Fridays\n[TOPIC]: settling_in' });
     assertEquals(both.payload.actionProposal, { type: 'task.create_custom', version: 1, title: 'Set up phone service' });
+    // #365 + #370: an edit suggestion wins over a detail line, and the model is told so.
+    const edited = await ask('I booked it.', {}, { answer: 'Answer.\n[EDIT]: custom:41 | state | in_progress\n[REMEMBER]: I can attend appointments on Fridays\n[TOPIC]: settling_in' });
+    assertEquals(edited.payload.actionProposal, { type: 'task.edit', version: 1, task_ref: 'custom:41', field: 'state', value: 'in_progress' });
+    assertStringIncludes(edited.system, 'and no [TASK], [EDIT] or [STEP] line is written, you may suggest saving ONE detail');
   },
 });

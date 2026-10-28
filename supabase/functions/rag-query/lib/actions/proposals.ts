@@ -248,7 +248,7 @@ const detailCreate = {
 
 export const DETAIL_PROPOSAL_INSTRUCTION = `
 DETAIL SUGGESTION:
-You cannot save personal details. When the user's own message states a lasting personal detail that would help in later conversations (for example when they can attend appointments, an accessibility need, or a preferred language for appointments), and no [TASK] or [STEP] line is written, you may suggest saving ONE detail for them to review. Never suggest their province, city, arrival date or immigration status: the profile owns those. Do not suggest a detail already listed under SAVED PERSONAL DETAILS. Write it on its own line before any [SUGGESTIONS] line, as:
+You cannot save personal details. When the user's own message states a lasting personal detail that would help in later conversations (for example when they can attend appointments, an accessibility need, or a preferred language for appointments), and no [TASK], [EDIT] or [STEP] line is written, you may suggest saving ONE detail for them to review. Never suggest their province, city, arrival date or immigration status: the profile owns those. Do not suggest a detail already listed under SAVED PERSONAL DETAILS. Write it on its own line before any [SUGGESTIONS] line, as:
 [REMEMBER]: <the detail in plain text, at most 200 characters, in the language of your answer, written as the user would say it, for example "I can attend appointments on Fridays">
 The app asks the user whether to save it; only the user can approve it. Never say that a detail was saved or remembered. Write no [REMEMBER] line in any other case.`;
 

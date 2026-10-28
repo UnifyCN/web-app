@@ -9,13 +9,21 @@ import { assert, assertEquals } from 'jsr:@std/assert@1';
 import {
   type Account, apply, approved, cancel, command, confirmedRemoval, conversationActions, conversationWith,
   detailRows, detailsOf, detailUpdate, existingCustomTask, interpret, messageIn, newAccount, planApply, plansOf,
-  prepare, read, ready, rememberedBy, setState, status, stepCreate, stepsOf, taskOf, testOpts, undo, uuid,
+  prepare, read, ready, setState, status, stepCreate, stepsOf, taskOf, testOpts, undo, uuid,
 } from './support.ts';
 import { draftFor, vancouverArrival } from './planSupport.ts';
 
 await ready();
 
 const reasons = (r: Record<string, unknown>) => [r.before_waiting_reason, r.after_waiting_reason];
+
+/** Saves a detail through the user's own clear remember command, asserting the reply. */
+async function remember(who: Account, text: string) {
+  const m = await conversationWith(who, 'user', `Remember that ${text}`);
+  const w = await apply(who, [{ type: 'detail.create', text }], { authorization: command(m.message_id) });
+  assertEquals(w.status, 200, `remember: ${JSON.stringify(w.json)}`);
+  return { ...m, receipt: w.json.receipt, operation_id: w.json.operation_id as string };
+}
 
 /** Interprets and applies one clear edit command of `who`; returns both replies. */
 async function edit(who: Account, conversationRow: number, text: string) {
@@ -103,7 +111,9 @@ Deno.test({
     assertEquals((await taskOf(a, ref)).waiting_reason, 'The store calls on Friday');
     const u2 = await undo(a, approvedEdit.json.operation_id);
     assertEquals(u2.status, 409, 'an edit receipt that the later state changes made historical must not be undone directly');
-    const undoSave = await undo(a, saved.json.operation_id);
+    // An Undo that removes asks for confirmation first; confirmed, the later edit wins.
+    assertEquals((await undo(a, saved.json.operation_id)).status, 403, 'a removing Undo applied without confirmation');
+    const undoSave = await undo(a, saved.json.operation_id, { authorization: confirmedRemoval });
     assertEquals(undoSave.status, 409, 'a detail save edited later must not be undone directly');
     const undoEdit = await undo(a, changed.json.operation_id);
     assertEquals(undoEdit.status, 200, `undo detail edit: ${JSON.stringify(undoEdit.json)}`);
@@ -133,7 +143,7 @@ Deno.test({
     assertEquals(p.status, 200, `prepare edit draft: ${JSON.stringify(p.json)}`);
     const e = await apply(a, p.json.proposal.operations, { authorization: approved(p.json.proposal) });
     assertEquals(e.status, 200, `approve edit: ${JSON.stringify(e.json)}`);
-    const r = await rememberedBy(a, 'I need an interpreter for appointments');
+    const r = await remember(a, 'I need an interpreter for appointments');
 
     const ue = await undo(a, e.json.operation_id);
     assertEquals(ue.status, 200, `undo edit: ${JSON.stringify(ue.json)}`);
@@ -145,7 +155,15 @@ Deno.test({
     assertEquals(await detailsOf(a), []);
     assertEquals((await detailRows(a.id)).map(d => [d.body, d.removed]), [['I need an interpreter for appointments', true]]);
 
-    assertEquals((await plansOf(a)).json.plans, plansBefore, 'the plan changed');
+    // The plan refers to the task and reads its live progress: only the revision moves.
+    const withoutRevisions = (v: unknown): unknown => Array.isArray(v) ? v.map(withoutRevisions)
+      : v && typeof v === 'object'
+      ? Object.fromEntries(Object.entries(v).filter(([k]) => k !== 'revision').map(([k, x]) => [k, withoutRevisions(x)]))
+      : v;
+    const plansAfter = (await plansOf(a)).json.plans;
+    assertEquals(withoutRevisions(plansAfter), withoutRevisions(plansBefore), 'the plan changed');
+    assertEquals(JSON.stringify(plansAfter).includes(`"revision":${(await taskOf(a, phone)).revision}`), true,
+      'the plan does not read the current task revision');
     assertEquals(await stepsOf(a, phone), stepsBefore, 'the steps changed');
   },
 });
@@ -162,7 +180,7 @@ Deno.test({
     const { conversation_id, conversationRow } = await conversationWith(a, 'user', 'hello');
     const w = await edit(a, conversationRow, 'Mark task "Get a phone plan" as waiting: Letter from the bank');
     assertEquals(w.a.status, 200, JSON.stringify(w.a.json));
-    const r = await rememberedBy(a, 'I can attend appointments on Fridays');
+    const r = await remember(a, 'I can attend appointments on Fridays');
     const [detail] = await detailsOf(a);
     const p = await prepare(a, { type: 'task.edit_details', task_ref: ref, priority: 'Do now' });
     assertEquals(p.status, 200, JSON.stringify(p.json));
