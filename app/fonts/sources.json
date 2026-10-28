@@ -1,0 +1,707 @@
+{
+  "_comment": "Provenance of the self-hosted fonts and the reference that app/fonts/fonts.test.ts binds fonts.css, preload.ts and the files to. faces = the Google Fonts css2 responses captured 2026-10-27 (display=swap, the next/font/google request); fallbacks and variables = the CSS next/font/google generated for them; preload = the files its manifest preloaded.",
+  "capturedUTC": "2026-10-27T21:35:34Z",
+  "files": [
+    {
+      "file": "inter-cyrillic-ext.woff2",
+      "family": "Inter",
+      "subset": "cyrillic-ext",
+      "sourceUrl": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2JL7W0Q5n-wU.woff2",
+      "bytes": 25844,
+      "sha256": "fccca918fea40089dacadc7045861314d1a6bc91f1f323cc1eeb22ebcdb321b5",
+      "fontVersion": "Version 4.001;git-66647c0bb"
+    },
+    {
+      "file": "inter-cyrillic.woff2",
+      "family": "Inter",
+      "subset": "cyrillic",
+      "sourceUrl": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2",
+      "bytes": 18744,
+      "sha256": "aebf2ab4a4ce6810d73c1ac7be7cafb4e5ec4cee2d6db5fb3e09691747ec4bd6",
+      "fontVersion": "Version 4.001;git-66647c0bb"
+    },
+    {
+      "file": "inter-greek-ext.woff2",
+      "family": "Inter",
+      "subset": "greek-ext",
+      "sourceUrl": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2ZL7W0Q5n-wU.woff2",
+      "bytes": 11272,
+      "sha256": "a2e2c783ca6f9c20486e81e72a279203e86730bbf8f01ff6a5ee9dbd09e1c271",
+      "fontVersion": "Version 4.001;git-66647c0bb"
+    },
+    {
+      "file": "inter-greek.woff2",
+      "family": "Inter",
+      "subset": "greek",
+      "sourceUrl": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1pL7W0Q5n-wU.woff2",
+      "bytes": 19044,
+      "sha256": "46dd4cdca58c26ae87cc6927657bf83b2e8abfc39ffd0ab176e301a8d28d22bf",
+      "fontVersion": "Version 4.001;git-66647c0bb"
+    },
+    {
+      "file": "inter-vietnamese.woff2",
+      "family": "Inter",
+      "subset": "vietnamese",
+      "sourceUrl": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2pL7W0Q5n-wU.woff2",
+      "bytes": 10280,
+      "sha256": "8db00ff46c67b22cda8bed865acf7077651cac8d2841d5b40980556b48961931",
+      "fontVersion": "Version 4.001;git-66647c0bb"
+    },
+    {
+      "file": "inter-latin-ext.woff2",
+      "family": "Inter",
+      "subset": "latin-ext",
+      "sourceUrl": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa25L7W0Q5n-wU.woff2",
+      "bytes": 85272,
+      "sha256": "a28eb6d3ccb534ae0c94ca999371df024aab60b08c3c8a5720ee9e32fa0faaa2",
+      "fontVersion": "Version 4.001;git-66647c0bb"
+    },
+    {
+      "file": "inter-latin.woff2",
+      "family": "Inter",
+      "subset": "latin",
+      "sourceUrl": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2",
+      "bytes": 48432,
+      "sha256": "c940764593d0fe5d596be327ca7558855e018039fb78509aa21921fd3644c3e4",
+      "fontVersion": "Version 4.001;git-66647c0bb"
+    },
+    {
+      "file": "noto-sans-devanagari-devanagari.woff2",
+      "family": "Noto Sans Devanagari",
+      "subset": "devanagari",
+      "sourceUrl": "https://fonts.gstatic.com/s/notosansdevanagari/v30/TuG7UUFzXI5FBtUq5a8bjKYTZjtRU6Sgv3NaV_SNmI0b8QQCQmHN5TV_5Kl4-GIB.woff2",
+      "bytes": 121188,
+      "sha256": "12223f2beeb4752c6fe7662550978ee22be4d56e49a8f937c324b015ac5ef77a",
+      "fontVersion": "Version 2.006"
+    },
+    {
+      "file": "noto-sans-devanagari-latin-ext.woff2",
+      "family": "Noto Sans Devanagari",
+      "subset": "latin-ext",
+      "sourceUrl": "https://fonts.gstatic.com/s/notosansdevanagari/v30/TuG7UUFzXI5FBtUq5a8bjKYTZjtRU6Sgv3NaV_SNmI0b8QQCQmHN6jV_5Kl4-GIB.woff2",
+      "bytes": 13816,
+      "sha256": "d81a013359dce135281a51a45918b6527e39ff27c085b5d5260df9ad0b4a4a8c",
+      "fontVersion": "Version 2.006"
+    },
+    {
+      "file": "noto-sans-devanagari-latin.woff2",
+      "family": "Noto Sans Devanagari",
+      "subset": "latin",
+      "sourceUrl": "https://fonts.gstatic.com/s/notosansdevanagari/v30/TuG7UUFzXI5FBtUq5a8bjKYTZjtRU6Sgv3NaV_SNmI0b8QQCQmHN5DV_5Kl4-A.woff2",
+      "bytes": 25316,
+      "sha256": "908ea550433276ce2ff423f086abac22a78caf4d033c11ba8ba2f0ca981ef676",
+      "fontVersion": "Version 2.006"
+    },
+    {
+      "file": "noto-sans-arabic-arabic.woff2",
+      "family": "Noto Sans Arabic",
+      "subset": "arabic",
+      "sourceUrl": "https://fonts.gstatic.com/s/notosansarabic/v33/nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj4wv4rqxzLIhjE.woff2",
+      "bytes": 166152,
+      "sha256": "69cdf0bf005fdc9cc13fb5a8581697eb9ba8f761aeaf255fc717d14c62c38891",
+      "fontVersion": "Version 2.012"
+    },
+    {
+      "file": "noto-sans-arabic-math.woff2",
+      "family": "Noto Sans Arabic",
+      "subset": "math",
+      "sourceUrl": "https://fonts.gstatic.com/s/notosansarabic/v33/nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj5Jv4rqxzLIhjE.woff2",
+      "bytes": 22716,
+      "sha256": "cd5ad0461f394131e9137d1d7034f737e088f70316f52619a0923b1800e0949f",
+      "fontVersion": "Version 2.012"
+    },
+    {
+      "file": "noto-sans-arabic-symbols.woff2",
+      "family": "Noto Sans Arabic",
+      "subset": "symbols",
+      "sourceUrl": "https://fonts.gstatic.com/s/notosansarabic/v33/nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj5bv4rqxzLIhjE.woff2",
+      "bytes": 14524,
+      "sha256": "13b367c04ad558c681b8e5ea757029bbb9c9dc93700aaafc70888bb10c6dc711",
+      "fontVersion": "Version 2.012"
+    },
+    {
+      "file": "noto-sans-arabic-latin-ext.woff2",
+      "family": "Noto Sans Arabic",
+      "subset": "latin-ext",
+      "sourceUrl": "https://fonts.gstatic.com/s/notosansarabic/v33/nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj47v4rqxzLIhjE.woff2",
+      "bytes": 16800,
+      "sha256": "ebf1bb8a062aa6693b51fbeaf6b8d30d6456869e3f169230e4c35cc60b96aafb",
+      "fontVersion": "Version 2.012"
+    },
+    {
+      "file": "noto-sans-arabic-latin.woff2",
+      "family": "Noto Sans Arabic",
+      "subset": "latin",
+      "sourceUrl": "https://fonts.gstatic.com/s/notosansarabic/v33/nwpCtLGrOAZMl5nJ_wfgRg3DrWFZWsnVBJ_sS6tlqHHFlj41v4rqxzLI.woff2",
+      "bytes": 31368,
+      "sha256": "20d51311e187e0ff5be9d6fe24f099e97be6cc583078d6f271c74d68920cd1e0",
+      "fontVersion": "Version 2.012"
+    },
+    {
+      "file": "noto-sans-gurmukhi-gurmukhi.woff2",
+      "family": "Noto Sans Gurmukhi",
+      "subset": "gurmukhi",
+      "sourceUrl": "https://fonts.gstatic.com/s/notosansgurmukhi/v29/w8gyH3EvQP81sInb43inmyN9zZ7hb7ATbSWo4q8dJ74a3cVrSnsXn3KMYO8ieQ.woff2",
+      "bytes": 33776,
+      "sha256": "51729fe11030b919350cff5a6e822575e12c63248a1fc26e60c93532cbafc0fa",
+      "fontVersion": "Version 2.004"
+    },
+    {
+      "file": "noto-sans-gurmukhi-latin-ext.woff2",
+      "family": "Noto Sans Gurmukhi",
+      "subset": "latin-ext",
+      "sourceUrl": "https://fonts.gstatic.com/s/notosansgurmukhi/v29/w8gyH3EvQP81sInb43inmyN9zZ7hb7ATbSWo4q8dJ74a3cVrSlYXn3KMYO8ieQ.woff2",
+      "bytes": 17316,
+      "sha256": "f0e84dd00bc002ae4f1f8263f8111e8bcad07abca38cf7395853133337f619df",
+      "fontVersion": "Version 2.004"
+    },
+    {
+      "file": "noto-sans-gurmukhi-latin.woff2",
+      "family": "Noto Sans Gurmukhi",
+      "subset": "latin",
+      "sourceUrl": "https://fonts.gstatic.com/s/notosansgurmukhi/v29/w8gyH3EvQP81sInb43inmyN9zZ7hb7ATbSWo4q8dJ74a3cVrSlgXn3KMYO8.woff2",
+      "bytes": 31320,
+      "sha256": "b081a0f9a3679837fa5d1bb5524de1a02e321e32f5ba452ea0690c48e26f1bec",
+      "fontVersion": "Version 2.004"
+    }
+  ],
+  "faces": [
+    {
+      "family": "Inter",
+      "style": "normal",
+      "weight": "100 900",
+      "display": "swap",
+      "unicodeRange": "U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F",
+      "file": "inter-cyrillic-ext.woff2"
+    },
+    {
+      "family": "Inter",
+      "style": "normal",
+      "weight": "100 900",
+      "display": "swap",
+      "unicodeRange": "U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116",
+      "file": "inter-cyrillic.woff2"
+    },
+    {
+      "family": "Inter",
+      "style": "normal",
+      "weight": "100 900",
+      "display": "swap",
+      "unicodeRange": "U+1F00-1FFF",
+      "file": "inter-greek-ext.woff2"
+    },
+    {
+      "family": "Inter",
+      "style": "normal",
+      "weight": "100 900",
+      "display": "swap",
+      "unicodeRange": "U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF",
+      "file": "inter-greek.woff2"
+    },
+    {
+      "family": "Inter",
+      "style": "normal",
+      "weight": "100 900",
+      "display": "swap",
+      "unicodeRange": "U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB",
+      "file": "inter-vietnamese.woff2"
+    },
+    {
+      "family": "Inter",
+      "style": "normal",
+      "weight": "100 900",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "inter-latin-ext.woff2"
+    },
+    {
+      "family": "Inter",
+      "style": "normal",
+      "weight": "100 900",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "inter-latin.woff2"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "style": "normal",
+      "weight": "400",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0900-097F, U+1CD0-1CF4, U+1CF7-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839, U+A8E0-A8FF, U+11B00-11B0A",
+      "file": "noto-sans-devanagari-devanagari.woff2"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "style": "normal",
+      "weight": "400",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "noto-sans-devanagari-latin-ext.woff2"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "style": "normal",
+      "weight": "400",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "noto-sans-devanagari-latin.woff2"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "style": "normal",
+      "weight": "500",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0900-097F, U+1CD0-1CF4, U+1CF7-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839, U+A8E0-A8FF, U+11B00-11B0A",
+      "file": "noto-sans-devanagari-devanagari.woff2"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "style": "normal",
+      "weight": "500",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "noto-sans-devanagari-latin-ext.woff2"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "style": "normal",
+      "weight": "500",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "noto-sans-devanagari-latin.woff2"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "style": "normal",
+      "weight": "600",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0900-097F, U+1CD0-1CF4, U+1CF7-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839, U+A8E0-A8FF, U+11B00-11B0A",
+      "file": "noto-sans-devanagari-devanagari.woff2"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "style": "normal",
+      "weight": "600",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "noto-sans-devanagari-latin-ext.woff2"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "style": "normal",
+      "weight": "600",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "noto-sans-devanagari-latin.woff2"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "style": "normal",
+      "weight": "700",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0900-097F, U+1CD0-1CF4, U+1CF7-1CF9, U+200C-200D, U+20A8, U+20B9, U+20F0, U+25CC, U+A830-A839, U+A8E0-A8FF, U+11B00-11B0A",
+      "file": "noto-sans-devanagari-devanagari.woff2"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "style": "normal",
+      "weight": "700",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "noto-sans-devanagari-latin-ext.woff2"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "style": "normal",
+      "weight": "700",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "noto-sans-devanagari-latin.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "400",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1",
+      "file": "noto-sans-arabic-arabic.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "400",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0302-0303, U+0305, U+0307-0308, U+0310, U+0312, U+0315, U+031A, U+0326-0327, U+032C, U+032F-0330, U+0332-0333, U+0338, U+033A, U+0346, U+034D, U+0391-03A1, U+03A3-03A9, U+03B1-03C9, U+03D1, U+03D5-03D6, U+03F0-03F1, U+03F4-03F5, U+2016-2017, U+2034-2038, U+203C, U+2040, U+2043, U+2047, U+2050, U+2057, U+205F, U+2070-2071, U+2074-209F, U+20D0-20DC, U+20E1, U+20E5-20EF, U+2100-2112, U+2114-2115, U+2117-2121, U+2123-214F, U+2190, U+2192, U+2194-21AE, U+21B0-21E5, U+21F1-21F2, U+21F4-2211, U+2213-2214, U+2216-22FF, U+2308-230B, U+2310, U+2319, U+231C-2321, U+2336-237A, U+237C, U+2395, U+239B-23B7, U+23D0, U+23DC-23E1, U+2474-2475, U+25AF, U+25B3, U+25B7, U+25BD, U+25C1, U+25CA, U+25CC, U+25FB, U+266D-266F, U+27C0-27FF, U+2900-2AFF, U+2B0E-2B11, U+2B30-2B4C, U+2BFE, U+3030, U+FF5B, U+FF5D, U+1D400-1D7FF, U+1EE00-1EEFF",
+      "file": "noto-sans-arabic-math.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "400",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0001-000C, U+000E-001F, U+007F-009F, U+20DD-20E0, U+20E2-20E4, U+2150-218F, U+2190, U+2192, U+2194-2199, U+21AF, U+21E6-21F0, U+21F3, U+2218-2219, U+2299, U+22C4-22C6, U+2300-243F, U+2440-244A, U+2460-24FF, U+25A0-27BF, U+2800-28FF, U+2921-2922, U+2981, U+29BF, U+29EB, U+2B00-2BFF, U+4DC0-4DFF, U+FFF9-FFFB, U+10140-1018E, U+10190-1019C, U+101A0, U+101D0-101FD, U+102E0-102FB, U+10E60-10E7E, U+1D2C0-1D2D3, U+1D2E0-1D37F, U+1F000-1F0FF, U+1F100-1F1AE, U+1F1E6-1F1FF, U+1F30D-1F30F, U+1F315, U+1F31C, U+1F31E, U+1F320-1F32C, U+1F336, U+1F378, U+1F37D, U+1F382, U+1F393-1F39F, U+1F3A7-1F3A8, U+1F3AC-1F3AF, U+1F3C2, U+1F3C4-1F3C6, U+1F3CA-1F3CE, U+1F3D4-1F3E0, U+1F3ED, U+1F3F1-1F3F3, U+1F3F5-1F3F7, U+1F408, U+1F415, U+1F41F, U+1F426, U+1F43F, U+1F441-1F442, U+1F444, U+1F446-1F449, U+1F44C-1F44E, U+1F453, U+1F46A, U+1F47D, U+1F4A3, U+1F4B0, U+1F4B3, U+1F4B9, U+1F4BB, U+1F4BF, U+1F4C8-1F4CB, U+1F4D6, U+1F4DA, U+1F4DF, U+1F4E3-1F4E6, U+1F4EA-1F4ED, U+1F4F7, U+1F4F9-1F4FB, U+1F4FD-1F4FE, U+1F503, U+1F507-1F50B, U+1F50D, U+1F512-1F513, U+1F53E-1F54A, U+1F54F-1F5FA, U+1F610, U+1F650-1F67F, U+1F687, U+1F68D, U+1F691, U+1F694, U+1F698, U+1F6AD, U+1F6B2, U+1F6B9-1F6BA, U+1F6BC, U+1F6C6-1F6CF, U+1F6D3-1F6D7, U+1F6E0-1F6EA, U+1F6F0-1F6F3, U+1F6F7-1F6FC, U+1F700-1F80B, U+1F810-1F847, U+1F850-1F859, U+1F860-1F887, U+1F890-1F8AD, U+1F8B0-1F8BB, U+1F8C0-1F8C1, U+1F8D0-1F8D8, U+1F900-1F90B, U+1F93B, U+1F946, U+1F984, U+1F996, U+1F9E9, U+1FA00-1FA6F, U+1FA70-1FA7C, U+1FA80-1FAC6, U+1FAC8, U+1FACC-1FADD, U+1FADF-1FAEB, U+1FAEF-1FAFA, U+1FB00-1FBFF",
+      "file": "noto-sans-arabic-symbols.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "400",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "noto-sans-arabic-latin-ext.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "400",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "noto-sans-arabic-latin.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "500",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1",
+      "file": "noto-sans-arabic-arabic.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "500",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0302-0303, U+0305, U+0307-0308, U+0310, U+0312, U+0315, U+031A, U+0326-0327, U+032C, U+032F-0330, U+0332-0333, U+0338, U+033A, U+0346, U+034D, U+0391-03A1, U+03A3-03A9, U+03B1-03C9, U+03D1, U+03D5-03D6, U+03F0-03F1, U+03F4-03F5, U+2016-2017, U+2034-2038, U+203C, U+2040, U+2043, U+2047, U+2050, U+2057, U+205F, U+2070-2071, U+2074-209F, U+20D0-20DC, U+20E1, U+20E5-20EF, U+2100-2112, U+2114-2115, U+2117-2121, U+2123-214F, U+2190, U+2192, U+2194-21AE, U+21B0-21E5, U+21F1-21F2, U+21F4-2211, U+2213-2214, U+2216-22FF, U+2308-230B, U+2310, U+2319, U+231C-2321, U+2336-237A, U+237C, U+2395, U+239B-23B7, U+23D0, U+23DC-23E1, U+2474-2475, U+25AF, U+25B3, U+25B7, U+25BD, U+25C1, U+25CA, U+25CC, U+25FB, U+266D-266F, U+27C0-27FF, U+2900-2AFF, U+2B0E-2B11, U+2B30-2B4C, U+2BFE, U+3030, U+FF5B, U+FF5D, U+1D400-1D7FF, U+1EE00-1EEFF",
+      "file": "noto-sans-arabic-math.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "500",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0001-000C, U+000E-001F, U+007F-009F, U+20DD-20E0, U+20E2-20E4, U+2150-218F, U+2190, U+2192, U+2194-2199, U+21AF, U+21E6-21F0, U+21F3, U+2218-2219, U+2299, U+22C4-22C6, U+2300-243F, U+2440-244A, U+2460-24FF, U+25A0-27BF, U+2800-28FF, U+2921-2922, U+2981, U+29BF, U+29EB, U+2B00-2BFF, U+4DC0-4DFF, U+FFF9-FFFB, U+10140-1018E, U+10190-1019C, U+101A0, U+101D0-101FD, U+102E0-102FB, U+10E60-10E7E, U+1D2C0-1D2D3, U+1D2E0-1D37F, U+1F000-1F0FF, U+1F100-1F1AE, U+1F1E6-1F1FF, U+1F30D-1F30F, U+1F315, U+1F31C, U+1F31E, U+1F320-1F32C, U+1F336, U+1F378, U+1F37D, U+1F382, U+1F393-1F39F, U+1F3A7-1F3A8, U+1F3AC-1F3AF, U+1F3C2, U+1F3C4-1F3C6, U+1F3CA-1F3CE, U+1F3D4-1F3E0, U+1F3ED, U+1F3F1-1F3F3, U+1F3F5-1F3F7, U+1F408, U+1F415, U+1F41F, U+1F426, U+1F43F, U+1F441-1F442, U+1F444, U+1F446-1F449, U+1F44C-1F44E, U+1F453, U+1F46A, U+1F47D, U+1F4A3, U+1F4B0, U+1F4B3, U+1F4B9, U+1F4BB, U+1F4BF, U+1F4C8-1F4CB, U+1F4D6, U+1F4DA, U+1F4DF, U+1F4E3-1F4E6, U+1F4EA-1F4ED, U+1F4F7, U+1F4F9-1F4FB, U+1F4FD-1F4FE, U+1F503, U+1F507-1F50B, U+1F50D, U+1F512-1F513, U+1F53E-1F54A, U+1F54F-1F5FA, U+1F610, U+1F650-1F67F, U+1F687, U+1F68D, U+1F691, U+1F694, U+1F698, U+1F6AD, U+1F6B2, U+1F6B9-1F6BA, U+1F6BC, U+1F6C6-1F6CF, U+1F6D3-1F6D7, U+1F6E0-1F6EA, U+1F6F0-1F6F3, U+1F6F7-1F6FC, U+1F700-1F80B, U+1F810-1F847, U+1F850-1F859, U+1F860-1F887, U+1F890-1F8AD, U+1F8B0-1F8BB, U+1F8C0-1F8C1, U+1F8D0-1F8D8, U+1F900-1F90B, U+1F93B, U+1F946, U+1F984, U+1F996, U+1F9E9, U+1FA00-1FA6F, U+1FA70-1FA7C, U+1FA80-1FAC6, U+1FAC8, U+1FACC-1FADD, U+1FADF-1FAEB, U+1FAEF-1FAFA, U+1FB00-1FBFF",
+      "file": "noto-sans-arabic-symbols.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "500",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "noto-sans-arabic-latin-ext.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "500",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "noto-sans-arabic-latin.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "600",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1",
+      "file": "noto-sans-arabic-arabic.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "600",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0302-0303, U+0305, U+0307-0308, U+0310, U+0312, U+0315, U+031A, U+0326-0327, U+032C, U+032F-0330, U+0332-0333, U+0338, U+033A, U+0346, U+034D, U+0391-03A1, U+03A3-03A9, U+03B1-03C9, U+03D1, U+03D5-03D6, U+03F0-03F1, U+03F4-03F5, U+2016-2017, U+2034-2038, U+203C, U+2040, U+2043, U+2047, U+2050, U+2057, U+205F, U+2070-2071, U+2074-209F, U+20D0-20DC, U+20E1, U+20E5-20EF, U+2100-2112, U+2114-2115, U+2117-2121, U+2123-214F, U+2190, U+2192, U+2194-21AE, U+21B0-21E5, U+21F1-21F2, U+21F4-2211, U+2213-2214, U+2216-22FF, U+2308-230B, U+2310, U+2319, U+231C-2321, U+2336-237A, U+237C, U+2395, U+239B-23B7, U+23D0, U+23DC-23E1, U+2474-2475, U+25AF, U+25B3, U+25B7, U+25BD, U+25C1, U+25CA, U+25CC, U+25FB, U+266D-266F, U+27C0-27FF, U+2900-2AFF, U+2B0E-2B11, U+2B30-2B4C, U+2BFE, U+3030, U+FF5B, U+FF5D, U+1D400-1D7FF, U+1EE00-1EEFF",
+      "file": "noto-sans-arabic-math.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "600",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0001-000C, U+000E-001F, U+007F-009F, U+20DD-20E0, U+20E2-20E4, U+2150-218F, U+2190, U+2192, U+2194-2199, U+21AF, U+21E6-21F0, U+21F3, U+2218-2219, U+2299, U+22C4-22C6, U+2300-243F, U+2440-244A, U+2460-24FF, U+25A0-27BF, U+2800-28FF, U+2921-2922, U+2981, U+29BF, U+29EB, U+2B00-2BFF, U+4DC0-4DFF, U+FFF9-FFFB, U+10140-1018E, U+10190-1019C, U+101A0, U+101D0-101FD, U+102E0-102FB, U+10E60-10E7E, U+1D2C0-1D2D3, U+1D2E0-1D37F, U+1F000-1F0FF, U+1F100-1F1AE, U+1F1E6-1F1FF, U+1F30D-1F30F, U+1F315, U+1F31C, U+1F31E, U+1F320-1F32C, U+1F336, U+1F378, U+1F37D, U+1F382, U+1F393-1F39F, U+1F3A7-1F3A8, U+1F3AC-1F3AF, U+1F3C2, U+1F3C4-1F3C6, U+1F3CA-1F3CE, U+1F3D4-1F3E0, U+1F3ED, U+1F3F1-1F3F3, U+1F3F5-1F3F7, U+1F408, U+1F415, U+1F41F, U+1F426, U+1F43F, U+1F441-1F442, U+1F444, U+1F446-1F449, U+1F44C-1F44E, U+1F453, U+1F46A, U+1F47D, U+1F4A3, U+1F4B0, U+1F4B3, U+1F4B9, U+1F4BB, U+1F4BF, U+1F4C8-1F4CB, U+1F4D6, U+1F4DA, U+1F4DF, U+1F4E3-1F4E6, U+1F4EA-1F4ED, U+1F4F7, U+1F4F9-1F4FB, U+1F4FD-1F4FE, U+1F503, U+1F507-1F50B, U+1F50D, U+1F512-1F513, U+1F53E-1F54A, U+1F54F-1F5FA, U+1F610, U+1F650-1F67F, U+1F687, U+1F68D, U+1F691, U+1F694, U+1F698, U+1F6AD, U+1F6B2, U+1F6B9-1F6BA, U+1F6BC, U+1F6C6-1F6CF, U+1F6D3-1F6D7, U+1F6E0-1F6EA, U+1F6F0-1F6F3, U+1F6F7-1F6FC, U+1F700-1F80B, U+1F810-1F847, U+1F850-1F859, U+1F860-1F887, U+1F890-1F8AD, U+1F8B0-1F8BB, U+1F8C0-1F8C1, U+1F8D0-1F8D8, U+1F900-1F90B, U+1F93B, U+1F946, U+1F984, U+1F996, U+1F9E9, U+1FA00-1FA6F, U+1FA70-1FA7C, U+1FA80-1FAC6, U+1FAC8, U+1FACC-1FADD, U+1FADF-1FAEB, U+1FAEF-1FAFA, U+1FB00-1FBFF",
+      "file": "noto-sans-arabic-symbols.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "600",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "noto-sans-arabic-latin-ext.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "600",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "noto-sans-arabic-latin.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "700",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC7, U+10EC9-10EEE, U+10EF0-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1",
+      "file": "noto-sans-arabic-arabic.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "700",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0302-0303, U+0305, U+0307-0308, U+0310, U+0312, U+0315, U+031A, U+0326-0327, U+032C, U+032F-0330, U+0332-0333, U+0338, U+033A, U+0346, U+034D, U+0391-03A1, U+03A3-03A9, U+03B1-03C9, U+03D1, U+03D5-03D6, U+03F0-03F1, U+03F4-03F5, U+2016-2017, U+2034-2038, U+203C, U+2040, U+2043, U+2047, U+2050, U+2057, U+205F, U+2070-2071, U+2074-209F, U+20D0-20DC, U+20E1, U+20E5-20EF, U+2100-2112, U+2114-2115, U+2117-2121, U+2123-214F, U+2190, U+2192, U+2194-21AE, U+21B0-21E5, U+21F1-21F2, U+21F4-2211, U+2213-2214, U+2216-22FF, U+2308-230B, U+2310, U+2319, U+231C-2321, U+2336-237A, U+237C, U+2395, U+239B-23B7, U+23D0, U+23DC-23E1, U+2474-2475, U+25AF, U+25B3, U+25B7, U+25BD, U+25C1, U+25CA, U+25CC, U+25FB, U+266D-266F, U+27C0-27FF, U+2900-2AFF, U+2B0E-2B11, U+2B30-2B4C, U+2BFE, U+3030, U+FF5B, U+FF5D, U+1D400-1D7FF, U+1EE00-1EEFF",
+      "file": "noto-sans-arabic-math.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "700",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0001-000C, U+000E-001F, U+007F-009F, U+20DD-20E0, U+20E2-20E4, U+2150-218F, U+2190, U+2192, U+2194-2199, U+21AF, U+21E6-21F0, U+21F3, U+2218-2219, U+2299, U+22C4-22C6, U+2300-243F, U+2440-244A, U+2460-24FF, U+25A0-27BF, U+2800-28FF, U+2921-2922, U+2981, U+29BF, U+29EB, U+2B00-2BFF, U+4DC0-4DFF, U+FFF9-FFFB, U+10140-1018E, U+10190-1019C, U+101A0, U+101D0-101FD, U+102E0-102FB, U+10E60-10E7E, U+1D2C0-1D2D3, U+1D2E0-1D37F, U+1F000-1F0FF, U+1F100-1F1AE, U+1F1E6-1F1FF, U+1F30D-1F30F, U+1F315, U+1F31C, U+1F31E, U+1F320-1F32C, U+1F336, U+1F378, U+1F37D, U+1F382, U+1F393-1F39F, U+1F3A7-1F3A8, U+1F3AC-1F3AF, U+1F3C2, U+1F3C4-1F3C6, U+1F3CA-1F3CE, U+1F3D4-1F3E0, U+1F3ED, U+1F3F1-1F3F3, U+1F3F5-1F3F7, U+1F408, U+1F415, U+1F41F, U+1F426, U+1F43F, U+1F441-1F442, U+1F444, U+1F446-1F449, U+1F44C-1F44E, U+1F453, U+1F46A, U+1F47D, U+1F4A3, U+1F4B0, U+1F4B3, U+1F4B9, U+1F4BB, U+1F4BF, U+1F4C8-1F4CB, U+1F4D6, U+1F4DA, U+1F4DF, U+1F4E3-1F4E6, U+1F4EA-1F4ED, U+1F4F7, U+1F4F9-1F4FB, U+1F4FD-1F4FE, U+1F503, U+1F507-1F50B, U+1F50D, U+1F512-1F513, U+1F53E-1F54A, U+1F54F-1F5FA, U+1F610, U+1F650-1F67F, U+1F687, U+1F68D, U+1F691, U+1F694, U+1F698, U+1F6AD, U+1F6B2, U+1F6B9-1F6BA, U+1F6BC, U+1F6C6-1F6CF, U+1F6D3-1F6D7, U+1F6E0-1F6EA, U+1F6F0-1F6F3, U+1F6F7-1F6FC, U+1F700-1F80B, U+1F810-1F847, U+1F850-1F859, U+1F860-1F887, U+1F890-1F8AD, U+1F8B0-1F8BB, U+1F8C0-1F8C1, U+1F8D0-1F8D8, U+1F900-1F90B, U+1F93B, U+1F946, U+1F984, U+1F996, U+1F9E9, U+1FA00-1FA6F, U+1FA70-1FA7C, U+1FA80-1FAC6, U+1FAC8, U+1FACC-1FADD, U+1FADF-1FAEB, U+1FAEF-1FAFA, U+1FB00-1FBFF",
+      "file": "noto-sans-arabic-symbols.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "700",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "noto-sans-arabic-latin-ext.woff2"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "style": "normal",
+      "weight": "700",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "noto-sans-arabic-latin.woff2"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "style": "normal",
+      "weight": "400",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0951-0952, U+0964-0965, U+0A01-0A76, U+200C-200D, U+20B9, U+25CC, U+262C, U+A830-A839",
+      "file": "noto-sans-gurmukhi-gurmukhi.woff2"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "style": "normal",
+      "weight": "400",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "noto-sans-gurmukhi-latin-ext.woff2"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "style": "normal",
+      "weight": "400",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "noto-sans-gurmukhi-latin.woff2"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "style": "normal",
+      "weight": "500",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0951-0952, U+0964-0965, U+0A01-0A76, U+200C-200D, U+20B9, U+25CC, U+262C, U+A830-A839",
+      "file": "noto-sans-gurmukhi-gurmukhi.woff2"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "style": "normal",
+      "weight": "500",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "noto-sans-gurmukhi-latin-ext.woff2"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "style": "normal",
+      "weight": "500",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "noto-sans-gurmukhi-latin.woff2"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "style": "normal",
+      "weight": "600",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0951-0952, U+0964-0965, U+0A01-0A76, U+200C-200D, U+20B9, U+25CC, U+262C, U+A830-A839",
+      "file": "noto-sans-gurmukhi-gurmukhi.woff2"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "style": "normal",
+      "weight": "600",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "noto-sans-gurmukhi-latin-ext.woff2"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "style": "normal",
+      "weight": "600",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "noto-sans-gurmukhi-latin.woff2"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "style": "normal",
+      "weight": "700",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0951-0952, U+0964-0965, U+0A01-0A76, U+200C-200D, U+20B9, U+25CC, U+262C, U+A830-A839",
+      "file": "noto-sans-gurmukhi-gurmukhi.woff2"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "style": "normal",
+      "weight": "700",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "file": "noto-sans-gurmukhi-latin-ext.woff2"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "style": "normal",
+      "weight": "700",
+      "stretch": "100%",
+      "display": "swap",
+      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "file": "noto-sans-gurmukhi-latin.woff2"
+    }
+  ],
+  "fallbacks": [
+    {
+      "family": "Inter Fallback",
+      "local": "Arial",
+      "ascentOverride": "90.44%",
+      "descentOverride": "22.52%",
+      "lineGapOverride": "0.0%",
+      "sizeAdjust": "107.12%"
+    },
+    {
+      "family": "Noto Sans Devanagari Fallback",
+      "local": "Arial",
+      "ascentOverride": "84.27%",
+      "descentOverride": "38.37%",
+      "lineGapOverride": "0.0%",
+      "sizeAdjust": "106.33%"
+    },
+    {
+      "family": "Noto Sans Arabic Fallback",
+      "local": "Arial",
+      "ascentOverride": "113.22%",
+      "descentOverride": "60.81%",
+      "lineGapOverride": "0.0%",
+      "sizeAdjust": "121.35%"
+    },
+    {
+      "family": "Noto Sans Gurmukhi Fallback",
+      "local": "Arial",
+      "ascentOverride": "84.27%",
+      "descentOverride": "38.37%",
+      "lineGapOverride": "0.0%",
+      "sizeAdjust": "106.33%"
+    }
+  ],
+  "variables": [
+    [
+      "--font-inter",
+      "\"Inter\", \"Inter Fallback\""
+    ],
+    [
+      "--font-noto-devanagari",
+      "\"Noto Sans Devanagari\", \"Noto Sans Devanagari Fallback\""
+    ],
+    [
+      "--font-noto-arabic",
+      "\"Noto Sans Arabic\", \"Noto Sans Arabic Fallback\""
+    ],
+    [
+      "--font-noto-gurmukhi",
+      "\"Noto Sans Gurmukhi\", \"Noto Sans Gurmukhi Fallback\""
+    ]
+  ],
+  "preload": [
+    "inter-latin.woff2",
+    "inter-vietnamese.woff2",
+    "noto-sans-devanagari-devanagari.woff2",
+    "noto-sans-arabic-arabic.woff2",
+    "noto-sans-gurmukhi-gurmukhi.woff2"
+  ],
+  "licenses": [
+    {
+      "family": "Inter",
+      "file": "OFL-Inter.txt",
+      "copyright": "Copyright 2020 The Inter Project Authors (https://github.com/rsms/inter)",
+      "sourceUrl": "https://github.com/google/fonts/blob/ddf386ba1b9fbc6b2c818f1ddcd9148f54ced94b/ofl/inter/OFL.txt"
+    },
+    {
+      "family": "Noto Sans Devanagari",
+      "file": "OFL-NotoSansDevanagari.txt",
+      "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/devanagari)",
+      "sourceUrl": "https://github.com/google/fonts/blob/ddf386ba1b9fbc6b2c818f1ddcd9148f54ced94b/ofl/notosansdevanagari/OFL.txt"
+    },
+    {
+      "family": "Noto Sans Arabic",
+      "file": "OFL-NotoSansArabic.txt",
+      "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/arabic)",
+      "sourceUrl": "https://github.com/google/fonts/blob/ddf386ba1b9fbc6b2c818f1ddcd9148f54ced94b/ofl/notosansarabic/OFL.txt"
+    },
+    {
+      "family": "Noto Sans Gurmukhi",
+      "file": "OFL-NotoSansGurmukhi.txt",
+      "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/gurmukhi)",
+      "sourceUrl": "https://github.com/google/fonts/blob/ddf386ba1b9fbc6b2c818f1ddcd9148f54ced94b/ofl/notosansgurmukhi/OFL.txt"
+    }
+  ]
+}

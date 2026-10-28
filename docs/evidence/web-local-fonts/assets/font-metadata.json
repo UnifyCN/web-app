@@ -1,0 +1,434 @@
+[
+ {
+  "file": "inter-cyrillic-ext.woff2",
+  "familyName": "Inter",
+  "version": "Version 4.001;git-66647c0bb",
+  "copyright": "Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)",
+  "license": null,
+  "licenseURL": "https://openfontlicense.org",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 2048,
+  "ascent": 1984,
+  "descent": -494,
+  "lineGap": 0,
+  "glyphs": 224,
+  "codepoints": 158,
+  "rangeCodepoints": 350,
+  "rangeCovered": 152
+ },
+ {
+  "file": "inter-cyrillic.woff2",
+  "familyName": "Inter",
+  "version": "Version 4.001;git-66647c0bb",
+  "copyright": "Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)",
+  "license": null,
+  "licenseURL": "https://openfontlicense.org",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 2048,
+  "ascent": 1984,
+  "descent": -494,
+  "lineGap": 0,
+  "glyphs": 153,
+  "codepoints": 108,
+  "rangeCodepoints": 102,
+  "rangeCovered": 102
+ },
+ {
+  "file": "inter-greek-ext.woff2",
+  "familyName": "Inter",
+  "version": "Version 4.001;git-66647c0bb",
+  "copyright": "Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)",
+  "license": null,
+  "licenseURL": "https://openfontlicense.org",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 2048,
+  "ascent": 1984,
+  "descent": -494,
+  "lineGap": 0,
+  "glyphs": 263,
+  "codepoints": 239,
+  "rangeCodepoints": 256,
+  "rangeCovered": 233
+ },
+ {
+  "file": "inter-greek.woff2",
+  "familyName": "Inter",
+  "version": "Version 4.001;git-66647c0bb",
+  "copyright": "Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)",
+  "license": null,
+  "licenseURL": "https://openfontlicense.org",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 2048,
+  "ascent": 1984,
+  "descent": -494,
+  "lineGap": 0,
+  "glyphs": 144,
+  "codepoints": 111,
+  "rangeCodepoints": 135,
+  "rangeCovered": 105
+ },
+ {
+  "file": "inter-latin-ext.woff2",
+  "familyName": "Inter",
+  "version": "Version 4.001;git-66647c0bb",
+  "copyright": "Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)",
+  "license": null,
+  "licenseURL": "https://openfontlicense.org",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 2048,
+  "ascent": 1984,
+  "descent": -494,
+  "lineGap": 0,
+  "glyphs": 879,
+  "codepoints": 734,
+  "rangeCodepoints": 1166,
+  "rangeCovered": 722
+ },
+ {
+  "file": "inter-latin.woff2",
+  "familyName": "Inter",
+  "version": "Version 4.001;git-66647c0bb",
+  "copyright": "Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)",
+  "license": null,
+  "licenseURL": "https://openfontlicense.org",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 2048,
+  "ascent": 1984,
+  "descent": -494,
+  "lineGap": 0,
+  "glyphs": 518,
+  "codepoints": 231,
+  "rangeCodepoints": 387,
+  "rangeCovered": 225
+ },
+ {
+  "file": "inter-vietnamese.woff2",
+  "familyName": "Inter",
+  "version": "Version 4.001;git-66647c0bb",
+  "copyright": "Copyright 2016 The Inter Project Authors (https://github.com/rsms/inter)",
+  "license": null,
+  "licenseURL": "https://openfontlicense.org",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 2048,
+  "ascent": 1984,
+  "descent": -494,
+  "lineGap": 0,
+  "glyphs": 152,
+  "codepoints": 116,
+  "rangeCodepoints": 111,
+  "rangeCovered": 110
+ },
+ {
+  "file": "noto-sans-arabic-arabic.woff2",
+  "familyName": "Noto Sans Arabic",
+  "version": "Version 2.012",
+  "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/arabic)",
+  "license": null,
+  "licenseURL": "https://scripts.sil.org/OFL",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 1000,
+  "ascent": 1374,
+  "descent": -738,
+  "lineGap": 0,
+  "glyphs": 1340,
+  "codepoints": 1226,
+  "rangeCodepoints": 1539,
+  "rangeCovered": 1221
+ },
+ {
+  "file": "noto-sans-arabic-latin-ext.woff2",
+  "familyName": "Noto Sans Arabic",
+  "version": "Version 2.012",
+  "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/arabic)",
+  "license": null,
+  "licenseURL": "https://scripts.sil.org/OFL",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 1000,
+  "ascent": 1374,
+  "descent": -738,
+  "lineGap": 0,
+  "glyphs": 169,
+  "codepoints": 122,
+  "rangeCodepoints": 1166,
+  "rangeCovered": 113
+ },
+ {
+  "file": "noto-sans-arabic-latin.woff2",
+  "familyName": "Noto Sans Arabic",
+  "version": "Version 2.012",
+  "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/arabic)",
+  "license": null,
+  "licenseURL": "https://scripts.sil.org/OFL",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 1000,
+  "ascent": 1374,
+  "descent": -738,
+  "lineGap": 0,
+  "glyphs": 211,
+  "codepoints": 211,
+  "rangeCodepoints": 387,
+  "rangeCovered": 207
+ },
+ {
+  "file": "noto-sans-arabic-math.woff2",
+  "familyName": "Noto Sans Arabic",
+  "version": "Version 2.012",
+  "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/arabic)",
+  "license": null,
+  "licenseURL": "https://scripts.sil.org/OFL",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 1000,
+  "ascent": 1374,
+  "descent": -738,
+  "lineGap": 0,
+  "glyphs": 120,
+  "codepoints": 113,
+  "rangeCodepoints": 2614,
+  "rangeCovered": 9
+ },
+ {
+  "file": "noto-sans-arabic-symbols.woff2",
+  "familyName": "Noto Sans Arabic",
+  "version": "Version 2.012",
+  "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/arabic)",
+  "license": null,
+  "licenseURL": "https://scripts.sil.org/OFL",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 1000,
+  "ascent": 1374,
+  "descent": -738,
+  "lineGap": 0,
+  "glyphs": 70,
+  "codepoints": 72,
+  "rangeCodepoints": 3960,
+  "rangeCovered": 1
+ },
+ {
+  "file": "noto-sans-devanagari-devanagari.woff2",
+  "familyName": "Noto Sans Devanagari",
+  "version": "Version 2.006",
+  "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/devanagari)",
+  "license": null,
+  "licenseURL": "https://openfontlicense.org",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 1000,
+  "ascent": 896,
+  "descent": -408,
+  "lineGap": 0,
+  "glyphs": 769,
+  "codepoints": 231,
+  "rangeCodepoints": 227,
+  "rangeCovered": 224
+ },
+ {
+  "file": "noto-sans-devanagari-latin-ext.woff2",
+  "familyName": "Noto Sans Devanagari",
+  "version": "Version 2.006",
+  "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/devanagari)",
+  "license": null,
+  "licenseURL": "https://openfontlicense.org",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 1000,
+  "ascent": 896,
+  "descent": -408,
+  "lineGap": 0,
+  "glyphs": 165,
+  "codepoints": 114,
+  "rangeCodepoints": 1166,
+  "rangeCovered": 106
+ },
+ {
+  "file": "noto-sans-devanagari-latin.woff2",
+  "familyName": "Noto Sans Devanagari",
+  "version": "Version 2.006",
+  "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/devanagari)",
+  "license": null,
+  "licenseURL": "https://openfontlicense.org",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 1000,
+  "ascent": 896,
+  "descent": -408,
+  "lineGap": 0,
+  "glyphs": 213,
+  "codepoints": 210,
+  "rangeCodepoints": 387,
+  "rangeCovered": 206
+ },
+ {
+  "file": "noto-sans-gurmukhi-gurmukhi.woff2",
+  "familyName": "Noto Sans Gurmukhi",
+  "version": "Version 2.004",
+  "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/gurmukhi)",
+  "license": null,
+  "licenseURL": "https://scripts.sil.org/OFL",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 1000,
+  "ascent": 896,
+  "descent": -408,
+  "lineGap": 0,
+  "glyphs": 193,
+  "codepoints": 105,
+  "rangeCodepoints": 137,
+  "rangeCovered": 99
+ },
+ {
+  "file": "noto-sans-gurmukhi-latin-ext.woff2",
+  "familyName": "Noto Sans Gurmukhi",
+  "version": "Version 2.004",
+  "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/gurmukhi)",
+  "license": null,
+  "licenseURL": "https://scripts.sil.org/OFL",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 1000,
+  "ascent": 896,
+  "descent": -408,
+  "lineGap": 0,
+  "glyphs": 177,
+  "codepoints": 125,
+  "rangeCodepoints": 1166,
+  "rangeCovered": 116
+ },
+ {
+  "file": "noto-sans-gurmukhi-latin.woff2",
+  "familyName": "Noto Sans Gurmukhi",
+  "version": "Version 2.004",
+  "copyright": "Copyright 2022 The Noto Project Authors (https://github.com/notofonts/gurmukhi)",
+  "license": null,
+  "licenseURL": "https://scripts.sil.org/OFL",
+  "axes": {
+   "wght": {
+    "name": "Weight",
+    "min": 100,
+    "default": 400,
+    "max": 900
+   }
+  },
+  "unitsPerEm": 1000,
+  "ascent": 896,
+  "descent": -408,
+  "lineGap": 0,
+  "glyphs": 216,
+  "codepoints": 211,
+  "rangeCodepoints": 387,
+  "rangeCovered": 207
+ }
+]
