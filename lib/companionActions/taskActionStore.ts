@@ -40,6 +40,8 @@ export interface PendingWrite {
   receiptOperationId?: string;
   /** Undo of an added task: the user confirmed its removal (#363). */
   removalConfirmed?: boolean;
+  /** The reviewed compensating change of a conflicting Undo. */
+  compensation?: boolean;
 }
 
 export type TaskActionPhase =
@@ -87,6 +89,9 @@ export interface TaskActionResultEvent {
     /** #366: a step control (add, edit, check, remove) or approved suggested steps. */
     | "step_change"
     | "approve_steps"
+    /** #365: a change to an existing task, from an approved draft or a clear command. */
+    | "approve_edit"
+    | "command_edit"
     /** #370: a saved-detail control (edit, remove), an approved draft or a remember command. */
     | "detail_change"
     | "approve_detail"
@@ -237,6 +242,7 @@ export class TaskActionStore {
       operationId: this.deps.newOperationId(),
       kind: "apply",
       operation: op,
+      compensation: true,
       authorization: {
         kind: "approved_proposal",
         proposal_id: p.proposal.proposalId,
@@ -295,6 +301,15 @@ export class TaskActionStore {
       return write.authorization?.kind === "direct_command"
         ? "command_create"
         : "approve_create";
+    // #365: a change an approved edit draft or a clear command authorized. A compensating
+    // change of an Undo is a reviewed proposal too, but keeps its own action.
+    if (write.authorization?.kind === "direct_command") return "command_edit";
+    if (
+      write.authorization?.kind === "approved_proposal" &&
+      write.authorization.proposal_id &&
+      !write.compensation
+    )
+      return "approve_edit";
     return write.authorization?.kind === "approved_proposal"
       ? "approve_compensation"
       : "set_state";

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Runs the Companion task actions tests (mobile-app#361, #363) against a disposable
 # local Supabase stack: Postgres 17, GoTrue, PostgREST, Kong and the edge runtime
-# serving the real supabase/functions/companion-actions source.
+# serving the real supabase/functions/companion-actions source (and the rag-query
+# context module it imports, #365).
 #
 # Usage: run.sh [test files...]      default: every *_test.ts here
 #        ACTIONS_STOP=1 run.sh       stop the stack afterwards
@@ -19,10 +20,10 @@ project_id=$(sed -n 's/^project_id = "\(.*\)"$/\1/p' supabase/config.toml)
 [ -n "$project_id" ] || { echo "no project_id in supabase/config.toml" >&2; exit 2; }
 
 rm -rf supabase/functions
-mkdir -p supabase/functions
-cp -R "$functions_src/companion-actions" supabase/functions/companion-actions
-# #370: the profile-fact check is shared with rag-query (its place and arrival lists).
 mkdir -p supabase/functions/rag-query
+cp -R "$functions_src/companion-actions" supabase/functions/companion-actions
+# The function reads the caller's Checklist through the rag-query context module (#365)
+# and shares the profile-fact check with rag-query (its place and arrival lists, #370).
 cp -R "$functions_src/rag-query/lib" supabase/functions/rag-query/lib
 
 # The published-content read of the function goes to the tests' stand-in (#366).

@@ -9,6 +9,7 @@ import {
   Hourglass,
   WifiOff,
 } from "lucide-react";
+import { DETAIL_FIELDS, priorityLabel } from "./editText";
 import { ReceiptBlock } from "./ReceiptBlock";
 import { TaskStepsSection } from "./TaskStepsSection";
 import { Button } from "@/components/ui/Button";
@@ -490,6 +491,63 @@ export function PhaseMessage({
                 onClick={() => store?.dismiss(taskRef)}
               >
                 {t("taskCreate.keep")}
+              </Button>
+            </div>
+          </div>
+        );
+      }
+      if (proposed.type === "task.edit_details") {
+        // #365: Undo of an edit met a newer change: nothing was undone. Restoring the
+        // recorded earlier values now is a reviewed change at the current revision.
+        const edit = proposed;
+        return (
+          <div className="rounded-lg border border-primary-subtle bg-primary-bg px-3 py-3">
+            <p className="text-sm font-semibold text-ink-secondary">
+              {t("taskActions.undoConflictTitle")}
+            </p>
+            <p className="mt-1 text-sm text-ink-tertiary">
+              {t("taskEdit.undoConflict")}
+            </p>
+            {DETAIL_FIELDS.map((field) =>
+              edit[field] === undefined ? null : (
+                <p
+                  key={field}
+                  className="mt-1 break-words text-sm text-ink-tertiary"
+                >
+                  {t("taskEdit.restoreLine", {
+                    field: t(`taskEdit.field.${field}`),
+                    value:
+                      field === "priority"
+                        ? priorityLabel(t as never, edit[field] ?? null)
+                        : edit[field]
+                          ? `“${edit[field]}”`
+                          : t("taskEdit.empty"),
+                  })}
+                </p>
+              ),
+            )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                aria-disabled={!writable}
+                className={cn(
+                  "bg-ink-secondary hover:bg-ink",
+                  !writable && "cursor-not-allowed opacity-60",
+                )}
+                onClick={() =>
+                  writable && void store?.approveCompensation(taskRef)
+                }
+              >
+                {t("taskEdit.restore")}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => store?.dismiss(taskRef)}
+              >
+                {t("taskActions.keepCurrent")}
               </Button>
             </div>
           </div>

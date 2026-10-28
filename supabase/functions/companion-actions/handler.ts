@@ -6,8 +6,9 @@
 // lookup and Undo stay available at the AI limit.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import { type ActionRequest, type Operation, PLATFORMS, type Platform, parseAction, parseEnvelope } from './contract.ts';
-import { resolveCommand, resolveRemember, titleKey } from './commands.ts';
+import { type CommandResolution, resolveCommand, resolveRemember, titleKey } from './commands.ts';
 import { profileFactOf } from '../rag-query/lib/context/profileFacts.ts';
+import type { ListTasks } from './targets.ts';
 import { isPlanAction, type PlanActionName, parsePlanAction } from './plans.ts';
 import { handlePlanRequest } from './planHandler.ts';
 
@@ -21,6 +22,11 @@ export type ContentTaskLookup = (sanityId: string) => Promise<boolean | null>;
 export interface HandlerDeps {
   /** Service-role client. Used for the user lookup, the gate and the action SQL. */
   admin: SupabaseClient;
+  /**
+   * The caller's live Checklist tasks by title, read with the caller's JWT (#365). Absent:
+   * published tasks cannot be named, so an edit that needs them is unclear, never guessed.
+   */
+  listTasks?: ListTasks;
   /** Published Checklist content read. Absent: content-backed parents cannot be checked. */
   contentTaskExists?: ContentTaskLookup | null;
   /** Allowlisted, content-free result line for operational metrics. */
@@ -79,11 +85,11 @@ function mapDbError(error: DbError): Response {
   return json({ error: mapped[1], reason: error.message, ...(detail && Object.keys(detail).length ? { detail } : {}) }, mapped[0]);
 }
 
-async function userIdFrom(admin: SupabaseClient, req: Request): Promise<string | null> {
+async function callerOf(admin: SupabaseClient, req: Request): Promise<{ userId: string; jwt: string } | null> {
   const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '').trim();
   if (!token) return null;
   const { data, error } = await admin.auth.getUser(token);
-  return error || !data.user ? null : data.user.id;
+  return error || !data.user ? null : { userId: data.user.id, jwt: token };
 }
 
 /** The caller's own saved user message, or null. Read by the service, never taken from the client. */
@@ -181,7 +187,97 @@ async function contentParentRefusal(
   return json({ error: 'content_unavailable' }, 503, { 'retry-after': '1' });
 }
 
-export function createHandler({ admin, contentTaskExists, log = line => console.log(JSON.stringify(line)) }: HandlerDeps) {
+/** What a clear edit command resolves to against the account's live Checklist (#365). */
+type EditResolution =
+  | {
+      kind: 'edit';
+      operation: Operation;
+      target: { task_ref: string; title: string };
+      /** The current values of what the change touches, for the receipt and the card. */
+      before: Record<string, unknown>;
+    }
+  | {
+      kind: 'clarify';
+      reason: 'task_not_found' | 'task_ambiguous' | 'shared_task_field' | 'no_change' | 'tasks_unavailable' | 'invalid_value';
+      candidates?: { task_ref: string; title: string }[];
+    };
+
+/** Without the revision: what a command names, whatever revision it was read at. */
+const withoutRevision = (op: unknown) => {
+  const { expected_revision: _r, ...rest } = (op ?? {}) as Record<string, unknown>;
+  return JSON.stringify(Object.keys(rest).sort().map(k => [k, rest[k]]));
+};
+
+export function createHandler(
+  { admin, contentTaskExists, listTasks, log = line => console.log(JSON.stringify(line)) }: HandlerDeps,
+) {
+  /**
+   * Names the one live task a command means, by its title, among every task the
+   * account's Checklist shows (in the command's language), and builds the exact operation
+   * at its current revision. Anything uncertain is a question, never a guess: no match,
+   * two matches, published tasks that could not be read, shared content fields, a value
+   * the database refuses, or a change that changes nothing.
+   */
+  async function resolveEdit(
+    userId: string,
+    jwt: string,
+    command: Extract<CommandResolution, { kind: 'edit' }>,
+  ): Promise<EditResolution> {
+    let list;
+    try {
+      list = listTasks ? await listTasks(jwt, userId, command.lang) : null;
+    } catch {
+      list = null;
+    }
+    if (!list || !list.complete) return { kind: 'clarify', reason: 'tasks_unavailable' };
+    const key = titleKey(command.target);
+    const matches = list.tasks.filter(t => titleKey(t.title) === key);
+    if (matches.length === 0) return { kind: 'clarify', reason: 'task_not_found' };
+    if (matches.length > 1) return { kind: 'clarify', reason: 'task_ambiguous', candidates: matches };
+    const target = matches[0];
+    const { change } = command;
+    if (change.field !== 'state' && target.task_ref.startsWith('sanity:')) {
+      return { kind: 'clarify', reason: 'shared_task_field' };
+    }
+    const draft = change.field === 'state'
+      ? {
+        type: 'task.set_state',
+        task_ref: target.task_ref,
+        state: change.value,
+        ...(change.waiting_reason ? { waiting_reason: change.waiting_reason } : {}),
+      }
+      : { type: 'task.edit_details', task_ref: target.task_ref, [change.field]: change.value };
+    const [{ data: op, error }, { data: context, error: contextError }] = await Promise.all([
+      admin.rpc('companion_edit_operation', { p_user: userId, p_draft: draft }),
+      admin.rpc('companion_edit_context', { p_user: userId, p_ref: target.task_ref }),
+    ]);
+    if (error || contextError) {
+      const failure = error ?? contextError!;
+      if (failure.message === 'no_change') return { kind: 'clarify', reason: 'no_change' };
+      if (failure.message === 'task_removed' || failure.message === 'task_not_found') {
+        return { kind: 'clarify', reason: 'task_not_found' };
+      }
+      if (failure.code === 'CA422') return { kind: 'clarify', reason: 'invalid_value' };
+      throw failure;
+    }
+    const ctx = context as Record<string, unknown>;
+    const before = change.field === 'state'
+      ? { state: ctx.state, waiting_reason: ctx.waiting_reason ?? null }
+      : { [change.field]: ctx[change.field] };
+    return { kind: 'edit', operation: op as Operation, target, before };
+  }
+
+  /**
+   * The operation that already used this command message, or null. A use is recorded in
+   * the same transaction as its receipt, so a use is a committed write.
+   */
+  async function commandUse(userId: string, messageId: number): Promise<string | null> {
+    const { data, error } = await admin.from('companion_command_uses').select('operation_id')
+      .eq('user_id', userId).eq('message_id', messageId).maybeSingle();
+    if (error) throw error;
+    return (data as { operation_id: string } | null)?.operation_id ?? null;
+  }
+
   return async function handle(req: Request): Promise<Response> {
     let action: ResultLine['action'] = 'unknown';
     let platform: Platform | null = null;
@@ -192,8 +288,9 @@ export function createHandler({ admin, contentTaskExists, log = line => console.
     };
 
     if (req.method !== 'POST') return finish(json({ error: 'method_not_allowed' }, 405), 'rejected');
-    const userId = await userIdFrom(admin, req);
-    if (!userId) return finish(json({ error: 'unauthorized' }, 401), 'unauthorized');
+    const caller = await callerOf(admin, req);
+    if (!caller) return finish(json({ error: 'unauthorized' }, 401), 'unauthorized');
+    const { userId, jwt } = caller;
 
     let body: unknown;
     try {
@@ -277,6 +374,37 @@ export function createHandler({ admin, contentTaskExists, log = line => console.
       return finish(json({ proposal: data }), 'prepared');
     }
 
+    if (request.action === 'prepare_edit') {
+      // #365: an edit of one existing task, for review. Writes only the proposal. A
+      // content-backed task must be one the account's Checklist shows; its title is read
+      // from there for display. A custom task's ownership is checked by the database.
+      operationType = request.draft.type;
+      let title: string | null = null;
+      if (request.draft.task_ref.startsWith('sanity:')) {
+        let list;
+        try {
+          list = listTasks ? await listTasks(jwt, userId, request.language) : { complete: false, tasks: [] };
+        } catch {
+          return finish(json({ error: 'tasks_unavailable' }, 503), 'unavailable');
+        }
+        const target = list.tasks.find(t => t.task_ref === request.draft.task_ref);
+        if (!target) {
+          return list.complete
+            ? finish(json({ error: 'not_found', reason: 'task_not_found' }, 404), 'rejected')
+            : finish(json({ error: 'tasks_unavailable' }, 503), 'unavailable');
+        }
+        title = target.title;
+      }
+      const { data, error } = await admin.rpc('companion_prepare_edit', {
+        p_user_id: userId,
+        p_draft: request.draft,
+        p_source: request.source,
+        p_title: title,
+      });
+      if (error) return finish(mapDbError(error), 'failed');
+      return finish(json({ proposal: data }), 'prepared');
+    }
+
     if (request.action === 'proposal') {
       const { data, error } = await admin.rpc('companion_get_proposal', {
         p_user_id: userId,
@@ -291,6 +419,16 @@ export function createHandler({ admin, contentTaskExists, log = line => console.
       const text = await ownUserMessage(admin, userId, request.message_id);
       if (text === null) return finish(json({ error: 'not_found', reason: 'message_not_found' }, 404), 'rejected');
       const resolved = resolveCommand(text);
+      if (resolved.kind === 'edit') {
+        let edit: EditResolution;
+        try {
+          edit = await resolveEdit(userId, jwt, resolved);
+        } catch {
+          return finish(json({ error: 'internal' }, 500), 'failed');
+        }
+        if (edit.kind === 'edit') operationType = edit.operation.type;
+        return finish(json({ command: edit }), `interpret_${edit.kind}`);
+      }
       // #370: not a task command: a clear remember command, an unclear one, a profile
       // fact (refused; the profile owns it) or nothing.
       if (resolved.kind === 'none') {
@@ -384,15 +522,43 @@ export function createHandler({ admin, contentTaskExists, log = line => console.
       if (request.authorization.kind === 'direct_command') {
         // The command is read from the user's own saved message, here, and must resolve
         // to exactly the submitted operation. A client or model cannot widen it.
-        const text = await ownUserMessage(admin, userId, request.authorization.message_id);
+        const messageId = request.authorization.message_id;
+        let used: string | null;
+        try {
+          used = await commandUse(userId, messageId);
+        } catch {
+          return finish(json({ error: 'internal' }, 500), 'failed');
+        }
+        // One message authorizes one write. Another operation under it is refused; a retry
+        // of the same operation replays its recorded result below.
+        if (used && used !== request.operation_id) {
+          return finish(json({ error: 'command_already_used', reason: 'command_already_used' }, 409), 'failed');
+        }
+        const text = await ownUserMessage(admin, userId, messageId);
         const resolved = text === null ? null : resolveCommand(text);
         const op = request.operations[0];
-        // #370: a remember command saves exactly the detail the message states.
-        const remember = text === null || resolved?.kind !== 'none' ? null : resolveRemember(text);
-        const taskCommand = resolved?.kind === 'create' && op.type === 'task.create_custom' &&
-          op.title === resolved.title && op.priority === 'Do soon';
-        const rememberCommand = remember?.kind === 'remember' && op.type === 'detail.create' && op.text === remember.text;
-        if (!taskCommand && !rememberCommand) {
+        let allowed = used === request.operation_id;
+        if (allowed) {
+          // Committed already: what the message resolves to now may differ (a renamed task).
+        } else if (resolved?.kind === 'create') {
+          allowed = op.type === 'task.create_custom' && op.title === resolved.title && op.priority === 'Do soon';
+        } else if (resolved?.kind === 'edit') {
+          // #365: the message must name exactly this change to exactly this task now. The
+          // revision is checked by the database (a change in between is a conflict).
+          try {
+            const edit = await resolveEdit(userId, jwt, resolved);
+            allowed = edit.kind === 'edit' && withoutRevision(edit.operation) === withoutRevision(op);
+          } catch {
+            return finish(json({ error: 'internal' }, 500), 'failed');
+          }
+        } else if (resolved?.kind === 'none' && text !== null) {
+          // #370: a remember command saves exactly the detail the message states.
+          const remember = resolveRemember(text);
+          allowed = remember.kind === 'remember' && op.type === 'detail.create' && op.text === remember.text;
+        }
+        // The same operation may have committed while this request read the task (a
+        // concurrent retry): look again before refusing, so a retry replays its result.
+        if (!allowed && (await commandUse(userId, messageId).catch(() => null)) !== request.operation_id) {
           return finish(json({ error: 'forbidden', reason: 'invalid_authorization' }, 403), 'rejected');
         }
       }

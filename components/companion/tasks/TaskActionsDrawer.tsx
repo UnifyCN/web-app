@@ -49,6 +49,8 @@ interface TaskActionsDrawerProps {
   detailProposalId?: string | null;
   /** #370: open on the saved details instead of the task list. */
   openDetails?: boolean;
+  /** #365: the draft is a change to an existing task, not a new task. */
+  proposalKind?: "task_create" | "task_edit";
 }
 
 /** The task list and task controls inside the direction B drawer. */
@@ -63,6 +65,7 @@ export function TaskActionsDrawer({
   stepProposalId = null,
   detailProposalId = null,
   openDetails = false,
+  proposalKind = "task_create",
 }: TaskActionsDrawerProps) {
   const { t } = useTranslation();
   const { data: tasks = [], isLoading } = useTasks();
@@ -130,7 +133,9 @@ export function TaskActionsDrawer({
                   ? t("plans.reviewTitle")
                   : t("plans.planTitle")
                 : proposalId
-                  ? t("taskCreate.drawerTitle")
+                  ? proposalKind === "task_edit"
+                    ? t("taskEdit.drawerTitle")
+                    : t("taskCreate.drawerTitle")
                   : selected
                     ? t("taskActions.drawerTitle")
                     : t("taskActions.listTitle")
@@ -175,7 +180,14 @@ export function TaskActionsDrawer({
       ) : plan ? (
         <PlanPanel target={plan} onOpenTask={(taskRef) => onOpenTask?.(taskRef)} />
       ) : proposalId ? (
-        <TaskProposalPanel proposalId={proposalId} view={view} store={store} />
+        <TaskProposalPanel
+          proposalId={proposalId}
+          view={view}
+          store={store}
+          titleFor={(ref) =>
+            active.find((task) => taskOrderKey(task) === ref)?.title ?? null
+          }
+        />
       ) : view.status === "loading" || isLoading ? (
         <p role="status" className="loading-delayed text-sm text-ink-muted">
           {t("taskActions.loading")}

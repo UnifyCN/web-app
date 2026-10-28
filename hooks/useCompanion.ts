@@ -40,17 +40,40 @@ import {
   DETAIL_TEXT_MAX,
   TITLE_MAX,
   createTaskOperation,
+  editDraftOf,
   type CommandResult,
 } from "@/lib/companionActions/contract";
 
+/** The question for a command that was not clear enough to change anything (#363, #365). */
+function clarifyQuestion(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  command: Extract<CommandResult, { kind: "clarify" }>,
+): string {
+  switch (command.reason) {
+    case "missing_title":
+      return t("taskCreate.clarifyMissingTitle");
+    case "multiple":
+      return t("taskCreate.clarifyMultiple");
+    case "too_long":
+      return t("taskCreate.clarifyTooLong", { max: TITLE_MAX });
+    case "task_ambiguous":
+      return t("taskEdit.clarify.task_ambiguous", {
+        title: command.candidates[0]?.title ?? "",
+        number: command.candidates.length,
+      });
+    default:
+      return t(`taskEdit.clarify.${command.reason}`);
+  }
+}
+
 /**
  * The question or explanation Companion saves for a command that writes nothing (#363
- * unclear task commands; #370 unclear remember commands, a detail already saved, and a
- * profile fact, which the profile owns).
+ * unclear task commands; #365 unclear edits; #370 unclear remember commands, a detail
+ * already saved, and a profile fact, which the profile owns).
  */
 function commandReply(
   t: (key: string, options?: Record<string, unknown>) => string,
-  command: Exclude<CommandResult, { kind: "none" }>,
+  command: Exclude<CommandResult, { kind: "none" } | { kind: "edit" }>,
 ): string {
   switch (command.kind) {
     case "create":
@@ -58,14 +81,7 @@ function commandReply(
         title: command.sameTitleTasks[0]?.title ?? command.operation.title,
       });
     case "clarify":
-      return t(
-        command.reason === "missing_title"
-          ? "taskCreate.clarifyMissingTitle"
-          : command.reason === "multiple"
-            ? "taskCreate.clarifyMultiple"
-            : "taskCreate.clarifyTooLong",
-        { max: TITLE_MAX },
-      );
+      return clarifyQuestion(t, command);
     case "remember":
       return t("savedDetails.commandExists");
     case "remember_clarify":
@@ -282,8 +298,11 @@ export function useSendMessage() {
         const command = interpreted.command;
         if (
           (command.kind === "create" && command.sameTitleTasks.length === 0) ||
+          command.kind === "edit" ||
           (command.kind === "remember" && command.sameTextDetails.length === 0)
         ) {
+          // A clear command makes exactly its one change (#365 edits too). Its card
+          // shows the saved receipt, never assistant text.
           if (store) {
             await store.applyOperation(
               `command:${savedUser.id}`,
@@ -372,6 +391,17 @@ export function useSendMessage() {
           conversationId: conversationIdentifier,
           messageId: savedAnswer.id,
         });
+        ensureOwned(owner);
+      }
+      // #365: a suggested change to a listed task becomes a server-owned draft too.
+      const editDraft = reply.actionEdit ? editDraftOf(reply.actionEdit) : null;
+      if (editDraft) {
+        await actions.prepare(
+          editDraft,
+          { conversationId: conversationIdentifier, messageId: savedAnswer.id },
+          // The app language is one of the content languages; the service checks it.
+          { language: i18n.language },
+        );
         ensureOwned(owner);
       }
       // #366: suggested steps for one Checklist task become a server-owned draft

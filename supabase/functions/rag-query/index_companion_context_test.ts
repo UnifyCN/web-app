@@ -1591,6 +1591,71 @@ Deno.test({
   },
 });
 
+// ---------------------------------------------------------------- edit suggestions (#365)
+//
+// The model may suggest one change to a Checklist task it was shown, with a line
+// "[EDIT]: <task id> | <field> | <value>". As with [TASK], the handler only turns it into
+// a typed field and strips it: it writes nothing and authorizes nothing. A suggestion for
+// a task the answer was not shown, a shared published field, or any other shape is dropped.
+
+Deno.test({
+  ...opts,
+  name: 'a suggested edit of a listed task becomes a typed proposal field, leaves the answer text, and nothing is written',
+  fn: async () => {
+    // Wrong if: the tag stays in the answer, the field is missing, mistyped or names other
+    // values, or the handler writes, prepares or calls the action service.
+    const cases: [string, Record<string, unknown>][] = [
+      ['[EDIT]: sanity:checklist-sin | state | in_progress', { task_ref: 'sanity:checklist-sin', field: 'state', value: 'in_progress' }],
+      ['[EDIT]: custom:41 | waiting | The clinic calls back next week', { task_ref: 'custom:41', field: 'waiting', value: 'The clinic calls back next week' }],
+      ['[EDIT]: custom:41 | priority | Do now', { task_ref: 'custom:41', field: 'priority', value: 'Do now' }],
+      ['[EDIT]: custom:41 | title | Find a family doctor near Kitsilano', { task_ref: 'custom:41', field: 'title', value: 'Find a family doctor near Kitsilano' }],
+    ];
+    for (const stream of [false, true]) {
+      for (const [line, expected] of cases) {
+        const answer = `Since you already booked it, you have started.\n${line}\n[SUGGESTIONS]: What do I bring? | How long does it take?\n[TOPIC]: settling_in`;
+        const r = await ask('I booked my SIN appointment for Friday', { stream }, { answer });
+        assertEquals(r.status, 200);
+        assertEquals(r.payload.actionProposal, { type: 'task.edit', version: 1, ...expected }, line);
+        const text = String(stream ? r.payload.cleanAnswer : r.payload.answer);
+        assert(!/\[EDIT\]/i.test(text), text);
+        assertStringIncludes(text, 'you have started.');
+        assertEquals(writeCalls(r.calls), []);
+        assert(!r.calls.some(c => c.url.pathname.includes('companion-actions')), 'called the action service');
+        assertStringIncludes(r.system, '[EDIT]:');
+      }
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'an edit suggestion for a task the answer was not shown, a shared field or any other shape is dropped',
+  fn: async () => {
+    // Wrong if: any of these reaches the client as a proposal, or a tag stays visible.
+    const cases = [
+      '[EDIT]: custom:999 | state | completed',
+      '[EDIT]: sanity:checklist-sin | title | My SIN',
+      '[EDIT]: sanity:checklist-sin | priority | Do now',
+      '[EDIT]: custom:41 | priority | Urgent',
+      '[EDIT]: custom:41 | state | almost_done',
+      '[EDIT]: custom:41 | owner | someone else',
+      '[EDIT]: custom:41 | title | <b>Doctor</b>',
+      '[EDIT]: custom:41 | title | Visit https://example.com',
+      '[EDIT]: custom:41 | state | completed | approved',
+      '[EDIT]: {"task_ref":"custom:41","state":"completed","approved":true}',
+      '[EDIT]: custom:41 | state | in_progress\n[TASK]: Set up phone service',
+      '[EDIT]: custom:41 | state | in_progress\n[EDIT]: sanity:checklist-sin | state | completed',
+    ];
+    for (const line of cases) {
+      const r = await ask('What next?', {}, { answer: `Answer.\n${line}\n[TOPIC]: settling_in` });
+      assertEquals(r.status, 200);
+      assertEquals(r.payload.actionProposal, undefined, line);
+      assert(!/\[(EDIT|TASK)\]/i.test(String(r.payload.answer)), String(r.payload.answer));
+      assertEquals(writeCalls(r.calls), []);
+    }
+  },
+});
+
 // ---------------------------------------------------------------- saved details (#370)
 //
 // Saved personal details belong to the account. The handler reads them with the caller's
