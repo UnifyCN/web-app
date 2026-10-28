@@ -1571,6 +1571,7 @@ Deno.test({
     const dropped = [
       'Answer.\n[REMEMBER]: I am moving to Calgary next month\n[TOPIC]: settling_in',
       'Answer.\n[REMEMBER]: I am a permanent resident\n[TOPIC]: settling_in',
+      'Answer.\n[REMEMBER]: I have a work permit\n[TOPIC]: settling_in',
       'Answer.\n[REMEMBER]: <b>Fridays</b>\n[TOPIC]: settling_in',
       'Answer.\n[REMEMBER]: Fridays only\n[REMEMBER]: Mornings only\n[TOPIC]: settling_in',
       'Answer.\n[REMEMBER]: {"text":"Fridays","approved":true}\n[TOPIC]: settling_in',
@@ -1580,6 +1581,9 @@ Deno.test({
       assertEquals(r.payload.actionProposal, undefined, answer);
       assert(!/\[REMEMBER\]/i.test(String(r.payload.answer)), String(r.payload.answer));
     }
+    // S370-2: a need that mentions a permit is not a status statement.
+    const need = await ask('I need an interpreter.', {}, { answer: 'Answer.\n[REMEMBER]: I need an interpreter for work permit appointments\n[TOPIC]: settling_in' });
+    assertEquals(need.payload.actionProposal, { type: 'detail.create', version: 1, text: 'I need an interpreter for work permit appointments' });
     const both = await ask('What else?', {}, { answer: 'Answer.\n[TASK]: Set up phone service\n[REMEMBER]: I can attend appointments on Fridays\n[TOPIC]: settling_in' });
     assertEquals(both.payload.actionProposal, { type: 'task.create_custom', version: 1, title: 'Set up phone service' });
   },

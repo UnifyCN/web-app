@@ -81,8 +81,11 @@ export const titleKey = (title: string) => title.trim().replace(/\s+/gu, ' ').to
 //   en  "Remember that <detail>", "Remember: <detail>"
 //   fr  "Souviens-toi que <detail>"     es  "Recuerda que <detail>"
 //   vi  "Hãy nhớ rằng <detail>"          hi  "याद रखें कि <detail>"
-//   pa  "ਯਾਦ ਰੱਖੋ ਕਿ <detail>"             ar  "تذكر أن <detail>"
+//   pa  "ਯਾਦ ਰੱਖੋ ਕਿ <detail>"             ar  "تذكر أن <detail>", "تذكر أنني <detail>"
 // "Remember this/that/it" (and the same in each language) names nothing: it is unclear.
+// Arabic attaches the subject pronoun to أن: "أنني" is "that I". The detail keeps a first
+// person as its separate pronoun (أنا, نحن), so it still says who it is about; any other
+// attached form (أنه, أنها, …) is unclear rather than cut into a broken word.
 
 
 /** Longest saved detail (SQL: companion_detail_text_ok). */
@@ -103,18 +106,31 @@ const REMEMBER: { verb: RegExp; that: string; deictic: string }[] = [
   { verb: /(?:hãy\s+)?(?:ghi nhớ|nhớ)/iu, that: 'rằng|là', deictic: 'điều này|điều đó' },
   { verb: /(?:कृपया\s+)?याद\s+(?:रखें|रखना|रखो)/u, that: 'कि', deictic: 'यह|ये|इसे' },
   { verb: /(?:ਕਿਰਪਾ ਕਰਕੇ\s+)?ਯਾਦ\s+(?:ਰੱਖੋ|ਰੱਖਣਾ|ਰੱਖ)/u, that: 'ਕਿ', deictic: 'ਇਹ|ਇਸ ਨੂੰ' },
-  { verb: /(?:من فضلك\s+)?(?:تذكر|تذكّر|احفظ)/u, that: 'أن|ان', deictic: 'هذا|ذلك' },
+  { verb: /(?:من فضلك\s+)?(?:تذكر|تذكّر|احفظ)/u, that: '(?:أن|ان)[\\u064B-\\u0652]*(?!\\p{L})', deictic: 'هذا|ذلك' },
 ];
+const AR_VERB = REMEMBER[REMEMBER.length - 1].verb.source;
+/** "that" + attached pronoun, with optional shadda/short vowels: first person singular and plural. */
+const AR_MARKS = '[\\u064B-\\u0652]*';
+const AR_THAT_I = new RegExp(`^${AR_VERB}\\s+[أا]ن${AR_MARKS}(?:ن${AR_MARKS})?ي${AR_MARKS}(?!\\p{L})\\s*(.*)$`, 'u');
+const AR_THAT_WE = new RegExp(`^${AR_VERB}\\s+[أا]ن${AR_MARKS}ن${AR_MARKS}ا${AR_MARKS}(?!\\p{L})\\s*(.*)$`, 'u');
+const AR_THAT_OTHER = new RegExp(`^${AR_VERB}\\s+[أا]ن${AR_MARKS}\\p{L}`, 'u');
 const END = '[.!?।؟]*';
 const WITH_DETAIL = REMEMBER.map(r => new RegExp(`^${r.verb.source}\\s*(?::|\\s(?:${r.that}))\\s*(.*)$`, 'iu'));
 const DEICTIC = REMEMBER.map(r => new RegExp(`^${r.verb.source}(?:\\s+(?:${r.deictic}))?${END}$`, 'iu'));
 
 function rememberLine(line: string): RememberResolution {
+  const firstPerson = line.match(AR_THAT_I) ?? line.match(AR_THAT_WE);
+  if (firstPerson) {
+    const rest = firstPerson[1].trim();
+    return rest ? detailOf(`${AR_THAT_I.test(line) ? 'أنا' : 'نحن'} ${rest}`) : detailOf('');
+  }
   for (const re of WITH_DETAIL) {
     const m = line.match(re);
     if (m) return detailOf(m[1]);
   }
-  if (DEICTIC.some(re => re.test(line))) return { kind: 'remember_clarify', reason: 'unclear_reference' };
+  if (DEICTIC.some(re => re.test(line)) || AR_THAT_OTHER.test(line)) {
+    return { kind: 'remember_clarify', reason: 'unclear_reference' };
+  }
   return { kind: 'none' };
 }
 
