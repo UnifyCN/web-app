@@ -42,13 +42,23 @@ import {
   createTaskOperation,
   editDraftOf,
   type CommandResult,
+  titleKey,
 } from "@/lib/companionActions/contract";
+import * as checklist from "@/services/checklist";
+import { tasksKey } from "@/hooks/useChecklist";
+import { useLanguage } from "@/hooks/useLanguage";
 
-/** The question for a command that was not clear enough to change anything (#363, #365). */
+/** The question for a command that was not clear enough to change anything (#363, #365, #367). */
 function clarifyQuestion(
   t: (key: string, options?: Record<string, unknown>) => string,
   command: Extract<CommandResult, { kind: "clarify" }>,
 ): string {
+  if (command.intent === "remove")
+    return t(
+      command.reason === "multiple"
+        ? "taskRemove.clarifyMultiple"
+        : "taskRemove.clarifyMissingTitle",
+    );
   switch (command.reason) {
     case "missing_title":
       return t("taskCreate.clarifyMissingTitle");
@@ -73,7 +83,7 @@ function clarifyQuestion(
  */
 function commandReply(
   t: (key: string, options?: Record<string, unknown>) => string,
-  command: Exclude<CommandResult, { kind: "none" } | { kind: "edit" }>,
+  command: Exclude<CommandResult, { kind: "none" } | { kind: "edit" } | { kind: "remove" }>,
 ): string {
   switch (command.kind) {
     case "create":
@@ -229,6 +239,8 @@ export function useSendMessage() {
   const { t, i18n } = useTranslation();
   // #363: a clear command in the message adds its task through the action store.
   const store = useTaskActionStore("companion");
+  // #367: a removal request names a task by its Checklist title (in this language).
+  const { currentLanguage } = useLanguage();
   return useMutation<
     { conversationIdentifier: string; accountId: string | null },
     Error,
@@ -296,6 +308,49 @@ export function useSendMessage() {
       ensureOwned(owner);
       if (interpreted.kind === "ok" && interpreted.command.kind !== "none") {
         const command = interpreted.command;
+        if (command.kind === "remove") {
+          // #367: a removal request opens a review (never a removal) of the one live
+          // task with that title. No match or several: a reply, and nothing is prepared.
+          const tasks = await queryClient.ensureQueryData({
+            queryKey: tasksKey(currentLanguage, owner.accountId),
+            queryFn: () => checklist.getTasks(currentLanguage),
+            staleTime: 60_000,
+          });
+          ensureOwned(owner);
+          const key = titleKey(command.title);
+          const matches = tasks.filter(
+            (task) => !task.dismissedAt && titleKey(task.title) === key,
+          );
+          let reply: string | null = null;
+          if (matches.length === 1) {
+            const prepared = await actions.prepareRemoval(
+              {
+                type: "task.remove",
+                task_ref: checklist.taskOrderKey(matches[0]),
+                expected_revision: 0,
+              },
+              { conversationId: conversationIdentifier, messageId: savedUser.id },
+            );
+            ensureOwned(owner);
+            if (prepared.kind !== "ok" && prepared.kind !== "changed")
+              reply = t("taskRemove.commandFailed", { title: command.title });
+          } else {
+            reply = t(
+              matches.length === 0
+                ? "taskRemove.commandNoMatch"
+                : "taskRemove.commandSeveral",
+              { title: command.title },
+            );
+          }
+          if (reply)
+            await companion.saveMessage({
+              conversationIdentifier,
+              role: "assistant",
+              content: reply,
+              owner,
+            });
+          return { conversationIdentifier, accountId: owner.accountId };
+        }
         if (
           (command.kind === "create" && command.sameTitleTasks.length === 0) ||
           command.kind === "edit" ||

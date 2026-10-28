@@ -402,7 +402,8 @@ Deno.test({
       createTask(''), createTask('   '), createTask('x'.repeat(201)), createTask('Line one\nLine two'),
       createTask(PHONE, 'Urgent'), { ...createTask(PHONE), user_id: b.id }, { ...createTask(PHONE), html: '<b>x</b>' },
       { type: 'task.create_custom', title: 7, priority: 'Do soon' }, { type: 'job.apply', title: PHONE },
-      { type: 'task.remove', task_ref: 'custom:1', expected_revision: 1 },
+      // #367 registered task.remove as a removal review; reminder.schedule is not preparable.
+      { type: 'reminder.schedule', task_ref: 'custom:1', expected_revision: 1 },
     ];
     for (const operation of malformed) {
       const r = await prepare(a, operation);

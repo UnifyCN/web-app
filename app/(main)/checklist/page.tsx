@@ -21,7 +21,10 @@ import {
 } from "@/components/checklist/TaskProgressContext";
 import { TaskActionsDrawer } from "@/components/companion/tasks/TaskActionsDrawer";
 import { progressFor } from "@/components/companion/tasks/TaskStatePanel";
-import { useTaskProgress } from "@/hooks/useTaskActions";
+import {
+  useTaskActionStore,
+  useTaskProgress,
+} from "@/hooks/useTaskActions";
 import { taskOrderKey } from "@/services/checklist";
 
 const PRIORITY_ORDER: Priority[] = [
@@ -88,6 +91,7 @@ export default function ChecklistPage() {
   const [deleteTarget, setDeleteTarget] = useState<ChecklistTask | null>(null);
   const progress = useTaskProgress();
   const [progressTaskId, setProgressTaskId] = useState<string | null>(null);
+  const actionStore = useTaskActionStore("checklist");
   const progressRows = useMemo<TaskProgressRows | null>(() => {
     // The gate is off, the version is unsupported, or nobody is signed in: keep today's rows.
     if (progress.status === "unavailable" || progress.status === "signed_out")
@@ -127,7 +131,15 @@ export default function ChecklistPage() {
 
   function requestDelete(id: string) {
     const task = tasks.find((t) => t.id === id);
-    if (task) setDeleteTarget(task);
+    if (!task) return;
+    // #367: with the shared task actions on, removal is the reviewed removal in the task
+    // drawer (named effects on plans and steps, confirmation, Undo); otherwise the legacy one.
+    if (progressRows && actionStore) {
+      actionStore.requestRemoval(taskOrderKey(task));
+      setProgressTaskId(task.id);
+      return;
+    }
+    setDeleteTarget(task);
   }
 
   async function handleConfirmDelete() {

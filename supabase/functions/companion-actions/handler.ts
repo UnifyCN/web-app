@@ -450,6 +450,7 @@ export function createHandler(
           },
         }), 'interpret_remember');
       }
+      // A removal request (#367) only names a task to review; the client opens its review.
       if (resolved.kind !== 'create') return finish(json({ command: resolved }), `interpret_${resolved.kind}`);
       operationType = 'task.create_custom';
       let same;

@@ -38,8 +38,17 @@ real-browser check of the web step controls against this stack (same port).
 
 Results, test order and proof limits: mobile repo `DOCS/companion-actions/361-task-actions.md`.
 
-#365 + #370 composition: `compose_365_370_test.ts` (both domains through one service, one
-account, isolation, concurrency) and `compose_rollback_test.ts` (the #370 rollback restores
-the #365 shared functions and kinds exactly; data keeps its identity through the full
-reverse rollback and re-application). Support applies #361, #363, #364, #366, #365, #370 and
-rolls back in reverse: `migrate365('down')` runs the #370 rollback first.
+#365 + #370 composition: `compose_365_370_test.ts` and `compose_rollback_test.ts`.
+#367 + #370 composition: `compose_367_370_test.ts`, `compose_367_370_rollback_test.ts`
+and `compose_367_370_recovery_test.ts`. These tests check approved details, removal
+and restore, exact receipts, retained steps, account isolation, full live definitions,
+signatures and grants at each down/up stage, and combined archived recovery.
+
+#367 task removal: `remove_test.ts`, `remove_rollback_test.ts` and
+`remove_plan_race_test.ts`. The race tests hold a fixture write and observe
+`pg_stat_activity` to prove the plan/removal commit order in both directions.
+
+Support applies #361, #363, #364, #366, #365, #370, #367 in timestamp order.
+Rollback uses the reverse order. `migrate370('down')` first removes #367.
+The #367 down script restores #370. The #370 down script restores #365/#366.
+Results and proof limits remain in the mobile repo's `DOCS/companion-actions/`.

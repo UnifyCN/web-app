@@ -51,6 +51,11 @@ export const MIGRATION_370 = override('ACTIONS_MIGRATION_370_FILE') ??
   new URL('../../migrations/20261028004902_companion_saved_details.sql', import.meta.url);
 export const ROLLBACK_370 = override('ACTIONS_ROLLBACK_370_FILE') ??
   new URL('../../rollbacks/20261028004902_companion_saved_details.down.sql', import.meta.url);
+// #367 task removal (ACTIONS_MIGRATION_367_FILE / ACTIONS_ROLLBACK_367_FILE for mutation runs).
+export const MIGRATION_367 = override('ACTIONS_MIGRATION_367_FILE') ??
+  new URL('../../migrations/20261028025026_companion_task_remove.sql', import.meta.url);
+export const ROLLBACK_367 = override('ACTIONS_ROLLBACK_367_FILE') ??
+  new URL('../../rollbacks/20261028025026_companion_task_remove.down.sql', import.meta.url);
 
 export const admin = createClient(API_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 export const sql = postgres(DB_URL, { max: 20, onnotice: () => {} });
@@ -110,7 +115,7 @@ export async function migrationApplied(): Promise<boolean> {
 
 /**
  * The full schema change: 'up' applies the production migrations in timestamp order
- * (#361, #363, #364, #366, #365), each in one transaction; 'down' runs the rollback
+ * (#361, #363, #364, #366, #365, #370, #367), each in one transaction; 'down' runs the rollback
  * scripts in reverse order.
  */
 export async function migrate(which: 'up' | 'down'): Promise<void> {
@@ -121,7 +126,9 @@ export async function migrate(which: 'up' | 'down'): Promise<void> {
     await migrate366('up');
     await migrate365('up');
     await migrate370('up');
+    await migrate367('up');
   } else {
+    if (await migration367Applied()) await migrate367('down');
     if (await migration370Applied()) await migrate370('down');
     if (await migration365Applied()) await migrate365('down');
     if (await migration366Applied()) await migrate366('down');
@@ -165,7 +172,8 @@ export async function migration364Applied(): Promise<boolean> {
 
 /**
  * Only the #366 migration or only its rollback script, in one transaction. The #365
- * rollback runs first when #365 is applied (rollback order: #365, #366, #364, #363, #361).
+ * rollback (and before it #367) runs first when applied (rollback order: #367, #365,
+ * #366, #364, #363, #361).
  */
 export async function migrate366(which: 'up' | 'down'): Promise<void> {
   if (which === 'down' && await migration365Applied()) await migrate365('down');
@@ -180,7 +188,7 @@ export async function migrate366(which: 'up' | 'down'): Promise<void> {
 
 /**
  * Only the #365 migration or only its rollback script, in one transaction. The #370
- * rollback runs first when #370 is applied (it is the newest migration).
+ * rollback runs first when #370 is applied; that step first rolls back #367.
  */
 export async function migrate365(which: 'up' | 'down'): Promise<void> {
   if (which === 'down' && await migration370Applied()) await migrate370('down');
@@ -198,6 +206,7 @@ export async function migration365Applied(): Promise<boolean> {
 
 /** Only the #370 migration or only its rollback script, in one transaction. */
 export async function migrate370(which: 'up' | 'down'): Promise<void> {
+  if (which === 'down' && await migration367Applied()) await migrate367('down');
   const text = await Deno.readTextFile(which === 'up' ? MIGRATION_370 : ROLLBACK_370);
   await sql.begin(async tx => await tx.unsafe(text));
   // #370 builds on #365: its rollback returns to the #365 schema.
@@ -206,6 +215,23 @@ export async function migrate370(which: 'up' | 'down'): Promise<void> {
 
 export async function migration370Applied(): Promise<boolean> {
   const [r] = await sql`select to_regprocedure('public.companion_read_details(uuid)') is not null as applied`;
+  return r.applied;
+}
+
+/**
+ * Only the #367 migration or only its rollback script, in one transaction. It replaces
+ * shared function bodies and adds no RPC name, so PostgREST needs no schema reload.
+ * It is applied after #370 (timestamp order): older schema gets #365 and #370 first.
+ */
+export async function migrate367(which: 'up' | 'down'): Promise<void> {
+  if (which === 'up' && !(await migration365Applied())) await migrate365('up');
+  if (which === 'up' && !(await migration370Applied())) await migrate370('up');
+  await sql.begin(async tx => await tx.unsafe(await Deno.readTextFile(which === 'up' ? MIGRATION_367 : ROLLBACK_367)));
+}
+
+/** The #367 marker: the removal-effects reader exists. */
+export async function migration367Applied(): Promise<boolean> {
+  const [r] = await sql`select to_regprocedure('public.companion_remove_effects(uuid,text)') is not null as applied`;
   return r.applied;
 }
 
@@ -263,6 +289,7 @@ export async function ready(): Promise<void> {
     if (!(await migration366Applied())) await migrate366('up');
     if (!(await migration365Applied())) await migrate365('up');
     if (!(await migration370Applied())) await migrate370('up');
+    if (!(await migration367Applied())) await migrate367('up');
   }
   await openGate();
 }
@@ -577,4 +604,38 @@ export async function rememberedBy(who: Account, text: string) {
   const w = await apply(who, [detailCreate(text)], { authorization: command(m.message_id) });
   if (w.status !== 200) throw new Error(`remember failed: ${w.status} ${JSON.stringify(w.json)}`);
   return { ...m, receipt: w.json.receipt, operation_id: w.json.operation_id as string };
+}
+
+// ------------------------------------------------------------------ #367 task removal
+export const taskRemove = (task_ref: string, expected_revision: number) => ({ type: 'task.remove', task_ref, expected_revision });
+
+/** Approval evidence of a reviewed removal, with the user's confirmation. */
+export const confirmedApproval = (p: { proposal_id: string; proposal_revision: number }) => ({
+  ...approved(p), removal_confirmed: true,
+});
+
+/** A pending reminder row (no reminder schedule exists in this slice; fixture only). */
+export async function pendingReminder(userId: string, task_ref: string): Promise<string> {
+  const [r] = await sql`insert into companion_task_reminders (user_id, task_ref, remind_at, time_zone)
+    values (${userId}, ${task_ref}, now() + interval '2 days', 'America/Vancouver') returning id::text`;
+  return r.id as string;
+}
+
+export async function reminderRow(id: string): Promise<{ status: string; cancelled_reason: string | null }> {
+  const [r] = await sql`select status, cancelled_reason from companion_task_reminders where id = ${id}::uuid`;
+  return { status: r.status as string, cancelled_reason: (r.cancelled_reason ?? null) as string | null };
+}
+
+/** Holds the parent lock (#366) of one task of one account from another connection. */
+export function holdParentLock(userId: string, task_ref: string): { ready: Promise<void>; release: () => Promise<void> } {
+  let release!: () => void;
+  const held = new Promise<void>(r => (release = r));
+  let markReady!: () => void;
+  const readyP = new Promise<void>(r => (markReady = r));
+  const tx = sql.begin(async t => {
+    await t`select pg_advisory_xact_lock(hashtextextended(${userId + ':' + task_ref}, 366))`;
+    markReady();
+    await held;
+  });
+  return { ready: readyP, release: async () => { release(); await tx; } };
 }

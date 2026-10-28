@@ -1,6 +1,6 @@
 // Companion actions contract, version 1 (mobile-app#361; decided in #360; task
 // creation and proposals added in #363, task steps in #366, task edits in #365, saved details
-// in #370, within the same version: new actions, operations and fields only, which version 1
+// in #370, task removal in #367, within the same version: new actions, operations and fields only, which version 1
 // clients ignore).
 // Typed request parsing and the domain operation registry. Pure: no I/O, so the
 // handler validates every request before it reaches the database. The database
@@ -91,6 +91,21 @@ export interface StepRemoveCreatedOperation {
   task_ref: string;
   steps: { step_id: string; expected_revision: number }[];
 }
+/**
+ * #367: remove one task. Only as the approval of its reviewed removal draft (which names
+ * the task and its effects on plans, steps and reminders), with the user's confirmation.
+ */
+export interface TaskRemoveOperation {
+  type: 'task.remove';
+  task_ref: string;
+  expected_revision: number;
+}
+/** #367: the inverse of a removal. Only as the reviewed change of a conflicting Undo. */
+export interface TaskRestoreOperation {
+  type: 'task.restore';
+  task_ref: string;
+  expected_revision: number;
+}
 export type StepOperation =
   | StepCreateOperation
   | StepUpdateOperation
@@ -144,6 +159,8 @@ export type Operation =
   | SetStateOperation
   | CreateCustomOperation
   | RemoveCreatedOperation
+  | TaskRemoveOperation
+  | TaskRestoreOperation
   | StepOperation
   | EditDetailsOperation
   | DetailOperation;
@@ -280,6 +297,35 @@ const removeCreated: OperationSpec<RemoveCreatedOperation> = {
     return ok({ type: 'task.remove_created', task_ref: raw.task_ref, expected_revision: raw.expected_revision });
   },
 };
+
+// ------------------------------------------------------------- #367 task removal
+/** One task at the revision the caller saw (a removal or its reviewed restore). */
+function taskAtRevision<T extends TaskRemoveOperation | TaskRestoreOperation>(type: T['type'], undoRemoves: boolean): OperationSpec<T> {
+  return {
+    type,
+    version: 1,
+    access: 'owner',
+    classification: 'write',
+    // Never a control, a command or model output: only the approved review of this change.
+    approval: ['approved_proposal'],
+    revisionCheck: 'expected_revision',
+    idempotency: 'operation_id',
+    undo: 'recorded_inverse',
+    undoRemoves,
+    parse(raw) {
+      for (const key of Object.keys(raw)) {
+        if (!['type', 'task_ref', 'expected_revision'].includes(key)) return refuse(422, 'unknown_field');
+      }
+      if (typeof raw.task_ref !== 'string' || !TASK_REF.test(raw.task_ref)) return refuse(422, 'invalid_task_ref');
+      if (!isPlainInt(raw.expected_revision)) return refuse(422, 'expected_revision_required');
+      return ok({ type, task_ref: raw.task_ref, expected_revision: raw.expected_revision } as T);
+    },
+  };
+}
+// Every removal also needs removal_confirmed (checked with the authorization). Its Undo
+// restores, so it asks for no removal confirmation.
+const taskRemove = taskAtRevision<TaskRemoveOperation>('task.remove', false);
+const taskRestore = taskAtRevision<TaskRestoreOperation>('task.restore', false);
 
 // ------------------------------------------------------------------ #366 steps
 const plainTitle = (raw: unknown): string | null => {
@@ -518,6 +564,8 @@ export const OPERATION_REGISTRY: { readonly [K in Operation['type']]: OperationS
   'task.set_state': setState,
   'task.create_custom': createCustom,
   'task.remove_created': removeCreated,
+  'task.remove': taskRemove,
+  'task.restore': taskRestore,
   'step.create': stepCreate,
   'step.update': stepUpdate,
   'step.set_done': stepSetDone,
@@ -547,9 +595,15 @@ export function parseEditDraft(raw: unknown): Parsed<EditDraft> {
 }
 
 
-/** The operations a draft can be prepared and revised for. */
-export type PreparableOperation = CreateCustomOperation | StepCreateOperation | DetailCreateOperation;
+/**
+ * The operations a draft can be prepared for. A removal review (#367) is prepared, never
+ * revised; the others can be revised too.
+ */
+export type PreparableOperation = CreateCustomOperation | StepCreateOperation | DetailCreateOperation | TaskRemoveOperation;
 const isPreparable = (op: Operation): op is PreparableOperation =>
+  op.type === 'task.create_custom' || op.type === 'step.create' || op.type === 'detail.create' || op.type === 'task.remove';
+type RevisableOperation = CreateCustomOperation | StepCreateOperation | DetailCreateOperation;
+const isRevisable = (op: Operation): op is RevisableOperation =>
   op.type === 'task.create_custom' || op.type === 'step.create' || op.type === 'detail.create';
 
 /** One operation through its registry entry, without authorization (prepare, revise). */
@@ -635,7 +689,7 @@ export type ActionRequest =
   | { action: 'interpret'; message_id: number }
   | { action: 'conversation_actions'; conversation_id: string }
   | { action: 'cancel'; proposal_id: string; proposal_revision: number }
-  | { action: 'revise'; proposal_id: string; proposal_revision: number; operation: PreparableOperation }
+  | { action: 'revise'; proposal_id: string; proposal_revision: number; operation: RevisableOperation }
   | { action: 'status'; operation_id: string }
   | { action: 'apply'; operation_id: string; authorization: Authorization; operations: Operation[] }
   | { action: 'undo'; operation_id: string; receipt_operation_id: string; authorization: Authorization };
@@ -662,7 +716,7 @@ export function parseAction(body: Record<string, unknown>): Parsed<ActionRequest
       }
       const op = parseOperation(body.operation);
       if (!op.ok) return op;
-      // Only a new task (#363), suggested steps (#366) or a suggested detail (#370) can be
+      // Only a new task (#363), suggested steps (#366) or a suggested detail (#370) or a removal (#367) can be
       // prepared for review.
       if (!isPreparable(op.value)) return refuse(422, 'unsupported_operation');
       const source = parseSource(body.source);
@@ -693,7 +747,7 @@ export function parseAction(body: Record<string, unknown>): Parsed<ActionRequest
       }
       const op = parseOperation(body.operation);
       if (!op.ok) return op;
-      if (!isPreparable(op.value)) return refuse(422, 'unsupported_operation');
+      if (!isRevisable(op.value)) return refuse(422, 'unsupported_operation');
       return ok({
         action: 'revise',
         proposal_id: body.proposal_id,

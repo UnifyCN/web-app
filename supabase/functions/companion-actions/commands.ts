@@ -1,5 +1,6 @@
-// Clear direct commands (mobile-app#363 create, #365 edit). Deterministic, no model: a
-// user's own saved message either is one clear command that resolves to one exact change,
+// Clear direct commands (mobile-app#363 create, #365 edit) and removal requests (#367).
+// Deterministic, no model: a user's own saved message either is one clear command that
+// resolves to one exact change (or, for a removal request, one exact task title to review),
 // is an unclear command that needs a question, or is not a command. The action service
 // reads the message itself, so a model, page text or a client flag can never make a
 // message count as a command.
@@ -10,6 +11,12 @@
 //   vi  "Thêm việc: <title>"              hi  "कार्य जोड़ें: <title>"
 //   pa  "ਕੰਮ ਜੋੜੋ: <title>"                 ar  "أضف مهمة: <title>"
 //
+// A removal request (#367) only names the task to review; it never authorizes a write.
+// Every removal is a reviewed draft the user confirms:
+//   en  "Remove task: <title>", "Delete task: <title>", "Remove <title> from my checklist"
+//   fr  "Supprime la tâche : <title>"     es  "Elimina la tarea: <title>"
+//   vi  "Xóa việc: <title>"               hi  "कार्य हटाएँ: <title>"
+//   pa  "ਕੰਮ ਹਟਾਓ: <title>"                 ar  "احذف مهمة: <title>"
 // Edit phrasings (#365): the task is named by its title in quotes ("…", “…” or «…»);
 // priorities and states are the Checklist's own labels in that language (or English).
 // A line has only the quote marks of its one change: a title, a description or a waiting
@@ -65,12 +72,16 @@ export type EditChange =
 export type CommandResolution =
   | { kind: 'create'; title: string }
   | { kind: 'edit'; lang: ContentLanguage; target: string; change: EditChange }
+  /** #367: review the removal of the task with this title (the client resolves which). */
+  | { kind: 'remove'; title: string }
   | {
       kind: 'clarify';
       reason:
         | 'missing_title' | 'multiple' | 'too_long'
         /** #365: an edit value is missing, unknown or too long; a message with an edit has more lines. */
         | 'missing_value' | 'invalid_value' | 'value_too_long' | 'multiple_changes';
+      /** intent 'remove' (#367): the unclear command asked for a removal. */
+      intent?: 'remove';
     }
   | { kind: 'none' };
 
@@ -94,6 +105,27 @@ const BARE: RegExp[] = [
   /^(?:कार्य|काम)\s+जोड़ें[।.!?]?$/u,
   /^(?:ਕੰਮ|ਕਾਰਜ)\s+ਜੋੜੋ[।.!?]?$/u,
   /^(?:أضف|اضف)\s+مهمة[.!؟?]?$/u,
+];
+
+// #367: "<remove verb> <task noun> : <title>" per language, and the bare form.
+const REMOVE_WITH_TITLE: RegExp[] = [
+  /^(?:please\s+)?(?:remove|delete)\s+(?:the\s+)?task\s*[:\-–]\s*(.*)$/iu,
+  /^(?:supprime|supprimer|supprimez|retire|retirer|retirez)\s+(?:la\s+)?tâche\s*:\s*(.*)$/iu,
+  /^(?:elimina|eliminar|borra|borrar|quita|quitar)\s+(?:la\s+)?tarea\s*:\s*(.*)$/iu,
+  /^xóa\s+(?:việc|nhiệm vụ|công việc)\s*:\s*(.*)$/iu,
+  /^(?:कार्य|काम)\s+(?:हटाएँ|हटाएं)\s*:\s*(.*)$/u,
+  /^(?:ਕੰਮ|ਕਾਰਜ)\s+ਹਟਾਓ\s*:\s*(.*)$/u,
+  /^(?:احذف|احذفي)\s+(?:ال)?مهمة\s*:\s*(.*)$/u,
+];
+const REMOVE_FROM_CHECKLIST = /^(?:please\s+)?(?:remove|delete)\s+(.+?)\s+from\s+my\s+checklist[.!]?$/iu;
+const REMOVE_BARE: RegExp[] = [
+  /^(?:please\s+)?(?:remove|delete)\s+(?:the\s+|a\s+)?task[.!?]?$/iu,
+  /^(?:supprime|supprimer|supprimez|retire|retirer|retirez)\s+(?:la\s+|une\s+)?tâche[.!?]?$/iu,
+  /^(?:elimina|eliminar|borra|borrar|quita|quitar)\s+(?:la\s+|una\s+)?tarea[.!?]?$/iu,
+  /^xóa\s+(?:việc|nhiệm vụ|công việc)[.!?]?$/iu,
+  /^(?:कार्य|काम)\s+(?:हटाएँ|हटाएं)[।.!?]?$/u,
+  /^(?:ਕੰਮ|ਕਾਰਜ)\s+ਹਟਾਓ[।.!?]?$/u,
+  /^(?:احذف|احذفي)\s+(?:ال)?مهمة[.!؟?]?$/u,
 ];
 
 // ------------------------------------------------------------------- edits (#365)
@@ -267,11 +299,21 @@ function lineCommand(line: string): CommandResolution {
     const m = line.match(re);
     if (m) return titled(m[1]);
   }
+  for (const re of REMOVE_WITH_TITLE) {
+    const m = line.match(re);
+    if (m) return asRemoval(titled(m[1]));
+  }
+  const from = line.match(REMOVE_FROM_CHECKLIST);
+  if (from) return asRemoval(titled(from[1]));
+  if (REMOVE_BARE.some(re => re.test(line))) return { kind: 'clarify', reason: 'missing_title', intent: 'remove' };
   const to = line.match(TO_CHECKLIST);
   if (to) return titled(to[1]);
   if (BARE.some(re => re.test(line))) return { kind: 'clarify', reason: 'missing_title' };
   return { kind: 'none' };
 }
+
+const asRemoval = (r: CommandResolution): CommandResolution =>
+  r.kind === 'create' ? { kind: 'remove', title: r.title } : r.kind === 'clarify' ? { ...r, intent: 'remove' } : r;
 
 function titled(raw: string): CommandResolution {
   const title = raw.trim().replace(/^["“”'«]+|["“”'»]+$/gu, '').replace(/[.。।]+$/u, '').trim();
@@ -289,6 +331,9 @@ export function resolveCommand(text: string): CommandResolution {
   if (commands.length === 0) return { kind: 'none' };
   // A command with more lines (a second command, or a title over several lines) is unclear.
   if (lines.length > 1) {
+    if (commands.every(c => c.kind === 'remove' || (c.kind === 'clarify' && c.intent === 'remove'))) {
+      return { kind: 'clarify', reason: 'multiple', intent: 'remove' };
+    }
     const edits = lines.some(line => editCommand(line).kind !== 'none');
     return { kind: 'clarify', reason: edits ? 'multiple_changes' : 'multiple' };
   }

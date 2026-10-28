@@ -21,13 +21,13 @@ interface ReceiptBlockProps {
   store: TaskActionStore | null;
   /** A connection, a fresh read and no unresolved write. */
   canWrite: boolean;
-  /** The task's title, for a receipt that does not record one (#365). */
+  /** The task's title, for a receipt that does not record one (#365, #367). */
   taskTitle?: string | null;
 }
 
 /**
  * The exact saved result of one action and the Undo of that receipt only
- * (mobile-app#361, #363, #365, #366). An added task's Undo removes it, so it asks first;
+ * (mobile-app#361, #363, #365, #366, #367). An added task's Undo removes it, so it asks first;
  * Keep sends nothing. An edit names each changed field with its recorded before and after.
  */
 export function ReceiptBlock({
@@ -41,7 +41,10 @@ export function ReceiptBlock({
   const [confirming, setConfirming] = useState(false);
   const [instant, setInstant] = useState(false);
   const stateLabel = (s: TaskState) => t(`taskActions.state.${s}`);
-  const title = receipt.title ?? "";
+  const title = receipt.title ?? taskTitle ?? "";
+  // #367: a removal and its restore name the task (a custom title, else the Checklist one).
+  const removal = receipt.operationType === "task.remove";
+  const restore = receipt.operationType === "task.restore";
   const steps = receipt.steps ?? [];
   const first = steps[0];
   const isStep = receipt.operationType.startsWith("step.");
@@ -72,6 +75,14 @@ export function ReceiptBlock({
   };
   const text = isStep
     ? stepText()
+    : removal
+      ? title
+        ? t("taskRemove.receiptRemoved", { title })
+        : t("taskRemove.receiptRemovedUnknown")
+      : restore
+        ? title
+          ? t("taskRemove.receiptRestored", { title })
+          : t("taskRemove.receiptRestoredUnknown")
     : receipt.operationType === "task.edit_details"
       ? editReceiptText(t as never, receipt, receipt.title ?? taskTitle ?? "")
       : receipt.operationType === "task.create_custom"
@@ -125,6 +136,15 @@ export function ReceiptBlock({
           {receiptChangeText(t as never, change)}
         </p>
       ))}
+      {removal && (
+        <p className="mt-0.5 text-xs text-ink-muted">
+          {t("taskRemove.receiptEffects", {
+            plans: receipt.plans?.length ?? 0,
+            steps: receipt.stepsKept ?? 0,
+            reminders: receipt.remindersStopped ?? 0,
+          })}
+        </p>
+      )}
       {receipt.stepsTotal !== null && receipt.stepsTotal > 0 && (
         <p className="mt-0.5 text-xs text-ink-muted">
           {t("taskSteps.receiptAtCompletion", {
@@ -142,7 +162,9 @@ export function ReceiptBlock({
           type="button"
           aria-disabled={!canWrite}
           aria-label={
-            isStep
+            removal
+              ? t("taskRemove.undoRemovalA11y", { change: text })
+              : isStep
               ? t("taskSteps.undoA11y", { change: text })
               : removes
                 ? t("taskCreate.undoA11y", { title })
@@ -162,7 +184,9 @@ export function ReceiptBlock({
           )}
         >
           <Undo2 className="h-4 w-4" aria-hidden />
-          {isStep
+          {removal
+            ? t("taskRemove.undoRemoval")
+            : isStep
             ? t("taskSteps.undo")
             : removes
               ? t("taskCreate.undo")

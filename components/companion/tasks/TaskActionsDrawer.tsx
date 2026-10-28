@@ -96,8 +96,24 @@ export function TaskActionsDrawer({
   }, [open, initialTaskId, refetch]);
 
   const active = tasks.filter((task) => !task.dismissedAt);
-  const selected = active.find((task) => task.id === selectedId) ?? null;
-  const selectedRef = selected ? taskOrderKey(selected) : null;
+  // A task removed in this drawer (#367) leaves the active list (a custom one every read);
+  // its panel stays open on the removal receipt, with the ref and title it was opened with.
+  const live = active.find((task) => task.id === selectedId) ?? null;
+  const [seen, setSeen] = useState<{
+    id: string;
+    ref: string;
+    title: string;
+  } | null>(null);
+  if (
+    live &&
+    (seen?.id !== live.id ||
+      seen.ref !== taskOrderKey(live) ||
+      seen.title !== live.title)
+  )
+    setSeen({ id: live.id, ref: taskOrderKey(live), title: live.title });
+  const kept = !live && seen && seen.id === selectedId ? seen : null;
+  const selected = live ?? (kept ? { title: kept.title } : null);
+  const selectedRef = live ? taskOrderKey(live) : (kept?.ref ?? null);
   const phase = useTaskActionPhase(store, selectedRef);
   const draftId = proposalId ?? stepProposalId ?? detailProposalId;
   const draftPhase = useTaskActionPhase(

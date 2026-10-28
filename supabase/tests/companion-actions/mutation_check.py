@@ -4,7 +4,10 @@
 Each mutation edits a temporary copy of a migration, a rollback script or the edge
 function, never the source. #363 replaces six #361 action functions and #365 replaces
 eight #363 ones (same signatures), so a mutation of a mechanism edits the latest
-migration that defines it, where the running code is. The run must fail with an assertion error. A pass
+migration that defines it, where the running code is. #367 (applied after #365) keeps
+six of the #365 bodies verbatim and adds removal lines: a #365 anchor that the #367
+migration also contains in one of those six functions is edited in both copies, so the
+running code is the mutated one. The run must fail with an assertion error. A pass
 is SURVIVED (the test does not bind the mechanism). A failure without an assertion
 error (crash, stack failure, timeout) is UNRESOLVED. Exit 0 only when every line is RED.
 
@@ -24,6 +27,10 @@ MIGRATION_363 = os.path.join(ROOT, 'migrations', '20261026165156_companion_task_
 ROLLBACK_363 = os.path.join(ROOT, 'rollbacks', '20261026165156_companion_task_create.down.sql')
 MIGRATION_365 = os.path.join(ROOT, 'migrations', '20261028001530_companion_task_edit.sql')
 ROLLBACK_365 = os.path.join(ROOT, 'rollbacks', '20261028001530_companion_task_edit.down.sql')
+MIGRATION_367 = os.path.join(ROOT, 'migrations', '20261028025026_companion_task_remove.sql')
+# The #365 bodies that #367 keeps verbatim (with added removal lines).
+SHARED_365_367 = ('companion_validate_operations', 'companion_check_authorization', 'companion_apply_one',
+                  'companion_receipt_summary', 'companion_undo_action', 'companion_conversation_actions')
 SQL_TARGETS = {
     'up365': (MIGRATION_365, 'ACTIONS_MIGRATION_365_FILE'),
     'down365': (ROLLBACK_365, 'ACTIONS_ROLLBACK_365_FILE'),
@@ -184,6 +191,20 @@ def run_one(m, tmp):
         with open(out, 'w') as f:
             f.write(text)
         env[var] = out
+        if target == 'up365':
+            with open(MIGRATION_367) as f:
+                later = f.read()
+            if later.count(find) > 1:
+                raise SystemExit(f'{name}: anchor found {later.count(find)} times in #367, expected 0 or 1')
+            at = later.find(find)
+            start = later.rfind('create or replace function public.', 0, at) if at >= 0 else -1
+            inside = start >= 0 and later[start:at].count('$$') == 1 and any(
+                later.startswith(f'create or replace function public.{fn}(', start) for fn in SHARED_365_367)
+            if inside:
+                out367 = os.path.join(tmp, f'{name}.367.sql')
+                with open(out367, 'w') as f:
+                    f.write(later.replace(find, replace))
+                env['ACTIONS_MIGRATION_367_FILE'] = out367
     else:
         dst = os.path.join(tmp, name, 'functions')
         shutil.copytree(FUNCTIONS, dst)

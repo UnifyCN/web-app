@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { DETAIL_FIELDS, priorityLabel } from "./editText";
 import { ReceiptBlock } from "./ReceiptBlock";
+import { TaskRemovalSection } from "./TaskRemovalSection";
 import { TaskStepsSection } from "./TaskStepsSection";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -96,6 +97,8 @@ export function TaskStatePanel({
   // connection and a fresh read; offline nothing is sent or queued.
   const writable = Boolean(store) && view.canWrite && !progress.removed;
   const canWrite = writable && !busy;
+  // #367: the Undo of a removal restores a removed task, so it does not need a live task.
+  const canUndoRemoval = Boolean(store) && view.canWrite && !busy;
   const stateLabel = (s: TaskState) => t(`taskActions.state.${s}`);
 
   function choose(next: TaskState) {
@@ -271,16 +274,30 @@ export function TaskStatePanel({
           taskRef={taskRef}
           steps={view.stepsByRef.get(taskRef)}
           phaseValue={phase}
+          canRestore={canUndoRemoval}
         />
         {receipt && phase.phase !== "undo_review" && (
           <ReceiptBlock
             receipt={receipt}
             storeKey={taskRef}
             store={store}
-            canWrite={canWrite}
+            canWrite={
+              receipt.operationType === "task.remove"
+                ? canUndoRemoval
+                : canWrite
+            }
+            taskTitle={title}
           />
         )}
       </div>
+
+      <TaskRemovalSection
+        taskRef={taskRef}
+        taskTitle={title}
+        progress={progress}
+        store={store}
+        writable={writable}
+      />
     </section>
   );
 }
@@ -294,6 +311,7 @@ export function PhaseMessage({
   store,
   taskRef,
   steps = [],
+  canRestore = false,
 }: {
   writable: boolean;
   phase: string;
@@ -302,6 +320,8 @@ export function PhaseMessage({
   store: TaskActionStore | null;
   taskRef: string;
   steps?: readonly TaskStep[];
+  /** #367: a fresh read and no unresolved write; the task may be removed. */
+  canRestore?: boolean;
 }) {
   const { t } = useTranslation();
   const line = (text: string, tone: "neutral" | "error" = "neutral") => (
@@ -334,6 +354,13 @@ export function PhaseMessage({
       return line(t("taskActions.conflict"), "error");
     case "already_undone":
       return line(t("taskActions.alreadyUndone"));
+    case "undo_blocked":
+      return line(
+        phaseValue.phase === "undo_blocked" &&
+          phaseValue.reason === "not_removed"
+          ? t("taskRemove.undoNotRemoved")
+          : t("taskRemove.undoRemovedAgain"),
+      );
     case "command_used":
       return line(t("taskCreate.commandUsed"));
     case "needs_clarification":
@@ -548,6 +575,41 @@ export function PhaseMessage({
                 onClick={() => store?.dismiss(taskRef)}
               >
                 {t("taskActions.keepCurrent")}
+              </Button>
+            </div>
+          </div>
+        );
+      }
+      if (proposed.type === "task.restore") {
+        // #367: Undo of a removal met a newer edit of the removed task. Nothing changed;
+        // restoring it keeps that edit and is a reviewed change.
+        return (
+          <div className="rounded-lg border border-primary-subtle bg-primary-bg px-3 py-3">
+            <p className="text-sm text-ink-secondary">
+              {t("taskRemove.restoreConflict")}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                aria-disabled={!canRestore}
+                className={cn(
+                  "bg-ink-secondary hover:bg-ink",
+                  !canRestore && "cursor-not-allowed opacity-60",
+                )}
+                onClick={() =>
+                  canRestore && void store?.approveCompensation(taskRef)
+                }
+              >
+                {t("taskRemove.restoreTask")}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => store?.dismiss(taskRef)}
+              >
+                {t("taskRemove.keepRemoved")}
               </Button>
             </div>
           </div>
