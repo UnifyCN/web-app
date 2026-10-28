@@ -1,7 +1,7 @@
 // Rollback and re-application of the #366 step migration, through the public boundary.
 import { assertEquals } from 'jsr:@std/assert@1';
 import {
-  API_URL, apply, approved, existingCustomTask, migrate366, newAccount, openGate, prepare, read, ready, setState, sql,
+  API_URL, apply, approved, existingCustomTask, migrate365, migrate366, newAccount, openGate, prepare, read, ready, setState, sql,
   startContentStub, status, stepCreate, stepDone, stepsOf, taskOf, testOpts, undo, waitForSchemaCache,
 } from './support.ts';
 
@@ -13,6 +13,9 @@ Deno.test({
   ...testOpts,
   fn: async () => {
     // Wrong if rollback finishes while its last schema response still lists the step RPC.
+    // The newer #370 and #365 roll back first, against the real cache (reverse order);
+    // the mocked cache below then stands for the #366 schema only.
+    await migrate365('down');
     const originalFetch = globalThis.fetch;
     const base = ['/companion_feature_gate', '/rpc/companion_apply_actions',
       '/rpc/companion_prepare_proposal', '/rpc/companion_plan_prepare'];
@@ -38,7 +41,7 @@ Deno.test({
     } finally {
       globalThis.fetch = originalFetch;
       await migrate366('up');
-      await openGate();
+      await ready(); // #365 and #370 again, in timestamp order; opens the gate
     }
   },
 });

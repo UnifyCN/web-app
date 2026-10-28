@@ -37,3 +37,9 @@ the port before `supabase start`. `steps_parent_race_test.ts` (#366 F1) and
 real-browser check of the web step controls against this stack (same port).
 
 Results, test order and proof limits: mobile repo `DOCS/companion-actions/361-task-actions.md`.
+
+#365 + #370 composition: `compose_365_370_test.ts` (both domains through one service, one
+account, isolation, concurrency) and `compose_rollback_test.ts` (the #370 rollback restores
+the #365 shared functions and kinds exactly; data keeps its identity through the full
+reverse rollback and re-application). Support applies #361, #363, #364, #366, #365, #370 and
+rolls back in reverse: `migrate365('down')` runs the #370 rollback first.
