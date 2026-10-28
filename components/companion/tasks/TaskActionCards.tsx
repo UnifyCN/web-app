@@ -15,7 +15,12 @@ import type {
 import { isUnresolved } from "@/lib/companionActions/taskActionStore";
 import { useTaskActionPhase } from "@/hooks/useTaskActions";
 import type { ChatMessage } from "@/types";
-import { changeLines, editReceiptText, receiptChangeText } from "./editText";
+import {
+  changeLines,
+  editReceiptText,
+  receiptChanges,
+  receiptChangeText,
+} from "./editText";
 
 /** A write in flight: a loading state, shown only after the shared 300ms delay. */
 const isTransient = (phase: TaskActionPhase) =>
@@ -422,7 +427,7 @@ function CommandCard({
           <p className="break-words text-sm text-ink-secondary">
             {editReceiptText(t as never, receipt, title)}
           </p>
-          {receipt.changes.map((change) => (
+          {receiptChanges(receipt).map((change) => (
             <p
               key={change.field}
               className="break-words text-xs text-ink-tertiary"

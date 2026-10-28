@@ -5,8 +5,8 @@
 // behavior wrong.
 import { assertEquals } from 'jsr:@std/assert@1';
 import {
-  apply, conversationWith, existingCustomTask, interpret, messageIn, newAccount, ready, setProfile, setState,
-  taskOf, testOpts,
+  apply, conversationActions, conversationWith, existingCustomTask, interpret, messageIn, newAccount, ready, setProfile,
+  setState, sql, status, taskOf, testOpts, undo,
 } from './support.ts';
 
 await ready();
@@ -201,6 +201,63 @@ Deno.test({
   },
 });
 
+// #365 review S365-001 (red first): a quoted value must not run into a second command.
+Deno.test({
+  name: 'a command line with more quoted text than one change uses asks one change at a time and writes nothing',
+  ...testOpts,
+  fn: async () => {
+    // Wrong if: interpret returns an edit for any of these, the change the earlier grammar
+    // read (Phone renamed to the rest of the line) or any other operation is accepted
+    // under the message, or either task changes. The plain command after them still works.
+    const a = await newAccount('quotes');
+    const phone = await existingCustomTask(a, 'Phone');
+    const bank = await existingCustomTask(a, 'Bank');
+    const { conversationRow } = await conversationWith(a, 'user', 'hello');
+    const cases: [string, Record<string, unknown>][] = [
+      ['Rename task "Phone" to "Mobile" and rename task "Bank" to "Credit union"',
+        { title: 'Mobile" and rename task "Bank" to "Credit union' }],
+      ['Set description of task "Phone" to "Compare carriers" and rename task "Bank" to "Credit union"',
+        { description: 'Compare carriers" and rename task "Bank" to "Credit union' }],
+      ['Renomme la tâche « Phone » en « Mobile » et renomme la tâche « Bank » en « Credit union »',
+        { title: 'Mobile » et renomme la tâche « Bank » en « Credit union' }],
+      ['Rename task "Phone "Rogers"" to "Mobile"', { title: 'Mobile' }],
+    ];
+    for (const [text, forged] of cases) {
+      const message_id = await messageIn(a, conversationRow, 'user', text);
+      const i = await interpret(a, message_id);
+      assertEquals(i.status, 200, JSON.stringify(i.json));
+      assertEquals([i.json.command.kind, i.json.command.reason], ['clarify', 'multiple_changes'], text);
+      for (const op of [
+        { type: 'task.edit_details', task_ref: phone.ref, expected_revision: 1, ...forged },
+        { type: 'task.edit_details', task_ref: phone.ref, expected_revision: 1, title: 'Mobile' },
+      ]) {
+        const r = await apply(a, [op], { authorization: command(message_id) });
+        assertEquals(r.status, 403, `${text} -> ${JSON.stringify(op)} -> ${JSON.stringify(r.json)}`);
+      }
+    }
+    // A waiting reason runs to the end of the line, so a second command in it is the
+    // same defect: the reason would be saved as the rest of the message.
+    const reason = await messageIn(a, conversationRow, 'user',
+      'Mark task "Phone" as waiting: letter and rename task "Bank" to "Credit union"');
+    const ri = await interpret(a, reason);
+    assertEquals([ri.json.command.kind, ri.json.command.reason], ['clarify', 'multiple_changes']);
+    const forgedReason = await apply(a, [setState(phone.ref, 'waiting', 1, 'letter and rename task "Bank" to "Credit union"')],
+      { authorization: command(reason) });
+    assertEquals(forgedReason.status, 403, JSON.stringify(forgedReason.json));
+    for (const t of [phone, bank]) {
+      const r = await row(a, t.id);
+      assertEquals([r.revision, r.progress_state], [1, null], `${t.ref} changed`);
+    }
+    assertEquals([(await row(a, phone.id)).title, (await row(a, bank.id)).title], ['Phone', 'Bank']);
+    // Positive controls: one plain quoted change per message still applies exactly.
+    const ok = await run(a, conversationRow, 'Rename task "Phone" to "Mobile"');
+    assertEquals(ok.a?.status, 200, JSON.stringify(ok.i.json));
+    const okReason = await run(a, conversationRow, 'Mark task "Bank" as waiting: Letter from the bank');
+    assertEquals(okReason.a?.status, 200, JSON.stringify(okReason.i.json));
+    assertEquals([(await row(a, phone.id)).title, (await row(a, bank.id)).waiting_reason], ['Mobile', 'Letter from the bank']);
+  },
+});
+
 Deno.test({
   name: 'a command never names a task it cannot see: published tasks unread, another account, an assistant message',
   ...testOpts,
@@ -260,6 +317,54 @@ Deno.test({
     const ok = await apply(a, [reread.json.command.operation], { authorization: command(message_id) });
     assertEquals(ok.status, 200, JSON.stringify(ok.json));
     assertEquals((await row(a, id)).completed, true);
+  },
+});
+
+// #365 review S365-002 (red first): a reason change is a saved change the receipt names.
+Deno.test({
+  name: 'a waiting reason change names both reasons in its receipt, kept after a later edit and through lookup, replay and Undo',
+  ...testOpts,
+  fn: async () => {
+    // Wrong if: a receipt that changed the reason does not name the reason before and
+    // after, a later change, Undo, the conversation read, lookup or replay shows other
+    // reasons than the ones saved, or a receipt saved without them gains invented ones.
+    const a = await newAccount('reasons');
+    const { ref } = await existingCustomTask(a, 'Phone');
+    const { conversation_id, conversationRow } = await conversationWith(a, 'user', 'hello');
+    const reasons = (r: Record<string, unknown>) => [r.before_waiting_reason, r.after_waiting_reason];
+    const friday = await run(a, conversationRow, 'Mark task "Phone" as waiting: Appointment on Friday');
+    assertEquals(friday.a?.status, 200, JSON.stringify(friday.a?.json));
+    assertEquals(reasons(friday.a!.json.receipt), [null, 'Appointment on Friday']);
+    const monday = await run(a, conversationRow, 'Mark task "Phone" as waiting: Appointment on Monday');
+    assertEquals(monday.a?.status, 200, JSON.stringify(monday.a?.json));
+    const saved = monday.a!.json;
+    assertEquals([saved.receipt.before_state, saved.receipt.after_state], ['waiting', 'waiting']);
+    assertEquals(reasons(saved.receipt), ['Appointment on Friday', 'Appointment on Monday']);
+    // Replay and lookup return the recorded reasons.
+    const replay = await apply(a, [monday.i.json.command.operation],
+      { operation_id: saved.operation_id, authorization: command(monday.message_id) });
+    assertEquals([replay.json.replayed, ...reasons(replay.json.receipt)], [true, 'Appointment on Friday', 'Appointment on Monday']);
+    assertEquals(reasons((await status(a, saved.operation_id)).json.receipt), ['Appointment on Friday', 'Appointment on Monday']);
+    // Undo restores Friday and its receipt says so.
+    const undone = await undo(a, saved.operation_id);
+    assertEquals(undone.status, 200, JSON.stringify(undone.json));
+    assertEquals(reasons(undone.json.receipt), ['Appointment on Monday', 'Appointment on Friday']);
+    assertEquals((await taskOf(a, ref)).waiting_reason, 'Appointment on Friday');
+    // A later change: the earlier receipts keep their reasons and become history.
+    await apply(a, [setState(ref, 'in_progress', undone.json.receipt.after_revision)]);
+    const c = await conversationActions(a, conversation_id);
+    const byMessage = new Map(c.json.commands.map((x: { message_id: number; receipt: Record<string, unknown> }) =>
+      [x.message_id, x.receipt]));
+    const historical = byMessage.get(monday.message_id) as Record<string, unknown>;
+    assertEquals([historical.current, ...reasons(historical)], [false, 'Appointment on Friday', 'Appointment on Monday']);
+    assertEquals(reasons(byMessage.get(friday.message_id) as Record<string, unknown>), [null, 'Appointment on Friday']);
+    // A receipt saved before reasons were recorded keeps no reason fields at all.
+    await sql`update public.companion_action_receipts
+      set outcome = jsonb_set(outcome, '{results,0}', (outcome->'results'->0) - 'before_waiting_reason' - 'after_waiting_reason')
+      where operation_id = ${friday.a!.json.operation_id}::uuid`;
+    const legacy = (await status(a, friday.a!.json.operation_id)).json.receipt;
+    assertEquals(['before_waiting_reason' in legacy, 'after_waiting_reason' in legacy], [false, false]);
+    assertEquals([legacy.before_state, legacy.after_state], ['not_started', 'waiting']);
   },
 });
 

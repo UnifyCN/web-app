@@ -8,7 +8,11 @@ import { Reveal } from "@/components/ui/Reveal";
 import { cn } from "@/lib/utils";
 import type { TaskReceipt, TaskState } from "@/lib/companionActions/contract";
 import type { TaskActionStore } from "@/lib/companionActions/taskActionStore";
-import { editReceiptText, receiptChangeText } from "./editText";
+import {
+  editReceiptText,
+  receiptChanges,
+  receiptChangeText,
+} from "./editText";
 
 interface ReceiptBlockProps {
   receipt: TaskReceipt;
@@ -113,7 +117,7 @@ export function ReceiptBlock({
   return (
     <div className="rounded-lg border border-border-card bg-surface-card px-3 py-2.5">
       <p className="break-words text-sm text-ink-secondary">{text}</p>
-      {receipt.changes.map((change) => (
+      {receiptChanges(receipt).map((change) => (
         <p
           key={change.field}
           className="break-words text-sm text-ink-secondary"

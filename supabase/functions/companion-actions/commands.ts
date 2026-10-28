@@ -12,6 +12,8 @@
 //
 // Edit phrasings (#365): the task is named by its title in quotes ("…", “…” or «…»);
 // priorities and states are the Checklist's own labels in that language (or English).
+// A line has only the quote marks of its one change: a title, a description or a waiting
+// reason cannot contain a quote mark, so a second command on the same line is a question.
 // The documented examples are in DOCS/companion-actions/365-task-edits.md (mobile repo)
 // and are each a server test case (edit_command_test.ts):
 //   en  Rename task "<task>" to "<title>"
@@ -99,6 +101,8 @@ const OPEN_Q = '["“«„]';
 const CLOSE_Q = '["”»“]';
 /** A quoted text: the task's title, or a new title or description (may be empty). */
 const Q = `${OPEN_Q}\\s*(.*?)\\s*${CLOSE_Q}`;
+/** Every quote mark the grammar knows. */
+const QUOTE_MARK = /["“”«»„]/gu;
 
 /**
  * The Checklist's priority labels per language, and English. The mobile Checklist
@@ -224,6 +228,11 @@ function editCommand(line: string): CommandResolution {
   for (const { lang, kind, re } of EDIT_PATTERNS) {
     const m = line.match(re);
     if (!m) continue;
+    // One change uses exactly its own quotes: the task's title, and a new title or
+    // description. More quote marks (a second command run on, or a quote inside a title)
+    // cannot be read as one exact change, so the message gets a question (S365-001).
+    const quotes = kind === 'title' || kind === 'description' ? 4 : 2;
+    if ((line.match(QUOTE_MARK) ?? []).length !== quotes) return { kind: 'clarify', reason: 'multiple_changes' };
     const target = m[1].trim();
     if (!target) return { kind: 'clarify', reason: 'missing_value' };
     let resolved: CommandResolution;
