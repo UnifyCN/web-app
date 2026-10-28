@@ -48,7 +48,7 @@ function Action({
 }: {
   label: string;
   name?: string;
-  onClick: () => void;
+  onClick: (keyboard: boolean) => void;
   disabled?: boolean;
   primary?: boolean;
 }) {
@@ -59,8 +59,8 @@ function Action({
       variant={primary ? undefined : "secondary"}
       aria-label={name}
       aria-disabled={disabled}
-      onClick={() => {
-        if (!disabled) onClick();
+      onClick={(event) => {
+        if (!disabled) onClick(event.detail === 0);
       }}
       className={cn(
         // 44px targets (sm buttons are 32px tall).
@@ -112,6 +112,7 @@ export function DetailReceipt({
 }) {
   const { t } = useTranslation();
   const [confirming, setConfirming] = useState(false);
+  const [instant, setInstant] = useState(false);
   const phase = useTaskActionPhase(store, storeKey);
   const shown = phase.phase === "saved" ? phase.receipt : receipt;
   const d = shown.detail;
@@ -153,10 +154,14 @@ export function DetailReceipt({
         <Action
           label={t("taskActions.undo")}
           name={undoName}
-          onClick={() => (undoRemoves ? setConfirming(true) : undo(false))}
+          onClick={(keyboard) => {
+            setInstant(keyboard);
+            if (undoRemoves) setConfirming(true);
+            else undo(false);
+          }}
         />
       )}
-      <Reveal open={confirming} className={confirmBox}>
+      <Reveal open={confirming} instant={instant} className={confirmBox}>
         <p className="text-sm font-semibold text-ink-secondary">
           {t("savedDetails.confirmTitle")}
         </p>
@@ -207,9 +212,11 @@ export function DetailPhase({
   const [confirming, setConfirming] = useState(false);
   const line = (value: string, error = false) => (
     <p
+      key={phase.phase}
       className={cn(
         "text-sm",
         error ? "text-destructive-label" : "text-ink-tertiary",
+        (phase.phase === "saving" || phase.phase === "checking") && "loading-delayed",
       )}
     >
       {value}
@@ -340,6 +347,7 @@ function DetailRow({
   const phase = useTaskActionPhase(store, key);
   const edit = useTaskActionDraft(store, editDraftKey(detail.detailId));
   const [confirming, setConfirming] = useState(false);
+  const [instant, setInstant] = useState(false);
   const busy = isUnresolved(phase);
   const canWrite = view.canWrite && !busy;
   const editing = edit !== undefined;
@@ -391,19 +399,23 @@ function DetailRow({
             label={t("savedDetails.edit")}
             name={t("savedDetails.editA11y", { text: detail.text })}
             disabled={!canWrite}
-            onClick={() =>
-              store?.setDraft(editDraftKey(detail.detailId), detail.text)
-            }
+            onClick={(keyboard) => {
+              setInstant(keyboard);
+              store?.setDraft(editDraftKey(detail.detailId), detail.text);
+            }}
           />
           <Action
             label={t("savedDetails.remove")}
             name={t("savedDetails.removeA11y", { text: detail.text })}
             disabled={!canWrite}
-            onClick={() => setConfirming(true)}
+            onClick={(keyboard) => {
+              setInstant(keyboard);
+              setConfirming(true);
+            }}
           />
         </div>
       )}
-      <Reveal open={editing} className="space-y-2">
+      <Reveal open={editing} instant={instant} className="space-y-2">
         <textarea
           aria-label={t("savedDetails.editLabel")}
           value={edit ?? ""}
@@ -432,7 +444,7 @@ function DetailRow({
           />
         </div>
       </Reveal>
-      <Reveal open={confirming} className={confirmBox}>
+      <Reveal open={confirming} instant={instant} className={confirmBox}>
         <p className="text-sm font-semibold text-ink-secondary">
           {t("savedDetails.confirmTitle")}
         </p>

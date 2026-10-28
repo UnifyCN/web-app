@@ -497,3 +497,45 @@ describe("Saved personal details through Companion (web, #370)", () => {
     expect(screen.queryByDisplayValue("Typed by the first account")).toBeNull();
   });
 });
+
+
+it("a conflicting detail removal names the current revision, allows Cancel and preserves the historical receipt", async () => {
+  useServer(scriptedServer());
+  mount(<CompanionPage />);
+  await send(`Remember that ${FRIDAYS}`);
+  const card = await screen.findByTestId("detail-command-card");
+  const undo = await within(card).findByRole("button", { name: `Undo saving “${FRIDAYS}”` });
+  await waitFor(() => expect(enabled(undo)).toBe(true));
+  fireEvent.click(undo);
+  const current = "I can attend appointments on Saturdays";
+  server.editDetailElsewhere(server.details()[0].detail_id, current);
+  fireEvent.click(within(card).getByRole("button", { name: "Remove detail" }));
+  await within(card).findByText("This detail changed after that. Nothing was undone. Review the change below before saving it.");
+  expect(within(card).getByText(`Saved: “${FRIDAYS}”.`)).toBeTruthy();
+  const review = within(card).getByRole("button", { name: /Remove “/ });
+  await waitFor(() => expect(enabled(review)).toBe(true));
+  fireEvent.click(review);
+  expect(within(card).getByText(`“${current}” will no longer be used in later conversations.`)).toBeTruthy();
+  fireEvent.click(within(card).getByRole("button", { name: "Cancel" }));
+  expect(server.details()[0]).toMatchObject({ text: current, removed: false });
+  fireEvent.click(within(card).getByRole("button", { name: `Remove “${current}”` }));
+  fireEvent.click(within(card).getByRole("button", { name: "Remove detail" }));
+  await within(card).findByText(`Removed “${current}”. It will not be used in later conversations.`);
+  expect(server.details()[0].removed).toBe(true);
+  expect(server.sent.filter(body => body.action === "apply" && body.operations?.[0]?.type === "detail.remove").at(-1)?.operations[0].expected_revision).toBe(2);
+  expect(saved.find(message => message.role === "user")?.content).toBe(`Remember that ${FRIDAYS}`);
+});
+
+
+it.each([0, 1] as const)("the detail editor uses immediate keyboard disclosure and pointer motion (click detail %s)", async detail => {
+  useServer(scriptedServer());
+  mount(<CompanionPage />);
+  const { drawer } = await rememberAndOpen();
+  const edit = within(drawer).getByRole("button", { name: `Edit saved detail: ${FRIDAYS}` });
+  await waitFor(() => expect(enabled(edit)).toBe(true));
+  fireEvent.click(edit, { detail });
+  // Read before the first animation frame; keyboard input must be visible at once.
+  const editor = within(drawer).getByLabelText("Saved detail");
+  if (detail === 0) expect(editor.parentElement?.style.opacity).not.toBe("0");
+  else expect(editor.parentElement?.style.opacity).toBe("0");
+});
