@@ -145,9 +145,10 @@ export async function migration364Applied(): Promise<boolean> {
 export async function migrate366(which: 'up' | 'down'): Promise<void> {
   const text = await Deno.readTextFile(which === 'up' ? MIGRATION_366 : ROLLBACK_366);
   await sql.begin(async tx => await tx.unsafe(text));
-  // A #364 schema below stays: wait for it rather than for its absence.
+  // After rollback, the step RPC must be absent and any #364 schema below must stay.
   await waitForSchemaCache(
-    which === 'up' && text.includes('companion_read_steps') ? 'up366' : await migration364Applied() ? 'up364' : 'up',
+    which === 'up' && text.includes('companion_read_steps') ? 'up366'
+      : await migration364Applied() ? 'down366WithPlans' : 'down366',
   );
 }
 
@@ -162,7 +163,7 @@ export async function migration363Applied(): Promise<boolean> {
 }
 
 /** PostgREST reloads its schema cache asynchronously after DDL; wait until it agrees. */
-export async function waitForSchemaCache(which: 'up' | 'up364' | 'up361' | 'up366' | 'down', timeoutMs = 15000): Promise<void> {
+export async function waitForSchemaCache(which: 'up' | 'up364' | 'up361' | 'up366' | 'down366' | 'down366WithPlans' | 'down', timeoutMs = 15000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const res = await fetch(`${API_URL}/rest/v1/`, {
@@ -172,9 +173,12 @@ export async function waitForSchemaCache(which: 'up' | 'up364' | 'up361' | 'up36
     const seen = paths.includes('/companion_feature_gate') && paths.includes('/rpc/companion_apply_actions');
     const seen363 = paths.includes('/rpc/companion_prepare_proposal');
     const seen364 = paths.includes('/rpc/companion_plan_prepare');
+    const seen366 = paths.includes('/rpc/companion_read_steps');
     if (which === 'up364' && seen && seen363 && seen364) return;
     if (which === 'up' && seen && seen363 && !seen364) return;
-    if (which === 'up366' && seen && seen363 && paths.includes('/rpc/companion_read_steps')) return;
+    if (which === 'up366' && seen && seen363 && seen366) return;
+    if ((which === 'down366' || which === 'down366WithPlans') && seen && seen363 && !seen366
+      && seen364 === (which === 'down366WithPlans')) return;
     if (which === 'up361' && seen && !seen363) return;
     if (which === 'down' && !paths.some(p => p.includes('companion_') && !p.includes('rollback_archive'))) return;
     await sleep(100);

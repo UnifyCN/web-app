@@ -62,3 +62,8 @@ reader. The unchanged mobile candidate retains its earlier evidence only.
 No server, database stack, hosted operation or child ran for this correction.
 All commands ended normally. Ignored dependencies and local build output remain
 in the owned checkout. The records exclude environment files and credentials.
+
+These comparisons and gates belong to candidate `66575de1`. The later C1
+correction in `../364-366-cache-wait-c1/README.md` intentionally changes executable
+test-helper code so the step rollback waits for the API cache. It adds no product
+or SQL change.
