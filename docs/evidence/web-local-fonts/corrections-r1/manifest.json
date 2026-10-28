@@ -1,0 +1,42 @@
+[
+  {
+    "file": "build.log.gz",
+    "raw_bytes": 2198,
+    "raw_sha256": "fe2035ae93e97b1b41e7b91bd9e010c0c515495d8762064538923eb05f520087"
+  },
+  {
+    "file": "checks.json.gz",
+    "raw_bytes": 639,
+    "raw_sha256": "65a2c76bb6c8624d858cd473ad7d2df6d0f65e0a91cf34fd9182187f4dad1f10"
+  },
+  {
+    "file": "full-lint.json.log.gz",
+    "raw_bytes": 215410,
+    "raw_sha256": "cd062549600ba83022ebbcca0ac45d55b91ae2c55316797b800000d47ec5d950"
+  },
+  {
+    "file": "lint-green.log.gz",
+    "raw_bytes": 0,
+    "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "lint-red.log.gz",
+    "raw_bytes": 437,
+    "raw_sha256": "7d486b43308593d22f5e4959762ee7c95e67ae76a0b45afbc0cba7efc2b61cb8"
+  },
+  {
+    "file": "metadata-after.json.gz",
+    "raw_bytes": 9869,
+    "raw_sha256": "e13caeac3b361b446de015ac3983b4b0c97b5e1287fc0873d41e56d582ae0efb"
+  },
+  {
+    "file": "metadata-before.json.gz",
+    "raw_bytes": 9869,
+    "raw_sha256": "e13caeac3b361b446de015ac3983b4b0c97b5e1287fc0873d41e56d582ae0efb"
+  },
+  {
+    "file": "npm-test.log.gz",
+    "raw_bytes": 6833,
+    "raw_sha256": "9a24b408f112915d1fd4179ce0c3267c0da9b0598ad220f39a7aca54221036e6"
+  }
+]

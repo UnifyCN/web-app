@@ -1,0 +1,6 @@
+(version 1)
+(allow default)
+(debug deny)
+(deny network-outbound)
+(allow network-outbound (remote ip "localhost:*"))
+(allow network-outbound (remote unix-socket))

@@ -1,0 +1,22 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "build"
+  ],
+  "cwd": "/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05",
+  "start_utc": "2026-10-27T22:08:03.788591+00:00",
+  "timeout_s": 300,
+  "removed_environment_names": [],
+  "mock": null,
+  "blocked": false,
+  "extra_env": [],
+  "pid": 21221,
+  "pgid": 21221,
+  "exit_code": 0,
+  "timed_out": false,
+  "remaining_group_term_sent": false,
+  "elapsed_s": 11.29,
+  "end_utc": "2026-10-27T22:08:15.078333+00:00",
+  "log_bytes": 2198
+}
