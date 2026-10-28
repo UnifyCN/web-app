@@ -31,6 +31,11 @@ export const MIGRATION_363 = override('ACTIONS_MIGRATION_363_FILE') ??
   new URL('../../migrations/20261026165156_companion_task_create.sql', import.meta.url);
 export const ROLLBACK_363 = override('ACTIONS_ROLLBACK_363_FILE') ??
   new URL('../../rollbacks/20261026165156_companion_task_create.down.sql', import.meta.url);
+// #364 settlement plans; ACTIONS_MIGRATION_364_FILE / ACTIONS_ROLLBACK_364_FILE likewise.
+export const MIGRATION_364 = override('ACTIONS_MIGRATION_364_FILE') ??
+  new URL('../../migrations/20261027183338_companion_settlement_plan.sql', import.meta.url);
+export const ROLLBACK_364 = override('ACTIONS_ROLLBACK_364_FILE') ??
+  new URL('../../rollbacks/20261027183338_companion_settlement_plan.down.sql', import.meta.url);
 // #366 task steps (ACTIONS_MIGRATION_366_FILE / ACTIONS_ROLLBACK_366_FILE for mutation runs).
 export const MIGRATION_366 = override('ACTIONS_MIGRATION_366_FILE') ??
   new URL('../../migrations/20261027183644_companion_task_steps.sql', import.meta.url);
@@ -100,13 +105,14 @@ export async function migrationApplied(): Promise<boolean> {
 
 /**
  * The full schema change: 'up' applies the production migrations in timestamp order
- * (#361, #363, #366, #365), each in one transaction; 'down' runs the rollback scripts in
- * reverse order.
+ * (#361, #363, #364, #366, #365), each in one transaction; 'down' runs the rollback
+ * scripts in reverse order.
  */
 export async function migrate(which: 'up' | 'down'): Promise<void> {
   if (which === 'up') {
     await sql.begin(async tx => await tx.unsafe(await Deno.readTextFile(MIGRATION)));
     await migrate363('up');
+    await migrate364('up');
     await migrate366('up');
     await migrate365('up');
   } else {
@@ -119,11 +125,12 @@ export async function migrate(which: 'up' | 'down'): Promise<void> {
 }
 
 /**
- * Only the #363 migration or only its rollback script, in one transaction. The #365
- * rollback runs first when #365 is applied (it is the newest migration).
+ * Only the #363 migration or only its rollback script, in one transaction. Newer schema
+ * on top (#365, then #364) is rolled back first, as the operator order requires.
  */
 export async function migrate363(which: 'up' | 'down'): Promise<void> {
   if (which === 'down' && await migration365Applied()) await migrate365('down');
+  if (which === 'down' && await migration364Applied()) await migrate364('down');
   const text = await Deno.readTextFile(which === 'up' ? MIGRATION_363 : ROLLBACK_363);
   await sql.begin(async tx => await tx.unsafe(text));
   // Wait for what the file actually defines (a red run may use an empty placeholder).
@@ -131,14 +138,37 @@ export async function migrate363(which: 'up' | 'down'): Promise<void> {
 }
 
 /**
+ * Only the #364 migration or only its rollback script, in one transaction. The #365
+ * rollback runs first when #365 is applied (it is the newest migration).
+ */
+export async function migrate364(which: 'up' | 'down'): Promise<void> {
+  if (which === 'down' && await migration365Applied()) await migrate365('down');
+  const text = await Deno.readTextFile(which === 'up' ? MIGRATION_364 : ROLLBACK_364);
+  await sql.begin(async tx => await tx.unsafe(text));
+  // Wait for what the file actually defines (a red run may use an empty placeholder).
+  // A down script that does not drop the plan functions (a red placeholder) leaves them.
+  const present = which === 'up' ? text.includes('companion_plan_prepare') : !text.includes('companion_plan_prepare');
+  await waitForSchemaCache(present && await migration364Applied() ? 'up364' : 'up');
+}
+
+export async function migration364Applied(): Promise<boolean> {
+  const [r] = await sql`select to_regclass('public.companion_plan_proposals') is not null as applied`;
+  return r.applied;
+}
+
+/**
  * Only the #366 migration or only its rollback script, in one transaction. The #365
- * rollback runs first when #365 is applied (rollback order: #365, #366, #363, #361).
+ * rollback runs first when #365 is applied (rollback order: #365, #366, #364, #363, #361).
  */
 export async function migrate366(which: 'up' | 'down'): Promise<void> {
   if (which === 'down' && await migration365Applied()) await migrate365('down');
   const text = await Deno.readTextFile(which === 'up' ? MIGRATION_366 : ROLLBACK_366);
   await sql.begin(async tx => await tx.unsafe(text));
-  await waitForSchemaCache(which === 'up' && text.includes('companion_read_steps') ? 'up366' : 'up');
+  // After rollback, the step RPC must be absent and any #364 schema below must stay.
+  await waitForSchemaCache(
+    which === 'up' && text.includes('companion_read_steps') ? 'up366'
+      : await migration364Applied() ? 'down366WithPlans' : 'down366',
+  );
 }
 
 /** Only the #365 migration or only its rollback script, in one transaction. */
@@ -166,7 +196,7 @@ export async function migration363Applied(): Promise<boolean> {
 }
 
 /** PostgREST reloads its schema cache asynchronously after DDL; wait until it agrees. */
-export async function waitForSchemaCache(which: 'up' | 'up361' | 'up366' | 'up365' | 'down', timeoutMs = 15000): Promise<void> {
+export async function waitForSchemaCache(which: 'up' | 'up364' | 'up361' | 'up366' | 'up365' | 'down366' | 'down366WithPlans' | 'down', timeoutMs = 15000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const res = await fetch(`${API_URL}/rest/v1/`, {
@@ -175,11 +205,15 @@ export async function waitForSchemaCache(which: 'up' | 'up361' | 'up366' | 'up36
     const paths = Object.keys((await res.json()).paths ?? {});
     const seen = paths.includes('/companion_feature_gate') && paths.includes('/rpc/companion_apply_actions');
     const seen363 = paths.includes('/rpc/companion_prepare_proposal');
+    const seen364 = paths.includes('/rpc/companion_plan_prepare');
     const seen365 = paths.includes('/rpc/companion_prepare_edit');
     const seen366 = paths.includes('/rpc/companion_read_steps');
     if (which === 'up365' && seen && seen363 && seen366 && seen365) return;
-    if (which === 'up' && seen && seen363 && !seen365) return;
+    if (which === 'up364' && seen && seen363 && seen364) return;
+    if (which === 'up' && seen && seen363 && !seen364 && !seen365) return;
     if (which === 'up366' && seen && seen363 && seen366 && !seen365) return;
+    if ((which === 'down366' || which === 'down366WithPlans') && seen && seen363 && !seen366
+      && !seen365 && seen364 === (which === 'down366WithPlans')) return;
     if (which === 'up361' && seen && !seen363) return;
     if (which === 'down' && !paths.some(p => p.includes('companion_') && !p.includes('rollback_archive'))) return;
     await sleep(100);
@@ -199,6 +233,7 @@ export async function ready(): Promise<void> {
   if (!(await migrationApplied())) await migrate('up');
   else {
     if (!(await migration363Applied())) await migrate363('up');
+    if (!(await migration364Applied())) await migrate364('up');
     if (!(await migration366Applied())) await migrate366('up');
     if (!(await migration365Applied())) await migrate365('up');
   }
@@ -363,6 +398,53 @@ export function holdTaskRow(table: 'user_tasks' | 'custom_checklist_tasks', wher
 
 export const testOpts = { sanitizeOps: false, sanitizeResources: false };
 
+// ------------------------------------------------------------ settlement plans (#364)
+export const existingItem = (task_ref: string, label?: string) =>
+  ({ kind: 'existing', task_ref, ...(label === undefined ? {} : { label }) });
+export const newItem = (title: string, extra: Record<string, unknown> = {}) => ({ kind: 'new', title, ...extra });
+
+export const planPrepare = (who: Account | null, goal: string, items: unknown[], extra: Record<string, unknown> = {}, platform?: Platform) =>
+  call(who, { ...base(platform), action: 'plan_prepare', goal, items, ...extra });
+export const planProposal = (who: Account, plan_proposal_id: string, platform?: Platform) =>
+  call(who, { ...base(platform), action: 'plan_proposal', plan_proposal_id });
+export const planRevise = (who: Account, plan_proposal_id: string, proposal_revision: number, items: unknown[]) =>
+  call(who, { ...base(), action: 'plan_revise', plan_proposal_id, proposal_revision, items });
+export const planCancel = (who: Account, plan_proposal_id: string, proposal_revision: number) =>
+  call(who, { ...base(), action: 'plan_cancel', plan_proposal_id, proposal_revision });
+/** Approval of a plan draft at the revision and exact items the user saw. */
+export const planApply = (
+  who: Account | null,
+  draft: { plan_proposal_id: string; proposal_revision: number; items: unknown[] },
+  opts: { operation_id?: string; authorization?: unknown; items?: unknown[]; platform?: Platform } = {},
+) =>
+  call(who, {
+    ...base(opts.platform),
+    action: 'plan_apply',
+    operation_id: opts.operation_id ?? uuid(),
+    authorization: 'authorization' in opts ? opts.authorization : {
+      kind: 'approved_proposal', proposal_id: draft.plan_proposal_id, proposal_revision: draft.proposal_revision,
+    },
+    items: opts.items ?? draft.items,
+  });
+export const planStatus = (who: Account, operation_id: string) =>
+  call(who, { ...base(), action: 'plan_status', operation_id });
+export const planRetry = (who: Account, receipt_operation_id: string, opts: { operation_id?: string } = {}) =>
+  call(who, { ...base(), action: 'plan_retry', operation_id: opts.operation_id ?? uuid(), receipt_operation_id,
+    authorization: { kind: 'ui_control' } });
+export const planUndo = (who: Account, receipt_operation_id: string, opts: { operation_id?: string; authorization?: unknown } = {}) =>
+  call(who, { ...base(), action: 'plan_undo', operation_id: opts.operation_id ?? uuid(), receipt_operation_id,
+    authorization: 'authorization' in opts ? opts.authorization : { kind: 'ui_control', removal_confirmed: true } });
+export const plansOf = (who: Account, platform?: Platform) => call(who, { ...base(platform), action: 'plans' });
+export const conversationPlans = (who: Account, conversation_id: string) =>
+  call(who, { ...base(), action: 'conversation_plans', conversation_id });
+
+/** Every custom task row of an account, removed ones included (no public read shows those). */
+export async function customRows(userId: string): Promise<{ id: number; title: string; removed: boolean }[]> {
+  const rows = await sql`select id::int, title, removed_at is not null as removed from custom_checklist_tasks
+    where user_id = ${userId} order by id`;
+  return rows.map(r => ({ id: r.id as number, title: r.title as string, removed: r.removed as boolean }));
+}
+
 // ------------------------------------------------------------------ #366 task steps
 export const stepCreate = (task_ref: string, titles: string[]) => ({ type: 'step.create', task_ref, titles });
 export const stepUpdate = (step_id: string, title: string, expected_revision: number) =>
@@ -372,8 +454,26 @@ export const stepDone = (step_id: string, done: boolean, expected_revision: numb
 export const stepRemove = (step_id: string, expected_revision: number) => ({ type: 'step.remove', step_id, expected_revision });
 export const confirmedRemoval = { kind: 'ui_control', removal_confirmed: true };
 
+export interface LiveStep {
+  step_id: string;
+  task_ref: string;
+  title: string;
+  done: boolean;
+  position: number;
+  revision: number;
+}
+
+interface StoredStep {
+  id: string;
+  task_ref: string;
+  title: string;
+  completed: boolean;
+  removed: boolean;
+  revision: string;
+}
+
 /** The caller's live steps of one task, as the read action returns them, in order. */
-export async function stepsOf(who: Account, ref: string, platform?: Platform): Promise<any[]> {
+export async function stepsOf(who: Account, ref: string, platform?: Platform): Promise<LiveStep[]> {
   const r = await read(who, platform);
   if (r.status !== 200) throw new Error(`read failed: ${r.status} ${JSON.stringify(r.json)}`);
   if (!Array.isArray(r.json.steps)) throw new Error(`read returned no steps: ${JSON.stringify(r.json)}`);
@@ -381,8 +481,8 @@ export async function stepsOf(who: Account, ref: string, platform?: Platform): P
 }
 
 /** Every step row of an account, removed ones included (no public path exposes those). */
-export async function stepRows(userId: string): Promise<any[]> {
-  return [...await sql`select id::text, task_ref, title, completed, removed_at is not null as removed, revision
+export async function stepRows(userId: string): Promise<StoredStep[]> {
+  return [...await sql<StoredStep[]>`select id::text, task_ref, title, completed, removed_at is not null as removed, revision
     from companion_task_steps where user_id = ${userId} order by position, created_at`];
 }
 

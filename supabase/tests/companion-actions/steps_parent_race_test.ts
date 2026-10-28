@@ -15,8 +15,9 @@
 // behind the step is started without being awaited, so a correct ordering cannot hang
 // the test.
 import { assert, assertEquals } from 'jsr:@std/assert@1';
+import type postgres from 'npm:postgres@3';
 import {
-  type Account, apply, migrate366, newAccount, openGate, read, ready, sql, startContentStub, stepCreate, stepDone,
+  type Account, type LiveStep, apply, migrate366, newAccount, openGate, read, ready, sql, startContentStub, stepCreate, stepDone,
   testOpts,
 } from './support.ts';
 
@@ -47,7 +48,7 @@ function legacyUpdateCompleted(who: Account, userTaskId: number): Promise<Settle
 }
 
 /** Runs `statement` in a transaction on its own connection and keeps it open until release(). */
-function hold(statement: (t: any) => Promise<unknown>) {
+function hold(statement: (t: postgres.TransactionSql) => Promise<unknown>) {
   let release!: () => void;
   const held = new Promise<void>(r => (release = r));
   let acquired!: () => void;
@@ -82,10 +83,11 @@ async function blockedOrSettled(pattern: string, event: string, settled?: Promis
   throw new Error(`neither waiting on ${event} nor settled: ${pattern}`);
 }
 
-function parentOf(json: any, ref = REF) {
+type Parent = { task_ref: string; state: string; removed: boolean; revision: number };
+function parentOf(json: { tasks: Parent[] }, ref = REF) {
   return json.tasks.find((t: { task_ref: string }) => t.task_ref === ref);
 }
-const changed = (mode: Mode, parent: any) =>
+const changed = (mode: Mode, parent: Parent | undefined): parent is Parent =>
   parent !== undefined && (mode === 'completion' ? parent.state === 'completed' : parent.removed === true);
 
 for (const mode of ['completion', 'dismissal'] as Mode[]) {
@@ -146,7 +148,7 @@ for (const mode of ['completion', 'dismissal'] as Mode[]) {
         }
         assertEquals(s.status, 200);
         assertEquals([s.json.receipt.before_state, s.json.receipt.after_state], ['not_started', 'not_started']);
-        assertEquals(after.json.steps.map((x: any) => [x.title, x.done]), [[`held ${mode} step`, false]]);
+        assertEquals(after.json.steps.map((x: LiveStep) => [x.title, x.done]), [[`held ${mode} step`, false]]);
       } finally {
         if (!releasedParent) await parentLock.release();
         if (!releasedTable) await stepTable.release();
@@ -212,7 +214,7 @@ for (const mode of ['completion', 'dismissal'] as Mode[]) {
         assertEquals(legacyState, 'blocked', 'the legacy write waits for the step add');
         assertEquals(s.status, 200);
         assert(changed(mode, parentOf(after.json)));
-        assertEquals(after.json.steps.map((x: any) => x.title), [`late ${mode} step`]);
+        assertEquals(after.json.steps.map((x: LiveStep) => x.title), [`late ${mode} step`]);
       } finally {
         if (!released) await stepTable.release();
       }
@@ -253,7 +255,7 @@ Deno.test({
 
       for (const mid of [mid1, mid2]) {
         if (changed('completion', parentOf(mid.json))) {
-          assertEquals(mid.json.steps.map((x: any) => x.done), [false]);
+          assertEquals(mid.json.steps.map((x: LiveStep) => x.done), [false]);
           assertEquals(c.status, 422, 'a step was checked after the completion was committed and publicly read');
         }
       }
@@ -261,8 +263,8 @@ Deno.test({
       assertEquals(legacyFirst, 'blocked', 'the legacy completion waits for the parent lock');
       assertEquals(c.status, 200);
       assertEquals(legacyWhileCheckHeld, ['advisory'], 'the legacy completion still waits while the check holds the parent');
-      assertEquals(parentOf(after.json).state, 'completed');
-      assertEquals(after.json.steps.map((x: any) => x.done), [true]);
+      assertEquals(parentOf(after.json)!.state, 'completed');
+      assertEquals(after.json.steps.map((x: LiveStep) => x.done), [true]);
     } finally {
       if (!releasedParent) await parentLock.release();
       if (!releasedTable) await stepTable.release();
@@ -303,7 +305,7 @@ Deno.test({
           step: { status: s.status, reason: s.json.reason }, legacy: l, after: after.json }));
         assert([200, 201, 204].includes(l.status), `legacy ${shape} finished: ${l.status}`);
         assertEquals(l.error, null);
-        assertEquals(parentOf(after.json).state, 'completed');
+        assertEquals(parentOf(after.json)!.state, 'completed');
         if (changed('completion', parentOf(mid.json))) {
           // The completion was committed and read first: the step add must be refused.
           assertEquals([s.status, s.json.reason], [422, 'task_completed']);
@@ -405,7 +407,7 @@ Deno.test({
     } finally {
       if (!released) await parentLock.release();
     }
-    const parent = parentOf((await read(who)).json);
+    const parent = parentOf((await read(who)).json)!;
     assertEquals([parent.state, parent.removed, parent.revision], ['completed', true, 2]);
   },
 });

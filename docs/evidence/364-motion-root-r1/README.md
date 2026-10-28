@@ -1,0 +1,9 @@
+# Plan confirmation motion correction
+
+Standards S1 in review-364-STANDARDS-r1.md identified plain Undo and conflict confirmation blocks. Both now use shared Reveal. Pointer clicks use its entrance; keyboard clicks pass instant. Existing controls, group semantics, store calls and removal approval are preserved. No SQL, contract, mobile UI or locale changes. The optional shared instant property matches the separately prepared366client correction byte for byte, but no366code was imported.
+
+Falsifiers: a pointer-triggered confirmation or conflict has no shared entrance; or keyboard activation leaves controls initially hidden or moved. Four tests render the real PlanPanel and Reveal with scripted hooks and a network tripwire. On unchanged5bb8289e, two pointer cases failed at opacity assertions and two keyboard controls passed. After correction all four pass. An initial test draft used an incorrect confirmation label; it was corrected to the actual Undo plan label before the final four-case red run and before source fixes. No binding detection is attributed to that draft.
+
+Web full suite exits0:633tests pass,4local-stack cases skip. Production build, separate TypeScript and changed-file eslint each exit0. Source tests inspect jsdom styles, not real browser timing, reduced-motion settings, screen-reader output or persisted authorization. Existing app MotionConfig still controls reduced motion. The store, receipts and action boundary are unchanged. No Docker, local database, live provider, hosted service or native device ran for this correction. The independent SPEC review remains on the original candidate; this correction is not acceptance.
+
+Raw gate logs remain node_modules/.cache/364-motion-root-r1 in the root-owned correction checkout. Red/green JSON and selected gate summary are retained here. Counts overlap.

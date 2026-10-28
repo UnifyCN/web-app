@@ -6,6 +6,7 @@ import type {
   Conversation,
   LessonContext,
 } from "@/types";
+import { parseSuggestedPlan } from "@/lib/companionActions/planContract";
 import {
   parseSuggestedEdit,
   type SuggestedEdit,
@@ -434,6 +435,9 @@ export interface GeneratedReply {
   /** A change to one listed task the answer suggests (#365). A suggestion only, like
    *  actionProposal: the action service prepares the draft; nothing is saved here. */
   actionEdit: SuggestedEdit | null;
+  /** A settlement plan the answer suggests for review (#364), allowlisted fields only.
+   *  The action service prepares the draft and checks every reused task again. */
+  planProposal: ReturnType<typeof parseSuggestedPlan>;
   /* Analytics only (companion_response_received); null when absent. */
   queryType: string | null;
   topic: CompanionTopic | null;
@@ -525,6 +529,7 @@ export async function generateReply(
       contextRecord: null,
       actionProposal: null,
       actionEdit: null,
+      planProposal: null,
       queryType: null,
       topic: null,
       tokenUsage: null,
@@ -584,6 +589,7 @@ export async function generateReply(
     contextRecord: savableContext(body.context),
     actionProposal: parseActionProposal(body.actionProposal),
     actionEdit: parseSuggestedEdit(body.actionProposal),
+    planProposal: parseSuggestedPlan(body.actionProposal),
     queryType: typeof body.queryType === "string" ? body.queryType : null,
     topic: parseCompanionTopic(body.topic),
     tokenUsage: normalizeTokenUsage(body.tokenUsage),
