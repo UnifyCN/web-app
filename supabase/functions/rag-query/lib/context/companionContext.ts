@@ -21,6 +21,7 @@ import {
   readChecklist,
   readOwnConversation,
   readProfileRow,
+  readSavedDetails,
   type ChecklistRead,
   type ProfileRow,
   type SanityConfig,
@@ -52,6 +53,11 @@ export interface CompanionReadRequest {
   queryType: string;
   sanity: SanityConfig | null;
   guidance: GuidanceConfig;
+  /**
+   * #370: whether Companion actions are on (the action service's feature gate). Saved
+   * details are used only then, so a detail the user cannot see or remove is never used.
+   */
+  actionsEnabled: () => Promise<boolean>;
   now: () => Date;
 }
 
@@ -64,6 +70,8 @@ export interface CompanionReads {
     evidence: Map<string, string>;
     /** The client's earlier turns may be used: conversation access was established. */
     historyAllowed: boolean;
+    /** #370: the account's saved personal details, for the prompt only. */
+    savedDetails: string[];
   }>;
 }
 
@@ -103,6 +111,17 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
         parseInput: raw => (typeof raw === 'string' ? raw : null),
         execute: (id, signal) => readOwnConversation(userClient, id, signal),
         validateOutput: raw => (raw && typeof raw === 'object' ? (raw as ContextItem) : null),
+      })
+    : Promise.resolve({ status: 'skipped' } as const);
+
+  // #370: saved details belong to the account, not to the conversation: read with the
+  // user's JWT beside the profile. A failed read means none are used.
+  const savedDetailsOutcome = userClient && userId
+    ? runRead<string, string[]>('context.saved_details', userId, {
+        parseInput: raw => (typeof raw === 'string' && raw ? raw : null),
+        execute: async (id, signal) =>
+          (await request.actionsEnabled()) ? readSavedDetails(userClient, id, signal) : [],
+        validateOutput: raw => (Array.isArray(raw) && raw.every(t => typeof t === 'string') ? (raw as string[]) : null),
       })
     : Promise.resolve({ status: 'skipped' } as const);
 
@@ -146,7 +165,7 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
         )
       : Promise.resolve(null);
 
-    const [checklist, guidance] = await Promise.all([checklistOutcome, guidancePromise]);
+    const [checklist, guidance, savedDetails] = await Promise.all([checklistOutcome, guidancePromise, savedDetailsOutcome]);
 
     reports.push({
       capability: 'context.checklist',
@@ -176,6 +195,7 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
       context: result,
       evidence: guidance?.evidence ?? new Map<string, string>(),
       historyAllowed,
+      savedDetails: savedDetails.status === 'ok' ? savedDetails.value ?? [] : [],
     };
   })().catch(error => {
     // A defect in assembling context must not cost the user the answer; the
@@ -188,7 +208,7 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
       guidance: { status: 'unavailable', reason: 'read_failed', sources: [] } as GuidanceResult,
       clarification: null,
     };
-    return { context: empty, evidence: new Map<string, string>(), historyAllowed: false };
+    return { context: empty, evidence: new Map<string, string>(), historyAllowed: false, savedDetails: [] };
   });
 
   return { profile, context };

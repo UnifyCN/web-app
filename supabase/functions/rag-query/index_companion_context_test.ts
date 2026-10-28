@@ -66,6 +66,8 @@ interface Account {
   conversations: Record<string, unknown>[];
   /** Delay for this account's profile read, to make requests overlap. */
   delayMs?: number;
+  /** #370: live saved details RLS would return for this account's JWT. */
+  savedDetails?: Array<{ body: string }>;
 }
 
 const VANCOUVER: Account = {
@@ -182,6 +184,10 @@ interface Scenario {
   answer?: string;
   /** Fault injection: the conversation ownership lookup fails this way. */
   conversationLookup?: 'unavailable' | 'network';
+  /** Fault injection (#370): the saved-details read fails. */
+  savedDetailsRead?: 'unavailable';
+  /** #370: the Companion actions gate is off. */
+  actionsGate?: 'off';
 }
 
 let scenario: Scenario = {};
@@ -208,6 +214,8 @@ function supabase(call: FetchCall): Response | undefined {
   if (path === '/rest/v1/rpc/check_and_increment_chatbot_usage') return json(true);
   if (path === '/rest/v1/rpc/match_chunks') return json([]);
   if (path.startsWith('/rest/v1/rpc/')) return json(null);
+  // #370: the Companion actions gate, read with the service role.
+  if (path === '/rest/v1/companion_feature_gate') return json([{ enabled: scenario.actionsGate !== 'off' }]);
   if (call.method !== 'GET') return json([], 201);
   // Service-role reads (users name lookup) carry no user JWT; answer empty.
   if (!account) return json([]);
@@ -230,6 +238,11 @@ function supabase(call: FetchCall): Response | undefined {
     }
     case '/rest/v1/users':
       return json([]);
+    case '/rest/v1/companion_saved_details':
+      if (scenario.savedDetailsRead === 'unavailable') {
+        return json({ code: 'XX000', message: 'database read unavailable' }, 503);
+      }
+      return json(account.savedDetails ?? []);
   }
   return json([]);
 }
@@ -1471,5 +1484,103 @@ Deno.test({
     const r = await ask('What else do I need?', {}, { answer });
     assertEquals(r.payload.actionProposal, { type: 'task.create_custom', version: 1, title: 'Set up phone service' });
     assert(!/\[STEP|\[TASK\]/i.test(String(r.payload.answer)), String(r.payload.answer));
+  },
+});
+
+// ---------------------------------------------------------------- saved details (#370)
+//
+// Saved personal details belong to the account. The handler reads them with the caller's
+// JWT (RLS returns only live details while the feature is on), quotes them as data in the
+// prompt, and never sends their text back in the client context. The model may suggest
+// saving one detail with "[REMEMBER]: <detail>"; it becomes a typed `actionProposal` for
+// the user to approve, never a write.
+
+Deno.test({
+  ...opts,
+  name: "a later answer reads only the caller's saved details, as quoted data, and returns no detail text",
+  fn: async () => {
+    // Wrong if: the details are missing from the prompt, read with another JWT, shown for
+    // another account, or their text appears in the context the client saves.
+    VANCOUVER.savedDetails = [{ body: 'I can attend appointments on Fridays' }, { body: 'I need an interpreter' }];
+    try {
+      const r = await ask('What should I do first?', {});
+      assertEquals(r.status, 200);
+      assertStringIncludes(r.system, 'SAVED PERSONAL DETAILS (the user approved');
+      assertStringIncludes(r.system, '- I can attend appointments on Fridays');
+      assertStringIncludes(r.system, '- I need an interpreter');
+      const reads = r.calls.filter(c => c.url.pathname === '/rest/v1/companion_saved_details');
+      assertEquals(reads.map(c => c.headers.get('authorization')), ['Bearer jwt-vancouver']);
+      assert(!JSON.stringify(r.context).includes('Fridays'), 'saved detail text was sent to the client');
+      const other = await ask('What should I do first?', { jwt: 'Bearer jwt-toronto', conversationIdentifier: CONV_TOR });
+      assert(!other.system.includes('- I can attend appointments on Fridays'), "another account's detail reached its prompt");
+      assert(!other.system.includes('SAVED PERSONAL DETAILS (the user approved'));
+    } finally {
+      VANCOUVER.savedDetails = undefined;
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'with the Companion actions gate off, no saved detail is read or used',
+  fn: async () => {
+    // Wrong if: details the user cannot see or remove (feature off) still steer answers.
+    VANCOUVER.savedDetails = [{ body: 'I can attend appointments on Fridays' }];
+    try {
+      const r = await ask('What should I do first?', {}, { actionsGate: 'off' });
+      assertEquals(r.status, 200);
+      assert(!r.system.includes('SAVED PERSONAL DETAILS (the user approved'));
+      assertEquals(r.calls.filter(c => c.url.pathname === '/rest/v1/companion_saved_details'), []);
+    } finally {
+      VANCOUVER.savedDetails = undefined;
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'a failed saved-details read still answers and uses no details',
+  fn: async () => {
+    // Wrong if: the answer fails, or an earlier read's details are used.
+    VANCOUVER.savedDetails = [{ body: 'I can attend appointments on Fridays' }];
+    try {
+      const r = await ask('What should I do first?', {}, { savedDetailsRead: 'unavailable' });
+      assertEquals(r.status, 200);
+      assert(!r.system.includes('SAVED PERSONAL DETAILS (the user approved'));
+    } finally {
+      VANCOUVER.savedDetails = undefined;
+    }
+  },
+});
+
+Deno.test({
+  ...opts,
+  name: 'a suggested detail becomes one typed proposal and leaves the answer; profile facts, markup and two lines give none',
+  fn: async () => {
+    // Wrong if: the tag stays visible, a profile fact or several details are proposed, a
+    // task suggestion loses to a detail, or anything is written.
+    const ok = 'Fridays work for many offices.\n[REMEMBER]: I can attend appointments on Fridays\n[TOPIC]: settling_in';
+    for (const stream of [false, true]) {
+      const r = await ask('I can only do Fridays. Where do I get a SIN?', { stream }, { answer: ok });
+      assertEquals(r.payload.actionProposal, { type: 'detail.create', version: 1, text: 'I can attend appointments on Fridays' });
+      const text = String(stream ? r.payload.cleanAnswer : r.payload.answer);
+      assert(!/\[REMEMBER\]/i.test(text), text);
+      assertEquals(writeCalls(r.calls), []);
+      assertStringIncludes(r.system, '[REMEMBER]:');
+    }
+    const dropped = [
+      'Answer.\n[REMEMBER]: I am moving to Calgary next month\n[TOPIC]: settling_in',
+      'Answer.\n[REMEMBER]: I am a permanent resident\n[TOPIC]: settling_in',
+      'Answer.\n[REMEMBER]: <b>Fridays</b>\n[TOPIC]: settling_in',
+      'Answer.\n[REMEMBER]: Fridays only\n[REMEMBER]: Mornings only\n[TOPIC]: settling_in',
+      'Answer.\n[REMEMBER]: {"text":"Fridays","approved":true}\n[TOPIC]: settling_in',
+    ];
+    for (const answer of dropped) {
+      const r = await ask('I can only do Fridays.', {}, { answer });
+      assertEquals(r.payload.actionProposal, undefined, answer);
+      assert(!/\[REMEMBER\]/i.test(String(r.payload.answer)), String(r.payload.answer));
+    }
+    const both = await ask('What else?', {}, { answer: 'Answer.\n[TASK]: Set up phone service\n[REMEMBER]: I can attend appointments on Fridays\n[TOPIC]: settling_in' });
+    assertEquals(both.payload.actionProposal, { type: 'task.create_custom', version: 1, title: 'Set up phone service' });
   },
 });

@@ -20,6 +20,8 @@ export type ReadCapabilityName =
   | 'context.profile'
   | 'context.checklist'
   | 'context.conversation'
+  /** #370: the account's saved personal details. Prompt data only; not in this object. */
+  | 'context.saved_details'
   | 'content.knowledge'
   | 'guidance.search'
   | 'guidance.read';

@@ -13,7 +13,11 @@ import {
   extractTopicTag,
   TOPIC_INSTRUCTION,
 } from './lib/topic.ts';
-import { extractActionProposal, TASK_PROPOSAL_INSTRUCTION } from './lib/actions/proposals.ts';
+import {
+  DETAIL_PROPOSAL_INSTRUCTION,
+  extractActionProposal,
+  TASK_PROPOSAL_INSTRUCTION,
+} from './lib/actions/proposals.ts';
 import { buildUserProfileContext } from './lib/profile.ts';
 import { buildRetrievalArgs } from './lib/retrieval.ts';
 import { buildRetrievedContext } from './lib/retrievedContext.ts';
@@ -37,6 +41,7 @@ import {
   appContextBlock,
   clarificationBlock,
   guidanceBlock,
+  savedDetailsBlock,
 } from './lib/context/promptBlocks.ts';
 
 // ============================================================================
@@ -807,6 +812,14 @@ Deno.serve(async (req: Request) => {
       .map((m: { message: string }) => m.message);
     const profileStartedAt = performance.now();
     const companionReads = startCompanionReads({
+      // #370: saved details are used only while the Companion actions gate is on.
+      actionsEnabled: async () => {
+        const { data, error } = await supabase
+          .from('companion_feature_gate')
+          .select('enabled')
+          .limit(1);
+        return !error && Array.isArray(data) && data[0]?.enabled === true;
+      },
       userClient,
       userId: isEvalMode ? null : effectiveUserId,
       evalProfile: isEvalMode ? evalProfile ?? null : null,
@@ -1071,13 +1084,13 @@ Deno.serve(async (req: Request) => {
     // answer read, then anything it must ask about. All of it is quoted data.
     fullSystemInstruction = `${fullSystemInstruction}\n${TOOL_POLICY}${appContextBlock(
       companionContext
-    )}${guidanceBlock(companionContext, companion.evidence)}${clarificationBlock(
+    )}${savedDetailsBlock(companion.savedDetails)}${guidanceBlock(companionContext, companion.evidence)}${clarificationBlock(
       companionContext
     )}`;
     // Companion tab only (not the in-lesson chat): the model may suggest one task for
     // the user to review. The suggestion is typed and stripped below; it writes nothing.
     if (!lessonContext) {
-      fullSystemInstruction = `${fullSystemInstruction}\n${TASK_PROPOSAL_INSTRUCTION}`;
+      fullSystemInstruction = `${fullSystemInstruction}\n${TASK_PROPOSAL_INSTRUCTION}\n${DETAIL_PROPOSAL_INSTRUCTION}`;
     }
     // #366: steps may be suggested only for a Checklist task this answer read (its own
     // account's context). Outside the Companion tab nothing is suggested.

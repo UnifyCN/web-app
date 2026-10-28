@@ -11,6 +11,7 @@
 //   pa  "ਕੰਮ ਜੋੜੋ: <title>"                 ar  "أضف مهمة: <title>"
 
 import { TITLE_MAX } from './contract.ts';
+import { profileFactOf, type ProfileFactField } from '../rag-query/lib/context/profileFacts.ts';
 
 export type CommandResolution =
   | { kind: 'create'; title: string }
@@ -71,3 +72,71 @@ export function resolveCommand(text: string): CommandResolution {
 
 /** How titles are compared for "a task with this title exists" (SQL: companion_title_key). */
 export const titleKey = (title: string) => title.trim().replace(/\s+/gu, ' ').toLowerCase();
+
+// ------------------------------------------------------------------ #370 remember
+// Clear "remember" commands for saved personal details (mobile-app#370). Same rules: the
+// action service reads the user's own saved message; a clear command saves exactly the
+// stated detail, an unclear one gets a question, a profile fact is refused (the profile
+// owns it), anything else is not a command. One phrasing family per supported language:
+//   en  "Remember that <detail>", "Remember: <detail>"
+//   fr  "Souviens-toi que <detail>"     es  "Recuerda que <detail>"
+//   vi  "Hãy nhớ rằng <detail>"          hi  "याद रखें कि <detail>"
+//   pa  "ਯਾਦ ਰੱਖੋ ਕਿ <detail>"             ar  "تذكر أن <detail>"
+// "Remember this/that/it" (and the same in each language) names nothing: it is unclear.
+
+
+/** Longest saved detail (SQL: companion_detail_text_ok). */
+export const DETAIL_MAX = 300;
+
+export type RememberResolution =
+  | { kind: 'remember'; text: string }
+  | { kind: 'remember_clarify'; reason: 'missing_detail' | 'unclear_reference' | 'multiple' | 'too_long' }
+  | { kind: 'profile_fact'; field: ProfileFactField }
+  | { kind: 'none' };
+
+// Polite opener, verb, then ":" or the "that" word. The detail group may be empty.
+const REMEMBER: { verb: RegExp; that: string; deictic: string }[] = [
+  { verb: /(?:please\s+)?remember/iu, that: 'that\\b', deictic: 'this|that|it' },
+  { verb: /(?:s['’]il te pla[iî]t,?\s+)?(?:souviens-toi|souvenez-vous|rappelle-toi|retiens|retenez|mémorise)/iu,
+    that: "que\\b|qu['’]", deictic: 'ça|cela|ceci' },
+  { verb: /(?:por favor,?\s+)?(?:recuerda|recuerde|memoriza)/iu, that: 'que\\b', deictic: 'esto|eso' },
+  { verb: /(?:hãy\s+)?(?:ghi nhớ|nhớ)/iu, that: 'rằng|là', deictic: 'điều này|điều đó' },
+  { verb: /(?:कृपया\s+)?याद\s+(?:रखें|रखना|रखो)/u, that: 'कि', deictic: 'यह|ये|इसे' },
+  { verb: /(?:ਕਿਰਪਾ ਕਰਕੇ\s+)?ਯਾਦ\s+(?:ਰੱਖੋ|ਰੱਖਣਾ|ਰੱਖ)/u, that: 'ਕਿ', deictic: 'ਇਹ|ਇਸ ਨੂੰ' },
+  { verb: /(?:من فضلك\s+)?(?:تذكر|تذكّر|احفظ)/u, that: 'أن|ان', deictic: 'هذا|ذلك' },
+];
+const END = '[.!?।؟]*';
+const WITH_DETAIL = REMEMBER.map(r => new RegExp(`^${r.verb.source}\\s*(?::|\\s(?:${r.that}))\\s*(.*)$`, 'iu'));
+const DEICTIC = REMEMBER.map(r => new RegExp(`^${r.verb.source}(?:\\s+(?:${r.deictic}))?${END}$`, 'iu'));
+
+function rememberLine(line: string): RememberResolution {
+  for (const re of WITH_DETAIL) {
+    const m = line.match(re);
+    if (m) return detailOf(m[1]);
+  }
+  if (DEICTIC.some(re => re.test(line))) return { kind: 'remember_clarify', reason: 'unclear_reference' };
+  return { kind: 'none' };
+}
+
+function detailOf(raw: string): RememberResolution {
+  const text = raw.trim().replace(/^["“”'«]+|["“”'»]+$/gu, '').replace(/[.。।]+$/u, '').trim();
+  if (!text) return { kind: 'remember_clarify', reason: 'missing_detail' };
+  if (REMEMBER.some(r => new RegExp(`^(?:${r.deictic})${END}$`, 'iu').test(text))) {
+    return { kind: 'remember_clarify', reason: 'unclear_reference' };
+  }
+  if (text.length > DETAIL_MAX) return { kind: 'remember_clarify', reason: 'too_long' };
+  const field = profileFactOf(text);
+  if (field) return { kind: 'profile_fact', field };
+  return { kind: 'remember', text };
+}
+
+/** What the user's own message asks to remember, if anything. */
+export function resolveRemember(text: string): RememberResolution {
+  const lines = text.normalize('NFC').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) return { kind: 'none' };
+  const first = rememberLine(lines[0]);
+  if (first.kind === 'none') return first;
+  // A detail over several lines, or a second request, is unclear.
+  if (lines.length > 1) return { kind: 'remember_clarify', reason: 'multiple' };
+  return first;
+}

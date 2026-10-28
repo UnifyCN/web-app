@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
+  DetailProposal,
   StepProposal,
   TaskProposal,
   TaskReceipt,
@@ -13,7 +14,8 @@ import type {
   TaskActionStore,
 } from "@/lib/companionActions/taskActionStore";
 import { isUnresolved } from "@/lib/companionActions/taskActionStore";
-import { useTaskActionPhase } from "@/hooks/useTaskActions";
+import { useTaskActionPhase, useTaskProgress } from "@/hooks/useTaskActions";
+import { DetailReceipt, detailReceiptText } from "./SavedDetails";
 import type { ChatMessage } from "@/types";
 
 /** A write in flight: a loading state, shown only after the shared 300ms delay. */
@@ -40,6 +42,11 @@ interface CardsProps {
   onReviewSteps?: (proposalId: string) => void;
   /** The current title of a Checklist task, or null when this account has no such task. */
   taskTitleOf?: (taskRef: string) => string | null;
+  /** #370: suggested-detail drafts and remember results of the conversation. */
+  detailProposals?: DetailProposal[];
+  detailCommands?: Array<{ messageId: number; receipt: TaskReceipt }>;
+  onReviewDetail?: (proposalId: string) => void;
+  onViewDetails?: () => void;
 }
 
 export function TaskActionCards({
@@ -53,12 +60,22 @@ export function TaskActionCards({
   stepProposals = [],
   onReviewSteps,
   taskTitleOf,
+  detailProposals = [],
+  detailCommands = [],
+  onReviewDetail,
+  onViewDetails,
 }: CardsProps) {
   const mine = proposals.filter((p) => p.source?.messageId === message.id);
   const mySteps = stepProposals.filter(
     (p) => p.source?.messageId === message.id,
   );
-  const command = commands.find((c) => c.messageId === message.id) ?? null;
+  const myDetails = detailProposals.filter(
+    (p) => p.source?.messageId === message.id,
+  );
+  const command =
+    commands.find((c) => c.messageId === message.id) ??
+    detailCommands.find((c) => c.messageId === message.id) ??
+    null;
   return (
     <>
       {mine.map((p) => (
@@ -78,6 +95,14 @@ export function TaskActionCards({
           onReview={() => onReviewSteps?.(p.proposalId)}
         />
       ))}
+      {myDetails.map((p) => (
+        <DetailDraftCard
+          key={p.proposalId}
+          proposal={p}
+          store={store}
+          onReview={() => onReviewDetail?.(p.proposalId)}
+        />
+      ))}
       {message.role === "user" && (
         <CommandCard
           messageId={message.id}
@@ -85,6 +110,7 @@ export function TaskActionCards({
           store={store}
           canWrite={canWrite}
           onViewTask={onViewTask}
+          onViewDetails={onViewDetails}
         />
       )}
     </>
@@ -259,6 +285,105 @@ function DraftCard({
   );
 }
 
+/** #370: a detail the answer suggested saving. Says it is not saved; opens the review. */
+function DetailDraftCard({
+  proposal,
+  store,
+  onReview,
+}: {
+  proposal: DetailProposal;
+  store: TaskActionStore | null;
+  onReview: () => void;
+}) {
+  const { t } = useTranslation();
+  const phase = useTaskActionPhase(store, `proposal:${proposal.proposalId}`);
+  const saved = phase.phase === "saved" ? phase.receipt : proposal.receipt;
+  const draft = proposal.status === "draft" && !saved;
+  const text = proposal.operation.text;
+  const status = saved
+    ? detailReceiptText(t, saved)
+    : proposal.status === "cancelled"
+      ? t("savedDetails.notSaved")
+      : isUnresolved(phase)
+        ? t("taskActions.checking")
+        : t("savedDetails.draftBadge");
+  return (
+    <article
+      data-testid="detail-draft-card"
+      aria-label={t("savedDetails.draftEyebrow")}
+      className={cn(CARD, draft && "border-dashed")}
+    >
+      <CardIcon />
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-medium text-ink-muted">
+          {t("savedDetails.draftEyebrow")}
+        </p>
+        <p className="break-words text-sm font-semibold text-ink-secondary">
+          {text}
+        </p>
+        <p
+          className={cn(
+            "text-xs text-ink-tertiary",
+            isTransient(phase) && "loading-delayed",
+          )}
+          role="status"
+        >
+          {status}
+        </p>
+      </div>
+      <CardButton
+        label={draft ? t("savedDetails.review") : t("taskCreate.view")}
+        name={
+          draft
+            ? t("savedDetails.reviewA11y", { text })
+            : t("savedDetails.view")
+        }
+        onClick={onReview}
+      />
+    </article>
+  );
+}
+
+/** #370: the result of a remember command: the receipt's own text, its Undo, the details. */
+function DetailCommandResult({
+  receipt,
+  storeKey,
+  store,
+  onViewDetails,
+}: {
+  receipt: TaskReceipt;
+  storeKey: string;
+  store: TaskActionStore | null;
+  onViewDetails?: () => void;
+}) {
+  const { t } = useTranslation();
+  const view = useTaskProgress();
+  return (
+    <article
+      data-testid="detail-command-card"
+      aria-label={t("savedDetails.entryTitle")}
+      className={cn(CARD, "items-start")}
+    >
+      <CardIcon />
+      <div className="min-w-0 flex-1">
+        <DetailReceipt
+          receipt={receipt}
+          storeKey={storeKey}
+          store={store}
+          view={view}
+        />
+      </div>
+      {onViewDetails && (
+        <CardButton
+          label={t("savedDetails.view")}
+          name={t("savedDetails.view")}
+          onClick={onViewDetails}
+        />
+      )}
+    </article>
+  );
+}
+
 function commandText(
   t: (k: string, o?: Record<string, unknown>) => string,
   phase: TaskActionPhase,
@@ -266,6 +391,10 @@ function commandText(
   switch (phase.phase) {
     case "saving":
     case "checking":
+      if (phase.write.operation?.type === "detail.create")
+        return t("savedDetails.commandSaving", {
+          text: phase.write.operation.text,
+        });
       return t("taskCreate.commandAdding", {
         title:
           phase.write.operation?.type === "task.create_custom"
@@ -282,8 +411,12 @@ function commandText(
       return t("taskCreate.commandUsed");
     case "needs_clarification":
       return t("taskCreate.needsClarification");
+    case "detail_exists":
+      return t("savedDetails.exists");
     case "refused":
-      return t("taskActions.refused");
+      return phase.reason === "profile_fact"
+        ? t("savedDetails.profileFact")
+        : t("taskActions.refused");
     case "unavailable":
       return t("taskActions.unavailable");
     case "signed_out":
@@ -299,17 +432,35 @@ function CommandCard({
   store,
   canWrite,
   onViewTask,
+  onViewDetails,
 }: {
   messageId: number;
   saved: TaskReceipt | null;
   store: TaskActionStore | null;
   canWrite: boolean;
   onViewTask: (taskRef: string) => void;
+  onViewDetails?: () => void;
 }) {
   const { t } = useTranslation();
   const key = `command:${messageId}`;
   const phase = useTaskActionPhase(store, key);
   const receipt = phase.phase === "saved" ? phase.receipt : saved;
+  // #370: a remember command's receipt (and its Undo) is a saved-detail receipt.
+  const detailReceipt = receipt?.detail
+    ? receipt
+    : phase.phase === "undo_review" || phase.phase === "already_undone"
+      ? saved
+      : null;
+  if (detailReceipt?.detail) {
+    return (
+      <DetailCommandResult
+        receipt={detailReceipt}
+        storeKey={key}
+        store={store}
+        onViewDetails={onViewDetails}
+      />
+    );
+  }
   if (receipt) {
     const title = receipt.title ?? "";
     return (

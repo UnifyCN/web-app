@@ -36,6 +36,11 @@ export const MIGRATION_366 = override('ACTIONS_MIGRATION_366_FILE') ??
   new URL('../../migrations/20261027183644_companion_task_steps.sql', import.meta.url);
 export const ROLLBACK_366 = override('ACTIONS_ROLLBACK_366_FILE') ??
   new URL('../../rollbacks/20261027183644_companion_task_steps.down.sql', import.meta.url);
+// #370 saved personal details (ACTIONS_MIGRATION_370_FILE / ACTIONS_ROLLBACK_370_FILE for mutation runs).
+export const MIGRATION_370 = override('ACTIONS_MIGRATION_370_FILE') ??
+  new URL('../../migrations/20261028004902_companion_saved_details.sql', import.meta.url);
+export const ROLLBACK_370 = override('ACTIONS_ROLLBACK_370_FILE') ??
+  new URL('../../rollbacks/20261028004902_companion_saved_details.down.sql', import.meta.url);
 
 export const admin = createClient(API_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 export const sql = postgres(DB_URL, { max: 20, onnotice: () => {} });
@@ -102,7 +107,9 @@ export async function migrate(which: 'up' | 'down'): Promise<void> {
     await sql.begin(async tx => await tx.unsafe(await Deno.readTextFile(MIGRATION)));
     await migrate363('up');
     await migrate366('up');
+    await migrate370('up');
   } else {
+    if (await migration370Applied()) await migrate370('down');
     if (await migration366Applied()) await migrate366('down');
     if (await migration363Applied()) await migrate363('down');
     await sql.begin(async tx => await tx.unsafe(await Deno.readTextFile(ROLLBACK)));
@@ -125,6 +132,18 @@ export async function migrate366(which: 'up' | 'down'): Promise<void> {
   await waitForSchemaCache(which === 'up' && text.includes('companion_read_steps') ? 'up366' : 'up');
 }
 
+/** Only the #370 migration or only its rollback script, in one transaction. */
+export async function migrate370(which: 'up' | 'down'): Promise<void> {
+  const text = await Deno.readTextFile(which === 'up' ? MIGRATION_370 : ROLLBACK_370);
+  await sql.begin(async tx => await tx.unsafe(text));
+  await waitForSchemaCache(which === 'up' && text.includes('companion_read_details') ? 'up370' : 'up366');
+}
+
+export async function migration370Applied(): Promise<boolean> {
+  const [r] = await sql`select to_regprocedure('public.companion_read_details(uuid)') is not null as applied`;
+  return r.applied;
+}
+
 export async function migration366Applied(): Promise<boolean> {
   const [r] = await sql`select to_regprocedure('public.companion_read_steps(uuid)') is not null as applied`;
   return r.applied;
@@ -136,7 +155,7 @@ export async function migration363Applied(): Promise<boolean> {
 }
 
 /** PostgREST reloads its schema cache asynchronously after DDL; wait until it agrees. */
-export async function waitForSchemaCache(which: 'up' | 'up361' | 'up366' | 'down', timeoutMs = 15000): Promise<void> {
+export async function waitForSchemaCache(which: 'up' | 'up361' | 'up366' | 'up370' | 'down', timeoutMs = 15000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const res = await fetch(`${API_URL}/rest/v1/`, {
@@ -147,6 +166,8 @@ export async function waitForSchemaCache(which: 'up' | 'up361' | 'up366' | 'down
     const seen363 = paths.includes('/rpc/companion_prepare_proposal');
     if (which === 'up' && seen && seen363) return;
     if (which === 'up366' && seen && seen363 && paths.includes('/rpc/companion_read_steps')) return;
+    if (which === 'up370' && seen && seen363 && paths.includes('/rpc/companion_read_details') &&
+        paths.includes('/companion_saved_details')) return;
     if (which === 'up361' && seen && !seen363) return;
     if (which === 'down' && !paths.some(p => p.includes('companion_') && !p.includes('rollback_archive'))) return;
     await sleep(100);
@@ -167,6 +188,7 @@ export async function ready(): Promise<void> {
   else {
     if (!(await migration363Applied())) await migrate363('up');
     if (!(await migration366Applied())) await migrate366('up');
+    if (!(await migration370Applied())) await migrate370('up');
   }
   await openGate();
 }
@@ -374,4 +396,46 @@ export function startContentStub(): void {
     const found = typeof id === 'string' && contentStub.published.has(id) ? id : null;
     return Response.json({ result: found });
   });
+}
+
+// ------------------------------------------------------------------ #370 saved details
+export const detailCreate = (text: string) => ({ type: 'detail.create', text });
+export const detailUpdate = (detail_id: string, text: string, expected_revision: number) =>
+  ({ type: 'detail.update', detail_id, text, expected_revision });
+export const detailRemove = (detail_id: string, expected_revision: number) =>
+  ({ type: 'detail.remove', detail_id, expected_revision });
+export const command = (message_id: number) => ({ kind: 'direct_command', message_id });
+
+/** The caller's live saved details, as the read action returns them. */
+export async function detailsOf(who: Account, platform?: Platform): Promise<Record<string, unknown>[]> {
+  const r = await read(who, platform);
+  if (r.status !== 200) throw new Error(`read failed: ${r.status} ${JSON.stringify(r.json)}`);
+  if (!Array.isArray(r.json.details)) throw new Error(`read returned no details: ${JSON.stringify(r.json)}`);
+  return r.json.details;
+}
+
+/** What a later Companion answer reads (rag-query reads with the user's own JWT and RLS). */
+export async function contextDetails(who: Account): Promise<string[]> {
+  const r = await who.client.from('companion_saved_details').select('body').order('created_at');
+  if (r.error) throw r.error;
+  return (r.data ?? []).map(row => row.body as string);
+}
+
+/** Every detail row of an account, removed ones included (no public path exposes those). */
+export async function detailRows(userId: string): Promise<Record<string, unknown>[]> {
+  return [...await sql`select id::text, body, revision::int as revision, removed_at is not null as removed, source
+    from companion_saved_details where user_id = ${userId} order by created_at`];
+}
+
+/** A user message that says one thing, saved the way the clients do; returns its ids. */
+export async function said(who: Account, content: string) {
+  return await conversationWith(who, 'user', content);
+}
+
+/** Saves a detail through the user's own clear command and returns the receipt. */
+export async function rememberedBy(who: Account, text: string) {
+  const m = await said(who, `Remember that ${text}`);
+  const w = await apply(who, [detailCreate(text)], { authorization: command(m.message_id) });
+  if (w.status !== 200) throw new Error(`remember failed: ${w.status} ${JSON.stringify(w.json)}`);
+  return { ...m, receipt: w.json.receipt, operation_id: w.json.operation_id as string };
 }

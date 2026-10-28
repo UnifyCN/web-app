@@ -74,6 +74,16 @@ export function appContextBlock(context: CompanionContext): string {
   }${taskRule}`;
 }
 
+/**
+ * #370: the personal details the user approved for later conversations. Quoted data like
+ * every other record; the profile stays the owner of place, arrival and status.
+ */
+export function savedDetailsBlock(details: string[]): string {
+  if (details.length === 0) return '';
+  const lines = details.map(d => `- ${dataText(d, 300)}`);
+  return `\n\nSAVED PERSONAL DETAILS (the user approved these for later conversations; use them when relevant; the profile wins for province, city, arrival date and status):\n${OPEN}\n${lines.join('\n')}\n${CLOSE}`;
+}
+
 /** Official pages checked for this answer, or how guidance is missing. */
 export function guidanceBlock(context: CompanionContext, evidence: Map<string, string>): string {
   const g = context.guidance;

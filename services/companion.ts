@@ -1,4 +1,7 @@
-import { parseSuggestedSteps } from "@/lib/companionActions/contract";
+import {
+  parseSuggestedDetail,
+  parseSuggestedSteps,
+} from "@/lib/companionActions/contract";
 import type {
   ChatMessage,
   ChatSource,
@@ -420,12 +423,13 @@ export interface GeneratedReply {
   /** The server's version-1 context object as received, for saving with the
    *  answer (the saved row is parsed again on read). Null when absent. */
   contextRecord: Record<string, unknown> | null;
-  /** A task (#363) or steps for one Checklist task (#366) the answer suggests for
-   *  the user to review. A suggestion only: the action service prepares the
-   *  reviewable draft; nothing is saved here. */
+  /** A task (#363), steps for one Checklist task (#366) or a personal detail (#370)
+   *  the answer suggests for the user to review. A suggestion only: the action
+   *  service prepares the reviewable draft; nothing is saved here. */
   actionProposal:
     | { type: "task.create_custom"; title: string }
     | { type: "step.create"; taskRef: string; titles: string[] }
+    | { type: "detail.create"; text: string }
     | null;
   /* Analytics only (companion_response_received); null when absent. */
   queryType: string | null;
@@ -450,6 +454,7 @@ function savableContext(raw: unknown): Record<string, unknown> | null {
 function parseActionProposal(raw: unknown): GeneratedReply["actionProposal"] {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
+  if (r.type === "detail.create") return parseSuggestedDetail(raw);
   if (r.type === "step.create") {
     const steps = parseSuggestedSteps(raw);
     return steps

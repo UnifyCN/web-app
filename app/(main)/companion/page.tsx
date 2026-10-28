@@ -48,6 +48,9 @@ export default function CompanionPage() {
     | { kind: "proposal"; proposalId: string }
     | { kind: "steps"; proposalId: string }
     | { kind: "task"; taskId: string }
+    // #370: a suggested detail's review, or the saved details.
+    | { kind: "detail"; proposalId: string }
+    | { kind: "details" }
     | null
   >(null);
 
@@ -208,6 +211,12 @@ export default function CompanionPage() {
               setDrawer({ kind: "steps", proposalId })
             }
             taskTitleOf={taskTitleOf}
+            detailProposals={actions?.detailProposals ?? []}
+            detailCommands={actions?.detailCommands ?? []}
+            onReviewDetail={(proposalId) =>
+              setDrawer({ kind: "detail", proposalId })
+            }
+            onViewDetails={() => setDrawer({ kind: "details" })}
           />
         )}
       />
@@ -218,6 +227,8 @@ export default function CompanionPage() {
         initialTaskId={drawer?.kind === "task" ? drawer.taskId : null}
         proposalId={drawer?.kind === "proposal" ? drawer.proposalId : null}
         stepProposalId={drawer?.kind === "steps" ? drawer.proposalId : null}
+        detailProposalId={drawer?.kind === "detail" ? drawer.proposalId : null}
+        openDetails={drawer?.kind === "details"}
       />
     </div>
   );

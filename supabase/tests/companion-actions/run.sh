@@ -21,6 +21,9 @@ project_id=$(sed -n 's/^project_id = "\(.*\)"$/\1/p' supabase/config.toml)
 rm -rf supabase/functions
 mkdir -p supabase/functions
 cp -R "$functions_src/companion-actions" supabase/functions/companion-actions
+# #370: the profile-fact check is shared with rag-query (its place and arrival lists).
+mkdir -p supabase/functions/rag-query
+cp -R "$functions_src/rag-query/lib" supabase/functions/rag-query/lib
 
 # The published-content read of the function goes to the tests' stand-in (#366).
 export ACTIONS_CONTENT_PORT="${ACTIONS_CONTENT_PORT:-60675}"

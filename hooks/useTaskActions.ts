@@ -28,16 +28,20 @@ import {
   type Transport,
 } from "@/lib/companionActions/client";
 import type {
+  DetailProposal,
+  SavedDetail,
   StepProposal,
   TaskProgress,
   TaskStep,
 } from "@/lib/companionActions/contract";
 import {
   CONVERSATION_ACTIONS_ROOT,
+  DETAIL_PROPOSAL_ROOT,
   STEP_PROPOSAL_ROOT,
   TASK_PROGRESS_ROOT,
   TASK_PROPOSAL_ROOT,
   conversationActionsKey,
+  detailProposalKey,
   stepProposalKey,
   taskProgressKey,
   taskProposalKey,
@@ -112,6 +116,8 @@ export interface TaskProgressView {
   byRef: ReadonlyMap<string, TaskProgress>;
   /** #366: live steps by task_ref, in order. */
   stepsByRef: ReadonlyMap<string, readonly TaskStep[]>;
+  /** #370: the account's live saved details, oldest first. */
+  details: readonly SavedDetail[];
   /** True when the shown progress may be out of date (offline or the last read failed). */
   stale: boolean;
   /** Writes are allowed only with a fresh read and a connection. */
@@ -169,6 +175,11 @@ export function useTaskProgress(): TaskProgressView {
     return map;
   }, [result]);
 
+  const details = useMemo(
+    () => (result?.kind === "ok" ? result.details : []),
+    [result],
+  );
+
   let status: TaskProgressStatus;
   if ((!authPending && !userId) || result?.kind === "unauthorized")
     status = "signed_out";
@@ -184,6 +195,7 @@ export function useTaskProgress(): TaskProgressView {
     status,
     byRef,
     stepsByRef,
+    details,
     stale,
     // A refetch after a save may still carry the old revision: wait for it.
     canWrite: status === "ready" && !stale && !query.isFetching,
@@ -219,6 +231,10 @@ export function useTaskActionStore(
         // #366: suggested-step drafts.
         void queryClient.invalidateQueries({
           queryKey: [STEP_PROPOSAL_ROOT, userId],
+        });
+        // #370: suggested-detail drafts.
+        void queryClient.invalidateQueries({
+          queryKey: [DETAIL_PROPOSAL_ROOT, userId],
         });
       },
       onResult: (event) => {
@@ -280,6 +296,26 @@ export function useStepProposal(proposalId: string | null) {
       const owner = ownAccountWork();
       if (owner.accountId !== userId) throw new ReadFailed("account changed");
       const result = await clientFor(owner).stepProposal(proposalId as string);
+      if (result.kind === "ok" || result.kind === "changed")
+        return result.proposal;
+      throw new ReadFailed(result.kind);
+    },
+    staleTime: 0,
+    retry: 1,
+    refetchOnReconnect: true,
+  });
+}
+
+/** #370: one suggested-detail draft, read from the action service. */
+export function useDetailProposal(proposalId: string | null) {
+  const userId = useAccountId() ?? null;
+  return useQuery({
+    queryKey: detailProposalKey(userId, proposalId),
+    enabled: Boolean(userId && proposalId),
+    queryFn: async (): Promise<DetailProposal> => {
+      const owner = ownAccountWork();
+      if (owner.accountId !== userId) throw new ReadFailed("account changed");
+      const result = await clientFor(owner).detailProposal(proposalId as string);
       if (result.kind === "ok" || result.kind === "changed")
         return result.proposal;
       throw new ReadFailed(result.kind);

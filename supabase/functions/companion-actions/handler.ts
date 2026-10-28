@@ -6,7 +6,8 @@
 // lookup and Undo stay available at the AI limit.
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import { type ActionRequest, type Operation, PLATFORMS, type Platform, parseAction, parseEnvelope } from './contract.ts';
-import { resolveCommand, titleKey } from './commands.ts';
+import { resolveCommand, resolveRemember, titleKey } from './commands.ts';
+import { profileFactOf } from '../rag-query/lib/context/profileFacts.ts';
 
 /**
  * Whether a published Checklist document exists (#366): true, false, or null when the
@@ -42,6 +43,7 @@ const SQLSTATE_TO_HTTP: Record<string, [number, string]> = {
   CA411: [409, 'already_undone'],
   CA412: [409, 'command_already_used'],
   CA413: [409, 'needs_clarification'],
+  CA414: [409, 'detail_exists'],
   CA422: [422, 'invalid_request'],
 };
 
@@ -107,6 +109,30 @@ async function sameTitleTasks(admin: SupabaseClient, userId: string, title: stri
   return (data ?? [])
     .filter(row => titleKey(String(row.title)) === key)
     .map(row => ({ task_ref: `custom:${row.id}`, revision: row.revision, title: row.title }));
+}
+
+/**
+ * #370: a saved detail never states what the profile owns (province, city, arrival date,
+ * immigration status). Refused before any write; updating the profile is separate.
+ */
+function profileFactRefusal(op: Operation): Response | null {
+  if (op.type !== 'detail.create' && op.type !== 'detail.update') return null;
+  const field = profileFactOf(op.text);
+  return field ? json({ error: 'invalid_request', reason: 'profile_fact', detail: { field } }, 422) : null;
+}
+
+/** Live saved details of the caller with the same text (shown when a remember command repeats one). */
+async function sameTextDetails(admin: SupabaseClient, userId: string, text: string) {
+  const { data, error } = await admin
+    .from('companion_saved_details')
+    .select('id, body')
+    .eq('user_id', userId)
+    .is('removed_at', null);
+  if (error) throw error;
+  const key = titleKey(text);
+  return (data ?? [])
+    .filter(row => titleKey(String(row.body)) === key)
+    .map(row => ({ detail_id: row.id, text: row.body }));
 }
 
 const CONTENT_QUERY = '*[_type == "checklist" && _id == $id][0]._id';
@@ -211,12 +237,22 @@ export function createHandler({ admin, contentTaskExists, log = line => console.
       // step migration the read function is gone: the tasks are still served, without steps.
       const steps = await admin.rpc('companion_read_steps', { p_user_id: userId });
       if (steps.error && steps.error.code !== 'PGRST202') return finish(mapDbError(steps.error), 'failed');
-      return finish(json({ contract_version: version, tasks: data, ...(steps.error ? {} : { steps: steps.data }) }), 'read');
+      // #370: the live saved details, served the same way (absent after a rollback).
+      const details = await admin.rpc('companion_read_details', { p_user_id: userId });
+      if (details.error && details.error.code !== 'PGRST202') return finish(mapDbError(details.error), 'failed');
+      return finish(json({
+        contract_version: version,
+        tasks: data,
+        ...(steps.error ? {} : { steps: steps.data }),
+        ...(details.error ? {} : { details: details.data }),
+      }), 'read');
     }
 
     if (request.action === 'prepare') {
       // A draft for review: writes only the proposal, never task progress.
       operationType = request.operation.type;
+      const factRefusal = profileFactRefusal(request.operation);
+      if (factRefusal) return finish(factRefusal, 'rejected');
       const parentRefusal = await contentParentRefusal(contentTaskExists, request.operation);
       if (parentRefusal) return finish(parentRefusal, 'rejected');
       const { data, error } = await admin.rpc('companion_prepare_proposal', {
@@ -242,6 +278,27 @@ export function createHandler({ admin, contentTaskExists, log = line => console.
       const text = await ownUserMessage(admin, userId, request.message_id);
       if (text === null) return finish(json({ error: 'not_found', reason: 'message_not_found' }, 404), 'rejected');
       const resolved = resolveCommand(text);
+      // #370: not a task command: a clear remember command, an unclear one, a profile
+      // fact (refused; the profile owns it) or nothing.
+      if (resolved.kind === 'none') {
+        const remember = resolveRemember(text);
+        if (remember.kind !== 'remember') return finish(json({ command: remember }), `interpret_${remember.kind}`);
+        operationType = 'detail.create';
+        let sameText;
+        try {
+          sameText = await sameTextDetails(admin, userId, remember.text);
+        } catch {
+          // No saved-details schema (rolled back): nothing can be saved, so it is no command.
+          return finish(json({ command: { kind: 'none' } }), 'interpret_none');
+        }
+        return finish(json({
+          command: {
+            kind: 'remember',
+            operation: { type: 'detail.create', text: remember.text },
+            same_text_details: sameText,
+          },
+        }), 'interpret_remember');
+      }
       if (resolved.kind !== 'create') return finish(json({ command: resolved }), `interpret_${resolved.kind}`);
       operationType = 'task.create_custom';
       let same;
@@ -282,6 +339,8 @@ export function createHandler({ admin, contentTaskExists, log = line => console.
 
     if (request.action === 'revise') {
       operationType = request.operation.type;
+      const factRefusal = profileFactRefusal(request.operation);
+      if (factRefusal) return finish(factRefusal, 'rejected');
       const { data, error } = await admin.rpc('companion_revise_proposal', {
         p_user_id: userId,
         p_proposal_id: request.proposal_id,
@@ -307,14 +366,20 @@ export function createHandler({ admin, contentTaskExists, log = line => console.
 
     if (request.action === 'apply') {
       operationType = request.operations[0].type;
+      const factRefusal = profileFactRefusal(request.operations[0]);
+      if (factRefusal) return finish(factRefusal, 'rejected');
       if (request.authorization.kind === 'direct_command') {
         // The command is read from the user's own saved message, here, and must resolve
         // to exactly the submitted operation. A client or model cannot widen it.
         const text = await ownUserMessage(admin, userId, request.authorization.message_id);
         const resolved = text === null ? null : resolveCommand(text);
         const op = request.operations[0];
-        if (!resolved || resolved.kind !== 'create' || op.type !== 'task.create_custom' ||
-            op.title !== resolved.title || op.priority !== 'Do soon') {
+        // #370: a remember command saves exactly the detail the message states.
+        const remember = text === null || resolved?.kind !== 'none' ? null : resolveRemember(text);
+        const taskCommand = resolved?.kind === 'create' && op.type === 'task.create_custom' &&
+          op.title === resolved.title && op.priority === 'Do soon';
+        const rememberCommand = remember?.kind === 'remember' && op.type === 'detail.create' && op.text === remember.text;
+        if (!taskCommand && !rememberCommand) {
           return finish(json({ error: 'forbidden', reason: 'invalid_authorization' }, 403), 'rejected');
         }
       }

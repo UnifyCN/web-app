@@ -20,6 +20,7 @@ import { TaskProposalPanel } from "./TaskProposalPanel";
 import { StepProposalPanel } from "./StepProposalPanel";
 import { useStepProposal } from "@/hooks/useTaskActions";
 import { TaskStatePanel, progressFor } from "./TaskStatePanel";
+import { DetailProposalPanel, SavedDetailsPanel } from "./SavedDetails";
 
 const STATE_ORDER: TaskState[] = [
   "in_progress",
@@ -38,6 +39,10 @@ interface TaskActionsDrawerProps {
   proposalId?: string | null;
   /** #366: open on the review of suggested steps for one task. */
   stepProposalId?: string | null;
+  /** #370: open on the review of one suggested detail. */
+  detailProposalId?: string | null;
+  /** #370: open on the saved details instead of the task list. */
+  openDetails?: boolean;
 }
 
 /** The task list and task controls inside the direction B drawer. */
@@ -48,6 +53,8 @@ export function TaskActionsDrawer({
   initialTaskId = null,
   proposalId = null,
   stepProposalId = null,
+  detailProposalId = null,
+  openDetails = false,
 }: TaskActionsDrawerProps) {
   const { t } = useTranslation();
   const { data: tasks = [], isLoading } = useTasks();
@@ -56,12 +63,15 @@ export function TaskActionsDrawer({
   const [selectedId, setSelectedId] = useState<string | null>(initialTaskId);
   // The task last opened from the list: focus returns to its row on Back.
   const [returnId, setReturnId] = useState<string | null>(null);
+  // #370: the saved details view, opened from the list, a card or a review.
+  const [showDetails, setShowDetails] = useState(openDetails);
   const [lastOpen, setLastOpen] = useState(open);
   if (open !== lastOpen) {
     setLastOpen(open);
     if (open) {
       setSelectedId(initialTaskId);
       setReturnId(null);
+      setShowDetails(openDetails);
     }
   }
 
@@ -76,7 +86,7 @@ export function TaskActionsDrawer({
   const selected = active.find((task) => task.id === selectedId) ?? null;
   const selectedRef = selected ? taskOrderKey(selected) : null;
   const phase = useTaskActionPhase(store, selectedRef);
-  const draftId = proposalId ?? stepProposalId;
+  const draftId = proposalId ?? stepProposalId ?? detailProposalId;
   const draftPhase = useTaskActionPhase(
     store,
     draftId ? `proposal:${draftId}` : null,
@@ -99,22 +109,49 @@ export function TaskActionsDrawer({
       open={open}
       onClose={onClose}
       title={
-        stepProposalId
-          ? t("taskSteps.reviewTitle")
-          : proposalId
-          ? t("taskCreate.drawerTitle")
-          : selected
-            ? t("taskActions.drawerTitle")
-            : t("taskActions.listTitle")
+        showDetails
+          ? t("savedDetails.title")
+          : detailProposalId
+            ? t("savedDetails.reviewTitle")
+            : stepProposalId
+              ? t("taskSteps.reviewTitle")
+              : proposalId
+                ? t("taskCreate.drawerTitle")
+                : selected
+                  ? t("taskActions.drawerTitle")
+                  : t("taskActions.listTitle")
       }
       onBack={
-        selected && !initialTaskId && !proposalId && !stepProposalId
-          ? () => setSelectedId(null)
-          : undefined
+        showDetails && !openDetails && !detailProposalId
+          ? () => setShowDetails(false)
+          : selected && !initialTaskId && !proposalId && !stepProposalId
+            ? () => setSelectedId(null)
+            : undefined
       }
       closeOnEscape={phase.phase !== "saving" && draftPhase.phase !== "saving"}
     >
-      {stepProposalId ? (
+      {showDetails ? (
+        view.status === "loading" ? (
+          <p role="status" className="loading-delayed text-sm text-ink-muted">
+            {t("taskActions.loading")}
+          </p>
+        ) : view.status === "signed_out" ? (
+          <p className="text-sm text-ink-muted">{t("taskActions.signedOut")}</p>
+        ) : view.status === "unavailable" ? (
+          <p className="text-sm text-ink-muted">
+            {t("taskActions.unavailable")}
+          </p>
+        ) : (
+          <SavedDetailsPanel view={view} store={store} />
+        )
+      ) : detailProposalId ? (
+        <DetailProposalPanel
+          proposalId={detailProposalId}
+          view={view}
+          store={store}
+          onViewDetails={() => setShowDetails(true)}
+        />
+      ) : stepProposalId ? (
         <StepProposalPanel
           proposalId={stepProposalId}
           view={view}
@@ -149,46 +186,73 @@ export function TaskActionsDrawer({
             </Link>
           )}
         </div>
-      ) : sorted.length === 0 ? (
-        <p className="text-sm text-ink-muted">{t("taskActions.noTasks")}</p>
       ) : (
-        <ul
-          className="divide-y divide-border-card"
-          aria-label={t("taskActions.listTitle")}
-        >
-          {sorted.map((task) => {
-            const p = progressFor(taskOrderKey(task), view);
-            return (
-              <li key={`${task.isCustom ? "c" : "s"}-${task.id}`}>
-                <button
-                  type="button"
-                  data-drawer-focus={task.id === returnId ? "" : undefined}
-                  onClick={() => {
-                    setSelectedId(task.id);
-                    setReturnId(task.id);
-                  }}
-                  className="press-dim flex min-h-12 w-full cursor-pointer items-center gap-3 rounded py-2.5 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="block break-words text-sm font-medium text-ink-secondary">
-                      {task.title}
-                    </span>
-                    <span className="mt-0.5 block text-xs text-ink-muted">
-                      {t(`taskActions.state.${p.state}`)}
-                    </span>
-                  </span>
-                  <ChevronRight
-                    className={cn(
-                      "h-4 w-4 shrink-0 text-ink-placeholder",
-                      RTL_FLIP,
-                    )}
-                    aria-hidden
-                  />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="space-y-2">
+          {/* #370: the saved details, one row above the tasks. */}
+          <button
+            type="button"
+            data-drawer-focus={returnId === "details" ? "" : undefined}
+            onClick={() => {
+              setShowDetails(true);
+              setReturnId("details");
+            }}
+            className="press-dim flex min-h-12 w-full cursor-pointer items-center gap-3 rounded border-b border-border-card py-2.5 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block break-words text-sm font-medium text-ink-secondary">
+                {t("savedDetails.entryTitle")}
+              </span>
+              <span className="mt-0.5 block text-xs text-ink-muted">
+                {t("savedDetails.entryHint")}
+              </span>
+            </span>
+            <ChevronRight
+              className={cn("h-4 w-4 shrink-0 text-ink-placeholder", RTL_FLIP)}
+              aria-hidden
+            />
+          </button>
+          {sorted.length === 0 ? (
+            <p className="text-sm text-ink-muted">{t("taskActions.noTasks")}</p>
+          ) : (
+            <ul
+              className="divide-y divide-border-card"
+              aria-label={t("taskActions.listTitle")}
+            >
+              {sorted.map((task) => {
+                const p = progressFor(taskOrderKey(task), view);
+                return (
+                  <li key={`${task.isCustom ? "c" : "s"}-${task.id}`}>
+                    <button
+                      type="button"
+                      data-drawer-focus={task.id === returnId ? "" : undefined}
+                      onClick={() => {
+                        setSelectedId(task.id);
+                        setReturnId(task.id);
+                      }}
+                      className="press-dim flex min-h-12 w-full cursor-pointer items-center gap-3 rounded py-2.5 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block break-words text-sm font-medium text-ink-secondary">
+                          {task.title}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-ink-muted">
+                          {t(`taskActions.state.${p.state}`)}
+                        </span>
+                      </span>
+                      <ChevronRight
+                        className={cn(
+                          "h-4 w-4 shrink-0 text-ink-placeholder",
+                          RTL_FLIP,
+                        )}
+                        aria-hidden
+                      />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       )}
     </TaskDrawer>
   );

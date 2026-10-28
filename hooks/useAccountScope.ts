@@ -10,6 +10,7 @@ import {
 import { clearComposerDrafts } from "@/lib/companion/composerDrafts";
 import {
   CONVERSATION_ACTIONS_ROOT,
+  DETAIL_PROPOSAL_ROOT,
   STEP_PROPOSAL_ROOT,
   TASK_PROGRESS_ROOT,
   TASK_PROPOSAL_ROOT,
@@ -46,6 +47,8 @@ export function useAccountScope(userId: string | null, ready = true) {
       CONVERSATION_ACTIONS_ROOT,
       // Suggested-step drafts (#366).
       STEP_PROPOSAL_ROOT,
+      // Suggested-detail drafts (#370). Saved details live in the task-progress read.
+      DETAIL_PROPOSAL_ROOT,
     ]) {
       void queryClient.cancelQueries({
         queryKey: [root],

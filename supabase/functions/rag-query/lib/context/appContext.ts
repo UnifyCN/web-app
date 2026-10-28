@@ -85,6 +85,34 @@ export function profileContextItem(row: ProfileRow | null): ProfileContextItem |
   };
 }
 
+// ---------------------------------------------------------------- saved details
+
+/** At most this many saved details reach the prompt. */
+export const SAVED_DETAIL_LIMIT = 20;
+
+/**
+ * The caller's saved personal details (#370), oldest first. RLS returns only the
+ * account's live details, and none while the Companion actions gate is off, so a removed
+ * detail is never read again. Text only: it goes to the prompt, not to the client.
+ */
+export async function readSavedDetails(
+  client: UserClient,
+  userId: string,
+  signal: AbortSignal
+): Promise<string[]> {
+  const { data, error } = await client
+    .from('companion_saved_details')
+    .select('body')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+    .limit(SAVED_DETAIL_LIMIT)
+    .abortSignal(signal);
+  if (error) throw classifyPostgrestError(error);
+  return ((data ?? []) as Array<{ body?: unknown }>)
+    .map(row => cleanShortText(row.body, 300))
+    .filter((text): text is string => text !== null);
+}
+
 // ---------------------------------------------------------------- conversation
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

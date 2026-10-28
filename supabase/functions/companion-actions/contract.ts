@@ -1,5 +1,5 @@
 // Companion actions contract, version 1 (mobile-app#361; decided in #360; task
-// creation and proposals added in #363, task steps in #366, within the same version:
+// creation and proposals added in #363, task steps in #366, saved details in #370, within the same version:
 // new actions, operations and fields only, which version 1 clients ignore).
 // Typed request parsing and the domain operation registry. Pure: no I/O, so the
 // handler validates every request before it reaches the database. The database
@@ -96,7 +96,41 @@ export type StepOperation =
   | StepRestoreOperation
   | StepRemoveCreatedOperation;
 
-export type Operation = SetStateOperation | CreateCustomOperation | RemoveCreatedOperation | StepOperation;
+/** #370: saved personal details. Text is one plain line the user approved. */
+export const DETAIL_TEXT_MAX = 300;
+export interface DetailCreateOperation {
+  type: 'detail.create';
+  text: string;
+}
+export interface DetailUpdateOperation {
+  type: 'detail.update';
+  detail_id: string;
+  text: string;
+  expected_revision: number;
+}
+export interface DetailRemoveOperation {
+  type: 'detail.remove';
+  detail_id: string;
+  expected_revision: number;
+}
+/** The inverse of a removal. Only as an Undo (direct, or its reviewed change). */
+export interface DetailRestoreOperation {
+  type: 'detail.restore';
+  detail_id: string;
+  expected_revision: number;
+}
+export type DetailOperation =
+  | DetailCreateOperation
+  | DetailUpdateOperation
+  | DetailRemoveOperation
+  | DetailRestoreOperation;
+
+export type Operation =
+  | SetStateOperation
+  | CreateCustomOperation
+  | RemoveCreatedOperation
+  | StepOperation
+  | DetailOperation;
 
 export type Parsed<T> = { ok: true; value: T } | { ok: false; status: 400 | 403 | 422; reason: string };
 const ok = <T>(value: T): Parsed<T> => ({ ok: true, value });
@@ -336,6 +370,70 @@ const stepRemoveCreated: OperationSpec<StepRemoveCreatedOperation> = {
   },
 };
 
+// ------------------------------------------------------------------ #370 details
+const detailText = (raw: unknown): string | null => {
+  if (typeof raw !== 'string') return null;
+  const text = raw.trim();
+  return text && text.length <= DETAIL_TEXT_MAX && !CONTROL.test(text) ? text : null;
+};
+
+/** One detail of this account at the revision the caller saw (update, remove, restore). */
+function oneDetail<T extends DetailUpdateOperation | DetailRemoveOperation | DetailRestoreOperation>(
+  type: T['type'],
+  extra: string[],
+  approval: readonly AuthorizationKind[],
+  undoRemoves: boolean,
+  build: (raw: Record<string, unknown>, base: { detail_id: string; expected_revision: number }) => Parsed<T>,
+): OperationSpec<T> {
+  return {
+    type,
+    version: 1,
+    access: 'owner',
+    classification: 'write',
+    approval,
+    revisionCheck: 'expected_revision',
+    idempotency: 'operation_id',
+    undo: 'recorded_inverse',
+    undoRemoves,
+    parse(raw) {
+      if (!onlyKeys(raw, ['type', 'detail_id', 'expected_revision', ...extra])) return refuse(422, 'unknown_field');
+      if (typeof raw.detail_id !== 'string' || !UUID.test(raw.detail_id)) return refuse(422, 'invalid_detail_id');
+      if (!isPlainInt(raw.expected_revision)) return refuse(422, 'expected_revision_required');
+      return build(raw, { detail_id: raw.detail_id.toLowerCase(), expected_revision: raw.expected_revision });
+    },
+  };
+}
+
+const detailCreate: OperationSpec<DetailCreateOperation> = {
+  type: 'detail.create',
+  version: 1,
+  access: 'owner',
+  classification: 'write',
+  // Never ui_control: a new detail comes from the user's own clear remember message or
+  // from approving a reviewed draft. Reading a conversation never saves one.
+  approval: ['approved_proposal', 'direct_command'],
+  revisionCheck: 'proposal_context',
+  idempotency: 'operation_id',
+  undo: 'recorded_inverse',
+  undoRemoves: true,
+  parse(raw) {
+    if (!onlyKeys(raw, ['type', 'text'])) return refuse(422, 'unknown_field');
+    const text = detailText(raw.text);
+    return text ? ok({ type: 'detail.create', text }) : refuse(422, 'invalid_text');
+  },
+};
+const detailUpdate = oneDetail<DetailUpdateOperation>('detail.update', ['text'], ['ui_control', 'approved_proposal'], false,
+  (raw, base) => {
+    const text = detailText(raw.text);
+    return text ? ok({ type: 'detail.update', detail_id: base.detail_id, text, expected_revision: base.expected_revision })
+      : refuse(422, 'invalid_text');
+  });
+// Every removal needs removal_confirmed (checked with the authorization).
+const detailRemove = oneDetail<DetailRemoveOperation>('detail.remove', [], ['ui_control', 'approved_proposal'], false,
+  (_raw, base) => ok({ type: 'detail.remove', ...base }));
+const detailRestore = oneDetail<DetailRestoreOperation>('detail.restore', [], ['approved_proposal'], true,
+  (_raw, base) => ok({ type: 'detail.restore', ...base }));
+
 export const OPERATION_REGISTRY: { readonly [K in Operation['type']]: OperationSpec<Extract<Operation, { type: K }>> } = {
   'task.set_state': setState,
   'task.create_custom': createCustom,
@@ -346,12 +444,16 @@ export const OPERATION_REGISTRY: { readonly [K in Operation['type']]: OperationS
   'step.remove': stepRemove,
   'step.restore': stepRestore,
   'step.remove_created': stepRemoveCreated,
+  'detail.create': detailCreate,
+  'detail.update': detailUpdate,
+  'detail.remove': detailRemove,
+  'detail.restore': detailRestore,
 };
 
 /** The operations a draft can be prepared and revised for. */
-export type PreparableOperation = CreateCustomOperation | StepCreateOperation;
+export type PreparableOperation = CreateCustomOperation | StepCreateOperation | DetailCreateOperation;
 const isPreparable = (op: Operation): op is PreparableOperation =>
-  op.type === 'task.create_custom' || op.type === 'step.create';
+  op.type === 'task.create_custom' || op.type === 'step.create' || op.type === 'detail.create';
 
 /** One operation through its registry entry, without authorization (prepare, revise). */
 export function parseOperation(raw: unknown): Parsed<Operation> {
@@ -452,7 +554,8 @@ export function parseAction(body: Record<string, unknown>): Parsed<ActionRequest
     case 'prepare': {
       const op = parseOperation(body.operation);
       if (!op.ok) return op;
-      // Only a new task (#363) or suggested steps (#366) can be prepared for review.
+      // Only a new task (#363), suggested steps (#366) or a suggested detail (#370) can be
+      // prepared for review.
       if (!isPreparable(op.value)) return refuse(422, 'unsupported_operation');
       const source = parseSource(body.source);
       if (!source.ok) return source;

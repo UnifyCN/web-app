@@ -8,6 +8,8 @@
 // A later domain (for example job search) adds an entry here and a matching operation
 // in the action service registry; it gains no other permission.
 
+import { profileFactOf } from '../context/profileFacts.ts';
+
 export interface TaskCreateProposal {
   type: 'task.create_custom';
   version: 1;
@@ -22,7 +24,14 @@ export interface StepCreateProposal {
   titles: string[];
 }
 
-export type ActionProposal = TaskCreateProposal | StepCreateProposal;
+/** #370: one personal detail the user mentioned, for them to approve saving. */
+export interface DetailCreateProposal {
+  type: 'detail.create';
+  version: 1;
+  text: string;
+}
+
+export type ActionProposal = TaskCreateProposal | StepCreateProposal | DetailCreateProposal;
 
 export interface ProposalCapabilitySpec<P extends ActionProposal> {
   type: P['type'];
@@ -81,6 +90,29 @@ const stepCreate = {
   },
 };
 
+// #370: "[REMEMBER]: <detail>". Plain text only; never a profile fact (the profile owns
+// province, city, arrival date and status), which the action service would refuse too.
+const DETAIL_MIN = 3;
+const DETAIL_MAX = 200;
+const detailCreate = {
+  type: 'detail.create' as const,
+  version: 1 as const,
+  classification: 'propose' as const,
+  tag: 'REMEMBER',
+  parse(value: string): DetailCreateProposal | null {
+    const text = value.trim().replace(/\s+/g, ' ').replace(/^["“]|["”]$/g, '').trim();
+    if (text.length < DETAIL_MIN || text.length > DETAIL_MAX || NOT_PLAIN.test(text)) return null;
+    if (profileFactOf(text)) return null;
+    return { type: 'detail.create', version: 1, text };
+  },
+};
+
+export const DETAIL_PROPOSAL_INSTRUCTION = `
+DETAIL SUGGESTION:
+You cannot save personal details. When the user's own message states a lasting personal detail that would help in later conversations (for example when they can attend appointments, an accessibility need, or a preferred language for appointments), and no [TASK] or [STEP] line is written, you may suggest saving ONE detail for them to review. Never suggest their province, city, arrival date or immigration status: the profile owns those. Do not suggest a detail already listed under SAVED PERSONAL DETAILS. Write it on its own line before any [SUGGESTIONS] line, as:
+[REMEMBER]: <the detail in plain text, at most 200 characters, in the language of your answer, written as the user would say it, for example "I can attend appointments on Fridays">
+The app asks the user whether to save it; only the user can approve it. Never say that a detail was saved or remembered. Write no [REMEMBER] line in any other case.`;
+
 export const TASK_PROPOSAL_INSTRUCTION = `
 TASK SUGGESTION:
 You cannot add or change tasks. When the user asks for help with one concrete settlement step that is not already in their Checklist above, you may suggest ONE new Checklist task for them to review. Write it on its own line before any [SUGGESTIONS] line, as:
@@ -93,10 +125,11 @@ When the user asks how to do one task that is listed in their Checklist above, a
 Use the exact task id shown for that Checklist task. The app shows the steps as a draft that only the user can approve. Never say that a step was added, saved or done. Steps never complete the task. Write no [STEP] line in any other case.`;
 
 /**
- * Removes every "[TASK]: ..." and "[STEP <id>]: ..." line from the answer and returns
+ * Removes every "[TASK]: ...", "[STEP <id>]: ..." and "[REMEMBER]: ..." line from the answer and returns
  * the suggestion. A task: exactly one valid "[TASK]" line (two or more, or an invalid
  * value, give none). Steps (#366), only when no "[TASK]" line was written: valid lines
- * for one task in `readTaskRefs`, the Checklist tasks this answer read.
+ * for one task in `readTaskRefs`, the Checklist tasks this answer read. A detail (#370),
+ * only when neither was written: exactly one valid "[REMEMBER]" line.
  */
 export function extractActionProposal(
   answer: string,
@@ -107,6 +140,8 @@ export function extractActionProposal(
   const stepLine = /^[ \t*_`~]*\[STEP(?:[ \t]+([^\]\s]*))?[ \t]*\]:[ \t]*(.*)$/gim;
   const values: string[] = [];
   const steps: { ref: string; value: string }[] = [];
+  const details: string[] = [];
+  const detailLine = new RegExp(`^[ \\t*_\`~]*\\[${detailCreate.tag}\\]:[ \\t]*(.*)$`, 'gim');
   const stripped = answer
     .replace(line, (_m, value: string) => {
       values.push(value);
@@ -115,9 +150,15 @@ export function extractActionProposal(
     .replace(stepLine, (_m, ref: string | undefined, value: string) => {
       steps.push({ ref: ref ?? '', value });
       return '';
+    })
+    .replace(detailLine, (_m, value: string) => {
+      details.push(value);
+      return '';
     });
-  if (values.length === 0 && steps.length === 0) return { answer, proposal: null };
+  if (values.length === 0 && steps.length === 0 && details.length === 0) return { answer, proposal: null };
   const cleaned = stripped.replace(/\n{3,}/g, '\n\n').trim();
   if (values.length > 0) return { answer: cleaned, proposal: values.length === 1 ? spec.parse(values[0]) : null };
-  return { answer: cleaned, proposal: stepCreate.parse(steps, readTaskRefs) };
+  if (steps.length > 0) return { answer: cleaned, proposal: stepCreate.parse(steps, readTaskRefs) };
+  // #370: exactly one detail line, only when no task or step was suggested.
+  return { answer: cleaned, proposal: details.length === 1 ? detailCreate.parse(details[0]) : null };
 }

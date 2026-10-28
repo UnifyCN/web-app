@@ -21,6 +21,13 @@ export const stepProposalKey = (
   proposalId: string | null,
 ) => [STEP_PROPOSAL_ROOT, userId, proposalId] as const;
 
+/** A suggested-detail draft (#370), per account. */
+export const DETAIL_PROPOSAL_ROOT = "companion-detail-proposal" as const;
+export const detailProposalKey = (
+  userId: string | null,
+  proposalId: string | null,
+) => [DETAIL_PROPOSAL_ROOT, userId, proposalId] as const;
+
 /** The drafts and command results of one conversation (#363), per account. */
 export const CONVERSATION_ACTIONS_ROOT =
   "companion-conversation-actions" as const;

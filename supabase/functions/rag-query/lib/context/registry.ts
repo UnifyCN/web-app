@@ -48,6 +48,13 @@ export const READ_CAPABILITIES: Readonly<Record<ReadCapabilityName, ReadCapabili
     access: 'owner_rls',
     timeoutMs: 4000,
   },
+  'context.saved_details': {
+    name: 'context.saved_details',
+    version: 1,
+    classification: 'read',
+    access: 'owner_rls',
+    timeoutMs: 4000,
+  },
   'content.knowledge': {
     name: 'content.knowledge',
     version: 1,
