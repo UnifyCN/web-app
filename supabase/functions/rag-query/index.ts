@@ -16,8 +16,17 @@ import {
 import {
   DETAIL_PROPOSAL_INSTRUCTION,
   extractActionProposal,
+  PLAN_PROPOSAL_INSTRUCTION,
+  type ReadChecklistTask,
   TASK_PROPOSAL_INSTRUCTION,
 } from './lib/actions/proposals.ts';
+
+/** The Checklist tasks this answer read for the account: a suggested plan may reuse only these. */
+function readChecklistTasks(context: { items: Array<{ kind: string; id?: string; title?: string | null }> }): ReadChecklistTask[] {
+  return context.items.flatMap(item =>
+    item.kind === 'checklist_task' && typeof item.id === 'string' ? [{ id: item.id, title: item.title ?? null }] : []
+  );
+}
 import { buildUserProfileContext } from './lib/profile.ts';
 import { buildRetrievalArgs } from './lib/retrieval.ts';
 import { buildRetrievedContext } from './lib/retrievedContext.ts';
@@ -1090,7 +1099,7 @@ Deno.serve(async (req: Request) => {
     // Companion tab only (not the in-lesson chat): the model may suggest one task for
     // the user to review. The suggestion is typed and stripped below; it writes nothing.
     if (!lessonContext) {
-      fullSystemInstruction = `${fullSystemInstruction}\n${TASK_PROPOSAL_INSTRUCTION}\n${DETAIL_PROPOSAL_INSTRUCTION}`;
+      fullSystemInstruction = `${fullSystemInstruction}\n${TASK_PROPOSAL_INSTRUCTION}\n${PLAN_PROPOSAL_INSTRUCTION}\n${DETAIL_PROPOSAL_INSTRUCTION}`;
     }
     // #366: steps may be suggested only for a Checklist task this answer read (its own
     // account's context). Outside the Companion tab nothing is suggested.
@@ -1363,7 +1372,7 @@ Deno.serve(async (req: Request) => {
               );
             }
 
-            const proposed = extractActionProposal(untaggedAnswer, readTaskRefs);
+            const proposed = extractActionProposal(untaggedAnswer, readChecklistTasks(companionContext), readTaskRefs);
             const { cleanAnswer, suggestions } =
               parseSuggestionsFromResponse(proposed.answer);
 
@@ -1537,7 +1546,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // A suggested task (typed, validated) leaves the answer text first.
-    const proposed = extractActionProposal(untaggedAnswer, readTaskRefs);
+    const proposed = extractActionProposal(untaggedAnswer, readChecklistTasks(companionContext), readTaskRefs);
     // Parse out suggestions from the response
     const { cleanAnswer, suggestions } =
       parseSuggestionsFromResponse(proposed.answer);

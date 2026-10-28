@@ -36,7 +36,10 @@ import type {
 } from "@/lib/companionActions/contract";
 import {
   CONVERSATION_ACTIONS_ROOT,
+  CONVERSATION_PLANS_ROOT,
   DETAIL_PROPOSAL_ROOT,
+  PLANS_ROOT,
+  PLAN_PROPOSAL_ROOT,
   STEP_PROPOSAL_ROOT,
   TASK_PROGRESS_ROOT,
   TASK_PROPOSAL_ROOT,
@@ -228,6 +231,10 @@ export function useTaskActionStore(
         void queryClient.invalidateQueries({
           queryKey: [CONVERSATION_ACTIONS_ROOT, userId],
         });
+        // Plans join current shared progress and must refresh after a task save.
+        for (const root of [PLANS_ROOT, PLAN_PROPOSAL_ROOT, CONVERSATION_PLANS_ROOT]) {
+          void queryClient.invalidateQueries({ queryKey: [root, userId] });
+        }
         // #366: suggested-step drafts.
         void queryClient.invalidateQueries({
           queryKey: [STEP_PROPOSAL_ROOT, userId],
@@ -265,6 +272,8 @@ export function useTaskActionClient(): {
 
 /** A client bound to `owner`, for work started by a send (#363). */
 export const taskActionClientFor = clientFor;
+/** The account-bound transport, for the plan client (#364). */
+export const companionActionsTransportFor = transportFor;
 
 /** One task draft, read from the action service. */
 export function useTaskProposal(proposalId: string | null) {

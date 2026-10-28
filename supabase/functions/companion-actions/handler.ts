@@ -8,6 +8,8 @@ import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import { type ActionRequest, type Operation, PLATFORMS, type Platform, parseAction, parseEnvelope } from './contract.ts';
 import { resolveCommand, resolveRemember, titleKey } from './commands.ts';
 import { profileFactOf } from '../rag-query/lib/context/profileFacts.ts';
+import { isPlanAction, type PlanActionName, parsePlanAction } from './plans.ts';
+import { handlePlanRequest } from './planHandler.ts';
 
 /**
  * Whether a published Checklist document exists (#366): true, false, or null when the
@@ -28,7 +30,7 @@ export interface HandlerDeps {
 /** Only categorical fields. Never task titles, reasons, ids of rows or message text. */
 export interface ResultLine {
   event: 'companion_action_result';
-  action: ActionRequest['action'] | 'unknown';
+  action: ActionRequest['action'] | PlanActionName | 'unknown';
   operation_type: Operation['type'] | null;
   platform: Platform | null;
   http_status: number;
@@ -220,6 +222,17 @@ export function createHandler({ admin, contentTaskExists, log = line => console.
     if (!gate.enabled) return finish(json({ error: 'feature_disabled' }, 403), 'feature_disabled');
     if (!platform || !gate.allowed_platforms.includes(platform)) {
       return finish(json({ error: 'platform_not_enabled' }, 403), 'platform_not_enabled');
+    }
+
+    // Settlement plans (#364): same boundary, own actions and SQL functions.
+    if (isPlanAction((body as Record<string, unknown>).action)) {
+      const plan = parsePlanAction(body as Record<string, unknown>);
+      if (!plan.ok) {
+        return finish(json({ error: plan.status === 403 ? 'forbidden' : 'invalid_request', reason: plan.reason }, plan.status), 'rejected');
+      }
+      action = plan.value.action;
+      const handled = await handlePlanRequest(admin, userId, version as number, plan.value, { json, mapDbError });
+      return finish(handled.response, handled.outcome);
     }
 
     const parsed = parseAction(body as Record<string, unknown>);

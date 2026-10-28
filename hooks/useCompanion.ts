@@ -4,6 +4,8 @@ import {
   useQueryClient,
   type QueryClient,
 } from "@tanstack/react-query";
+import { conversationPlansKey, plansKey } from "@/lib/companionActions/queryKeys";
+import { planClientFor } from "@/hooks/usePlans";
 import { useTranslation } from "react-i18next";
 import * as companion from "@/services/companion";
 import {
@@ -353,6 +355,16 @@ export function useSendMessage() {
         owner,
       });
       ensureOwned(owner);
+      // #364: a suggested plan becomes a server-owned plan draft for review, tied to
+      // this answer. The action service checks every reused task again; preparing
+      // writes no task and no plan. A failure only means no plan card.
+      if (reply.planProposal) {
+        await planClientFor(owner).prepare(reply.planProposal.goal, reply.planProposal.items, {
+          conversationId: conversationIdentifier,
+          messageId: savedAnswer.id,
+        });
+        ensureOwned(owner);
+      }
       // #363: a suggested task becomes a server-owned draft for review, tied to this
       // answer. Preparing writes no task; a failure only means no draft card.
       if (reply.actionProposal?.type === "task.create_custom") {
@@ -422,6 +434,11 @@ export function useSendMessage() {
       queryClient.invalidateQueries({
         queryKey: conversationActionsKey(accountId, conversationIdentifier),
       });
+      // #364: the conversation's plan card and the plan entry.
+      queryClient.invalidateQueries({
+        queryKey: conversationPlansKey(accountId, conversationIdentifier),
+      });
+      queryClient.invalidateQueries({ queryKey: plansKey(accountId) });
       queryClient.invalidateQueries({ queryKey: [CONVERSATIONS_ROOT] });
       // The edge function incremented chatbot_usage server-side — refetch so
       // the free-tier "remaining" counter reflects the new count.

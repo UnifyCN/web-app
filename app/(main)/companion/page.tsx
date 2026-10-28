@@ -10,6 +10,9 @@ import {
   TaskActionsDrawer,
 } from "@/components/companion/tasks/TaskActionsDrawer";
 import { TaskActionCards } from "@/components/companion/tasks/TaskActionCards";
+import { PlanEntry, type PlanTarget } from "@/components/companion/plans/PlanEntry";
+import { PlanCards } from "@/components/companion/plans/PlanCards";
+import { useConversationPlans, usePlanStore } from "@/hooks/usePlans";
 import {
   useConversationActions,
   useTaskActionStore,
@@ -51,6 +54,7 @@ export default function CompanionPage() {
     // #370: a suggested detail's review, or the saved details.
     | { kind: "detail"; proposalId: string }
     | { kind: "details" }
+    | { kind: "plan"; target: PlanTarget }
     | null
   >(null);
 
@@ -84,6 +88,11 @@ export default function CompanionPage() {
   const actionStore = useTaskActionStore("companion");
   const progress = useTaskProgress();
   const actions = actionsQuery.data;
+  // #364: the plan drafts of the open conversation, and the account's plan store.
+  const plansQuery = useConversationPlans(activeId);
+  const planStore = usePlanStore("companion");
+  const openTaskRef = (taskRef: string) =>
+    setDrawer({ kind: "task", taskId: taskRef.slice(taskRef.indexOf(":") + 1) });
   // #366: the card names the Checklist task suggested steps are for.
   const { data: checklistTasks = [] } = useTasks();
   const taskTitleOf = (taskRef: string) =>
@@ -188,9 +197,13 @@ export default function CompanionPage() {
         mobileActive={!mobileListOpen}
         onOpenList={() => setMobileListOpen(true)}
         taskEntry={
-          <CompanionTasksEntry onOpen={() => setDrawer({ kind: "tasks" })} />
+          <>
+            <CompanionTasksEntry onOpen={() => setDrawer({ kind: "tasks" })} />
+            <PlanEntry onOpen={(target) => setDrawer({ kind: "plan", target })} />
+          </>
         }
         renderAfterMessage={(message) => (
+          <>
           <TaskActionCards
             message={message}
             proposals={actions?.proposals ?? []}
@@ -218,6 +231,13 @@ export default function CompanionPage() {
             }
             onViewDetails={() => setDrawer({ kind: "details" })}
           />
+          <PlanCards
+            message={message}
+            proposals={plansQuery.data ?? []}
+            store={planStore}
+            onOpen={(proposalId) => setDrawer({ kind: "plan", target: { proposalId } })}
+          />
+          </>
         )}
       />
       <TaskActionsDrawer
@@ -226,6 +246,8 @@ export default function CompanionPage() {
         surface="companion"
         initialTaskId={drawer?.kind === "task" ? drawer.taskId : null}
         proposalId={drawer?.kind === "proposal" ? drawer.proposalId : null}
+        plan={drawer?.kind === "plan" ? drawer.target : null}
+        onOpenTask={openTaskRef}
         stepProposalId={drawer?.kind === "steps" ? drawer.proposalId : null}
         detailProposalId={drawer?.kind === "detail" ? drawer.proposalId : null}
         openDetails={drawer?.kind === "details"}

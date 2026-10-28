@@ -21,6 +21,8 @@ import { StepProposalPanel } from "./StepProposalPanel";
 import { useStepProposal } from "@/hooks/useTaskActions";
 import { TaskStatePanel, progressFor } from "./TaskStatePanel";
 import { DetailProposalPanel, SavedDetailsPanel } from "./SavedDetails";
+import { PlanPanel } from "../plans/PlanPanel";
+import type { PlanTarget } from "../plans/PlanEntry";
 
 const STATE_ORDER: TaskState[] = [
   "in_progress",
@@ -37,6 +39,10 @@ interface TaskActionsDrawerProps {
   initialTaskId?: string | null;
   /** Open on the review of one task draft (#363) instead of a task. */
   proposalId?: string | null;
+  /** Open on a settlement plan draft or saved plan (#364). */
+  plan?: PlanTarget | null;
+  /** A task row of the plan was opened (#364). */
+  onOpenTask?: (taskRef: string) => void;
   /** #366: open on the review of suggested steps for one task. */
   stepProposalId?: string | null;
   /** #370: open on the review of one suggested detail. */
@@ -52,6 +58,8 @@ export function TaskActionsDrawer({
   surface,
   initialTaskId = null,
   proposalId = null,
+  plan = null,
+  onOpenTask,
   stepProposalId = null,
   detailProposalId = null,
   openDetails = false,
@@ -66,8 +74,10 @@ export function TaskActionsDrawer({
   // #370: the saved details view, opened from the list, a card or a review.
   const [showDetails, setShowDetails] = useState(openDetails);
   const [lastOpen, setLastOpen] = useState(open);
-  if (open !== lastOpen) {
+  const [lastInitialTaskId, setLastInitialTaskId] = useState(initialTaskId);
+  if (open !== lastOpen || initialTaskId !== lastInitialTaskId) {
     setLastOpen(open);
+    setLastInitialTaskId(initialTaskId);
     if (open) {
       setSelectedId(initialTaskId);
       setReturnId(null);
@@ -80,7 +90,7 @@ export function TaskActionsDrawer({
   const { refetch } = view;
   useEffect(() => {
     if (open) refetch();
-  }, [open, refetch]);
+  }, [open, initialTaskId, refetch]);
 
   const active = tasks.filter((task) => !task.dismissedAt);
   const selected = active.find((task) => task.id === selectedId) ?? null;
@@ -115,16 +125,20 @@ export function TaskActionsDrawer({
             ? t("savedDetails.reviewTitle")
             : stepProposalId
               ? t("taskSteps.reviewTitle")
-              : proposalId
-                ? t("taskCreate.drawerTitle")
-                : selected
-                  ? t("taskActions.drawerTitle")
-                  : t("taskActions.listTitle")
+              : plan
+                ? "proposalId" in plan
+                  ? t("plans.reviewTitle")
+                  : t("plans.planTitle")
+                : proposalId
+                  ? t("taskCreate.drawerTitle")
+                  : selected
+                    ? t("taskActions.drawerTitle")
+                    : t("taskActions.listTitle")
       }
       onBack={
         showDetails && !openDetails && !detailProposalId
           ? () => setShowDetails(false)
-          : selected && !initialTaskId && !proposalId && !stepProposalId
+          : selected && !initialTaskId && !proposalId && !stepProposalId && !plan
             ? () => setSelectedId(null)
             : undefined
       }
@@ -158,6 +172,8 @@ export function TaskActionsDrawer({
           store={store}
           taskTitle={stepTask?.title ?? null}
         />
+      ) : plan ? (
+        <PlanPanel target={plan} onOpenTask={(taskRef) => onOpenTask?.(taskRef)} />
       ) : proposalId ? (
         <TaskProposalPanel proposalId={proposalId} view={view} store={store} />
       ) : view.status === "loading" || isLoading ? (

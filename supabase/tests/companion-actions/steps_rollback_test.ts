@@ -1,12 +1,47 @@
 // Rollback and re-application of the #366 step migration, through the public boundary.
 import { assertEquals } from 'jsr:@std/assert@1';
 import {
-  apply, approved, existingCustomTask, migrate366, newAccount, openGate, prepare, read, ready, setState, sql,
-  startContentStub, status, stepCreate, stepDone, stepsOf, taskOf, testOpts, undo,
+  API_URL, apply, approved, existingCustomTask, migrate366, newAccount, openGate, prepare, read, ready, setState, sql,
+  startContentStub, status, stepCreate, stepDone, stepsOf, taskOf, testOpts, undo, waitForSchemaCache,
 } from './support.ts';
 
 await ready();
 startContentStub();
+
+Deno.test({
+  name: 'the #366 rollback waits for the step RPC to leave the cache while plan setup accepts installed steps',
+  ...testOpts,
+  fn: async () => {
+    // Wrong if rollback finishes while its last schema response still lists the step RPC.
+    const originalFetch = globalThis.fetch;
+    const base = ['/companion_feature_gate', '/rpc/companion_apply_actions',
+      '/rpc/companion_prepare_proposal', '/rpc/companion_plan_prepare'];
+    const response = (steps: boolean) => Response.json({ paths: Object.fromEntries(
+      [...base, ...(steps ? ['/rpc/companion_read_steps'] : [])].map(path => [path, {}]),
+    ) });
+    let rollback = false;
+    let freshCacheRead = false;
+    let reads = 0;
+    globalThis.fetch = (input, init) => {
+      if (String(input) !== `${API_URL}/rest/v1/`) return originalFetch(input, init);
+      if (!rollback) return Promise.resolve(response(true));
+      reads++;
+      freshCacheRead = reads > 1;
+      return Promise.resolve(response(!freshCacheRead));
+    };
+    try {
+      // The general plan setup wait must still accept a schema with installed steps.
+      await waitForSchemaCache('up364', 500);
+      rollback = true;
+      await migrate366('down');
+      assertEquals(freshCacheRead, true, 'rollback accepted the cache that still lists the step RPC');
+    } finally {
+      globalThis.fetch = originalFetch;
+      await migrate366('up');
+      await openGate();
+    }
+  },
+});
 
 Deno.test({
   name: 'rolling back #366 keeps every saved step and the #363 actions; re-applying restores step receipts and re-reviews drafts',
