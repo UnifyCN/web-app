@@ -13,6 +13,7 @@ import {
   CONVERSATION_PLANS_ROOT,
   PLAN_PROPOSAL_ROOT,
   PLANS_ROOT,
+  STEP_PROPOSAL_ROOT,
   TASK_PROGRESS_ROOT,
   TASK_PROPOSAL_ROOT,
 } from "@/lib/companionActions/queryKeys";
@@ -52,6 +53,8 @@ export function useAccountScope(userId: string | null, ready = true) {
       PLANS_ROOT,
       PLAN_PROPOSAL_ROOT,
       CONVERSATION_PLANS_ROOT,
+      // Suggested-step drafts (#366).
+      STEP_PROPOSAL_ROOT,
     ]) {
       void queryClient.cancelQueries({
         queryKey: [root],

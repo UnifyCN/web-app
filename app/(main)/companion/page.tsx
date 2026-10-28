@@ -28,6 +28,8 @@ import {
   useSendMessage,
 } from "@/hooks/useCompanion";
 import { useCurrentUser } from "@/hooks/useProfile";
+import { useTasks } from "@/hooks/useChecklist";
+import { taskOrderKey } from "@/services/checklist";
 import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
 import type { CompanionInputSource } from "@/lib/companionAnalytics";
 import type { ChatMessage } from "@/types";
@@ -47,6 +49,7 @@ export default function CompanionPage() {
   const [drawer, setDrawer] = useState<
     | { kind: "tasks" }
     | { kind: "proposal"; proposalId: string }
+    | { kind: "steps"; proposalId: string }
     | { kind: "task"; taskId: string }
     | { kind: "plan"; target: PlanTarget }
     | null
@@ -87,6 +90,12 @@ export default function CompanionPage() {
   const planStore = usePlanStore("companion");
   const openTaskRef = (taskRef: string) =>
     setDrawer({ kind: "task", taskId: taskRef.slice(taskRef.indexOf(":") + 1) });
+  // #366: the card names the Checklist task suggested steps are for.
+  const { data: checklistTasks = [] } = useTasks();
+  const taskTitleOf = (taskRef: string) =>
+    checklistTasks.find(
+      (task) => !task.dismissedAt && taskOrderKey(task) === taskRef,
+    )?.title ?? null;
   const activeConversation = activeId
     ? (conversations.find((c) => c.id === activeId) ?? null)
     : null;
@@ -207,6 +216,11 @@ export default function CompanionPage() {
                 taskId: taskRef.slice(taskRef.indexOf(":") + 1),
               })
             }
+            stepProposals={actions?.stepProposals ?? []}
+            onReviewSteps={(proposalId) =>
+              setDrawer({ kind: "steps", proposalId })
+            }
+            taskTitleOf={taskTitleOf}
           />
           <PlanCards
             message={message}
@@ -225,6 +239,7 @@ export default function CompanionPage() {
         proposalId={drawer?.kind === "proposal" ? drawer.proposalId : null}
         plan={drawer?.kind === "plan" ? drawer.target : null}
         onOpenTask={openTaskRef}
+        stepProposalId={drawer?.kind === "steps" ? drawer.proposalId : null}
       />
     </div>
   );

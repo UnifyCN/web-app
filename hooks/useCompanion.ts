@@ -324,11 +324,24 @@ export function useSendMessage() {
       }
       // #363: a suggested task becomes a server-owned draft for review, tied to this
       // answer. Preparing writes no task; a failure only means no draft card.
-      if (reply.actionProposal) {
+      if (reply.actionProposal?.type === "task.create_custom") {
         await actions.prepare(createTaskOperation(reply.actionProposal.title), {
           conversationId: conversationIdentifier,
           messageId: savedAnswer.id,
         });
+        ensureOwned(owner);
+      }
+      // #366: suggested steps for one Checklist task become a server-owned draft
+      // too. The action service checks the task is this account's live task.
+      if (reply.actionProposal?.type === "step.create") {
+        await actions.prepareSteps(
+          {
+            type: "step.create",
+            task_ref: reply.actionProposal.taskRef,
+            titles: reply.actionProposal.titles,
+          },
+          { conversationId: conversationIdentifier, messageId: savedAnswer.id },
+        );
         ensureOwned(owner);
       }
       return { conversationIdentifier, accountId: owner.accountId };

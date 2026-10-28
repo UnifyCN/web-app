@@ -12,7 +12,8 @@
     "test:learning-navigation": "node scripts/verify-learning-navigation.mjs",
     "test:companion-drawer": "node scripts/verify-companion-context-drawer.mjs",
     "test:companion-task-loading": "node scripts/verify-companion-task-loading.mjs",
-    "test:companion-plan-drawer": "node scripts/verify-companion-plan-drawer.mjs"
+    "test:companion-plan-drawer": "node scripts/verify-companion-plan-drawer.mjs",
+    "test:companion-task-steps": "node scripts/verify-companion-task-steps.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

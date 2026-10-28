@@ -27,7 +27,15 @@ export interface PlanProposal {
   items: PlanProposalItem[];
 }
 
-export type ActionProposal = TaskCreateProposal | PlanProposal;
+/** #366: preparation steps for one task this answer read from the user's Checklist. */
+export interface StepCreateProposal {
+  type: 'step.create';
+  version: 1;
+  task_ref: string;
+  titles: string[];
+}
+
+export type ActionProposal = TaskCreateProposal | PlanProposal | StepCreateProposal;
 
 /** A Checklist task this answer actually read for this account (the plan may reuse only these). */
 export interface ReadChecklistTask {
@@ -129,35 +137,77 @@ function parsePlan(lines: Array<{ tag: string; value: string }>, read: ReadCheck
   };
 }
 
+const STEPS_MAX = 5;
+const TASK_ID = /^(sanity:(?!drafts\.|versions\.)[A-Za-z0-9][A-Za-z0-9._-]{0,127}|custom:[1-9][0-9]{0,17})$/;
+const stepKey = (t: string) => t.toLowerCase();
+
+/**
+ * Steps for one task: "[STEP <task id>]: <title>" lines, at most five, all naming the same
+ * task, which must be one this answer read (`readTaskRefs`). Anything else gives none.
+ */
+const stepCreate = {
+  type: 'step.create' as const,
+  version: 1 as const,
+  classification: 'propose' as const,
+  parse(lines: { ref: string; value: string }[], readTaskRefs: ReadonlySet<string>): StepCreateProposal | null {
+    if (lines.length === 0 || lines.length > STEPS_MAX) return null;
+    const ref = lines[0].ref;
+    if (!TASK_ID.test(ref) || !readTaskRefs.has(ref) || lines.some(l => l.ref !== ref)) return null;
+    const titles: string[] = [];
+    for (const l of lines) {
+      const title = taskCreate.parse(l.value)?.title;
+      if (!title || titles.some(t => stepKey(t) === stepKey(title))) return null;
+      titles.push(title);
+    }
+    return { type: 'step.create', version: 1, task_ref: ref, titles };
+  },
+};
+
 export const TASK_PROPOSAL_INSTRUCTION = `
 TASK SUGGESTION:
 You cannot add or change tasks. When the user asks for help with one concrete settlement step that is not already in their Checklist above, you may suggest ONE new Checklist task for them to review. Write it on its own line before any [SUGGESTIONS] line, as:
 [TASK]: <short task title in plain text, at most 80 characters, in the language of your answer>
-The app shows it as a draft that only the user can approve. Never say that a task was added or saved. Do not suggest a task that the Checklist already has. Write no [TASK] line in any other case.`;
+The app shows it as a draft that only the user can approve. Never say that a task was added or saved. Do not suggest a task that the Checklist already has. Write no [TASK] line in any other case.
+
+STEP SUGGESTION:
+When the user asks how to do one task that is listed in their Checklist above, and no [TASK] line is written, you may suggest up to 5 short preparation steps for that one task. Write each on its own line before any [SUGGESTIONS] line, as:
+[STEP <task id>]: <short step in plain text, at most 80 characters, in the language of your answer>
+Use the exact task id shown for that Checklist task. The app shows the steps as a draft that only the user can approve. Never say that a step was added, saved or done. Steps never complete the task. Write no [STEP] line in any other case.`;
 
 /**
- * Removes every "[TASK]: ..." and plan line from the answer. Returns a plan when the
- * answer has exactly one valid plan (checked against `read`, the Checklist tasks this
- * answer read for the account), else the one valid task suggestion, else none.
+ * Removes every "[TASK]: ...", plan and "[STEP <id>]: ..." line from the answer.
+ * Returns a plan when the answer has exactly one valid plan (checked against `read`,
+ * the Checklist tasks this answer read for the account), else the one valid task
+ * suggestion, else steps (#366): valid lines for one task in `readTaskRefs`, the
+ * Checklist tasks this answer read. Two or more tasks, or an invalid value, give none.
  */
 export function extractActionProposal(
   answer: string,
   read: ReadChecklistTask[] = [],
+  readTaskRefs: ReadonlySet<string> = new Set(),
 ): { answer: string; proposal: ActionProposal | null } {
   const spec = PROPOSAL_CAPABILITIES['task.create_custom'];
   const line = new RegExp(`^[ \\t*_\`~]*\\[(${spec.tag}|PLAN|PLAN_TASK|PLAN_NEW)\\]:[ \\t]*(.*)$`, 'gim');
+  const stepLine = /^[ \t*_`~]*\[STEP(?:[ \t]+([^\]\s]*))?[ \t]*\]:[ \t]*(.*)$/gim;
   const values: string[] = [];
   const planLines: Array<{ tag: string; value: string }> = [];
-  const stripped = answer.replace(line, (_m, tag: string, value: string) => {
-    const t = tag.toUpperCase();
-    if (t === spec.tag) values.push(value);
-    else planLines.push({ tag: t, value });
-    return '';
-  });
-  if (values.length === 0 && planLines.length === 0) return { answer, proposal: null };
+  const steps: { ref: string; value: string }[] = [];
+  const stripped = answer
+    .replace(line, (_m, tag: string, value: string) => {
+      const t = tag.toUpperCase();
+      if (t === spec.tag) values.push(value);
+      else planLines.push({ tag: t, value });
+      return '';
+    })
+    .replace(stepLine, (_m, ref: string | undefined, value: string) => {
+      steps.push({ ref: ref ?? '', value });
+      return '';
+    });
+  if (values.length === 0 && planLines.length === 0 && steps.length === 0) return { answer, proposal: null };
   const cleaned = stripped.replace(/\n{3,}/g, '\n\n').trim();
   if (planLines.length > 0) {
     return { answer: cleaned, proposal: parsePlan(planLines, read) };
   }
-  return { answer: cleaned, proposal: values.length === 1 ? spec.parse(values[0]) : null };
+  if (values.length > 0) return { answer: cleaned, proposal: values.length === 1 ? spec.parse(values[0]) : null };
+  return { answer: cleaned, proposal: stepCreate.parse(steps, readTaskRefs) };
 }

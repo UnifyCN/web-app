@@ -21,4 +21,15 @@ python3 -I mutation_check.py   # breaks one mechanism at a time; each must fail 
 
 Needs docker, the Supabase CLI and deno. No hosted project is contacted.
 
+#366 task steps: `steps_test.ts` and `steps_rollback_test.ts` also apply
+`20261027183644_companion_task_steps.sql`. A new step under a content-backed task needs
+its published Checklist document; the edge function reads it from
+`COMPANION_CONTENT_QUERY_URL`, which `run.sh` points at the tests' stand-in
+(`support.ts` `contentStub`) on `ACTIONS_CONTENT_PORT` (default 60675; the edge runtime
+reaches it as `host.docker.internal`). The secret is set when the stack starts, so set
+the port before `supabase start`. `steps_parent_race_test.ts` (#366 F1) and
+`steps_context_race_test.ts` (#366 F3) hold locks from separate connections and read
+`pg_stat_activity` to order concurrent requests. `scripts/verify-companion-task-steps.mjs` is the
+real-browser check of the web step controls against this stack (same port).
+
 Results, test order and proof limits: mobile repo `DOCS/companion-actions/361-task-actions.md`.

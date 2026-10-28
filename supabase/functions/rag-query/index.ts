@@ -1091,6 +1091,11 @@ Deno.serve(async (req: Request) => {
     if (!lessonContext) {
       fullSystemInstruction = `${fullSystemInstruction}\n${TASK_PROPOSAL_INSTRUCTION}\n${PLAN_PROPOSAL_INSTRUCTION}`;
     }
+    // #366: steps may be suggested only for a Checklist task this answer read (its own
+    // account's context). Outside the Companion tab nothing is suggested.
+    const readTaskRefs = new Set<string>(
+      lessonContext ? [] : companionContext.items.filter(i => i.kind === 'checklist_task').map(i => i.id)
+    );
     if (lessonContext) {
       const lessonProgress = await lessonProgressPromise;
       fullSystemInstruction = `${fullSystemInstruction}\n${buildLessonContextBlock(
@@ -1357,7 +1362,7 @@ Deno.serve(async (req: Request) => {
               );
             }
 
-            const proposed = extractActionProposal(untaggedAnswer, readChecklistTasks(companionContext));
+            const proposed = extractActionProposal(untaggedAnswer, readChecklistTasks(companionContext), readTaskRefs);
             const { cleanAnswer, suggestions } =
               parseSuggestionsFromResponse(proposed.answer);
 
@@ -1531,7 +1536,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // A suggested task (typed, validated) leaves the answer text first.
-    const proposed = extractActionProposal(untaggedAnswer, readChecklistTasks(companionContext));
+    const proposed = extractActionProposal(untaggedAnswer, readChecklistTasks(companionContext), readTaskRefs);
     // Parse out suggestions from the response
     const { cleanAnswer, suggestions } =
       parseSuggestionsFromResponse(proposed.answer);

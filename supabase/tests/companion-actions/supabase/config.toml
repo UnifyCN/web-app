@@ -47,5 +47,10 @@ enabled = true
 policy = "per_worker"
 inspector_port = 60674
 
+# A new step under a content-backed task needs its published Checklist document (#366).
+# Tests answer that read from 127.0.0.1 (support.ts contentStub); run.sh sets the URL.
+[edge_runtime.secrets]
+COMPANION_CONTENT_QUERY_URL = "env(ACTIONS_CONTENT_QUERY_URL)"
+
 [functions.companion-actions]
 verify_jwt = true

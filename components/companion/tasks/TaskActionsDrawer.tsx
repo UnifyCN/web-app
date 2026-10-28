@@ -17,6 +17,8 @@ import {
 } from "@/hooks/useTaskActions";
 import { TaskDrawer } from "./TaskDrawer";
 import { TaskProposalPanel } from "./TaskProposalPanel";
+import { StepProposalPanel } from "./StepProposalPanel";
+import { useStepProposal } from "@/hooks/useTaskActions";
 import { TaskStatePanel, progressFor } from "./TaskStatePanel";
 import { PlanPanel } from "../plans/PlanPanel";
 import type { PlanTarget } from "../plans/PlanEntry";
@@ -40,6 +42,8 @@ interface TaskActionsDrawerProps {
   plan?: PlanTarget | null;
   /** A task row of the plan was opened (#364). */
   onOpenTask?: (taskRef: string) => void;
+  /** #366: open on the review of suggested steps for one task. */
+  stepProposalId?: string | null;
 }
 
 /** The task list and task controls inside the direction B drawer. */
@@ -51,6 +55,7 @@ export function TaskActionsDrawer({
   proposalId = null,
   plan = null,
   onOpenTask,
+  stepProposalId = null,
 }: TaskActionsDrawerProps) {
   const { t } = useTranslation();
   const { data: tasks = [], isLoading } = useTasks();
@@ -81,10 +86,17 @@ export function TaskActionsDrawer({
   const selected = active.find((task) => task.id === selectedId) ?? null;
   const selectedRef = selected ? taskOrderKey(selected) : null;
   const phase = useTaskActionPhase(store, selectedRef);
+  const draftId = proposalId ?? stepProposalId;
   const draftPhase = useTaskActionPhase(
     store,
-    proposalId ? `proposal:${proposalId}` : null,
+    draftId ? `proposal:${draftId}` : null,
   );
+  const stepDraft = useStepProposal(stepProposalId);
+  const stepTask = stepDraft.data
+    ? (active.find(
+        (task) => taskOrderKey(task) === stepDraft.data.operation.task_ref,
+      ) ?? null)
+    : null;
 
   const stateOf = (task: ChecklistTask): TaskState =>
     progressFor(taskOrderKey(task), view).state;
@@ -97,7 +109,9 @@ export function TaskActionsDrawer({
       open={open}
       onClose={onClose}
       title={
-        plan
+        stepProposalId
+          ? t("taskSteps.reviewTitle")
+          : plan
           ? "proposalId" in plan
             ? t("plans.reviewTitle")
             : t("plans.planTitle")
@@ -108,13 +122,20 @@ export function TaskActionsDrawer({
             : t("taskActions.listTitle")
       }
       onBack={
-        selected && !initialTaskId && !proposalId && !plan
+        selected && !initialTaskId && !proposalId && !stepProposalId && !plan
           ? () => setSelectedId(null)
           : undefined
       }
       closeOnEscape={phase.phase !== "saving" && draftPhase.phase !== "saving"}
     >
-      {plan ? (
+      {stepProposalId ? (
+        <StepProposalPanel
+          proposalId={stepProposalId}
+          view={view}
+          store={store}
+          taskTitle={stepTask?.title ?? null}
+        />
+      ) : plan ? (
         <PlanPanel target={plan} onOpenTask={(taskRef) => onOpenTask?.(taskRef)} />
       ) : proposalId ? (
         <TaskProposalPanel proposalId={proposalId} view={view} store={store} />
