@@ -642,6 +642,71 @@ describeStack("Settlement plans against the real local stack (web)", () => {
   });
 });
 
+// Composition of #364 and #366 (integration reconciliation): the same real stack and
+// actual page, plan entry, drawer and step controls. Added with the integration.
+describeStack("Plan and task steps together against the real local stack (web)", () => {
+  it("a task the approved plan added takes a step; the step never completes the task or the plan; explicit completion updates the plan and keeps the step", { timeout: 90_000 }, async () => {
+    // Wrong if: the plan-added task has no step controls, checking its only step changes
+    // the task state or the plan count, or completion loses the step or the plan count.
+    const acc = await newAccount("web-plan-steps");
+    account.set(acc.id);
+    generateReply.mockResolvedValue(reply());
+    // The Checklist read lists what the approval saved, as the real read would.
+    hook = async (body, forward) => {
+      const res = await forward();
+      if (body.action === "plan_apply" && res.ok) checklistFixture = tasksFromPlan((await res.clone().json()).plan.items);
+      return res;
+    };
+    mount();
+    await send("I arrive in Vancouver next week. Help me plan my first week.");
+    const card = await screen.findByTestId("plan-card", {}, { timeout: 10_000 });
+    fireEvent.click(within(card).getByRole("button", { name: `Review plan: ${GOAL}` }));
+    const review = await screen.findByRole("dialog", { name: "Review plan" });
+    fireEvent.click(await enabledButton(within(review), "Approve and add 1 task"));
+    await within(review).findByText("Added 1 task. Reused 2 tasks you already had.", {}, { timeout: 10_000 });
+    const plans = async () => (await actions(acc.jwt, { action: "plans" })).json.plans;
+    const phoneRef = (await plans())[0].items[2].task_ref as string;
+    expect(phoneRef).toMatch(/^custom:/);
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    // Open the same task from the plan and add and check one step.
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`Your plan, ${GOAL}, 0 of 3 done`) }, { timeout: 10_000 }));
+    fireEvent.click(await within(screen.getByRole("dialog")).findByRole("button", { name: `${PHONE}, Not started` }));
+    const panel = screen.getByRole("dialog");
+    const input = await within(panel).findByRole("textbox", { name: "New step" }, { timeout: 10_000 });
+    fireEvent.change(input, { target: { value: "Compare phone plans" } });
+    const add = within(panel).getByRole("button", { name: "Add step" });
+    await waitFor(() => expect(add.getAttribute("aria-disabled")).not.toBe("true"), { timeout: 10_000 });
+    fireEvent.click(add);
+    const box = await within(panel).findByRole("checkbox", { name: "Compare phone plans" }, { timeout: 10_000 });
+    await waitFor(() => expect((box as HTMLInputElement).disabled).toBe(false), { timeout: 10_000 });
+    fireEvent.click(box);
+    await within(panel).findByText("Checked step: Compare phone plans", {}, { timeout: 10_000 });
+    expect(await within(panel).findByText("All steps are done. This task stays Not started until you mark it complete.")).toBeTruthy();
+    expect(within(panel).getByRole("radio", { name: "Not started" }).getAttribute("aria-checked")).toBe("true");
+    let read = (await actions(acc.jwt, { action: "read" })).json;
+    expect(read.tasks.find((t: { task_ref: string }) => t.task_ref === phoneRef).state).toBe("not_started");
+    expect(read.steps.filter((s: { task_ref: string }) => s.task_ref === phoneRef).map((s: { title: string; done: boolean }) => [s.title, s.done]))
+      .toEqual([["Compare phone plans", true]]);
+    expect((await plans())[0].items.map((i: { state: string }) => i.state)).toEqual(["not_started", "not_started", "not_started"]);
+
+    // Only the explicit completion completes the task; the plan and step history follow.
+    const complete = await within(panel).findByRole("button", { name: "Mark task complete" });
+    await waitFor(() => expect(complete.getAttribute("aria-disabled")).not.toBe("true"), { timeout: 10_000 });
+    fireEvent.click(complete);
+    expect(await within(panel).findByText("Completed with 1 of 1 steps done.", {}, { timeout: 10_000 })).toBeTruthy();
+    read = (await actions(acc.jwt, { action: "read" })).json;
+    expect(read.tasks.find((t: { task_ref: string }) => t.task_ref === phoneRef).state).toBe("completed");
+    expect(read.steps.filter((s: { task_ref: string }) => s.task_ref === phoneRef).map((s: { title: string; done: boolean }) => [s.title, s.done]))
+      .toEqual([["Compare phone plans", true]]);
+    expect((await plans())[0].items.map((i: { state: string }) => i.state)).toEqual(["not_started", "not_started", "completed"]);
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(await screen.findByRole("button", { name: new RegExp(`Your plan, ${GOAL}, 1 of 3 done`) }, { timeout: 10_000 })).toBeTruthy();
+  });
+});
+
 function tasksFromPlan(items: { task_ref: string; source: string; title: string | null; label: string | null }[]): ChecklistTask[] {
   return items.map(item => ({
     id: item.task_ref.slice(item.task_ref.indexOf(":") + 1),
