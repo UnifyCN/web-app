@@ -2,9 +2,7 @@
 
 import {
   useCallback,
-  useEffect,
   useMemo,
-  useState,
   useSyncExternalStore,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -93,21 +91,31 @@ function clientFor(owner: AccountOwner): TaskActionClient {
   });
 }
 
+function subscribeOnline(onChange: () => void) {
+  window.addEventListener("online", onChange);
+  window.addEventListener("offline", onChange);
+  return () => {
+    window.removeEventListener("online", onChange);
+    window.removeEventListener("offline", onChange);
+  };
+}
+
+function onlineSnapshot(): boolean {
+  return typeof navigator === "undefined" || navigator.onLine !== false;
+}
+
+// The server and first browser render use the same value. React then reads
+// the browser's actual connection state.
+function serverOnlineSnapshot(): boolean {
+  return true;
+}
+
 export function useOnline(): boolean {
-  const [online, setOnline] = useState(() =>
-    typeof navigator === "undefined" ? true : navigator.onLine,
+  return useSyncExternalStore(
+    subscribeOnline,
+    onlineSnapshot,
+    serverOnlineSnapshot,
   );
-  useEffect(() => {
-    const on = () => setOnline(true);
-    const off = () => setOnline(false);
-    window.addEventListener("online", on);
-    window.addEventListener("offline", off);
-    return () => {
-      window.removeEventListener("online", on);
-      window.removeEventListener("offline", off);
-    };
-  }, []);
-  return online;
 }
 
 export type TaskProgressStatus =
