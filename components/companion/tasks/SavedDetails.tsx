@@ -10,6 +10,7 @@ import {
   detailRemoveOperation,
   detailUpdateOperation,
   isDetailProposal,
+  verifiedCompensationDetail,
   type DetailProposal,
   type SavedDetail,
   type TaskReceipt,
@@ -272,13 +273,34 @@ export function DetailPhase({
       return line(t("taskActions.signedOut"), true);
     case "undo_review": {
       const op = phase.proposal.operations[0];
+      // The receipt keeps its historical text; the reviewed change names the detail as
+      // the service read it now, and only while no newer read contradicts it.
+      const current = verifiedCompensationDetail(
+        op,
+        phase.currentDetail,
+        view.status === "ready" ? view.details : undefined,
+      );
+      if (!current) {
+        return (
+          <div className="space-y-2">
+            {line(t("savedDetails.undoConflict"))}
+            {line(t("savedDetails.reviewUnverified"), true)}
+            <div className="flex flex-wrap gap-2">
+              <Action
+                label={t("taskActions.keepCurrent")}
+                onClick={() => store?.dismiss(storeKey)}
+              />
+            </div>
+          </div>
+        );
+      }
       const removes = op.type === "detail.remove";
       const label =
         op.type === "detail.update"
           ? t("savedDetails.reviewUpdate", { text: op.text })
           : op.type === "detail.restore"
-            ? t("savedDetails.reviewRestore", { text })
-            : t("savedDetails.reviewRemove", { text });
+            ? t("savedDetails.reviewRestore", { text: current.text })
+            : t("savedDetails.reviewRemove", { text: current.text });
       return (
         <div className="space-y-2">
           {line(t("savedDetails.undoConflict"))}
@@ -288,7 +310,7 @@ export function DetailPhase({
                 {t("savedDetails.confirmTitle")}
               </p>
               <p className="mt-1 break-words text-sm text-ink-tertiary">
-                {t("savedDetails.confirmBody", { text })}
+                {t("savedDetails.confirmBody", { text: current.text })}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Action

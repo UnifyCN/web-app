@@ -539,3 +539,70 @@ it.each([0, 1] as const)("the detail editor uses immediate keyboard disclosure a
   if (detail === 0) expect(editor.parentElement?.style.opacity).not.toBe("0");
   else expect(editor.parentElement?.style.opacity).toBe("0");
 });
+
+
+describe("the reviewed change of a conflicting detail Undo is bound to the server’s current detail (S370-1)", () => {
+  const SATURDAYS = "I can attend appointments on Saturdays";
+  const UNVERIFIED =
+    "The current text of this detail could not be confirmed, so nothing was saved. Open Saved details to see it.";
+
+  /** Saves Fridays by command, then confirms its Undo after another device changed it. */
+  async function conflictingUndo() {
+    mount(<CompanionPage />);
+    await send(`Remember that ${FRIDAYS}`);
+    const card = await screen.findByTestId("detail-command-card");
+    const undo = await within(card).findByRole("button", { name: `Undo saving “${FRIDAYS}”` });
+    await waitFor(() => expect(enabled(undo)).toBe(true));
+    fireEvent.click(undo);
+    server.editDetailElsewhere(server.details()[0].detail_id, SATURDAYS);
+    fireEvent.click(within(card).getByRole("button", { name: "Remove detail" }));
+    await within(card).findByText(
+      "This detail changed after that. Nothing was undone. Review the change below before saving it.",
+    );
+    return card;
+  }
+  const removals = () =>
+    server.sent.filter(
+      (b) => b.action === "apply" && b.operations?.[0]?.type === "detail.remove",
+    );
+
+  it("a newer edit read while the review is open withholds approval and names nothing stale", async () => {
+    useServer(scriptedServer());
+    const card = await conflictingUndo();
+    const review = within(card).getByRole("button", { name: `Remove “${SATURDAYS}”` });
+    await waitFor(() => expect(enabled(review)).toBe(true));
+    fireEvent.click(review);
+    expect(within(card).getByText(`“${SATURDAYS}” will no longer be used in later conversations.`)).toBeTruthy();
+    // A third edit lands elsewhere; the tab regains focus and reads it while the review is open.
+    server.editDetailElsewhere(server.details()[0].detail_id, "I can attend appointments on Sundays");
+    act(() => {
+      window.dispatchEvent(new Event("visibilitychange"));
+    });
+    await within(card).findByText(UNVERIFIED);
+    expect(within(card).queryByRole("button", { name: "Remove detail" })).toBeNull();
+    expect(within(card).queryByText(new RegExp(SATURDAYS))).toBeNull();
+    expect(within(card).getByText(`Saved: “${FRIDAYS}”.`)).toBeTruthy();
+    expect(removals()).toHaveLength(0);
+    expect(server.details()[0]).toMatchObject({ revision: 3, removed: false });
+    fireEvent.click(within(card).getByRole("button", { name: "Keep current" }));
+    await waitFor(() => expect(within(card).queryByText(UNVERIFIED)).toBeNull());
+  });
+
+  it.each([
+    ["absent", () => undefined],
+    ["a different detail", (v: Record<string, unknown>) => ({ ...v, detail_id: "e1000000-0000-4000-8000-000000000999" })],
+    ["an older revision", (v: Record<string, unknown>) => ({ ...v, revision: Number(v.revision) - 1 })],
+    ["a removed detail", (v: Record<string, unknown>) => ({ ...v, removed: true })],
+    ["malformed text", (v: Record<string, unknown>) => ({ ...v, text: 42 })],
+  ])("current_detail %s: approval stays unavailable and nothing is removed", async (_name, transform) => {
+    useServer(scriptedServer());
+    server.setConflictDetail(transform);
+    const card = await conflictingUndo();
+    await within(card).findByText(UNVERIFIED);
+    expect(within(card).queryByRole("button", { name: /^Remove “/ })).toBeNull();
+    expect(within(card).queryByRole("button", { name: "Remove detail" })).toBeNull();
+    expect(within(card).getByText(`Saved: “${FRIDAYS}”.`)).toBeTruthy();
+    expect(removals()).toHaveLength(0);
+    expect(server.details()[0]).toMatchObject({ text: SATURDAYS, revision: 2, removed: false });
+  });
+});

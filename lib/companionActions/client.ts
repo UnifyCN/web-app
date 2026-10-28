@@ -11,6 +11,7 @@ import {
   type CommandResult,
   type CompensatingProposal,
   type CreateTaskOperation,
+  type CurrentDetailValue,
   type CurrentTaskValue,
   type DetailCreateOperation,
   type DetailProposal,
@@ -25,6 +26,7 @@ import {
   TASK_ACTIONS_CONTRACT_VERSION,
   parseCommand,
   parseCurrent,
+  parseCurrentDetail,
   parseDetailProposal,
   parseProposal,
   parseSavedDetail,
@@ -167,6 +169,8 @@ export type UndoResult =
   | {
       kind: "undo_conflict";
       current: CurrentTaskValue[];
+      /** #370: the detail's value now; null when absent or malformed. */
+      currentDetail: CurrentDetailValue | null;
       proposal: CompensatingProposal;
     }
   | { kind: "already_undone" }
@@ -446,6 +450,7 @@ export function createTaskActionClient(opts: {
         return {
           kind: "undo_conflict",
           current,
+          currentDetail: parseCurrentDetail(body.current_detail),
           proposal: parseProposal(body.proposal),
         };
       }
