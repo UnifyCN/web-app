@@ -1027,7 +1027,8 @@ it.each([1, 0] as const)("suggested-step Undo confirmation uses shared reveal fo
   const undo = await within(panel).findByRole("button", { name: "Undo “Added step: Bring two IDs”" });
   await waitFor(() => expect(isDisabled(undo)).toBe(false));
   fireEvent.click(undo, { detail });
-  const text = await within(panel).findByText("Remove “Bring two IDs”?");
+  // Read the initial style before yielding to the first animation frame.
+  const text = within(panel).getByText("Remove “Bring two IDs”?");
   const disclosure = text.closest(".mt-2") as HTMLElement;
   if (detail === 1) expect(disclosure.parentElement?.style.opacity).toBe("0");
   else expect(disclosure.parentElement?.style.opacity).not.toBe("0");

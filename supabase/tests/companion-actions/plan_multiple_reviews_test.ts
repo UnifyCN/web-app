@@ -14,13 +14,12 @@ import {
 
 await ready();
 
-// deno-lint-ignore no-explicit-any
-type Json = any;
+type Json = Record<string, unknown>;
 const SAVED = 'Arrange transport';
 const LIBRARY = 'Get a library card';
 const outcomes = (results: Json[]) => results.map(r => [r.key, r.outcome]);
-const reviewIds = (plan: Json) => (plan.reviews ?? []).map((r: Json) => r.plan_proposal_id);
-const openReviews = (plan: Json) => (plan.reviews ?? []).filter((r: Json) => r.status === 'draft');
+const reviewIds = (plan: { reviews?: Json[] }) => (plan.reviews ?? []).map((r: Json) => r.plan_proposal_id);
+const openReviews = (plan: { reviews?: Json[] }) => (plan.reviews ?? []).filter((r: Json) => r.status === 'draft');
 
 /** Inserts of these titles fail until the returned function sets other titles or heals. */
 async function failTitles(titles: string[]): Promise<(next?: string[]) => Promise<void>> {

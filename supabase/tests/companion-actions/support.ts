@@ -414,8 +414,26 @@ export const stepDone = (step_id: string, done: boolean, expected_revision: numb
 export const stepRemove = (step_id: string, expected_revision: number) => ({ type: 'step.remove', step_id, expected_revision });
 export const confirmedRemoval = { kind: 'ui_control', removal_confirmed: true };
 
+export interface LiveStep {
+  step_id: string;
+  task_ref: string;
+  title: string;
+  done: boolean;
+  position: number;
+  revision: number;
+}
+
+interface StoredStep {
+  id: string;
+  task_ref: string;
+  title: string;
+  completed: boolean;
+  removed: boolean;
+  revision: string;
+}
+
 /** The caller's live steps of one task, as the read action returns them, in order. */
-export async function stepsOf(who: Account, ref: string, platform?: Platform): Promise<any[]> {
+export async function stepsOf(who: Account, ref: string, platform?: Platform): Promise<LiveStep[]> {
   const r = await read(who, platform);
   if (r.status !== 200) throw new Error(`read failed: ${r.status} ${JSON.stringify(r.json)}`);
   if (!Array.isArray(r.json.steps)) throw new Error(`read returned no steps: ${JSON.stringify(r.json)}`);
@@ -423,8 +441,8 @@ export async function stepsOf(who: Account, ref: string, platform?: Platform): P
 }
 
 /** Every step row of an account, removed ones included (no public path exposes those). */
-export async function stepRows(userId: string): Promise<any[]> {
-  return [...await sql`select id::text, task_ref, title, completed, removed_at is not null as removed, revision
+export async function stepRows(userId: string): Promise<StoredStep[]> {
+  return [...await sql<StoredStep[]>`select id::text, task_ref, title, completed, removed_at is not null as removed, revision
     from companion_task_steps where user_id = ${userId} order by position, created_at`];
 }
 

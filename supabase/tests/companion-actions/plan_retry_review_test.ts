@@ -12,8 +12,7 @@ import {
 
 await ready();
 
-// deno-lint-ignore no-explicit-any
-type Json = any;
+type Json = Record<string, unknown>;
 const outcomes = (results: Json[]) => results.map(r => [r.key, r.outcome]);
 
 Deno.test({
