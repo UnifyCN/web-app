@@ -233,6 +233,7 @@ export function useTaskActionStore(
   return useMemo(() => {
     if (!userId) return null;
     return taskActionStoreFor(userId, {
+      sessionEpoch: epoch,
       // Its requests are made only while this account is signed in.
       client: clientFor({ accountId: userId, epoch }),
       newOperationId: () => crypto.randomUUID(),
