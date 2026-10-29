@@ -1,0 +1,158 @@
+[
+  {
+    "original": "browser-context.log",
+    "stored": "browser-context.log.gz",
+    "bytes": 3462,
+    "sha256": "3bd22b1d5fdcf82c9543381268550db75193ed82357c989a5ee8598e8698c48a"
+  },
+  {
+    "original": "build.log",
+    "stored": "build.log.gz",
+    "bytes": 2198,
+    "sha256": "28f175a50f821b6a3800e0e93aeb40e0286bc97f2b6a8238e6574ad8c4784226"
+  },
+  {
+    "original": "changed-lint.log",
+    "stored": "changed-lint.log.gz",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "original": "clears-on-token-refresh.log",
+    "stored": "clears-on-token-refresh.log.gz",
+    "bytes": 2972,
+    "sha256": "5ecd77b963a36265b141be91a44491be60323f6057523e3506b8ea4443cb08e0"
+  },
+  {
+    "original": "final-cases-on-base-first.log",
+    "stored": "final-cases-on-base-first.log.gz",
+    "bytes": 57143,
+    "sha256": "b596bfc0f719f70f67c14c45fbc501dfdeb9520ae231db56f6ed19d10733c41a"
+  },
+  {
+    "original": "final-cases-on-base.log",
+    "stored": "final-cases-on-base.log.gz",
+    "bytes": 57077,
+    "sha256": "056bf5342c02a1ccad6ac80434ec3916f1fb137452fb2ce0de4468a6eeb13733"
+  },
+  {
+    "original": "full-lint.log",
+    "stored": "full-lint.log.gz",
+    "bytes": 1623,
+    "sha256": "a808edf51272150d315dc92a4af8e5b6dd8544f5cfa440cec114c0378e4f47cb"
+  },
+  {
+    "original": "full-tests-final.log",
+    "stored": "full-tests-final.log.gz",
+    "bytes": 16664,
+    "sha256": "0af5075a6655d519d22c0cabcdcaff5bb33103bd628397ccb65b9449cda68b55"
+  },
+  {
+    "original": "full-tests.log",
+    "stored": "full-tests.log.gz",
+    "bytes": 16727,
+    "sha256": "5d3ae505f6606cd4e3b9c9081aa6c000b7ebef8ae3f0bcd0253d9170b674fbf9"
+  },
+  {
+    "original": "green-auth-controls-final.log",
+    "stored": "green-auth-controls-final.log.gz",
+    "bytes": 372,
+    "sha256": "ca8f5e3a2c71b61a2667423b87549ec55f0f4cbe078cdb9976525419a67ee8e5"
+  },
+  {
+    "original": "green-auth-controls.log",
+    "stored": "green-auth-controls.log.gz",
+    "bytes": 2222,
+    "sha256": "05ed1e3bfaf1070b495bab5c8edb4dd9f075442c1a7f07896a73883cd3db6553"
+  },
+  {
+    "original": "green-drawer-first.log",
+    "stored": "green-drawer-first.log.gz",
+    "bytes": 369,
+    "sha256": "ad18b75793bdfff8e19d3185ea07a2c6df0be395b07d9c88a29310783d2ae227"
+  },
+  {
+    "original": "green-final-cases.log",
+    "stored": "green-final-cases.log.gz",
+    "bytes": 372,
+    "sha256": "c03a97dcf96f144a0e75a9ef5dd312aeafbb0f9662046337dba71f32084423ed"
+  },
+  {
+    "original": "green-focused-first.log",
+    "stored": "green-focused-first.log.gz",
+    "bytes": 2525,
+    "sha256": "c35a90ce7379395333faac01888d1c191809c1a1b4b4617c6a594bed36f1f404"
+  },
+  {
+    "original": "green-permanent-and-exact.log",
+    "stored": "green-permanent-and-exact.log.gz",
+    "bytes": 446,
+    "sha256": "76c639b00fdffe8bc13c39112754b3c686676a38328e5ed1c12dd95ab6d5a438"
+  },
+  {
+    "original": "i18n.log",
+    "stored": "i18n.log.gz",
+    "bytes": 226,
+    "sha256": "ea80af9e7f95ccb6af004b38f46583cfa180c8b49af47789b8d6f2898c5b16d1"
+  },
+  {
+    "original": "late-control-precondition.log",
+    "stored": "late-control-precondition.log.gz",
+    "bytes": 2112,
+    "sha256": "57b0bf82d6df73da57e70d5766fb0305435adf829c7c6668ccbe09a3e3cabcb9"
+  },
+  {
+    "original": "no-event-user-publication.log",
+    "stored": "no-event-user-publication.log.gz",
+    "bytes": 2138,
+    "sha256": "de148bce25ed55ab5cb9027dff7313cd421e72dbcec7f22d5c84ac66691e00ce"
+  },
+  {
+    "original": "no-private-cache-reset.log",
+    "stored": "no-private-cache-reset.log.gz",
+    "bytes": 24565,
+    "sha256": "6812ca0e6ff951b59885eb16d69da5cc5463960ac864f04406a3011821a7143f"
+  },
+  {
+    "original": "no-reactive-epoch.log",
+    "stored": "no-reactive-epoch.log.gz",
+    "bytes": 2116,
+    "sha256": "afad8adaa04abde03ed68aff1a999c29dbd069b07200255855e46b7f44513fe3"
+  },
+  {
+    "original": "red-composer-after-epoch.log",
+    "stored": "red-composer-after-epoch.log.gz",
+    "bytes": 23482,
+    "sha256": "33c2e8c8e294079343fdacd0ca45d6bba0a17ad4e9c19ac2556ef1d064e61446"
+  },
+  {
+    "original": "red-drawer.log",
+    "stored": "red-drawer.log.gz",
+    "bytes": 31493,
+    "sha256": "d84ea83fc29acdc193c0ae95108a95a1dedbd21e3f155a596fb8be5d88c10c90"
+  },
+  {
+    "original": "test-format.log",
+    "stored": "test-format.log.gz",
+    "bytes": 64,
+    "sha256": "1cfac08494f9a0e1dd9d9f94a3f75ebec48557407a83132f42e43c753833c39e"
+  },
+  {
+    "original": "typecheck-first.log",
+    "stored": "typecheck-first.log.gz",
+    "bytes": 168,
+    "sha256": "7a05dbe8c429d22712d21072e3a28c04a714d05423344874378dbd9be462032e"
+  },
+  {
+    "original": "types-final.log",
+    "stored": "types-final.log.gz",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "original": "types.log",
+    "stored": "types.log.gz",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

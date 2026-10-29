@@ -1,3 +1,4 @@
+import { TASKS_KEY } from "@/lib/checklistQueryKeys";
 import {
   useMutation,
   useQuery,
@@ -31,7 +32,7 @@ function rebuildWithBucket(
 
 /** React Query hooks for Checklist data. */
 
-export const TASKS_KEY = ["tasks"] as const;
+export { TASKS_KEY } from "@/lib/checklistQueryKeys";
 
 /** Exact tasks cache key: `["tasks", lang, accountId]`. Sanity checklist
  * content is localized, so the key carries the language AFTER the prefix —

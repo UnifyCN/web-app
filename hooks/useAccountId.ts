@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useAuthUser } from "@/hooks/useAuthUser";
-import { noteAccount } from "@/lib/accountSession";
+import {
+  accountEpoch,
+  noteAccount,
+  subscribeAccountEpoch,
+} from "@/lib/accountSession";
 
 /**
  * The signed-in account id, or null; undefined while the session is read.
@@ -10,6 +14,7 @@ import { noteAccount } from "@/lib/accountSession";
  * started for an earlier account is stopped before its next request or result.
  */
 export function useAccountId(): string | null | undefined {
+  useSyncExternalStore(subscribeAccountEpoch, accountEpoch, () => 0);
   const { data: user, isPending } = useAuthUser();
   if (isPending) return undefined;
   const id = user?.id ?? null;
@@ -25,11 +30,5 @@ export function useAccountId(): string | null | undefined {
  */
 export function useAccountGeneration(): number {
   const accountId = useAccountId();
-  const [seen, setSeen] = useState({ id: accountId, generation: 0 });
-  if (accountId !== undefined && accountId !== seen.id) {
-    const generation = seen.generation + (seen.id === undefined ? 0 : 1);
-    setSeen({ id: accountId, generation });
-    return generation;
-  }
-  return seen.generation;
+  return accountId === undefined ? 0 : accountEpoch();
 }

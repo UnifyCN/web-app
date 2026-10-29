@@ -1,0 +1,6 @@
+{
+  "exit": 0,
+  "seconds": 8.002,
+  "port": 3411,
+  "scope": "actual page components, fixture data hooks, Chromium; no Auth provider or Next SSR"
+}

@@ -1,0 +1,28 @@
+{
+  "mutations": [
+    {
+      "name": "no-reactive-epoch",
+      "exit": 1,
+      "assertion_failure": true
+    },
+    {
+      "name": "no-private-cache-reset",
+      "exit": 1,
+      "assertion_failure": true
+    },
+    {
+      "name": "clears-on-token-refresh",
+      "exit": 1,
+      "assertion_failure": true
+    },
+    {
+      "name": "no-event-user-publication",
+      "exit": 1,
+      "assertion_failure": true
+    }
+  ],
+  "restored_sha256": {
+    "lib/accountSession.ts": "6c470879e505bf9fa94011c980302d004241c7d5c6333e37155de7911c00d14a",
+    "hooks/useAuthUser.ts": "09d5c928ced795c6def89566c1f0f3a12a36d7717bbcc6c48e46ee0196e4ffc6"
+  }
+}

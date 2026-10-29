@@ -6,11 +6,31 @@
  */
 let known: string | null | undefined;
 let epoch = 0;
+const listeners = new Set<() => void>();
+let notificationQueued = false;
+
+export const accountEpoch = () => epoch;
+export function subscribeAccountEpoch(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
 
 /** Records the signed-in account. Idempotent; safe to call while rendering. */
 export function noteAccount(accountId: string | null) {
-  if (known !== undefined && known !== accountId) epoch += 1;
+  const changed = known !== undefined && known !== accountId;
+  if (changed) epoch += 1;
   known = accountId;
+  if (changed && !notificationQueued) {
+    notificationQueued = true;
+    // The owner changes synchronously. Notify React after a possible render
+    // has finished; the final epoch still includes every batched auth event.
+    queueMicrotask(() => {
+      notificationQueued = false;
+      for (const listener of listeners) listener();
+    });
+  }
 }
 
 export interface AccountOwner {

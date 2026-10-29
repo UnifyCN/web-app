@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { getSessionUser } from "@/services/auth";
-import { noteAccount } from "@/lib/accountSession";
+import { noteAccount, ownAccountWork } from "@/lib/accountSession";
+import { clearPrivateAccountWork } from "@/lib/companion/clearPrivateAccountWork";
 
 /**
  * The signed-in Supabase user (auth.users), or null when signed out. Read from
@@ -25,8 +26,16 @@ export function useAuthUser() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      const accountId = session?.user.id ?? null;
+      if (ownAccountWork().accountId !== accountId) {
+        clearPrivateAccountWork(queryClient);
+      }
+      // Publish the event's user before epoch subscribers render. An equal
+      // final query result must not hide a session reset, or restore old data.
+      void queryClient.cancelQueries({ queryKey: AUTH_USER_KEY });
+      queryClient.setQueryData(AUTH_USER_KEY, session?.user ?? null);
       // Work in flight for an earlier account stops at once (#361).
-      noteAccount(session?.user.id ?? null);
+      noteAccount(accountId);
       queryClient.invalidateQueries({ queryKey: AUTH_USER_KEY });
     });
     return () => subscription.unsubscribe();
