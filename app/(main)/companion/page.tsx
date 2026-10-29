@@ -56,7 +56,7 @@ export default function CompanionPage() {
         proposalKind: "task_create" | "task_edit";
       }
     | { kind: "steps"; proposalId: string }
-    | { kind: "task"; taskId: string }
+    | { kind: "task"; target: { taskRef: string; title: string } }
     // #370: a suggested detail's review, or the saved details.
     | { kind: "detail"; proposalId: string }
     | { kind: "details" }
@@ -97,14 +97,22 @@ export default function CompanionPage() {
   // #364: the plan drafts of the open conversation, and the account's plan store.
   const plansQuery = useConversationPlans(activeId);
   const planStore = usePlanStore("companion");
-  const openTaskRef = (taskRef: string) =>
-    setDrawer({ kind: "task", taskId: taskRef.slice(taskRef.indexOf(":") + 1) });
   // #366: the card names the Checklist task suggested steps are for.
   const { data: checklistTasks = [] } = useTasks();
   const taskTitleOf = (taskRef: string) =>
     checklistTasks.find(
       (task) => !task.dismissedAt && taskOrderKey(task) === taskRef,
     )?.title ?? null;
+  const openTaskRef = (taskRef: string) =>
+    setDrawer({
+      kind: "task",
+      target: {
+        taskRef,
+        title: checklistTasks.find((task) => taskOrderKey(task) === taskRef)?.title ??
+          progressFor(taskRef, progress).lastReceipt?.title ??
+          t("taskRemove.unknownTask"),
+      },
+    });
   // #367: a removal request's card opens the task's drawer on that removal review.
   const openRemoval = (proposal: RemovalProposal) => {
     if (proposal.status === "draft")
@@ -230,12 +238,7 @@ export default function CompanionPage() {
             onReview={(proposalId, proposalKind) =>
               setDrawer({ kind: "proposal", proposalId, proposalKind })
             }
-            onViewTask={(taskRef) =>
-              setDrawer({
-                kind: "task",
-                taskId: taskRef.slice(taskRef.indexOf(":") + 1),
-              })
-            }
+            onViewTask={openTaskRef}
             stepProposals={actions?.stepProposals ?? []}
             onReviewSteps={(proposalId) =>
               setDrawer({ kind: "steps", proposalId })
@@ -264,7 +267,7 @@ export default function CompanionPage() {
         open={drawer !== null}
         onClose={() => setDrawer(null)}
         surface="companion"
-        initialTaskId={drawer?.kind === "task" ? drawer.taskId : null}
+        initialTask={drawer?.kind === "task" ? drawer.target : null}
         proposalId={drawer?.kind === "proposal" ? drawer.proposalId : null}
         plan={drawer?.kind === "plan" ? drawer.target : null}
         onOpenTask={openTaskRef}

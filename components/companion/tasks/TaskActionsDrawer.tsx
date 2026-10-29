@@ -37,6 +37,8 @@ interface TaskActionsDrawerProps {
   surface: TaskActionSurface;
   /** Open straight on one task (Checklist). Without it the drawer starts on the task list (Companion). */
   initialTaskId?: string | null;
+  /** A conversation can open a removed task that is absent from the Checklist. */
+  initialTask?: { taskRef: string; title: string } | null;
   /** Open on the review of one task draft (#363) instead of a task. */
   proposalId?: string | null;
   /** Open on a settlement plan draft or saved plan (#364). */
@@ -59,6 +61,7 @@ export function TaskActionsDrawer({
   onClose,
   surface,
   initialTaskId = null,
+  initialTask = null,
   proposalId = null,
   plan = null,
   onOpenTask,
@@ -71,6 +74,7 @@ export function TaskActionsDrawer({
   const { data: tasks = [], isLoading } = useTasks();
   const view = useTaskProgress();
   const store = useTaskActionStore(surface);
+  const initialTaskRef = initialTask?.taskRef ?? null;
   const [selectedId, setSelectedId] = useState<string | null>(initialTaskId);
   // The task last opened from the list: focus returns to its row on Back.
   const [returnId, setReturnId] = useState<string | null>(null);
@@ -78,9 +82,15 @@ export function TaskActionsDrawer({
   const [showDetails, setShowDetails] = useState(openDetails);
   const [lastOpen, setLastOpen] = useState(open);
   const [lastInitialTaskId, setLastInitialTaskId] = useState(initialTaskId);
-  if (open !== lastOpen || initialTaskId !== lastInitialTaskId) {
+  const [lastInitialTaskRef, setLastInitialTaskRef] = useState(initialTaskRef);
+  if (
+    open !== lastOpen ||
+    initialTaskId !== lastInitialTaskId ||
+    initialTaskRef !== lastInitialTaskRef
+  ) {
     setLastOpen(open);
     setLastInitialTaskId(initialTaskId);
+    setLastInitialTaskRef(initialTaskRef);
     if (open) {
       setSelectedId(initialTaskId);
       setReturnId(null);
@@ -93,12 +103,14 @@ export function TaskActionsDrawer({
   const { refetch } = view;
   useEffect(() => {
     if (open) refetch();
-  }, [open, initialTaskId, refetch]);
+  }, [open, initialTaskId, initialTaskRef, refetch]);
 
   const active = tasks.filter((task) => !task.dismissedAt);
   // A task removed in this drawer (#367) leaves the active list (a custom one every read);
   // its panel stays open on the removal receipt, with the ref and title it was opened with.
-  const live = active.find((task) => task.id === selectedId) ?? null;
+  const live = active.find((task) =>
+    initialTaskRef ? taskOrderKey(task) === initialTaskRef : task.id === selectedId,
+  ) ?? null;
   const [seen, setSeen] = useState<{
     id: string;
     ref: string;
@@ -111,9 +123,15 @@ export function TaskActionsDrawer({
       seen.title !== live.title)
   )
     setSeen({ id: live.id, ref: taskOrderKey(live), title: live.title });
-  const kept = !live && seen && seen.id === selectedId ? seen : null;
-  const selected = live ?? (kept ? { title: kept.title } : null);
-  const selectedRef = live ? taskOrderKey(live) : (kept?.ref ?? null);
+  const kept = !live && seen &&
+    (initialTaskRef ? seen.ref === initialTaskRef : seen.id === selectedId)
+    ? seen : null;
+  // Only current account progress can supply a task absent from Checklist.
+  const explicit = initialTask && view.byRef.has(initialTask.taskRef)
+    ? initialTask : null;
+  const selected = live ?? (kept ? { title: kept.title } : explicit);
+  const selectedRef = live
+    ? taskOrderKey(live) : (kept?.ref ?? explicit?.taskRef ?? null);
   const phase = useTaskActionPhase(store, selectedRef);
   const draftId = proposalId ?? stepProposalId ?? detailProposalId;
   const draftPhase = useTaskActionPhase(
@@ -159,7 +177,7 @@ export function TaskActionsDrawer({
       onBack={
         showDetails && !openDetails && !detailProposalId
           ? () => setShowDetails(false)
-          : selected && !initialTaskId && !proposalId && !stepProposalId && !plan
+          : selected && !initialTaskId && !initialTaskRef && !proposalId && !stepProposalId && !plan
             ? () => setSelectedId(null)
             : undefined
       }
