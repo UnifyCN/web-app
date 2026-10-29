@@ -116,8 +116,9 @@ Deno.test({ name: 'invalid payloads are 4xx, never 500, and write nothing', ...t
   const { ref: cref } = await existingCustomTask(a);
   const rev = (await taskOf(a, ref)).revision;
   const bad: Array<[string, unknown[], number, string]> = [
-    // #367 registered task.remove; reminder.schedule (#368) is still unimplemented.
-    ['unimplemented operation', [{ type: 'reminder.schedule', task_ref: ref, expected_revision: rev }], 422, 'unsupported_operation'],
+    // #368 registers reminder.schedule. Email reminders remain outside the contract.
+    ['unimplemented operation', [{ type: 'reminder.send_email', task_ref: ref, expected_revision: rev }], 422, 'unsupported_operation'],
+    ['schedule without an instant or zone', [{ type: 'reminder.schedule', task_ref: ref, expected_revision: rev }], 422, 'explicit_instant_and_zone_required'],
     // #363: a new task needs a reviewed proposal or a clear command, never a plain control.
     ['create from a control', [{ type: 'task.create_custom', title: 'x', priority: 'Do now' }], 403, 'invalid_authorization'],
     // Names every JavaScript object inherits must not resolve to a registry entry.
