@@ -140,6 +140,7 @@ export function TaskActionCards({
           title={p.effects.title ?? taskTitleOf?.(p.operation.task_ref) ?? null}
           removedNow={isRemovedNow?.(p.operation.task_ref) ?? false}
           onReview={() => onReviewRemoval?.(p)}
+          onView={() => onViewTask(p.operation.task_ref)}
         />
       ))}
       {message.role === "user" && (
@@ -206,12 +207,14 @@ function RemovalCard({
   title,
   removedNow,
   onReview,
+  onView,
 }: {
   proposal: RemovalProposal;
   store: TaskActionStore | null;
   title: string | null;
   removedNow: boolean;
   onReview: () => void;
+  onView: () => void;
 }) {
   const { t } = useTranslation();
   const phase = useTaskActionPhase(store, proposal.operation.task_ref);
@@ -254,7 +257,7 @@ function RemovalCard({
           {status}
         </p>
       </div>
-      {(open || saved) && (
+      {(open || saved || removedNow) && (
         <CardButton
           label={open ? t("taskRemove.cardReview") : t("taskCreate.view")}
           name={
@@ -262,7 +265,7 @@ function RemovalCard({
               ? t("taskRemove.cardReviewA11y", { title: name })
               : t("taskCreate.view")
           }
-          onClick={onReview}
+          onClick={open ? onReview : onView}
         />
       )}
     </article>
