@@ -86,13 +86,13 @@ const row = async (id: string) =>
   )[0];
 await sql.unsafe(`create table companion_reminder_private.test_barriers(task_ref text primary key,kind text);
 create function companion_reminder_private.test_barrier() returns trigger language plpgsql security definer set search_path=public,pg_temp as $$
-declare ref text;kind text;
+declare barrier_ref text;barrier_kind text;
 begin
- if tg_table_name='events' then select task_ref into ref from companion_task_reminders where id=new.reminder_id;kind:='claim';
- elsif tg_table_name='companion_task_reminders' then if new.status<>'cancelled' then return new;end if;ref:=new.task_ref;kind:='stop';
- elsif tg_table_name='user_tasks' then if new.completed is not true then return new;end if;ref:='sanity:'||new.sanity_checklist_id;kind:='stop';
- else if new.completed is not true and new.removed_at is null then return new;end if;ref:='custom:'||new.id;kind:='stop';end if;
- if exists(select 1 from companion_reminder_private.test_barriers b where b.task_ref=ref and b.kind=kind) then
+ if tg_table_name='events' then select task_ref into barrier_ref from companion_task_reminders where id=new.reminder_id;barrier_kind:='claim';
+ elsif tg_table_name='companion_task_reminders' then if new.status<>'cancelled' then return new;end if;barrier_ref:=new.task_ref;barrier_kind:='stop';
+ elsif tg_table_name='user_tasks' then if new.completed is not true then return new;end if;barrier_ref:='sanity:'||new.sanity_checklist_id;barrier_kind:='stop';
+ else if new.completed is not true and new.removed_at is null then return new;end if;barrier_ref:='custom:'||new.id;barrier_kind:='stop';end if;
+ if exists(select 1 from companion_reminder_private.test_barriers b where b.task_ref=barrier_ref and b.kind=barrier_kind) then
  -- The barrier extends only its own wait. It leaves the worker's parent-lock order intact.
  perform set_config('lock_timeout','8s',true);perform pg_advisory_xact_lock(368,1);end if;
  return new;end $$;
