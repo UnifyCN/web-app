@@ -1,0 +1,198 @@
+
+ RUN  v3.2.7 /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root
+
+ ❯ components/companion/tasks/ReminderPresentation.test.tsx (12 tests | 6 failed) 121ms
+   × delays only the transient saving message 36ms
+     → expected false to be true // Object.is equality
+   × delays only the transient checking message 4ms
+     → expected false to be true // Object.is equality
+   ✓ keeps pending recovery visible at once 9ms
+   ✓ keeps lookup_failed recovery visible at once 5ms
+   ✓ keeps not_applied recovery visible at once 5ms
+   × keeps schedule input method across held preparation (detail 0) 33ms
+     → expected [ { open: true, instant: false } ] to deeply equal [ { open: true, instant: true } ]
+   ✓ keeps schedule input method across held preparation (detail 1) 6ms
+   × keeps cancel input method across held preparation (detail 0) 7ms
+     → expected [ { open: true, instant: false } ] to deeply equal [ { open: true, instant: true } ]
+   ✓ keeps cancel input method across held preparation (detail 1) 4ms
+   × uses the Undo activation method (detail 0) 5ms
+     → expected [ { open: true, instant: false } ] to deeply equal [ { open: true, instant: true } ]
+   ✓ uses the Undo activation method (detail 1) 4ms
+   × uses approved surface, ink and border tokens 3ms
+     → expected <section …(2)>…(7)</section> to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  components/companion/tasks/ReminderPresentation.test.tsx > delays only the transient saving message
+ FAIL  components/companion/tasks/ReminderPresentation.test.tsx > delays only the transient checking message
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ components/companion/tasks/ReminderPresentation.test.tsx:78:56
+     76|   const status = screen.getByRole("status");
+     77|   expect(status.textContent).toContain(i18n.t(`taskActions.${phase}`));
+     78|   expect(status.classList.contains("loading-delayed")).toBe(true);
+       |                                                        ^
+     79| });
+     80| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  components/companion/tasks/ReminderPresentation.test.tsx > keeps schedule input method across held preparation (detail 0)
+ FAIL  components/companion/tasks/ReminderPresentation.test.tsx > keeps cancel input method across held preparation (detail 0)
+AssertionError: expected [ { open: true, instant: false } ] to deeply equal [ { open: true, instant: true } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "instant": true,
++     "instant": false,
+      "open": true,
+    },
+  ]
+
+ ❯ components/companion/tasks/ReminderPresentation.test.tsx:112:47
+    110|   fixture.reveals = [];
+    111|   mounted.rerender(panel());
+    112|   expect(fixture.reveals.filter(r => r.open)).toEqual([{ open: true, i…
+       |                                               ^
+    113| });
+    114| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  components/companion/tasks/ReminderPresentation.test.tsx > uses the Undo activation method (detail 0)
+AssertionError: expected [ { open: true, instant: false } ] to deeply equal [ { open: true, instant: true } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "instant": true,
++     "instant": false,
+      "open": true,
+    },
+  ]
+
+ ❯ components/companion/tasks/ReminderPresentation.test.tsx:131:47
+    129|   fixture.reveals = [];
+    130|   mounted.rerender(panel());
+    131|   expect(fixture.reveals.filter(r => r.open)).toEqual([{ open: true, i…
+       |                                               ^
+    132| });
+    133| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  components/companion/tasks/ReminderPresentation.test.tsx > uses approved surface, ink and border tokens
+AssertionError: expected <section …(2)>…(7)</section> to be null
+
+- Expected: 
+null
+
++ Received: 
+<section
+  aria-label="Reminders"
+  class="mt-6 space-y-3 border-t border-gray-200 pt-5"
+>
+  <h3
+    class="font-semibold text-gray-900"
+    tabindex="-1"
+  >
+    Reminders
+  </h3>
+  <div
+    class="space-y-3"
+  />
+  <label
+    class="block space-y-1 text-sm"
+  >
+    Date and time with UTC offset
+    <input
+      autocomplete="off"
+      class="block min-h-11 w-full rounded-xl border border-gray-200 px-3"
+      placeholder="2027-11-07T01:30-04:00"
+      value="2027-11-07T01:30-04:00"
+    />
+  </label>
+  <label
+    class="block space-y-1 text-sm"
+  >
+    Time zone
+    <input
+      autocomplete="off"
+      class="block min-h-11 w-full rounded-xl border border-gray-200 px-3"
+      value="America/New_York"
+    />
+  </label>
+  <p
+    class="text-sm text-gray-600"
+  >
+    Enter the date, time, UTC offset and named time zone. Check all values before you save.
+  </p>
+  <div
+    class="flex flex-wrap gap-2"
+  >
+    <button
+      class="inline-flex items-center justify-center rounded-lg font-semibold press cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed bg-surface text-ink-secondary border border-border-card hover:bg-surface-gray disabled:opacity-60 px-4 text-sm gap-2 min-h-11 h-auto whitespace-normal text-start"
+      type="button"
+    >
+      Review reminder
+    </button>
+    <button
+      class="inline-flex items-center justify-center rounded-lg font-semibold press cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed bg-surface text-ink-secondary border border-border-card hover:bg-surface-gray disabled:opacity-60 px-4 text-sm gap-2 min-h-11 h-auto whitespace-normal text-start"
+      type="button"
+    >
+      Cancel reminder
+    </button>
+  </div>
+  <div
+    style="opacity: 1; transform: none;"
+  >
+    <div
+      aria-live="polite"
+      class="space-y-3 rounded-xl bg-gray-50 p-3"
+    >
+      <p>
+        Nov 7, 2027, 01:30 AM GMT-04:00 · America/New_York
+      </p>
+      <button
+        class="inline-flex items-center justify-center rounded-lg font-semibold press cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed bg-surface text-ink-secondary border border-border-card hover:bg-surface-gray disabled:opacity-60 px-4 text-sm gap-2 min-h-11 h-auto whitespace-normal text-start"
+        type="button"
+      >
+        Save reminder
+      </button>
+      <button
+        class="inline-flex items-center justify-center rounded-lg font-semibold press cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed bg-surface text-ink-secondary border border-border-card hover:bg-surface-gray disabled:opacity-60 px-4 text-sm gap-2 min-h-11 h-auto whitespace-normal text-start"
+        type="button"
+      >
+        Keep editing
+      </button>
+    </div>
+  </div>
+</section>
+
+ ❯ components/companion/tasks/ReminderPresentation.test.tsx:137:63
+    135|   editor.proposal = proposal;
+    136|   const mounted = render(panel());
+    137|   expect(mounted.container.querySelector('[class*="gray-"]')).toBeNull…
+       |                                                               ^
+    138|   expect(screen.getByRole("heading", { name: i18n.t("reminders.title")…
+    139|     .classList.contains("text-ink-secondary")).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 6 passed (12)
+   Start at  14:13:27
+   Duration  1.86s (transform 91ms, setup 0ms, collect 391ms, tests 121ms, environment 363ms, prepare 36ms)
+

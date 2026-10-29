@@ -1,5 +1,5 @@
 "use client";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TaskProgressView } from "@/hooks/useTaskActions";
 import { useReminderEditor } from "@/hooks/useReminderEditor";
@@ -19,13 +19,15 @@ export function ReminderSection({
 }) {
   const { t, i18n } = useTranslation();
   const e = useReminderEditor(taskRef, view, store);
-  const button = (label: string, onClick: () => void, disabled = false) => (
+  const [reviewInstant, setReviewInstant] = useState(false);
+  const [undoInstant, setUndoInstant] = useState(false);
+  const button = (label: string, onClick: (keyboard: boolean) => void, disabled = false) => (
     <Button
       type="button"
       variant="secondary"
       className="min-h-11 h-auto whitespace-normal text-start"
       disabled={disabled}
-      onClick={onClick}
+      onClick={(event) => onClick(event.detail === 0)}
     >
       {label}
     </Button>
@@ -37,12 +39,12 @@ export function ReminderSection({
   return (
     <section
       aria-label={t("reminders.title")}
-      className="mt-6 space-y-3 border-t border-gray-200 pt-5"
+      className="mt-6 space-y-3 border-t border-border-card pt-5"
     >
       <h3
         ref={headingRef}
         tabIndex={-1}
-        className="font-semibold text-gray-900"
+        className="font-semibold text-ink-secondary"
       >
         {t("reminders.title")}
       </h3>
@@ -50,7 +52,7 @@ export function ReminderSection({
       <label className="block space-y-1 text-sm">
         {t("reminders.instant")}
         <input
-          className="block min-h-11 w-full rounded-xl border border-gray-200 px-3"
+          className="block min-h-11 w-full rounded-xl border border-border-card px-3"
           value={e.draft.instant}
           onChange={(v) => e.change("instant", v.target.value)}
           placeholder="2027-11-07T01:30-04:00"
@@ -60,13 +62,13 @@ export function ReminderSection({
       <label className="block space-y-1 text-sm">
         {t("reminders.zone")}
         <input
-          className="block min-h-11 w-full rounded-xl border border-gray-200 px-3"
+          className="block min-h-11 w-full rounded-xl border border-border-card px-3"
           value={e.draft.zone}
           onChange={(v) => e.change("zone", v.target.value)}
           autoComplete="off"
         />
       </label>
-      <p className="text-sm text-gray-600">{t("reminders.timeHelp")}</p>
+      <p className="text-sm text-ink-muted">{t("reminders.timeHelp")}</p>
       {e.error ? (
         <p role="alert">
           {t(
@@ -82,20 +84,26 @@ export function ReminderSection({
           type="button"
           variant="secondary"
           className="min-h-11 h-auto whitespace-normal text-start"
-          onClick={() => void e.prepare()}
+          onClick={(event) => {
+            setReviewInstant(event.detail === 0);
+            void e.prepare();
+          }}
           disabled={!e.canSchedule}
         >
           {t("reminders.review")}
         </Button>
         {e.active
-          ? button(t("reminders.cancel"), () => void e.cancel(), !e.canWrite)
+          ? button(t("reminders.cancel"), (keyboard) => {
+              setReviewInstant(keyboard);
+              void e.cancel();
+            }, !e.canWrite)
           : null}
       </div>
-      <Reveal open={Boolean(op)}>
+      <Reveal open={Boolean(op)} instant={reviewInstant}>
         {op ? (
           <div
             aria-live="polite"
-            className="space-y-3 rounded-xl bg-gray-50 p-3"
+            className="space-y-3 rounded-xl bg-surface-card p-3"
           >
             <p>
               {op.type === "reminder.schedule"
@@ -166,17 +174,20 @@ export function ReminderSection({
             )) ? (
             <p>{t("reminders.history")}</p>
           ) : null}
-          <p className="text-sm text-gray-600">{t("reminders.undoHelp")}</p>
+          <p className="text-sm text-ink-muted">{t("reminders.undoHelp")}</p>
           {receipt.undoable
             ? button(
                 t("taskActions.undo"),
-                () => e.setConfirm("undo"),
+                (keyboard) => {
+                  setUndoInstant(keyboard);
+                  e.setConfirm("undo");
+                },
                 !e.canWrite,
               )
             : null}
         </div>
       ) : null}
-      <Reveal open={e.confirm === "undo"}>
+      <Reveal open={e.confirm === "undo"} instant={undoInstant}>
         {e.confirm === "undo" ? (
           <div>
             <p>{t("reminders.undoConfirm")}</p>
@@ -192,7 +203,11 @@ export function ReminderSection({
         "lookup_failed",
         "not_applied",
       ].includes(e.phase.phase) ? (
-        <div role="status">
+        <div
+          key={e.phase.phase}
+          role="status"
+          className={e.phase.phase === "saving" || e.phase.phase === "checking" ? "loading-delayed" : undefined}
+        >
           <p>
             {t(
               `taskActions.${e.phase.phase === "saving" ? "saving" : e.phase.phase === "checking" ? "checking" : e.phase.phase === "lookup_failed" ? "lookupFailed" : e.phase.phase === "not_applied" ? "notApplied" : "pending"}`,
@@ -231,7 +246,7 @@ export function ReminderList({
       {view.stale ? <p role="status">{t("reminders.readFailed")}</p> : null}
       {view.reminders.scheduler !== "ready" &&
       items.some((r) => r.status === "pending") ? (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-ink-muted">
           {t("reminders.schedulerUnavailable")}
         </p>
       ) : null}
@@ -241,7 +256,7 @@ export function ReminderList({
             {r.title ?? t("taskActions.existingTask")}
           </p>
           <p className="text-sm">{reminderLabel(r, i18n.language)}</p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-ink-muted">
             {t(
               r.status !== "pending"
                 ? "reminders.stopped"
