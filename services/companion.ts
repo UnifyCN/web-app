@@ -1,4 +1,8 @@
 import {
+  parseSuggestedReminder,
+  type ReminderScheduleOperation,
+} from "@/lib/companionActions/reminders";
+import {
   parseSuggestedDetail,
   parseSuggestedSteps,
 } from "@/lib/companionActions/contract";
@@ -432,6 +436,7 @@ export interface GeneratedReply {
    *  the answer suggests for the user to review. A suggestion only: the action
    *  service prepares the reviewable draft; nothing is saved here. */
   actionProposal:
+    | (ReminderScheduleOperation & { version: 1 })
     | { type: "task.create_custom"; title: string }
     | { type: "step.create"; taskRef: string; titles: string[] }
     | { type: "detail.create"; text: string }
@@ -465,6 +470,10 @@ function savableContext(raw: unknown): Record<string, unknown> | null {
 function parseActionProposal(raw: unknown): GeneratedReply["actionProposal"] {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
+  if (r.type === "reminder.schedule") {
+    const reminder = parseSuggestedReminder(raw);
+    return reminder ? { ...reminder, version: 1 } : null;
+  }
   if (r.type === "detail.create") return parseSuggestedDetail(raw);
   if (r.type === "step.create") {
     const steps = parseSuggestedSteps(raw);

@@ -1,4 +1,5 @@
 "use client";
+import { reminderLabel } from "@/lib/companionActions/reminders";
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,11 +9,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { cn } from "@/lib/utils";
 import type { TaskReceipt, TaskState } from "@/lib/companionActions/contract";
 import type { TaskActionStore } from "@/lib/companionActions/taskActionStore";
-import {
-  editReceiptText,
-  receiptChanges,
-  receiptChangeText,
-} from "./editText";
+import { editReceiptText, receiptChanges, receiptChangeText } from "./editText";
 
 interface ReceiptBlockProps {
   receipt: TaskReceipt;
@@ -73,33 +70,49 @@ export function ReceiptBlock({
           : t("taskSteps.receiptRemovedMany", { count: steps.length });
     }
   };
-  const text = isStep
-    ? stepText()
-    : removal
-      ? title
-        ? t("taskRemove.receiptRemoved", { title })
-        : t("taskRemove.receiptRemovedUnknown")
-      : restore
+  const text = receipt.reminder
+    ? t(receipt.reminder.stopped ? "reminders.stopped" : "reminders.saved") +
+      (receipt.reminder.remindAt && receipt.reminder.timeZone
+        ? " " +
+          reminderLabel(
+            {
+              remindAt: receipt.reminder.remindAt,
+              timeZone: receipt.reminder.timeZone,
+            },
+            i18n.language,
+          )
+        : "")
+    : isStep
+      ? stepText()
+      : removal
         ? title
-          ? t("taskRemove.receiptRestored", { title })
-          : t("taskRemove.receiptRestoredUnknown")
-    : receipt.operationType === "task.edit_details"
-      ? editReceiptText(t as never, receipt, receipt.title ?? taskTitle ?? "")
-      : receipt.operationType === "task.create_custom"
-        ? t("taskCreate.added", { title })
-        : receipt.operationType === "task.remove_created"
-          ? t("taskCreate.removed", { title })
-          : receipt.kind === "undo"
-            ? t("taskActions.receiptUndo", {
-                state: stateLabel(receipt.afterState),
-              })
-            : receipt.beforeState === "waiting" &&
-                receipt.afterState === "waiting"
-              ? t("taskActions.receiptReason")
-              : t("taskActions.receiptChange", {
-                  from: stateLabel(receipt.beforeState),
-                  to: stateLabel(receipt.afterState),
-                });
+          ? t("taskRemove.receiptRemoved", { title })
+          : t("taskRemove.receiptRemovedUnknown")
+        : restore
+          ? title
+            ? t("taskRemove.receiptRestored", { title })
+            : t("taskRemove.receiptRestoredUnknown")
+          : receipt.operationType === "task.edit_details"
+            ? editReceiptText(
+                t as never,
+                receipt,
+                receipt.title ?? taskTitle ?? "",
+              )
+            : receipt.operationType === "task.create_custom"
+              ? t("taskCreate.added", { title })
+              : receipt.operationType === "task.remove_created"
+                ? t("taskCreate.removed", { title })
+                : receipt.kind === "undo"
+                  ? t("taskActions.receiptUndo", {
+                      state: stateLabel(receipt.afterState),
+                    })
+                  : receipt.beforeState === "waiting" &&
+                      receipt.afterState === "waiting"
+                    ? t("taskActions.receiptReason")
+                    : t("taskActions.receiptChange", {
+                        from: stateLabel(receipt.beforeState),
+                        to: stateLabel(receipt.afterState),
+                      });
   const time = new Intl.DateTimeFormat(i18n.language, {
     month: "short",
     day: "numeric",
@@ -108,13 +121,16 @@ export function ReceiptBlock({
   }).format(new Date(receipt.createdAt));
   // Undo of an added task or added steps removes them: it asks first.
   const removes =
+    receipt.operationType === "reminder.schedule" ||
     receipt.operationType === "task.create_custom" ||
     receipt.operationType === "step.create";
-  const confirmTitle = isStep
-    ? steps.length === 1
-      ? t("taskSteps.confirmRemove", { title: first?.title ?? "" })
-      : t("taskSteps.confirmRemoveMany", { count: steps.length })
-    : t("taskCreate.confirmRemove", { title });
+  const confirmTitle = receipt.reminder
+    ? t("reminders.undoConfirm")
+    : isStep
+      ? steps.length === 1
+        ? t("taskSteps.confirmRemove", { title: first?.title ?? "" })
+        : t("taskSteps.confirmRemoveMany", { count: steps.length })
+      : t("taskCreate.confirmRemove", { title });
 
   function undo() {
     if (!canWrite || !store) return;
@@ -165,10 +181,10 @@ export function ReceiptBlock({
             removal
               ? t("taskRemove.undoRemovalA11y", { change: text })
               : isStep
-              ? t("taskSteps.undoA11y", { change: text })
-              : removes
-                ? t("taskCreate.undoA11y", { title })
-                : undefined
+                ? t("taskSteps.undoA11y", { change: text })
+                : removes
+                  ? t("taskCreate.undoA11y", { title })
+                  : undefined
           }
           data-drawer-focus=""
           onClick={(event) => {
@@ -187,10 +203,10 @@ export function ReceiptBlock({
           {removal
             ? t("taskRemove.undoRemoval")
             : isStep
-            ? t("taskSteps.undo")
-            : removes
-              ? t("taskCreate.undo")
-              : t("taskActions.undo")}
+              ? t("taskSteps.undo")
+              : removes
+                ? t("taskCreate.undo")
+                : t("taskActions.undo")}
         </button>
       )}
       <Reveal open={confirming} instant={instant}>
@@ -199,9 +215,11 @@ export function ReceiptBlock({
             {confirmTitle}
           </p>
           <p className="mt-1 text-sm text-ink-tertiary">
-            {isStep
-              ? t("taskSteps.confirmRemoveBody")
-              : t("taskCreate.confirmRemoveBody")}
+            {receipt.reminder
+              ? t("reminders.undoConfirm")
+              : isStep
+                ? t("taskSteps.confirmRemoveBody")
+                : t("taskCreate.confirmRemoveBody")}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {/* Dark fill as in the reviewed prototype: white on the brand orange is below 4.5:1. */}

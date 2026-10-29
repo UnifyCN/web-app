@@ -1,4 +1,5 @@
 "use client";
+import { ReminderSection } from "./ReminderSection";
 
 import { useId, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
@@ -169,6 +170,7 @@ export function TaskStatePanel({
         </p>
       )}
 
+      <ReminderSection taskRef={taskRef} view={view} store={store} />
       <TaskStepsSection
         taskRef={taskRef}
         progress={progress}
@@ -414,18 +416,26 @@ export function PhaseMessage({
         // #366: Undo of a step change met a newer edit. Nothing changed; the offered
         // change needs approval, and a removal also its confirmation (this button).
         const removes = isRemoval(proposed);
-        const targets = proposed.type === "step.remove_created"
-          ? proposed.steps
-          : proposed.type === "step.remove"
-            ? [{ step_id: proposed.step_id, expected_revision: proposed.expected_revision }]
-            : [];
-        const currentTargets = targets.map(target => ({
+        const targets =
+          proposed.type === "step.remove_created"
+            ? proposed.steps
+            : proposed.type === "step.remove"
+              ? [
+                  {
+                    step_id: proposed.step_id,
+                    expected_revision: proposed.expected_revision,
+                  },
+                ]
+              : [];
+        const currentTargets = targets.map((target) => ({
           ...target,
-          current: steps.find(step => step.stepId === target.step_id),
+          current: steps.find((step) => step.stepId === target.step_id),
         }));
-        const detailsMatch = currentTargets.length > 0 && currentTargets.every(
-          target => target.current?.revision === target.expected_revision
-        );
+        const detailsMatch =
+          currentTargets.length > 0 &&
+          currentTargets.every(
+            (target) => target.current?.revision === target.expected_revision,
+          );
         const canApprove = writable && (!removes || detailsMatch);
         return (
           <div className="rounded-lg border border-primary-subtle bg-primary-bg px-3 py-3">
@@ -441,14 +451,23 @@ export function PhaseMessage({
             )}
             {removes && (
               <div className="mt-2 space-y-1">
-                {currentTargets.map(target => target.current && (
-                  <p key={target.step_id} className="whitespace-pre-wrap break-words text-sm text-ink-secondary">
-                    {target.current.title}
-                  </p>
-                ))}
+                {currentTargets.map(
+                  (target) =>
+                    target.current && (
+                      <p
+                        key={target.step_id}
+                        className="whitespace-pre-wrap break-words text-sm text-ink-secondary"
+                      >
+                        {target.current.title}
+                      </p>
+                    ),
+                )}
                 {!detailsMatch && (
                   <p className="text-sm text-destructive-label">
-                    {t("taskSteps.removalNeedsRefresh", { keep: t("taskActions.keepCurrent"), undo: t("taskSteps.undo") })}
+                    {t("taskSteps.removalNeedsRefresh", {
+                      keep: t("taskActions.keepCurrent"),
+                      undo: t("taskSteps.undo"),
+                    })}
                   </p>
                 )}
               </div>

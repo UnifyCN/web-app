@@ -33,6 +33,7 @@ vi.mock("@/hooks/useCompanion", () => ({
   useDeleteConversation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock("@/hooks/useTaskActions", () => ({
+  useTaskActionClient: () => null,
   useConversationActions: (id: string | null) => ({ data: { removalProposals: id && fixture.proposal ? [fixture.proposal] : [] } }),
   useTaskActionPhase: () => ({ phase: "idle" }),
   useTaskActionDraft: () => undefined,

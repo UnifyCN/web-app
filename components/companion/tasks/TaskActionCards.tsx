@@ -1,4 +1,9 @@
 "use client";
+import {
+  reminderLabel,
+  type ReminderProposal,
+} from "@/lib/companionActions/reminders";
+import { ReceiptBlock } from "./ReceiptBlock";
 
 import { useTranslation } from "react-i18next";
 import { ListChecks, Trash2 } from "lucide-react";
@@ -37,6 +42,7 @@ const isTransient = (phase: TaskActionPhase) =>
  * text.
  */
 interface CardsProps {
+  reminderProposals?: ReminderProposal[];
   message: ChatMessage;
   proposals: TaskProposal[];
   commands: Array<{ messageId: number; receipt: TaskReceipt }>;
@@ -63,6 +69,7 @@ interface CardsProps {
 }
 
 export function TaskActionCards({
+  reminderProposals = [],
   message,
   proposals,
   commands,
@@ -81,6 +88,7 @@ export function TaskActionCards({
   onReviewRemoval,
   isRemovedNow,
 }: CardsProps) {
+  const { t, i18n } = useTranslation();
   const mine = proposals.filter((p) => p.source?.messageId === message.id);
   const mySteps = stepProposals.filter(
     (p) => p.source?.messageId === message.id,
@@ -97,6 +105,46 @@ export function TaskActionCards({
     null;
   return (
     <>
+      {reminderProposals
+        .filter((p) => p.source?.messageId === message.id)
+        .map((p) => (
+          <article key={p.proposalId} className={CARD}>
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">{t("reminders.title")}</p>
+              <p>
+                {p.operation.type === "reminder.schedule"
+                  ? reminderLabel(
+                      {
+                        remindAt: p.operation.remind_at,
+                        timeZone: p.operation.time_zone,
+                      },
+                      i18n.language,
+                    )
+                  : t("reminders.stopped")}
+              </p>
+              <p>
+                {t(
+                  p.status === "draft"
+                    ? "taskCreate.draftBadge"
+                    : p.status === "applied"
+                      ? "reminders.saved"
+                      : "reminders.stopped",
+                )}
+              </p>
+            </div>
+            <CardButton
+              label={t("reminders.review")}
+              name={t("reminders.review")}
+              onClick={() => {
+                store?.setDraft(
+                  `reminder-review:${p.operation.task_ref}`,
+                  p.proposalId,
+                );
+                onViewTask(p.operation.task_ref);
+              }}
+            />
+          </article>
+        ))}
       {mine.map((p) =>
         p.kind === "task_edit" ? (
           <EditDraftCard
@@ -630,16 +678,35 @@ function CommandCard({
   const { t } = useTranslation();
   const key = `command:${messageId}`;
   const phase = useTaskActionPhase(store, key);
-  const receipt = phase.phase === "saved"
-    ? saved?.operationId === phase.receipt.operationId
-      ? {
-          ...phase.receipt,
-          current: saved.current,
-          undoable: saved.undoable,
-          undoneBy: saved.undoneBy,
-        }
-      : phase.receipt
-    : saved;
+  const receipt =
+    phase.phase === "saved"
+      ? saved?.operationId === phase.receipt.operationId
+        ? {
+            ...phase.receipt,
+            current: saved.current,
+            undoable: saved.undoable,
+            undoneBy: saved.undoneBy,
+          }
+        : phase.receipt
+      : saved;
+  if (receipt?.reminder)
+    return (
+      <article className={CARD}>
+        <div className="min-w-0 flex-1">
+          <ReceiptBlock
+            receipt={receipt}
+            storeKey={key}
+            store={store}
+            canWrite={canWrite}
+          />
+        </div>
+        <CardButton
+          label={t("reminders.openTask")}
+          name={t("reminders.openTask")}
+          onClick={() => onViewTask(receipt.taskRef)}
+        />
+      </article>
+    );
   // #370: a remember command's receipt (and its Undo) is a saved-detail receipt.
   const detailReceipt = receipt?.detail
     ? receipt

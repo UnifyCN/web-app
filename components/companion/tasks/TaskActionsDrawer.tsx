@@ -1,4 +1,5 @@
 "use client";
+import { ReminderList } from "./ReminderSection";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -13,6 +14,7 @@ import type { TaskActionSurface } from "@/lib/companionActions/analytics";
 import {
   useTaskActionPhase,
   useTaskActionStore,
+  useTaskActionClient,
   useTaskProgress,
 } from "@/hooks/useTaskActions";
 import { TaskDrawer } from "./TaskDrawer";
@@ -74,7 +76,28 @@ export function TaskActionsDrawer({
   const { data: tasks = [], isLoading } = useTasks();
   const view = useTaskProgress();
   const store = useTaskActionStore(surface);
-  const initialTaskRef = initialTask?.taskRef ?? null;
+  const [reminderTarget, setReminderTarget] = useState<{
+    taskRef: string;
+    title: string;
+  } | null>(null);
+  const reminderOwner = useTaskActionClient()?.owner;
+  const reminderIdentity = reminderOwner
+    ? `${reminderOwner.accountId}:${reminderOwner.epoch}`
+    : "";
+  const [seenReminderIdentity, setSeenReminderIdentity] =
+    useState(reminderIdentity);
+  if (seenReminderIdentity !== reminderIdentity) {
+    setSeenReminderIdentity(reminderIdentity);
+    setReminderTarget(null);
+  }
+  const ownedReminderTarget =
+    reminderTarget &&
+    !view.stale &&
+    view.reminders?.items.some((r) => r.taskRef === reminderTarget.taskRef)
+      ? reminderTarget
+      : null;
+  const initialTaskRef =
+    initialTask?.taskRef ?? ownedReminderTarget?.taskRef ?? null;
   const [selectedId, setSelectedId] = useState<string | null>(initialTaskId);
   // The task last opened from the list: focus returns to its row on Back.
   const [returnId, setReturnId] = useState<string | null>(null);
@@ -108,9 +131,12 @@ export function TaskActionsDrawer({
   const active = tasks.filter((task) => !task.dismissedAt);
   // A task removed in this drawer (#367) leaves the active list (a custom one every read);
   // its panel stays open on the removal receipt, with the ref and title it was opened with.
-  const live = active.find((task) =>
-    initialTaskRef ? taskOrderKey(task) === initialTaskRef : task.id === selectedId,
-  ) ?? null;
+  const live =
+    active.find((task) =>
+      initialTaskRef
+        ? taskOrderKey(task) === initialTaskRef
+        : task.id === selectedId,
+    ) ?? null;
   const [seen, setSeen] = useState<{
     id: string;
     ref: string;
@@ -123,15 +149,22 @@ export function TaskActionsDrawer({
       seen.title !== live.title)
   )
     setSeen({ id: live.id, ref: taskOrderKey(live), title: live.title });
-  const kept = !live && seen &&
+  const kept =
+    !live &&
+    seen &&
     (initialTaskRef ? seen.ref === initialTaskRef : seen.id === selectedId)
-    ? seen : null;
+      ? seen
+      : null;
   // Only current account progress can supply a task absent from Checklist.
-  const explicit = initialTask && view.byRef.has(initialTask.taskRef)
-    ? initialTask : null;
-  const selected = live ?? (kept ? { title: kept.title } : explicit);
+  const explicit =
+    initialTask && (view.byRef.has(initialTask.taskRef) ||
+      view.reminders?.items.some(r=>r.taskRef===initialTask.taskRef) ||
+      Boolean(store?.draft(`reminder-review:${initialTask.taskRef}`))) ? initialTask : null;
+  const selected =
+    live ?? (kept ? { title: kept.title } : (explicit ?? ownedReminderTarget));
   const selectedRef = live
-    ? taskOrderKey(live) : (kept?.ref ?? explicit?.taskRef ?? null);
+    ? taskOrderKey(live)
+    : (kept?.ref ?? explicit?.taskRef ?? ownedReminderTarget?.taskRef ?? null);
   const phase = useTaskActionPhase(store, selectedRef);
   const draftId = proposalId ?? stepProposalId ?? detailProposalId;
   const draftPhase = useTaskActionPhase(
@@ -175,11 +208,21 @@ export function TaskActionsDrawer({
                     : t("taskActions.listTitle")
       }
       onBack={
-        showDetails && !openDetails && !detailProposalId
-          ? () => setShowDetails(false)
-          : selected && !initialTaskId && !initialTaskRef && !proposalId && !stepProposalId && !plan
-            ? () => setSelectedId(null)
-            : undefined
+        ownedReminderTarget
+          ? () => {
+              setReminderTarget(null);
+              setSelectedId(null);
+            }
+          : showDetails && !openDetails && !detailProposalId
+            ? () => setShowDetails(false)
+            : selected &&
+                !initialTaskId &&
+                !initialTaskRef &&
+                !proposalId &&
+                !stepProposalId &&
+                !plan
+              ? () => setSelectedId(null)
+              : undefined
       }
       closeOnEscape={phase.phase !== "saving" && draftPhase.phase !== "saving"}
     >
@@ -212,7 +255,10 @@ export function TaskActionsDrawer({
           taskTitle={stepTask?.title ?? null}
         />
       ) : plan ? (
-        <PlanPanel target={plan} onOpenTask={(taskRef) => onOpenTask?.(taskRef)} />
+        <PlanPanel
+          target={plan}
+          onOpenTask={(taskRef) => onOpenTask?.(taskRef)}
+        />
       ) : proposalId ? (
         <TaskProposalPanel
           proposalId={proposalId}
@@ -250,6 +296,10 @@ export function TaskActionsDrawer({
         </div>
       ) : (
         <div className="space-y-2">
+          <ReminderList
+            view={view}
+            onOpen={(taskRef, title) => setReminderTarget({ taskRef, title })}
+          />
           {/* #370: the saved details, one row above the tasks. */}
           <button
             type="button"

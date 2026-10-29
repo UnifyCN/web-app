@@ -260,7 +260,7 @@
       "people": "Personnes",
       "groups": "Groupes"
     },
-    "tabWithCount": "{{label}}\u00a0({{count}})",
+    "tabWithCount": "{{label}} ({{count}})",
     "clear": "Effacer la recherche",
     "resultsFor": "Résultats pour « {{term}} »",
     "error": "La recherche n'a pas pu être chargée. Veuillez réessayer."
@@ -3533,5 +3533,32 @@
     "commandFailed": "Impossible d’ouvrir la vérification du retrait de « {{title}} ». Rien n’a été retiré.",
     "clarifyMissingTitle": "Quelle tâche voulez-vous retirer? Écrivez-la ainsi : Retire la tâche : Obtenir un forfait cellulaire",
     "clarifyMultiple": "Demandez de retirer une seule tâche à la fois. Rien n’a été retiré."
+  },
+  "reminders": {
+    "title": "Rappels",
+    "instant": "Date et heure avec décalage UTC",
+    "zone": "Fuseau horaire",
+    "timeHelp": "Entrez la date, l’heure, le décalage UTC et le nom du fuseau horaire. Vérifiez chaque valeur avant d’enregistrer.",
+    "invalidTime": "Entrez une heure future valide et le décalage UTC correspondant. Une heure répétée exige un décalage explicite.",
+    "readFailed": "Impossible d’actualiser les rappels. Vérifiez la connexion avant de modifier un rappel.",
+    "review": "Vérifier le rappel",
+    "save": "Enregistrer le rappel",
+    "cancel": "Annuler le rappel",
+    "cancelConfirm": "Arrêter ce rappel? La tâche et sa progression resteront enregistrées.",
+    "confirmCancel": "Confirmer l’annulation",
+    "keepEditing": "Continuer la modification",
+    "keep": "Conserver le rappel",
+    "saved": "Rappel enregistré.",
+    "stopped": "Rappel arrêté",
+    "scheduled": "Planifié",
+    "due": "À faire maintenant",
+    "schedulerUnavailable": "Le rappel est enregistré. La planification est indisponible pour le moment.",
+    "interruption": "La planification a été arrêtée lors d’une interruption de service. Choisissez et vérifiez une nouvelle heure pour recommencer.",
+    "openTask": "Ouvrir la tâche",
+    "undoHelp": "Annuler une modification ne réactive pas les rappels arrêtés. Vérifiez une nouvelle heure pour relancer un rappel.",
+    "undoConfirm": "Arrêter le rappel enregistré par cette modification? Les rappels plus récents resteront inchangés.",
+    "confirmUndo": "Confirmer l’annulation de la modification",
+    "reviewAgain": "Le rappel a changé. Actualisez et vérifiez les valeurs actuelles avant d’enregistrer.",
+    "history": "Cette modification est un historique. Les rappels actuels sont affichés ci-dessus."
   }
 }

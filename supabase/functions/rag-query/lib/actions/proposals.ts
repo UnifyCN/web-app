@@ -58,7 +58,11 @@ export interface DetailCreateProposal {
   text: string;
 }
 
+export interface ReminderProposal {
+ type:'reminder.schedule';version:1;task_ref:string;remind_at:string;time_zone:string;wall_time:string;
+}
 export type ActionProposal =
+  | ReminderProposal
   | TaskCreateProposal
   | PlanProposal
   | StepCreateProposal
@@ -138,7 +142,18 @@ const taskEdit: ProposalCapabilitySpec<TaskEditProposal> = {
   },
 };
 
-export const PROPOSAL_CAPABILITIES = { 'task.create_custom': taskCreate, 'task.edit': taskEdit } as const;
+const reminderSchedule: ProposalCapabilitySpec<ReminderProposal> = {
+ type:'reminder.schedule',version:1,classification:'propose',tag:'REMINDER',
+ parse(value,shownTasks) {
+  const parts=value.split(' | ');if(parts.length!==3)return null;
+  const [ref,instant,zone]=parts;
+  if(!shownTasks?.has(ref) || !TASK_REF.test(ref) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})$/.test(instant))return null;
+  try {new Intl.DateTimeFormat('en',{timeZone:zone});}catch{return null;}
+  return {type:'reminder.schedule',version:1,task_ref:ref,remind_at:instant,time_zone:zone,wall_time:instant.replace(/(Z|[+-]\d{2}:\d{2})$/,'')};
+ }
+};
+
+export const PROPOSAL_CAPABILITIES = { 'reminder.schedule': reminderSchedule, 'task.create_custom': taskCreate, 'task.edit': taskEdit } as const;
 
 const PLAN_GOAL_MAX = 120;
 const PLAN_ITEMS_MAX = 12;
@@ -266,7 +281,12 @@ Use the exact task id shown for that Checklist task. The app shows the steps as 
 TASK CHANGE SUGGESTION:
 When what the user says clearly changes one Checklist task listed above, you may instead suggest ONE change to it for them to review, on its own line before any [SUGGESTIONS] line, as:
 [EDIT]: <task id from the list> | <field> | <value>
-Fields: state (value: not_started, in_progress, waiting or completed), waiting (value: what the task is waiting for, in plain text), and only for a task whose id starts with custom: also title, description (plain text) or priority (value: Do now, Do soon, Explore and connect or Optional / later). Suggest completed only when the user says the whole task is done; finished preparation is not completion. The app shows the change as a draft that only the user can approve. Never say that it was changed or saved. Write at most one [TASK] or [EDIT] line in an answer, and no [STEP] line with it.`;
+Fields: state (value: not_started, in_progress, waiting or completed), waiting (value: what the task is waiting for, in plain text), and only for a task whose id starts with custom: also title, description (plain text) or priority (value: Do now, Do soon, Explore and connect or Optional / later). Suggest completed only when the user says the whole task is done; finished preparation is not completion. The app shows the change as a draft that only the user can approve. Never say that it was changed or saved. Write at most one [TASK] or [EDIT] line in an answer, and no [STEP] line with it.
+
+REMINDER SUGGESTION:
+Only when the user has supplied an exact date, time, UTC offset and IANA zone for a task listed above, you may suggest one reminder with no other action line:
+[REMINDER]: <task id> | <YYYY-MM-DDTHH:mm:ss+HH:mm> | <IANA zone>
+Never invent a time or choose an offset for an ambiguous repeated time. Ask for missing values. The app requires a time review and approval. This line never schedules or delivers a reminder.`;
 
 /**
  * Removes every "[TASK]: ...", "[EDIT]: ...", plan, "[STEP <id>]: ..." and "[REMEMBER]: ..."
@@ -291,8 +311,10 @@ export function extractActionProposal(
   const planLines: Array<{ tag: string; value: string }> = [];
   const steps: { ref: string; value: string }[] = [];
   const details: string[] = [];
+  const reminders:string[]=[];
   const detailLine = new RegExp(`^[ \\t*_\`~]*\\[${detailCreate.tag}\\]:[ \\t]*(.*)$`, 'gim');
   const stripped = answer
+    .replace(/^[ \t*_`~]*\[REMINDER\]:[ \t]*(.*)$/gim,(_m,value:string)=>{reminders.push(value);return '';})
     .replace(line, (_m, tag: string, value: string) => {
       const t = tag.toUpperCase();
       if (t === spec.tag || t === edit.tag) values.push({ tag: t, value });
@@ -307,8 +329,9 @@ export function extractActionProposal(
       details.push(value);
       return '';
     });
-  if (values.length === 0 && planLines.length === 0 && steps.length === 0 && details.length === 0) return { answer, proposal: null };
+  if (values.length === 0 && planLines.length === 0 && steps.length === 0 && details.length === 0 && reminders.length === 0) return { answer, proposal: null };
   const cleaned = stripped.replace(/\n{3,}/g, '\n\n').trim();
+  if(reminders.length) return {answer:cleaned,proposal:reminders.length===1 && !planLines.length && !values.length && !steps.length && !details.length ? reminderSchedule.parse(reminders[0],readTaskRefs) : null};
   if (planLines.length > 0) {
     return { answer: cleaned, proposal: parsePlan(planLines, read) };
   }

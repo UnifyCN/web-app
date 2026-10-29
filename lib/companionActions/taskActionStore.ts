@@ -1,6 +1,8 @@
 /**
- * Save, lookup and Undo flow for one task's explicit controls (mobile-app#361, #363, #366).
- * Framework-free so mobile and web share the same rules (mobile mirrors this file):
+ * Save, lookup and Undo flow for one task's explicit controls (mobile-app#361), and
+ * for an added task from an approved draft or a clear command (#363).
+ * Framework-free so mobile and web share the same rules (mirror of the web app's
+ * lib/companionActions/taskActionStore.ts):
  *   - one operation identity per user intent, reused for every retry and lookup;
  *   - an outcome that may hide a committed write is looked up, never retried blind;
  *   - "pending" and "lookup failed" stay visibly unresolved and allow only another lookup;
@@ -14,7 +16,7 @@ import type {
   StatusResult,
   TaskActionClient,
   UndoResult,
-} from "./client";
+} from './client';
 import {
   isRemoval,
   verifiedCompensationDetail,
@@ -31,11 +33,11 @@ import {
   type TaskProposal,
   type TaskReceipt,
   type TaskState,
-} from "./contract";
+} from './contract';
 
 export interface PendingWrite {
   operationId: string;
-  kind: "apply" | "undo";
+  kind: 'apply' | 'undo';
   operation?: Operation;
   authorization?: Authorization;
   receiptOperationId?: string;
@@ -46,75 +48,76 @@ export interface PendingWrite {
 }
 
 export type TaskActionPhase =
-  | { phase: "idle" }
-  | { phase: "saving"; write: PendingWrite }
-  | { phase: "saved"; receipt: TaskReceipt }
-  | { phase: "refused"; reason: string }
-  | { phase: "conflict" }
-  | { phase: "checking"; write: PendingWrite }
-  | { phase: "pending"; write: PendingWrite }
-  | { phase: "lookup_failed"; write: PendingWrite }
-  | { phase: "not_applied"; write: PendingWrite }
+  | { phase: 'idle' }
+  | { phase: 'saving'; write: PendingWrite }
+  | { phase: 'saved'; receipt: TaskReceipt }
+  | { phase: 'refused'; reason: string }
+  | { phase: 'conflict' }
+  | { phase: 'checking'; write: PendingWrite }
+  | { phase: 'pending'; write: PendingWrite }
+  | { phase: 'lookup_failed'; write: PendingWrite }
+  | { phase: 'not_applied'; write: PendingWrite }
   | {
-      phase: "undo_review";
+      phase: 'undo_review';
       receiptOperationId: string;
       current: CurrentTaskValue | null;
       /** #370: the detail the reviewed change acts on, as the service read it. */
       currentDetail: CurrentDetailValue | null;
       proposal: CompensatingProposal;
     }
-  | { phase: "already_undone" }
+  | { phase: 'already_undone' }
   /** #367: Undo of a removal changed nothing: the task is back already, or removed again later. */
-  | { phase: "undo_blocked"; reason: "not_removed" | "removed_again" }
+  | { phase: 'undo_blocked'; reason: 'not_removed' | 'removed_again' }
   /** #363: the draft's relevant context changed; nothing was written. Review this revision. */
   | {
-      phase: "needs_review";
+      phase: 'needs_review';
       proposal: TaskProposal | StepProposal | DetailProposal | RemovalProposal;
     }
   /** #370: a live saved detail already says this; nothing was written. */
-  | { phase: "detail_exists" }
+  | { phase: 'detail_exists' }
   /** #363: this command already added its task, or a task with that title exists. */
-  | { phase: "command_used" }
-  | { phase: "needs_clarification" }
-  | { phase: "unavailable" }
-  | { phase: "signed_out" };
+  | { phase: 'command_used' }
+  | { phase: 'needs_clarification' }
+  | { phase: 'unavailable' }
+  | { phase: 'signed_out' };
 
 /** Allowlisted, content-free result for analytics. */
 export interface TaskActionResultEvent {
   action:
-    | "set_state"
-    | "undo"
-    | "approve_compensation"
-    | "lookup"
+    | 'set_state'
+    | 'undo'
+    | 'approve_compensation'
+    | 'lookup'
     /** #363: an added task, from an approved draft or a clear command. */
-    | "approve_create"
-    | "command_create"
-    /** #366: a step control (add, edit, check, remove) or approved suggested steps. */
-    | "step_change"
-    | "approve_steps"
+    | 'approve_create'
+    | 'command_create'
     /** #365: a change to an existing task, from an approved draft or a clear command. */
-    | "approve_edit"
-    | "command_edit"
+    | 'approve_edit'
+    | 'command_edit'
+    /** #366: a step control (add, edit, check, remove) or approved suggested steps. */
+    | 'step_change'
+    | 'approve_steps'
     /** #370: a saved-detail control (edit, remove), an approved draft or a remember command. */
-    | "detail_change"
-    | "approve_detail"
-    | "command_detail"
+    | 'detail_change'
+    | 'approve_detail'
+    | 'command_detail'
     /** #367: an approved removal review. */
-    | "approve_removal";
+    | 'approve_removal'
+    | 'reminder_change';
   outcome:
-    | "applied"
-    | "replayed"
-    | "conflict"
-    | "undo_conflict"
-    | "already_undone"
-    | "refused"
-    | "unknown"
-    | "pending"
-    | "not_applied"
-    | "lookup_failed"
-    | "unavailable"
-    | "needs_review"
-    | "undo_blocked";
+    | 'applied'
+    | 'replayed'
+    | 'conflict'
+    | 'undo_conflict'
+    | 'already_undone'
+    | 'refused'
+    | 'unknown'
+    | 'pending'
+    | 'not_applied'
+    | 'lookup_failed'
+    | 'unavailable'
+    | 'needs_review'
+    | 'undo_blocked';
   toState?: TaskState;
   /** The registered operation type; never content. */
   operationType?: OperationType;
@@ -129,13 +132,13 @@ export interface TaskActionStoreDeps {
 }
 
 type Listener = () => void;
-const IDLE: TaskActionPhase = { phase: "idle" };
+const IDLE: TaskActionPhase = { phase: 'idle' };
 const UNRESOLVED = new Set([
-  "saving",
-  "checking",
-  "pending",
-  "lookup_failed",
-  "not_applied",
+  'saving',
+  'checking',
+  'pending',
+  'lookup_failed',
+  'not_applied',
 ]);
 
 export function isUnresolved(p: TaskActionPhase): boolean {
@@ -211,7 +214,7 @@ export class TaskActionStore {
     if (isUnresolved(this.get(operation.task_ref))) return Promise.resolve();
     return this.run(operation.task_ref, {
       operationId: this.deps.newOperationId(),
-      kind: "apply",
+      kind: 'apply',
       operation,
     });
   }
@@ -224,12 +227,12 @@ export class TaskActionStore {
   applyOperation(
     key: string,
     operation: Operation,
-    authorization: Authorization,
+    authorization: Authorization
   ) {
     if (isUnresolved(this.get(key))) return Promise.resolve();
     return this.run(key, {
       operationId: this.deps.newOperationId(),
-      kind: "apply",
+      kind: 'apply',
       operation,
       authorization,
     });
@@ -239,12 +242,12 @@ export class TaskActionStore {
   undo(
     taskRef: string,
     receiptOperationId: string,
-    options: { removalConfirmed?: boolean } = {},
+    options: { removalConfirmed?: boolean } = {}
   ) {
     if (isUnresolved(this.get(taskRef))) return Promise.resolve();
     return this.run(taskRef, {
       operationId: this.deps.newOperationId(),
-      kind: "undo",
+      kind: 'undo',
       receiptOperationId,
       removalConfirmed: options.removalConfirmed === true,
     });
@@ -253,27 +256,27 @@ export class TaskActionStore {
   /** Approve the reviewed compensating change of a conflicting Undo. */
   approveCompensation(
     taskRef: string,
-    options: { removalConfirmed?: boolean } = {},
+    options: { removalConfirmed?: boolean } = {}
   ) {
     const p = this.get(taskRef);
-    if (p.phase !== "undo_review") return Promise.resolve();
+    if (p.phase !== 'undo_review') return Promise.resolve();
     const op = p.proposal.operations[0];
     // A removal needs the user's explicit confirmation; without it nothing is sent.
     if (isRemoval(op) && options.removalConfirmed !== true)
       return Promise.resolve();
     // #370: a detail change is approved only for the current detail the service named.
     if (
-      op.type.startsWith("detail.") &&
+      op.type.startsWith('detail.') &&
       !verifiedCompensationDetail(op, p.currentDetail)
     )
       return Promise.resolve();
     return this.run(taskRef, {
       operationId: this.deps.newOperationId(),
-      kind: "apply",
+      kind: 'apply',
       operation: op,
       compensation: true,
       authorization: {
-        kind: "approved_proposal",
+        kind: 'approved_proposal',
         proposal_id: p.proposal.proposalId,
         proposal_revision: p.proposal.proposalRevision,
         ...(isRemoval(op) ? { removal_confirmed: true as const } : {}),
@@ -284,7 +287,7 @@ export class TaskActionStore {
   /** Same identity, same payload. Allowed only after a confirmed "not applied". */
   retry(taskRef: string) {
     const p = this.get(taskRef);
-    if (p.phase !== "not_applied") return Promise.resolve();
+    if (p.phase !== 'not_applied') return Promise.resolve();
     return this.run(taskRef, p.write);
   }
 
@@ -294,12 +297,12 @@ export class TaskActionStore {
    * the new title needs its own approval. An unknown outcome is never dropped.
    */
   supersedeNotApplied(taskRef: string) {
-    if (this.get(taskRef).phase === "not_applied") this.set(taskRef, IDLE);
+    if (this.get(taskRef).phase === 'not_applied') this.set(taskRef, IDLE);
   }
 
   checkAgain(taskRef: string) {
     const p = this.get(taskRef);
-    if (p.phase !== "pending" && p.phase !== "lookup_failed")
+    if (p.phase !== 'pending' && p.phase !== 'lookup_failed')
       return Promise.resolve();
     return this.lookup(taskRef, p.write);
   }
@@ -308,143 +311,144 @@ export class TaskActionStore {
   keysWith(prefix: string): string[] {
     return [...this.phases.entries()]
       .filter(
-        ([key, phase]) => key.startsWith(prefix) && phase.phase !== "idle",
+        ([key, phase]) => key.startsWith(prefix) && phase.phase !== 'idle'
       )
       .map(([key]) => key);
   }
 
-  private actionOf(write: PendingWrite): TaskActionResultEvent["action"] {
-    if (write.kind === "undo") return "undo";
-    if (write.operation?.type.startsWith("detail."))
-      return write.authorization?.kind === "direct_command"
-        ? "command_detail"
-        : write.operation.type === "detail.create"
-          ? "approve_detail"
-          : "detail_change";
-    if (write.operation?.type.startsWith("step."))
-      return write.operation.type === "step.create" &&
-        write.authorization?.kind === "approved_proposal"
-        ? "approve_steps"
-        : "step_change";
-    if (write.operation?.type === "task.remove") return "approve_removal";
-    if (write.operation?.type === "task.create_custom")
-      return write.authorization?.kind === "direct_command"
-        ? "command_create"
-        : "approve_create";
+  private actionOf(write: PendingWrite): TaskActionResultEvent['action'] {
+    if (write.kind === 'undo') return 'undo';
+    if (write.operation?.type.startsWith('reminder.')) return 'reminder_change';
+    if (write.operation?.type.startsWith('detail.'))
+      return write.authorization?.kind === 'direct_command'
+        ? 'command_detail'
+        : write.operation.type === 'detail.create'
+          ? 'approve_detail'
+          : 'detail_change';
+    if (write.operation?.type.startsWith('step.'))
+      return write.operation.type === 'step.create' &&
+        write.authorization?.kind === 'approved_proposal'
+        ? 'approve_steps'
+        : 'step_change';
+    if (write.operation?.type === 'task.remove') return 'approve_removal';
+    if (write.operation?.type === 'task.create_custom')
+      return write.authorization?.kind === 'direct_command'
+        ? 'command_create'
+        : 'approve_create';
     // #365: a change an approved edit draft or a clear command authorized. A compensating
     // change of an Undo is a reviewed proposal too, but keeps its own action.
-    if (write.authorization?.kind === "direct_command") return "command_edit";
+    if (write.authorization?.kind === 'direct_command') return 'command_edit';
     if (
-      write.authorization?.kind === "approved_proposal" &&
+      write.authorization?.kind === 'approved_proposal' &&
       write.authorization.proposal_id &&
       !write.compensation
     )
-      return "approve_edit";
-    return write.authorization?.kind === "approved_proposal"
-      ? "approve_compensation"
-      : "set_state";
+      return 'approve_edit';
+    return write.authorization?.kind === 'approved_proposal'
+      ? 'approve_compensation'
+      : 'set_state';
   }
 
   private async run(taskRef: string, write: PendingWrite) {
-    this.set(taskRef, { phase: "saving", write });
+    this.set(taskRef, { phase: 'saving', write });
     const action = this.actionOf(write);
     // Every request of one operation, its lookup included, goes through the
     // client it started with, so it stays bound to that client's account.
     const { client } = this.deps;
     const result: ApplyResult | UndoResult =
-      write.kind === "undo"
+      write.kind === 'undo'
         ? await client.undo(write.operationId, write.receiptOperationId!, {
             removalConfirmed: write.removalConfirmed,
           })
         : await client.apply(
             write.operationId,
             write.operation!,
-            write.authorization,
+            write.authorization
           );
-    const report = (outcome: TaskActionResultEvent["outcome"]) =>
+    const report = (outcome: TaskActionResultEvent['outcome']) =>
       this.deps.onResult?.({
         action,
         outcome,
         toState:
-          write.operation?.type === "task.set_state"
+          write.operation?.type === 'task.set_state'
             ? write.operation.state
             : undefined,
         operationType: write.operation?.type,
       });
 
     switch (result.kind) {
-      case "applied":
-        this.set(taskRef, { phase: "saved", receipt: result.receipt });
-        report(result.replayed ? "replayed" : "applied");
+      case 'applied':
+        this.set(taskRef, { phase: 'saved', receipt: result.receipt });
+        report(result.replayed ? 'replayed' : 'applied');
         this.deps.onChanged();
         return;
-      case "conflict":
-        this.set(taskRef, { phase: "conflict" });
-        report("conflict");
+      case 'conflict':
+        this.set(taskRef, { phase: 'conflict' });
+        report('conflict');
         this.deps.onChanged();
         return;
-      case "undo_conflict":
+      case 'undo_conflict':
         this.set(taskRef, {
-          phase: "undo_review",
+          phase: 'undo_review',
           receiptOperationId: write.receiptOperationId!,
           current:
-            result.current.find((c) => c.taskRef === taskRef) ??
+            result.current.find(c => c.taskRef === taskRef) ??
             result.current[0] ??
             null,
           currentDetail: result.currentDetail,
           proposal: result.proposal,
         });
-        report("undo_conflict");
+        report('undo_conflict');
         this.deps.onChanged();
         return;
-      case "already_undone":
-        this.set(taskRef, { phase: "already_undone" });
-        report("already_undone");
+      case 'already_undone':
+        this.set(taskRef, { phase: 'already_undone' });
+        report('already_undone');
         this.deps.onChanged();
         return;
-      case "undo_blocked":
-        this.set(taskRef, { phase: "undo_blocked", reason: result.reason });
-        report("undo_blocked");
+      case 'undo_blocked':
+        this.set(taskRef, { phase: 'undo_blocked', reason: result.reason });
+        report('undo_blocked');
         this.deps.onChanged();
         return;
-      case "needs_review":
-        this.set(taskRef, { phase: "needs_review", proposal: result.proposal });
-        report("needs_review");
+      case 'needs_review':
+        this.set(taskRef, { phase: 'needs_review', proposal: result.proposal });
+        report('needs_review');
         this.deps.onChanged();
         return;
-      case "command_used":
-        this.set(taskRef, { phase: "command_used" });
-        report("refused");
+      case 'command_used':
+        this.set(taskRef, { phase: 'command_used' });
+        report('refused');
         this.deps.onChanged();
         return;
-      case "needs_clarification":
-        this.set(taskRef, { phase: "needs_clarification" });
-        report("refused");
+      case 'needs_clarification':
+        this.set(taskRef, { phase: 'needs_clarification' });
+        report('refused');
         return;
-      case "detail_exists":
-        this.set(taskRef, { phase: "detail_exists" });
-        report("refused");
+      case 'detail_exists':
+        this.set(taskRef, { phase: 'detail_exists' });
+        report('refused');
         this.deps.onChanged();
         return;
-      case "unknown":
-      case "in_flight":
-        report("unknown");
+      case 'unknown':
+      case 'in_flight':
+        report('unknown');
         await this.lookup(taskRef, write, client);
         return;
-      case "unavailable":
-        this.set(taskRef, { phase: "unavailable" });
-        report("unavailable");
+      case 'unavailable':
+        this.set(taskRef, { phase: 'unavailable' });
+        report('unavailable');
         return;
-      case "unauthorized":
-        this.set(taskRef, { phase: "signed_out" });
-        report("refused");
+      case 'unauthorized':
+        this.set(taskRef, { phase: 'signed_out' });
+        report('refused');
         return;
-      case "refused":
+      case 'refused':
         this.set(taskRef, {
-          phase: "refused",
+          phase: 'refused',
           reason: result.reason ?? result.error,
         });
-        report("refused");
+        report('refused');
         this.deps.onChanged();
         return;
     }
@@ -453,39 +457,39 @@ export class TaskActionStore {
   private async lookup(
     taskRef: string,
     write: PendingWrite,
-    client = this.deps.client,
+    client = this.deps.client
   ) {
-    this.set(taskRef, { phase: "checking", write });
+    this.set(taskRef, { phase: 'checking', write });
     const result: StatusResult = await client.status(write.operationId);
-    const report = (outcome: TaskActionResultEvent["outcome"]) =>
-      this.deps.onResult?.({ action: "lookup", outcome });
+    const report = (outcome: TaskActionResultEvent['outcome']) =>
+      this.deps.onResult?.({ action: 'lookup', outcome });
     switch (result.kind) {
-      case "applied":
-        this.set(taskRef, { phase: "saved", receipt: result.receipt });
-        report("applied");
+      case 'applied':
+        this.set(taskRef, { phase: 'saved', receipt: result.receipt });
+        report('applied');
         this.deps.onChanged();
         return;
-      case "pending":
-        this.set(taskRef, { phase: "pending", write });
-        report("pending");
+      case 'pending':
+        this.set(taskRef, { phase: 'pending', write });
+        report('pending');
         return;
-      case "not_applied":
-        this.set(taskRef, { phase: "not_applied", write });
-        report("not_applied");
+      case 'not_applied':
+        this.set(taskRef, { phase: 'not_applied', write });
+        report('not_applied');
         this.deps.onChanged();
         return;
-      case "lookup_failed":
-        this.set(taskRef, { phase: "lookup_failed", write });
-        report("lookup_failed");
+      case 'lookup_failed':
+        this.set(taskRef, { phase: 'lookup_failed', write });
+        report('lookup_failed');
         return;
-      case "unavailable":
+      case 'unavailable':
         // The gate closed after the write was sent: the outcome is still unknown.
-        this.set(taskRef, { phase: "lookup_failed", write });
-        report("unavailable");
+        this.set(taskRef, { phase: 'lookup_failed', write });
+        report('unavailable');
         return;
-      case "unauthorized":
-        this.set(taskRef, { phase: "signed_out" });
-        report("lookup_failed");
+      case 'unauthorized':
+        this.set(taskRef, { phase: 'signed_out' });
+        report('lookup_failed');
         return;
     }
   }
@@ -496,7 +500,7 @@ const stores = new Map<string, TaskActionStore>();
 /** The store of one signed-in account. Another account never sees it. */
 export function taskActionStoreFor(
   accountId: string,
-  deps: TaskActionStoreDeps,
+  deps: TaskActionStoreDeps
 ): TaskActionStore {
   let store = stores.get(accountId);
   if (!store) {

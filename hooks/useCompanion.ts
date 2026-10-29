@@ -1,10 +1,14 @@
+import { parseSuggestedReminder } from "@/lib/companionActions/reminders";
 import {
   useMutation,
   useQuery,
   useQueryClient,
   type QueryClient,
 } from "@tanstack/react-query";
-import { conversationPlansKey, plansKey } from "@/lib/companionActions/queryKeys";
+import {
+  conversationPlansKey,
+  plansKey,
+} from "@/lib/companionActions/queryKeys";
 import { planClientFor } from "@/hooks/usePlans";
 import { useTranslation } from "react-i18next";
 import * as companion from "@/services/companion";
@@ -83,7 +87,13 @@ function clarifyQuestion(
  */
 function commandReply(
   t: (key: string, options?: Record<string, unknown>) => string,
-  command: Exclude<CommandResult, { kind: "none" } | { kind: "edit" } | { kind: "remove" }>,
+  command: Exclude<
+    CommandResult,
+    | { kind: "none" }
+    | { kind: "edit" }
+    | { kind: "remove" }
+    | { kind: "reminder" }
+  >,
 ): string {
   switch (command.kind) {
     case "create":
@@ -329,7 +339,10 @@ export function useSendMessage() {
                 task_ref: checklist.taskOrderKey(matches[0]),
                 expected_revision: 0,
               },
-              { conversationId: conversationIdentifier, messageId: savedUser.id },
+              {
+                conversationId: conversationIdentifier,
+                messageId: savedUser.id,
+              },
             );
             ensureOwned(owner);
             if (prepared.kind !== "ok" && prepared.kind !== "changed")
@@ -354,6 +367,7 @@ export function useSendMessage() {
         if (
           (command.kind === "create" && command.sameTitleTasks.length === 0) ||
           command.kind === "edit" ||
+          command.kind === "reminder" ||
           (command.kind === "remember" && command.sameTextDetails.length === 0)
         ) {
           // A clear command makes exactly its one change (#365 edits too). Its card
@@ -433,10 +447,14 @@ export function useSendMessage() {
       // this answer. The action service checks every reused task again; preparing
       // writes no task and no plan. A failure only means no plan card.
       if (reply.planProposal) {
-        await planClientFor(owner).prepare(reply.planProposal.goal, reply.planProposal.items, {
-          conversationId: conversationIdentifier,
-          messageId: savedAnswer.id,
-        });
+        await planClientFor(owner).prepare(
+          reply.planProposal.goal,
+          reply.planProposal.items,
+          {
+            conversationId: conversationIdentifier,
+            messageId: savedAnswer.id,
+          },
+        );
         ensureOwned(owner);
       }
       // #363: a suggested task becomes a server-owned draft for review, tied to this
@@ -479,6 +497,14 @@ export function useSendMessage() {
           { type: "detail.create", text: reply.actionProposal.text },
           { conversationId: conversationIdentifier, messageId: savedAnswer.id },
         );
+        ensureOwned(owner);
+      }
+      const suggestedReminder = parseSuggestedReminder(reply.actionProposal);
+      if (suggestedReminder && actions.prepareReminder) {
+        await actions.prepareReminder(suggestedReminder, {
+          conversationId: conversationIdentifier,
+          messageId: savedAnswer.id,
+        });
         ensureOwned(owner);
       }
       return { conversationIdentifier, accountId: owner.accountId };

@@ -155,7 +155,18 @@ export type DetailOperation =
   | DetailUpdateOperation
   | DetailRemoveOperation
   | DetailRestoreOperation;
+export interface ReminderScheduleOperation {
+  type: 'reminder.schedule'; task_ref: string; expected_revision: number;
+  remind_at: string; time_zone: string; wall_time: string;
+  reminder_id?: string; expected_reminder_revision?: number;
+}
+export interface ReminderCancelOperation {
+  type: 'reminder.cancel'; task_ref: string; expected_revision: number;
+  reminder_id: string; expected_reminder_revision: number;
+}
+export type ReminderOperation = ReminderScheduleOperation | ReminderCancelOperation;
 export type Operation =
+  | ReminderOperation
   | SetStateOperation
   | CreateCustomOperation
   | RemoveCreatedOperation
@@ -560,7 +571,31 @@ const detailRemove = oneDetail<DetailRemoveOperation>('detail.remove', [], ['ui_
 const detailRestore = oneDetail<DetailRestoreOperation>('detail.restore', [], ['approved_proposal'], true,
   (_raw, base) => ok({ type: 'detail.restore', ...base }));
 
+function reminderSpec<T extends ReminderOperation>(type: T['type']): OperationSpec<T> {
+  return { type, version: 1, access: 'owner', classification: 'write',
+    approval: type === 'reminder.cancel' ? ['ui_control', 'approved_proposal'] : ['ui_control', 'approved_proposal', 'direct_command'],
+    revisionCheck: 'expected_revision', idempotency: 'operation_id', undo: 'recorded_inverse', undoRemoves: type === 'reminder.schedule',
+    parse(raw) {
+      const keys = ['type','task_ref','expected_revision','reminder_id','expected_reminder_revision',
+        ...(type === 'reminder.schedule' ? ['remind_at','time_zone','wall_time'] : [])];
+      if (!onlyKeys(raw,keys)) return refuse(422,'unknown_field');
+      if (typeof raw.task_ref !== 'string' || !TASK_REF.test(raw.task_ref) || !isPlainInt(raw.expected_revision)) return refuse(422,'invalid_reminder');
+      if (type === 'reminder.cancel' || raw.reminder_id !== undefined) {
+        if (typeof raw.reminder_id !== 'string' || !UUID.test(raw.reminder_id) || !isPlainInt(raw.expected_reminder_revision)) return refuse(422,'reminder_revision_required');
+      } else if (raw.expected_reminder_revision !== undefined) return refuse(422,'invalid_reminder');
+      if (type === 'reminder.schedule') {
+        if (typeof raw.remind_at !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?(Z|[+-]\d{2}:\d{2})$/.test(raw.remind_at)
+          || typeof raw.wall_time !== 'string' || typeof raw.time_zone !== 'string' || raw.time_zone.length > 100) return refuse(422,'explicit_instant_and_zone_required');
+        try { new Intl.DateTimeFormat('en',{timeZone:raw.time_zone}); } catch {return refuse(422,'invalid_time_zone');}
+      }
+      return ok(raw as unknown as T);
+    }
+  };
+}
+
 export const OPERATION_REGISTRY: { readonly [K in Operation['type']]: OperationSpec<Extract<Operation, { type: K }>> } = {
+  'reminder.schedule': reminderSpec<ReminderScheduleOperation>('reminder.schedule'),
+  'reminder.cancel': reminderSpec<ReminderCancelOperation>('reminder.cancel'),
   'task.set_state': setState,
   'task.create_custom': createCustom,
   'task.remove_created': removeCreated,
@@ -599,9 +634,9 @@ export function parseEditDraft(raw: unknown): Parsed<EditDraft> {
  * The operations a draft can be prepared for. A removal review (#367) is prepared, never
  * revised; the others can be revised too.
  */
-export type PreparableOperation = CreateCustomOperation | StepCreateOperation | DetailCreateOperation | TaskRemoveOperation;
+export type PreparableOperation = CreateCustomOperation | StepCreateOperation | DetailCreateOperation | TaskRemoveOperation | ReminderOperation;
 const isPreparable = (op: Operation): op is PreparableOperation =>
-  op.type === 'task.create_custom' || op.type === 'step.create' || op.type === 'detail.create' || op.type === 'task.remove';
+  op.type === 'task.create_custom' || op.type === 'step.create' || op.type === 'detail.create' || op.type === 'task.remove' || op.type === 'reminder.schedule' || op.type === 'reminder.cancel';
 type RevisableOperation = CreateCustomOperation | StepCreateOperation | DetailCreateOperation;
 const isRevisable = (op: Operation): op is RevisableOperation =>
   op.type === 'task.create_custom' || op.type === 'step.create' || op.type === 'detail.create';

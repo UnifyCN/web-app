@@ -12,7 +12,10 @@ import {
 import { TaskActionCards } from "@/components/companion/tasks/TaskActionCards";
 import { useTasks } from "@/hooks/useChecklist";
 import { taskOrderKey } from "@/services/checklist";
-import { PlanEntry, type PlanTarget } from "@/components/companion/plans/PlanEntry";
+import {
+  PlanEntry,
+  type PlanTarget,
+} from "@/components/companion/plans/PlanEntry";
 import { PlanCards } from "@/components/companion/plans/PlanCards";
 import { useConversationPlans, usePlanStore } from "@/hooks/usePlans";
 import {
@@ -108,7 +111,9 @@ export default function CompanionPage() {
       kind: "task",
       target: {
         taskRef,
-        title: checklistTasks.find((task) => taskOrderKey(task) === taskRef)?.title ??
+        title:
+          checklistTasks.find((task) => taskOrderKey(task) === taskRef)
+            ?.title ??
           progressFor(taskRef, progress).lastReceipt?.title ??
           t("taskRemove.unknownTask"),
       },
@@ -224,42 +229,47 @@ export default function CompanionPage() {
         taskEntry={
           <>
             <CompanionTasksEntry onOpen={() => setDrawer({ kind: "tasks" })} />
-            <PlanEntry onOpen={(target) => setDrawer({ kind: "plan", target })} />
+            <PlanEntry
+              onOpen={(target) => setDrawer({ kind: "plan", target })}
+            />
           </>
         }
         renderAfterMessage={(message) => (
           <>
-          <TaskActionCards
-            message={message}
-            proposals={actions?.proposals ?? []}
-            commands={actions?.commands ?? []}
-            store={actionStore}
-            canWrite={progress.canWrite}
-            onReview={(proposalId, proposalKind) =>
-              setDrawer({ kind: "proposal", proposalId, proposalKind })
-            }
-            onViewTask={openTaskRef}
-            stepProposals={actions?.stepProposals ?? []}
-            onReviewSteps={(proposalId) =>
-              setDrawer({ kind: "steps", proposalId })
-            }
-            taskTitleOf={taskTitleOf}
-            detailProposals={actions?.detailProposals ?? []}
-            detailCommands={actions?.detailCommands ?? []}
-            onReviewDetail={(proposalId) =>
-              setDrawer({ kind: "detail", proposalId })
-            }
-            onViewDetails={() => setDrawer({ kind: "details" })}
-            removalProposals={actions?.removalProposals ?? []}
-            onReviewRemoval={openRemoval}
-            isRemovedNow={isRemovedNow}
-          />
-          <PlanCards
-            message={message}
-            proposals={plansQuery.data ?? []}
-            store={planStore}
-            onOpen={(proposalId) => setDrawer({ kind: "plan", target: { proposalId } })}
-          />
+            <TaskActionCards
+              reminderProposals={actions?.reminderProposals ?? []}
+              message={message}
+              proposals={actions?.proposals ?? []}
+              commands={actions?.commands ?? []}
+              store={actionStore}
+              canWrite={progress.canWrite}
+              onReview={(proposalId, proposalKind) =>
+                setDrawer({ kind: "proposal", proposalId, proposalKind })
+              }
+              onViewTask={openTaskRef}
+              stepProposals={actions?.stepProposals ?? []}
+              onReviewSteps={(proposalId) =>
+                setDrawer({ kind: "steps", proposalId })
+              }
+              taskTitleOf={taskTitleOf}
+              detailProposals={actions?.detailProposals ?? []}
+              detailCommands={actions?.detailCommands ?? []}
+              onReviewDetail={(proposalId) =>
+                setDrawer({ kind: "detail", proposalId })
+              }
+              onViewDetails={() => setDrawer({ kind: "details" })}
+              removalProposals={actions?.removalProposals ?? []}
+              onReviewRemoval={openRemoval}
+              isRemovedNow={isRemovedNow}
+            />
+            <PlanCards
+              message={message}
+              proposals={plansQuery.data ?? []}
+              store={planStore}
+              onOpen={(proposalId) =>
+                setDrawer({ kind: "plan", target: { proposalId } })
+              }
+            />
           </>
         )}
       />

@@ -1,10 +1,7 @@
 "use client";
+import type { ReminderRead } from "@/lib/companionActions/reminders";
 
-import {
-  useCallback,
-  useMemo,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAccountScope } from "@/hooks/useAccountScope";
 import { useAccountId } from "@/hooks/useAccountId";
@@ -79,6 +76,7 @@ const transportFor =
     } catch {
       parsed = null;
     }
+    assertOwned(owner);
     return { status: res.status, body: parsed };
   };
 
@@ -119,10 +117,15 @@ export function useOnline(): boolean {
 }
 
 export type TaskProgressStatus =
-  "loading" | "ready" | "unavailable" | "offline" | "signed_out";
+  | "loading"
+  | "ready"
+  | "unavailable"
+  | "offline"
+  | "signed_out";
 
 export interface TaskProgressView {
   status: TaskProgressStatus;
+  reminders?: ReminderRead;
   /** Saved progress by task_ref. A content-backed task never written has no entry. */
   byRef: ReadonlyMap<string, TaskProgress>;
   /** #366: live steps by task_ref, in order. */
@@ -165,7 +168,12 @@ export function useTaskProgress(): TaskProgressView {
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
     // While the last read failed, keep checking so a reconnect re-reads current progress.
-    refetchInterval: (q) => (q.state.status === "error" ? 5_000 : false),
+    refetchInterval: (q) =>
+      q.state.status === "error" ||
+      (q.state.data?.kind === "ok" &&
+        q.state.data.reminders?.items.some((r) => r.status === "pending"))
+        ? 5_000
+        : false,
   });
 
   const result = query.data;
@@ -207,6 +215,7 @@ export function useTaskProgress(): TaskProgressView {
     byRef,
     stepsByRef,
     details,
+    reminders: result?.kind === "ok" ? result.reminders : undefined,
     stale,
     // A refetch after a save may still carry the old revision: wait for it.
     canWrite: status === "ready" && !stale && !query.isFetching,
@@ -240,7 +249,11 @@ export function useTaskActionStore(
           queryKey: [CONVERSATION_ACTIONS_ROOT, userId],
         });
         // Plans join current shared progress and must refresh after a task save.
-        for (const root of [PLANS_ROOT, PLAN_PROPOSAL_ROOT, CONVERSATION_PLANS_ROOT]) {
+        for (const root of [
+          PLANS_ROOT,
+          PLAN_PROPOSAL_ROOT,
+          CONVERSATION_PLANS_ROOT,
+        ]) {
           void queryClient.invalidateQueries({ queryKey: [root, userId] });
         }
         // #366: suggested-step drafts.
@@ -332,7 +345,9 @@ export function useDetailProposal(proposalId: string | null) {
     queryFn: async (): Promise<DetailProposal> => {
       const owner = ownAccountWork();
       if (owner.accountId !== userId) throw new ReadFailed("account changed");
-      const result = await clientFor(owner).detailProposal(proposalId as string);
+      const result = await clientFor(owner).detailProposal(
+        proposalId as string,
+      );
       if (result.kind === "ok" || result.kind === "changed")
         return result.proposal;
       throw new ReadFailed(result.kind);

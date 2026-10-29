@@ -658,6 +658,8 @@ describe("Companion task entry and drawer (web)", () => {
     await waitFor(() =>
       expect(isDisabled(radio(panel, "Waiting"))).toBe(false),
     );
+    expect(within(panel).getByLabelText("Date and time with UTC offset")).toBeTruthy();
+    expect(isDisabled(within(panel).getByRole("button",{name:"Review reminder"}))).toBe(false);
     fireEvent.click(radio(panel, "Waiting"));
     expect(
       await within(panel).findByText("Changed from In progress to Waiting"),

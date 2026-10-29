@@ -260,7 +260,7 @@
       "people": "Personas",
       "groups": "Grupos"
     },
-    "tabWithCount": "{{label}}\u00a0({{count}})",
+    "tabWithCount": "{{label}} ({{count}})",
     "clear": "Borrar búsqueda",
     "resultsFor": "Resultados para “{{term}}”",
     "error": "No se pudo cargar la búsqueda. Inténtalo de nuevo."
@@ -3533,5 +3533,32 @@
     "commandFailed": "No pude abrir la revisión para quitar «{{title}}». No se quitó nada.",
     "clarifyMissingTitle": "¿Qué tarea quieres quitar? Escríbela así: Quita la tarea: Contratar un plan de teléfono",
     "clarifyMultiple": "Pide quitar una sola tarea a la vez. No se quitó nada."
+  },
+  "reminders": {
+    "title": "Recordatorios",
+    "instant": "Fecha y hora con desfase UTC",
+    "zone": "Zona horaria",
+    "timeHelp": "Introduce la fecha, la hora, el desfase UTC y el nombre de la zona horaria. Revisa todos los valores antes de guardar.",
+    "invalidTime": "Introduce una hora futura válida y su desfase UTC. Una hora repetida requiere un desfase explícito.",
+    "readFailed": "No se pudieron actualizar los recordatorios. Comprueba la conexión antes de hacer cambios.",
+    "review": "Revisar recordatorio",
+    "save": "Guardar recordatorio",
+    "cancel": "Cancelar recordatorio",
+    "cancelConfirm": "¿Detener este recordatorio? La tarea y su progreso seguirán guardados.",
+    "confirmCancel": "Confirmar cancelación",
+    "keepEditing": "Seguir editando",
+    "keep": "Conservar recordatorio",
+    "saved": "Recordatorio guardado.",
+    "stopped": "Recordatorio detenido",
+    "scheduled": "Programado",
+    "due": "Es la hora",
+    "schedulerUnavailable": "El recordatorio está guardado. La programación no está disponible ahora.",
+    "interruption": "La programación se detuvo durante una interrupción del servicio. Elige y revisa una nueva hora para empezar de nuevo.",
+    "openTask": "Abrir tarea",
+    "undoHelp": "Deshacer no reactiva los recordatorios detenidos. Para iniciar otro, revisa una nueva hora.",
+    "undoConfirm": "¿Detener el recordatorio guardado por este cambio? Los recordatorios posteriores no cambiarán.",
+    "confirmUndo": "Confirmar deshacer",
+    "reviewAgain": "El recordatorio cambió. Actualiza y revisa los valores actuales antes de guardar.",
+    "history": "Este cambio forma parte del historial. Los recordatorios actuales aparecen arriba."
   }
 }

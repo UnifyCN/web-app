@@ -260,7 +260,7 @@
       "people": "People",
       "groups": "Groups"
     },
-    "tabWithCount": "{{label}}\u00a0({{count}})",
+    "tabWithCount": "{{label}} ({{count}})",
     "clear": "Clear search",
     "resultsFor": "Results for “{{term}}”",
     "error": "Search didn't load. Please try again."
@@ -3533,5 +3533,32 @@
     "commandFailed": "I couldn't open the removal review for “{{title}}”. Nothing was removed.",
     "clarifyMissingTitle": "Which task should I remove? Send it like this: Remove task: Get a phone plan",
     "clarifyMultiple": "Please ask to remove one task at a time. Nothing was removed."
+  },
+  "reminders": {
+    "title": "Reminders",
+    "instant": "Date and time with UTC offset",
+    "zone": "Time zone",
+    "timeHelp": "Enter the date, time, UTC offset and named time zone. Check all values before you save.",
+    "invalidTime": "Enter a valid future time and matching UTC offset. A repeated clock time needs an explicit offset.",
+    "readFailed": "Reminders could not refresh. Check the connection before you make a change.",
+    "review": "Review reminder",
+    "save": "Save reminder",
+    "cancel": "Cancel reminder",
+    "cancelConfirm": "Stop this reminder? The task and its progress will stay saved.",
+    "confirmCancel": "Confirm cancellation",
+    "keepEditing": "Keep editing",
+    "keep": "Keep reminder",
+    "saved": "Reminder saved.",
+    "stopped": "Reminder stopped",
+    "scheduled": "Scheduled",
+    "due": "Due now",
+    "schedulerUnavailable": "The reminder is saved. Scheduling is not available right now.",
+    "interruption": "Scheduling stopped during a service interruption. Choose and review a new time to start again.",
+    "openTask": "Open task",
+    "undoHelp": "Undo leaves stopped reminders stopped. Starting a reminder again requires a new time review.",
+    "undoConfirm": "Stop the schedule saved by this change? Later schedules will stay unchanged.",
+    "confirmUndo": "Confirm Undo",
+    "reviewAgain": "The reminder changed. Refresh and review the current values before you save.",
+    "history": "This saved change is history. The current reminders are shown above."
   }
 }

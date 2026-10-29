@@ -1,3 +1,4 @@
+import {reminderCommand} from './reminders.ts';
 // Companion actions request handler (mobile-app#361). One authenticated HTTP
 // boundary for both clients: mobile calls it directly with the user's JWT, web
 // through the same-origin /api/companion/actions proxy. The account comes from
@@ -177,7 +178,7 @@ async function contentParentRefusal(
   lookup: ContentTaskLookup | null | undefined,
   op: Operation,
 ): Promise<Response | null> {
-  if (op.type !== 'step.create' || !op.task_ref.startsWith('sanity:')) return null;
+  if ((op.type !== 'step.create' && op.type !== 'reminder.schedule') || !op.task_ref.startsWith('sanity:')) return null;
   const exists = lookup ? await lookup(op.task_ref.slice('sanity:'.length)) : null;
   if (exists === true) return null;
   if (exists === false) {
@@ -267,6 +268,22 @@ export function createHandler(
     return { kind: 'edit', operation: op as Operation, target, before };
   }
 
+  async function resolveReminder(userId:string,jwt:string,text:string) {
+    const command=reminderCommand(text);if(!command) return null;
+    const list=await listTasks?.(jwt,userId,command.lang);
+    if(!list?.complete) return {kind:'clarify' as const,reason:'tasks_unavailable'};
+    const matches=list.tasks.filter(t=>titleKey(t.title)===titleKey(command.title));
+    if(matches.length!==1) return {kind:'clarify' as const,reason:matches.length?'task_ambiguous':'task_not_found'};
+    const ref=matches[0].task_ref;
+    const {data:revision,error}=await admin.rpc('companion_task_revision',{p_user:userId,p_ref:ref});
+    if(error)throw error;
+    const {data:reminders,error:readError}=await admin.rpc('companion_read_reminders',{p_user_id:userId});
+    if(readError)throw readError;
+    const prior=(reminders?.items??[]).find((r:{task_ref:string;status:string})=>r.task_ref===ref && r.status==='pending');
+    return {kind:'reminder' as const,target:matches[0],operation:{type:'reminder.schedule' as const,task_ref:ref,expected_revision:revision,...command.time,
+      ...(prior?{reminder_id:prior.reminder_id,expected_reminder_revision:prior.revision}:{})}};
+  }
+
   /**
    * The operation that already used this command message, or null. A use is recorded in
    * the same transaction as its receipt, so a use is a committed write.
@@ -350,7 +367,10 @@ export function createHandler(
       // #370: the live saved details, served the same way (absent after a rollback).
       const details = await admin.rpc('companion_read_details', { p_user_id: userId });
       if (details.error && details.error.code !== 'PGRST202') return finish(mapDbError(details.error), 'failed');
+      const reminders = await admin.rpc('companion_read_reminders', { p_user_id: userId });
+      if (reminders.error && reminders.error.code !== 'PGRST202') return finish(mapDbError(reminders.error), 'failed');
       return finish(json({
+        ...(reminders.error ? {} : { reminders: reminders.data }),
         contract_version: version,
         tasks: data,
         ...(steps.error ? {} : { steps: steps.data }),
@@ -418,6 +438,8 @@ export function createHandler(
       // Reads only. The message must be the caller's own user message.
       const text = await ownUserMessage(admin, userId, request.message_id);
       if (text === null) return finish(json({ error: 'not_found', reason: 'message_not_found' }, 404), 'rejected');
+      const reminder=await resolveReminder(userId,jwt,text).catch(()=>({kind:'clarify' as const,reason:'tasks_unavailable'}));
+      if(reminder) return finish(json({command:reminder}),`interpret_${reminder.kind}`);
       const resolved = resolveCommand(text);
       if (resolved.kind === 'edit') {
         let edit: EditResolution;
@@ -552,6 +574,9 @@ export function createHandler(
           } catch {
             return finish(json({ error: 'internal' }, 500), 'failed');
           }
+        } else if (text !== null && reminderCommand(text)) {
+          const reminder=await resolveReminder(userId,jwt,text).catch(()=>null);
+          allowed=reminder?.kind==='reminder' && withoutRevision(reminder.operation)===withoutRevision(op);
         } else if (resolved?.kind === 'none' && text !== null) {
           // #370: a remember command saves exactly the detail the message states.
           const remember = resolveRemember(text);
@@ -563,7 +588,8 @@ export function createHandler(
           return finish(json({ error: 'forbidden', reason: 'invalid_authorization' }, 403), 'rejected');
         }
       }
-      const parentRefusal = await contentParentRefusal(contentTaskExists, request.operations[0]);
+      const prior = request.operations[0].type.startsWith('reminder.') ? await admin.rpc('companion_action_status',{p_user_id:userId,p_operation_id:request.operation_id}) : null;
+      const parentRefusal = prior?.data?.status==='applied' ? null : await contentParentRefusal(contentTaskExists, request.operations[0]);
       if (parentRefusal) return finish(parentRefusal, parentRefusal.status === 404 ? 'rejected' : 'unavailable');
       const { data, error } = await admin.rpc('companion_apply_actions', {
         p_user_id: userId,
