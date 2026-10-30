@@ -5,7 +5,7 @@ import { normalizeQuery, selectPartnersMatching } from "./search";
 
 const label = () => "";
 const enT = makeT("en");
-const all = getActiveResourcePartners(enT, enT);
+const all = getActiveResourcePartners(enT, enT, "British Columbia");
 const slugs = (q: string) =>
   selectPartnersMatching(all, q, label).map((p) => p.slug);
 
@@ -34,7 +34,7 @@ describe("selectPartnersMatching", () => {
 
   it("searches Arabic copy with Arabic folding", () => {
     const arT = makeT("ar");
-    const arabic = getActiveResourcePartners(arT, enT);
+    const arabic = getActiveResourcePartners(arT, enT, "British Columbia");
     const hits = selectPartnersMatching(arabic, "مكتبة", label).map((p) => p.slug);
     expect(hits.length).toBeGreaterThan(0);
   });
@@ -48,7 +48,7 @@ describe("selectPartnersMatching", () => {
     'matches "Surrey" typed in Latin letters and in the local script (%s)',
     (lang) => {
       const t = makeT(lang);
-      const localized = getActiveResourcePartners(t, enT);
+      const localized = getActiveResourcePartners(t, enT, "British Columbia");
       const hits = (q: string) =>
         selectPartnersMatching(localized, q, label).map((p) => p.slug);
       const surrey = t("resources.location.surrey") as string;

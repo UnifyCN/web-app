@@ -13,7 +13,7 @@ import {
 } from "./filters";
 
 const enT = makeT("en");
-const all = getActiveResourcePartners(enT, enT);
+const all = getActiveResourcePartners(enT, enT, "British Columbia");
 const run = (f: Partial<ResourceFilters>) =>
   applyFilters(all, { ...EMPTY_FILTERS, ...f });
 const slugs = (f: Partial<ResourceFilters>) => run(f).results.map((p) => p.slug);

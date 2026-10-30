@@ -1761,6 +1761,7 @@
     "visitWebsiteA11y": "Truy cập trang web của {{name}}",
     "opensInBrowser": "{{name}}, mở trong trình duyệt",
     "notFound": "Tài nguyên này không còn khả dụng.",
+    "morePartnersComingSoon": "Sắp có thêm đối tác tại {{province}}.",
     "category": {
       "gettingSettled": {
         "label": "Bắt đầu ổn định",

@@ -1761,6 +1761,7 @@
     "visitWebsiteA11y": "Visit {{name}} website",
     "opensInBrowser": "{{name}}, opens in browser",
     "notFound": "This resource is no longer available.",
+    "morePartnersComingSoon": "More partners in {{province}} are coming soon.",
     "category": {
       "gettingSettled": {
         "label": "Getting Settled",

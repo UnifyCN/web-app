@@ -124,6 +124,7 @@ export const MODULES_LIST_QUERY = `*[_type == "module" && ${BASE_LANG}] | order(
   icon,
   "personas": coalesce(personas, []),
   "interests": coalesce(interests, []),
+  province,
   ${i18nOverlay("title, description")},
   "submodules": *[_type == "submodule" && references(^._id) && ${BASE_LANG}] | order(order) {
     _id,
@@ -156,6 +157,7 @@ export const MODULE_DETAIL_QUERY = `*[_type == "module" && _id == $moduleId][0] 
   icon,
   "personas": coalesce(personas, []),
   "interests": coalesce(interests, []),
+  province,
   ${i18nOverlay("title, description")},
   "submodules": *[_type == "submodule" && references(^._id) && ${BASE_LANG}] | order(order) {
     _id,

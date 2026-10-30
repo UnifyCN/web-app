@@ -6,6 +6,7 @@ import {
   PARTNERS,
   PARTNER_FACETS,
   getActivePartners,
+  getMorePartnersNoteProvince,
   getPartnerBySlug,
 } from "./partners";
 
@@ -28,9 +29,61 @@ describe("partner data", () => {
   });
 
   it("follows mobile in holding Global Connect inactive", () => {
-    expect(getActivePartners().some((p) => p.slug === "global-connect-immigration")).toBe(
-      false,
-    );
+    expect(
+      getActivePartners("British Columbia").some(
+        (p) => p.slug === "global-connect-immigration",
+      ),
+    ).toBe(false);
+  });
+
+  describe("province targeting (mobile #347)", () => {
+    const slugsFor = (province: string | null) =>
+      getActivePartners(province).map((p) => p.slug);
+
+    it("shows BC partners and national ones to a BC reader", () => {
+      const bc = slugsFor("British Columbia");
+      expect(bc).toContain("diversecity");
+      expect(bc).toContain("tugo");
+      expect(bc).not.toContain("desjardins");
+    });
+
+    it("reads stored codes like BC and ON", () => {
+      expect(slugsFor("BC")).toEqual(slugsFor("British Columbia"));
+      expect(slugsFor("ON")).toEqual(slugsFor("Ontario"));
+    });
+
+    it("shows only national and own-province partners elsewhere", () => {
+      expect(slugsFor("Ontario").sort()).toEqual(
+        ["canada-shaw-immigration", "desjardins", "newcomer-jobs-canada", "tugo"].sort(),
+      );
+    });
+
+    it("shows only national partners to a reader with no province", () => {
+      expect(slugsFor(null).sort()).toEqual(
+        ["canada-shaw-immigration", "newcomer-jobs-canada", "tugo"].sort(),
+      );
+    });
+
+    it("tags every partner the way mobile does", () => {
+      const tagged = Object.fromEntries(
+        PARTNERS.map((p) => [p.slug, p.provinces ?? null]),
+      );
+      expect(tagged["desjardins"]).toEqual(["Ontario", "Quebec"]);
+      expect(tagged["tugo"]).toBeNull();
+      expect(tagged["newcomer-jobs-canada"]).toBeNull();
+      expect(tagged["canada-shaw-immigration"]).toBeNull();
+      const bcOnly = PARTNERS.filter(
+        (p) => p.provinces?.length === 1 && p.provinces[0] === "British Columbia",
+      );
+      expect(bcOnly).toHaveLength(16);
+    });
+
+    it("names the province in the coming-soon note outside BC only", () => {
+      expect(getMorePartnersNoteProvince("ON")).toBe("Ontario");
+      expect(getMorePartnersNoteProvince("British Columbia")).toBeNull();
+      expect(getMorePartnersNoteProvince(null)).toBeNull();
+      expect(getMorePartnersNoteProvince("Somewhere")).toBeNull();
+    });
   });
 
   // Canada Shaws copy is under contract and changes only at their request. The

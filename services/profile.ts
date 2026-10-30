@@ -26,6 +26,7 @@ import {
   generateUsernameBase,
 } from "@/lib/supabase/username";
 import { calculateUserStage } from "@/lib/onboarding/calculateUserStage";
+import { normalizeProvince } from "@/lib/province";
 import {
   currentUser,
   getUserById as findUser,
@@ -136,7 +137,8 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
           referralSource: onb.referral_source ?? null,
           arrivalDate: onb.arrival_date ? onb.arrival_date.slice(0, 10) : null,
           city: onb.city,
-          province: onb.province,
+          // Older web builds stored codes ("ON"); always hand out the full name.
+          province: normalizeProvince(onb.province) ?? onb.province,
           stage: Number(onb.stage) as Stage,
           goals: onb.goals ?? [],
           learningInterests: onb.learning_interests ?? [],

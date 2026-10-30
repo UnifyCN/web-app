@@ -1780,6 +1780,7 @@
     "visitWebsiteA11y": "زيارة الموقع الإلكتروني لـ {{name}}",
     "opensInBrowser": "{{name}}، يفتح في المتصفح",
     "notFound": "هذا المورد لم يعد متاحًا.",
+    "morePartnersComingSoon": "المزيد من الشركاء في {{province}} قادمون قريبًا.",
     "category": {
       "gettingSettled": {
         "label": "الاستقرار",
