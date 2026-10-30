@@ -1,0 +1,20 @@
+{
+  "checks": [
+    {
+      "name": "Auth is pending",
+      "ok": true
+    },
+    {
+      "name": "textarea stays editable",
+      "ok": true
+    },
+    {
+      "name": "keyboard text remains while Auth is pending",
+      "ok": false,
+      "detail": ""
+    }
+  ],
+  "errors": [],
+  "pageErrors": [],
+  "port": 3472
+}

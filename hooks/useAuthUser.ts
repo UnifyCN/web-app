@@ -27,15 +27,26 @@ export function useAuthUser() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       const accountId = session?.user.id ?? null;
-      if (ownAccountWork().accountId !== accountId) {
-        clearPrivateAccountWork(queryClient);
-      }
+      const previousOwner = ownAccountWork();
       // Publish the event's user before epoch subscribers render. An equal
       // final query result must not hide a session reset, or restore old data.
       void queryClient.cancelQueries({ queryKey: AUTH_USER_KEY });
       queryClient.setQueryData(AUTH_USER_KEY, session?.user ?? null);
       // Work in flight for an earlier account stops at once (#361).
       noteAccount(accountId);
+      if (previousOwner.accountId !== accountId) {
+        // The first confirmation keeps only new input from the unresolved
+        // session. A real account reset advances the epoch and keeps none.
+        const firstConfirmation =
+          previousOwner.accountId === null &&
+          accountId !== null &&
+          previousOwner.epoch === ownAccountWork().epoch;
+        clearPrivateAccountWork(
+          queryClient,
+          undefined,
+          firstConfirmation ? previousOwner : undefined,
+        );
+      }
       queryClient.invalidateQueries({ queryKey: AUTH_USER_KEY });
     });
     return () => subscription.unsubscribe();

@@ -16,7 +16,7 @@ import {
 export function useAccountId(): string | null | undefined {
   useSyncExternalStore(subscribeAccountEpoch, accountEpoch, () => 0);
   const { data: user, isPending } = useAuthUser();
-  if (isPending) return undefined;
+  if (isPending || user === undefined) return undefined;
   const id = user?.id ?? null;
   noteAccount(id);
   return id;

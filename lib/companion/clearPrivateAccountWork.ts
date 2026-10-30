@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import type { AccountOwner } from "@/lib/accountSession";
 import { TASKS_KEY } from "@/lib/checklistQueryKeys";
 import { CURRENT_USER_KEY } from "@/lib/profileQueryKeys";
 import {
@@ -23,10 +24,11 @@ import { clearPlanStores } from "@/lib/companionActions/planStore";
 export function clearPrivateAccountWork(
   queryClient: QueryClient,
   keepAccountId?: string | null,
+  preservePendingOwner?: AccountOwner,
 ) {
   clearTaskActionStores(keepAccountId);
   clearPlanStores(keepAccountId);
-  clearComposerDrafts(keepAccountId);
+  clearComposerDrafts(keepAccountId, preservePendingOwner);
   // This legacy key has no account part. Clear it only on a full reset,
   // not when another consumer keeps the current account's data.
   if (keepAccountId == null) {

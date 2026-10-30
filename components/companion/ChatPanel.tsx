@@ -11,7 +11,8 @@ import {
 import { PanelLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn, RTL_FLIP } from "@/lib/utils";
-import { useAuthUser } from "@/hooks/useAuthUser";
+import { useAccountId } from "@/hooks/useAccountId";
+import { accountEpoch, stillOwned } from "@/lib/accountSession";
 import {
   composerDraft,
   setComposerDraft,
@@ -80,15 +81,16 @@ export function ChatPanel({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // The unsent message lives outside this panel, per account, so panels,
   // navigation, resize and losing access to a conversation keep it (#361).
-  const accountId = useAuthUser().data?.id ?? null;
+  const accountId = useAccountId();
+  const epoch = accountEpoch();
   const draft = useSyncExternalStore(
     subscribeComposerDrafts,
-    () => composerDraft(accountId),
+    () => composerDraft(accountId ?? null),
     () => "",
   );
   const setDraft = useCallback(
-    (text: string) => setComposerDraft(accountId, text),
-    [accountId],
+    (text: string) => setComposerDraft(accountId ?? null, text, epoch),
+    [accountId, epoch],
   );
   // The answer whose sources and context are open in the drawer. The drawer
   // overlays the conversation, so the draft and scroll position stay put. It
@@ -111,6 +113,7 @@ export function ChatPanel({
   }, [messages.length, isTyping]);
 
   function handleSubmit(text: string, inputSource: CompanionInputSource) {
+    if (!accountId || !stillOwned({ accountId, epoch })) return;
     onSend(text, inputSource);
     setDraft("");
   }
@@ -199,6 +202,7 @@ export function ChatPanel({
             <StarterPromptChips
               onSelect={(question) => handleSubmit(question, "starter_prompt")}
               onboarding={onboarding}
+              disabled={!accountId}
             />
           </div>
         </div>
@@ -220,6 +224,7 @@ export function ChatPanel({
             onValueChange={setDraft}
             onSend={(text) => handleSubmit(text, "typed")}
             inputRef={inputRef}
+            sendDisabled={!accountId}
           />
           <FreeTierIndicator remaining={freeTierRemaining} />
           <p className="text-center text-xs text-ink-placeholder">

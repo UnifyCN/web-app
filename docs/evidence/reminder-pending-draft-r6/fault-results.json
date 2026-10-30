@@ -1,0 +1,231 @@
+{
+  "results": [
+    {
+      "name": "final-cases-on-base",
+      "exit": 1,
+      "passed": 3,
+      "failed": 9,
+      "seconds": 2.724977083998965,
+      "failures": [
+        {
+          "name": "keeps newly typed text when INITIAL_SESSION confirms the first account",
+          "message": "AssertionError: expected '' to be 'First pending message' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:223:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noindex/t"
+        },
+        {
+          "name": "keeps companion input editable but cannot send until Auth resolves",
+          "message": "AssertionError: expected '' to be 'Keep while pending' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:255:25\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:863:59\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-w"
+        },
+        {
+          "name": "keeps lesson input editable but cannot send until Auth resolves",
+          "message": "AssertionError: expected false to be true // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:262:7\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:863:59\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify"
+        },
+        {
+          "name": "keeps new text when a pending session read fails and later recovers",
+          "message": "AssertionError: expected [ { id: '1', \u2026(7) } ] to be undefined\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:293:53\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "keeps a pending draft through Checklist navigation and the same-account reply",
+          "message": "AssertionError: expected '' to be 'Pending navigation message' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:312:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noin"
+        },
+        {
+          "name": "applies the account policy to pending text on token refresh",
+          "message": "AssertionError: expected '' to be 'Private pending text' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:351:27\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "hides an earlier account draft while pending and keeps an explicit clear after resolution",
+          "message": "AssertionError: expected '' to be 'New pending text' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:373:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noindex/t3-wor"
+        },
+        {
+          "name": "ignores pending starter sends and sends once after the account is known",
+          "message": "AssertionError: expected false to be true // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:405:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unif"
+        },
+        {
+          "name": "does not clear a pending lesson draft when its starter control is pressed",
+          "message": "AssertionError: expected false to be true // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:441:30\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unif"
+        }
+      ]
+    },
+    {
+      "name": "drop-unresolved-text",
+      "exit": 1,
+      "passed": 5,
+      "failed": 7,
+      "seconds": 1.5885743329999968,
+      "failures": [
+        {
+          "name": "keeps newly typed text when INITIAL_SESSION confirms the first account",
+          "message": "AssertionError: expected '' to be 'First pending message' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:223:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noindex/t"
+        },
+        {
+          "name": "keeps companion input editable but cannot send until Auth resolves",
+          "message": "AssertionError: expected '' to be 'Keep while pending' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:255:25\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:863:59\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-w"
+        },
+        {
+          "name": "keeps new text when a pending session read fails and later recovers",
+          "message": "AssertionError: expected '' to be 'Keep after a session error' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:296:23\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "keeps a pending draft through Checklist navigation and the same-account reply",
+          "message": "AssertionError: expected '' to be 'Pending navigation message' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:312:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noin"
+        },
+        {
+          "name": "applies the account policy to pending text on token refresh",
+          "message": "AssertionError: expected '' to be 'Private pending text' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:351:27\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "hides an earlier account draft while pending and keeps an explicit clear after resolution",
+          "message": "AssertionError: expected '' to be 'New pending text' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:373:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noindex/t3-wor"
+        },
+        {
+          "name": "ignores pending starter sends and sends once after the account is known",
+          "message": "AssertionError: expected '' to be 'Pending starter control' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:408:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noindex"
+        }
+      ]
+    },
+    {
+      "name": "erase-first-confirmation-input",
+      "exit": 1,
+      "passed": 11,
+      "failed": 1,
+      "seconds": 1.6761516669976118,
+      "failures": [
+        {
+          "name": "keeps newly typed text when INITIAL_SESSION confirms the first account",
+          "message": "AssertionError: expected '' to be 'First pending message' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:230:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        }
+      ]
+    },
+    {
+      "name": "read-error-signs-out",
+      "exit": 1,
+      "passed": 11,
+      "failed": 1,
+      "seconds": 1.790358499998547,
+      "failures": [
+        {
+          "name": "keeps new text when a pending session read fails and later recovers",
+          "message": "AssertionError: expected { accountId: null, epoch: 7 } to deeply equal { accountId: 'real-auth-a', epoch: 6 }\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:294:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        }
+      ]
+    },
+    {
+      "name": "checklist-read-before-account",
+      "exit": 1,
+      "passed": 11,
+      "failed": 1,
+      "seconds": 1.6889001250019646,
+      "failures": [
+        {
+          "name": "keeps new text when a pending session read fails and later recovers",
+          "message": "AssertionError: expected [ { id: '1', \u2026(7) } ] to be undefined\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:293:53\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        }
+      ]
+    },
+    {
+      "name": "enable-pending-main-send",
+      "exit": 1,
+      "passed": 11,
+      "failed": 1,
+      "seconds": 1.6900814159998845,
+      "failures": [
+        {
+          "name": "keeps companion input editable but cannot send until Auth resolves",
+          "message": "AssertionError: expected false to be true // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:262:7\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:863:59\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify"
+        }
+      ]
+    },
+    {
+      "name": "enable-pending-lesson-send",
+      "exit": 1,
+      "passed": 11,
+      "failed": 1,
+      "seconds": 1.7343677909993858,
+      "failures": [
+        {
+          "name": "keeps lesson input editable but cannot send until Auth resolves",
+          "message": "AssertionError: expected false to be true // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:262:7\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:863:59\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify"
+        }
+      ]
+    },
+    {
+      "name": "enable-pending-main-starter",
+      "exit": 1,
+      "passed": 11,
+      "failed": 1,
+      "seconds": 1.652904208000109,
+      "failures": [
+        {
+          "name": "ignores pending starter sends and sends once after the account is known",
+          "message": "AssertionError: expected false to be true // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:405:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unif"
+        }
+      ]
+    },
+    {
+      "name": "enable-pending-lesson-starter",
+      "exit": 1,
+      "passed": 11,
+      "failed": 1,
+      "seconds": 1.7500077500008047,
+      "failures": [
+        {
+          "name": "does not clear a pending lesson draft when its starter control is pressed",
+          "message": "AssertionError: expected false to be true // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:441:30\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unif"
+        }
+      ]
+    },
+    {
+      "name": "clear-keeps-pending-text",
+      "exit": 1,
+      "passed": 10,
+      "failed": 2,
+      "seconds": 1.8316590419999557,
+      "failures": [
+        {
+          "name": "hides an earlier account draft while pending and keeps an explicit clear after resolution",
+          "message": "AssertionError: expected 'New pending text' to be '' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:380:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "ignores pending starter sends and sends once after the account is known",
+          "message": "AssertionError: expected 'Pending starter control' to be '' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:418:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        }
+      ]
+    },
+    {
+      "name": "navigation-drops-pending-text",
+      "exit": 1,
+      "passed": 11,
+      "failed": 1,
+      "seconds": 1.7635437499993714,
+      "failures": [
+        {
+          "name": "keeps a pending draft through Checklist navigation and the same-account reply",
+          "message": "AssertionError: expected '' to be 'Pending navigation message' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:316:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noin"
+        }
+      ]
+    },
+    {
+      "name": "guess-old-account-while-pending",
+      "exit": 1,
+      "passed": 11,
+      "failed": 1,
+      "seconds": 1.6984562920006283,
+      "failures": [
+        {
+          "name": "hides an earlier account draft while pending and keeps an explicit clear after resolution",
+          "message": "AssertionError: expected 'Earlier stored private text' to be '' // Object.is equality\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/ComposerPendingSession.test.tsx:371:28\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:155:11\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:26\n    at file:///Volumes/Lexar/Dev.noi"
+        }
+      ]
+    }
+  ],
+  "restored": {
+    "lib/companion/composerDrafts.ts": "1f445d92a6c4a3660a7ec37af95bf803f82361e6c3533e703ca41a92de57dc5b",
+    "lib/companion/clearPrivateAccountWork.ts": "f12cdb03f6199b641ca2673110587530dfbd3ac437fb2227b504e49cb43707e2",
+    "hooks/useAuthUser.ts": "3eb021df6a6c4977b9032871f3496f42114dee5b42a5e8a7c0ccde019dc67d3c",
+    "hooks/useAccountId.ts": "a9ad49b064ea1ec7ee48f76ded7b7e35c4822af3445060259e0bb2fd3e102a17",
+    "hooks/useChecklist.ts": "73635e1759c032f9b723bc9ab7344b6d99e8d512cf9dae444d44e843c5fb3237",
+    "components/companion/ChatInput.tsx": "471d942129d322eae001d971688c0a3670f0145bd9166ac8454dc51bffeaf106",
+    "components/companion/ChatPanel.tsx": "c6201e6ad5c3fa343bf18729e2ee60861d58e1750ef01ed69b92b183a35a3095",
+    "components/companion/StarterPromptChips.tsx": "2e10ede6ad91a2734cbc1aa9f52a7d3ad4d4dd35dc9a7b1591d4e332f2aa7b60",
+    "components/learn/help/InLessonChat.tsx": "09e31ba8ac4310f5ff9f1823e4d1aea1fb22c7b4676187619a308c778d3d1d82"
+  }
+}

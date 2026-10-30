@@ -51,7 +51,8 @@ function useTasksKey() {
 
 export function useTasks() {
   const { currentLanguage } = useLanguage();
-  const { data: user, isPending: authPending } = useAuthUser();
+  const { data: user, isPending } = useAuthUser();
+  const authPending = isPending || user === undefined;
   const query = useQuery({
     queryKey: tasksKey(currentLanguage, user?.id ?? null),
     queryFn: () => checklist.getTasks(currentLanguage),
