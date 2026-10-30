@@ -206,10 +206,11 @@ async function fetchChecklistContent(
   stage: string,
   lang: string,
   province: string,
-  signal: AbortSignal
+  signal: AbortSignal,
+  queryURL?: string
 ): Promise<SanityChecklistDoc[]> {
   const url = new URL(
-    `https://${sanity.projectId}.apicdn.sanity.io/v2024-01-01/data/query/${sanity.dataset}`
+    queryURL ?? `https://${sanity.projectId}.apicdn.sanity.io/v2024-01-01/data/query/${sanity.dataset}`
   );
   url.searchParams.set('query', CHECKLIST_GROQ);
   url.searchParams.set('$persona', JSON.stringify(persona));
@@ -399,4 +400,19 @@ function classifyPostgrestError(error: { code?: string; message?: string; status
     return new ReadDeniedError(code || 'denied');
   }
   return new Error(code || 'postgrest error');
+}
+
+/** #369 worker: the same persona/stage/province content rule, under its caller's total deadline.
+ * The worker reads the account profile in its locked SQL transaction. The optional URL
+ * belongs to a loopback-only local fixture; production callers omit it. No task title
+ * leaves this function. A missing profile/config fails closed. */
+export async function publishedTaskAvailable(
+  profile: ProfileRow | null, taskId: string, sanity: SanityConfig | null,
+  signal: AbortSignal, queryURL?: string,
+): Promise<boolean> {
+  const persona=typeof profile?.persona === 'string' && PERSONA_PATTERN.test(profile.persona) ? profile.persona : null;
+  const stage=STAGE_TO_SLUG[Number(profile?.stage)] ?? null;
+  if (!persona || !stage || !sanity) return false;
+  const docs=await fetchChecklistContent(sanity,persona,stage,'en',canonicalProvince(profile?.province) ?? '',signal,queryURL);
+  return docs.some(doc=>doc._id===taskId);
 }

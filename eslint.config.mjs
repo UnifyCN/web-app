@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     // Supabase Edge Functions are Deno, not part of the Next app — linted/typed
     // by the Supabase CLI, not this toolchain.
     "supabase/functions/**",
+    "supabase/workers/**",
   ]),
 ]);
 

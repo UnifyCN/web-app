@@ -1,3 +1,4 @@
+import { isPushAction, handlePushRequest } from './push.ts';
 import {reminderCommand} from './reminders.ts';
 // Companion actions request handler (mobile-app#361). One authenticated HTTP
 // boundary for both clients: mobile calls it directly with the user's JWT, web
@@ -45,6 +46,7 @@ export interface ResultLine {
 }
 
 const SQLSTATE_TO_HTTP: Record<string, [number, string]> = {
+  CA503: [503, 'push_disabled'],
   CA403: [403, 'forbidden'],
   CA404: [404, 'not_found'],
   CA409: [409, 'revision_conflict'],
@@ -336,6 +338,11 @@ export function createHandler(
     if (!gate.enabled) return finish(json({ error: 'feature_disabled' }, 403), 'feature_disabled');
     if (!platform || !gate.allowed_platforms.includes(platform)) {
       return finish(json({ error: 'platform_not_enabled' }, 403), 'platform_not_enabled');
+    }
+
+    if (isPushAction((body as Record<string, unknown>).action)) {
+      const response = await handlePushRequest(admin, userId, jwt, body as Record<string, unknown>, listTasks, { json, mapDbError });
+      return finish(response, response.ok ? 'push_result' : 'push_rejected');
     }
 
     // Settlement plans (#364): same boundary, own actions and SQL functions.

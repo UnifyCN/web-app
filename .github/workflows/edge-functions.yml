@@ -10,11 +10,13 @@ on:
   pull_request:
     paths:
       - 'supabase/functions/**'
+      - 'supabase/workers/**'
       - '.github/workflows/edge-functions.yml'
   push:
     branches: [main]
     paths:
       - 'supabase/functions/**'
+      - 'supabase/workers/**'
       - '.github/workflows/edge-functions.yml'
 
 # Least privilege — this job only needs to read the repo to type-check.
@@ -73,6 +75,9 @@ jobs:
           printf 'Type-checking %s file(s):\n' "$(( ${#entrypoints[@]} + ${#shared[@]} ))"
           printf '  %s\n' "${entrypoints[@]}" "${shared[@]}"
           deno check --node-modules-dir=auto "${entrypoints[@]}" "${shared[@]}"
+
+      - name: Type-check the isolated push worker
+        run: deno check --frozen --node-modules-dir=none --lock=supabase/workers/companion-push/deno.lock supabase/workers/companion-push/supervisor.ts
 
       - name: Run edge-function unit tests
         # The `*_test.ts` files beside the pure helpers (events-crawler's
