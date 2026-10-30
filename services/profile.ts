@@ -25,11 +25,12 @@ import {
   claimUsername,
   generateUsernameBase,
 } from "@/lib/supabase/username";
-import { calculateUserStage } from "@/lib/onboarding/calculateUserStage";
 import {
-  normalizeStoredArrivalDate,
-  resolveStoredStage,
-} from "@/lib/onboarding/arrivalStage";
+  calculateUserStage,
+  resolveProfileStage,
+  stageCacheIsCurrent,
+} from "@/lib/onboarding/calculateUserStage";
+import { normalizeStoredArrivalDate } from "@/lib/onboarding/arrivalStage";
 import { normalizeProvince } from "@/lib/province";
 import {
   currentUser,
@@ -125,7 +126,11 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
   // The stored `stage` is only a cache: the stage moves on as time passes, so
   // it is computed from the arrival date on every read (as on mobile) and the
   // user's own row is corrected when it is out of date.
-  const computedStage = onb ? calculateUserStage(onb.arrival_date) : null;
+  // (A dateless profile with stored stage 0 keeps stage 0 and is not
+  // rewritten: see resolveProfileStage.)
+  const computedStage = onb
+    ? resolveProfileStage(onb.arrival_date, onb.stage)
+    : null;
   if (onb) void syncStageCache(user.id, onb.stage, computedStage);
 
   return {
@@ -173,11 +178,7 @@ async function syncStageCache(
   storedStage: unknown,
   computedStage: Stage | null,
 ): Promise<void> {
-  const isCurrent =
-    computedStage === null
-      ? storedStage === null || storedStage === undefined
-      : resolveStoredStage(storedStage) === computedStage;
-  if (isCurrent) return;
+  if (stageCacheIsCurrent(storedStage, computedStage)) return;
   try {
     const { error } = await createClient()
       .from("user_onboarding_profiles")

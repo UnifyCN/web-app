@@ -1464,7 +1464,9 @@
     "arrival": {
       "subtitle": "Un mois approximatif suffit — il définit votre étape d'établissement.",
       "ariaMonth": "Mois d'arrivée",
-      "ariaYear": "Année d'arrivée"
+      "ariaYear": "Année d'arrivée",
+      "promptDescription": "Indiquez le mois où vous prévoyez arriver, ou celui où vous êtes arrivé, pour que votre liste de tâches et vos leçons correspondent à votre situation.",
+      "promptLater": "Pas maintenant"
     },
     "location": {
       "title": "Où êtes-vous au Canada?",

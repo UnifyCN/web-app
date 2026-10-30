@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { calculateUserStage, checklistStage } from "./calculateUserStage";
+import {
+  calculateUserStage,
+  checklistStage,
+  isAwaitingArrivalDate,
+  resolveProfileStage,
+  stageCacheIsCurrent,
+} from "./calculateUserStage";
 
 // Local noon, so the device day is unambiguous in any test time zone.
 const today = new Date(2026, 9, 30, 12); // 2026-10-30
@@ -43,5 +49,39 @@ describe("checklistStage", () => {
     expect(checklistStage(null)).toBe(1);
     expect(checklistStage(0)).toBe(0);
     expect(checklistStage(4)).toBe(4);
+  });
+});
+
+describe("web's old \"I haven't arrived yet\" profiles (no date, stored stage 0)", () => {
+  // The stored enum comes back from PostgREST as the string "0".
+  it("keep the pre-arrival stage instead of becoming unknown", () => {
+    expect(resolveProfileStage(null, "0", today)).toBe(0);
+    expect(resolveProfileStage(null, 0, today)).toBe(0);
+    expect(isAwaitingArrivalDate(null, "0")).toBe(true);
+  });
+
+  it("stay on the pre-arrival checklist, not the first-3-months one", () => {
+    expect(checklistStage(resolveProfileStage(null, "0", today))).toBe(0);
+  });
+
+  it("are never rewritten by the stage-cache sync", () => {
+    const stage = resolveProfileStage(null, "0", today);
+    expect(stageCacheIsCurrent("0", stage)).toBe(true);
+  });
+
+  it("move to the computed stage once a date is set", () => {
+    expect(resolveProfileStage("2026-12-01", "0", today)).toBe(0);
+    expect(resolveProfileStage("2026-08-01T00:00:00+00:00", "0", today)).toBe(1);
+    expect(stageCacheIsCurrent("0", 1)).toBe(false);
+    expect(isAwaitingArrivalDate("2026-12-01", "0")).toBe(false);
+  });
+
+  it("does not apply to other dateless profiles, which follow mobile", () => {
+    // Stored null (mobile's unknown) or any other stage: unknown -> stage 1 checklist.
+    expect(resolveProfileStage(null, null, today)).toBeNull();
+    expect(resolveProfileStage(null, "2", today)).toBeNull();
+    expect(checklistStage(resolveProfileStage(null, null, today))).toBe(1);
+    expect(stageCacheIsCurrent(null, null)).toBe(true);
+    expect(stageCacheIsCurrent("2", null)).toBe(false);
   });
 });

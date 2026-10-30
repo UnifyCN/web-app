@@ -8,8 +8,8 @@ import { mergeI18nOverlay, sanityClient, type WithI18n } from "@/lib/sanity";
 import type { SupportedLanguage } from "@/lib/i18n/config";
 import { tasks as mockTasks } from "@/lib/mock/tasks";
 import {
-  calculateUserStage,
   checklistStage,
+  resolveProfileStage,
 } from "@/lib/onboarding/calculateUserStage";
 import {
   isVisibleForProvince,
@@ -198,7 +198,7 @@ export async function getTasks(
   const [onboardingRes, userTasksRes, customRes, orderRes] = await Promise.all([
     supabase
       .from("user_onboarding_profiles")
-      .select("persona, arrival_date, province")
+      .select("persona, arrival_date, stage, province")
       .eq("id", userId)
       .maybeSingle(),
     supabase
@@ -226,9 +226,14 @@ export async function getTasks(
   const persona = onboarding.persona as Persona;
   // Stage comes from the arrival date (the stored column is only a cache that
   // goes stale as time passes); an unknown date gets the first-3-months
-  // checklist, as on mobile.
+  // checklist, as on mobile, except web's old dateless pre-arrival profiles,
+  // which keep stage 0 until they set a date.
   const stageSlug =
-    STAGE_TO_SLUG[checklistStage(calculateUserStage(onboarding.arrival_date))];
+    STAGE_TO_SLUG[
+      checklistStage(
+        resolveProfileStage(onboarding.arrival_date, onboarding.stage),
+      )
+    ];
   const userProvince = resolveUserProvince(onboarding.province);
   const items = await getChecklistByPersonaAndStage(
     persona,

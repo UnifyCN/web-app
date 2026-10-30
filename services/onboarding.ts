@@ -152,3 +152,30 @@ export async function updateLearningReminders(enabled: boolean): Promise<void> {
     throw new Error("No onboarding profile found — complete your profile first");
   }
 }
+
+/**
+ * Set the arrival date (`YYYY-MM-01`) and the stage it implies, and nothing
+ * else (mobile's narrow `updateArrivalDate`), so a stale cached profile is never
+ * written back. Used by the one-time arrival-month prompt.
+ */
+export async function updateArrivalDate(arrivalDate: string): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("updateArrivalDate: no auth session");
+
+  const stage = calculateUserStage(arrivalDate);
+  if (stage === null) throw new Error(`updateArrivalDate: invalid date ${arrivalDate}`);
+
+  const { error, count } = await createClient()
+    .from("user_onboarding_profiles")
+    .update(
+      { arrival_date: arrivalDate, stage: String(stage) },
+      { count: "exact" },
+    )
+    .eq("id", userId);
+  if (error) throw error;
+  if (count === 0) {
+    throw new Error("No onboarding profile found — complete your profile first");
+  }
+}
