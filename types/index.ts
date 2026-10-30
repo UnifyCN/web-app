@@ -238,18 +238,6 @@ export interface DailyTip {
   sources: DailyTipSource[] | null;
 }
 
-export type CircleStatus = "default" | "waiting" | "in_circle";
-
-export interface CommunityCircle {
-  id: string;
-  persona: Persona;
-  timeInCanada: Stage;
-  goal: string;
-  topics: string[];
-  status: CircleStatus;
-  endsAt: string | null;
-}
-
 /* ----- Companion (chat) ------------------------------------------- */
 
 export type MessageRole = "user" | "assistant";

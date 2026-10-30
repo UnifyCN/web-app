@@ -54,13 +54,24 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   modules/submodules/lessons with Supabase progress, including the lesson
   detail page. Both follow the Community wiring pattern. See `PLAN.md` for the
   phase-by-phase build record.
-- **Community Circles (PR #13)** — the Circles tab is wired to its status +
-  waitlist join/leave on the mobile-mirrored schema (`community_match_waitlist`,
-  `community_circles`, `community_circle_members`, `community_messages`). The
-  EntryCard moves through default → waiting → in_circle. (Matching engine,
-  realtime, and circle chat remain deferred — see `BACKLOG.md`.)
-- **Navigation (PR #14)** — the sidebar mirrors the mobile nav order + icons, and
-  the Circles tab is hidden to match the mobile launch navigation.
+- **Circles paused (removed from web, PR #CIRCLES_PR).** Mobile paused Circles on
+  2026-10-24 (mobile PR #351, migration `pause_circles`) because it was hitting Supabase
+  usage limits. While `circles_feature_state.enabled = false`, a restrictive RLS policy
+  makes every read of the circle tables (`community_circles`, `community_circle_members`,
+  `community_match_waitlist`, `community_match_history`, `community_messages`,
+  `community_matching_runs`) return no rows, and a trigger rejects every insert/update
+  with `Circles are paused` (55000). Data and cron schedules are kept, and only `postgres`
+  can switch it back on (`set_circles_enabled(true)`). Web removed everything that read
+  or showed Circles: the Community tab code, the `useCurrentCircle` /
+  `useStartCircleMatching` / `useCancelCircleMatching` hooks and their services,
+  `CirclesEntryCard`, the mock, the types, the welcome-carousel card and the `circles.*`
+  strings in all 7 languages (`circles.backToCommunity` moved to
+  `community.backToCommunity`). Old URLs (`/circles/*`, `/community/circles/*`,
+  `/community-matching/*`, `/community?tab=circles`) land on `/community`.
+  **To restore:** after Savar re-enables Circles on the DB, `git revert` the squash commit
+  of PR #CIRCLES_PR (it brings back the PR #13 tab, hooks, services, card and strings),
+  then add the Circles entry back to `TAB_DEFS`.
+- **Navigation (PR #14)** — the sidebar mirrors the mobile nav order + icons.
 - **Companion AI (PR #15 + PR #20; unified with mobile in the consolidation PR) —
   fully wired to the UI.** The web app calls the **shared `rag-query` Supabase Edge
   Function** (Deno; one unified function for web + mobile — the web-only
@@ -596,7 +607,7 @@ All other pages: **2-column** — sidebar (fixed) | full content area
 
 ### Community (`/community`)
 
-**Tabs:** Groups | Events | News | Circles
+**Tabs:** Groups | Events | News (Circles removed while paused; see "Circles paused")
 
 **Groups:** Search bar + "My Groups" horizontal scroll strip + grid of group cards (name, member count, Join button)
 
@@ -604,11 +615,7 @@ All other pages: **2-column** — sidebar (fixed) | full content area
 
 **News:** Article list with title, description snippet, author, date, category badge
 
-**Circles tab:** Orange gradient entry card matching mobile `EntryCard.tsx`:
-
-- Background: `#f68b26`, decorative ellipses `#ff9d40` + `#f59d4a`
-- States: default (Join your Circle) | waiting (Finding matches) | in circle (Open my Circle)
-- CTA button with arrow icon
+**Circles tab:** removed while Circles is paused (see "Circles paused" in Build Status).
 
 ---
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search, Users, CalendarDays, MessageCircle } from "lucide-react";
+import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Tabs } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
@@ -12,16 +12,12 @@ import { EventCard } from "@/components/community/EventCard";
 import { EventGenreFilter } from "@/components/community/EventGenreFilter";
 import { NewsArticleItem } from "@/components/community/NewsArticleItem";
 import { DailyTipCard } from "@/components/community/DailyTipCard";
-import { CirclesEntryCard } from "@/components/community/CirclesEntryCard";
 import { RequestGroupModal } from "@/components/community/RequestGroupModal";
 import {
-  useCancelCircleMatching,
-  useCurrentCircle,
   useEvents,
   useGroups,
   useJoinedGroups,
   useNews,
-  useStartCircleMatching,
 } from "@/hooks/useCommunity";
 import { useGroupText } from "@/lib/i18n/groupText";
 import type { EventGenre } from "@/types";
@@ -30,32 +26,12 @@ import { LoadingSwap } from "@/components/ui/LoadingSwap";
 const TAB_GROUPS = "groups";
 const TAB_EVENTS = "events";
 const TAB_NEWS = "news";
-const TAB_CIRCLES = "circles";
 // Stable tab keys stay in state; labels are translated at render time.
-// Circles is hidden for now — re-enable by adding the circles entry back to this array.
-// The TAB_CIRCLES constant, CIRCLE_FEATURES, hooks, and render block below are left intact.
+// Circles was removed while it is paused on the shared DB (see CLAUDE.md, "Circles paused").
 const TAB_DEFS: { key: string; labelKey: string }[] = [
   { key: TAB_GROUPS, labelKey: "groups.joinGroups" },
   { key: TAB_EVENTS, labelKey: "events.title" },
   { key: TAB_NEWS, labelKey: "news.title" },
-];
-
-const CIRCLE_FEATURES = [
-  {
-    icon: Users,
-    titleKey: "circles.matching",
-    descriptionKey: "circles.matchingDesc",
-  },
-  {
-    icon: CalendarDays,
-    titleKey: "circles.twoWeekDuration",
-    descriptionKey: "circles.twoWeekDesc",
-  },
-  {
-    icon: MessageCircle,
-    titleKey: "circles.groupChat",
-    descriptionKey: "circles.groupChatDesc",
-  },
 ];
 
 /** Loading placeholder for the genre chip row + Events grid (mirrors EventCard). */
@@ -129,6 +105,11 @@ function CommunityPageContent() {
   const activeTab =
     TAB_DEFS.find((tab) => tab.key === tabParam)?.key ?? TAB_DEFS[0].key;
 
+  // Old Circles links (`?tab=circles`) go to plain /community, now that Circles is gone.
+  useEffect(() => {
+    if (tabParam === "circles") router.replace(pathname, { scroll: false });
+  }, [tabParam, router, pathname]);
+
   const setActiveTab = (key: string) => {
     const params = new URLSearchParams(searchParams.toString());
     // Keep the default tab's URL clean at /community rather than /community?tab=groups.
@@ -149,9 +130,6 @@ function CommunityPageContent() {
   const joinedGroupsQuery = useJoinedGroups();
   const eventsQuery = useEvents();
   const newsQuery = useNews();
-  const circleQuery = useCurrentCircle();
-  const startMatching = useStartCircleMatching();
-  const cancelMatching = useCancelCircleMatching();
 
   const groups = groupsQuery.data ?? [];
   const joinedGroups = joinedGroupsQuery.data ?? [];
@@ -369,57 +347,6 @@ function CommunityPageContent() {
               </p>
             )}
             </LoadingSwap>
-          </div>
-        )}
-
-        {activeTab === TAB_CIRCLES && (
-          <div className="max-w-2xl space-y-4">
-            {circleQuery.isLoading ? (
-              <p className="loading-delayed py-12 text-center text-sm text-ink-muted">
-                {t("common.loading")}
-              </p>
-            ) : circleQuery.error ? (
-              <p
-                role="alert"
-                className="py-12 text-center text-sm text-destructive"
-              >
-                {t("circles.failedLoad")}
-              </p>
-            ) : (
-              <CirclesEntryCard
-                status={circleQuery.data?.status ?? "default"}
-                onStart={() => startMatching.mutate()}
-                onCancel={() => cancelMatching.mutate()}
-                isPending={startMatching.isPending || cancelMatching.isPending}
-              />
-            )}
-
-            {(startMatching.error || cancelMatching.error) && (
-              <p role="alert" className="text-sm text-destructive">
-                {t("circles.updateMatchingFailed")}
-              </p>
-            )}
-
-            <div className="space-y-4 rounded-card border border-border-card bg-surface p-5">
-              {CIRCLE_FEATURES.map((feature) => {
-                const Icon = feature.icon;
-                return (
-                  <div key={feature.titleKey} className="flex gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-bg">
-                      <Icon className="h-5 w-5 text-primary" aria-hidden />
-                    </span>
-                    <div>
-                      <p className="text-sm font-semibold text-ink-secondary">
-                        {t(feature.titleKey)}
-                      </p>
-                      <p className="mt-0.5 text-xs leading-relaxed text-ink-muted">
-                        {t(feature.descriptionKey)}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         )}
       </div>

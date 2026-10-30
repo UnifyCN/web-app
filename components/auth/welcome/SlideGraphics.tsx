@@ -17,7 +17,6 @@ import {
   MapPin,
   MessageSquare,
   User,
-  Users,
 } from "lucide-react";
 
 /**
@@ -30,7 +29,8 @@ import {
  * border-radius utilities so the whole scene mirrors under dir="rtl".
  */
 
-/** Slide 1 — community (event + Circles + group cards). */
+/** Slide 1: community (event + group cards). The Circles card was removed while
+ * Circles is paused; the pair stays centred in the same 340px frame as the other slides. */
 export function CommunityGraphic() {
   const { container, item } = useStagger();
   const { t } = useTranslation();
@@ -40,34 +40,10 @@ export function CommunityGraphic() {
       className="relative mx-auto h-[340px] w-[300px]"
       aria-hidden
     >
-      {/* Circles card */}
+      {/* Event card */}
       <motion.div
         {...item}
-        className="absolute top-0 end-0 z-10 w-[180px] overflow-hidden rounded-2xl bg-primary p-3 text-white shadow-md"
-      >
-        <div className="absolute -top-5 -end-3 h-16 w-16 rounded-full bg-white/15" />
-        <div className="absolute top-8 end-6 h-10 w-10 rounded-full bg-white/10" />
-        <div className="relative">
-          <div className="mb-1.5 flex h-6 w-6 items-center justify-center rounded-lg bg-white/20">
-            <Users className="h-3.5 w-3.5" />
-          </div>
-          <p className="text-sm font-bold">
-            {t("welcomeCarousel.mockup.circlesTitle")}
-          </p>
-          <p className="mt-1 text-[11px] leading-snug text-white/90">
-            {t("welcomeCarousel.mockup.circlesBody")}
-          </p>
-          <div className="mt-2 flex items-center justify-center gap-1 rounded-full border border-white/40 bg-white/25 py-1.5 text-[11px] font-semibold">
-            {t("welcomeCarousel.mockup.circlesCta")}{" "}
-            <ArrowRight className={cn("h-3 w-3", RTL_FLIP)} />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Event card — title sits below the Circles card's bottom edge (no clip) */}
-      <motion.div
-        {...item}
-        className="absolute top-[118px] start-0 w-[200px] overflow-hidden rounded-2xl border border-border-card bg-surface shadow-sm"
+        className="absolute top-[59px] start-0 w-[200px] overflow-hidden rounded-2xl border border-border-card bg-surface shadow-sm"
       >
         <div className="relative h-16 w-full">
           <Image
@@ -102,7 +78,7 @@ export function CommunityGraphic() {
       {/* Group card */}
       <motion.div
         {...item}
-        className="absolute end-0 bottom-0 z-20 w-[180px] rounded-2xl border border-border-card bg-surface p-2 shadow-md"
+        className="absolute end-0 bottom-[59px] z-20 w-[180px] rounded-2xl border border-border-card bg-surface p-2 shadow-md"
       >
         <div className="relative h-[70px] w-full overflow-hidden rounded-xl">
           <Image

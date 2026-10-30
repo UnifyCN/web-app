@@ -60,7 +60,7 @@ export default function GroupDetailPage({
           href="/community"
           className="mt-3 inline-block text-sm font-semibold text-primary"
         >
-          {t("circles.backToCommunity")}
+          {t("community.backToCommunity")}
         </Link>
       </div>
     );
