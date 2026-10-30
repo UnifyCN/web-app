@@ -8,6 +8,17 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/opengraph-image": ["./app/_og-assets/**"],
   },
+  // Circles is paused on the shared DB (mobile #351) and removed from web. Old
+  // Circles links land on Community instead of a 404 or a "group not found".
+  // `/community?tab=circles` is handled in the Community page, since a config
+  // redirect would carry the query along and loop.
+  async redirects() {
+    return [
+      { source: "/circles/:path*", destination: "/community", permanent: false },
+      { source: "/community/circles/:path*", destination: "/community", permanent: false },
+      { source: "/community-matching/:path*", destination: "/community", permanent: false },
+    ];
+  },
   images: {
     // picsum.photos supplies stable placeholder photos for mock surfaces
     // (group member avatars, etc.). cdn.sanity.io serves lesson content images
