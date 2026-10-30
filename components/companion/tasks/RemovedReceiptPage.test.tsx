@@ -19,6 +19,7 @@ vi.mock("@/hooks/useProfile", () => ({ useCurrentUser: () => ({ data: { id: "own
 vi.mock("@/hooks/useChecklist", () => ({ useTasks: () => ({ data: fixture.tasks, isLoading: false }) }));
 vi.mock("@/services/checklist", () => ({ taskOrderKey: (task: ChecklistTask) => `${task.isCustom ? "custom" : "sanity"}:${task.id}` }));
 vi.mock("@/lib/accountSession", () => ({ ownAccountWork: vi.fn(), stillOwned: () => true }));
+vi.mock("@/hooks/useAccountId", () => ({ useAccountId: () => "owner-1", useAccountGeneration: () => 0 }));
 vi.mock("@/services/companion", () => ({ ChatLimitError: class extends Error {}, FREE_TIER_DAILY_LIMIT: 6 }));
 vi.mock("@/hooks/usePlans", () => ({ useConversationPlans: () => ({ data: [] }), usePlanStore: () => null }));
 vi.mock("@/components/companion/plans/PlanEntry", () => ({ PlanEntry: () => null }));

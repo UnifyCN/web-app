@@ -7,6 +7,7 @@ import {testI18n} from './taskActionsTestHarness';
 import {taskProgressFor} from '@/lib/companionActions/contract';
 import {TaskActionsDrawer} from './TaskActionsDrawer';
 const f=vi.hoisted(()=>({items:[] as unknown[],tasks:[] as unknown[],owner:{accountId:'a',epoch:0}}));
+vi.mock('@/hooks/useAccountId',()=>({useAccountGeneration:()=>f.owner.epoch}));
 vi.mock('@/hooks/useChecklist',()=>({useTasks:()=>({data:f.tasks,isLoading:false})}));
 vi.mock('@/hooks/useTaskActions',()=>({
  useTaskProgress:()=>({status:'ready',stale:false,canWrite:true,refetch:()=>{},byRef:new Map(),stepsByRef:new Map(),details:[],reminders:{items:f.items,scheduler:'ready'}}),

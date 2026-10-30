@@ -1,0 +1,126 @@
+{
+  "results": [
+    {
+      "name": "final-cases-on-base",
+      "exit": 1,
+      "seconds": 3.7542120420002902,
+      "passed": 3,
+      "failed": 6,
+      "failures": [
+        {
+          "name": "the actual page applies selected task ownership on account change",
+          "message": "AssertionError: expected <h3 id=\"_r_7_-title\" \u2026(3)></h3> to be null\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body\u001b[39m\n    \u001b[33mstyle\u001b[39m=\u001b[32m\"overflow: hidden;\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33minert\u001b[39m=\u001b[32m\"\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex h-[calc(100dvh_-_3.5rem_-_env(safe-area-inset-bottom))] md:h-dvh\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<aside\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"w-full shrink-0 flex-col border-e border-border-card bg-surface md:flex md:w-[240px] hidden\"\u001b[39m\n  "
+        },
+        {
+          "name": "clears a task selected inside the drawer on replacement without a page owner",
+          "message": "AssertionError: expected <h3 id=\"_r_q_-title\" \u2026(3)></h3> to be null\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/TaskSelectionAccountSession.test.tsx:194:69\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "clears a task selected inside the drawer on sign-out/sign-in without a page owner",
+          "message": "AssertionError: expected <h3 id=\"_r_16_-title\" \u2026(3)></h3> to be null\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/TaskSelectionAccountSession.test.tsx:194:69\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "clears a task selected inside the drawer on A/B/A without a page owner",
+          "message": "AssertionError: expected <h3 id=\"_r_1i_-title\" \u2026(3)></h3> to be null\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/TaskSelectionAccountSession.test.tsx:194:69\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "closes the Checklist task view when its account changes",
+          "message": "AssertionError: expected <div role=\"dialog\" \u2026(4)>\u2026(2)</div> to be null\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body\u001b[39m\n    \u001b[33mstyle\u001b[39m=\u001b[32m\"overflow: hidden;\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33minert\u001b[39m=\u001b[32m\"\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"mx-auto max-w-[720px] px-6 py-6\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<h1\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"text-xl font-semibold text-ink-secondary\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[0mChecklist\u001b[0m\n        \u001b[36m</h1>\u001b[39m\n        \u001b[36m<p\u001b[39"
+        },
+        {
+          "name": "removes the old profile while the replacement account profile is pending",
+          "message": "AssertionError: expected { id: 'real-auth-a', \u2026(2) } to be undefined\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/TaskSelectionAccountSession.test.tsx:217:47\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        }
+      ]
+    },
+    {
+      "name": "fault-drawer-keeps-selection",
+      "exit": 1,
+      "seconds": 1.6602815830010513,
+      "passed": 6,
+      "failed": 3,
+      "failures": [
+        {
+          "name": "clears a task selected inside the drawer on replacement without a page owner",
+          "message": "AssertionError: expected <h3 id=\"_r_l_-title\" \u2026(3)></h3> to be null\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/TaskSelectionAccountSession.test.tsx:194:69\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "clears a task selected inside the drawer on sign-out/sign-in without a page owner",
+          "message": "AssertionError: expected <h3 id=\"_r_11_-title\" \u2026(3)></h3> to be null\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/TaskSelectionAccountSession.test.tsx:194:69\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "clears a task selected inside the drawer on A/B/A without a page owner",
+          "message": "AssertionError: expected <h3 id=\"_r_1d_-title\" \u2026(3)></h3> to be null\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/TaskSelectionAccountSession.test.tsx:194:69\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        }
+      ]
+    },
+    {
+      "name": "fault-companion-keeps-open-view",
+      "exit": 1,
+      "seconds": 1.6274336669994227,
+      "passed": 8,
+      "failed": 1,
+      "failures": [
+        {
+          "name": "the actual page applies selected task ownership on account change",
+          "message": "AssertionError: expected <div role=\"dialog\" \u2026(4)>\u2026(2)</div> to be null\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/TaskSelectionAccountSession.test.tsx:167:41\n    at runNextTicks (node:internal/process/task_queues:64:5)\n    at listOnTimeout (node:internal/timers:547:9)\n    at processTimers (node:internal/timers:521:7)\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        }
+      ]
+    },
+    {
+      "name": "fault-checklist-keeps-open-view",
+      "exit": 1,
+      "seconds": 2.682188834001863,
+      "passed": 8,
+      "failed": 1,
+      "failures": [
+        {
+          "name": "closes the Checklist task view when its account changes",
+          "message": "AssertionError: expected <div role=\"dialog\" \u2026(4)>\u2026(2)</div> to be null\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body\u001b[39m\n    \u001b[33mstyle\u001b[39m=\u001b[32m\"overflow: hidden;\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33minert\u001b[39m=\u001b[32m\"\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"mx-auto max-w-[720px] px-6 py-6\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<h1\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"text-xl font-semibold text-ink-secondary\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[0mChecklist\u001b[0m\n        \u001b[36m</h1>\u001b[39m\n        \u001b[36m<p\u001b[39"
+        }
+      ]
+    },
+    {
+      "name": "fault-profile-not-cleared",
+      "exit": 1,
+      "seconds": 1.6833714589993178,
+      "passed": 8,
+      "failed": 1,
+      "failures": [
+        {
+          "name": "removes the old profile while the replacement account profile is pending",
+          "message": "AssertionError: expected { id: 'real-auth-a', \u2026(2) } to be undefined\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/TaskSelectionAccountSession.test.tsx:217:47\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        }
+      ]
+    },
+    {
+      "name": "fault-profile-owner-not-checked",
+      "exit": 0,
+      "seconds": 1.6480425839981763,
+      "passed": 9,
+      "failed": 0,
+      "failures": []
+    },
+    {
+      "name": "fault-pending-generation-zero",
+      "exit": 1,
+      "seconds": 1.6697235419997014,
+      "passed": 8,
+      "failed": 1,
+      "failures": [
+        {
+          "name": "keeps the initial page input and focus when the first session read finishes",
+          "message": "AssertionError: expected <textarea rows=\"1\" \u2026(3)></textarea> to be <textarea rows=\"1\" \u2026(3)></textarea> // Object.is equality\n\nIf it should pass with deep equality, replace \"toBe\" with \"toStrictEqual\"\n\nExpected: <textarea rows=\"1\" \u2026(3)></textarea>\nReceived: serializes to the same string\n\n    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/components/companion/tasks/TaskSelectionAccountSession.test.tsx:233:38\n    at file:///Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/node_modules/@vitest/runner/dist/chunk-hoo"
+        }
+      ]
+    }
+  ],
+  "restored": {
+    "app/(main)/companion/page.tsx": "577feda69c1bbf2cace0444f6a5ce5aa341b07f49ce344a473235cb7ada13d11",
+    "app/(main)/checklist/page.tsx": "5dc8bf21fc3a59584e2fa518d83584504c1111909fc105e6af3dc69fc1fe8281",
+    "components/companion/tasks/TaskActionsDrawer.tsx": "b69562b533340042c27916b1d7904c7c5c8c725e7d744477784c9ceb07da0f72",
+    "hooks/useAccountId.ts": "cf2b2b5670f71e7c90f21680d55013c943946cfed3ee1292e3c09e856d1232fc",
+    "hooks/useProfile.ts": "252bfa3a6c995aae416dad9f44535d30f205014d4cb75e546cef4342dceeb15e",
+    "lib/companion/clearPrivateAccountWork.ts": "fba2c00e9d24c866640cf2a48d5606328eb20e4a7f37814e7fa911ecbc2a89cf"
+  }
+}

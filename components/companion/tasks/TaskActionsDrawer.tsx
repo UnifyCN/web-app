@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { ChevronRight } from "lucide-react";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { useTasks } from "@/hooks/useChecklist";
+import { useAccountGeneration } from "@/hooks/useAccountId";
 import { taskOrderKey } from "@/services/checklist";
 import type { ChecklistTask } from "@/types";
 import type { TaskState } from "@/lib/companionActions/contract";
@@ -58,7 +59,12 @@ interface TaskActionsDrawerProps {
 }
 
 /** The task list and task controls inside the direction B drawer. */
-export function TaskActionsDrawer({
+export function TaskActionsDrawer(props: TaskActionsDrawerProps) {
+  const generation = useAccountGeneration();
+  return <AccountTaskActionsDrawer key={generation} {...props} />;
+}
+
+function AccountTaskActionsDrawer({
   open,
   onClose,
   surface,

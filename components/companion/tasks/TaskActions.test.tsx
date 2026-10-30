@@ -583,6 +583,9 @@ describe("Checklist task progress (web)", () => {
       expect(screen.queryByDisplayValue("Unsaved private note")).toBe(null),
     );
     act(() => account.set(me));
+    fireEvent.click(await screen.findByRole("button", {
+      name: "Task progress for Get a SIN",
+    }));
     const reopened = await screen.findByRole("dialog");
     const reason = (await within(reopened).findByLabelText(
       "What are you waiting for?",

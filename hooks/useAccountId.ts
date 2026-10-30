@@ -29,6 +29,8 @@ export function useAccountId(): string | null | undefined {
  * account's unsent text, errors or pending sends (mobile-app#361).
  */
 export function useAccountGeneration(): number {
-  const accountId = useAccountId();
-  return accountId === undefined ? 0 : accountEpoch();
+  useAccountId();
+  // A pending read does not start a new session. Keep its existing generation;
+  // the server snapshot remains zero for hydration.
+  return useSyncExternalStore(subscribeAccountEpoch, accountEpoch, () => 0);
 }

@@ -33,6 +33,7 @@ import {
   useSendMessage,
 } from "@/hooks/useCompanion";
 import { useCurrentUser } from "@/hooks/useProfile";
+import { useAccountGeneration, useAccountId } from "@/hooks/useAccountId";
 import { progressFor } from "@/components/companion/tasks/TaskStatePanel";
 import type { RemovalProposal } from "@/lib/companionActions/contract";
 import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
@@ -41,6 +42,11 @@ import type { ChatMessage } from "@/types";
 import { ownAccountWork, stillOwned } from "@/lib/accountSession";
 
 export default function CompanionPage() {
+  const generation = useAccountGeneration();
+  return <AccountCompanionPage key={generation} />;
+}
+
+function AccountCompanionPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -70,22 +76,9 @@ export default function CompanionPage() {
   const conversationsQuery = useConversations();
   const messagesQuery = useConversationMessages(activeId);
   const usageQuery = useChatbotUsage();
-  const currentUser = useCurrentUser().data;
-  // A different signed-in account (or sign-out) must not see the previous
-  // account's open conversation, sources drawer or unsent draft. The chat panel
-  // remounts on each account change; loading the first account is not one.
-  const accountId = currentUser?.id ?? null;
-  const [account, setAccount] = useState({ id: accountId, epoch: 0 });
-  if (accountId !== account.id) {
-    const changed = account.id !== null;
-    setAccount({ id: accountId, epoch: account.epoch + (changed ? 1 : 0) });
-    if (changed) {
-      setActiveId(null);
-      setSendError(null);
-      setMobileListOpen(false);
-      setDrawer(null);
-    }
-  }
+  const profile = useCurrentUser().data;
+  const accountId = useAccountId();
+  const currentUser = profile?.id === accountId ? profile : undefined;
   const createConversation = useCreateConversation();
   const sendMessage = useSendMessage();
   const deleteConversation = useDeleteConversation();
@@ -216,7 +209,6 @@ export default function CompanionPage() {
         isDeleting={deleteConversation.isPending}
       />
       <ChatPanel
-        key={account.epoch}
         conversation={activeConversation}
         messages={messages}
         isTyping={sendMessage.isPending}

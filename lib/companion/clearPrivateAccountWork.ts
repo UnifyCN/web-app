@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { TASKS_KEY } from "@/lib/checklistQueryKeys";
+import { CURRENT_USER_KEY } from "@/lib/profileQueryKeys";
 import {
   CONVERSATIONS_ROOT,
   MESSAGES_ROOT,
@@ -26,6 +27,12 @@ export function clearPrivateAccountWork(
   clearTaskActionStores(keepAccountId);
   clearPlanStores(keepAccountId);
   clearComposerDrafts(keepAccountId);
+  // This legacy key has no account part. Clear it only on a full reset,
+  // not when another consumer keeps the current account's data.
+  if (keepAccountId == null) {
+    void queryClient.cancelQueries({ queryKey: CURRENT_USER_KEY });
+    queryClient.removeQueries({ queryKey: CURRENT_USER_KEY });
+  }
   const otherAccount =
     (index: number) => (q: { queryKey: readonly unknown[] }) =>
       keepAccountId === undefined || q.queryKey[index] !== keepAccountId;

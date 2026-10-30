@@ -26,6 +26,7 @@ import {
   useTaskProgress,
 } from "@/hooks/useTaskActions";
 import { taskOrderKey } from "@/services/checklist";
+import { useAccountGeneration } from "@/hooks/useAccountId";
 
 const PRIORITY_ORDER: Priority[] = [
   "Do now",
@@ -82,6 +83,11 @@ function ChecklistSkeleton() {
 }
 
 export default function ChecklistPage() {
+  const generation = useAccountGeneration();
+  return <AccountChecklistPage key={generation} />;
+}
+
+function AccountChecklistPage() {
   const { t } = useTranslation();
   const { data: tasks = [], isLoading, error } = useTasks();
   const toggle = useToggleTask();
