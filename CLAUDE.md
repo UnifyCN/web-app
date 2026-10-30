@@ -54,7 +54,7 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   modules/submodules/lessons with Supabase progress, including the lesson
   detail page. Both follow the Community wiring pattern. See `PLAN.md` for the
   phase-by-phase build record.
-- **Circles paused (removed from web, PR #CIRCLES_PR).** Mobile paused Circles on
+- **Circles paused (removed from web, PR #194).** Mobile paused Circles on
   2026-10-24 (mobile PR #351, migration `pause_circles`) because it was hitting Supabase
   usage limits. While `circles_feature_state.enabled = false`, a restrictive RLS policy
   makes every read of the circle tables (`community_circles`, `community_circle_members`,
@@ -69,7 +69,7 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   `community.backToCommunity`). Old URLs (`/circles/*`, `/community/circles/*`,
   `/community-matching/*`, `/community?tab=circles`) land on `/community`.
   **To restore:** after Savar re-enables Circles on the DB, `git revert` the squash commit
-  of PR #CIRCLES_PR (it brings back the PR #13 tab, hooks, services, card and strings),
+  of PR #194 (it brings back the PR #13 tab, hooks, services, card and strings),
   then add the Circles entry back to `TAB_DEFS`.
 - **Navigation (PR #14)** — the sidebar mirrors the mobile nav order + icons.
 - **Companion AI (PR #15 + PR #20; unified with mobile in the consolidation PR) —
