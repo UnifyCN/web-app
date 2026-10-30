@@ -66,8 +66,9 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   Function** (Deno; one unified function for web + mobile — the web-only
   `rag-query-web` fork was retired) through the same-origin `/api/companion` proxy
   (which tags requests `source:"web"`), and `useSendMessage`
-  renders the real RAG answer + sources (the canned reply is gone). The KB is seeded
-  (32 docs / 350 chunks, 1536-dim) with RLS + grants. **Both embeddings and the chat
+  renders the real RAG answer + sources (the canned reply is gone). The KB lives in
+  `knowledge_documents` / `knowledge_chunks` (37 docs / 2321 chunks on 2026-10-30, 1536-dim)
+  with RLS + grants, refreshed by mobile's `ingest-documents` cron. **Both embeddings and the chat
   completion go through OpenRouter** — the query vector uses
   `qwen/qwen3-embedding-8b` (the one fixed model; no env override or fallback), through the
   shared adapter `_shared/embeddings.ts` (first 1536 of 4096 native values, scaled to length 1;
@@ -82,6 +83,33 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   also dropped the blue squiggly background, redesigned the conversation sidebar, and
   surfaces AI "suggested next steps" in the message bubble
   (`messages.suggested_next_steps`).
+
+  > **Companion deploy safety (read before touching `rag-query`).**
+  > - **The knowledge base is Qwen-only since 2026-10-28.** Every row in
+  >   `knowledge_documents` / `knowledge_chunks` has `embedding_model =
+  >   'qwen/qwen3-embedding-8b'` (mobile PR #358, migration `qwen_embedding_model_guards`).
+  >   The old 3- and 4-argument `match_chunks` overloads are pinned to
+  >   `openai/text-embedding-3-small` and now **return zero rows, with no error**. Only the
+  >   5-argument call with `query_embedding_model` finds anything. A Companion that answers
+  >   with no sources is the symptom.
+  > - **`rag-query` is owned by this repo, not mobile.** Mobile deleted its copy in mobile
+  >   PR #300 (2026-09-17); both apps call the one function deployed from here. So it must
+  >   never be deployed from an old checkout or branch: a tree from before PR #188 brings
+  >   back the OpenAI query and silently breaks Companion for web and mobile. Deploy it only
+  >   from an up-to-date `main` (`git pull` first), and only with Savar's sign-off, since
+  >   mobile depends on it. Deployed v139 matched `main` on 2026-10-30 (apart from the
+  >   additive #191 change to `_shared/embeddings.ts`), so nothing is waiting to deploy.
+  > - **Never write embeddings from a script.** Mobile's `ingest-documents` is the only
+  >   writer and goes through the model-guarded RPCs. A direct `update {embedding}` on
+  >   `knowledge_chunks` mixes vector spaces in rows labelled Qwen and corrupts retrieval for
+  >   both apps. (The old local `scripts/reembed-crawler-docs.mjs`, which did exactly that
+  >   with OpenAI vectors, was deleted on 2026-10-30; it was never committed.)
+  > - **`_shared/embeddings.ts` and `_shared/openrouter.ts` are byte copies of mobile's.**
+  >   When mobile changes them, copy them over; never edit them here.
+  > - **Shared slugs:** `explain-term`, `practice-feedback` and `get-daily-tip` exist in
+  >   both repos and deploy to the same slug, and mobile deployed them last (Oct 2026). Diff
+  >   this repo's copy against mobile's before deploying any of them from here, or mobile's
+  >   newer logic is lost.
 - **Learn + Practice (PR #16)** — section page
   redesign (Learn + Practice timeline cards in the module's colour); lesson
   pagination (`components/learn/LessonPager.tsx`); custom Sanity content-block
@@ -244,12 +272,10 @@ The frontend is complete on mock data. **Supabase integration is underway** on t
   (`components/layout/Sidebar.tsx`) call `createClient()` directly. Flagged by
   CodeRabbit on PR #1 — do as a separate PR after PR #1 merges.
 - **Arabic (`ar`) and Canadian French (`fr-CA`) are ungated in the UI.** Both ship complete
-  (mobile PR #299 made the language sets identical). `translate-content` already carries
-  them in `LANGUAGE_NAMES` and `rag-query` now carries them in
-  `RESPONSE_LANGUAGE_NAMES`, so the Translate button and Companion answers work in either
-  language **once both functions are redeployed**
-  (`supabase functions deploy translate-content rag-query`) — a pending post-merge step
-  until done. Their machine translations have not had a native review yet;
+  (mobile PR #299 made the language sets identical). `translate-content` carries them in
+  `LANGUAGE_NAMES` and `rag-query` in `RESPONSE_LANGUAGE_NAMES`, and both functions are
+  deployed (live code matched `main` on 2026-10-30), so there is no deploy step left. Their
+  machine translations have not had a native review yet;
   `NEXT_PUBLIC_ENABLE_ARABIC=false` / `NEXT_PUBLIC_ENABLE_FRENCH=false` hide one again if
   a review turns up problems.
 
@@ -764,7 +790,8 @@ caution belongs to the shared surface only, listed below.
 **Requires Savar's explicit sign-off before proceeding:**
 
 - **Changes to shared / mobile-owned infrastructure** — the `rag-query` edge function
-  (and any other edge function mobile also calls), shared Supabase RPCs, and any schema
+  (web-owned, but mobile calls it; see "Companion deploy safety"), any other edge function
+  mobile also calls, shared Supabase RPCs, and any schema
   change on the shared DB `wrbauxutkysljmsqojts`.
 - **Publishing content to production that mobile also reads** — translations, events,
   KB documents — before mobile has corresponding support for it.
