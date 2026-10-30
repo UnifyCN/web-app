@@ -12,6 +12,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nextProvider } from "react-i18next";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { AUTH_USER_KEY } from "@/hooks/useAuthUser";
+import { AuthRetryableFetchError } from "@supabase/supabase-js";
 import { ownAccountWork, noteAccount } from "@/lib/accountSession";
 import { clearTaskActionStores } from "@/lib/companionActions/taskActionStore";
 import {
@@ -30,6 +31,10 @@ const scrollDescriptor = Object.getOwnPropertyDescriptor(
   HTMLElement.prototype,
   "scrollIntoView",
 );
+type SessionReply = {
+  data: { session: { user: { id: string } } | null };
+  error?: Error | null;
+};
 const auth = vi.hoisted(() => ({
   user: { id: "real-auth-a" },
   listeners: new Set<(event: string, session: unknown) => void>(),
@@ -39,9 +44,7 @@ const auth = vi.hoisted(() => ({
     onboarding: null;
     isPremium: boolean;
   }> | null,
-  reply: null as
-    | (() => Promise<{ data: { session: { user: { id: string } } } }>)
-    | null,
+  reply: null as (() => Promise<SessionReply>) | null,
 }));
 vi.mock("@/lib/supabase/client", () => ({
   isSupabaseConfigured: () => true,
@@ -177,16 +180,12 @@ function ui(node: ReactNode) {
   );
 }
 function holdSession() {
-  let resolve!: (value: {
-    data: { session: { user: { id: string } } };
-  }) => void;
+  let resolve!: (value: SessionReply) => void;
   let reject!: (error: Error) => void;
-  const promise = new Promise<{ data: { session: { user: { id: string } } } }>(
-    (a, b) => {
-      resolve = a;
-      reject = b;
-    },
-  );
+  const promise = new Promise<SessionReply>((a, b) => {
+    resolve = a;
+    reject = b;
+  });
   auth.reply = () => promise;
   return {
     resolve: (id = "real-auth-a") => {
@@ -194,6 +193,8 @@ function holdSession() {
       resolve({ data: { session: { user: { id } } } });
     },
     reject,
+    returnError: (error: Error) => resolve({ data: { session: null }, error }),
+    signedOut: () => resolve({ data: { session: null }, error: null }),
   };
 }
 function knownAccount() {
@@ -445,3 +446,106 @@ it("does not clear a pending lesson draft when its starter control is pressed", 
     await act(async () => session.resolve());
   }
 });
+
+it.each(["companion", "lesson"])(
+  "keeps %s text, owner and focus when the SDK returns a session error",
+  async (surface) => {
+    knownAccount();
+    const session = holdSession();
+    render(
+      ui(
+        surface === "companion" ? (
+          <CompanionPage />
+        ) : (
+          <InLessonChat
+            conversationId={null}
+            onConversationCreated={() => {}}
+            lessonContext={lesson}
+          />
+        ),
+      ),
+    );
+    type("Keep after returned Auth error");
+    const input = composer();
+    input.focus();
+    const owner = ownAccountWork();
+    await act(async () =>
+      session.returnError(
+        new AuthRetryableFetchError("Session temporarily unavailable", 503),
+      ),
+    );
+    await waitFor(() =>
+      expect(query.getQueryState(AUTH_USER_KEY)?.status).toBe("error"),
+    );
+    await waitFor(() => expect(query.isFetching()).toBe(0));
+    expect(composer().value).toBe("Keep after returned Auth error");
+    expect(composer()).toBe(input);
+    expect(document.activeElement).toBe(input);
+    expect(ownAccountWork()).toEqual(owner);
+    expect(query.getQueryData(["tasks", "en", null])).toBeUndefined();
+    expect(
+      (
+        screen.getByRole("button", {
+          name: en.companion.sendMessageAria,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    auth.reply = null;
+    await act(async () => {
+      await query.refetchQueries({ queryKey: AUTH_USER_KEY });
+    });
+    await settled();
+    expect(composer().value).toBe("Keep after returned Auth error");
+    expect(composer()).toBe(input);
+    expect(document.activeElement).toBe(input);
+    expect(ownAccountWork()).toEqual(owner);
+    expect(
+      (
+        screen.getByRole("button", {
+          name: en.companion.sendMessageAria,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false);
+  },
+);
+
+it.each(["companion", "lesson"])(
+  "clears %s pending text when a successful read confirms sign-out",
+  async (surface) => {
+    knownAccount();
+    const session = holdSession();
+    render(
+      ui(
+        surface === "companion" ? (
+          <CompanionPage />
+        ) : (
+          <InLessonChat
+            conversationId={null}
+            onConversationCreated={() => {}}
+            lessonContext={lesson}
+          />
+        ),
+      ),
+    );
+    type("Clear on confirmed sign-out");
+    const owner = ownAccountWork();
+    await act(async () => session.signedOut());
+    await waitFor(() =>
+      expect(query.getQueryState(AUTH_USER_KEY)?.status).toBe("success"),
+    );
+    await waitFor(() => expect(query.isFetching()).toBe(0));
+    expect(query.getQueryData(AUTH_USER_KEY)).toBeNull();
+    expect(ownAccountWork()).toEqual({
+      accountId: null,
+      epoch: owner.epoch + 1,
+    });
+    expect(composer().value).toBe("");
+    expect(
+      (
+        screen.getByRole("button", {
+          name: en.companion.sendMessageAria,
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+  },
+);

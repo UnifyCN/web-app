@@ -1,0 +1,15 @@
+{
+  "archive_base": "aeb1ba96df61d36fe2c15eb3f75ed09d34276adb",
+  "unchanged_tracked_files": 1387,
+  "changed_tracked_files": [
+    "components/companion/tasks/ComposerPendingSession.test.tsx",
+    "services/auth.ts"
+  ],
+  "original_twelve_case_bodies_unchanged": true,
+  "prepared_sha256": {
+    "components/companion/tasks/ComposerPendingSession.test.tsx": "f7cbf39b5a6eeef36a37355fd43bc1e88f0faa2c6e4cfb27d922ba7e6f03a095",
+    "services/auth.ts": "813cec68492a19a9b4eb24d80f333ca439117cf77d67383fc1f51443b4be770c"
+  },
+  "canonical_head": "aeb1ba96df61d36fe2c15eb3f75ed09d34276adb",
+  "canonical_status": ""
+}

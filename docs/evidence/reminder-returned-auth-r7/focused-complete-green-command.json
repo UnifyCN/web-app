@@ -1,0 +1,20 @@
+{
+  "argv": [
+    "npx",
+    "vitest",
+    "run",
+    "components/companion/tasks/ComposerPendingSession.test.tsx",
+    "components/companion/tasks/ReviewReturnedAuthR7.test.tsx",
+    "components/companion/tasks/ReviewPendingDraftR6.test.tsx",
+    "components/companion/tasks/TaskSelectionAccountSession.test.tsx",
+    "components/companion/tasks/ReminderAccountSession.test.tsx",
+    "components/companion/accountOwnership.test.tsx",
+    "components/companion/accountOwnershipRequests.test.tsx",
+    "components/learn/help/inLessonAccountOwnership.test.tsx"
+  ],
+  "exit": 0,
+  "seconds": 2.557737000002817,
+  "passed": 75,
+  "failed": 0,
+  "files": 8
+}
