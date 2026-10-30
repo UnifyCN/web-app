@@ -1462,11 +1462,9 @@
       }
     },
     "arrival": {
-      "title": "When did you arrive in Canada?",
       "subtitle": "An approximate month is fine — it sets your settling-in stage.",
       "ariaMonth": "Arrival month",
-      "ariaYear": "Arrival year",
-      "notArrived": "I haven't arrived in Canada yet"
+      "ariaYear": "Arrival year"
     },
     "location": {
       "title": "Where in Canada are you?",

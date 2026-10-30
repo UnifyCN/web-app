@@ -1462,11 +1462,9 @@
       }
     },
     "arrival": {
-      "title": "Quand êtes-vous arrivé au Canada?",
       "subtitle": "Un mois approximatif suffit — il définit votre étape d'établissement.",
       "ariaMonth": "Mois d'arrivée",
-      "ariaYear": "Année d'arrivée",
-      "notArrived": "Je ne suis pas encore arrivé au Canada"
+      "ariaYear": "Année d'arrivée"
     },
     "location": {
       "title": "Où êtes-vous au Canada?",

@@ -82,7 +82,9 @@ export async function saveOnboarding(input: SaveOnboardingInput): Promise<void> 
       // Full names only (e.g. "Ontario"), as mobile stores them: content
       // targeting compares against the 13 canonical names.
       province: normalizeProvince(input.province),
-      stage: String(stage), // mobile `stage` is a stage_enum ('0'..'4')
+      // mobile `stage` is a stage_enum ('0'..'4'); null when the date is unknown,
+      // as mobile writes it.
+      stage: stage === null ? null : String(stage),
       goals,
       learning_interests: learningInterests,
       hobbies,

@@ -1,29 +1,30 @@
 import type { Stage } from "@/types";
-
-/** Average milliseconds per month, matching the mobile app's stage math. */
-const MS_PER_MONTH = 1000 * 60 * 60 * 24 * 30.44;
+import {
+  getArrivalStage,
+  normalizeStoredArrivalDate,
+} from "@/lib/onboarding/arrivalStage";
 
 /**
- * Derive the time-in-Canada {@link Stage} from an arrival date.
+ * The time-in-Canada {@link Stage} for a stored or wizard arrival date, by
+ * mobile's rule (`arrivalStage.ts`, mobile #346/#349): whole calendar months
+ * on the user's local day. A future date is 0 (pre-arrival), then
+ * <3 months → 1 · <12 → 2 · <36 → 3 · else → 4.
  *
- * Mirrors the mobile app's `calculateUserStage`: a missing or future date is
- * stage 0 (not arrived yet); otherwise bucket by months since arrival.
+ * A missing or unreadable date is **unknown (null)**, not "not arrived": mobile
+ * stores `stage = null` for it and shows the first-3-months checklist (see
+ * {@link checklistStage}).
  *
- *   null / future → 0 · <3mo → 1 · <12mo → 2 · <36mo → 3 · else → 4
- *
- * `arrivalDate` is the wizard's `YYYY-MM-01` string (month granularity), but
- * any Date-parseable string works; unparseable input falls back to stage 0.
+ * Accepts the wizard's `YYYY-MM-01` or the timestamptz the database returns
+ * (`2026-12-01T00:00:00+00:00`, read as its UTC calendar date).
  */
-export function calculateUserStage(arrivalDate: string | null): Stage {
-  if (!arrivalDate) return 0;
+export function calculateUserStage(
+  arrivalDate: string | null | undefined,
+  today: Date = new Date(),
+): Stage | null {
+  return getArrivalStage(normalizeStoredArrivalDate(arrivalDate), today);
+}
 
-  const arrival = new Date(arrivalDate);
-  if (Number.isNaN(arrival.getTime())) return 0;
-
-  const months = (Date.now() - arrival.getTime()) / MS_PER_MONTH;
-  if (months <= 0) return 0;
-  if (months < 3) return 1;
-  if (months < 12) return 2;
-  if (months < 36) return 3;
-  return 4;
+/** Stage used to pick checklist content: unknown counts as just arrived (1), as on mobile. */
+export function checklistStage(stage: Stage | null): Stage {
+  return stage ?? 1;
 }

@@ -1462,11 +1462,9 @@
       }
     },
     "arrival": {
-      "title": "¿Cuándo llegaste a Canadá?",
       "subtitle": "Un mes aproximado está bien; define tu etapa de establecimiento.",
       "ariaMonth": "Mes de llegada",
-      "ariaYear": "Año de llegada",
-      "notArrived": "Aún no he llegado a Canadá"
+      "ariaYear": "Año de llegada"
     },
     "location": {
       "title": "¿En qué parte de Canadá estás?",
