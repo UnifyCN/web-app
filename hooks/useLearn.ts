@@ -22,9 +22,9 @@ import { useLanguage } from "@/hooks/useLanguage";
  * Supabase progress keys are language-agnostic (progress is per-`_id`).
  */
 
-const MODULES_KEY = ["modules"] as const;
+export const MODULES_KEY = ["modules"] as const;
 const LESSON_PROGRESSES_KEY = ["lesson-progresses"] as const;
-const LEARNING_PROGRESS_KEY = ["learning-progress"] as const;
+export const LEARNING_PROGRESS_KEY = ["learning-progress"] as const;
 const PRACTICES_KEY = ["practices"] as const;
 const PRACTICE_PROGRESS_KEY = ["practice-progress"] as const;
 const LESSON_QUIZ_KEY = ["lesson-quiz"] as const;

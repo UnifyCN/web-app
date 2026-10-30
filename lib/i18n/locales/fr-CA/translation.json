@@ -1780,6 +1780,7 @@
     "visitWebsiteA11y": "Visiter le site Web de {{name}}",
     "opensInBrowser": "{{name}}, s'ouvre dans le navigateur",
     "notFound": "Cette ressource n'est plus disponible.",
+    "morePartnersComingSoon": "D'autres partenaires arrivent bientôt pour votre province : {{province}}.",
     "category": {
       "gettingSettled": {
         "label": "S'établir",

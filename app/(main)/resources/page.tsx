@@ -10,7 +10,11 @@ import { ResourcesSearch } from "@/components/resources/ResourcesSearch";
 import { filterValueLabel } from "@/components/resources/filterLabels";
 import { useResourceFilters } from "@/hooks/useResourceFilters";
 import { getCategoriesWithPartners } from "@/lib/resources/partners";
-import { useResourcePartners } from "@/hooks/useResourcePartners";
+import {
+  useReaderProvince,
+  useResourcePartners,
+} from "@/hooks/useResourcePartners";
+import { MorePartnersNote } from "@/components/resources/MorePartnersNote";
 import { PARTNER_CATEGORY_LABEL_KEYS } from "@/lib/resources/categories";
 import {
   PREFERENCE_PILLS,
@@ -43,7 +47,8 @@ function ResourcesFront() {
   const { t } = useTranslation();
   const [howOpen, setHowOpen] = useState(false);
   const { filters, query, setQuery, toggle, clearFilters } = useResourceFilters();
-  const categories = getCategoriesWithPartners();
+  const { province } = useReaderProvince();
+  const categories = getCategoriesWithPartners(province);
   const partners = useResourcePartners();
 
   const searching = query.trim().length > 0 || hasActiveFilters(filters);
@@ -88,6 +93,8 @@ function ResourcesFront() {
           ))}
         </div>
       </div>
+
+      <MorePartnersNote />
 
       {searching ? (
         <section className="flex flex-col gap-4">

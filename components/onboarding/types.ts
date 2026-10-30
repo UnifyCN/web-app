@@ -4,7 +4,8 @@ import type { SaveOnboardingInput } from "@/services/onboarding";
 /**
  * Client-side wizard state. `arrivalDate` is split into a month/year picker
  * plus a "haven't arrived" flag; it's recombined into `YYYY-MM-01` on save.
- * `province` holds the 2-letter code (e.g. "ON").
+ * `province` holds the full name (e.g. "Ontario"), as mobile stores it; an old
+ * 2-letter value is read through normalizeProvince when the profile loads.
  */
 export interface OnboardingDraft {
   firstName: string;

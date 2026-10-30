@@ -1761,6 +1761,7 @@
     "visitWebsiteA11y": "{{name}} की वेबसाइट देखें",
     "opensInBrowser": "{{name}}, ब्राउज़र में खुलता है",
     "notFound": "यह संसाधन अब उपलब्ध नहीं है।",
+    "morePartnersComingSoon": "{{province}} में और साझेदार जल्द ही आ रहे हैं।",
     "category": {
       "gettingSettled": {
         "label": "बसने की शुरुआत",

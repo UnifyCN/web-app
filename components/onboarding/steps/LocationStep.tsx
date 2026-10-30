@@ -7,6 +7,7 @@ import { cn, moveCaretToEnd } from "@/lib/utils";
 import {
   CITY_OPTIONS,
   CITY_TO_PROVINCE,
+  PROVINCE_NAME,
   PROVINCES,
 } from "@/lib/onboarding/constants";
 import { StepHeading } from "../StepHeading";
@@ -32,7 +33,7 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
     () =>
       draft.city !== "" &&
       KNOWN.has(draft.city) &&
-      CITY_TO_PROVINCE[draft.city] === draft.province,
+      PROVINCE_NAME[CITY_TO_PROVINCE[draft.city]] === draft.province,
   );
 
   function onCityChange(value: string) {
@@ -43,7 +44,8 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
       return;
     }
     setOther(false);
-    const mapped = CITY_TO_PROVINCE[value];
+    const code = CITY_TO_PROVINCE[value];
+    const mapped = code ? PROVINCE_NAME[code] : undefined;
     if (mapped) {
       setAutoFilled(true);
       update({ city: value, province: mapped });
@@ -114,7 +116,7 @@ export function LocationStep({ draft, update }: OnboardingStepProps) {
               {t("onboardingWeb.location.selectProvince")}
             </option>
             {PROVINCES.map((p) => (
-              <option key={p.code} value={p.code}>
+              <option key={p.code} value={p.name}>
                 {p.name}
               </option>
             ))}

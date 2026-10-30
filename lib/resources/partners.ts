@@ -8,6 +8,7 @@ import type {
 } from "@/types";
 import { CATEGORY_ORDER } from "./categories";
 import { localizePartner, partnerCopyKey } from "./localizePartner";
+import { isVisibleForProvince, resolveUserProvince } from "@/lib/province";
 
 /**
  * Partner directory for the Resources tab. Hardcoded for V1 — there is no
@@ -29,6 +30,7 @@ export const PARTNERS: Partner[] = [
   // ── Getting Settled ─────────────────────────────────────────────────────
   {
     slug: "diversecity",
+    provinces: ["British Columbia"],
     name: "DIVERSEcity",
     category: "gettingSettled",
     partnershipType: "resource",
@@ -81,6 +83,7 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "burnaby-neighbourhood-house",
+    provinces: ["British Columbia"],
     name: "Burnaby Neighbourhood House",
     category: "gettingSettled",
     partnershipType: "resource",
@@ -124,6 +127,7 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "ymca-bc",
+    provinces: ["British Columbia"],
     name: "YMCA BC",
     category: "gettingSettled",
     partnershipType: "resource",
@@ -177,6 +181,7 @@ export const PARTNERS: Partner[] = [
   // ── Find Work ───────────────────────────────────────────────────────────
   {
     slug: "iec-bc",
+    provinces: ["British Columbia"],
     name: "Immigrant Employment Council of BC",
     category: "findWork",
     partnershipType: "resource",
@@ -265,6 +270,7 @@ export const PARTNERS: Partner[] = [
   // college-ic.ca. Tracked in .design/state.json.
   {
     slug: "global-connect-immigration",
+    provinces: ["British Columbia"],
     name: "Global Connect Immigration",
     category: "immigrationHelp",
     partnershipType: "referral",
@@ -285,6 +291,7 @@ export const PARTNERS: Partner[] = [
   // ── Libraries & Learning ────────────────────────────────────────────────
   {
     slug: "burnaby-public-library",
+    provinces: ["British Columbia"],
     name: "Burnaby Public Library",
     category: "librariesLearning",
     partnershipType: "resource",
@@ -331,6 +338,7 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "surrey-libraries",
+    provinces: ["British Columbia"],
     name: "Surrey Libraries",
     category: "librariesLearning",
     partnershipType: "resource",
@@ -384,6 +392,7 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "vancouver-public-library",
+    provinces: ["British Columbia"],
     name: "Vancouver Public Library",
     category: "librariesLearning",
     partnershipType: "resource",
@@ -432,6 +441,7 @@ export const PARTNERS: Partner[] = [
   // ── Community & Belonging ───────────────────────────────────────────────
   {
     slug: "big-brothers-big-sisters",
+    provinces: ["British Columbia"],
     name: "Big Brothers Big Sisters",
     category: "communityBelonging",
     partnershipType: "resource",
@@ -474,6 +484,7 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "united-way-bc",
+    provinces: ["British Columbia"],
     name: "United Way BC",
     category: "communityBelonging",
     partnershipType: "resource",
@@ -520,6 +531,7 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "trout-lake-community-centre",
+    provinces: ["British Columbia"],
     name: "Trout Lake Community Centre",
     category: "communityBelonging",
     partnershipType: "resource",
@@ -559,6 +571,7 @@ export const PARTNERS: Partner[] = [
   // ── Networks & Planning Tables ──────────────────────────────────────────
   {
     slug: "amssa",
+    provinces: ["British Columbia"],
     name: "AMSSA",
     category: "networksPlanning",
     partnershipType: "resource",
@@ -600,6 +613,7 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "surrey-lip",
+    provinces: ["British Columbia"],
     name: "Surrey Local Immigration Partnership",
     category: "networksPlanning",
     partnershipType: "resource",
@@ -636,6 +650,7 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "delta-lip",
+    provinces: ["British Columbia"],
     name: "Delta Local Immigration Partnership",
     category: "networksPlanning",
     partnershipType: "resource",
@@ -665,6 +680,7 @@ export const PARTNERS: Partner[] = [
   // ── International Students ──────────────────────────────────────────────
   {
     slug: "sfu-international",
+    provinces: ["British Columbia"],
     name: "SFU International Services for Students",
     category: "internationalStudents",
     partnershipType: "resource",
@@ -705,6 +721,7 @@ export const PARTNERS: Partner[] = [
   },
   {
     slug: "fraser-international-college",
+    provinces: ["British Columbia"],
     name: "Fraser International College",
     category: "internationalStudents",
     partnershipType: "resource",
@@ -789,6 +806,7 @@ export const PARTNERS: Partner[] = [
   // ── Money & Banking ─────────────────────────────────────────────────────
   {
     slug: "desjardins",
+    provinces: ["Ontario", "Quebec"],
     name: "Desjardins",
     category: "money",
     partnershipType: "referral",
@@ -820,18 +838,35 @@ export const PARTNERS: Partner[] = [
 ];
 
 /**
- * Active partners from an arbitrary list, sorted by displayOrder. Split out so
- * the filter is testable without an inactive partner in the shipped data.
+ * Active partners a reader in `province` may see, sorted by displayOrder (as on
+ * mobile, PR #347). A partner with no `provinces` is national and shows to
+ * everyone; a reader with no recognized province sees national partners only.
+ * `province` is a stored profile string, so aliases ("BC", "ON") are resolved
+ * here. It has no default on purpose: a caller that forgets it must not quietly
+ * show every province's partners. Split out so the filter is testable without
+ * an inactive partner in the shipped data.
  */
-export const selectActivePartners = (partners: Partner[]): Partner[] =>
-  partners.filter((p) => p.active).sort((a, b) => a.displayOrder - b.displayOrder);
+export const selectActivePartners = (
+  partners: Partner[],
+  province: string | null | undefined,
+): Partner[] => {
+  const readerProvince = resolveUserProvince(province);
+  return partners
+    .filter((p) => p.active && isVisibleForProvince(p.provinces, readerProvince))
+    .sort((a, b) => a.displayOrder - b.displayOrder);
+};
 
-/** Active partners only, sorted by displayOrder. */
-export const getActivePartners = (): Partner[] => selectActivePartners(PARTNERS);
+/** Active partners for a reader in `province`, sorted by displayOrder. */
+export const getActivePartners = (
+  province: string | null | undefined,
+): Partner[] => selectActivePartners(PARTNERS, province);
 
-/** Active partners in a category, sorted by displayOrder. */
-export const getPartnersByCategory = (category: PartnerCategory): Partner[] =>
-  getActivePartners().filter((p) => p.category === category);
+/** Active partners in a category for a reader in `province`. */
+export const getPartnersByCategory = (
+  category: PartnerCategory,
+  province: string | null | undefined,
+): Partner[] =>
+  getActivePartners(province).filter((p) => p.category === category);
 
 /** A single partner by slug (any active state), for the detail route. */
 export const getPartnerBySlug = (slug: string): Partner | undefined =>
@@ -841,9 +876,11 @@ export const getPartnerBySlug = (slug: string): Partner | undefined =>
  * Categories that have ≥1 active partner, in CATEGORY_ORDER, with counts.
  * Empty categories are omitted.
  */
-export const getCategoriesWithPartners = (): CategoryWithCount[] => {
+export const getCategoriesWithPartners = (
+  province: string | null | undefined,
+): CategoryWithCount[] => {
   const counts = new Map<PartnerCategory, number>();
-  for (const p of getActivePartners()) {
+  for (const p of getActivePartners(province)) {
     counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
   }
   return CATEGORY_ORDER.filter((c) => counts.has(c)).map((category) => ({
@@ -1086,8 +1123,21 @@ export function toResourcePartner(
 export const getActiveResourcePartners = (
   t: TFunction,
   enT: TFunction,
+  province: string | null | undefined,
 ): ResourcePartner[] =>
-  getActivePartners().map((p) => toResourcePartner(p, t, enT));
+  getActivePartners(province).map((p) => toResourcePartner(p, t, enT));
+
+/**
+ * The province named by the "more partners are coming" line, or null when the
+ * line stays hidden: it shows for a known province other than British
+ * Columbia, where the directory is already built (as on mobile).
+ */
+export const getMorePartnersNoteProvince = (
+  province: string | null | undefined,
+): string | null => {
+  const resolved = resolveUserProvince(province);
+  return resolved && resolved !== "British Columbia" ? resolved : null;
+};
 
 /** Cost values in filter order. */
 export const COST_ORDER: Cost[] = ["free", "paid", "mixed"];

@@ -13,7 +13,10 @@ export default function PartnerDetailPage({
 }) {
   const { t } = useTranslation();
   const { slug } = use(params);
-  const partner = useResourcePartner(slug);
+  const { partner, pending } = useResourcePartner(slug);
+
+  // Waiting for the profile to know whether this province-tagged partner shows.
+  if (pending) return null;
 
   if (!partner || !partner.active) {
     return (

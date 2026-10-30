@@ -5,6 +5,7 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
 import { calculateUserStage } from "@/lib/onboarding/calculateUserStage";
+import { normalizeProvince } from "@/lib/province";
 import {
   GOAL_OPTIONS,
   HOBBY_OPTIONS,
@@ -78,7 +79,9 @@ export async function saveOnboarding(input: SaveOnboardingInput): Promise<void> 
       referral_source: referralSource,
       arrival_date: input.arrivalDate,
       city: input.city.trim() || null,
-      province: input.province.trim() || null,
+      // Full names only (e.g. "Ontario"), as mobile stores them: content
+      // targeting compares against the 13 canonical names.
+      province: normalizeProvince(input.province),
       stage: String(stage), // mobile `stage` is a stage_enum ('0'..'4')
       goals,
       learning_interests: learningInterests,

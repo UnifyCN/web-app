@@ -38,6 +38,11 @@ import {
   getMockPracticesBySubmodule,
 } from "@/lib/mock/practices";
 import { mockLearningProgress } from "@/lib/mock/progress";
+import {
+  isVisibleForProvince,
+  resolveUserProvince,
+  type Province,
+} from "@/lib/province";
 
 /**
  * Learn data access. Sanity owns module/submodule/lesson content; Supabase
@@ -143,6 +148,25 @@ interface UserModuleState {
   progressByModuleId: Record<string, LearnProgressRow>;
   favouriteIds: Set<string>;
   completedLessonIds: Set<string>;
+  /** The user's province as one of the 13 names, or null (national modules
+   * only). See lib/province.ts. */
+  province: Province | null;
+}
+
+/**
+ * The user's province for content targeting: one of the 13 names, or null when
+ * the profile has none (then only national modules show, as on mobile). A
+ * failed read also gives null, so Learn still lists the national modules
+ * instead of failing as a whole.
+ */
+async function getUserProvince(userId: string): Promise<Province | null> {
+  const { data, error } = await createClient()
+    .from("user_onboarding_profiles")
+    .select("province")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) return null;
+  return resolveUserProvince(data?.province);
 }
 
 /**
@@ -156,6 +180,7 @@ async function loadUserModuleState(): Promise<UserModuleState> {
     progressByModuleId: {},
     favouriteIds: new Set<string>(),
     completedLessonIds: new Set<string>(),
+    province: null,
   };
   if (!isSupabaseConfigured()) {
     // Env-not-configured: reflect the in-memory mock favourites.
@@ -166,7 +191,7 @@ async function loadUserModuleState(): Promise<UserModuleState> {
   if (!userId) return state;
 
   const supabase = createClient();
-  const [progressRes, favRes, lessonsRes] = await Promise.all([
+  const [progressRes, favRes, lessonsRes, province] = await Promise.all([
     supabase
       .from("learn_progress")
       .select("module_id, status, completed_at, updated_at")
@@ -180,11 +205,13 @@ async function loadUserModuleState(): Promise<UserModuleState> {
       .select("sanity_lesson_id, is_completed")
       .eq("user_id", userId)
       .eq("is_completed", true),
+    getUserProvince(userId),
   ]);
   if (progressRes.error) throw progressRes.error;
   if (favRes.error) throw favRes.error;
   if (lessonsRes.error) throw lessonsRes.error;
 
+  state.province = province;
   state.progressByModuleId = Object.fromEntries(
     ((progressRes.data ?? []) as LearnProgressRow[]).map((r) => [
       r.module_id,
@@ -220,8 +247,13 @@ export async function getModules(
     sanityClient.fetch<ModuleRow[]>(MODULES_LIST_QUERY, { lang: language }),
     loadUserModuleState(),
   ]);
-  const sanityModules = rows.map(mergeModuleTreeI18n);
-  const { progressByModuleId, favouriteIds, completedLessonIds } = userState;
+  const { progressByModuleId, favouriteIds, completedLessonIds, province } =
+    userState;
+  // Modules for another province are left out entirely (lists, search,
+  // recommendations, resume cards), as on mobile. See lib/province.ts.
+  const sanityModules = rows
+    .filter((row) => isVisibleForProvince(row.province, province))
+    .map(mergeModuleTreeI18n);
 
   return sanityModules.map((mod) => {
     const status: ModuleStatus =
@@ -344,6 +376,22 @@ export async function getModule(
     progressPercent,
     isFavourite,
   };
+}
+
+/**
+ * One module's province tag, for deciding whether the user may open it.
+ * `found` is false when no such module exists, so the page keeps its own
+ * not-found state. Without Sanity (mock data) every module is national.
+ */
+export async function getModuleProvince(
+  moduleId: string,
+): Promise<{ found: boolean; province: string | null }> {
+  if (!isSanityConfigured()) return { found: true, province: null };
+  const row = await sanityClient.fetch<{ province?: string | null } | null>(
+    `*[_type == "module" && _id == $moduleId][0]{ province }`,
+    { moduleId },
+  );
+  return { found: row != null, province: row?.province ?? null };
 }
 
 /* ---- Lesson body ------------------------------------------------------ */
@@ -724,17 +772,20 @@ export async function getLearningProgressSummary(
   // can compute real percent. One Sanity query + one Supabase query, both
   // in parallel.
   const moduleIds = rows.map((r) => r.module_id);
-  type SummaryModuleRow = Pick<SanityModule, "_id" | "title" | "colorTheme"> & {
+  type SummaryModuleRow = Pick<
+    SanityModule,
+    "_id" | "title" | "colorTheme" | "province"
+  > & {
     lessonIds?: string[];
     i18n?: { title?: string | null } | null;
   };
-  const [summaryRows, lessonsRes] = await Promise.all([
+  const [summaryRows, lessonsRes, province] = await Promise.all([
     sanityClient.fetch<SummaryModuleRow[]>(
       // Base-language guards on the nested listings keep lessonIds scoped to
       // base docs (progress is tracked against base ids); the overlay only
       // localizes the module title shown on the Home progress card.
       `*[_type == "module" && _id in $ids]{
-        _id, title, colorTheme { hex },
+        _id, title, colorTheme { hex }, province,
         "i18n": select($lang != "en" => *[_type == "translation.metadata" && references(^._id)][0].translations[_key == $lang][0].value->{ title }, null),
         "lessonIds": *[_type == "submodule" && references(^._id) && (language == "en" || !defined(language))][]{
           "ids": *[_type == "lesson" && references(^._id) && (language == "en" || !defined(language))]._id
@@ -747,6 +798,7 @@ export async function getLearningProgressSummary(
       .select("sanity_lesson_id, is_completed")
       .eq("user_id", userId)
       .eq("is_completed", true),
+    getUserProvince(userId),
   ]);
   if (lessonsRes.error) throw lessonsRes.error;
 
@@ -761,7 +813,8 @@ export async function getLearningProgressSummary(
   return rows
     .map((r) => {
       const mod = sanityById.get(r.module_id);
-      if (!mod) return null;
+      // Started before a move to another province: hidden, as on mobile.
+      if (!mod || !isVisibleForProvince(mod.province, province)) return null;
       return {
         moduleId: mod._id,
         moduleName: mod.i18n?.title ?? mod.title,

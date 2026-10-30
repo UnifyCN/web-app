@@ -1761,6 +1761,7 @@
     "visitWebsiteA11y": "Visitar el sitio web de {{name}}",
     "opensInBrowser": "{{name}}, se abre en el navegador",
     "notFound": "Este recurso ya no está disponible.",
+    "morePartnersComingSoon": "Pronto habrá más socios en {{province}}.",
     "category": {
       "gettingSettled": {
         "label": "Primeros pasos",

@@ -12,6 +12,7 @@ import {
   PARTNER_CATEGORY_LABEL_KEYS,
 } from "@/lib/resources/categories";
 import { useResourcePartners } from "@/hooks/useResourcePartners";
+import { MorePartnersNote } from "@/components/resources/MorePartnersNote";
 import { applyFilters } from "@/lib/resources/filters";
 import { selectPartnersMatching } from "@/lib/resources/search";
 import { trackResourcesCategoryOpened } from "@/lib/analytics";
@@ -78,6 +79,8 @@ function CategoryBody({ category }: { category: PartnerCategory }) {
         <BackLink href="/resources" label={t("resources.navLabel")} />
         <ResourcesSearch value={query} onCommit={setQuery} />
       </div>
+
+      <MorePartnersNote />
 
       <header className="flex flex-col gap-[3px]">
         <h1 className="text-[28px] leading-tight font-bold tracking-[-0.3px] break-words text-res-heading md:text-[32px]">
