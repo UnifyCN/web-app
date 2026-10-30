@@ -30,7 +30,7 @@ export function useAccountId(): string | null | undefined {
  */
 export function useAccountGeneration(): number {
   useAccountId();
-  // A pending read does not start a new session. Keep its existing generation;
-  // the server snapshot remains zero for hydration.
-  return useSyncExternalStore(subscribeAccountEpoch, accountEpoch, () => 0);
+  // The subscription above requests renders. Keys use the live owner epoch:
+  // catching up from the server snapshot does not change account ownership.
+  return accountEpoch();
 }

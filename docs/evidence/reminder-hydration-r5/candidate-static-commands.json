@@ -1,0 +1,48 @@
+[
+  {
+    "name": "types",
+    "argv": [
+      "npx",
+      "tsc",
+      "--noEmit",
+      "--incremental",
+      "false"
+    ],
+    "exit": 0,
+    "seconds": 12.930643042000156
+  },
+  {
+    "name": "changed-lint",
+    "argv": [
+      "npx",
+      "eslint",
+      "hooks/useAccountId.ts",
+      "components/companion/tasks/TaskSelectionAccountSession.test.tsx"
+    ],
+    "exit": 0,
+    "seconds": 2.39582558300026
+  },
+  {
+    "name": "i18n",
+    "argv": [
+      "npm",
+      "run",
+      "check-i18n"
+    ],
+    "exit": 0,
+    "seconds": 0.14349704200139968
+  },
+  {
+    "name": "full-lint",
+    "argv": [
+      "npx",
+      "eslint",
+      "-f",
+      "json",
+      "-o",
+      "docs/evidence/reminder-hydration-r5/candidate-full-lint.json"
+    ],
+    "exit": 1,
+    "seconds": 10.283618999997998
+  }
+]
