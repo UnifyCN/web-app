@@ -155,7 +155,9 @@ interface UserModuleState {
 
 /**
  * The user's province for content targeting: one of the 13 names, or null when
- * the profile has none (then only national modules show, as on mobile).
+ * the profile has none (then only national modules show, as on mobile). A
+ * failed read also gives null, so Learn still lists the national modules
+ * instead of failing as a whole.
  */
 async function getUserProvince(userId: string): Promise<Province | null> {
   const { data, error } = await createClient()
@@ -163,7 +165,7 @@ async function getUserProvince(userId: string): Promise<Province | null> {
     .select("province")
     .eq("id", userId)
     .maybeSingle();
-  if (error) throw error;
+  if (error) return null;
   return resolveUserProvince(data?.province);
 }
 
