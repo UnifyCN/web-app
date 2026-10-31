@@ -136,7 +136,8 @@ export const HOBBY_LABEL = Object.fromEntries(
 
 /* ----- Location --------------------------------------------------- */
 
-/** All 13 provinces & territories. `code` is stored; `name` is shown. */
+/** All 13 provinces & territories. `name` is both stored and shown (the shared
+ *  DB and the mobile app use full names); `code` is only a short key. */
 export const PROVINCES = [
   { code: "AB", name: "Alberta" },
   { code: "BC", name: "British Columbia" },
@@ -185,7 +186,8 @@ export const CITY_OPTIONS = [
 ] as const;
 
 /** City → province code, used to auto-fill the province when a known city is
- *  picked. Cities not listed here fall through to a manual province choice. */
+ *  picked. Cities not listed here fall through to a manual province choice.
+ *  Map the code through PROVINCE_NAME before storing it. */
 export const CITY_TO_PROVINCE: Record<string, ProvinceCode> = {
   Toronto: "ON",
   Vancouver: "BC",

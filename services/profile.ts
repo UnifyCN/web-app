@@ -25,7 +25,13 @@ import {
   claimUsername,
   generateUsernameBase,
 } from "@/lib/supabase/username";
-import { calculateUserStage } from "@/lib/onboarding/calculateUserStage";
+import {
+  calculateUserStage,
+  resolveProfileStage,
+  stageCacheIsCurrent,
+} from "@/lib/onboarding/calculateUserStage";
+import { normalizeStoredArrivalDate } from "@/lib/onboarding/arrivalStage";
+import { normalizeProvince } from "@/lib/province";
 import {
   currentUser,
   getUserById as findUser,
@@ -117,6 +123,16 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
     if (healed) username = healed;
   }
 
+  // The stored `stage` is only a cache: the stage moves on as time passes, so
+  // it is computed from the arrival date on every read (as on mobile) and the
+  // user's own row is corrected when it is out of date.
+  // (A dateless profile with stored stage 0 keeps stage 0 and is not
+  // rewritten: see resolveProfileStage.)
+  const computedStage = onb
+    ? resolveProfileStage(onb.arrival_date, onb.stage)
+    : null;
+  if (onb) void syncStageCache(user.id, onb.stage, computedStage);
+
   return {
     id: row.id,
     username,
@@ -134,10 +150,11 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
           firstName: row.first_name ?? null,
           persona: onb.persona as Persona,
           referralSource: onb.referral_source ?? null,
-          arrivalDate: onb.arrival_date ? onb.arrival_date.slice(0, 10) : null,
+          arrivalDate: normalizeStoredArrivalDate(onb.arrival_date),
           city: onb.city,
-          province: onb.province,
-          stage: Number(onb.stage) as Stage,
+          // Older web builds stored codes ("ON"); always hand out the full name.
+          province: normalizeProvince(onb.province) ?? onb.province,
+          stage: computedStage,
           goals: onb.goals ?? [],
           learningInterests: onb.learning_interests ?? [],
           hobbies: onb.hobbies ?? [],
@@ -148,6 +165,29 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
         }
       : null,
   };
+}
+
+/**
+ * Keep the user's stored `stage` in line with the stage computed from their
+ * arrival date (mobile's `syncStageCache`): mobile reads it on other screens
+ * and in edge functions. Writes only when it differs, only the user's own row
+ * (own-row RLS), and never throws: a failed write just retries on the next read.
+ */
+async function syncStageCache(
+  userId: string,
+  storedStage: unknown,
+  computedStage: Stage | null,
+): Promise<void> {
+  if (stageCacheIsCurrent(storedStage, computedStage)) return;
+  try {
+    const { error } = await createClient()
+      .from("user_onboarding_profiles")
+      .update({ stage: computedStage === null ? null : String(computedStage) })
+      .eq("id", userId);
+    if (error) console.warn("syncStageCache: update failed", error);
+  } catch (error) {
+    console.warn("syncStageCache: update failed", error);
+  }
 }
 
 export async function getUserById(
@@ -215,7 +255,11 @@ export async function getUserById(
  */
 export async function getPublicOnboarding(
   id: string,
-): Promise<{ persona: Persona; arrivalDate: string | null; stage: Stage } | null> {
+): Promise<{
+  persona: Persona;
+  arrivalDate: string | null;
+  stage: Stage | null;
+} | null> {
   if (!isSupabaseConfigured()) return null;
   try {
     const res = await fetch("/api/onboarding-profile", {
@@ -238,7 +282,7 @@ export async function getPublicOnboarding(
         : null;
     return {
       persona: rawProfile.persona as Persona,
-      arrivalDate: arrivalDate ? arrivalDate.slice(0, 10) : null,
+      arrivalDate: normalizeStoredArrivalDate(arrivalDate),
       stage: calculateUserStage(arrivalDate),
     };
   } catch (error) {
@@ -251,7 +295,7 @@ export async function getPublicOnboarding(
 export function publicOnboardingProfile(
   id: string,
   firstName: string | null,
-  fields: { persona: Persona; arrivalDate: string | null; stage: Stage },
+  fields: { persona: Persona; arrivalDate: string | null; stage: Stage | null },
 ): NonNullable<UserProfile["onboarding"]> {
   return {
     id,

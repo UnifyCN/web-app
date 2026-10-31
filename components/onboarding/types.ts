@@ -3,8 +3,9 @@ import type { SaveOnboardingInput } from "@/services/onboarding";
 
 /**
  * Client-side wizard state. `arrivalDate` is split into a month/year picker
- * plus a "haven't arrived" flag; it's recombined into `YYYY-MM-01` on save.
- * `province` holds the 2-letter code (e.g. "ON").
+ * (past or future, as on mobile); it's recombined into `YYYY-MM-01` on save.
+ * `province` holds the full name (e.g. "Ontario"), as mobile stores it; an old
+ * 2-letter value is read through normalizeProvince when the profile loads.
  */
 export interface OnboardingDraft {
   firstName: string;
@@ -12,7 +13,6 @@ export interface OnboardingDraft {
   referralSource: string | null;
   arrivalMonth: number | null; // 1–12
   arrivalYear: number | null;
-  notArrived: boolean;
   city: string;
   province: string;
   goals: string[];
@@ -34,7 +34,6 @@ export const EMPTY_DRAFT: OnboardingDraft = {
   referralSource: null,
   arrivalMonth: null,
   arrivalYear: null,
-  notArrived: false,
   city: "",
   province: "",
   goals: [],
@@ -49,7 +48,6 @@ function pad2(n: number): string {
 
 /** Recombine the picker fields into the stored `YYYY-MM-01`, or null. */
 export function toArrivalDate(draft: OnboardingDraft): string | null {
-  if (draft.notArrived) return null;
   if (draft.arrivalMonth && draft.arrivalYear) {
     return `${draft.arrivalYear}-${pad2(draft.arrivalMonth)}-01`;
   }
@@ -90,7 +88,6 @@ export function draftFromProfile(o: UserOnboardingProfile): OnboardingDraft {
     referralSource: o.referralSource ?? null,
     arrivalMonth,
     arrivalYear,
-    notArrived: o.arrivalDate === null,
     city: o.city ?? "",
     province: o.province ?? "",
     goals: o.goals ?? [],

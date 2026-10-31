@@ -39,7 +39,9 @@ interface StepDef {
 const ALWAYS = () => true;
 
 // Mirrors the 11-step mobile flow. Both onboard and edit run the full set
-// (mobile's edit variant keeps step 1); only Persona blocks advancing.
+// (mobile's edit variant keeps step 1). Persona and the arrival month block
+// advancing, as on mobile: the stage (and so the checklist) comes from the
+// arrival date, and a missing date would read as "unknown", not "not arrived".
 const ALL_STEPS: StepDef[] = [
   { key: "name", Component: NameStep, canAdvance: ALWAYS },
   {
@@ -48,7 +50,11 @@ const ALL_STEPS: StepDef[] = [
     canAdvance: (d) => d.persona !== null,
   },
   { key: "referral", Component: ReferralStep, canAdvance: ALWAYS },
-  { key: "arrival", Component: ArrivalDateStep, canAdvance: ALWAYS },
+  {
+    key: "arrival",
+    Component: ArrivalDateStep,
+    canAdvance: (d) => d.arrivalMonth !== null && d.arrivalYear !== null,
+  },
   { key: "location", Component: LocationStep, canAdvance: ALWAYS },
   { key: "goals", Component: GoalsStep, canAdvance: ALWAYS },
   { key: "interests", Component: InterestsStep, canAdvance: ALWAYS },

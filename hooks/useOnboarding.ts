@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as onboarding from "@/services/onboarding";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
 import { TASKS_KEY } from "@/hooks/useChecklist";
+import { LEARNING_PROGRESS_KEY, MODULES_KEY } from "@/hooks/useLearn";
 
 /** React Query mutation for saving the onboarding profile. */
 export function useSaveOnboarding() {
@@ -10,9 +11,12 @@ export function useSaveOnboarding() {
     mutationFn: onboarding.saveOnboarding,
     onSuccess: () => {
       // Re-read the profile (persona/stage/location/goals/interests) and let
-      // the checklist re-filter by the new persona + stage.
+      // the checklist and Learn re-filter by the new persona, stage and
+      // province.
       queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
       queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+      queryClient.invalidateQueries({ queryKey: MODULES_KEY });
+      queryClient.invalidateQueries({ queryKey: LEARNING_PROGRESS_KEY });
     },
   });
 }
@@ -34,5 +38,22 @@ export function useUpdateLearningReminders() {
     mutationFn: onboarding.updateLearningReminders,
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
+  });
+}
+
+/**
+ * Save the arrival month from the one-time prompt; refreshes everything the
+ * stage feeds (profile, checklist, Learn).
+ */
+export function useUpdateArrivalDate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: onboarding.updateArrivalDate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+      queryClient.invalidateQueries({ queryKey: MODULES_KEY });
+      queryClient.invalidateQueries({ queryKey: LEARNING_PROGRESS_KEY });
+    },
   });
 }

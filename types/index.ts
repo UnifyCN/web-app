@@ -37,7 +37,9 @@ export interface UserOnboardingProfile {
   arrivalDate: string | null;
   city: string;
   province: string;
-  stage: Stage;
+  /** Computed from `arrivalDate` by mobile's rule; null when there is no
+   * usable arrival date (unknown, not "not arrived"). */
+  stage: Stage | null;
   goals: string[];
   learningInterests: string[];
   /** Hobby slugs (see lib/onboarding/constants). */
@@ -237,18 +239,6 @@ export interface DailyTip {
   tipText: string;
   date: string;
   sources: DailyTipSource[] | null;
-}
-
-export type CircleStatus = "default" | "waiting" | "in_circle";
-
-export interface CommunityCircle {
-  id: string;
-  persona: Persona;
-  timeInCanada: Stage;
-  goal: string;
-  topics: string[];
-  status: CircleStatus;
-  endsAt: string | null;
 }
 
 /* ----- Companion (chat) ------------------------------------------- */
@@ -460,6 +450,9 @@ export interface SanityModule {
   personas?: Persona[];
   /** Learning-interest slugs this module covers (recommendation scoring). */
   interests?: string[];
+  /** Province this module is only for (one of the 13 full names), or empty
+   * for a national module. See lib/province.ts. */
+  province?: string | null;
   submodules?: SanitySubmodule[];
 }
 
@@ -691,6 +684,9 @@ export interface Partner {
   /** The organization's own name. A proper noun — never translated. */
   name: string;
   category: PartnerCategory;
+  /** Provinces this partner serves (full names, see lib/province.ts). Absent
+   * for a national partner, which shows to everyone. Mirrors mobile's tags. */
+  provinces?: readonly string[];
   partnershipType: PartnershipType;
   // Contact + cost — every field optional; render only when populated. An
   // absent value means the partner does not publish it, never "free".

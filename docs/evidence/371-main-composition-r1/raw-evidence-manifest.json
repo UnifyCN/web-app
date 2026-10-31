@@ -1,0 +1,217 @@
+[
+  {
+    "path": "ancestor-checklist.ts.txt",
+    "bytes": 14278,
+    "sha256": "4d005bbed3fd65807579200f03acec0476d7630d5e74bbb091a966585651236b"
+  },
+  {
+    "path": "auto-merge-checklist.ts.txt",
+    "bytes": 16297,
+    "sha256": "43b909536e5c6d0bd296a688f47d8667082eb34fa2639175a0356174d1db5051"
+  },
+  {
+    "path": "build.json",
+    "bytes": 269,
+    "sha256": "6225a8a1a575ed4354e54c6f9a01a4ba5f038d0adf2422d03f9c917dea0dbc54"
+  },
+  {
+    "path": "build.log",
+    "bytes": 2201,
+    "sha256": "b79283bd1f4e405f3c0134622540ada5f8fd4d5bd5a0b18c4227e7d1bfe16abc"
+  },
+  {
+    "path": "changed-lint.json",
+    "bytes": 376,
+    "sha256": "194f17149c9fed3ea882c9eda39eb0d0bbd678af563ba4d13ae3ae2f638ba6eb"
+  },
+  {
+    "path": "changed-lint.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "composition-tests.json",
+    "bytes": 481,
+    "sha256": "4a1c21de7c7cb40e661c1e0049eae721e02f4e0e1886d00491571145e9b0ea22"
+  },
+  {
+    "path": "composition-tests.log",
+    "bytes": 522,
+    "sha256": "3ddd887fc65db4c719d3892ea6fdecf7a0021277a563196b683869d64c54aa6e"
+  },
+  {
+    "path": "controlled-probes.json",
+    "bytes": 536,
+    "sha256": "6cfb613e5c99dc077e9c60feeabb6608775af233ed577b8100e2b765c3d2f24f"
+  },
+  {
+    "path": "edge-check.json",
+    "bytes": 246,
+    "sha256": "3e21e24dc9379799d7772522edf2b9e6c0051d39345ad7b2bcb9ee08e7a7f8a3"
+  },
+  {
+    "path": "edge-check.log",
+    "bytes": 14400,
+    "sha256": "e66b0ef862a182645c59d31aa0c4df1756a628b8f3a2243b409bfc3100987e68"
+  },
+  {
+    "path": "edge-test.json",
+    "bytes": 246,
+    "sha256": "67974077e9e759acc8383beb3b17891f93482b563a34ea1f0efb8b8da8cdd3bf"
+  },
+  {
+    "path": "edge-test.log",
+    "bytes": 280119,
+    "sha256": "6320597fe11968eaefc5019a63585dd89c3035f9828e49c4dc1ea2424a576dd3"
+  },
+  {
+    "path": "edge-worker-corrected-cwd.json",
+    "bytes": 570,
+    "sha256": "c44660aa32233f87638aef21c54f42abb527d6043e8af1f56ee82c9ae0782f3f"
+  },
+  {
+    "path": "edge-worker-corrected-cwd.log",
+    "bytes": 118,
+    "sha256": "50d022ece65302251e768038b4689a14c6a51a8427e625fb0e6a4ef2e364e8e6"
+  },
+  {
+    "path": "edge-worker.json",
+    "bytes": 249,
+    "sha256": "f084440b7ab9e9183162b1bd20fba408acc66088e00b5bd6a41dbf1dbb7229ef"
+  },
+  {
+    "path": "edge-worker.log",
+    "bytes": 2200,
+    "sha256": "c597380e6fab5565196b27477f2833694cdb1169767ba334ab14d6322f9d7833"
+  },
+  {
+    "path": "edge_gate.py",
+    "bytes": 1048,
+    "sha256": "5f91c58288d90786bff891cf39019855fb3ab01292a4a88b93f691d651b1c002"
+  },
+  {
+    "path": "embedding-provenance.json",
+    "bytes": 518,
+    "sha256": "3db29c577b745ab1e8f850b3935c47a0958d2ac3b439a17051c0e649c0e3b1b7"
+  },
+  {
+    "path": "full-lint.json",
+    "bytes": 273,
+    "sha256": "4cc36177b7e17538bcd0e3ee17648f30cb48de1abfb34acf444563082ac55c50"
+  },
+  {
+    "path": "full-lint.log",
+    "bytes": 2698,
+    "sha256": "be5bce4b9eae2f365cccbc30751c9feada3492cd88055b1e1445ee9fc4090d31"
+  },
+  {
+    "path": "full-test.json",
+    "bytes": 262,
+    "sha256": "67525d78dbdd947c272c13d80aa7924a23f8a7f4623c9a9fff66a3aeb55afcd2"
+  },
+  {
+    "path": "full-test.log",
+    "bytes": 25184,
+    "sha256": "bd9541524d6de5ed55c9e128d00ce65e67547262c38c47cf8e723735d2052068"
+  },
+  {
+    "path": "i18n.json",
+    "bytes": 273,
+    "sha256": "822ad054c30ac66bd595fa89d1309726ed8c04c095c8b18a2c0f335e3357f3ae"
+  },
+  {
+    "path": "i18n.log",
+    "bytes": 226,
+    "sha256": "64c4881bbe3dd838dfcc6c969ce48eb1f6ec6e9d6fa5078cecc2a7e1b7919b49"
+  },
+  {
+    "path": "incoming-main-byte-audit.json",
+    "bytes": 4261,
+    "sha256": "440086a8c372a3b3979620b985d907417418c4ee4c0c871c787b73344b33f5ec"
+  },
+  {
+    "path": "lint-baseline-map.json",
+    "bytes": 1118,
+    "sha256": "151955c4deccb15ffc8efabc4ef7c46abb19d57175b818c7ce642e3a52f3597f"
+  },
+  {
+    "path": "live-main-merge-tree.txt",
+    "bytes": 540,
+    "sha256": "0eb6d1432a1056513a7b3a8aa0718bceca4b1b3526aaada4e49cdca3e678f891"
+  },
+  {
+    "path": "locale-merge-audit.json",
+    "bytes": 601,
+    "sha256": "9c31a3bfdb615786cfe8ce93a6d3a8edf1770b61603beaded614fd3b5eaaf9b3"
+  },
+  {
+    "path": "main-parent-checklist.ts.txt",
+    "bytes": 15642,
+    "sha256": "3cbc6498784ec603baf0dbcbebcbdca34b9f6cb4d725c153d697e927ffe99f35"
+  },
+  {
+    "path": "main-pin.json",
+    "bytes": 216,
+    "sha256": "3aa2f6b3201751d14e7e7565e59e2860074fd6863f6e9dc0b166e2112c6c16c2"
+  },
+  {
+    "path": "merge-tree-command.json",
+    "bytes": 134,
+    "sha256": "b6d71d2eba161ec3953c8166c3ae55278c67d97e8781abd3b28d38679dd3bc2d"
+  },
+  {
+    "path": "merge-tree.txt",
+    "bytes": 41,
+    "sha256": "fb217b9c05798c5831ea89ccf946bf8fb3e94069c701dcddb802af595e9f620f"
+  },
+  {
+    "path": "mobile-main-embeddings.json",
+    "bytes": 11462,
+    "sha256": "457804553e1d36cdd8b5579fef77466d6bf25e4f3cfa76dc5ea6998bbb799193"
+  },
+  {
+    "path": "profile-parent-checklist.ts.txt",
+    "bytes": 14831,
+    "sha256": "15e482ac21eaa55c4fb9fbdc060f8db58af668cdbdc1d5dbd4236e92fb884d62"
+  },
+  {
+    "path": "profile-parent-control.json",
+    "bytes": 431,
+    "sha256": "e77851ef462ac98f4e37e80248feb995b50ace56bff959018defe9e69cd32bac"
+  },
+  {
+    "path": "profile-parent-control.log",
+    "bytes": 7487,
+    "sha256": "9b882b0697c0abb36fe5b404a812754cb17ff76cab104754e4bf8178f6691d65"
+  },
+  {
+    "path": "province-filter-fault.json",
+    "bytes": 449,
+    "sha256": "1ddd2ce9d1ea5a1c67239341ca5ddae1fb2ffa6f66de047eb9b9dac371f5a760"
+  },
+  {
+    "path": "province-filter-fault.log",
+    "bytes": 17476,
+    "sha256": "db00aaac690c698c34aeee417d3afa382c1a2858a3105ecf84c348ddde43d2bb"
+  },
+  {
+    "path": "run.py",
+    "bytes": 655,
+    "sha256": "d5897c638427f7b9ff4d49d38242e4e27ebe4bab56a664de81edcf88fbb5dc41"
+  },
+  {
+    "path": "types.json",
+    "bytes": 302,
+    "sha256": "1db78b398ddf33763d7f1d6a8c955ce07ae50212616bf3ffd182fc332f29fa7c"
+  },
+  {
+    "path": "types.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "worktree-precheck.json",
+    "bytes": 458,
+    "sha256": "47e02873fa6a61780e6953a962f1ce315cf27c9ad2791eb758505876612fa22e"
+  }
+]

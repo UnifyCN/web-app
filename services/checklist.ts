@@ -8,12 +8,22 @@ import { mergeI18nOverlay, sanityClient, type WithI18n } from "@/lib/sanity";
 import type { SupportedLanguage } from "@/lib/i18n/config";
 import { canonicalProvince } from "@/supabase/functions/rag-query/lib/province";
 import { tasks as mockTasks } from "@/lib/mock/tasks";
+import {
+  checklistStage,
+  resolveProfileStage,
+} from "@/lib/onboarding/calculateUserStage";
+import {
+  isVisibleForProvince,
+  resolveUserProvince,
+  type Province,
+} from "@/lib/province";
 
 /**
  * Checklist data access. Content comes from Sanity (filtered by the user's
- * persona + stage); per-user progress comes from Supabase. Pattern mirrors
- * the mobile app: only INSERT into `user_tasks` when the user marks an item
- * complete — Sanity items with no row are uncompleted by default.
+ * persona + stage + province, see lib/province.ts); per-user progress comes
+ * from Supabase. Pattern mirrors the mobile app: only INSERT into `user_tasks`
+ * when the user marks an item complete — Sanity items with no row are
+ * uncompleted by default.
  */
 
 const CLASS_TO_PRIORITY: Record<string, Priority> = {
@@ -66,8 +76,8 @@ const CHECKLIST_GROQ = `*[
   class_order,
   link_tab,
   "i18n": select($lang != "en" => *[_type == "translation.metadata" && references(^._id)][0].translations[_key == $lang][0].value->{ title, description, longer_description }, null),
-  "module": module->{_id},
-  "submodule": submodule->{_id, "moduleId": module._ref}
+  "module": module->{_id, province},
+  "submodule": submodule->{_id, "moduleId": module._ref, "moduleProvince": module->province}
 }`;
 
 interface SanityChecklistItem {
@@ -79,8 +89,12 @@ interface SanityChecklistItem {
   class: string;
   class_order: number;
   link_tab: string | null;
-  module: { _id: string } | null;
-  submodule: { _id: string; moduleId: string | null } | null;
+  module: { _id: string; province?: string | null } | null;
+  submodule: {
+    _id: string;
+    moduleId: string | null;
+    moduleProvince?: string | null;
+  } | null;
 }
 
 /**
@@ -90,14 +104,26 @@ interface SanityChecklistItem {
  * the Learn index. Every Sanity checklist doc carries at least one target, so
  * the final fallback is effectively a safety net.
  */
-function resolveLearnHowHref(item: SanityChecklistItem): string | undefined {
+function resolveLearnHowHref(
+  item: SanityChecklistItem,
+  userProvince: Province | null,
+): string | undefined {
   if (item.link_tab && TAB_TO_PATH[item.link_tab]) {
     return TAB_TO_PATH[item.link_tab];
   }
-  if (item.submodule?._id && item.submodule.moduleId) {
+  // A link into a module for another province is dropped (as on mobile): the
+  // module page would send the user straight back to Learn.
+  if (
+    item.submodule?._id &&
+    item.submodule.moduleId &&
+    isVisibleForProvince(item.submodule.moduleProvince, userProvince)
+  ) {
     return `/learn/${item.submodule.moduleId}/${item.submodule._id}`;
   }
-  if (item.module?._id) {
+  if (
+    item.module?._id &&
+    isVisibleForProvince(item.module.province, userProvince)
+  ) {
     return `/learn/${item.module._id}`;
   }
   return "/learn";
@@ -106,8 +132,8 @@ function resolveLearnHowHref(item: SanityChecklistItem): string | undefined {
 async function getChecklistByPersonaAndStage(
   persona: Persona,
   stageSlug: string,
-  province: string | null,
   language: SupportedLanguage = "en",
+  province: Province | null = null,
 ): Promise<SanityChecklistItem[]> {
   try {
     const result = await sanityClient.fetch<WithI18n<SanityChecklistItem>[]>(
@@ -115,11 +141,11 @@ async function getChecklistByPersonaAndStage(
       { persona, stage: stageSlug, lang: language },
     );
     if (!Array.isArray(result)) return [];
-    const currentProvince = canonicalProvince(province);
+    // Keep list tags and legacy aliases when applying the shared visibility rule.
     return result.map((row): SanityChecklistItem => mergeI18nOverlay(row)).filter(item => {
       const tags = item.province == null || item.province === '' ? [] :
         Array.isArray(item.province) ? item.province : [item.province];
-      return tags.length === 0 || (currentProvince !== null && tags.some(tag => canonicalProvince(tag) === currentProvince));
+      return isVisibleForProvince(tags.map(tag => canonicalProvince(tag) ?? tag), province);
     });
   } catch (error) {
     console.error("Sanity checklist fetch failed", error);
@@ -178,7 +204,7 @@ export async function getTasks(
   const [onboardingRes, userTasksRes, customRes, orderRes] = await Promise.all([
     supabase
       .from("user_onboarding_profiles")
-      .select("persona, stage, province")
+      .select("persona, arrival_date, stage, province")
       .eq("id", userId)
       .maybeSingle(),
     supabase
@@ -204,12 +230,22 @@ export async function getTasks(
   if (!onboarding) return mockTasks;
 
   const persona = onboarding.persona as Persona;
-  const stageSlug = STAGE_TO_SLUG[Number(onboarding.stage) as Stage];
+  // Stage comes from the arrival date (the stored column is only a cache that
+  // goes stale as time passes); an unknown date gets the first-3-months
+  // checklist, as on mobile, except web's old dateless pre-arrival profiles,
+  // which keep stage 0 until they set a date.
+  const stageSlug =
+    STAGE_TO_SLUG[
+      checklistStage(
+        resolveProfileStage(onboarding.arrival_date, onboarding.stage),
+      )
+    ];
+  const userProvince = resolveUserProvince(onboarding.province);
   const items = await getChecklistByPersonaAndStage(
     persona,
     stageSlug,
-    onboarding.province ?? null,
     language,
+    userProvince,
   );
 
   // Sanity errors are swallowed inside getChecklistByPersonaAndStage so a CMS
@@ -246,7 +282,7 @@ export async function getTasks(
       completed: row?.completed ?? false,
       completedAt: row?.completed_at ?? null,
       dismissedAt: row?.dismissed_at ?? null,
-      learnHowHref: resolveLearnHowHref(item),
+      learnHowHref: resolveLearnHowHref(item, userProvince),
       isCustom: false,
     };
   });
