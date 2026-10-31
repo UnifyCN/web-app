@@ -32,6 +32,12 @@ Deno.test({
     const saved = await a.client.from('user_onboarding_profiles').select('province,city').single();
     assertEquals(saved.data, { province: 'Alberta', city: 'Vancouver' });
     assertEquals((await read(a)).json.profile.province, 'Alberta');
+    const later = await said(a, 'Help me settle in my saved province.');
+    assertEquals(later.conversation_id === m.conversation_id, false);
+    const fresh = await prepare(a, { type: 'task.create_custom', title: 'Synthetic new-conversation task', priority: 'Do soon' },
+      { source: { conversation_id: later.conversation_id, message_id: later.message_id } });
+    assertEquals(fresh.status, 200, JSON.stringify(fresh.json));
+    assertEquals(fresh.json.proposal.context.profile.province, 'Alberta');
     assertEquals((await sql`select count(*)::int n from companion_saved_details where user_id=${a.id}`)[0].n, 0);
   },
 });
@@ -115,6 +121,27 @@ Deno.test({
     const w = await apply(a, [op], { authorization: command(next.message_id) });
     assertEquals((await undo(a, w.json.receipt.operation_id)).status, 200);
     assertEquals((await read(a)).json.profile.province, 'British Columbia');
+  },
+});
+
+Deno.test({
+  name: 'profile: an arrived date changes the derived stage and current Undo restores the missing date',
+  ...testOpts,
+  fn: async () => {
+    // Wrong if an arrived date stays pre-arrival, changes the province, or Undo loses the original missing date.
+    const a=await newAccount('profile-stage');
+    await a.client.from('user_onboarding_profiles').insert({id:a.id,province:'British Columbia',arrival_date:null,stage:0}).throwOnError();
+    const [{arrived}]=await sql`select (current_date-400)::text arrived`;
+    const message=await said(a,'Update my profile arrival date to '+arrived);
+    const operation=(await interpret(a,message.message_id)).json.command.operation;
+    const saved=await apply(a,[operation],{authorization:command(message.message_id)});
+    assertEquals(saved.status,200,JSON.stringify(saved.json));
+    const actual=await a.client.from('user_onboarding_profiles').select('arrival_date,stage,province').single();
+    assertEquals(actual.data?.arrival_date.slice(0,10),arrived);
+    assertEquals([Number(actual.data?.stage),actual.data?.province],[3,'British Columbia']);
+    assertEquals((await undo(a,saved.json.receipt.operation_id)).status,200);
+    const restored=await a.client.from('user_onboarding_profiles').select('arrival_date,stage,province').single();
+    assertEquals(restored.data,{arrival_date:null,stage:0,province:'British Columbia'});
   },
 });
 

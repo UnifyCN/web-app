@@ -35,6 +35,10 @@ Deno.test({name:'profile validation: forged controls, messages, sources, identit
   await a.client.from('user_onboarding_profiles').insert({id:a.id,province:'British Columbia'}).throwOnError();
   await b.client.from('user_onboarding_profiles').insert({id:b.id,province:'Quebec'}).throwOnError();
   const m=await said(a,'Update my profile province to Alberta'),op=(await interpret(a,m.message_id)).json.command.operation;
+  // The service-only RPCs cannot bypass the authenticated action boundary.
+  assertEquals((await a.client.rpc('companion_read_profile',{p_user_id:b.id})).error?.code,'42501');
+  assertEquals((await a.client.rpc('companion_apply_one',{p_user:a.id,p_op:op})).error?.code,'42501');
+  assertEquals((await a.client.rpc('companion_before371_context',{p_user:a.id})).error?.code,'42501');
   assertEquals((await apply(a,[op])).status,403);
   assertEquals((await apply(a,[op],{authorization:{kind:'ui_control',approved:true}})).status,403);
   assertEquals((await apply(b,[op],{authorization:command(m.message_id)})).status,403);
@@ -42,11 +46,23 @@ Deno.test({name:'profile validation: forged controls, messages, sources, identit
   assertEquals((await apply(a,[op],{authorization:command(assistant.message_id)})).status,403);
   assertEquals((await apply(a,[{...op,value:'Ontario'}],{authorization:command(m.message_id)})).status,403);
   assertEquals((await prepare(b,op,{source:{conversation_id:m.conversation_id}})).status,404);
-  for(const invalid of [{...op,field:'city'},{...op,value:'AB'},{...op,field:'arrival_date',value:'2026-02-30'},
+  for(const invalid of [{...op,field:'city'},{...op,value:'Mars'},{...op,field:'arrival_date',value:'2026-02-30'},
     {...op,field:'arrival_date',value:'1800-01-01'},
     {...op,expected_revision:-1},{...op,user_id:b.id}]) assertEquals((await prepare(a,invalid)).status,422,JSON.stringify(invalid));
   assertEquals((await call(a,{contract_version:99,client:{platform:'ios'},action:'read'})).status,426);
   assertEquals((await status(b,uuid())).json.status,'not_applied');
   assertEquals((await read(a)).json.profile.province,'British Columbia');
   assertEquals((await read(b)).json.profile.province,'Quebec');
+} });
+Deno.test({name:'profile preparation: existing province aliases and localized values resolve before review without saving a fact',...testOpts,fn:async()=>{
+  // Wrong if the manual editor rejects existing aliases or preparing changes the authoritative profile.
+  const a=await newAccount('profile-prepare-normalization');
+  await a.client.from('user_onboarding_profiles').insert({id:a.id,province:'British Columbia'}).throwOnError();
+  for(const [value,canonical] of [['AB','Alberta'],['Québec','Quebec'],['अल्बर्टा','Alberta'],['ألبرتا','Alberta']]){
+    const result=await prepare(a,{type:'profile.update',field:'province',value,expected_revision:0});
+    assertEquals(result.status,200,JSON.stringify(result.json));
+    assertEquals(result.json.proposal.operations[0].value,canonical);
+    assertEquals(result.json.proposal.context.value,'British Columbia');
+  }
+  assertEquals((await read(a)).json.profile.province,'British Columbia');
 } });

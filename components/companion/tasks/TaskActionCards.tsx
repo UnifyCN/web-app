@@ -112,7 +112,7 @@ export function TaskActionCards({
     null;
   return (
     <>
-      {profileProposals.filter(p => p.source?.messageId === message.id).map(p => <section key={p.proposalId} className={CARD}>
+      {profileProposals.filter(p => p.source?.messageId === message.id).map(p => <section key={p.proposalId} className={`${CARD} ph-no-capture ph-no-record`}>
         <div className="min-w-0 flex-1"><p className="text-sm font-medium">{t("profileActions.review")}</p>
           <p className="break-words text-sm text-ink-secondary">{t("profileActions.proposed", { value: p.operation.value ?? t("profileActions.notSet") })}</p>
           <p className="text-xs text-ink-muted">{t(p.status === "draft" ? "taskCreate.draftBadge" : "profileActions.title")}</p></div>

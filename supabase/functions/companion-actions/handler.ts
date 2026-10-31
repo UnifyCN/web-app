@@ -1,5 +1,5 @@
 import { isPushAction, handlePushRequest } from './push.ts';
-import { profileCommand } from './profile.ts';
+import { profileCommand, profileValue } from './profile.ts';
 import {reminderCommand} from './reminders.ts';
 // Companion actions request handler (mobile-app#361). One authenticated HTTP
 // boundary for both clients: mobile calls it directly with the user's JWT, web
@@ -60,7 +60,8 @@ const SQLSTATE_TO_HTTP: Record<string, [number, string]> = {
 };
 
 function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
-  return new Response(JSON.stringify(body), {
+  // Keep SQL context counters private and preserve the v1 profile fact shape.
+  return new Response(JSON.stringify(body, (key, value) => key === '_revisions' ? undefined : value), {
     status,
     headers: { 'content-type': 'application/json', 'cache-control': 'no-store', ...headers },
   });
@@ -391,14 +392,20 @@ export function createHandler(
 
     if (request.action === 'prepare') {
       // A draft for review: writes only the proposal, never task progress.
-      operationType = request.operation.type;
-      const factRefusal = profileFactRefusal(request.operation);
+      let operation = request.operation;
+      if (operation.type === 'profile.update') {
+        const value = profileValue(operation.field, operation.value);
+        if (value === null) return finish(json({ error: 'invalid_request', reason: 'invalid_profile_value' }, 422), 'rejected');
+        operation = { ...operation, value };
+      }
+      operationType = operation.type;
+      const factRefusal = profileFactRefusal(operation);
       if (factRefusal) return finish(factRefusal, 'rejected');
-      const parentRefusal = await contentParentRefusal(contentTaskExists, request.operation);
+      const parentRefusal = await contentParentRefusal(contentTaskExists, operation);
       if (parentRefusal) return finish(parentRefusal, 'rejected');
       const { data, error } = await admin.rpc('companion_prepare_proposal', {
         p_user_id: userId,
-        p_operations: [request.operation],
+        p_operations: [operation],
         p_source: request.source,
       });
       if (error) return finish(mapDbError(error), 'failed');

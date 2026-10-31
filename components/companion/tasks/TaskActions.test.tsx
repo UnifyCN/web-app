@@ -729,6 +729,10 @@ describe("Companion task entry and drawer (web)", () => {
     save.focus(); fireEvent.click(save);
     expect(await within(panel).findByText("Changed province from British Columbia to Ontario")).toBeTruthy();
     expect(document.activeElement).toBe(save); expect(composer.value).toBe("Keep this settlement question");
+    expect(capture.mock.calls.length).toBeGreaterThan(0);
+    const analyticsPayloads = JSON.stringify(capture.mock.calls);
+    for (const privateText of ["British Columbia", "Ontario", "Keep this settlement question"])
+      expect(analyticsPayloads).not.toContain(privateText);
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     await waitFor(() => expect(document.activeElement).toBe(opener));
