@@ -82,7 +82,9 @@ export async function saveOnboarding(input: SaveOnboardingInput): Promise<void> 
       // Full names only (e.g. "Ontario"), as mobile stores them: content
       // targeting compares against the 13 canonical names.
       province: normalizeProvince(input.province),
-      stage: String(stage), // mobile `stage` is a stage_enum ('0'..'4')
+      // mobile `stage` is a stage_enum ('0'..'4'); null when the date is unknown,
+      // as mobile writes it.
+      stage: stage === null ? null : String(stage),
       goals,
       learning_interests: learningInterests,
       hobbies,
@@ -144,6 +146,44 @@ export async function updateLearningReminders(enabled: boolean): Promise<void> {
   const { error, count } = await supabase
     .from("user_onboarding_profiles")
     .update({ wants_reminders: enabled }, { count: "exact" })
+    .eq("id", userId);
+  if (error) throw error;
+  if (count === 0) {
+    throw new Error("No onboarding profile found — complete your profile first");
+  }
+}
+
+/**
+ * Set the arrival date (`YYYY-MM-01`) and the stage it implies, and nothing
+ * else (mobile's narrow `updateArrivalDate`), so a stale cached profile is never
+ * written back. Used by the one-time arrival-month prompt. `expectedUserId` is
+ * the account the prompt opened for: if another tab has since signed in as
+ * someone else, the save is refused instead of landing on that account.
+ */
+export async function updateArrivalDate({
+  arrivalDate,
+  expectedUserId,
+}: {
+  arrivalDate: string;
+  expectedUserId: string;
+}): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const userId = await getAuthUserId();
+  if (!userId) throw new Error("updateArrivalDate: no auth session");
+  if (userId !== expectedUserId) {
+    throw new Error("updateArrivalDate: signed-in account changed");
+  }
+
+  const stage = calculateUserStage(arrivalDate);
+  if (stage === null) throw new Error(`updateArrivalDate: invalid date ${arrivalDate}`);
+
+  const { error, count } = await createClient()
+    .from("user_onboarding_profiles")
+    .update(
+      { arrival_date: arrivalDate, stage: String(stage) },
+      { count: "exact" },
+    )
     .eq("id", userId);
   if (error) throw error;
   if (count === 0) {

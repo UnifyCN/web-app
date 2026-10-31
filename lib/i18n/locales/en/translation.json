@@ -1462,11 +1462,11 @@
       }
     },
     "arrival": {
-      "title": "When did you arrive in Canada?",
       "subtitle": "An approximate month is fine — it sets your settling-in stage.",
       "ariaMonth": "Arrival month",
       "ariaYear": "Arrival year",
-      "notArrived": "I haven't arrived in Canada yet"
+      "promptDescription": "Add the month you plan to arrive, or the month you arrived, so your checklist and lessons match where you are.",
+      "promptLater": "Not now"
     },
     "location": {
       "title": "Where in Canada are you?",

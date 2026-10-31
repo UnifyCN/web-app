@@ -1462,11 +1462,11 @@
       }
     },
     "arrival": {
-      "title": "Bạn đến Canada khi nào?",
       "subtitle": "Tháng ước chừng cũng được. Nó xác định giai đoạn an cư của bạn.",
       "ariaMonth": "Tháng đến",
       "ariaYear": "Năm đến",
-      "notArrived": "Tôi chưa đến Canada"
+      "promptDescription": "Hãy thêm tháng bạn dự định đến, hoặc tháng bạn đã đến, để danh sách việc cần làm và bài học phù hợp với giai đoạn của bạn.",
+      "promptLater": "Để sau"
     },
     "location": {
       "title": "Bạn đang ở đâu tại Canada?",

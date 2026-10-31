@@ -5,6 +5,7 @@ import { TabPrefetcher } from "@/components/layout/TabPrefetcher";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { LanguageSync } from "@/lib/i18n/useLanguageSync";
 import { WhatsNewTour } from "@/components/whatsNew/WhatsNewTour";
+import { ArrivalDatePrompt } from "@/components/onboarding/ArrivalDatePrompt";
 
 /**
  * Shell for all authenticated app pages. Desktop (≥ md): fixed left sidebar +
@@ -31,6 +32,7 @@ export default function MainLayout({
       </div>
       <BottomNav />
       <WhatsNewTour />
+      <ArrivalDatePrompt />
     </ToastProvider>
   );
 }

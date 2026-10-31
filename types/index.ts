@@ -36,7 +36,9 @@ export interface UserOnboardingProfile {
   arrivalDate: string | null;
   city: string;
   province: string;
-  stage: Stage;
+  /** Computed from `arrivalDate` by mobile's rule; null when there is no
+   * usable arrival date (unknown, not "not arrived"). */
+  stage: Stage | null;
   goals: string[];
   learningInterests: string[];
   /** Hobby slugs (see lib/onboarding/constants). */

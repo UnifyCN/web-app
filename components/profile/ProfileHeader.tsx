@@ -224,9 +224,12 @@ export function ProfileHeader({
             </span>
           </div>
 
-          <div className="mt-3">
-            <StageIndicator stage={profile.onboarding.stage} />
-          </div>
+          {/* No stage chip when the arrival date is unknown (as on mobile). */}
+          {profile.onboarding.stage !== null && (
+            <div className="mt-3">
+              <StageIndicator stage={profile.onboarding.stage} />
+            </div>
+          )}
         </>
       ) : (
         isOwnProfile && (

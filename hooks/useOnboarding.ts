@@ -40,3 +40,20 @@ export function useUpdateLearningReminders() {
       queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY }),
   });
 }
+
+/**
+ * Save the arrival month from the one-time prompt; refreshes everything the
+ * stage feeds (profile, checklist, Learn).
+ */
+export function useUpdateArrivalDate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: onboarding.updateArrivalDate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+      queryClient.invalidateQueries({ queryKey: MODULES_KEY });
+      queryClient.invalidateQueries({ queryKey: LEARNING_PROGRESS_KEY });
+    },
+  });
+}
