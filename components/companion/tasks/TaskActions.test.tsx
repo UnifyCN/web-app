@@ -635,6 +635,105 @@ describe("Checklist task progress (web)", () => {
 });
 
 describe("Companion task entry and drawer (web)", () => {
+  it("371: a delayed profile review cannot restore A after account replacement; a same-account notification keeps its draft", async () => {
+    // Wrong if a late prepare starts A's proposal query or restores A's private editor in B.
+    const firstAccount = account.id;
+    useServer(scriptedServer({}, { override: body => body.action === "read" ? {
+      status: 200, body: { tasks: [], details: [], steps: [], profile: {
+        province: account.id === firstAccount ? "British Columbia" : "Quebec",
+        arrival_date: "2026-11-07", city: null, revisions: { province: 1, arrival_date: 1, city: 1 },
+      } },
+    } : undefined }));
+    const base = globalThis.fetch;
+    let release: () => void = () => {};
+    let held = false;
+    globalThis.fetch = (async (...args: Parameters<typeof fetch>) => {
+      const body = JSON.parse(String(args[1]?.body));
+      if (body.action === "prepare" && body.operation.type === "profile.update") {
+        held = true;
+        await new Promise<void>(resolve => { release = resolve; });
+        return new Response(JSON.stringify({ proposal: {
+          proposal_id: "private-profile-a-371", proposal_revision: 1, kind: "profile_update", status: "draft",
+          operations: [body.operation], context: { field: "province", value: "British Columbia", revision: 1 },
+          source: null, previous_context: null, review_reason: null, receipt: null,
+        } }), { status: 200 });
+      }
+      return base(...args);
+    }) as typeof fetch;
+    mount(<CompanionPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Open" }));
+    let panel = await dialog();
+    fireEvent.click(await within(panel).findByRole("button", { name: "Profile" }));
+    fireEvent.click(await within(panel).findByRole("button", { name: "Edit province" }));
+    fireEvent.change(within(panel).getByLabelText("Province"), { target: { value: "Ontario" } });
+    act(() => account.set(firstAccount));
+    expect((within(panel).getByLabelText("Province") as HTMLInputElement).value).toBe("Ontario");
+    const review = within(panel).getByRole("button", { name: "Review profile change" });
+    await waitFor(() => expect(isDisabled(review)).toBe(false));
+    fireEvent.click(review);
+    await waitFor(() => expect(held).toBe(true));
+    try {
+      act(() => account.set("profile-account-b-371"));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      await act(async () => release());
+      fireEvent.click(await screen.findByRole("button", { name: "Open" }));
+      panel = await dialog();
+      fireEvent.click(await within(panel).findByRole("button", { name: "Profile" }));
+      expect(await within(panel).findByText("Quebec")).toBeTruthy();
+      expect(within(panel).queryByLabelText("Province")).toBeNull();
+      expect(within(panel).queryByText("Proposed: Ontario")).toBeNull();
+      expect(server.sent.some(body => body.action === "proposal" && body.proposal_id === "private-profile-a-371")).toBe(false);
+      expect(server.writes()).toHaveLength(0);
+    } finally { release(); }
+  });
+
+  it("371: reviews authoritative profile values, keeps focus after save, and preserves the message draft", async () => {
+    // Wrong if preparation writes, reviewed values differ, save loses panel focus, or the draft changes.
+    let province = "British Columbia";
+    let revision = 1;
+    let proposal: Record<string, unknown> | null = null;
+    useServer(scriptedServer({}, { override: body => {
+      if (body.action === "read") return { status: 200, body: { tasks: [], details: [], steps: [], profile: {
+        province, arrival_date: "2026-11-07", city: "Vancouver", revisions: { province: revision, arrival_date: 1, city: 1 },
+      } } };
+      if (body.action === "prepare" && body.operation.type === "profile.update") {
+        proposal = { proposal_id: "profile-review-371", proposal_revision: 1, kind: "profile_update", status: "draft",
+          operations: [body.operation], context: { field: "province", value: province, revision }, source: null,
+          previous_context: null, review_reason: null, receipt: null };
+        return { status: 200, body: { proposal } };
+      }
+      if (body.action === "proposal" && body.proposal_id === "profile-review-371") return { status: 200, body: { proposal } };
+      if (body.action === "apply" && body.operations[0].type === "profile.update") {
+        const before = province; province = body.operations[0].value; revision++;
+        return { status: 200, body: { replayed: false, receipt: { operation_id: body.operation_id,
+          operation_type: "profile.update", created_at: "2026-10-31T06:00:00Z", kind: "change", undo_of: null,
+          task_ref: null, before_revision: revision - 1, after_revision: revision, undone_by: null,
+          current: true, undoable: true, profile: { field: "province", before, after: province } } } };
+      }
+      return undefined;
+    } }));
+    mount(<CompanionPage />);
+    const composer = await screen.findByLabelText("Message Companion") as HTMLTextAreaElement;
+    fireEvent.change(composer, { target: { value: "Keep this settlement question" } });
+    const opener = await screen.findByRole("button", { name: "Open" });
+    opener.focus(); fireEvent.click(opener);
+    const panel = await dialog();
+    fireEvent.click(await within(panel).findByRole("button", { name: "Profile" }));
+    expect(await within(panel).findByText("British Columbia")).toBeTruthy();
+    fireEvent.click(within(panel).getByRole("button", { name: "Edit province" }));
+    fireEvent.change(within(panel).getByLabelText("Province"), { target: { value: "Ontario" } });
+    fireEvent.click(within(panel).getByRole("button", { name: "Review profile change" }));
+    expect(await within(panel).findByText("Current: British Columbia")).toBeTruthy();
+    expect(within(panel).getByText("Proposed: Ontario")).toBeTruthy(); expect(province).toBe("British Columbia");
+    const save = within(panel).getByRole("button", { name: "Save profile change" });
+    save.focus(); fireEvent.click(save);
+    expect(await within(panel).findByText("Changed province from British Columbia to Ontario")).toBeTruthy();
+    expect(document.activeElement).toBe(save); expect(composer.value).toBe("Keep this settlement question");
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+  });
+
   it("opens saved tasks from a compact entry, changes one in the drawer, keeps the typed message, and can open Checklist", async () => {
     useServer(
       scriptedServer({ "sanity:sin": { state: "in_progress", revision: 2 } }),

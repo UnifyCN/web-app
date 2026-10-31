@@ -24,6 +24,7 @@ import { StepProposalPanel } from "./StepProposalPanel";
 import { useStepProposal } from "@/hooks/useTaskActions";
 import { TaskStatePanel, progressFor } from "./TaskStatePanel";
 import { DetailProposalPanel, SavedDetailsPanel } from "./SavedDetails";
+import { ProfilePanel } from "./ProfilePanel";
 import { PlanPanel } from "../plans/PlanPanel";
 import type { PlanTarget } from "../plans/PlanEntry";
 
@@ -35,6 +36,8 @@ const STATE_ORDER: TaskState[] = [
 ];
 
 interface TaskActionsDrawerProps {
+  profileProposalId?: string | null;
+  openProfile?: boolean;
   open: boolean;
   onClose: () => void;
   surface: TaskActionSurface;
@@ -76,6 +79,8 @@ function AccountTaskActionsDrawer({
   stepProposalId = null,
   detailProposalId = null,
   openDetails = false,
+  profileProposalId = null,
+  openProfile = false,
   proposalKind = "task_create",
 }: TaskActionsDrawerProps) {
   const { t } = useTranslation();
@@ -109,6 +114,7 @@ function AccountTaskActionsDrawer({
   const [returnId, setReturnId] = useState<string | null>(null);
   // #370: the saved details view, opened from the list, a card or a review.
   const [showDetails, setShowDetails] = useState(openDetails);
+  const [showProfile, setShowProfile] = useState(openProfile);
   const [lastOpen, setLastOpen] = useState(open);
   const [lastInitialTaskId, setLastInitialTaskId] = useState(initialTaskId);
   const [lastInitialTaskRef, setLastInitialTaskRef] = useState(initialTaskRef);
@@ -124,6 +130,7 @@ function AccountTaskActionsDrawer({
       setSelectedId(initialTaskId);
       setReturnId(null);
       setShowDetails(openDetails);
+      setShowProfile(openProfile);
     }
   }
 
@@ -195,7 +202,9 @@ function AccountTaskActionsDrawer({
       open={open}
       onClose={onClose}
       title={
-        showDetails
+        showProfile || profileProposalId
+          ? t("profileActions.title")
+          : showDetails
           ? t("savedDetails.title")
           : detailProposalId
             ? t("savedDetails.reviewTitle")
@@ -219,7 +228,9 @@ function AccountTaskActionsDrawer({
               setReminderTarget(null);
               setSelectedId(null);
             }
-          : showDetails && !openDetails && !detailProposalId
+          : showProfile && !openProfile && !profileProposalId
+            ? () => setShowProfile(false)
+            : showDetails && !openDetails && !detailProposalId
             ? () => setShowDetails(false)
             : selected &&
                 !initialTaskId &&
@@ -232,7 +243,7 @@ function AccountTaskActionsDrawer({
       }
       closeOnEscape={phase.phase !== "saving" && draftPhase.phase !== "saving"}
     >
-      {showDetails ? (
+      {showProfile || profileProposalId ? <ProfilePanel view={view} store={store} proposalId={profileProposalId} /> : showDetails ? (
         view.status === "loading" ? (
           <p role="status" className="loading-delayed text-sm text-ink-muted">
             {t("taskActions.loading")}
@@ -307,6 +318,14 @@ function AccountTaskActionsDrawer({
             onOpen={(taskRef, title) => setReminderTarget({ taskRef, title })}
           />
           {/* #370: the saved details, one row above the tasks. */}
+          <button type="button" aria-label={t("profileActions.title")}
+            data-drawer-focus={returnId === "profile" ? "" : undefined}
+            onClick={() => { setShowProfile(true); setReturnId("profile"); }}
+            className="press-dim flex min-h-12 w-full cursor-pointer items-center gap-3 rounded border-b border-border-card py-2.5 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <span className="min-w-0 flex-1"><span className="block break-words text-sm font-medium text-ink-secondary">{t("profileActions.title")}</span>
+              <span className="mt-0.5 block text-xs text-ink-muted">{t("profileActions.entryHint")}</span></span>
+            <ChevronRight className={cn("h-4 w-4 shrink-0 text-ink-placeholder",RTL_FLIP)} aria-hidden />
+          </button>
           <button
             type="button"
             data-drawer-focus={returnId === "details" ? "" : undefined}

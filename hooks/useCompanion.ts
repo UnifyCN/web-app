@@ -93,9 +93,12 @@ function commandReply(
     | { kind: "edit" }
     | { kind: "remove" }
     | { kind: "reminder" }
+    | { kind: "profile" }
   >,
 ): string {
   switch (command.kind) {
+    case "profile_clarify":
+      return t("profileActions.clarify");
     case "create":
       return t("taskCreate.clarifyDuplicate", {
         title: command.sameTitleTasks[0]?.title ?? command.operation.title,
@@ -367,6 +370,7 @@ export function useSendMessage() {
         if (
           (command.kind === "create" && command.sameTitleTasks.length === 0) ||
           command.kind === "edit" ||
+          command.kind === "profile" ||
           command.kind === "reminder" ||
           (command.kind === "remember" && command.sameTextDetails.length === 0)
         ) {
@@ -505,6 +509,11 @@ export function useSendMessage() {
           conversationId: conversationIdentifier,
           messageId: savedAnswer.id,
         });
+        ensureOwned(owner);
+      }
+      if (reply.actionProposal?.type === "profile.update" && actions.prepareProfile) {
+        await actions.prepareProfile({ ...reply.actionProposal, expected_revision: 0 },
+          { conversationId: conversationIdentifier, messageId: savedAnswer.id });
         ensureOwned(owner);
       }
       return { conversationIdentifier, accountId: owner.accountId };

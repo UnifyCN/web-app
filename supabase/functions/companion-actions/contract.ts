@@ -6,6 +6,7 @@
 // handler validates every request before it reaches the database. The database
 // validates again (companion_validate_operations) as defence in depth.
 
+import type { ProfileOperation } from './profile.ts';
 export const CONTRACT_VERSION = 1;
 
 export const TASK_STATES = ['not_started', 'in_progress', 'waiting', 'completed'] as const;
@@ -174,7 +175,8 @@ export type Operation =
   | TaskRestoreOperation
   | StepOperation
   | EditDetailsOperation
-  | DetailOperation;
+  | DetailOperation
+  | ProfileOperation;
 /** An edit for review, before the server binds it to the task's current revision (#365). */
 export type EditDraft =
   | Omit<SetStateOperation, 'expected_revision'>
@@ -594,6 +596,20 @@ function reminderSpec<T extends ReminderOperation>(type: T['type']): OperationSp
 }
 
 export const OPERATION_REGISTRY: { readonly [K in Operation['type']]: OperationSpec<Extract<Operation, { type: K }>> } = {
+  'profile.update': {
+    type: 'profile.update', version: 1, access: 'owner', classification: 'write',
+    approval: ['direct_command', 'approved_proposal'], revisionCheck: 'expected_revision',
+    idempotency: 'operation_id', undo: 'recorded_inverse', undoRemoves: false,
+    parse(raw) {
+      if (Object.keys(raw).some(k => !['type', 'field', 'value', 'expected_revision'].includes(k))) return refuse(422, 'unknown_field');
+      if (raw.field !== 'province' && raw.field !== 'arrival_date') return refuse(422, 'unsupported_profile_field');
+      if (!isPlainInt(raw.expected_revision)) return refuse(422, 'expected_revision_required');
+      // The database checks new values against the existing profile controls. An
+      // exact recorded inverse may restore a valid older custom province value.
+      if (raw.value !== null && (typeof raw.value !== 'string' || !raw.value.trim() || raw.value.length > 200 || /[\r\n\t]/.test(raw.value))) return refuse(422, 'invalid_profile_value');
+      return ok({ type: 'profile.update', field: raw.field, value: raw.value as string | null, expected_revision: raw.expected_revision });
+    },
+  },
   'reminder.schedule': reminderSpec<ReminderScheduleOperation>('reminder.schedule'),
   'reminder.cancel': reminderSpec<ReminderCancelOperation>('reminder.cancel'),
   'task.set_state': setState,
@@ -634,9 +650,9 @@ export function parseEditDraft(raw: unknown): Parsed<EditDraft> {
  * The operations a draft can be prepared for. A removal review (#367) is prepared, never
  * revised; the others can be revised too.
  */
-export type PreparableOperation = CreateCustomOperation | StepCreateOperation | DetailCreateOperation | TaskRemoveOperation | ReminderOperation;
+export type PreparableOperation = CreateCustomOperation | StepCreateOperation | DetailCreateOperation | TaskRemoveOperation | ReminderOperation | ProfileOperation;
 const isPreparable = (op: Operation): op is PreparableOperation =>
-  op.type === 'task.create_custom' || op.type === 'step.create' || op.type === 'detail.create' || op.type === 'task.remove' || op.type === 'reminder.schedule' || op.type === 'reminder.cancel';
+  op.type === 'profile.update' || op.type === 'task.create_custom' || op.type === 'step.create' || op.type === 'detail.create' || op.type === 'task.remove' || op.type === 'reminder.schedule' || op.type === 'reminder.cancel';
 type RevisableOperation = CreateCustomOperation | StepCreateOperation | DetailCreateOperation;
 const isRevisable = (op: Operation): op is RevisableOperation =>
   op.type === 'task.create_custom' || op.type === 'step.create' || op.type === 'detail.create';

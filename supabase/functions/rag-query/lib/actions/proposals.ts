@@ -10,6 +10,7 @@
 // in the action service registry; it gains no other permission.
 
 import { profileFactOf } from '../context/profileFacts.ts';
+import { profileValue, profileDateInRange, type ProfileField } from '../../../companion-actions/profile.ts';
 
 export interface TaskCreateProposal {
   type: 'task.create_custom';
@@ -62,6 +63,7 @@ export interface ReminderProposal {
  type:'reminder.schedule';version:1;task_ref:string;remind_at:string;time_zone:string;wall_time:string;
 }
 export type ActionProposal =
+  | { type: 'profile.update'; version: 1; field: ProfileField; value: string }
   | ReminderProposal
   | TaskCreateProposal
   | PlanProposal
@@ -267,6 +269,13 @@ You cannot save personal details. When the user's own message states a lasting p
 [REMEMBER]: <the detail in plain text, at most 200 characters, in the language of your answer, written as the user would say it, for example "I can attend appointments on Fridays">
 The app asks the user whether to save it; only the user can approve it. Never say that a detail was saved or remembered. Write no [REMEMBER] line in any other case.`;
 
+export const PROFILE_PROPOSAL_INSTRUCTION = `
+PROFILE CHANGE SUGGESTION:
+A discussion about a different province or arrival date never changes the durable profile. You may offer an optional profile change for review when the user states an exact new value. Use only one line:
+[PROFILE]: province | <one exact Canadian province name>
+or [PROFILE]: arrival_date | <an exact YYYY-MM-DD calendar date>
+Do not infer a profile change from a hypothetical question or an external source. Do not propose another profile field or a relative date. The action service reads and shows the authoritative old value. Only a user's later approval can save this proposal. Never say the profile was saved. Do not combine this line with another action suggestion.`;
+
 export const TASK_PROPOSAL_INSTRUCTION = `
 TASK SUGGESTION:
 You cannot add or change tasks. When the user asks for help with one concrete settlement step that is not already in their Checklist above, you may suggest ONE new Checklist task for them to review. Write it on its own line before any [SUGGESTIONS] line, as:
@@ -312,8 +321,10 @@ export function extractActionProposal(
   const steps: { ref: string; value: string }[] = [];
   const details: string[] = [];
   const reminders:string[]=[];
+  const profiles: string[] = [];
   const detailLine = new RegExp(`^[ \\t*_\`~]*\\[${detailCreate.tag}\\]:[ \\t]*(.*)$`, 'gim');
   const stripped = answer
+    .replace(/^[ \t*_`~]*\[PROFILE\]:[ \t]*(.*)$/gim, (_m, value: string) => { profiles.push(value); return ''; })
     .replace(/^[ \t*_`~]*\[REMINDER\]:[ \t]*(.*)$/gim,(_m,value:string)=>{reminders.push(value);return '';})
     .replace(line, (_m, tag: string, value: string) => {
       const t = tag.toUpperCase();
@@ -329,8 +340,17 @@ export function extractActionProposal(
       details.push(value);
       return '';
     });
-  if (values.length === 0 && planLines.length === 0 && steps.length === 0 && details.length === 0 && reminders.length === 0) return { answer, proposal: null };
+  if (values.length === 0 && planLines.length === 0 && steps.length === 0 && details.length === 0 && reminders.length === 0 && profiles.length === 0) return { answer, proposal: null };
   const cleaned = stripped.replace(/\n{3,}/g, '\n\n').trim();
+  if (profiles.length) {
+    if (profiles.length !== 1 || values.length || planLines.length || steps.length || details.length || reminders.length) return { answer: cleaned, proposal: null };
+    const parts = profiles[0].split('|').map(s => s.trim());
+    const field = parts[0];
+    if (parts.length !== 2 || (field !== 'province' && field !== 'arrival_date')) return { answer: cleaned, proposal: null };
+    const value = profileValue(field, parts[1]);
+    return { answer: cleaned, proposal: value && (field !== 'arrival_date' || profileDateInRange(value))
+      ? { type: 'profile.update', version: 1, field, value } : null };
+  }
   if(reminders.length) return {answer:cleaned,proposal:reminders.length===1 && !planLines.length && !values.length && !steps.length && !details.length ? reminderSchedule.parse(reminders[0],readTaskRefs) : null};
   if (planLines.length > 0) {
     return { answer: cleaned, proposal: parsePlan(planLines, read) };

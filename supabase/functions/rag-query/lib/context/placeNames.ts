@@ -8,7 +8,7 @@
 // cities and provinces below and the common phrasings below; an unlisted place
 // or phrasing produces no detail, as it does in English.
 
-import type { CanadianProvince } from '../province.ts';
+import { canonicalProvince, type CanadianProvince } from '../province.ts';
 
 /** Fold Arabic, Devanagari and Gurmukhi spelling variants together. */
 export function foldScript(text: string): string {
@@ -283,6 +283,21 @@ export interface Place {
   province: CanadianProvince | null;
   /** Two or more different provinces with no clear choice between them. */
   unclear: CanadianProvince[] | null;
+}
+
+/** A whole province name only. A city, an origin/destination phrase or a partial match is not a profile value. */
+export function exactProvinceName(value: string): CanadianProvince | null {
+  const canonical = canonicalProvince(value);
+  if (canonical) return canonical;
+  const folded = foldScript(value.trim());
+  for (const [province, names] of PROVINCE_SCRIPT) {
+    if (names.some(name => foldScript(name) === folded)) return province;
+  }
+  for (const [pattern, province] of PROVINCE_LATIN) {
+    const match = pattern.exec(folded);
+    if (match?.index === 0 && match[0].trim() === folded) return province;
+  }
+  return null;
 }
 
 /**

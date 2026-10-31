@@ -11,6 +11,7 @@ import {
   CONVERSATION_ACTIONS_ROOT,
   CONVERSATION_PLANS_ROOT,
   DETAIL_PROPOSAL_ROOT,
+  PROFILE_PROPOSAL_ROOT,
   PLAN_PROPOSAL_ROOT,
   PLANS_ROOT,
   STEP_PROPOSAL_ROOT,
@@ -50,6 +51,7 @@ export function clearPrivateAccountWork(
     [[CONVERSATION_PLANS_ROOT], 1],
     [[STEP_PROPOSAL_ROOT], 1],
     [[DETAIL_PROPOSAL_ROOT], 1],
+    [[PROFILE_PROPOSAL_ROOT], 1],
   ] as const) {
     const filters = { queryKey, predicate: otherAccount(index) };
     void queryClient.cancelQueries(filters);

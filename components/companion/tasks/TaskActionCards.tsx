@@ -22,6 +22,9 @@ import type {
 import { isUnresolved } from "@/lib/companionActions/taskActionStore";
 import { useTaskActionPhase, useTaskProgress } from "@/hooks/useTaskActions";
 import { DetailReceipt, detailReceiptText } from "./SavedDetails";
+import { ProfileReceipt } from "./ProfilePanel";
+import { Button } from "@/components/ui/Button";
+import type { ProfileProposal } from "@/lib/companionActions/profile";
 import type { ChatMessage } from "@/types";
 import {
   changeLines,
@@ -42,6 +45,8 @@ const isTransient = (phase: TaskActionPhase) =>
  * text.
  */
 interface CardsProps {
+  profileProposals?: ProfileProposal[];
+  onReviewProfile?: (proposalId: string) => void;
   reminderProposals?: ReminderProposal[];
   message: ChatMessage;
   proposals: TaskProposal[];
@@ -69,6 +74,8 @@ interface CardsProps {
 }
 
 export function TaskActionCards({
+  profileProposals = [],
+  onReviewProfile,
   reminderProposals = [],
   message,
   proposals,
@@ -105,6 +112,12 @@ export function TaskActionCards({
     null;
   return (
     <>
+      {profileProposals.filter(p => p.source?.messageId === message.id).map(p => <section key={p.proposalId} className={CARD}>
+        <div className="min-w-0 flex-1"><p className="text-sm font-medium">{t("profileActions.review")}</p>
+          <p className="break-words text-sm text-ink-secondary">{t("profileActions.proposed", { value: p.operation.value ?? t("profileActions.notSet") })}</p>
+          <p className="text-xs text-ink-muted">{t(p.status === "draft" ? "taskCreate.draftBadge" : "profileActions.title")}</p></div>
+        <Button type="button" variant="secondary" size="sm" className="min-h-11 whitespace-normal" onClick={() => onReviewProfile?.(p.proposalId)}>{t("profileActions.review")}</Button>
+      </section>)}
       {reminderProposals
         .filter((p) => p.source?.messageId === message.id)
         .map((p) => (
@@ -618,6 +631,7 @@ function commandText(
     case "saving":
     case "checking": {
       const op = phase.write.operation;
+      if (op?.type === "profile.update") return t("taskActions.saving");
       if (op?.type === "detail.create")
         return t("savedDetails.commandSaving", { text: op.text });
       if (op && op.type !== "task.create_custom") {
@@ -677,6 +691,7 @@ function CommandCard({
 }) {
   const { t } = useTranslation();
   const key = `command:${messageId}`;
+  const profileView = useTaskProgress();
   const phase = useTaskActionPhase(store, key);
   const receipt =
     phase.phase === "saved"
@@ -713,6 +728,8 @@ function CommandCard({
     : phase.phase === "undo_review" || phase.phase === "already_undone"
       ? saved
       : null;
+  const profileReceipt = receipt?.profile ? receipt : phase.phase === "saved" && phase.receipt.profile ? phase.receipt : null;
+  if (profileReceipt) return <ProfileReceipt receipt={profileReceipt} storeKey={key} store={store} view={profileView} />;
   if (detailReceipt?.detail) {
     return (
       <DetailCommandResult

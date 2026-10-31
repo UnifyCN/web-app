@@ -2,6 +2,7 @@ import {
   parseSuggestedReminder,
   type ReminderScheduleOperation,
 } from "@/lib/companionActions/reminders";
+import { parseSuggestedProfile, type ProfileField } from "@/lib/companionActions/profile";
 import {
   parseSuggestedDetail,
   parseSuggestedSteps,
@@ -440,6 +441,7 @@ export interface GeneratedReply {
     | { type: "task.create_custom"; title: string }
     | { type: "step.create"; taskRef: string; titles: string[] }
     | { type: "detail.create"; text: string }
+    | { type: "profile.update"; field: ProfileField; value: string }
     | null;
   /** A change to one listed task the answer suggests (#365). A suggestion only, like
    *  actionProposal: the action service prepares the draft; nothing is saved here. */
@@ -470,6 +472,7 @@ function savableContext(raw: unknown): Record<string, unknown> | null {
 function parseActionProposal(raw: unknown): GeneratedReply["actionProposal"] {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
+  if (r.type === "profile.update") return parseSuggestedProfile(raw);
   if (r.type === "reminder.schedule") {
     const reminder = parseSuggestedReminder(raw);
     return reminder ? { ...reminder, version: 1 } : null;

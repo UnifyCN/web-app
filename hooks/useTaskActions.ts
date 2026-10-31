@@ -1,5 +1,8 @@
 "use client";
 import type { ReminderRead } from "@/lib/companionActions/reminders";
+import type { ActionProfile, ProfileProposal } from "@/lib/companionActions/profile";
+import { PROFILE_PROPOSAL_ROOT } from "@/lib/companionActions/queryKeys";
+import { CURRENT_USER_KEY } from "@/lib/profileQueryKeys";
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,6 +11,7 @@ import { useAccountId } from "@/hooks/useAccountId";
 import {
   assertOwned,
   ownAccountWork,
+  stillOwned,
   type AccountOwner,
 } from "@/lib/accountSession";
 import { TASKS_KEY } from "@/hooks/useChecklist";
@@ -124,6 +128,7 @@ export type TaskProgressStatus =
   | "signed_out";
 
 export interface TaskProgressView {
+  profile?: ActionProfile | null;
   status: TaskProgressStatus;
   reminders?: ReminderRead;
   /** Saved progress by task_ref. A content-backed task never written has no entry. */
@@ -212,6 +217,7 @@ export function useTaskProgress(): TaskProgressView {
   const refetch = query.refetch;
   return {
     status,
+    profile: result?.kind === "ok" ? result.profile : null,
     byRef,
     stepsByRef,
     details,
@@ -238,6 +244,9 @@ export function useTaskActionStore(
       client: clientFor({ accountId: userId, epoch }),
       newOperationId: () => crypto.randomUUID(),
       onChanged: () => {
+        if (!stillOwned({ accountId: userId, epoch })) return;
+        void queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+        void queryClient.invalidateQueries({ queryKey: [PROFILE_PROPOSAL_ROOT, userId] });
         void queryClient.invalidateQueries({
           queryKey: taskProgressKey(userId),
         });
@@ -290,6 +299,23 @@ export function useTaskActionClient(): {
     const owner = { accountId: userId, epoch };
     return { client: clientFor(owner), owner };
   }, [userId, epoch]);
+}
+
+export function useProfileProposal(proposalId: string | null) {
+  const accountId = useAccountId() ?? null;
+  const { epoch } = ownAccountWork();
+  return useQuery({
+    queryKey: [PROFILE_PROPOSAL_ROOT, accountId, epoch, proposalId],
+    enabled: Boolean(accountId && proposalId),
+    queryFn: async (): Promise<ProfileProposal> => {
+      const owner = { accountId, epoch };
+      assertOwned(owner);
+      const result = await clientFor(owner).profileProposal!(proposalId!);
+      assertOwned(owner);
+      if (result.kind === "ok" || result.kind === "changed") return result.proposal;
+      throw new ReadFailed(result.kind);
+    }, staleTime: 0, retry: false,
+  });
 }
 
 /** A client bound to `owner`, for work started by a send (#363). */

@@ -6,6 +6,7 @@ import {
 } from "@/lib/supabase/client";
 import { mergeI18nOverlay, sanityClient, type WithI18n } from "@/lib/sanity";
 import type { SupportedLanguage } from "@/lib/i18n/config";
+import { canonicalProvince } from "@/supabase/functions/rag-query/lib/province";
 import { tasks as mockTasks } from "@/lib/mock/tasks";
 
 /**
@@ -58,6 +59,7 @@ const CHECKLIST_GROQ = `*[
 ] | order(class asc, class_order asc) {
   _id,
   title,
+  province,
   description,
   longer_description,
   class,
@@ -71,6 +73,7 @@ const CHECKLIST_GROQ = `*[
 interface SanityChecklistItem {
   _id: string;
   title: string;
+  province?: string | string[] | null;
   description: string | null;
   longer_description: string | null;
   class: string;
@@ -103,6 +106,7 @@ function resolveLearnHowHref(item: SanityChecklistItem): string | undefined {
 async function getChecklistByPersonaAndStage(
   persona: Persona,
   stageSlug: string,
+  province: string | null,
   language: SupportedLanguage = "en",
 ): Promise<SanityChecklistItem[]> {
   try {
@@ -111,7 +115,12 @@ async function getChecklistByPersonaAndStage(
       { persona, stage: stageSlug, lang: language },
     );
     if (!Array.isArray(result)) return [];
-    return result.map((row): SanityChecklistItem => mergeI18nOverlay(row));
+    const currentProvince = canonicalProvince(province);
+    return result.map((row): SanityChecklistItem => mergeI18nOverlay(row)).filter(item => {
+      const tags = item.province == null || item.province === '' ? [] :
+        Array.isArray(item.province) ? item.province : [item.province];
+      return tags.length === 0 || (currentProvince !== null && tags.some(tag => canonicalProvince(tag) === currentProvince));
+    });
   } catch (error) {
     console.error("Sanity checklist fetch failed", error);
     return [];
@@ -169,7 +178,7 @@ export async function getTasks(
   const [onboardingRes, userTasksRes, customRes, orderRes] = await Promise.all([
     supabase
       .from("user_onboarding_profiles")
-      .select("persona, stage")
+      .select("persona, stage, province")
       .eq("id", userId)
       .maybeSingle(),
     supabase
@@ -199,6 +208,7 @@ export async function getTasks(
   const items = await getChecklistByPersonaAndStage(
     persona,
     stageSlug,
+    onboarding.province ?? null,
     language,
   );
 

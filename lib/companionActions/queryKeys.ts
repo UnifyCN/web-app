@@ -4,6 +4,7 @@
  * progress without an import cycle.
  */
 export const TASK_PROGRESS_ROOT = "companion-task-actions" as const;
+export const PROFILE_PROPOSAL_ROOT = "companion-profile-proposal" as const;
 export const taskProgressKey = (userId: string | null) =>
   [TASK_PROGRESS_ROOT, userId] as const;
 

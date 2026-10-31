@@ -15,6 +15,7 @@ import {
 } from './lib/topic.ts';
 import {
   DETAIL_PROPOSAL_INSTRUCTION,
+  PROFILE_PROPOSAL_INSTRUCTION,
   extractActionProposal,
   PLAN_PROPOSAL_INSTRUCTION,
   type ReadChecklistTask,
@@ -1099,7 +1100,7 @@ Deno.serve(async (req: Request) => {
     // Companion tab only (not the in-lesson chat): the model may suggest one task for
     // the user to review. The suggestion is typed and stripped below; it writes nothing.
     if (!lessonContext) {
-      fullSystemInstruction = `${fullSystemInstruction}\n${TASK_PROPOSAL_INSTRUCTION}\n${PLAN_PROPOSAL_INSTRUCTION}\n${DETAIL_PROPOSAL_INSTRUCTION}`;
+      fullSystemInstruction = `${fullSystemInstruction}\n${TASK_PROPOSAL_INSTRUCTION}\n${PLAN_PROPOSAL_INSTRUCTION}\n${DETAIL_PROPOSAL_INSTRUCTION}\n${PROFILE_PROPOSAL_INSTRUCTION}`;
     }
     // #366: steps, and #365 edits, may be suggested only for a Checklist task this answer
     // read (its own account's context). Outside the Companion tab nothing is suggested.

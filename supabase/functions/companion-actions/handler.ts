@@ -1,4 +1,5 @@
 import { isPushAction, handlePushRequest } from './push.ts';
+import { profileCommand } from './profile.ts';
 import {reminderCommand} from './reminders.ts';
 // Companion actions request handler (mobile-app#361). One authenticated HTTP
 // boundary for both clients: mobile calls it directly with the user's JWT, web
@@ -376,7 +377,10 @@ export function createHandler(
       if (details.error && details.error.code !== 'PGRST202') return finish(mapDbError(details.error), 'failed');
       const reminders = await admin.rpc('companion_read_reminders', { p_user_id: userId });
       if (reminders.error && reminders.error.code !== 'PGRST202') return finish(mapDbError(reminders.error), 'failed');
+      const profile = await admin.rpc('companion_read_profile', { p_user_id: userId });
+      if (profile.error && profile.error.code !== 'PGRST202') return finish(mapDbError(profile.error), 'failed');
       return finish(json({
+        ...(profile.error ? {} : { profile: profile.data }),
         ...(reminders.error ? {} : { reminders: reminders.data }),
         contract_version: version,
         tasks: data,
@@ -445,6 +449,15 @@ export function createHandler(
       // Reads only. The message must be the caller's own user message.
       const text = await ownUserMessage(admin, userId, request.message_id);
       if (text === null) return finish(json({ error: 'not_found', reason: 'message_not_found' }, 404), 'rejected');
+      const profile = profileCommand(text);
+      if (profile) {
+        if (profile.kind === 'profile_clarify') return finish(json({ command: profile }), 'interpret_profile_clarify');
+        const { data, error } = await admin.rpc('companion_read_profile', { p_user_id: userId });
+        if (error) return finish(mapDbError(error), 'failed');
+        if (!data) return finish(json({ command: { kind: 'profile_clarify' } }), 'interpret_profile_clarify');
+        return finish(json({ command: { kind: 'profile', before: data[profile.field],
+          operation: { type: 'profile.update', field: profile.field, value: profile.value, expected_revision: data.revisions[profile.field] } } }), 'interpret_profile');
+      }
       const reminder=await resolveReminder(userId,jwt,text).catch(()=>({kind:'clarify' as const,reason:'tasks_unavailable'}));
       if(reminder) return finish(json({command:reminder}),`interpret_${reminder.kind}`);
       const resolved = resolveCommand(text);
@@ -585,9 +598,12 @@ export function createHandler(
           const reminder=await resolveReminder(userId,jwt,text).catch(()=>null);
           allowed=reminder?.kind==='reminder' && withoutRevision(reminder.operation)===withoutRevision(op);
         } else if (resolved?.kind === 'none' && text !== null) {
+          const profile = profileCommand(text);
           // #370: a remember command saves exactly the detail the message states.
           const remember = resolveRemember(text);
-          allowed = remember.kind === 'remember' && op.type === 'detail.create' && op.text === remember.text;
+          allowed = profile?.kind === 'profile' && op.type === 'profile.update'
+            ? profile.field === op.field && profile.value === op.value
+            : remember.kind === 'remember' && op.type === 'detail.create' && op.text === remember.text;
         }
         // The same operation may have committed while this request read the task (a
         // concurrent retry): look again before refusing, so a retry replays its result.

@@ -69,6 +69,7 @@ function AccountCompanionPage() {
     // #370: a suggested detail's review, or the saved details.
     | { kind: "detail"; proposalId: string }
     | { kind: "details" }
+    | { kind: "profile"; proposalId: string }
     | { kind: "plan"; target: PlanTarget }
     | null
   >(null);
@@ -232,7 +233,9 @@ function AccountCompanionPage() {
               reminderProposals={actions?.reminderProposals ?? []}
               message={message}
               proposals={actions?.proposals ?? []}
-              commands={actions?.commands ?? []}
+              commands={[...(actions?.commands ?? []), ...(actions?.profileCommands ?? [])]}
+              profileProposals={actions?.profileProposals ?? []}
+              onReviewProfile={proposalId => setDrawer({ kind: "profile", proposalId })}
               store={actionStore}
               canWrite={progress.canWrite}
               onReview={(proposalId, proposalKind) =>
@@ -275,6 +278,7 @@ function AccountCompanionPage() {
         onOpenTask={openTaskRef}
         stepProposalId={drawer?.kind === "steps" ? drawer.proposalId : null}
         detailProposalId={drawer?.kind === "detail" ? drawer.proposalId : null}
+        profileProposalId={drawer?.kind === "profile" ? drawer.proposalId : null}
         openDetails={drawer?.kind === "details"}
         proposalKind={
           drawer?.kind === "proposal" ? drawer.proposalKind : undefined
