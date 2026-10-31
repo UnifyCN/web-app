@@ -15,6 +15,7 @@ import {
   type AccountOwner,
 } from "@/lib/accountSession";
 import { TASKS_KEY } from "@/hooks/useChecklist";
+import { LEARNING_PROGRESS_KEY, MODULES_KEY } from "@/hooks/useLearn";
 import { trackCompanionActionResult } from "@/lib/analytics";
 import {
   buildTaskActionResultProperties,
@@ -245,7 +246,14 @@ export function useTaskActionStore(
       newOperationId: () => crypto.randomUUID(),
       onChanged: () => {
         if (!stillOwned({ accountId: userId, epoch })) return;
-        void queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+        // Profile changes affect Learn content in every language. An older
+        // pending read must finish without replacing the new profile's result.
+        for (const queryKey of [CURRENT_USER_KEY, MODULES_KEY, LEARNING_PROGRESS_KEY]) {
+          void queryClient.cancelQueries({ queryKey }).then(() => {
+            if (!stillOwned({ accountId: userId, epoch })) return;
+            return queryClient.invalidateQueries({ queryKey });
+          });
+        }
         void queryClient.invalidateQueries({ queryKey: [PROFILE_PROPOSAL_ROOT, userId] });
         void queryClient.invalidateQueries({
           queryKey: taskProgressKey(userId),
