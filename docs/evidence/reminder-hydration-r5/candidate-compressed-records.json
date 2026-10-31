@@ -1,0 +1,42 @@
+[
+  {
+    "stored": "candidate-build.log.gz",
+    "bytes": 2198,
+    "sha256": "d5865e20f6f3fd74700e7fa2faa9b504d3e4006409611573b3798a0e45df3506"
+  },
+  {
+    "stored": "candidate-changed-lint.log.gz",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "stored": "candidate-full-lint.json.gz",
+    "bytes": 274025,
+    "sha256": "47d85da440e736ccd8ef7794457c8bf3a67d1a012c87aec9008aa3c2e71af2ff"
+  },
+  {
+    "stored": "candidate-full-lint.log.gz",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "stored": "candidate-i18n.log.gz",
+    "bytes": 226,
+    "sha256": "ea80af9e7f95ccb6af004b38f46583cfa180c8b49af47789b8d6f2898c5b16d1"
+  },
+  {
+    "stored": "candidate-tests.json.gz",
+    "bytes": 249900,
+    "sha256": "0634361ad58e612b94dbc5fc6e25f8ab0a2fcc2ea1d38cd0a89a98e57dd66d74"
+  },
+  {
+    "stored": "candidate-tests.log.gz",
+    "bytes": 291,
+    "sha256": "063e63c89f0b1bea9fb787182c18d5a0a01bb0dc14462d0d50765f0bd6b66487"
+  },
+  {
+    "stored": "candidate-types.log.gz",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

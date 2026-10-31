@@ -6,6 +6,24 @@ import { useTranslation } from "react-i18next";
 import { ConversationList } from "@/components/companion/ConversationList";
 import { ChatPanel } from "@/components/companion/ChatPanel";
 import {
+  CompanionTasksEntry,
+  TaskActionsDrawer,
+} from "@/components/companion/tasks/TaskActionsDrawer";
+import { TaskActionCards } from "@/components/companion/tasks/TaskActionCards";
+import { useTasks } from "@/hooks/useChecklist";
+import { taskOrderKey } from "@/services/checklist";
+import {
+  PlanEntry,
+  type PlanTarget,
+} from "@/components/companion/plans/PlanEntry";
+import { PlanCards } from "@/components/companion/plans/PlanCards";
+import { useConversationPlans, usePlanStore } from "@/hooks/usePlans";
+import {
+  useConversationActions,
+  useTaskActionStore,
+  useTaskProgress,
+} from "@/hooks/useTaskActions";
+import {
   messagesKey,
   useChatbotUsage,
   useConversationMessages,
@@ -15,11 +33,20 @@ import {
   useSendMessage,
 } from "@/hooks/useCompanion";
 import { useCurrentUser } from "@/hooks/useProfile";
+import { useAccountGeneration, useAccountId } from "@/hooks/useAccountId";
+import { progressFor } from "@/components/companion/tasks/TaskStatePanel";
+import type { RemovalProposal } from "@/lib/companionActions/contract";
 import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
 import type { CompanionInputSource } from "@/lib/companionAnalytics";
 import type { ChatMessage } from "@/types";
+import { ownAccountWork, stillOwned } from "@/lib/accountSession";
 
 export default function CompanionPage() {
+  const generation = useAccountGeneration();
+  return <AccountCompanionPage key={generation} />;
+}
+
+function AccountCompanionPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -28,17 +55,74 @@ export default function CompanionPage() {
   // Mobile-only master/detail: when true the conversation list is shown instead
   // of the chat (the two sit side-by-side only at md+). Ignored on desktop.
   const [mobileListOpen, setMobileListOpen] = useState(false);
+  // Direction B: task progress, a task draft (#363) or one task opens in an
+  // overlay drawer; the chat and its draft stay mounted behind it.
+  const [drawer, setDrawer] = useState<
+    | { kind: "tasks" }
+    | {
+        kind: "proposal";
+        proposalId: string;
+        proposalKind: "task_create" | "task_edit";
+      }
+    | { kind: "steps"; proposalId: string }
+    | { kind: "task"; target: { taskRef: string; title: string } }
+    // #370: a suggested detail's review, or the saved details.
+    | { kind: "detail"; proposalId: string }
+    | { kind: "details" }
+    | { kind: "profile"; proposalId: string }
+    | { kind: "plan"; target: PlanTarget }
+    | null
+  >(null);
 
   const conversationsQuery = useConversations();
   const messagesQuery = useConversationMessages(activeId);
   const usageQuery = useChatbotUsage();
-  const currentUser = useCurrentUser().data;
+  const profile = useCurrentUser().data;
+  const accountId = useAccountId();
+  const currentUser = profile?.id === accountId ? profile : undefined;
   const createConversation = useCreateConversation();
   const sendMessage = useSendMessage();
   const deleteConversation = useDeleteConversation();
 
   const conversations = conversationsQuery.data ?? [];
   const messages = messagesQuery.data ?? [];
+  // #363: drafts and command results of the open conversation, for its cards.
+  const actionsQuery = useConversationActions(activeId);
+  const actionStore = useTaskActionStore("companion");
+  const progress = useTaskProgress();
+  const actions = actionsQuery.data;
+  // #364: the plan drafts of the open conversation, and the account's plan store.
+  const plansQuery = useConversationPlans(activeId);
+  const planStore = usePlanStore("companion");
+  // #366: the card names the Checklist task suggested steps are for.
+  const { data: checklistTasks = [] } = useTasks();
+  const taskTitleOf = (taskRef: string) =>
+    checklistTasks.find(
+      (task) => !task.dismissedAt && taskOrderKey(task) === taskRef,
+    )?.title ?? null;
+  const openTaskRef = (taskRef: string) =>
+    setDrawer({
+      kind: "task",
+      target: {
+        taskRef,
+        title:
+          checklistTasks.find((task) => taskOrderKey(task) === taskRef)
+            ?.title ??
+          progressFor(taskRef, progress).lastReceipt?.title ??
+          t("taskRemove.unknownTask"),
+      },
+    });
+  // #367: a removal request's card opens the task's drawer on that removal review.
+  const openRemoval = (proposal: RemovalProposal) => {
+    if (proposal.status === "draft")
+      actionStore?.requestRemoval(
+        proposal.operation.task_ref,
+        proposal.proposalId,
+      );
+    openTaskRef(proposal.operation.task_ref);
+  };
+  const isRemovedNow = (taskRef: string) =>
+    progress.status === "ready" && progressFor(taskRef, progress).removed;
   const activeConversation = activeId
     ? (conversations.find((c) => c.id === activeId) ?? null)
     : null;
@@ -48,13 +132,18 @@ export default function CompanionPage() {
 
   async function handleSend(text: string, inputSource: CompanionInputSource) {
     setSendError(null);
+    // Results of this send reach this page only while its account is signed
+    // in (#361): another account sees no conversation, message or error from it.
+    const owner = ownAccountWork();
     try {
       let conversationIdentifier = activeId;
       const isNewConversation = !conversationIdentifier;
       if (!conversationIdentifier) {
         const created = await createConversation.mutateAsync({
           firstMessage: text,
+          owner,
         });
+        if (!stillOwned(owner)) return;
         conversationIdentifier = created.id;
         // Pre-seed an empty messages list for the new conversation. Without
         // this, useConversationMessages mounts and fires a server fetch that
@@ -62,7 +151,7 @@ export default function CompanionPage() {
         // onMutate (Supabase round-trip returns [] before the user-save lands,
         // wiping the optimistic message).
         queryClient.setQueryData<ChatMessage[]>(
-          messagesKey(conversationIdentifier),
+          messagesKey(conversationIdentifier, owner.accountId),
           [],
         );
         setActiveId(conversationIdentifier);
@@ -72,8 +161,10 @@ export default function CompanionPage() {
         text,
         inputSource,
         isNewConversation,
+        owner,
       });
     } catch (err) {
+      if (!stillOwned(owner)) return;
       // The daily free-tier cap surfaces as a typed ChatLimitError (rag-query
       // 429, relayed by the /api/companion proxy) — show localized limit copy;
       // anything else gets a generic retry prompt instead of failing silently.
@@ -88,7 +179,10 @@ export default function CompanionPage() {
 
   async function handleDelete(conversationIdentifier: string) {
     try {
-      await deleteConversation.mutateAsync(conversationIdentifier);
+      await deleteConversation.mutateAsync({
+        conversationIdentifier,
+        owner: ownAccountWork(),
+      });
       if (conversationIdentifier === activeId) setActiveId(null);
     } catch (err) {
       console.error("Companion: failed to delete conversation", err);
@@ -125,6 +219,70 @@ export default function CompanionPage() {
         onboarding={currentUser?.onboarding ?? null}
         mobileActive={!mobileListOpen}
         onOpenList={() => setMobileListOpen(true)}
+        taskEntry={
+          <>
+            <CompanionTasksEntry onOpen={() => setDrawer({ kind: "tasks" })} />
+            <PlanEntry
+              onOpen={(target) => setDrawer({ kind: "plan", target })}
+            />
+          </>
+        }
+        renderAfterMessage={(message) => (
+          <>
+            <TaskActionCards
+              reminderProposals={actions?.reminderProposals ?? []}
+              message={message}
+              proposals={actions?.proposals ?? []}
+              commands={[...(actions?.commands ?? []), ...(actions?.profileCommands ?? [])]}
+              profileProposals={actions?.profileProposals ?? []}
+              onReviewProfile={proposalId => setDrawer({ kind: "profile", proposalId })}
+              store={actionStore}
+              canWrite={progress.canWrite}
+              onReview={(proposalId, proposalKind) =>
+                setDrawer({ kind: "proposal", proposalId, proposalKind })
+              }
+              onViewTask={openTaskRef}
+              stepProposals={actions?.stepProposals ?? []}
+              onReviewSteps={(proposalId) =>
+                setDrawer({ kind: "steps", proposalId })
+              }
+              taskTitleOf={taskTitleOf}
+              detailProposals={actions?.detailProposals ?? []}
+              detailCommands={actions?.detailCommands ?? []}
+              onReviewDetail={(proposalId) =>
+                setDrawer({ kind: "detail", proposalId })
+              }
+              onViewDetails={() => setDrawer({ kind: "details" })}
+              removalProposals={actions?.removalProposals ?? []}
+              onReviewRemoval={openRemoval}
+              isRemovedNow={isRemovedNow}
+            />
+            <PlanCards
+              message={message}
+              proposals={plansQuery.data ?? []}
+              store={planStore}
+              onOpen={(proposalId) =>
+                setDrawer({ kind: "plan", target: { proposalId } })
+              }
+            />
+          </>
+        )}
+      />
+      <TaskActionsDrawer
+        open={drawer !== null}
+        onClose={() => setDrawer(null)}
+        surface="companion"
+        initialTask={drawer?.kind === "task" ? drawer.target : null}
+        proposalId={drawer?.kind === "proposal" ? drawer.proposalId : null}
+        plan={drawer?.kind === "plan" ? drawer.target : null}
+        onOpenTask={openTaskRef}
+        stepProposalId={drawer?.kind === "steps" ? drawer.proposalId : null}
+        detailProposalId={drawer?.kind === "detail" ? drawer.proposalId : null}
+        profileProposalId={drawer?.kind === "profile" ? drawer.proposalId : null}
+        openDetails={drawer?.kind === "details"}
+        proposalKind={
+          drawer?.kind === "proposal" ? drawer.proposalKind : undefined
+        }
       />
     </div>
   );

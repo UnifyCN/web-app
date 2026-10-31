@@ -1,0 +1,51 @@
+{
+  "base": "4a2834a51fd1d389e5ebf7d22e60ad588fe5fc2a",
+  "source": [
+    {
+      "path": "components/companion/tasks/ReminderSection.tsx",
+      "sha256": "cd0441fa3236a9c665b64d52c72786c8dd757be422083bfddb07cf0c8078079b"
+    },
+    {
+      "path": "components/companion/tasks/ReminderPresentation.test.tsx",
+      "sha256": "b4894cbb93e46ba533348f07782c35048dda36763985d4194fe62c75d8fdb598"
+    },
+    {
+      "path": "scripts/verify-companion-reminder-presentation.mjs",
+      "sha256": "0f2da0a80d7d8e02350f6fc02a8c7d8566cd4116ca97e72d7083854d4beae616"
+    }
+  ],
+  "browser_fixed": {
+    "passed": 38,
+    "failed": 0
+  },
+  "browser_original": {
+    "passed": 22,
+    "failed": 16
+  },
+  "unit_red": {
+    "failed": 6,
+    "passed": 6
+  },
+  "focused_passed": 19,
+  "full_tests_passed": 732,
+  "full_tests_skipped": 13,
+  "full_test_exit": 0,
+  "build_exit": 0,
+  "changed_lint_exit": 0,
+  "typecheck_exit": 0,
+  "full_lint_exit": 1,
+  "unchanged_lint_files": [
+    {
+      "path": "supabase/probes/companion-context-362/context_rls_test.ts",
+      "sha256": "77990690f75f0774ad1cb3978108ec06847d07bf49a2e6ef36d996e7edea70f2"
+    },
+    {
+      "path": "supabase/tests/companion-actions/rollback_test.ts",
+      "sha256": "398b254f7e37b96123e908b75549836d4697f80806589740082256858d6bdc4a"
+    },
+    {
+      "path": "supabase/tests/companion-actions/support.ts",
+      "sha256": "d61674fc8173631bf7c7c9936f797f28a3c8f487924febbd4fc820f5afe40e9c"
+    }
+  ]
+}

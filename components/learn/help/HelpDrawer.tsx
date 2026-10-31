@@ -4,6 +4,8 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { ArrowLeft, Sparkles, Users, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { trackHelpPathSelected } from "@/lib/analytics";
+import { useAccountGeneration, useAccountId } from "@/hooks/useAccountId";
+import { useAccountScope } from "@/hooks/useAccountScope";
 import { useIsRtl } from "@/hooks/useDirection";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { HelpChooser } from "./HelpChooser";
@@ -87,6 +89,17 @@ export function HelpDrawer({
   // Owned here (not in InLessonChat) so revisiting the AI path continues the
   // same conversation instead of spawning a new row per visit.
   const [aiConversationId, setAiConversationId] = useState<string | null>(null);
+  // The open conversation belongs to the signed-in account (#361): another
+  // account, or a sign-out, starts without it. The lesson page also drops every
+  // other account's cached Companion and task data.
+  const accountId = useAccountId();
+  useAccountScope(accountId ?? null, accountId !== undefined);
+  const accountGeneration = useAccountGeneration();
+  const [chatGeneration, setChatGeneration] = useState(accountGeneration);
+  if (chatGeneration !== accountGeneration) {
+    setChatGeneration(accountGeneration);
+    setAiConversationId(null);
+  }
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   // Stable id so the resize handle (role="separator") can point aria-controls at

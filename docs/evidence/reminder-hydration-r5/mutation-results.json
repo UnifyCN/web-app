@@ -1,0 +1,116 @@
+{
+  "results": [
+    {
+      "name": "server-snapshot-as-key",
+      "exit": 1,
+      "passed": 22,
+      "failed": 6,
+      "seconds": 2.2963657079999393,
+      "failures": [
+        {
+          "name": "the actual preloaded-Auth page preserves the input and focus through hydration at nonzero epoch",
+          "message": "AssertionError: expected <textarea rows=\"1\" \u2026(3)></textarea> to be <textarea rows=\"1\" \u2026(3)></textarea> // Object.is equality\n\nIf it should pass with deep equality, replace \"toBe\" with \"toStrictEqual\"\n\nExpected: <textarea rows=\"1\" \u2026(3)></textarea>\nReceived: serializes to the same string\n\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/ReviewHydrationR5.test.tsx:187:47\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5-root/web-"
+        },
+        {
+          "name": "keeps the page input and focus through hydration with nonzero epoch",
+          "message": "AssertionError: expected <textarea rows=\"1\" \u2026(3)></textarea> to be <textarea rows=\"1\" \u2026(3)></textarea> // Object.is equality\n\nIf it should pass with deep equality, replace \"toBe\" with \"toStrictEqual\"\n\nExpected: <textarea rows=\"1\" \u2026(3)></textarea>\nReceived: serializes to the same string\n\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/TaskSelectionAccountSession.test.tsx:215:51\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5"
+        },
+        {
+          "name": "keeps the page input and focus through hydration with client catch-up epoch",
+          "message": "AssertionError: expected <textarea rows=\"1\" \u2026(3)></textarea> to be <textarea rows=\"1\" \u2026(3)></textarea> // Object.is equality\n\nIf it should pass with deep equality, replace \"toBe\" with \"toStrictEqual\"\n\nExpected: <textarea rows=\"1\" \u2026(3)></textarea>\nReceived: serializes to the same string\n\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/TaskSelectionAccountSession.test.tsx:215:51\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5"
+        },
+        {
+          "name": "keeps the page input and focus through hydration with pending Auth epoch",
+          "message": "AssertionError: expected <textarea rows=\"1\" \u2026(3)></textarea> to be <textarea rows=\"1\" \u2026(3)></textarea> // Object.is equality\n\nIf it should pass with deep equality, replace \"toBe\" with \"toStrictEqual\"\n\nExpected: <textarea rows=\"1\" \u2026(3)></textarea>\nReceived: serializes to the same string\n\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/TaskSelectionAccountSession.test.tsx:215:51\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5"
+        },
+        {
+          "name": "keeps the Checklist control and focus through hydration at an existing epoch",
+          "message": "AssertionError: expected <button type=\"button\" \u2026(4)></button> to be <button type=\"button\" \u2026(4)></button> // Object.is equality\n\nIf it should pass with deep equality, replace \"toBe\" with \"toStrictEqual\"\n\nExpected: <button type=\"button\" \u2026(4)></button>\nReceived: serializes to the same string\n\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/TaskSelectionAccountSession.test.tsx:267:58\n    at runNextTicks (node:internal/process/task_queues:64:5)\n "
+        },
+        {
+          "name": "keeps the lesson chat input and focus through hydration at an existing epoch",
+          "message": "AssertionError: expected <textarea rows=\"1\" \u2026(3)></textarea> to be <textarea rows=\"1\" \u2026(3)></textarea> // Object.is equality\n\nIf it should pass with deep equality, replace \"toBe\" with \"toStrictEqual\"\n\nExpected: <textarea rows=\"1\" \u2026(3)></textarea>\nReceived: serializes to the same string\n\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/TaskSelectionAccountSession.test.tsx:314:49\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5"
+        }
+      ]
+    },
+    {
+      "name": "never-reset-account-key",
+      "exit": 1,
+      "passed": 22,
+      "failed": 6,
+      "seconds": 4.1139690409981995,
+      "failures": [
+        {
+          "name": "account-owned UI observes both transitions even when the final Auth data is equal",
+          "message": "AssertionError: expected +0 to be 10 // Object.is equality\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/ReminderAccountSession.test.tsx:338:72\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "the actual page applies selected task ownership on account change",
+          "message": "AssertionError: expected <h3 id=\"_r_7_-title\" \u2026(3)></h3> to be null\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body\u001b[39m\n    \u001b[33mstyle\u001b[39m=\u001b[32m\"overflow: hidden;\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33minert\u001b[39m=\u001b[32m\"\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex h-[calc(100dvh_-_3.5rem_-_env(safe-area-inset-bottom))] md:h-dvh\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<aside\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\""
+        },
+        {
+          "name": "clears a task selected inside the drawer on replacement without a page owner",
+          "message": "AssertionError: expected <h3 id=\"_r_q_-title\" \u2026(3)></h3> to be null\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/TaskSelectionAccountSession.test.tsx:441:7\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "clears a task selected inside the drawer on sign-out/sign-in without a page owner",
+          "message": "AssertionError: expected <h3 id=\"_r_16_-title\" \u2026(3)></h3> to be null\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/TaskSelectionAccountSession.test.tsx:441:7\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "clears a task selected inside the drawer on A/B/A without a page owner",
+          "message": "AssertionError: expected <h3 id=\"_r_1i_-title\" \u2026(3)></h3> to be null\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/TaskSelectionAccountSession.test.tsx:441:7\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "closes the Checklist task view when its account changes",
+          "message": "AssertionError: expected <div role=\"dialog\" \u2026(4)>\u2026(2)</div> to be null\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body\u001b[39m\n    \u001b[33mstyle\u001b[39m=\u001b[32m\"overflow: hidden;\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33minert\u001b[39m=\u001b[32m\"\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"mx-auto max-w-[720px] px-6 py-6\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<h1\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"text-xl font-semibold text-ink-seconda"
+        }
+      ]
+    },
+    {
+      "name": "no-generation-subscription",
+      "exit": 1,
+      "passed": 19,
+      "failed": 9,
+      "seconds": 4.0451132919988595,
+      "failures": [
+        {
+          "name": "account-owned UI observes both transitions even when the final Auth data is equal",
+          "message": "AssertionError: expected 8 to be 10 // Object.is equality\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/ReminderAccountSession.test.tsx:338:72\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "the actual Auth callback applies private-cache policy on reset",
+          "message": "AssertionError: expected 'Private cached record' to be undefined // Object.is equality\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/ReminderAccountSession.test.tsx:416:39\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "the actual Auth callback applies private-cache policy on token refresh",
+          "message": "AssertionError: expected undefined to be 'real-auth-a' // Object.is equality\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/ReminderAccountSession.test.tsx:420:67\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "the actual page applies selected task ownership on account change",
+          "message": "AssertionError: expected <div role=\"dialog\" \u2026(4)>\u2026(2)</div> to be null\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/TaskSelectionAccountSession.test.tsx:383:44\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "clears a task selected inside the drawer on replacement without a page owner",
+          "message": "AssertionError: expected <h3 id=\"_r_n_-title\" \u2026(3)></h3> to be null\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/TaskSelectionAccountSession.test.tsx:441:7\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "clears a task selected inside the drawer on sign-out/sign-in without a page owner",
+          "message": "AssertionError: expected <h3 id=\"_r_13_-title\" \u2026(3)></h3> to be null\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/TaskSelectionAccountSession.test.tsx:441:7\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "clears a task selected inside the drawer on A/B/A without a page owner",
+          "message": "AssertionError: expected <h3 id=\"_r_1f_-title\" \u2026(3)></h3> to be null\n    at /private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/components/companion/tasks/TaskSelectionAccountSession.test.tsx:441:7\n    at file:///private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+        },
+        {
+          "name": "closes the Checklist task view when its account changes",
+          "message": "AssertionError: expected <div role=\"dialog\" \u2026(4)>\u2026(2)</div> to be null\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body\u001b[39m\n    \u001b[33mstyle\u001b[39m=\u001b[32m\"overflow: hidden;\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<div\u001b[39m\n      \u001b[33minert\u001b[39m=\u001b[32m\"\"\u001b[39m\n    \u001b[36m>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"mx-auto max-w-[720px] px-6 py-6\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<h1\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"text-xl font-semibold text-ink-seconda"
+        },
+        {
+          "name": "does not display an earlier profile returned after account replacement",
+          "message": "AssertionError: expected '' to be 'Earlier private name' // Object.is equality\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body\u001b[39m\n    \u001b[33mstyle\u001b[39m=\u001b[32m\"\"\u001b[39m\n  \u001b[36m>\u001b[39m\n    \u001b[36m<div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mdata-testid\u001b[39m=\u001b[32m\"companion-page\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"flex h-[calc(100dvh_-_3.5rem_-_env(safe-area-inset-bottom))] md:h-dvh\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b"
+        }
+      ]
+    }
+  ],
+  "restored_sha256": "7131114669aff16049adf41d30b8cafe37d81ca07074b284f7df3ef498f26245"
+}

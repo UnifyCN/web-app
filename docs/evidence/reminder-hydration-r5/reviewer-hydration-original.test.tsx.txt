@@ -1,0 +1,190 @@
+// @vitest-environment jsdom
+// Fresh real-hook and real-editor proof with scripted Auth callbacks.
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { I18nextProvider } from "react-i18next";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { useAccountGeneration } from "@/hooks/useAccountId";
+import { useCurrentUser } from "@/hooks/useProfile";
+import { AUTH_USER_KEY } from "@/hooks/useAuthUser";
+import { ownAccountWork, noteAccount } from "@/lib/accountSession";
+import { clearTaskActionStores } from "@/lib/companionActions/taskActionStore";
+import { TaskActionsDrawer } from "@/components/companion/tasks/TaskActionsDrawer";
+import {
+  testI18n,
+  scriptedServer,
+} from "@/components/companion/tasks/taskActionsTestHarness";
+import en from "@/lib/i18n/locales/en/translation.json";
+import { clearComposerDrafts } from "@/lib/companion/composerDrafts";
+import { TASK_PROGRESS_ROOT } from "@/lib/companionActions/queryKeys";
+const scrollDescriptor = Object.getOwnPropertyDescriptor(
+  HTMLElement.prototype,
+  "scrollIntoView",
+);
+const auth = vi.hoisted(() => ({
+  user: { id: "real-auth-a" },
+  listeners: new Set<(event: string, session: unknown) => void>(),
+  reads: 0,
+  profile: null as Promise<{
+    id: string;
+    onboarding: null;
+    isPremium: boolean;
+  }> | null,
+  reply: null as
+    | (() => Promise<{ data: { session: { user: { id: string } } } }>)
+    | null,
+}));
+vi.mock("@/lib/supabase/client", () => ({
+  isSupabaseConfigured: () => true,
+  createClient: () => ({
+    auth: {
+      getSession: async () => {
+        auth.reads++;
+        if (auth.reply) return auth.reply();
+        return { data: { session: { user: { ...auth.user } } } };
+      },
+      onAuthStateChange: (f: (event: string, session: unknown) => void) => {
+        auth.listeners.add(f);
+        return {
+          data: {
+            subscription: { unsubscribe: () => auth.listeners.delete(f) },
+          },
+        };
+      },
+    },
+  }),
+}));
+vi.mock("@/lib/posthog", () => ({
+  isPostHogConfigured: () => false,
+  posthog: { capture: () => {} },
+}));
+vi.mock("@/services/checklist", async (original) => ({
+  ...(await original<typeof import("@/services/checklist")>()),
+  getTasks: async () =>
+    auth.user.id === "real-auth-a"
+      ? [
+          {
+            id: "1",
+            title: "Private drawer task",
+            description: "",
+            priority: "Do now",
+            isCustom: true,
+            completed: false,
+            dismissedAt: null,
+            completedAt: null,
+          },
+        ]
+      : [],
+}));
+vi.mock("@/services/profile", async (original) => ({
+  ...(await original<typeof import("@/services/profile")>()),
+  getCurrentUser: async () =>
+    auth.profile ?? { id: auth.user.id, onboarding: null, isPremium: false },
+}));
+vi.mock("@/services/companion", async (original) => ({
+  ...(await original<typeof import("@/services/companion")>()),
+  getConversations: async () => [],
+  getMessages: async () => [],
+  getChatbotUsage: async () => ({ messageCount: 0, isPremium: false }),
+}));
+import CompanionPage from "@/app/(main)/companion/page";
+import ChecklistPage from "@/app/(main)/checklist/page";
+let query: QueryClient;
+function Caller() {
+  return <TaskActionsDrawer open onClose={() => {}} surface="companion" />;
+}
+beforeEach(() => {
+  const server = scriptedServer({ "custom:1": { revision: 1 } });
+  vi.stubGlobal("fetch", async (url: RequestInfo | URL, init: RequestInit) => {
+    const response = await server.fetch(url, init);
+    if (JSON.parse(String(init.body)).action === "read") {
+      const body = await response.json();
+      body.reminders = {
+        scheduler: "ready",
+        items: [
+          {
+            reminder_id: "r1",
+            task_ref: "custom:1",
+            title: "Private drawer task",
+            remind_at: "2027-11-07T05:30:00Z",
+            time_zone: "America/New_York",
+            wall_time: "2027-11-07T01:30:00",
+            revision: 1,
+            status: "pending",
+            due: true,
+            due_at: "2027-11-07T05:30:01Z",
+            cancelled_reason: null,
+            history: [],
+          },
+        ],
+      };
+      return new Response(JSON.stringify(body), {
+        status: response.status,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return response;
+  });
+  clearTaskActionStores();
+  clearComposerDrafts();
+  auth.reads = 0;
+  auth.profile = null;
+  auth.reply = null;
+  auth.user = { id: "real-auth-a" };
+  noteAccount(auth.user.id);
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: vi.fn(),
+  });
+  query = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+  });
+});
+afterEach(() => {
+  cleanup();
+  query.clear();
+  clearTaskActionStores();
+  auth.listeners.clear();
+  vi.unstubAllGlobals();
+  if (scrollDescriptor)
+    Object.defineProperty(
+      HTMLElement.prototype,
+      "scrollIntoView",
+      scrollDescriptor,
+    );
+  else Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+});
+
+import { renderToString } from "react-dom/server";
+import { hydrateRoot } from "react-dom/client";
+import { writeFileSync } from "node:fs";
+it.each(["zero", "nonzero"])("the actual preloaded-Auth page preserves the input and focus through hydration at %s epoch", async mode => {
+ if(mode === "nonzero") {noteAccount("older-hydration-account");noteAccount("real-auth-a");}
+ const before=ownAccountWork();
+ expect(before.epoch === 0).toBe(mode === "zero");
+ query.setQueryData(AUTH_USER_KEY,{id:"real-auth-a"});
+ const ui=<QueryClientProvider client={query}><I18nextProvider i18n={testI18n()}><CompanionPage/></I18nextProvider></QueryClientProvider>;
+ const html=renderToString(ui);
+ const container=document.createElement("div");container.innerHTML=html;document.body.append(container);
+ const input=container.querySelector("textarea")!;
+ expect(input).toBeTruthy();input.focus();expect(document.activeElement).toBe(input);
+ const onRecoverableError=vi.fn();
+ let root:ReturnType<typeof hydrateRoot>|undefined;
+ try {
+  await act(async()=>{root=hydrateRoot(container,ui,{onRecoverableError});});
+  await waitFor(()=>expect(query.isFetching()).toBe(0));
+  writeFileSync(`/Volumes/Lexar/Dev.noindex/t3-worktrees/Unify/t3-e0bef4b3/DOCS/companion-actions/evidence/review-368-selection-r5-SPEC/hydration-${mode}-state.json`,JSON.stringify({before,after:ownAccountWork(),sameInput:container.querySelector("textarea") === input,focusRetained:document.activeElement === input,recoverableErrors:onRecoverableError.mock.calls.map(c=>String(c[0]))},null,2));
+  expect(onRecoverableError).not.toHaveBeenCalled();
+  expect(ownAccountWork()).toEqual(before);
+  expect(container.querySelector("textarea")).toBe(input);
+  expect(document.activeElement).toBe(input);
+ } finally {await act(async()=>root?.unmount());container.remove();}
+});

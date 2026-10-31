@@ -13,6 +13,21 @@ import {
   extractTopicTag,
   TOPIC_INSTRUCTION,
 } from './lib/topic.ts';
+import {
+  DETAIL_PROPOSAL_INSTRUCTION,
+  PROFILE_PROPOSAL_INSTRUCTION,
+  extractActionProposal,
+  PLAN_PROPOSAL_INSTRUCTION,
+  type ReadChecklistTask,
+  TASK_PROPOSAL_INSTRUCTION,
+} from './lib/actions/proposals.ts';
+
+/** The Checklist tasks this answer read for the account: a suggested plan may reuse only these. */
+function readChecklistTasks(context: { items: Array<{ kind: string; id?: string; title?: string | null }> }): ReadChecklistTask[] {
+  return context.items.flatMap(item =>
+    item.kind === 'checklist_task' && typeof item.id === 'string' ? [{ id: item.id, title: item.title ?? null }] : []
+  );
+}
 import { buildUserProfileContext } from './lib/profile.ts';
 import { buildRetrievalArgs } from './lib/retrieval.ts';
 import { buildRetrievedContext } from './lib/retrievedContext.ts';
@@ -22,6 +37,22 @@ import {
   CURRENT_FACTS_WITH_CONTEXT,
   CURRENT_FACTS_WITHOUT_CONTEXT,
 } from './lib/currentFacts.ts';
+import {
+  startCompanionReads,
+  withKnowledgeSources,
+} from './lib/context/companionContext.ts';
+import {
+  createUserScopedClient,
+  sanityConfigFromEnv,
+} from './lib/context/appContext.ts';
+import { guidanceConfigFromEnv } from './lib/context/guidance.ts';
+import {
+  TOOL_POLICY,
+  appContextBlock,
+  clarificationBlock,
+  guidanceBlock,
+  savedDetailsBlock,
+} from './lib/context/promptBlocks.ts';
 
 // ============================================================================
 // CONSTANTS
@@ -249,30 +280,6 @@ type ProfileBundle = {
   text: string;
   raw: Record<string, unknown> | null;
 };
-
-async function fetchUserProfileContext(
-  supabase: ReturnType<typeof createClient>,
-  userId: string
-): Promise<ProfileBundle> {
-  try {
-    const { data: profile, error: profileError } = await supabase
-      .from('user_onboarding_profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (profileError || !profile) {
-      return { text: '', raw: null };
-    }
-
-    const userProfileContext = buildUserProfileContext(profile);
-    console.log('User profile context loaded:', userProfileContext.length > 0);
-    return { text: userProfileContext, raw: profile };
-  } catch (_profileFetchError) {
-    console.error('Failed to fetch user onboarding profile context');
-    return { text: '', raw: null };
-  }
-}
 
 async function persistChatbotUsage(
   supabase: ReturnType<typeof createClient>,
@@ -796,24 +803,58 @@ Deno.serve(async (req: Request) => {
       console.warn('Ignoring mismatched request userId and authenticated user');
     }
 
-    const profilePromise: Promise<ProfileBundle> = isEvalMode
-      ? Promise.resolve({
-          text: evalProfile ? buildUserProfileContext(evalProfile) : '',
-          raw: evalProfile,
-        })
-      : effectiveUserId
-      ? (async () => {
-          const profileStartedAt = performance.now();
-          const bundle = await fetchUserProfileContext(
-            supabase,
-            effectiveUserId
-          );
-          stageTimings.profile_ms = Math.round(
-            performance.now() - profileStartedAt
-          );
-          return bundle;
-        })()
-      : Promise.resolve<ProfileBundle>({ text: '', raw: null });
+    // Companion context reads (ticket #362). Profile, Checklist and the
+    // conversation are read with the caller's own JWT, so row-level security
+    // decides what this answer can see; the service-role client above is only
+    // used for the usage and retrieval RPCs. External guidance is searched and
+    // read only for planning and fact-check questions.
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    const authorization = req.headers.get('Authorization');
+    const userClient =
+      !isEvalMode && anonKey && authorization
+        ? createUserScopedClient(supabaseUrl, anonKey, authorization)
+        : null;
+    const earlierUserTurns = (Array.isArray(messages) ? messages.slice(-10) : [])
+      .filter(
+        (m: { role?: unknown; message?: unknown }) =>
+          m?.role === 'user' && typeof m.message === 'string'
+      )
+      .map((m: { message: string }) => m.message);
+    const profileStartedAt = performance.now();
+    const companionReads = startCompanionReads({
+      // #370: saved details are used only while the Companion actions gate is on.
+      actionsEnabled: async () => {
+        const { data, error } = await supabase
+          .from('companion_feature_gate')
+          .select('enabled')
+          .limit(1);
+        return !error && Array.isArray(data) && data[0]?.enabled === true;
+      },
+      userClient,
+      userId: isEvalMode ? null : effectiveUserId,
+      evalProfile: isEvalMode ? evalProfile ?? null : null,
+      conversationIdentifier,
+      prompt: prompt.trim(),
+      earlierUserTurns,
+      lang:
+        typeof responseLanguage === 'string' &&
+        RESPONSE_LANGUAGE_NAMES[responseLanguage]
+          ? responseLanguage
+          : 'en',
+      queryType,
+      sanity: sanityConfigFromEnv(key => Deno.env.get(key)),
+      guidance: guidanceConfigFromEnv(key => Deno.env.get(key)),
+      now: () => new Date(),
+    });
+
+    const profilePromise: Promise<ProfileBundle> = companionReads.profile.then(
+      raw => {
+        stageTimings.profile_ms = Math.round(
+          performance.now() - profileStartedAt
+        );
+        return { text: raw ? buildUserProfileContext(raw) : '', raw };
+      }
+    );
 
     // Personalize the system prompt with the user's first_name, falling back to
     // username. Missing both is expected for some users — we just skip the name
@@ -892,6 +933,8 @@ Deno.serve(async (req: Request) => {
     let hasGoodKBHits = false;
     let disclaimer: string | undefined;
     let lastVerified: string | undefined;
+    let knowledgeRead: 'ok' | 'error' | 'skipped' = 'skipped';
+    const knowledgeRevisions = new Map<number, string | null>();
 
     if (needsRAG) {
       // Use RAG pipeline for immigration-related queries
@@ -938,6 +981,16 @@ Deno.serve(async (req: Request) => {
           console.error('RPC function error:', searchError);
           chunks = [];
         }
+        knowledgeRead = searchError ? 'error' : 'ok';
+        for (const chunk of chunks ?? []) {
+          const updated = chunk?.knowledge_documents?.updated_at;
+          if (!knowledgeRevisions.has(chunk?.document_id)) {
+            knowledgeRevisions.set(
+              chunk?.document_id,
+              typeof updated === 'string' ? updated : null
+            );
+          }
+        }
 
         // Build context from retrieved chunks: each chunk is dated on its own,
         // and each distinct article address is cited.
@@ -967,8 +1020,23 @@ Deno.serve(async (req: Request) => {
     // ========================================================================
     // STEP 3: BUILD CONVERSATION HISTORY
     // ========================================================================
+    // The context reads ran beside retrieval. A conversation the caller's JWT
+    // cannot see (another account's id, deleted, access lost) contributes no
+    // history: the client-sent turns are dropped with it.
+    const companion = await companionReads.context;
+    const companionContext = withKnowledgeSources(
+      companion.context,
+      knowledgeRead,
+      sources.map(source => ({
+        ...source,
+        updated_at: knowledgeRevisions.get(source.document_id) ?? null,
+      }))
+    );
+
     const recentMessages =
-      messages && Array.isArray(messages) ? messages.slice(-10) : [];
+      companion.historyAllowed && messages && Array.isArray(messages)
+        ? messages.slice(-10)
+        : [];
 
     const conversationHistory = recentMessages.map(
       (msg: { message: string; role: 'user' | 'assistant' }) => ({
@@ -1022,6 +1090,23 @@ Deno.serve(async (req: Request) => {
         fullSystemInstruction = `${fullSystemInstruction}\n${provincePointer}`;
       }
     }
+    // Read-only tool policy, then the app records and official pages this
+    // answer read, then anything it must ask about. All of it is quoted data.
+    fullSystemInstruction = `${fullSystemInstruction}\n${TOOL_POLICY}${appContextBlock(
+      companionContext
+    )}${savedDetailsBlock(companion.savedDetails)}${guidanceBlock(companionContext, companion.evidence)}${clarificationBlock(
+      companionContext
+    )}`;
+    // Companion tab only (not the in-lesson chat): the model may suggest one task for
+    // the user to review. The suggestion is typed and stripped below; it writes nothing.
+    if (!lessonContext) {
+      fullSystemInstruction = `${fullSystemInstruction}\n${TASK_PROPOSAL_INSTRUCTION}\n${PLAN_PROPOSAL_INSTRUCTION}\n${DETAIL_PROPOSAL_INSTRUCTION}\n${PROFILE_PROPOSAL_INSTRUCTION}`;
+    }
+    // #366: steps, and #365 edits, may be suggested only for a Checklist task this answer
+    // read (its own account's context). Outside the Companion tab nothing is suggested.
+    const readTaskRefs = new Set<string>(
+      lessonContext ? [] : companionContext.items.filter(i => i.kind === 'checklist_task').map(i => i.id)
+    );
     if (lessonContext) {
       const lessonProgress = await lessonProgressPromise;
       fullSystemInstruction = `${fullSystemInstruction}\n${buildLessonContextBlock(
@@ -1169,6 +1254,7 @@ Deno.serve(async (req: Request) => {
                   queryType,
                   disclaimer,
                   lastVerified: lastVerified || undefined,
+                  context: companionContext,
                 })
               )
             ) {
@@ -1266,6 +1352,8 @@ Deno.serve(async (req: Request) => {
                 query_type: queryType,
                 topic,
                 has_sources: sources.length > 0,
+                // Categorical only: no URL, title, task or profile value.
+                guidance_status: companionContext.guidance.status,
                 response_time_ms: stageTimings.generation_ms,
               });
             }
@@ -1285,14 +1373,16 @@ Deno.serve(async (req: Request) => {
               );
             }
 
+            const proposed = extractActionProposal(untaggedAnswer, readChecklistTasks(companionContext), readTaskRefs);
             const { cleanAnswer, suggestions } =
-              parseSuggestionsFromResponse(untaggedAnswer);
+              parseSuggestionsFromResponse(proposed.answer);
 
             safeEnqueue(
               sse('complete', {
                 cleanAnswer,
                 suggestedNextSteps:
                   suggestions.length > 0 ? suggestions : undefined,
+                actionProposal: proposed.proposal ?? undefined,
                 topic,
                 tokenUsage,
                 estimatedCostUsd,
@@ -1438,6 +1528,8 @@ Deno.serve(async (req: Request) => {
         query_type: queryType,
         topic,
         has_sources: sources.length > 0,
+        // Categorical only: no URL, title, task or profile value.
+        guidance_status: companionContext.guidance.status,
         response_time_ms: stageTimings.generation_ms,
       });
     }
@@ -1454,9 +1546,11 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // A suggested task (typed, validated) leaves the answer text first.
+    const proposed = extractActionProposal(untaggedAnswer, readChecklistTasks(companionContext), readTaskRefs);
     // Parse out suggestions from the response
     const { cleanAnswer, suggestions } =
-      parseSuggestionsFromResponse(untaggedAnswer);
+      parseSuggestionsFromResponse(proposed.answer);
 
     // ========================================================================
     // STEP 6: RETURN RESPONSE
@@ -1471,6 +1565,8 @@ Deno.serve(async (req: Request) => {
         disclaimer,
         suggestedNextSteps: suggestions.length > 0 ? suggestions : undefined,
         lastVerified: lastVerified || undefined,
+        context: companionContext,
+        actionProposal: proposed.proposal ?? undefined,
         tokenUsage,
         estimatedCostUsd,
       }),

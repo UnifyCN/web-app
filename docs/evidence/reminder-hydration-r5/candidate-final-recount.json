@@ -1,0 +1,96 @@
+{
+  "web": {
+    "passed": 760,
+    "failed": 0,
+    "skipped": 13,
+    "files": 71
+  },
+  "expanded_caller_file": [
+    {
+      "name": "keeps the page input and focus through hydration with zero epoch",
+      "status": "passed"
+    },
+    {
+      "name": "keeps the page input and focus through hydration with nonzero epoch",
+      "status": "passed"
+    },
+    {
+      "name": "keeps the page input and focus through hydration with client catch-up epoch",
+      "status": "passed"
+    },
+    {
+      "name": "keeps the page input and focus through hydration with pending Auth epoch",
+      "status": "passed"
+    },
+    {
+      "name": "keeps the Checklist control and focus through hydration at an existing epoch",
+      "status": "passed"
+    },
+    {
+      "name": "keeps the lesson chat input and focus through hydration at an existing epoch",
+      "status": "passed"
+    },
+    {
+      "name": "the actual page applies selected task ownership on account change",
+      "status": "passed"
+    },
+    {
+      "name": "the actual page applies selected task ownership on token refresh",
+      "status": "passed"
+    },
+    {
+      "name": "clears a task selected inside the drawer on replacement without a page owner",
+      "status": "passed"
+    },
+    {
+      "name": "clears a task selected inside the drawer on sign-out/sign-in without a page owner",
+      "status": "passed"
+    },
+    {
+      "name": "clears a task selected inside the drawer on A/B/A without a page owner",
+      "status": "passed"
+    },
+    {
+      "name": "closes the Checklist task view when its account changes",
+      "status": "passed"
+    },
+    {
+      "name": "removes the old profile while the replacement account profile is pending",
+      "status": "passed"
+    },
+    {
+      "name": "keeps the initial page input and focus when the first session read finishes",
+      "status": "passed"
+    },
+    {
+      "name": "does not display an earlier profile returned after account replacement",
+      "status": "passed"
+    }
+  ],
+  "full_lint": [
+    {
+      "path": "supabase/probes/companion-context-362/context_rls_test.ts",
+      "errors": 7
+    },
+    {
+      "path": "supabase/tests/companion-actions/rollback_test.ts",
+      "errors": 1
+    },
+    {
+      "path": "supabase/tests/companion-actions/support.ts",
+      "errors": 4
+    }
+  ],
+  "preservation": {
+    "passed": 1445,
+    "failed": 0,
+    "runtime_source_files": 1255,
+    "service_inputs": 163,
+    "service_by_repo": {
+      "web": 140,
+      "mobile": 23
+    },
+    "mirrors": 21,
+    "sql_pairs": 16
+  }
+}

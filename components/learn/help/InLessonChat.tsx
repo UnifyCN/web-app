@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { BookOpen } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
+import { accountEpoch, ownAccountWork, stillOwned } from "@/lib/accountSession";
+import { useAccountGeneration, useAccountId } from "@/hooks/useAccountId";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { MessageBubble } from "@/components/companion/MessageBubble";
 import { ChatInput } from "@/components/companion/ChatInput";
@@ -43,18 +45,30 @@ function TypingIndicator() {
  * send carries `lessonContext` so rag-query scopes its answer to the lesson.
  * The parent owns `conversationId` so switching chooser views doesn't spawn a
  * new conversation per visit.
+ *
+ * The chat belongs to the signed-in account (#361): another account, or a
+ * sign-out, remounts it empty, without the previous account's unsent text,
+ * error, typing indicator or pending creation.
  */
-export function InLessonChat({
-  lessonContext,
-  conversationId,
-  onConversationCreated,
-}: {
+export function InLessonChat(props: InLessonChatProps) {
+  return <AccountLessonChat key={useAccountGeneration()} {...props} />;
+}
+
+interface InLessonChatProps {
   lessonContext: LessonContext;
   conversationId: string | null;
   onConversationCreated: (id: string) => void;
-}) {
+}
+
+function AccountLessonChat({
+  lessonContext,
+  conversationId,
+  onConversationCreated,
+}: InLessonChatProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const accountId = useAccountId();
+  const epoch = accountEpoch();
   const endRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
@@ -90,9 +104,17 @@ export function InLessonChat({
     // Guard the conversation-creation window: without this, a rapid second send
     // (e.g. double-tapping starter chips) fires createConversation twice and
     // spawns a duplicate conversation before the first id is set.
-    if (createConversation.isPending) return;
+    const owner = ownAccountWork();
+    if (
+      !accountId ||
+      owner.accountId !== accountId ||
+      owner.epoch !== epoch ||
+      createConversation.isPending
+    )
+      return;
     setSendError(null);
     setDraft("");
+    // Results reach this chat only while its account is signed in (#361).
     try {
       let id = conversationId;
       const isNewConversation = !id;
@@ -100,11 +122,16 @@ export function InLessonChat({
         const created = await createConversation.mutateAsync({
           firstMessage: text,
           options: { source: "in-lesson", lessonId: lessonContext.lessonId },
+          owner,
         });
+        if (!stillOwned(owner)) return;
         id = created.id;
         // Pre-seed an empty messages list so the mount-time fetch can't race
         // the optimistic user bubble (same guard as the Companion page).
-        queryClient.setQueryData<ChatMessage[]>(messagesKey(id), []);
+        queryClient.setQueryData<ChatMessage[]>(
+          messagesKey(id, owner.accountId),
+          [],
+        );
         onConversationCreated(id);
       }
       await sendMessage.mutateAsync({
@@ -113,8 +140,10 @@ export function InLessonChat({
         lessonContext,
         inputSource,
         isNewConversation,
+        owner,
       });
     } catch (err) {
+      if (!stillOwned(owner)) return;
       setSendError(
         err instanceof ChatLimitError
           ? t("companion.dailyLimitReachedToast")
@@ -134,9 +163,13 @@ export function InLessonChat({
               {t("learnWeb.help.contextLabel")}{" "}
             </span>
             {lessonContext.moduleTitle}{" "}
-            <span dir="ltr" className={cn("inline-block", RTL_FLIP)}>›</span>{" "}
+            <span dir="ltr" className={cn("inline-block", RTL_FLIP)}>
+              ›
+            </span>{" "}
             {lessonContext.submoduleTitle}{" "}
-            <span dir="ltr" className={cn("inline-block", RTL_FLIP)}>›</span>{" "}
+            <span dir="ltr" className={cn("inline-block", RTL_FLIP)}>
+              ›
+            </span>{" "}
             {lessonContext.lessonTitle}
           </span>
         </div>
@@ -164,7 +197,7 @@ export function InLessonChat({
                 key={prompt}
                 type="button"
                 onClick={() => handleSend(prompt, "starter_prompt")}
-                disabled={createConversation.isPending}
+                disabled={!accountId || createConversation.isPending}
                 className="block w-full cursor-pointer rounded-full border border-teal-600/40 px-4 py-2 text-start text-sm text-teal-700 transition-colors hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {prompt}
@@ -207,6 +240,7 @@ export function InLessonChat({
             onValueChange={setDraft}
             onSend={(text) => handleSend(text, "typed")}
             placeholder={t("learnWeb.help.chat.inputPlaceholder")}
+            sendDisabled={!accountId}
           />
           <FreeTierIndicator remaining={freeTierRemaining} />
         </div>

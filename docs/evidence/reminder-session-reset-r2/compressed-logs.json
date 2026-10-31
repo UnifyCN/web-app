@@ -1,0 +1,50 @@
+[
+  {
+    "original": "build.log",
+    "stored": "build.log.gz",
+    "bytes": 2198,
+    "sha256": "93268c61916e08018d87666feaf2342a3c4ffc58cd8cfad170c109ea5981d50c"
+  },
+  {
+    "original": "changed-lint.log",
+    "stored": "changed-lint.log.gz",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "original": "full-lint.log",
+    "stored": "full-lint.log.gz",
+    "bytes": 1623,
+    "sha256": "a808edf51272150d315dc92a4af8e5b6dd8544f5cfa440cec114c0378e4f47cb"
+  },
+  {
+    "original": "green-web.log",
+    "stored": "green-web.log.gz",
+    "bytes": 585,
+    "sha256": "f46d8c78738a047f45db5079731522f753a5519c2522677d4c389fa3f9960f94"
+  },
+  {
+    "original": "i18n.log",
+    "stored": "i18n.log.gz",
+    "bytes": 226,
+    "sha256": "ea80af9e7f95ccb6af004b38f46583cfa180c8b49af47789b8d6f2898c5b16d1"
+  },
+  {
+    "original": "red-store.log",
+    "stored": "red-store.log.gz",
+    "bytes": 1676,
+    "sha256": "c4059e5861ad6c276a6f874d3e06315ce0989b20bf67fc0f18b574a758331d98"
+  },
+  {
+    "original": "test-all.log",
+    "stored": "test-all.log.gz",
+    "bytes": 17437,
+    "sha256": "3a80230449534f28f99fb18a4a68f65ddccbafdddd035d0e608c92bc163913a2"
+  },
+  {
+    "original": "typecheck.log",
+    "stored": "typecheck.log.gz",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

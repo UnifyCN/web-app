@@ -1,0 +1,7 @@
+{
+  "original_sha256": "15b83c74a1deeef15ee91a8bb62c6fb7e3648949250b28830b30c9455f987412",
+  "adapted_sha256": "4f96638e3894d826f454964de2ebd9e9f28284ac081cc07e5d09d6797e7b4fd9",
+  "change": "Only observer directory changed from prior review evidence to root-owned evidence. Assertions unchanged.",
+  "original": "/Volumes/Lexar/Dev.noindex/t3-worktrees/Unify/t3-8ac1ec31/DOCS/companion-actions/evidence/review-368-pending-draft-r7-SPEC",
+  "new": "/Users/savargupta/.t3/companion-359-root-evidence/returned-auth-r7"
+}

@@ -1,0 +1,33 @@
+{
+  "before": {
+    "accountId": "real-auth-a",
+    "epoch": 1
+  },
+  "after": {
+    "accountId": null,
+    "epoch": 2
+  },
+  "authStatus": "success",
+  "authData": null,
+  "oldInputValue": "",
+  "currentInputValue": "",
+  "sameInput": false,
+  "focusRetained": false,
+  "nullAccountTasks": [
+    {
+      "id": "1",
+      "title": "Private drawer task",
+      "description": "",
+      "priority": "Do now",
+      "isCustom": true,
+      "completed": false,
+      "dismissedAt": null,
+      "completedAt": null
+    }
+  ],
+  "sdkError": {
+    "name": "AuthRetryableFetchError",
+    "status": 503,
+    "message": "Session read temporarily unavailable"
+  }
+}

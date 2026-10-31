@@ -6,6 +6,7 @@ import {
 } from "@/lib/supabase/client";
 import { mergeI18nOverlay, sanityClient, type WithI18n } from "@/lib/sanity";
 import type { SupportedLanguage } from "@/lib/i18n/config";
+import { canonicalProvince } from "@/supabase/functions/rag-query/lib/province";
 import { tasks as mockTasks } from "@/lib/mock/tasks";
 import {
   checklistStage,
@@ -65,10 +66,10 @@ const CHECKLIST_GROQ = `*[
   && (language == "en" || !defined(language))
   && $persona in personas
   && stage == $stage
-  && (!defined(province) || province == "" || province == $province)
 ] | order(class asc, class_order asc) {
   _id,
   title,
+  province,
   description,
   longer_description,
   class,
@@ -82,6 +83,7 @@ const CHECKLIST_GROQ = `*[
 interface SanityChecklistItem {
   _id: string;
   title: string;
+  province?: string | string[] | null;
   description: string | null;
   longer_description: string | null;
   class: string;
@@ -136,11 +138,15 @@ async function getChecklistByPersonaAndStage(
   try {
     const result = await sanityClient.fetch<WithI18n<SanityChecklistItem>[]>(
       CHECKLIST_GROQ,
-      // An empty $province matches only national items (no province set).
-      { persona, stage: stageSlug, lang: language, province: province ?? "" },
+      { persona, stage: stageSlug, lang: language },
     );
     if (!Array.isArray(result)) return [];
-    return result.map((row): SanityChecklistItem => mergeI18nOverlay(row));
+    // Keep list tags and legacy aliases when applying the shared visibility rule.
+    return result.map((row): SanityChecklistItem => mergeI18nOverlay(row)).filter(item => {
+      const tags = item.province == null || item.province === '' ? [] :
+        Array.isArray(item.province) ? item.province : [item.province];
+      return isVisibleForProvince(tags.map(tag => canonicalProvince(tag) ?? tag), province);
+    });
   } catch (error) {
     console.error("Sanity checklist fetch failed", error);
     return [];

@@ -1,0 +1,207 @@
+// @vitest-environment jsdom
+// Fresh real-hook and real-editor proof with scripted Auth callbacks.
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { I18nextProvider } from "react-i18next";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { AUTH_USER_KEY, useAuthUser } from "@/hooks/useAuthUser";
+import { ownAccountWork, noteAccount } from "@/lib/accountSession";
+import { clearTaskActionStores } from "@/lib/companionActions/taskActionStore";
+import { TaskActionsDrawer } from "@/components/companion/tasks/TaskActionsDrawer";
+import {
+  testI18n,
+  scriptedServer,
+} from "@/components/companion/tasks/taskActionsTestHarness";
+import en from "@/lib/i18n/locales/en/translation.json";
+import { ChatPanel } from "@/components/companion/ChatPanel";
+import { clearComposerDrafts } from "@/lib/companion/composerDrafts";
+import { useAccountGeneration } from "@/hooks/useAccountId";
+import {
+  TASK_PROGRESS_ROOT,
+  TASK_PROPOSAL_ROOT,
+  CONVERSATION_ACTIONS_ROOT,
+  PLANS_ROOT,
+  PLAN_PROPOSAL_ROOT,
+  CONVERSATION_PLANS_ROOT,
+  STEP_PROPOSAL_ROOT,
+  DETAIL_PROPOSAL_ROOT,
+} from "@/lib/companionActions/queryKeys";
+import {
+  CONVERSATIONS_ROOT,
+  MESSAGES_ROOT,
+} from "@/lib/companion/conversationKeys";
+const scrollDescriptor = Object.getOwnPropertyDescriptor(
+  HTMLElement.prototype,
+  "scrollIntoView",
+);
+const auth = vi.hoisted(() => ({
+  user: { id: "real-auth-a" },
+  listeners: new Set<(event: string, session: unknown) => void>(),
+  reads: 0,
+  reply: null as
+    (() => Promise<{ data: { session: { user: { id: string } } } }>) | null,
+}));
+vi.mock("@/lib/supabase/client", () => ({
+  isSupabaseConfigured: () => true,
+  createClient: () => ({
+    auth: {
+      getSession: async () => {
+        auth.reads++;
+        if (auth.reply) return auth.reply();
+        return { data: { session: { user: { ...auth.user } } } };
+      },
+      onAuthStateChange: (f: (event: string, session: unknown) => void) => {
+        auth.listeners.add(f);
+        return {
+          data: {
+            subscription: { unsubscribe: () => auth.listeners.delete(f) },
+          },
+        };
+      },
+    },
+  }),
+}));
+vi.mock("@/lib/posthog", () => ({
+  isPostHogConfigured: () => false,
+  posthog: { capture: () => {} },
+}));
+vi.mock("@/services/checklist", async (original) => ({
+ ...(await original<typeof import("@/services/checklist")>()),
+ getTasks: async () => auth.user.id === "real-auth-a" ? [{id:"1",title:"Private drawer task",isCustom:true,completed:false,dismissedAt:null}] : [],
+}));
+vi.mock("@/services/profile", async (original) => ({
+ ...(await original<typeof import("@/services/profile")>()),
+ getCurrentUser: async () => ({id:auth.user.id,onboarding:null,isPremium:false}),
+}));
+vi.mock("@/services/companion", async (original) => ({
+ ...(await original<typeof import("@/services/companion")>()),
+ getConversations: async () => [],getMessages: async () => [],
+ getChatbotUsage: async () => ({messageCount:0,isPremium:false}),
+}));
+import CompanionPage from "@/app/(main)/companion/page";
+import { writeFileSync } from "node:fs";
+let query: QueryClient;
+function Caller() {
+  return <TaskActionsDrawer open onClose={() => {}} surface="companion" />;
+}
+beforeEach(() => {
+  const server = scriptedServer({ "custom:1": { revision: 1 } });
+  vi.stubGlobal("fetch", async (url: RequestInfo | URL, init: RequestInit) => {
+    const response = await server.fetch(url, init);
+    if (JSON.parse(String(init.body)).action === "read") {
+      const body = await response.json();
+      body.reminders = {
+        scheduler: "ready",
+        items: [
+          {
+            reminder_id: "r1",
+            task_ref: "custom:1",
+            title: "Private drawer task",
+            remind_at: "2027-11-07T05:30:00Z",
+            time_zone: "America/New_York",
+            wall_time: "2027-11-07T01:30:00",
+            revision: 1,
+            status: "pending",
+            due: true,
+            due_at: "2027-11-07T05:30:01Z",
+            cancelled_reason: null,
+            history: [],
+          },
+        ],
+      };
+      return new Response(JSON.stringify(body), {
+        status: response.status,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return response;
+  });
+  clearTaskActionStores();
+  clearComposerDrafts();
+  auth.reads = 0;
+  auth.reply = null;
+  auth.user = { id: "real-auth-a" };
+  noteAccount(auth.user.id);
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: vi.fn(),
+  });
+  query = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+  });
+});
+afterEach(() => {
+  cleanup();
+  query.clear();
+  clearTaskActionStores();
+  auth.listeners.clear();
+  vi.unstubAllGlobals();
+  if (scrollDescriptor)
+    Object.defineProperty(
+      HTMLElement.prototype,
+      "scrollIntoView",
+      scrollDescriptor,
+    );
+  else Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+});
+async function mount() {
+  render(
+    <QueryClientProvider client={query}>
+      <I18nextProvider i18n={testI18n()}>
+        <Caller />
+      </I18nextProvider>
+    </QueryClientProvider>,
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: en.reminders.openTask }),
+  );
+  await screen.findByLabelText(en.reminders.instant);
+  await waitFor(() => expect(query.isFetching()).toBe(0));
+  fireEvent.change(screen.getByLabelText(en.reminders.instant), {
+    target: { value: "2027-11-07T01:30-04:00" },
+  });
+  expect(
+    (screen.getByLabelText(en.reminders.instant) as HTMLInputElement).value,
+  ).toBe("2027-11-07T01:30-04:00");
+}
+function emit(event: string, id: string | null) {
+  for (const f of [...auth.listeners])
+    f(event, id ? { user: { id }, access_token: `jwt-${id}` } : null);
+}
+
+it.each(["account change", "token refresh"])("the actual page applies selected task ownership on %s", async transition => {
+ render(<QueryClientProvider client={query}><I18nextProvider i18n={testI18n()}><CompanionPage/></I18nextProvider></QueryClientProvider>);
+ fireEvent.click(await screen.findByRole("button",{name:en.taskActions.open}));
+ fireEvent.click(await screen.findByRole("button",{name:/Private drawer task/}));
+ await screen.findByRole("heading",{name:"Private drawer task"});
+ fireEvent.change(await screen.findByLabelText(en.reminders.instant),{target:{value:"2027-11-07T01:30-04:00"}});
+ const before=ownAccountWork().epoch;
+ if(transition === "account change") {
+   auth.user={id:"real-auth-b"};
+   const bServer=scriptedServer({});
+   vi.stubGlobal("fetch",bServer.fetch);
+ }
+ await act(async()=>{for(const f of [...auth.listeners])f(transition === "account change" ? "SIGNED_IN" : "TOKEN_REFRESHED",{user:{id:auth.user.id}});await query.refetchQueries({queryKey:AUTH_USER_KEY});});
+ await waitFor(()=>expect(query.isFetching()).toBe(0));
+ expect(ownAccountWork().accountId).toBe(auth.user.id);
+ expect(query.getQueryData<{id:string}>(AUTH_USER_KEY)?.id).toBe(auth.user.id);
+ if(transition === "account change") {
+   expect(ownAccountWork().epoch).toBe(before+1);
+   expect(query.getQueryData(["tasks","en","real-auth-b"])).toEqual([]);
+   expect(query.getQueryData<{tasks:unknown[]}>([TASK_PROGRESS_ROOT,"real-auth-b"])?.tasks).toEqual([]);
+   expect(query.getQueryData(["tasks","en","real-auth-a"])).toBeUndefined();
+   writeFileSync("/Volumes/Lexar/Dev.noindex/t3-worktrees/Unify/t3-859e5775/DOCS/companion-actions/evidence/review-368-reactive-native-r4/page-boundary-state.json",JSON.stringify({owner:ownAccountWork(),authUser:query.getQueryData(AUTH_USER_KEY),profile:query.getQueryData(["current-user"]),bTasks:query.getQueryData(["tasks","en","real-auth-b"]),bProgress:query.getQueryData([TASK_PROGRESS_ROOT,"real-auth-b"]),retainedTitle:screen.queryByRole("heading",{name:"Private drawer task"})?.textContent,reminderDate:(screen.queryByLabelText(en.reminders.instant) as HTMLInputElement|null)?.value},null,2));
+   await waitFor(()=>expect(screen.queryByRole("heading",{name:"Private drawer task"})).toBeNull());
+ } else {
+   expect(ownAccountWork().epoch).toBe(before);
+   expect(screen.getByRole("heading",{name:"Private drawer task"})).toBeTruthy();
+   expect((screen.getByLabelText(en.reminders.instant) as HTMLInputElement).value).toBe("2027-11-07T01:30-04:00");
+ }
+});

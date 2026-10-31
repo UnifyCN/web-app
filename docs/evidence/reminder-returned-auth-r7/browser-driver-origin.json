@@ -1,0 +1,5 @@
+{
+  "base_script_sha256": "02ee2d0da93bc44f9d0efdc45c66fd1f9f0a847a45e99a36c30f024627ba9f84",
+  "extended_script_sha256": "7d723c6aaa51ccbc4dd5ff6a3861af63bf2a22e29e262bc0bdaa945c49f39f2d",
+  "change": "Adds returned SDK error, visible text/focus/Send/null-account-read checks and recovery. Original checks retained."
+}

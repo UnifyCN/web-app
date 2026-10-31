@@ -1,0 +1,72 @@
+[
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-page-entry-red-final-result.json",
+    "bytes": 466,
+    "sha256": "ecdd4f98cbcf23896ba539e5dd5beca1a2b9f22061b925f42fa6d536d1ce1dfd"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-page-entry-red-final.log",
+    "bytes": 24843,
+    "sha256": "e6dbdafc18293a39455b7be001b0b1fc70fd9564f683b04049d1fc616bbf94ef"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-rre2-final-page-result.json",
+    "bytes": 530,
+    "sha256": "8b86ae817404be9d54cdcc0246acfbb5efec949236248ddf7de27f0d95a1fd4f"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-rre2-final-page.log",
+    "bytes": 580,
+    "sha256": "b868b8011edc107cbe1617606711068b7da256b856a7b47ce40b46d34c6c3599"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-page-entry-controls-result.json",
+    "bytes": 530,
+    "sha256": "634e355a9ad2f6e0401a8369d3c17c4000dd6c7ab43ae3ab35466a19bec9843b"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-page-entry-controls.log",
+    "bytes": 580,
+    "sha256": "0e2f0fe4bec1b026fe2f0d90d7bcfb80400cf2b9520bdb4e423afca8e869f757"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-rre2-tests-final-result.json",
+    "bytes": 394,
+    "sha256": "aebfa7c10d909293f00d82223bbf1c01b3ad1401f611c80d9bf567c4cadf8c31"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-rre2-tests-final.log",
+    "bytes": 16487,
+    "sha256": "8dafeef19b2c9ae1e0b8287814953b5cf36e94f13aceaaee7fed6d011e22fe24"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-rre2-typecheck-final-result.json",
+    "bytes": 439,
+    "sha256": "c7d8e63d6027803040f4eaa2e3aab1ff3b6c9a6b5bab97a99707136f72f6e2fc"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-rre2-typecheck-final.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-rre2-lint-final-result.json",
+    "bytes": 580,
+    "sha256": "2d5907b8082783f92d16e17bd5638430e8434ba20bd247a72532dadc753256c5"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-rre2-lint-final.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-rre2-build-final-result.json",
+    "bytes": 408,
+    "sha256": "7b928074ed2987d9b41c968fefbeb4ae2dc5df258bd2f7ff9eb6baf089f573b1"
+  },
+  {
+    "path": "/Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/web-rre2-build-final.log",
+    "bytes": 2850,
+    "sha256": "2f99f835bd6881f4e2c9c456da89ac2631d3e231c8525ce7afaa9dfbd420345e"
+  }
+]

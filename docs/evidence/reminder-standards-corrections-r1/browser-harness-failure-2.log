@@ -1,0 +1,14 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+locator.click: Error: strict mode violation: getByRole('status').getByRole('button', { name: 'Undo this change', exact: true }) resolved to 2 elements:
+    1) <button type="button" class="inline-flex items-center justify-center rounded-lg font-semibold press cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed bg-surface text-ink-secondary border border-border-card hover:bg-surface-gray disabled:opacity-60 px-4 text-sm gap-2 min-h-11 h-auto whitespace-normal text-start">Undo this change</button> aka getByRole('button', { name: 'Undo this change' }).first()
+    2) <button type="button" class="inline-flex items-center justify-center rounded-lg font-semibold press cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed bg-surface text-ink-secondary border border-border-card hover:bg-surface-gray disabled:opacity-60 px-4 text-sm gap-2 min-h-11 h-auto whitespace-normal text-start">Undo this change</button> aka getByRole('button', { name: 'Undo this change' }).nth(1)
+
+Call log:
+[2m  - waiting for getByRole('status').getByRole('button', { name: 'Undo this change', exact: true })[22m
+
+    at /Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/scripts/verify-companion-reminder-presentation.mjs:118:96
+
+Node.js v22.23.1

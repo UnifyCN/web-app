@@ -52,3 +52,12 @@ verify_jwt = true
 # (supabase.auth.getUser) as defense-in-depth. verify_jwt stays ON — no unauthenticated
 # browser preflight needs to reach it.
 verify_jwt = true
+
+[functions.companion-actions]
+# Companion task actions (task state, result lookup, Undo; mobile-app#361). Mobile
+# calls it directly with the user's JWT; the web app calls it through the same-origin
+# /api/companion/actions proxy. verify_jwt stays ON, and the function also resolves
+# the account from the JWT itself (auth.getUser). It never calls a model or the
+# AI-generation quota. Schema: supabase/migrations/20261025235536_companion_task_actions.sql,
+# mirrored from the mobile repo, which owns that migration.
+verify_jwt = true

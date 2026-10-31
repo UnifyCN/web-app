@@ -1,0 +1,3 @@
+R368-SPEC-2 uses a session epoch for the shared private action store. Both adapters pass their existing epoch. The store implementation is byte-identical on mobile and web.
+
+The full correction record is at /Users/savargupta/.t3/worktrees/Unify/fix-reminder-account-isolation-368-r1-root/DOCS/companion-actions/evidence/368-session-reset-correction-r2/README.md. Web evidence in this folder contains the before/after store test, focused/full tests, types, lint, translation and build outputs. Full lint retains twelve prior errors in three byte-identical baseline files. No native, hosted or SDK auth-order proof follows.

@@ -1,0 +1,409 @@
+{
+  "results": [
+    {
+      "name": "summary text contrast >= 4.5:1 (answer card)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "drawer enters with motion (fades and moves in)",
+      "ok": true,
+      "detail": [
+        {
+          "t": 8,
+          "opacity": 0,
+          "transform": "matrix(0.97, 0, 0, 0.97, 0, 8)"
+        },
+        {
+          "t": 15,
+          "opacity": 0.161128,
+          "transform": "matrix(0.971787, 0, 0, 0.971787, 0, 7.52346)"
+        },
+        {
+          "t": 24,
+          "opacity": 0.268447,
+          "transform": "matrix(0.975107, 0, 0, 0.975107, 0, 6.63825)"
+        },
+        {
+          "t": 32,
+          "opacity": 0.363637,
+          "transform": "matrix(0.978155, 0, 0, 0.978155, 0, 5.82536)"
+        }
+      ]
+    },
+    {
+      "name": "drawer settles fully visible",
+      "ok": true,
+      "detail": {
+        "t": 324,
+        "opacity": 1,
+        "transform": "none"
+      }
+    },
+    {
+      "name": "focus moves to Close on open",
+      "ok": true,
+      "detail": {
+        "label": "Close sources and context",
+        "href": null,
+        "inDialog": true
+      }
+    },
+    {
+      "name": "open drawer: background composer and search cannot take focus",
+      "ok": true,
+      "detail": {
+        "took": [],
+        "inDialog": true
+      }
+    },
+    {
+      "name": "open drawer: background controls are not in the accessibility tree",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "drawer text contrast >= 4.5:1 (titles, publishers, addresses, times, sections)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "Tab and Shift+Tab stay inside the drawer",
+      "ok": true,
+      "detail": {
+        "trapped": [
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "wrapped": {
+          "label": "Medical Services Plan - Province of British Columbia(opens in a new tab)",
+          "href": "https://www2.gov.bc.ca/gov/content/health/health-drug-coverage/msp",
+          "inDialog": true
+        }
+      }
+    },
+    {
+      "name": "a same-account update keeps focus on the same source link",
+      "ok": true,
+      "detail": {
+        "before": {
+          "label": "Social Insurance Number - Canada.ca(opens in a new tab)",
+          "href": "https://www.canada.ca/en/employment-social-development/services/sin.html",
+          "inDialog": true
+        },
+        "after": {
+          "label": "Social Insurance Number - Canada.ca(opens in a new tab)",
+          "href": "https://www.canada.ca/en/employment-social-development/services/sin.html",
+          "inDialog": true
+        }
+      }
+    },
+    {
+      "name": "a same-account update keeps the drawer open",
+      "ok": true
+    },
+    {
+      "name": "a same-account update keeps the background inert",
+      "ok": true,
+      "detail": {
+        "took": [],
+        "inDialog": true
+      }
+    },
+    {
+      "name": "Escape closes with an exit fade (panel stays briefly, opacity < 1)",
+      "ok": true,
+      "detail": [
+        {
+          "t": 3,
+          "opacity": 1,
+          "transform": "none"
+        },
+        {
+          "t": 9,
+          "opacity": 0.999861,
+          "transform": "none"
+        },
+        {
+          "t": 17,
+          "opacity": 0.998787,
+          "transform": "none"
+        },
+        {
+          "t": 25,
+          "opacity": 0.995614,
+          "transform": "none"
+        }
+      ]
+    },
+    {
+      "name": "drawer is removed after the exit",
+      "ok": true
+    },
+    {
+      "name": "focus returns to the Sources and context control",
+      "ok": true,
+      "detail": {
+        "label": "Sources and context",
+        "href": null,
+        "inDialog": false
+      }
+    },
+    {
+      "name": "the draft survives open, update and close",
+      "ok": true
+    },
+    {
+      "name": "after close: the background can take focus again",
+      "ok": true,
+      "detail": {
+        "took": [
+          "Search chats",
+          "Message Companion"
+        ],
+        "inDialog": false
+      }
+    },
+    {
+      "name": "after close: background controls are back in the accessibility tree",
+      "ok": true
+    },
+    {
+      "name": "after close: an element the app made inert before opening stays inert",
+      "ok": true
+    },
+    {
+      "name": "a backdrop click closes the drawer",
+      "ok": true
+    },
+    {
+      "name": "account change: the open drawer closes",
+      "ok": true
+    },
+    {
+      "name": "account change: no prior-account context is shown",
+      "ok": true
+    },
+    {
+      "name": "account change: the prior account's draft is cleared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "account change: the composer can take focus again",
+      "ok": true,
+      "detail": {
+        "took": [
+          "Search chats",
+          "Message Companion"
+        ],
+        "inDialog": false
+      }
+    },
+    {
+      "name": "access loss: the open drawer closes",
+      "ok": true
+    },
+    {
+      "name": "access loss: the lost conversation's context is not shown",
+      "ok": true
+    },
+    {
+      "name": "access loss: the same account's draft is kept",
+      "ok": true
+    },
+    {
+      "name": "reduced motion: the drawer does not move gradually (no in-between transform)",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "reduced motion: the drawer still fades in",
+      "ok": true,
+      "detail": [
+        {
+          "t": 9,
+          "opacity": 0,
+          "transform": "matrix(0.97, 0, 0, 0.97, 0, 8)"
+        },
+        {
+          "t": 15,
+          "opacity": 0.159789,
+          "transform": "matrix(0.97, 0, 0, 0.97, 0, 8)"
+        },
+        {
+          "t": 22,
+          "opacity": 0.252502,
+          "transform": "matrix(0.97, 0, 0, 0.97, 0, 8)"
+        }
+      ]
+    },
+    {
+      "name": "reduced motion: Escape still closes",
+      "ok": true
+    },
+    {
+      "name": "a <body> child added while the drawer is open is inert",
+      "ok": true,
+      "detail": {
+        "found": true,
+        "took": false,
+        "inInert": true
+      }
+    },
+    {
+      "name": "ConfirmModal mounted closed, opened above the drawer: it takes focus and is not inert",
+      "ok": true,
+      "detail": {
+        "found": true,
+        "took": true,
+        "inInert": false
+      }
+    },
+    {
+      "name": "ConfirmModal mounted closed, opened above the drawer: it is in the accessibility tree",
+      "ok": true
+    },
+    {
+      "name": "ConfirmModal mounted closed, opened above the drawer: the page behind stays inert",
+      "ok": true
+    },
+    {
+      "name": "ConfirmModal mounted closed, closed again: the drawer takes focus and the page behind stays inert",
+      "ok": true,
+      "detail": {
+        "found": true,
+        "took": true,
+        "inInert": false
+      }
+    },
+    {
+      "name": "inert DialogPresence mounted closed, opened above the drawer: it takes focus and is not inert",
+      "ok": true,
+      "detail": {
+        "found": true,
+        "took": true,
+        "inInert": false
+      }
+    },
+    {
+      "name": "inert DialogPresence mounted closed, opened above the drawer: it is in the accessibility tree",
+      "ok": true
+    },
+    {
+      "name": "inert DialogPresence mounted closed, opened above the drawer: the page behind stays inert",
+      "ok": true
+    },
+    {
+      "name": "inert DialogPresence mounted closed, closed again: the drawer takes focus and the page behind stays inert",
+      "ok": true,
+      "detail": {
+        "found": true,
+        "took": true,
+        "inInert": false
+      }
+    },
+    {
+      "name": "inert DialogPresence mounted when opened, opened above the drawer: it takes focus and is not inert",
+      "ok": true,
+      "detail": {
+        "found": true,
+        "took": true,
+        "inInert": false
+      }
+    },
+    {
+      "name": "inert DialogPresence mounted when opened, opened above the drawer: it is in the accessibility tree",
+      "ok": true
+    },
+    {
+      "name": "inert DialogPresence mounted when opened, opened above the drawer: the page behind stays inert",
+      "ok": true
+    },
+    {
+      "name": "inert DialogPresence mounted when opened, closed again: the drawer takes focus and the page behind stays inert",
+      "ok": true,
+      "detail": {
+        "found": true,
+        "took": true,
+        "inInert": false
+      }
+    },
+    {
+      "name": "drawer closed under an open upper dialog: the upper dialog stays usable and the page stays inert",
+      "ok": true,
+      "detail": {
+        "found": true,
+        "took": true,
+        "inInert": false
+      }
+    },
+    {
+      "name": "all dialogs closed: only the element the app made inert is still inert",
+      "ok": true,
+      "detail": {
+        "inert": [
+          "app-inert"
+        ],
+        "appInert": true,
+        "appActive": false
+      }
+    },
+    {
+      "name": "all dialogs closed: the child added while open takes focus",
+      "ok": true,
+      "detail": {
+        "found": true,
+        "took": true,
+        "inInert": false
+      }
+    },
+    {
+      "name": "all dialogs closed: the composer and search take focus again",
+      "ok": true,
+      "detail": {
+        "took": [
+          "Search chats",
+          "Message Companion"
+        ],
+        "inDialog": false
+      }
+    },
+    {
+      "name": "RTL: the drawer sits at the inline end (left)",
+      "ok": true,
+      "detail": {
+        "x": 0,
+        "y": 0,
+        "width": 420,
+        "height": 800
+      }
+    },
+    {
+      "name": "RTL: summary and drawer text contrast >= 4.5:1",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "name": "RTL: focus moves to Close on open",
+      "ok": true,
+      "detail": {
+        "label": "إغلاق المصادر والسياق",
+        "href": null,
+        "inDialog": true
+      }
+    },
+    {
+      "name": "RTL: background cannot take focus and is not in the accessibility tree",
+      "ok": true,
+      "detail": {
+        "took": [],
+        "inDialog": true
+      }
+    }
+  ],
+  "errors": []
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { OverallProgressBar } from "@/components/checklist/OverallProgressBar";
 import { PrioritySection } from "@/components/checklist/PrioritySection";
@@ -15,6 +15,18 @@ import {
 } from "@/hooks/useChecklist";
 import type { ChecklistTask, Priority } from "@/types";
 import { LoadingSwap } from "@/components/ui/LoadingSwap";
+import {
+  TaskProgressRowsContext,
+  type TaskProgressRows,
+} from "@/components/checklist/TaskProgressContext";
+import { TaskActionsDrawer } from "@/components/companion/tasks/TaskActionsDrawer";
+import { progressFor } from "@/components/companion/tasks/TaskStatePanel";
+import {
+  useTaskActionStore,
+  useTaskProgress,
+} from "@/hooks/useTaskActions";
+import { taskOrderKey } from "@/services/checklist";
+import { useAccountGeneration } from "@/hooks/useAccountId";
 
 const PRIORITY_ORDER: Priority[] = [
   "Do now",
@@ -71,6 +83,11 @@ function ChecklistSkeleton() {
 }
 
 export default function ChecklistPage() {
+  const generation = useAccountGeneration();
+  return <AccountChecklistPage key={generation} />;
+}
+
+function AccountChecklistPage() {
   const { t } = useTranslation();
   const { data: tasks = [], isLoading, error } = useTasks();
   const toggle = useToggleTask();
@@ -78,6 +95,21 @@ export default function ChecklistPage() {
   const del = useDeleteCustomTask();
   const setDismissed = useSetSuggestedTaskDismissed();
   const [deleteTarget, setDeleteTarget] = useState<ChecklistTask | null>(null);
+  const progress = useTaskProgress();
+  const [progressTaskId, setProgressTaskId] = useState<string | null>(null);
+  const actionStore = useTaskActionStore("checklist");
+  const progressRows = useMemo<TaskProgressRows | null>(() => {
+    // The gate is off, the version is unsupported, or nobody is signed in: keep today's rows.
+    if (progress.status === "unavailable" || progress.status === "signed_out")
+      return null;
+    return {
+      stateOf: (task) => {
+        const p = progressFor(taskOrderKey(task), progress);
+        return { state: p.state, waitingReason: p.waitingReason };
+      },
+      open: (task) => setProgressTaskId(task.id),
+    };
+  }, [progress]);
 
   const activeTasks = tasks.filter((task) => !task.dismissedAt);
   const removedTasks = tasks.filter(
@@ -105,7 +137,15 @@ export default function ChecklistPage() {
 
   function requestDelete(id: string) {
     const task = tasks.find((t) => t.id === id);
-    if (task) setDeleteTarget(task);
+    if (!task) return;
+    // #367: with the shared task actions on, removal is the reviewed removal in the task
+    // drawer (named effects on plans and steps, confirmation, Undo); otherwise the legacy one.
+    if (progressRows && actionStore) {
+      actionStore.requestRemoval(taskOrderKey(task));
+      setProgressTaskId(task.id);
+      return;
+    }
+    setDeleteTarget(task);
   }
 
   async function handleConfirmDelete() {
@@ -127,83 +167,100 @@ export default function ChecklistPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[720px] px-6 py-6">
-      <h1 className="text-xl font-semibold text-ink-secondary">
-        {t("tabs.checklist")}
-      </h1>
-      <p className="mt-1 text-sm text-ink-muted">{t("checklist.subtitle")}</p>
+    <TaskProgressRowsContext.Provider value={progressRows}>
+      <div className="mx-auto max-w-[720px] px-6 py-6">
+        <h1 className="text-xl font-semibold text-ink-secondary">
+          {t("tabs.checklist")}
+        </h1>
+        <p className="mt-1 text-sm text-ink-muted">{t("checklist.subtitle")}</p>
 
-      <LoadingSwap loading={isLoading} skeleton={<ChecklistSkeleton />}>
-        {error && (
-          <p role="alert" className="mt-5 text-sm text-destructive">
-            {t("checklist.loadError")}
-          </p>
-        )}
+        <LoadingSwap loading={isLoading} skeleton={<ChecklistSkeleton />}>
+          {error && (
+            <p role="alert" className="mt-5 text-sm text-destructive">
+              {t("checklist.loadError")}
+            </p>
+          )}
 
-        {!error && (
-          <div className="mt-5 space-y-4">
-            <OverallProgressBar
-              completed={completedCount}
-              total={activeTasks.length}
-            />
-
-            {PRIORITY_ORDER.map((priority) => (
-              <PrioritySection
-                key={priority}
-                priority={priority}
-                tasks={activeTasks.filter((task) => task.priority === priority)}
-                onToggle={handleToggle}
-                onDelete={requestDelete}
+          {!error && (
+            <div className="mt-5 space-y-4">
+              <OverallProgressBar
+                completed={completedCount}
+                total={activeTasks.length}
               />
-            ))}
 
-            <AddCustomTask onAdd={handleAdd} />
+              {PRIORITY_ORDER.map((priority) => (
+                <PrioritySection
+                  key={priority}
+                  priority={priority}
+                  tasks={activeTasks.filter(
+                    (task) => task.priority === priority,
+                  )}
+                  onToggle={handleToggle}
+                  onDelete={requestDelete}
+                />
+              ))}
 
-            {removedTasks.length > 0 && (
-              <section className="rounded-card border border-border-card bg-surface px-4 py-3">
-                <h2 className="text-sm font-semibold text-ink-muted">
-                  {t("checklist.removedTasks")}
-                </h2>
-                <div className="mt-2 divide-y divide-border-card">
-                  {removedTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="flex min-h-11 items-center justify-between gap-3 py-2"
-                    >
-                      <span className="text-sm text-ink-muted">
-                        {task.title}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setDismissed.mutate({ id: task.id, dismissed: false })
-                        }
-                        className="cursor-pointer text-sm font-semibold text-primary hover:text-primary-dark"
-                        aria-label={t("checklist.restoreTaskAria", {
-                          title: task.title,
-                        })}
+              <AddCustomTask onAdd={handleAdd} />
+
+              {removedTasks.length > 0 && (
+                <section className="rounded-card border border-border-card bg-surface px-4 py-3">
+                  <h2 className="text-sm font-semibold text-ink-muted">
+                    {t("checklist.removedTasks")}
+                  </h2>
+                  <div className="mt-2 divide-y divide-border-card">
+                    {removedTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="flex min-h-11 items-center justify-between gap-3 py-2"
                       >
-                        {t("checklist.restore")}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
-        )}
-      </LoadingSwap>
+                        <span className="text-sm text-ink-muted">
+                          {task.title}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDismissed.mutate({
+                              id: task.id,
+                              dismissed: false,
+                            })
+                          }
+                          className="cursor-pointer text-sm font-semibold text-primary hover:text-primary-dark"
+                          aria-label={t("checklist.restoreTaskAria", {
+                            title: task.title,
+                          })}
+                        >
+                          {t("checklist.restore")}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
+        </LoadingSwap>
 
-      <DeleteTaskModal
-        open={deleteTarget !== null}
-        taskTitle={deleteTarget?.title ?? ""}
-        isPending={del.isPending || setDismissed.isPending}
-        variant={deleteTarget?.isCustom === false ? "remove" : "delete"}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => {
-          if (!del.isPending && !setDismissed.isPending) setDeleteTarget(null);
-        }}
-      />
-    </div>
+        <DeleteTaskModal
+          open={deleteTarget !== null}
+          taskTitle={deleteTarget?.title ?? ""}
+          isPending={del.isPending || setDismissed.isPending}
+          variant={deleteTarget?.isCustom === false ? "remove" : "delete"}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => {
+            if (!del.isPending && !setDismissed.isPending)
+              setDeleteTarget(null);
+          }}
+        />
+
+        {progressRows && (
+          <TaskActionsDrawer
+            open={progressTaskId !== null}
+            onClose={() => setProgressTaskId(null)}
+            surface="checklist"
+            initialTaskId={progressTaskId}
+          />
+        )}
+      </div>
+    </TaskProgressRowsContext.Provider>
   );
 }

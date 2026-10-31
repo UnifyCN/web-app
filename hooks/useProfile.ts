@@ -3,12 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as profile from "@/services/profile";
 import type { UserProfile } from "@/types";
 import { useLanguage } from "@/hooks/useLanguage";
+import { CURRENT_USER_KEY } from "@/lib/profileQueryKeys";
+
+export { CURRENT_USER_KEY } from "@/lib/profileQueryKeys";
 
 /** React Query hooks for Profile data. */
-
-/** Canonical query key for the signed-in user; shared by every reader/mutator
- *  so invalidations always hit the same cache entry. */
-export const CURRENT_USER_KEY = ["current-user"] as const;
 
 export function useCurrentUser() {
   return useQuery({

@@ -1,0 +1,481 @@
+{
+  "component": "/Volumes/Lexar/Dev.noindex/t3-worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root/docs/evidence/reminder-standards-corrections-r1/baseline-ReminderSection.txt",
+  "componentSha256": "d6ae3c156215fa0e44d2f45a39a93f04bbc7461add80b0f27eddd4010bb7409c",
+  "boundary": "Chromium actual component/shared CSS/Reveal with a controlled editor; no service, Next.js, native or screen reader",
+  "passed": 22,
+  "failed": 16,
+  "checks": [
+    {
+      "name": "no-preference: saving status exists immediately",
+      "passed": true,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "Saving…"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "no-preference: saving waits 300 ms",
+      "passed": false,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "Saving…"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "no-preference: saving becomes visible",
+      "passed": true,
+      "detail": "1"
+    },
+    {
+      "name": "no-preference: checking status exists immediately",
+      "passed": true,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "Checking whether the change saved…"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "no-preference: checking waits 300 ms",
+      "passed": false,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "Checking whether the change saved…"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "no-preference: checking becomes visible",
+      "passed": true,
+      "detail": "1"
+    },
+    {
+      "name": "no-preference: pending recovery is immediate",
+      "passed": true,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "The change is still being saved. Check again in a moment.Check again"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "no-preference: lookup_failed recovery is immediate",
+      "passed": true,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "We could not check the result. The change may or may not have saved.Check again"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "no-preference: not_applied recovery is immediate",
+      "passed": true,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "The change did not save.Try again"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "no-preference: schedule keyboard modality",
+      "passed": false,
+      "detail": [
+        {
+          "open": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "name": "no-preference: schedule pointer modality",
+      "passed": true,
+      "detail": [
+        {
+          "open": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "name": "no-preference: cancel keyboard modality",
+      "passed": false,
+      "detail": [
+        {
+          "open": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "name": "no-preference: cancel pointer modality",
+      "passed": true,
+      "detail": [
+        {
+          "open": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "name": "no-preference: undo keyboard modality",
+      "passed": false,
+      "detail": [
+        {
+          "open": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "name": "no-preference: undo pointer modality",
+      "passed": true,
+      "detail": [
+        {
+          "open": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "name": "no-preference: approved heading ink",
+      "passed": false,
+      "detail": {
+        "heading": "oklch(0.21 0.034 264.665)",
+        "help": "oklch(0.446 0.03 256.802)",
+        "border": "oklch(0.928 0.006 264.531)",
+        "overflow": false
+      }
+    },
+    {
+      "name": "no-preference: approved body ink",
+      "passed": false,
+      "detail": {
+        "heading": "oklch(0.21 0.034 264.665)",
+        "help": "oklch(0.446 0.03 256.802)",
+        "border": "oklch(0.928 0.006 264.531)",
+        "overflow": false
+      }
+    },
+    {
+      "name": "no-preference: approved border",
+      "passed": false,
+      "detail": {
+        "heading": "oklch(0.21 0.034 264.665)",
+        "help": "oklch(0.446 0.03 256.802)",
+        "border": "oklch(0.928 0.006 264.531)",
+        "overflow": false
+      }
+    },
+    {
+      "name": "no-preference: narrow layout fits",
+      "passed": true,
+      "detail": {
+        "heading": "oklch(0.21 0.034 264.665)",
+        "help": "oklch(0.446 0.03 256.802)",
+        "border": "oklch(0.928 0.006 264.531)",
+        "overflow": false
+      }
+    },
+    {
+      "name": "reduce: saving status exists immediately",
+      "passed": true,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "Saving…"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "reduce: saving waits 300 ms",
+      "passed": false,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "Saving…"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "reduce: saving becomes visible",
+      "passed": true,
+      "detail": "1"
+    },
+    {
+      "name": "reduce: checking status exists immediately",
+      "passed": true,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "Checking whether the change saved…"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "reduce: checking waits 300 ms",
+      "passed": false,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "Checking whether the change saved…"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "reduce: checking becomes visible",
+      "passed": true,
+      "detail": "1"
+    },
+    {
+      "name": "reduce: pending recovery is immediate",
+      "passed": true,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "The change is still being saved. Check again in a moment.Check again"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "reduce: lookup_failed recovery is immediate",
+      "passed": true,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "We could not check the result. The change may or may not have saved.Check again"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "reduce: not_applied recovery is immediate",
+      "passed": true,
+      "detail": {
+        "status": {
+          "opacity": "1",
+          "delay": "0s",
+          "animation": "none",
+          "text": "The change did not save.Try again"
+        },
+        "control": {
+          "opacity": "0",
+          "delay": "0.3s",
+          "animation": "loading-appear",
+          "text": "Positive delay control"
+        }
+      }
+    },
+    {
+      "name": "reduce: schedule keyboard modality",
+      "passed": false,
+      "detail": [
+        {
+          "open": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "name": "reduce: schedule pointer modality",
+      "passed": true,
+      "detail": [
+        {
+          "open": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "name": "reduce: cancel keyboard modality",
+      "passed": false,
+      "detail": [
+        {
+          "open": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "name": "reduce: cancel pointer modality",
+      "passed": true,
+      "detail": [
+        {
+          "open": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "name": "reduce: undo keyboard modality",
+      "passed": false,
+      "detail": [
+        {
+          "open": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "name": "reduce: undo pointer modality",
+      "passed": true,
+      "detail": [
+        {
+          "open": true,
+          "instant": false
+        }
+      ]
+    },
+    {
+      "name": "reduce: approved heading ink",
+      "passed": false,
+      "detail": {
+        "heading": "oklch(0.21 0.034 264.665)",
+        "help": "oklch(0.446 0.03 256.802)",
+        "border": "oklch(0.928 0.006 264.531)",
+        "overflow": false
+      }
+    },
+    {
+      "name": "reduce: approved body ink",
+      "passed": false,
+      "detail": {
+        "heading": "oklch(0.21 0.034 264.665)",
+        "help": "oklch(0.446 0.03 256.802)",
+        "border": "oklch(0.928 0.006 264.531)",
+        "overflow": false
+      }
+    },
+    {
+      "name": "reduce: approved border",
+      "passed": false,
+      "detail": {
+        "heading": "oklch(0.21 0.034 264.665)",
+        "help": "oklch(0.446 0.03 256.802)",
+        "border": "oklch(0.928 0.006 264.531)",
+        "overflow": false
+      }
+    },
+    {
+      "name": "reduce: narrow layout fits",
+      "passed": true,
+      "detail": {
+        "heading": "oklch(0.21 0.034 264.665)",
+        "help": "oklch(0.446 0.03 256.802)",
+        "border": "oklch(0.928 0.006 264.531)",
+        "overflow": false
+      }
+    }
+  ]
+}

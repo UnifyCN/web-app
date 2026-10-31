@@ -1,0 +1,21 @@
+{
+  "before": {
+    "accountId": "real-auth-a",
+    "epoch": 4
+  },
+  "after": {
+    "accountId": null,
+    "epoch": 5
+  },
+  "authStatus": "success",
+  "authData": null,
+  "oldInputValue": "Retain after returned Auth error",
+  "currentInputValue": "",
+  "sameInput": false,
+  "focusRetained": false,
+  "sdkError": {
+    "name": "AuthRetryableFetchError",
+    "status": 503,
+    "message": "Session read temporarily unavailable"
+  }
+}

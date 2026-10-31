@@ -1,0 +1,7 @@
+{
+  "first_run": "focused-green",
+  "files": 4,
+  "passed": 44,
+  "omitted": "Three supplied filter paths did not match actual files. No failure occurred. These totals do not cover the omitted files.",
+  "replacement": "focused-complete-green uses the exact paths from prior machine results, plus both reviewer reproductions."
+}

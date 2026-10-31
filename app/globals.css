@@ -36,6 +36,9 @@
   /* Semantic */
   --color-destructive: #ff3b30;
   --color-mention-blue: #007aff;
+  /* Companion source links (#362): AA text contrast on surface and
+   * surface-gray, which mention-blue misses. Matches mobile CONTEXT_LINK_COLOR. */
+  --color-context-link: #2b5a9b;
   /* Caution text — caps-lock indicator, common-password + medium-strength hints.
    * Dark enough for AA contrast on white (the priority oranges are too light). */
   --color-warning: #c77b1f;
@@ -113,7 +116,7 @@
   --radius-card: 0.625rem;
 }
 
-/* Fonts wired from next/font (see app/layout.tsx). `inline` so the
+/* Fonts self-hosted in app/fonts/fonts.css (see app/layout.tsx). `inline` so the
  * utilities resolve the underlying CSS variable. */
 @theme inline {
   /* Inter (Latin + Vietnamese) first, with Noto Sans Devanagari, Noto Sans

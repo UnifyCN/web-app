@@ -1,0 +1,5 @@
+# Copied from ../../functions by run.sh before every run.
+supabase/functions/
+supabase/.temp/
+supabase/.branches/
+__pycache__/
