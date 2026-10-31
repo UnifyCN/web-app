@@ -30,6 +30,8 @@ export function ArrivalDatePrompt() {
   const { data: user } = useCurrentUser();
   const mutation = useUpdateArrivalDate();
   const [open, setOpen] = useState(false);
+  // The account the prompt opened for; the save is refused for any other.
+  const [ownerId, setOwnerId] = useState<string | null>(null);
   const [month, setMonth] = useState<number | null>(null);
   const [year, setYear] = useState<number | null>(null);
 
@@ -42,6 +44,7 @@ export function ArrivalDatePrompt() {
       if (hasSeenArrivalPrompt(userId)) return true;
       if (otherDialogOpen()) return false;
       markArrivalPromptSeen(userId);
+      setOwnerId(userId);
       setOpen(true);
       return true;
     };
@@ -60,8 +63,11 @@ export function ArrivalDatePrompt() {
 
   const save = (event: React.FormEvent) => {
     event.preventDefault();
-    if (month === null || year === null) return;
-    mutation.mutate(arrivalMonthToDate(year, month), { onSuccess: close });
+    if (month === null || year === null || ownerId === null) return;
+    mutation.mutate(
+      { arrivalDate: arrivalMonthToDate(year, month), expectedUserId: ownerId },
+      { onSuccess: close },
+    );
   };
 
   return (
