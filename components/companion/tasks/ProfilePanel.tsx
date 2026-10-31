@@ -93,6 +93,6 @@ export function ProfilePanel({ view, store, proposalId = null }: Props) {
     {editor.receipt ? <ProfileReceipt receipt={editor.receipt} storeKey={editor.key} store={store} view={view} /> : null}
     {editor.waiting ? <p key={editor.loadingKind} role="status" className="loading-delayed text-sm text-ink-muted">{t(`taskActions.${editor.loadingKind}`)}</p> : null}
     {editor.failure || editor.queryFailed ? <p role="alert" className="text-sm text-destructive-label">{t(editor.failure ?? "taskActions.unavailable")}</p> : null}
-    <ProfileRecovery storeKey={editor.key} store={store} view={view} />
+    {!editor.receipt ? <ProfileRecovery storeKey={editor.key} store={store} view={view} /> : null}
   </div>;
 }

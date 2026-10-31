@@ -193,8 +193,118 @@ afterEach(() => {
   globalThis.fetch = realFetch;
 });
 
+
+// Keep the applied proposal available for the panel's later receipt read.
+async function openProfileRecovery(mode: "apply_unknown" | "undo_unknown", waits: Record<string, Promise<void>> = {}) {
+  let province = "British Columbia";
+  let revision = 1;
+  let proposal: Record<string, unknown> | null = null;
+  server = scriptedServer({}, { override: body => {
+    if (body.action === "read") return { status: 200, body: { tasks: [], details: [], steps: [], profile: {
+      province, arrival_date: "2026-11-07", city: "Vancouver", revisions: { province: revision, arrival_date: 1, city: 1 },
+    } } };
+    if (body.action === "prepare") {
+      proposal = { proposal_id: "profile-recovery-371", proposal_revision: 1, kind: "profile_update", status: "draft",
+        operations: [body.operation], context: { field: "province", value: province, revision }, source: null,
+        previous_context: null, review_reason: null, receipt: null };
+      return { status: 200, body: { proposal } };
+    }
+    if (body.action === "proposal") return { status: 200, body: { proposal } };
+    if (body.action === "status" || body.action === "undo") return "network-error";
+    if (body.action === "apply") {
+      if (mode === "apply_unknown") return "network-error";
+      const before = province; province = body.operations[0].value; revision++;
+      const receipt = { operation_id: body.operation_id, operation_type: "profile.update",
+        created_at: "2026-10-31T06:00:00Z", kind: "change", undo_of: null, task_ref: null,
+        before_revision: revision - 1, after_revision: revision, undone_by: null, current: true, undoable: true,
+        profile: { field: "province", before, after: province } };
+      if (proposal) { proposal.status = "applied"; proposal.receipt = receipt; }
+      return { status: 200, body: { replayed: false, receipt } };
+    }
+  } });
+  globalThis.fetch = async (input, init) => {
+    const request = JSON.parse(String(init?.body));
+    await waits[request.action];
+    return server.fetch(input, init);
+  };
+  mount(<CompanionPage />);
+  const composer = await screen.findByLabelText("Message Companion") as HTMLTextAreaElement;
+  fireEvent.change(composer, { target: { value: "Keep this draft during profile recovery" } });
+  fireEvent.click(await screen.findByRole("button", { name: "Open" }));
+  const panel = await dialog();
+  fireEvent.click(await within(panel).findByRole("button", { name: "Profile" }));
+  await within(panel).findByText("British Columbia");
+  fireEvent.click(within(panel).getByRole("button", { name: "Edit province" }));
+  fireEvent.change(within(panel).getByLabelText("Province"), { target: { value: "Ontario" } });
+  const review = within(panel).getByRole("button", { name: "Review profile change" });
+  await waitFor(() => expect(isDisabled(review)).toBe(false));
+  fireEvent.click(review);
+  await within(panel).findByText("Current: British Columbia");
+  expect(within(panel).getByText("Proposed: Ontario")).toBeTruthy();
+  expect(server.sent.filter(body => body.action === "apply")).toHaveLength(0);
+  const save = within(panel).getByRole("button", { name: "Save profile change" });
+  await waitFor(() => expect(isDisabled(save)).toBe(false));
+  fireEvent.click(save);
+  if (mode === "undo_unknown") {
+    await within(panel).findByText("Changed province from British Columbia to Ontario");
+    await waitFor(() => expect(server.sent.some(body => body.action === "proposal" && proposal?.status === "applied")).toBe(true));
+    const undo = within(panel).getByRole("button", { name: "Undo this change" });
+    await waitFor(() => expect(isDisabled(undo)).toBe(false));
+    fireEvent.click(undo);
+  }
+  await within(panel).findAllByText("We could not check the result. The change may or may not have saved.");
+  return { panel, composer };
+}
+
 // ---------------------------------------------------------------- tests
 describe("Checklist task progress (web)", () => {
+  it("371 recovery: labels an active proposal read, save and lookup separately", async () => {
+    // Held requests catch a control that hides all loading states.
+    const releases: (() => void)[] = [];
+    const waits = Object.fromEntries(["proposal", "apply", "status"].map(action => [action,
+      new Promise<void>(resolve => { releases.push(resolve); })]));
+    const work = openProfileRecovery("apply_unknown", waits);
+    try {
+      await screen.findByText("Loading task progress…");
+      expect(screen.queryAllByText("Saving…")).toHaveLength(0);
+      await act(async () => { releases[0](); });
+      await screen.findByText("Saving…");
+      await act(async () => { releases[1](); });
+      await screen.findByText("Checking whether the change saved…");
+      await act(async () => { releases[2](); });
+      const { panel } = await work;
+      expect(within(panel).queryAllByText("Saving…")).toHaveLength(0);
+      expect(within(panel).queryAllByText("Checking whether the change saved…")).toHaveLength(0);
+    } finally { releases.forEach(release => release()); await work; }
+  });
+
+  it("371 recovery: an unknown Undo has one recovery control and keeps its historical receipt", async () => {
+    // False if the panel and receipt both expose the same recovery action.
+    const { panel } = await openProfileRecovery("undo_unknown");
+    expect(within(panel).getAllByRole("button", { name: "Check again" })).toHaveLength(1);
+    expect(within(panel).getAllByText("We could not check the result. The change may or may not have saved.")).toHaveLength(1);
+    expect(within(panel).getByText("Changed province from British Columbia to Ontario")).toBeTruthy();
+    fireEvent.click(within(panel).getByRole("button", { name: "Check again" }));
+    await waitFor(() => expect(server.sent.filter(body => body.action === "status")).toHaveLength(2));
+    await within(panel).findByText("We could not check the result. The change may or may not have saved.");
+    expect(server.sent.filter(body => body.action === "undo")).toHaveLength(1);
+    expect(server.sent.filter(body => body.action === "apply")).toHaveLength(1);
+  });
+
+  it("371 recovery: stops loading after a failed result lookup and keeps approval locked", async () => {
+    // False if an idle unknown result claims Saving or enables another approval.
+    const { panel, composer } = await openProfileRecovery("apply_unknown");
+    expect(within(panel).queryAllByText("Saving…")).toHaveLength(0);
+    expect(within(panel).queryAllByText("Checking whether the change saved…")).toHaveLength(0);
+    expect(within(panel).getAllByRole("button", { name: "Check again" })).toHaveLength(1);
+    const save = within(panel).getByRole("button", { name: "Save profile change" });
+    expect(isDisabled(save)).toBe(true);
+    expect(isDisabled(within(panel).getByRole("button", { name: "Edit province" }))).toBe(true);
+    fireEvent.click(save);
+    expect(server.sent.filter(body => body.action === "apply")).toHaveLength(1);
+    expect(composer.value).toBe("Keep this draft during profile recovery");
+  });
+
   it("saves Waiting with a reason from explicit controls, shows the exact receipt, restores focus, and the row shows it", async () => {
     const { opener, panel } = await openFromChecklist();
 
