@@ -36,7 +36,7 @@ import { useCurrentUser } from "@/hooks/useProfile";
 import { useAccountGeneration, useAccountId } from "@/hooks/useAccountId";
 import { progressFor } from "@/components/companion/tasks/TaskStatePanel";
 import type { RemovalProposal } from "@/lib/companionActions/contract";
-import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
+import { ChatLimitError } from "@/services/companion";
 import type { CompanionInputSource } from "@/lib/companionAnalytics";
 import type { ChatMessage } from "@/types";
 import { ownAccountWork, stillOwned } from "@/lib/accountSession";
@@ -127,8 +127,6 @@ function AccountCompanionPage() {
     ? (conversations.find((c) => c.id === activeId) ?? null)
     : null;
 
-  const messageCount = usageQuery.data?.messageCount ?? 0;
-  const freeTierRemaining = Math.max(0, FREE_TIER_DAILY_LIMIT - messageCount);
 
   async function handleSend(text: string, inputSource: CompanionInputSource) {
     setSendError(null);
@@ -163,6 +161,7 @@ function AccountCompanionPage() {
         isNewConversation,
         owner,
       });
+      return true;
     } catch (err) {
       if (!stillOwned(owner)) return;
       // The daily free-tier cap surfaces as a typed ChatLimitError (rag-query
@@ -174,6 +173,7 @@ function AccountCompanionPage() {
         console.error("Companion: failed to send message", err);
         setSendError(t("companion.sendFailed"));
       }
+      return false;
     }
   }
 
@@ -213,7 +213,7 @@ function AccountCompanionPage() {
         conversation={activeConversation}
         messages={messages}
         isTyping={sendMessage.isPending}
-        freeTierRemaining={freeTierRemaining}
+        allowance={usageQuery.data}
         errorMessage={sendError}
         onSend={handleSend}
         onboarding={currentUser?.onboarding ?? null}

@@ -25,16 +25,17 @@ import { FreeTierIndicator } from "./FreeTierIndicator";
 import { CompanionContextDrawer } from "./CompanionContextDrawer";
 import type { CompanionContext } from "@/lib/companionContext";
 import type { CompanionInputSource } from "@/lib/companionAnalytics";
-import type { ChatMessage, Conversation, UserOnboardingProfile } from "@/types";
+import type { ChatMessage, ChatbotUsage, Conversation, UserOnboardingProfile } from "@/types";
 
 interface ChatPanelProps {
   conversation: Conversation | null;
   messages: ChatMessage[];
   isTyping: boolean;
-  freeTierRemaining: number;
+  freeTierRemaining?: number;
+  allowance?: ChatbotUsage;
   /** Non-blocking send error (e.g. daily-limit reached) shown above the input. */
   errorMessage?: string | null;
-  onSend: (text: string, inputSource: CompanionInputSource) => void;
+  onSend: (text: string, inputSource: CompanionInputSource) => void | boolean | Promise<void | boolean>;
   onboarding: UserOnboardingProfile | null;
   /** Mobile master/detail: is the chat the visible pane (vs the list)? */
   mobileActive: boolean;
@@ -67,7 +68,7 @@ export function ChatPanel({
   conversation,
   messages,
   isTyping,
-  freeTierRemaining,
+  allowance,
   errorMessage,
   onSend,
   onboarding,
@@ -112,10 +113,16 @@ export function ChatPanel({
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, isTyping]);
 
-  function handleSubmit(text: string, inputSource: CompanionInputSource) {
-    if (!accountId || !stillOwned({ accountId, epoch })) return;
-    onSend(text, inputSource);
+  async function handleSubmit(text: string, inputSource: CompanionInputSource) {
+    const owner = { accountId: accountId ?? null, epoch };
+    if (!accountId || !stillOwned(owner) || isTyping) return;
     setDraft("");
+    try {
+      const sent = await onSend(text, inputSource);
+      if (sent === false && stillOwned(owner) && !composerDraft(accountId)) setDraft(text);
+    } catch {
+      if (stillOwned(owner) && !composerDraft(accountId)) setDraft(text);
+    }
   }
 
   // A follow-up chip auto-sends immediately.
@@ -226,7 +233,7 @@ export function ChatPanel({
             inputRef={inputRef}
             sendDisabled={!accountId}
           />
-          <FreeTierIndicator remaining={freeTierRemaining} />
+          <FreeTierIndicator allowance={allowance} />
           <p className="text-center text-xs text-ink-placeholder">
             {t("companion.disclaimer")}
           </p>

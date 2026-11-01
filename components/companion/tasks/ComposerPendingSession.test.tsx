@@ -549,3 +549,22 @@ it.each(["companion", "lesson"])(
     ).toBe(true);
   },
 );
+
+it('retains the focused draft after a rejected generation without overwriting newer text', async () => {
+  knownAccount();
+  const hold = holdSession();
+  let finish!: (sent: boolean) => void;
+  const onSend = vi.fn(() => new Promise<boolean>(resolve => { finish=resolve; }));
+  render(ui(<ChatPanel conversation={null} messages={[]} isTyping={false} onSend={onSend}
+    onboarding={null} mobileActive onOpenList={() => {}} />));
+  await act(async () => hold.resolve()); await settled();
+  const input=composer(); input.focus(); type('Keep this failed question');
+  fireEvent.click(screen.getByRole('button',{name:en.companion.sendMessageAria}));
+  await act(async () => finish(false));
+  expect(composer().value).toBe('Keep this failed question');
+  expect(document.activeElement).toBe(input);
+  fireEvent.click(screen.getByRole('button',{name:en.companion.sendMessageAria}));
+  type('A newer draft');
+  await act(async () => finish(false));
+  expect(composer().value).toBe('A newer draft');
+});

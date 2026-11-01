@@ -215,7 +215,7 @@ function supabase(call: FetchCall): Response | undefined {
   if (path === '/rest/v1/rpc/match_chunks') return json([]);
   if (path.startsWith('/rest/v1/rpc/')) return json(null);
   // #370: the Companion actions gate, read with the service role.
-  if (path === '/rest/v1/companion_feature_gate') return json([{ enabled: scenario.actionsGate !== 'off' }]);
+  if (path === '/rest/v1/companion_feature_gate') return json([{ enabled: scenario.actionsGate !== 'off', allowed_platforms: ['ios', 'android', 'web'], account_allowlist: [] }]);
   if (call.method !== 'GET') return json([], 201);
   // Service-role reads (users name lookup) carry no user JWT; answer empty.
   if (!account) return json([]);
@@ -378,7 +378,7 @@ async function ask(prompt: string, o: AskOptions = {}, s: Scenario = {}) {
       m => m.role === 'system'
     )?.content ?? '';
   const context = (o.stream ? metadata?.context : payload.context) as Record<string, any>;
-  if (res.status === 200) {
+  if (res.status === 200 && scenario.actionsGate !== 'off') {
     // A missing context is a contract failure, not a crash further down.
     assert(context && typeof context === 'object', 'a 200 answer carries a context object');
   }
@@ -414,7 +414,7 @@ function writeCalls(calls: FetchCall[]): FetchCall[] {
 
 const FIXED_CHECKED_AT = '2026-10-25T17:30:00.000Z';
 const FIXED_ARRIVAL_DATE = '2026-10-31';
-const VOLATILE_KEYS = new Set(['tokenUsage', 'estimatedCostUsd', 'usage', 'latencyMs', 'model', 'provider']);
+const VOLATILE_KEYS = new Set(['tokenUsage', 'estimatedCostUsd', 'usage', 'latencyMs', 'model', 'provider', 'reasoningEffort', 'resolvedModel', 'generationCount']);
 
 function clientFixture(value: unknown, window: { startedAt: number; finishedAt: number }): unknown {
   if (Array.isArray(value)) return value.map(v => clientFixture(v, window));
@@ -570,6 +570,10 @@ Deno.test({
   fn: async () => {
     await ask(VANCOUVER_QUESTION);
     const events = aiGenerationEvents();
+    for (const event of events) {
+      assert(!('$ai_input' in event));
+      assert(!('$ai_output_choices' in event));
+    }
     assertEquals(events.length, 1);
     assertEquals(events[0].guidance_status, 'checked');
     const serialized = JSON.stringify(events[0]);

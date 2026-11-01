@@ -167,9 +167,13 @@ export function useConversationMessages(conversationIdentifier: string | null) {
 }
 
 export function useChatbotUsage() {
+  const accountId = useAccountId();
+  const owner = ownAccountWork();
   return useQuery({
-    queryKey: CHATBOT_USAGE_KEY,
-    queryFn: companion.getChatbotUsage,
+    queryKey: [...CHATBOT_USAGE_KEY, accountId, owner.epoch],
+    queryFn: () => companion.getChatbotUsage(owner),
+    enabled: Boolean(accountId),
+    refetchInterval: 60_000,
   });
 }
 
@@ -543,6 +547,7 @@ export function useSendMessage() {
       // Partial failures (user-save ok, assistant-save not) leave a row on the
       // server the cache wouldn't otherwise show. Re-fetch to converge.
       if (context && stillOwned(owner)) {
+        queryClient.invalidateQueries({ queryKey: CHATBOT_USAGE_KEY });
         queryClient.invalidateQueries({ queryKey: context.key });
       }
     },
@@ -629,8 +634,8 @@ export function prefetchCompanion(queryClient: QueryClient) {
         })
       : Promise.resolve(),
     queryClient.prefetchQuery({
-      queryKey: CHATBOT_USAGE_KEY,
-      queryFn: companion.getChatbotUsage,
+      queryKey: [...CHATBOT_USAGE_KEY, owner.accountId, owner.epoch],
+      queryFn: () => companion.getChatbotUsage(owner),
     }),
   ]);
 }

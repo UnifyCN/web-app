@@ -274,6 +274,11 @@ export interface Conversation {
 }
 
 export interface ChatbotUsage {
+  dailyLimit: number;
+  remaining: number | null;
+  isPremium: boolean;
+  resetsAt: string;
+  observedAt: string;
   messageCount: number;
   lastMessageAt: string | null;
 }

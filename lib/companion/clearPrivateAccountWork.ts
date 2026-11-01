@@ -46,6 +46,7 @@ export function clearPrivateAccountWork(
       keepAccountId === undefined || q.queryKey[index] !== keepAccountId;
   for (const [queryKey, index] of [
     [TASKS_KEY, 2],
+    [["chatbot-usage"], 1],
     [[TASK_PROGRESS_ROOT], 1],
     [[CONVERSATIONS_ROOT], 1],
     [[MESSAGES_ROOT], 1],

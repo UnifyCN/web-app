@@ -36,6 +36,7 @@ import {
 import { gatherGuidance, type GuidanceConfig, type GuidanceReads } from './guidance.ts';
 
 export interface CompanionReadRequest {
+  companionEnabled?: boolean;
   /** The caller's JWT client; null only in eval mode (no account). */
   userClient: UserClient | null;
   userId: string | null;
@@ -116,7 +117,7 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
 
   // #370: saved details belong to the account, not to the conversation: read with the
   // user's JWT beside the profile. A failed read means none are used.
-  const savedDetailsOutcome = userClient && userId
+  const savedDetailsOutcome = request.companionEnabled !== false && userClient && userId
     ? runRead<string, string[]>('context.saved_details', userId, {
         parseInput: raw => (typeof raw === 'string' && raw ? raw : null),
         execute: async (id, signal) =>
@@ -133,12 +134,12 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
     const [profileRow, conversation] = await Promise.all([profile, conversationOutcome]);
     const historyAllowed = conversation.status === 'ok' || (!userClient && !userId);
     const details = readConversationDetails(
-      request.prompt,
-      historyAllowed ? request.earlierUserTurns : []
+      request.companionEnabled === false ? '' : request.prompt,
+      request.companionEnabled !== false && historyAllowed ? request.earlierUserTurns : []
     );
     const province = effectiveProvince(details, profileRow);
 
-    const checklistOutcome = userClient && userId
+    const checklistOutcome = request.companionEnabled !== false && userClient && userId
       ? runRead<string, ChecklistRead>('context.checklist', userId, {
           parseInput: raw => (typeof raw === 'string' && raw ? raw : null),
           execute: (id, signal) =>
@@ -156,7 +157,7 @@ export function startCompanionReads(request: CompanionReadRequest): CompanionRea
         })
       : Promise.resolve({ status: 'skipped' } as const);
 
-    const guidancePromise: Promise<GuidanceReads | null> = needsGuidance(request.queryType, request.prompt)
+    const guidancePromise: Promise<GuidanceReads | null> = request.companionEnabled !== false && needsGuidance(request.queryType, request.prompt)
       ? gatherGuidance(
           `${request.prompt} ${province ?? ''} Canada official`.trim(),
           province,

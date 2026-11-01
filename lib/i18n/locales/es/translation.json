@@ -668,7 +668,10 @@
       "transitQ": "¿Cómo me desplazo por mi ciudad usando el transporte público?",
       "transitTopic": "Transporte"
     },
-    "welcomeTitleNamed": "Pregúntame lo que sea, {{name}}."
+    "welcomeTitleNamed": "Pregúntame lo que sea, {{name}}.",
+    "allowanceRemaining": "Quedan {{remaining}} mensajes de IA. Se restablecen el {{reset}}. Los controles de las tareas guardadas siguen disponibles.",
+    "allowancePremium": "Acceso prémium a la IA. Los controles de las tareas guardadas siguen disponibles.",
+    "allowanceUnavailable": "El cupo de IA no está disponible. Tu borrador y los controles de las tareas guardadas siguen disponibles."
   },
   "home": {
     "forYou": "Para ti",

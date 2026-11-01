@@ -769,9 +769,7 @@ Deno.serve(async (req: Request) => {
     // Atomic rate limit: check + increment in one RPC (fail-closed).
     // Returns false if over the daily cap or on any DB error. Skipped in eval
     // mode so regression runs don't consume real users' daily quotas.
-    // NOTE: keep DAILY_MESSAGE_LIMIT in sync with MESSAGE_LIMIT in
-    // app/(tabs)/companion/index.tsx — this server check is authoritative; the
-    // client constant only mirrors it for proactive UX gating.
+    // Existing production policy remains six per UTC day, premium exempt.
     if (!isEvalMode) {
       const DAILY_MESSAGE_LIMIT = 6;
       const { data: allowed, error: quotaError } = await supabase.rpc(
@@ -779,7 +777,7 @@ Deno.serve(async (req: Request) => {
         { p_user_id: effectiveUserId, p_daily_limit: DAILY_MESSAGE_LIMIT }
       );
 
-      if (quotaError || allowed === false) {
+      if (quotaError || allowed !== true) {
         return new Response(
           JSON.stringify({
             error: 'Daily message limit reached. Try again tomorrow.',
@@ -821,15 +819,17 @@ Deno.serve(async (req: Request) => {
       )
       .map((m: { message: string }) => m.message);
     const profileStartedAt = performance.now();
+    const { data: gates, error: gateError } = await supabase
+      .from('companion_feature_gate').select('*').limit(1);
+    const gate = !gateError && Array.isArray(gates) ? gates[0] : null;
+    const companionEnabled = !isEvalMode && Boolean(gate &&
+      (gate.enabled === true || (Array.isArray(gate.account_allowlist) && gate.account_allowlist.includes(effectiveUserId))) &&
+      Array.isArray(gate.allowed_platforms) && (platform === 'mobile'
+        ? gate.allowed_platforms.some((p: string) => p === 'ios' || p === 'android')
+        : gate.allowed_platforms.includes(platform)));
     const companionReads = startCompanionReads({
-      // #370: saved details are used only while the Companion actions gate is on.
-      actionsEnabled: async () => {
-        const { data, error } = await supabase
-          .from('companion_feature_gate')
-          .select('enabled')
-          .limit(1);
-        return !error && Array.isArray(data) && data[0]?.enabled === true;
-      },
+      companionEnabled,
+      actionsEnabled: async () => companionEnabled,
       userClient,
       userId: isEvalMode ? null : effectiveUserId,
       evalProfile: isEvalMode ? evalProfile ?? null : null,
@@ -975,7 +975,7 @@ Deno.serve(async (req: Request) => {
           performance.now() - vectorSearchStartedAt
         );
 
-        console.log(`Chunks received for "${prompt}":`, chunks?.length || 0);
+        console.log('Chunks received:', chunks?.length || 0);
 
         if (searchError) {
           console.error('RPC function error:', searchError);
@@ -1092,20 +1092,20 @@ Deno.serve(async (req: Request) => {
     }
     // Read-only tool policy, then the app records and official pages this
     // answer read, then anything it must ask about. All of it is quoted data.
-    fullSystemInstruction = `${fullSystemInstruction}\n${TOOL_POLICY}${appContextBlock(
+    if (companionEnabled) fullSystemInstruction = `${fullSystemInstruction}\n${TOOL_POLICY}${appContextBlock(
       companionContext
     )}${savedDetailsBlock(companion.savedDetails)}${guidanceBlock(companionContext, companion.evidence)}${clarificationBlock(
       companionContext
     )}`;
     // Companion tab only (not the in-lesson chat): the model may suggest one task for
     // the user to review. The suggestion is typed and stripped below; it writes nothing.
-    if (!lessonContext) {
+    if (companionEnabled && !lessonContext) {
       fullSystemInstruction = `${fullSystemInstruction}\n${TASK_PROPOSAL_INSTRUCTION}\n${PLAN_PROPOSAL_INSTRUCTION}\n${DETAIL_PROPOSAL_INSTRUCTION}\n${PROFILE_PROPOSAL_INSTRUCTION}`;
     }
     // #366: steps, and #365 edits, may be suggested only for a Checklist task this answer
     // read (its own account's context). Outside the Companion tab nothing is suggested.
     const readTaskRefs = new Set<string>(
-      lessonContext ? [] : companionContext.items.filter(i => i.kind === 'checklist_task').map(i => i.id)
+      !companionEnabled || lessonContext ? [] : companionContext.items.filter(i => i.kind === 'checklist_task').map(i => i.id)
     );
     if (lessonContext) {
       const lessonProgress = await lessonProgressPromise;
@@ -1228,6 +1228,7 @@ Deno.serve(async (req: Request) => {
               }
             | undefined;
           let resolvedModel: string | undefined;
+          let reportedModel: string | undefined;
           let resolvedProvider: string | undefined;
 
           // controller.enqueue throws TypeError once the stream has been
@@ -1254,7 +1255,7 @@ Deno.serve(async (req: Request) => {
                   queryType,
                   disclaimer,
                   lastVerified: lastVerified || undefined,
-                  context: companionContext,
+                  context: companionEnabled ? companionContext : undefined,
                 })
               )
             ) {
@@ -1277,6 +1278,7 @@ Deno.serve(async (req: Request) => {
                 }
               }
               if (chunk.usage) finalUsage = chunk.usage;
+              if (chunk.reportedModel) reportedModel = chunk.reportedModel;
               if (chunk.model) resolvedModel = chunk.model;
               if (chunk.provider) resolvedProvider = chunk.provider;
             }
@@ -1323,11 +1325,7 @@ Deno.serve(async (req: Request) => {
             const { answer: untaggedAnswer, topic } = topicFromAnswer(rawAnswer);
 
             // PostHog $ai_generation capture — same shape as non-streaming.
-            // $ai_input includes the full multi-turn conversation (last 10
-            // turns from conversationHistory + the current user prompt) so
-            // LLM trace UI and eval mining can reconstruct context. System
-            // prompt and RAG context are excluded — they're constants per
-            // queryType and would balloon event payload.
+            // Metadata only. Private messages and generated text stay out of analytics.
             if (!isEvalMode) {
               captureAiGeneration(effectiveUserId, {
                 $ai_model: resolvedModel ?? 'unknown',
@@ -1337,13 +1335,6 @@ Deno.serve(async (req: Request) => {
                 $ai_total_tokens: tokenUsage.total_tokens,
                 $ai_total_cost_usd: estimatedCostUsd,
                 $ai_trace_id: conversationIdentifier || undefined,
-                $ai_input: [
-                  ...conversationHistory,
-                  { role: 'user', content: prompt },
-                ],
-                $ai_output_choices: [
-                  { role: 'assistant', content: rawAnswer },
-                ],
                 feature: 'ai_companion',
                 platform,
                 // In-lesson chats are distinguishable from full-tab Companion.
@@ -1382,10 +1373,13 @@ Deno.serve(async (req: Request) => {
                 cleanAnswer,
                 suggestedNextSteps:
                   suggestions.length > 0 ? suggestions : undefined,
-                actionProposal: proposed.proposal ?? undefined,
+                actionProposal: companionEnabled ? proposed.proposal ?? undefined : undefined,
                 topic,
                 tokenUsage,
                 estimatedCostUsd,
+                generationCount: 1 + (companionContext.reads.some(r => r.capability === 'guidance.search' && r.status !== 'skipped') ? 1 : 0),
+                resolvedModel: reportedModel,
+                reasoningEffort: measurementReasoning(),
                 model: resolvedModel,
                 provider: resolvedProvider,
               })
@@ -1510,16 +1504,7 @@ Deno.serve(async (req: Request) => {
         $ai_total_tokens: tokenUsage.total_tokens,
         $ai_total_cost_usd: estimatedCostUsd,
         $ai_trace_id: conversationIdentifier || undefined,
-        // Full multi-turn conversation for LLM trace UI + eval mining
-        // (last 10 turns + the current user prompt). Excludes the system
-        // prompt and RAG context — constants per queryType, would balloon
-        // event payload.
-        $ai_input: [
-          ...conversationHistory,
-          { role: 'user', content: prompt },
-        ],
-        $ai_output_choices: [{ role: 'assistant', content: rawAnswer }],
-        // Custom properties for filtering
+        // Metadata only. Private messages stay out of analytics.
         feature: 'ai_companion',
         platform,
         // In-lesson chats are distinguishable from full-tab Companion.
@@ -1565,10 +1550,15 @@ Deno.serve(async (req: Request) => {
         disclaimer,
         suggestedNextSteps: suggestions.length > 0 ? suggestions : undefined,
         lastVerified: lastVerified || undefined,
-        context: companionContext,
-        actionProposal: proposed.proposal ?? undefined,
+        context: companionEnabled ? companionContext : undefined,
+        actionProposal: companionEnabled ? proposed.proposal ?? undefined : undefined,
         tokenUsage,
         estimatedCostUsd,
+        generationCount: 1 + (companionContext.reads.some(r => r.capability === 'guidance.search' && r.status !== 'skipped') ? 1 : 0),
+        resolvedModel: llmResult.reportedModel,
+        model: llmResult.model,
+        provider: llmResult.provider,
+        reasoningEffort: measurementReasoning(),
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -1596,3 +1586,11 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
+
+/** Same configured setting as the provider helper; no inference from model names. */
+function measurementReasoning(): string {
+  const setting = (Deno.env.get('OPENROUTER_REASONING') ?? 'off').trim().toLowerCase();
+  if (['minimal', 'low', 'medium', 'high'].includes(setting)) return setting;
+  if (setting === 'on' || setting === 'true') return 'provider_default';
+  return 'off';
+}

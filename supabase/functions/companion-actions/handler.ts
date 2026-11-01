@@ -337,7 +337,7 @@ export function createHandler(
     if (typeof rawPlatform === 'string' && (PLATFORMS as readonly string[]).includes(rawPlatform)) {
       platform = rawPlatform as Platform;
     }
-    if (!gate.enabled) return finish(json({ error: 'feature_disabled' }, 403), 'feature_disabled');
+    if (!gate.enabled && !(Array.isArray(gate.account_allowlist) && gate.account_allowlist.includes(userId))) return finish(json({ error: 'feature_disabled' }, 403), 'feature_disabled');
     if (!platform || !gate.allowed_platforms.includes(platform)) {
       return finish(json({ error: 'platform_not_enabled' }, 403), 'platform_not_enabled');
     }

@@ -668,7 +668,10 @@
       "transitQ": "Comment me déplacer en transport en commun dans ma ville?",
       "transitTopic": "Transport en commun"
     },
-    "welcomeTitleNamed": "Posez-moi n'importe quelle question, {{name}}."
+    "welcomeTitleNamed": "Posez-moi n'importe quelle question, {{name}}.",
+    "allowanceRemaining": "Il reste {{remaining}} messages IA. Réinitialisation : {{reset}}. Les commandes des tâches enregistrées restent disponibles.",
+    "allowancePremium": "Accès IA premium. Les commandes des tâches enregistrées restent disponibles.",
+    "allowanceUnavailable": "Le quota IA est indisponible. Votre brouillon et les commandes des tâches enregistrées restent disponibles."
   },
   "home": {
     "forYou": "Pour vous",

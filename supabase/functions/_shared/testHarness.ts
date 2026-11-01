@@ -172,7 +172,8 @@ export function supabaseRoute(
   if (table) {
     if (call.method !== 'GET') return json([], 201);
     const rows = handlers.tables?.[table[1]];
-    return json(rows ?? []);
+    return json(rows ?? (table[1] === 'companion_feature_gate'
+      ? [{ enabled: true, allowed_platforms: ['ios', 'android', 'web'], account_allowlist: [] }] : []));
   }
   return undefined;
 }

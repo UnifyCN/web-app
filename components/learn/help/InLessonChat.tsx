@@ -17,7 +17,7 @@ import {
   useCreateConversation,
   useSendMessage,
 } from "@/hooks/useCompanion";
-import { ChatLimitError, FREE_TIER_DAILY_LIMIT } from "@/services/companion";
+import { ChatLimitError } from "@/services/companion";
 import type { CompanionInputSource } from "@/lib/companionAnalytics";
 import type { ChatMessage, LessonContext } from "@/types";
 
@@ -79,10 +79,6 @@ function AccountLessonChat({
   const sendMessage = useSendMessage();
 
   const messages = messagesQuery.data ?? [];
-  const freeTierRemaining = Math.max(
-    0,
-    FREE_TIER_DAILY_LIMIT - (usageQuery.data?.messageCount ?? 0),
-  );
   const isTyping = sendMessage.isPending;
 
   useEffect(() => {
@@ -144,6 +140,7 @@ function AccountLessonChat({
       });
     } catch (err) {
       if (!stillOwned(owner)) return;
+      setDraft(current => current || text);
       setSendError(
         err instanceof ChatLimitError
           ? t("companion.dailyLimitReachedToast")
@@ -242,7 +239,7 @@ function AccountLessonChat({
             placeholder={t("learnWeb.help.chat.inputPlaceholder")}
             sendDisabled={!accountId}
           />
-          <FreeTierIndicator remaining={freeTierRemaining} />
+          <FreeTierIndicator allowance={usageQuery.data} />
         </div>
       </div>
     </div>

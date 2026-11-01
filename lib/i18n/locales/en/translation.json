@@ -668,7 +668,10 @@
       "transitQ": "How do I get around using public transit in my city?",
       "transitTopic": "Transit"
     },
-    "welcomeTitleNamed": "Ask me anything, {{name}}."
+    "welcomeTitleNamed": "Ask me anything, {{name}}.",
+    "allowanceRemaining": "{{remaining}} AI messages remaining. Resets {{reset}}. Saved task controls stay available.",
+    "allowancePremium": "Premium AI access. Saved task controls stay available.",
+    "allowanceUnavailable": "AI allowance unavailable. Your draft and saved task controls remain available."
   },
   "home": {
     "forYou": "For You",

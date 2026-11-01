@@ -24,7 +24,7 @@ import {
   getAuthUserId,
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
-import { assertOwned, type AccountOwner } from "@/lib/accountSession";
+import { assertOwned, ownAccountWork, type AccountOwner } from "@/lib/accountSession";
 import {
   mockConversations,
   mockMessagesByConversation,
@@ -66,10 +66,6 @@ interface MessageRow {
   created_at: string;
 }
 
-interface ChatbotUsageRow {
-  message_count: number;
-  last_message_at: string | null;
-}
 
 function rowToConversation(row: ConversationRow): Conversation {
   return {
@@ -141,15 +137,6 @@ function normalizeSources(raw: unknown): ChatSource[] | null {
     .filter((value) => !isInternalSourceUrl(value.url));
   return cleaned.length > 0 ? cleaned : null;
 }
-
-/**
- * Free-tier daily message cap shown next to the chat input. Must match the limit
- * the deployed `rag-query` edge function enforces via
- * `check_and_increment_chatbot_usage` — the shared-DB function allows 6/day. The
- * server check is authoritative; this constant only mirrors it for UX gating.
- * Single source of truth for both the Companion tab and the In-Lesson chat.
- */
-export const FREE_TIER_DAILY_LIMIT = 6;
 
 /* ---- Conversations ---------------------------------------------------- */
 
@@ -647,31 +634,22 @@ export async function deleteConversation(
 
 /* ---- Usage ------------------------------------------------------------ */
 
-export async function getChatbotUsage(): Promise<ChatbotUsage> {
-  if (!isSupabaseConfigured()) {
-    return { messageCount: 0, lastMessageAt: null };
-  }
+export async function getChatbotUsage(owner = ownAccountWork()): Promise<ChatbotUsage> {
+  if (!isSupabaseConfigured()) throw new Error("Allowance unavailable");
   const userId = await getAuthUserId();
-  if (!userId) return { messageCount: 0, lastMessageAt: null };
-
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("chatbot_usage")
-    .select("message_count, last_message_at")
-    .eq("user_id", userId)
-    .maybeSingle();
+  assertOwned(owner, userId);
+  if (!userId) throw new Error("Authentication required");
+  const { data, error } = await createClient().rpc("get_chatbot_allowance");
+  assertOwned(owner, userId);
   if (error) throw error;
-  if (!data) return { messageCount: 0, lastMessageAt: null };
-
-  const row = data as ChatbotUsageRow;
-  // Display-only "different day → 0" reset to match mobile. Server-side
-  // enforcement is deferred to a later phase.
-  const isSameDay =
-    row.last_message_at !== null &&
-    row.last_message_at.slice(0, 10) === new Date().toISOString().slice(0, 10);
-
-  return {
-    messageCount: isSameDay ? row.message_count : 0,
-    lastMessageAt: row.last_message_at,
-  };
+  if (!data || !Number.isInteger(data.message_count) || data.message_count < 0 ||
+      !Number.isInteger(data.daily_limit) || data.daily_limit < 0 ||
+      typeof data.is_premium !== "boolean" ||
+      (data.is_premium ? data.remaining !== null : !Number.isInteger(data.remaining) || data.remaining < 0) ||
+      !Number.isFinite(Date.parse(data.resets_at)) || !Number.isFinite(Date.parse(data.observed_at))) {
+    throw new Error("Invalid server allowance");
+  }
+  return { messageCount: data.message_count, lastMessageAt: data.last_message_at ?? null,
+    dailyLimit: data.daily_limit, remaining: data.remaining, isPremium: data.is_premium,
+    resetsAt: data.resets_at, observedAt: data.observed_at };
 }

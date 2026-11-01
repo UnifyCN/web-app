@@ -142,7 +142,12 @@ vi.mock("@/services/companion", async (importOriginal) => {
       };
     }),
     generateReply: (...args: unknown[]) => generateReply(...args),
-    getChatbotUsage: vi.fn(async () => ({ messageCount: 0, isPremium: false })),
+    getChatbotUsage: vi.fn(async () => {
+      if (API_URL !== 'http://127.0.0.1:65080') return { messageCount: 0, isPremium: false };
+      const d = await rest('/rest/v1/rpc/get_chatbot_allowance', { method: 'POST', body: {} });
+      return { messageCount: d.message_count, remaining: d.remaining, dailyLimit: d.daily_limit,
+        isPremium: d.is_premium, resetsAt: d.resets_at, observedAt: d.observed_at };
+    }),
   };
 });
 vi.mock("@/hooks/useProfile", () => ({
@@ -1043,5 +1048,38 @@ describeRecovery("372 rendered Web recovery", () => {
       expect(writes).toEqual([original]); expect(lookups).toEqual([original, original]);
       expect((await actions(acc.jwt, { action: "plan_status", operation_id: original })).json.receipt.operation_id).toBe(original);
     }
+  });
+});
+
+
+const describeAllowance = enabled && API_URL === 'http://127.0.0.1:65080' ? describe : describe.skip;
+describeAllowance('373 server allowance on the rendered Web client', () => {
+  it('keeps the draft, focused editor and saved task controls at exhaustion', { timeout: 60_000 }, async () => {
+    expect(DB_CONTAINER).toBe('supabase_db_unify-allowance-373-r1');
+    const inspected = JSON.parse(execFileSync('docker', ['inspect', DB_CONTAINER], { encoding: 'utf8' }))[0];
+    expect(inspected.Config.Labels['com.supabase.cli.project']).toBe('unify-allowance-373-r1');
+    const acc = await newAccount('allowance373'); account.set(acc.id);
+    execFileSync('docker', ['exec','-i',DB_CONTAINER,'psql','-v','ON_ERROR_STOP=1','-qtA','-U','postgres','-d','postgres'], { input: `insert into chatbot_usage(user_id,message_count,last_message_at) values('${acc.id}',6,now());`, encoding:'utf8' });
+    const saved = await savedPlanFor(acc); checklistFixture = tasksFromPlan(saved.plan.items);
+    mount();
+    await screen.findByText(/0 AI messages remaining/);
+    const box = screen.getByRole('textbox', { name: /message/i }) as HTMLTextAreaElement;
+    box.focus(); fireEvent.change(box, { target: { value: 'Keep my allowance draft' } });
+    const ownerFocus = document.activeElement;
+    expect(ownerFocus).toBe(box);
+    fireEvent.click(await screen.findByRole('button', { name: new RegExp(`Your plan, ${GOAL}`) }));
+    const drawer = await screen.findByRole('dialog');
+    fireEvent.click(await within(drawer).findByRole('button', { name: `${PHONE}, Not started` }));
+    const completed = await within(drawer).findByRole('radio',{name:'Completed'});
+    await waitFor(() => expect(completed.getAttribute('aria-disabled')).not.toBe('true'));
+    completed.focus(); fireEvent.click(completed);
+    await within(drawer).findByText('Changed from Not started to Completed');
+    expect(box.value).toBe('Keep my allowance draft');
+    expect(drawer.contains(document.activeElement)).toBe(true);
+    const read = await actions(acc.jwt,{ action:'read' });
+    expect(read.json.tasks.find((t: { task_ref: string }) => t.task_ref === saved.receipt.results[2].task_ref).state).toBe('completed');
+    expect(generateReply).not.toHaveBeenCalled();
+    const quota = await http('/rest/v1/rpc/get_chatbot_allowance', { method:'POST',jwt:acc.jwt,body:'{}' });
+    expect(quota.json.message_count).toBe(6);
   });
 });

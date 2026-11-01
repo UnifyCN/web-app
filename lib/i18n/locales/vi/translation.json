@@ -668,7 +668,10 @@
       "transitQ": "Làm sao để di chuyển bằng phương tiện công cộng ở thành phố của tôi?",
       "transitTopic": "Giao thông"
     },
-    "welcomeTitleNamed": "Hỏi tôi bất cứ điều gì, {{name}}."
+    "welcomeTitleNamed": "Hỏi tôi bất cứ điều gì, {{name}}.",
+    "allowanceRemaining": "Còn {{remaining}} tin nhắn AI. Đặt lại lúc {{reset}}. Bạn vẫn có thể dùng các nút điều khiển công việc đã lưu.",
+    "allowancePremium": "Quyền truy cập AI cao cấp. Bạn vẫn có thể dùng các nút điều khiển công việc đã lưu.",
+    "allowanceUnavailable": "Chưa thể xem hạn mức AI. Bản nháp và các nút điều khiển công việc đã lưu vẫn còn."
   },
   "home": {
     "forYou": "Dành cho bạn",

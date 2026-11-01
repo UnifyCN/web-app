@@ -109,6 +109,8 @@ export type OpenRouterResult =
       content: string;
       /** The actual model OpenRouter served from (after fallback resolution). */
       model: string;
+      /** Absent when the provider omitted its resolved model identity. */
+      reportedModel?: string;
       /** The upstream provider (e.g. "Google", "Anthropic"). */
       provider: string;
       usage: OpenRouterUsage;
@@ -292,6 +294,7 @@ export async function callOpenRouter(
       ok: true,
       content,
       model: resolvedModel,
+      reportedModel: typeof data?.model === 'string' ? data.model : undefined,
       provider: resolvedProvider,
       usage,
     };
@@ -332,6 +335,7 @@ export interface OpenRouterStreamChunk {
   usage?: OpenRouterUsage;
   /** Resolved model (after fallback chain). Present on final chunk. */
   model?: string;
+  reportedModel?: string;
   /** Resolved upstream provider. Present on final chunk. */
   provider?: string;
 }
@@ -595,6 +599,7 @@ function parseOpenRouterSseMessage(
   if (deltaContent === undefined && !isDone && !usage) return null;
 
   return {
+    ...(typeof parsed.model === 'string' && { reportedModel: parsed.model }),
     ...(deltaContent !== undefined && { delta: deltaContent }),
     ...(isDone && { done: true }),
     ...(usage && { usage }),

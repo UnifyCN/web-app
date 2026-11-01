@@ -386,7 +386,7 @@ for (const model of ACCEPTED_MODELS) {
       // The handler's existing success fields: no hits, so no sources or date,
       // and the stub's one-letter suggestions are dropped by the sanitizer.
       // `context` is the Companion context contract (mobile-app#362).
-      assertEquals(keys, ['answer', 'context', 'disclaimer', 'estimatedCostUsd', 'queryType', 'tokenUsage', 'topic']);
+      assertEquals(keys, ['answer', 'context', 'disclaimer', 'estimatedCostUsd', 'generationCount', 'model', 'provider', 'queryType', 'reasoningEffort', 'resolvedModel', 'tokenUsage', 'topic']);
       assertEquals([payload.answer, payload.topic], ['Answer.', 'immigration']);
       // The search above ran and found nothing: the context reports the knowledge
       // read as done and names no app content.
