@@ -3200,7 +3200,7 @@
     "reviewRestored": "Bản nháp này đã trở lại sau khi dịch vụ bị gián đoạn. Hãy kiểm tra lại trước khi đồng ý.",
     "changedElsewhere": "Kế hoạch này đã được lưu trước đó. Kết quả được hiển thị.",
     "receiptSaved": "{{added}}. {{reused}}.",
-    "receiptFailed": "Không thể thêm: {{titles}}. Mọi thứ khác đã được lưu.",
+    "receiptFailed": "Không thể thêm: {{titles}}.",
     "receiptNeedsReview": "Chưa thêm vì có điều đã thay đổi: {{titles}}.",
     "receiptRetried": "Đã thêm khi thử lại: {{titles}}.",
     "receiptReviewed": "Đã thêm sau khi bạn xem lại: {{titles}}.",

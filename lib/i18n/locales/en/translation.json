@@ -3200,7 +3200,7 @@
     "reviewRestored": "This draft came back after a service interruption. Check it again before you approve.",
     "changedElsewhere": "This plan was already saved. Its result is shown.",
     "receiptSaved": "{{added}}. {{reused}}.",
-    "receiptFailed": "Could not add: {{titles}}. Everything else is saved.",
+    "receiptFailed": "Could not add: {{titles}}.",
     "receiptNeedsReview": "Not added, because something changed: {{titles}}.",
     "receiptRetried": "Added on retry: {{titles}}.",
     "receiptReviewed": "Added after your review: {{titles}}.",

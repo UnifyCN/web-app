@@ -3200,7 +3200,7 @@
     "reviewRestored": "ਸੇਵਾ ਵਿੱਚ ਰੁਕਾਵਟ ਤੋਂ ਬਾਅਦ ਇਹ ਖਰੜਾ ਵਾਪਸ ਆਇਆ ਹੈ। ਮਨਜ਼ੂਰ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਇਸਨੂੰ ਦੁਬਾਰਾ ਜਾਂਚੋ।",
     "changedElsewhere": "ਇਹ ਯੋਜਨਾ ਪਹਿਲਾਂ ਹੀ ਸੰਭਾਲੀ ਜਾ ਚੁੱਕੀ ਸੀ। ਇਸਦਾ ਨਤੀਜਾ ਦਿਖਾਇਆ ਗਿਆ ਹੈ।",
     "receiptSaved": "{{added}}। {{reused}}।",
-    "receiptFailed": "ਜੋੜਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ: {{titles}}। ਬਾਕੀ ਸਭ ਸੰਭਾਲਿਆ ਗਿਆ ਹੈ।",
+    "receiptFailed": "ਜੋੜਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ: {{titles}}।",
     "receiptNeedsReview": "ਨਹੀਂ ਜੋੜਿਆ ਗਿਆ, ਕਿਉਂਕਿ ਕੁਝ ਬਦਲ ਗਿਆ: {{titles}}।",
     "receiptRetried": "ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਵਿੱਚ ਜੋੜਿਆ ਗਿਆ: {{titles}}।",
     "receiptReviewed": "ਤੁਹਾਡੀ ਸਮੀਖਿਆ ਤੋਂ ਬਾਅਦ ਜੋੜਿਆ ਗਿਆ: {{titles}}।",

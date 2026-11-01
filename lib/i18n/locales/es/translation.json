@@ -3200,7 +3200,7 @@
     "reviewRestored": "Este borrador volvió tras una interrupción del servicio. Revísalo de nuevo antes de aprobar.",
     "changedElsewhere": "Este plan ya estaba guardado. Se muestra su resultado.",
     "receiptSaved": "{{added}}. {{reused}}.",
-    "receiptFailed": "No se pudo añadir: {{titles}}. Todo lo demás está guardado.",
+    "receiptFailed": "No se pudo añadir: {{titles}}.",
     "receiptNeedsReview": "No se añadió porque algo cambió: {{titles}}.",
     "receiptRetried": "Añadida al reintentar: {{titles}}.",
     "receiptReviewed": "Añadida tras tu revisión: {{titles}}.",

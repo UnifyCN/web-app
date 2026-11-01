@@ -3200,7 +3200,7 @@
     "reviewRestored": "Ce plan provisoire est revenu après une interruption du service. Vérifiez-le de nouveau avant d’approuver.",
     "changedElsewhere": "Ce plan était déjà enregistré. Son résultat est affiché.",
     "receiptSaved": "{{added}}. {{reused}}.",
-    "receiptFailed": "Impossible d’ajouter : {{titles}}. Tout le reste est enregistré.",
+    "receiptFailed": "Impossible d’ajouter : {{titles}}.",
     "receiptNeedsReview": "Non ajoutée, car un élément a changé : {{titles}}.",
     "receiptRetried": "Ajoutée au nouvel essai : {{titles}}.",
     "receiptReviewed": "Ajoutée après votre vérification : {{titles}}.",

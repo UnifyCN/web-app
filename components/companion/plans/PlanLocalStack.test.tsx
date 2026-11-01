@@ -12,9 +12,11 @@
 // Runs only when ACTIONS_API_URL, ACTIONS_ANON_KEY and ACTIONS_SERVICE_ROLE_KEY point at
 // the disposable 127.0.0.1 stack (supabase/tests/companion-actions/run.sh, ACTIONS_KEEP=1).
 import { useSyncExternalStore } from "react";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createInstance } from "i18next";
 import { I18nextProvider, initReactI18next } from "react-i18next";
@@ -508,7 +510,7 @@ describeStack("Settlement plans against the real local stack (web)", () => {
     mount();
     fireEvent.click(await screen.findByRole("button", { name: new RegExp(`Your plan, ${GOAL}`) }, { timeout: 10_000 }));
     let drawer = await screen.findByRole("dialog", { name: "Your plan" });
-    expect(await within(drawer).findByText(`Could not add: ${PHONE}. Everything else is saved.`)).toBeTruthy();
+    expect(await within(drawer).findByText(`Could not add: ${PHONE}.`)).toBeTruthy();
     await setCity("Surrey");
     fireEvent.click(await enabledButton(within(drawer), "Try adding 1 task again"));
     expect(await within(drawer).findByText(`Not added, because something changed: ${PHONE}.`, {}, { timeout: 10_000 })).toBeTruthy();
@@ -722,3 +724,324 @@ if (!enabled) {
     expect(enabled).toBe(false);
   });
 }
+
+// #372 uses the same public requests and mounted Companion page. It does not
+// repeat the service's domain/race suites or claim real-browser/native evidence.
+const describeRecovery = enabled && API_URL === "http://127.0.0.1:65060" ? describe : describe.skip;
+describeRecovery("372 rendered Web recovery", () => {
+  const psql = (sql: string) => execFileSync("docker", ["exec", "-i", DB_CONTAINER,
+    "psql", "-v", "ON_ERROR_STOP=1", "-qtA", "-U", "postgres", "-d", "postgres"], { input: sql, encoding: "utf8" }).trim();
+  beforeAll(() => {
+    const project = "unify-recovery-372-r2";
+    expect(DB_CONTAINER).toBe(`supabase_db_${project}`);
+    expect(process.env.ACTIONS_REST_CONTAINER).toBe(`supabase_rest_${project}`);
+    const containers = JSON.parse(execFileSync("docker", ["inspect", DB_CONTAINER, process.env.ACTIONS_REST_CONTAINER!], { encoding: "utf8" }));
+    for (const container of containers) {
+      expect(container.Config.Labels["com.supabase.cli.project"]).toBe(project);
+      expect(container.State.Running).toBe(true);
+    }
+  });
+  const openPlan = async () => {
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`Your plan, ${GOAL}`) }, { timeout: 10_000 }));
+    return screen.findByRole("dialog");
+  };
+  const openPhone = async () => {
+    const drawer = await openPlan();
+    fireEvent.click(await within(drawer).findByRole("button", { name: new RegExp(`^${PHONE},`) }));
+    await within(drawer).findByRole("heading", { name: PHONE });
+    await waitFor(() => expect(within(drawer).getByRole("radio", { name: "Waiting" }).getAttribute("aria-disabled")).not.toBe("true"));
+    return drawer;
+  };
+  const composer = () => screen.getByRole("textbox", { name: /message/i }) as HTMLTextAreaElement;
+  const close = async () => {
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  };
+
+  it("names saved, failed and excluded additions, retries only the failed item, and names a later Undo conflict", { timeout: 60_000 }, async () => {
+    // Wrong if an excluded addition is labelled failed/saved, a retry repeats
+    // successful work, or historical Undo replaces another device's newer edit.
+    const acc = await newAccount("web-partial372");
+    account.set(acc.id);
+    const independent = "Book a bank appointment", excluded = "Join a library";
+    const prepared = await actions(acc.jwt, { action: "plan_prepare", goal: GOAL,
+      items: [...SUGGESTION.items, { kind: "new", title: independent }, { kind: "new", title: excluded }] });
+    expect(prepared.status).toBe(200);
+    const original = prepared.json.plan_proposal;
+    const revised = await actions(acc.jwt, { action: "plan_revise", plan_proposal_id: original.plan_proposal_id,
+      proposal_revision: original.proposal_revision,
+      items: original.items.map((item: { kind: string; task_ref?: string; key?: string; title?: string }) =>
+        item.kind === "existing" ? { kind: item.kind, task_ref: item.task_ref }
+          : { kind: item.kind, key: item.key, include: item.title !== excluded }) });
+    expect(revised.status).toBe(200);
+    const proposal = revised.json.plan_proposal;
+    psql(`create function public.test372_web_fault() returns trigger language plpgsql as $f$
+      begin if new.user_id = '${acc.id}' and new.title = '${PHONE}' then raise exception '372 controlled failure'; end if; return new; end $f$;
+      create trigger test372_web_fault before insert on custom_checklist_tasks for each row execute function public.test372_web_fault();`);
+    let partial;
+    try {
+      partial = await actions(acc.jwt, { action: "plan_apply", operation_id: crypto.randomUUID(),
+        authorization: { kind: "approved_proposal", proposal_id: proposal.plan_proposal_id, proposal_revision: proposal.proposal_revision }, items: proposal.items });
+    } finally { psql("drop trigger test372_web_fault on custom_checklist_tasks; drop function public.test372_web_fault();"); }
+    expect(partial.status).toBe(200);
+    expect(partial.json.receipt.results.map((r: { outcome: string }) => r.outcome)).toEqual(["reused", "reused", "failed", "created"]);
+    const failed = partial.json.receipt.results[2], succeeded = partial.json.receipt.results[3];
+    const before = psql(`select row_to_json(c) from custom_checklist_tasks c where user_id='${acc.id}' and id=${succeeded.task_ref.slice(7)};`);
+    checklistFixture = tasksFromPlan(partial.json.plan.items);
+    const retries: string[] = [];
+    hook = (body, forward) => { if (body.action === "plan_retry") retries.push(String(body.operation_id)); return forward(); };
+    mount();
+    const drawer = await openPlan();
+    await within(drawer).findByText(`Could not add: ${PHONE}.`);
+    expect(await within(drawer).findByText(`Left out after your review: ${excluded}.`)).toBeTruthy();
+    expect(within(drawer).getByRole("button", { name: `${independent}, Not started` })).toBeTruthy();
+    expect(within(drawer).queryByRole("button", { name: `${excluded}, Not started` })).toBeNull();
+    fireEvent.change(composer(), { target: { value: "Keep partial recovery question" } });
+    const retry = await enabledButton(within(drawer), "Try adding 1 task again");
+    retry.focus(); fireEvent.click(retry); fireEvent.click(retry);
+    await within(drawer).findByRole("button", { name: `${PHONE}, Not started` }, { timeout: 10_000 });
+    expect(retries).toHaveLength(1);
+    const retried = (await actions(acc.jwt, { action: "plan_status", operation_id: retries[0] })).json.receipt;
+    expect(retried.results).toHaveLength(1);
+    expect(retried.results[0]).toMatchObject({ key: failed.key, item_operation_id: failed.item_operation_id, outcome: "created" });
+    expect(psql(`select row_to_json(c) from custom_checklist_tasks c where user_id='${acc.id}' and id=${succeeded.task_ref.slice(7)};`)).toBe(before);
+    const moved = await actions(acc.jwt, { action: "apply", operation_id: crypto.randomUUID(), authorization: { kind: "ui_control" },
+      operations: [{ type: "task.set_state", task_ref: succeeded.task_ref, state: "waiting", expected_revision: 1, waiting_reason: "Changed on another device" }] });
+    expect(moved.status).toBe(200);
+    fireEvent.click(await enabledButton(within(drawer), "Undo plan change"));
+    fireEvent.click(await enabledButton(within(drawer), "Undo plan"));
+    expect(await within(drawer).findByText(`Some tasks changed after the plan was saved. Undo will keep them: ${independent}.`)).toBeTruthy();
+    expect((await actions(acc.jwt, { action: "read" })).json.tasks.find((t: { task_ref: string }) => t.task_ref === succeeded.task_ref).state).toBe("waiting");
+    expect(drawer.contains(document.activeElement)).toBe(true);
+    await close();
+    expect(composer().value).toBe("Keep partial recovery question");
+    expect((await customTasks(acc.jwt)).map(t => t.title).sort()).toEqual([independent, PHONE].sort());
+  });
+
+  it("keeps plan, task, step, Waiting reason and reminder identities after reopening, with stable input focus and draft", { timeout: 60_000 }, async () => {
+    // Wrong if a step completes its parent, review saves a reminder, reopening
+    // creates new identities, or a save replaces the focused reason field.
+    const acc = await newAccount("web-core372");
+    account.set(acc.id);
+    const saved = await savedPlanFor(acc);
+    const ref = saved.receipt.results[2].task_ref;
+    checklistFixture = tasksFromPlan(saved.plan.items);
+    const client = mount();
+    const drawer = await openPhone();
+    fireEvent.change(composer(), { target: { value: "Keep my next question" } });
+    fireEvent.change(within(drawer).getByRole("textbox", { name: "New step" }), { target: { value: "Compare phone plans" } });
+    fireEvent.click(await enabledButton(within(drawer), "Add step"));
+    const checkbox = await within(drawer).findByRole("checkbox", { name: "Compare phone plans" });
+    await waitFor(() => expect(checkbox.getAttribute("aria-disabled")).not.toBe("true"));
+    fireEvent.click(checkbox);
+    await within(drawer).findByText("Checked step: Compare phone plans");
+    expect(within(drawer).getByRole("radio", { name: "Not started" }).getAttribute("aria-checked")).toBe("true");
+    await waitFor(() => expect(within(drawer).getByRole("radio", { name: "Waiting" }).getAttribute("aria-disabled")).not.toBe("true"));
+    fireEvent.click(within(drawer).getByRole("radio", { name: "Waiting" }));
+    const reason = await within(drawer).findByRole("textbox", { name: "What are you waiting for?" });
+    fireEvent.change(reason, { target: { value: "A phone appointment" } });
+    reason.focus();
+    fireEvent.click(await enabledButton(within(drawer), "Save waiting reason"));
+    await waitFor(() => expect(within(drawer).getByRole("button", { name: "Save waiting reason" }).getAttribute("aria-disabled")).toBe("true"));
+    expect(within(drawer).getByRole("textbox", { name: "What are you waiting for?" })).toBe(reason);
+    expect(document.activeElement).toBe(reason);
+    fireEvent.change(within(drawer).getByLabelText(en.reminders.instant), { target: { value: "2026-12-15T10:00-08:00" } });
+    fireEvent.change(within(drawer).getByLabelText(en.reminders.zone), { target: { value: "America/Vancouver" } });
+    fireEvent.click(await enabledButton(within(drawer), en.reminders.review));
+    await enabledButton(within(drawer), en.reminders.save);
+    expect((await actions(acc.jwt, { action: "read" })).json.reminders.items).toEqual([]);
+    fireEvent.click(within(drawer).getByRole("button", { name: en.reminders.save }));
+    await within(drawer).findByText(en.reminders.saved);
+    const before = (await actions(acc.jwt, { action: "read" })).json;
+    expect(before.tasks.find((t: { task_ref: string }) => t.task_ref === ref)).toMatchObject({ state: "waiting", waiting_reason: "A phone appointment" });
+    expect(before.steps).toHaveLength(1); expect(before.steps[0]).toMatchObject({ task_ref: ref, done: true });
+    expect(before.reminders.items).toHaveLength(1);
+    expect(before.reminders.items[0]).toMatchObject({ task_ref: ref, time_zone: "America/Vancouver", status: "pending" });
+    await close(); expect(composer().value).toBe("Keep my next question");
+    cleanup(); client.clear(); clearPlanStores(null); clearTaskActionStores(null);
+    mount(); const reopened = await openPhone();
+    expect((await within(reopened).findByRole("textbox", { name: "What are you waiting for?" }) as HTMLTextAreaElement).value).toBe("A phone appointment");
+    expect((within(reopened).getByRole("checkbox", { name: "Compare phone plans" }) as HTMLInputElement).checked).toBe(true);
+    const after = (await actions(acc.jwt, { action: "read" })).json;
+    expect([after.steps[0].step_id, after.reminders.items[0].reminder_id]).toEqual([before.steps[0].step_id, before.reminders.items[0].reminder_id]);
+    expect((await actions(acc.jwt, { action: "plans" })).json.plans[0].plan_id).toBe(saved.plan.plan_id);
+    expect((await customTasks(acc.jwt)).map(t => t.title)).toEqual([PHONE]);
+  });
+
+  it("blocks offline writes, refreshes another device, protects historical Undo and clears unresolved recovery on account replacement and sign-out", { timeout: 60_000 }, async () => {
+    // Wrong if an offline press writes, reconnect misses the newer revision,
+    // Undo replaces it, removal leaves active controls, or another account gets recovery state.
+    const acc = await newAccount("web-offline372"), other = await newAccount("web-other372");
+    account.set(acc.id);
+    const saved = await savedPlanFor(acc), ref = saved.receipt.results[2].task_ref;
+    checklistFixture = tasksFromPlan(saved.plan.items);
+    const writes: Record<string, unknown>[] = [];
+    let failPlan = false;
+    hook = async (body, forward) => {
+      if (["apply", "undo", "plan_apply"].includes(String(body.action))) writes.push(body);
+      if (failPlan && ["plan_apply", "plan_status"].includes(String(body.action))) throw new TypeError("372 unavailable");
+      return forward();
+    };
+    const client = mount(); const drawer = await openPhone();
+    fireEvent.change(composer(), { target: { value: "Private recovery question" } });
+    fireEvent.click(within(drawer).getByRole("radio", { name: "In progress" }));
+    await within(drawer).findByText("Changed from Not started to In progress");
+    const original = writes[0].operation_id;
+    Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
+    act(() => window.dispatchEvent(new Event("offline")));
+    await within(drawer).findByText(en.taskActions.offline);
+    const waiting = within(drawer).getByRole("radio", { name: "Waiting" });
+    expect(waiting.getAttribute("aria-disabled")).toBe("true"); fireEvent.click(waiting); expect(writes).toHaveLength(1);
+    const current = (await actions(acc.jwt, { action: "read" })).json.tasks.find((t: { task_ref: string }) => t.task_ref === ref);
+    expect((await actions(acc.jwt, { action: "apply", operation_id: crypto.randomUUID(), authorization: { kind: "ui_control" },
+      operations: [{ type: "task.set_state", task_ref: ref, state: "waiting", waiting_reason: "Changed on another device", expected_revision: current.revision }] })).status).toBe(200);
+    Object.defineProperty(navigator, "onLine", { configurable: true, get: () => true });
+    act(() => window.dispatchEvent(new Event("online")));
+    await within(drawer).findByDisplayValue("Changed on another device", {}, { timeout: 10_000 });
+    fireEvent.click(await enabledButton(within(drawer), "Undo this change"));
+    await within(drawer).findByText("This task changed after that action");
+    expect(writes[1].receipt_operation_id).toBe(original);
+    expect((await actions(acc.jwt, { action: "read" })).json.tasks.find((t: { task_ref: string }) => t.task_ref === ref))
+      .toMatchObject({ state: "waiting", waiting_reason: "Changed on another device", revision: current.revision + 1 });
+    const prepared = await actions(acc.jwt, { action: "prepare", operation: { type: "task.remove", task_ref: ref, expected_revision: current.revision + 1 } });
+    expect(prepared.status).toBe(200);
+    expect((await actions(acc.jwt, { action: "apply", operation_id: crypto.randomUUID(),
+      authorization: { kind: "approved_proposal", proposal_id: prepared.json.proposal.proposal_id,
+        proposal_revision: prepared.json.proposal.proposal_revision, removal_confirmed: true }, operations: prepared.json.proposal.operations })).status).toBe(200);
+    act(() => window.dispatchEvent(new Event("online")));
+    await client.invalidateQueries();
+    await within(drawer).findByText(en.taskActions.removed);
+    expect(within(drawer).getByRole("radio", { name: "Completed" }).getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(within(drawer).getByRole("radio", { name: "Completed" })); expect(writes).toHaveLength(2);
+    await close();
+    expect((await actions(acc.jwt, { action: "plan_prepare", goal: "Private recovery plan", items: SUGGESTION.items })).status).toBe(200);
+    await client.invalidateQueries();
+    failPlan = true;
+    fireEvent.click(await screen.findByRole("button", { name: /Draft plan, Private recovery plan/ }));
+    const recovery = await screen.findByRole("dialog");
+    // Removal changed the draft context. The first approval refreshes the review.
+    fireEvent.click(await enabledButton(within(recovery), "Approve and add 1 task"));
+    await within(recovery).findByText(en.taskActions.lookupFailed);
+    expect(localStorage.getItem("companion-plan-recovery-v1")).not.toBeNull();
+    act(() => account.set(other.id));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(localStorage.getItem("companion-plan-recovery-v1")).toBeNull());
+    expect(composer().value).toBe(""); expect(screen.queryByText("Private recovery plan")).toBeNull();
+    expect((await actions(other.jwt, { action: "read" })).json.tasks).toHaveLength(2);
+    act(() => account.set(acc.id));
+    await screen.findByRole("button", { name: /Draft plan, Private recovery plan/ });
+    fireEvent.change(composer(), { target: { value: "Clear on sign-out" } });
+    expect((await http("/auth/v1/logout", { method: "POST", jwt: acc.jwt })).status).toBe(204);
+    act(() => account.set(null));
+    await waitFor(() => expect(composer().value).toBe(""));
+    expect(screen.queryByRole("button", { name: new RegExp(`Your plan, ${GOAL}`) })).toBeNull();
+    expect(writes.filter(w => w.action === "plan_apply")).toHaveLength(1);
+  });
+
+  it("keeps a real pending operation lookup-only and retries its unchanged identity after confirmed not-applied", { timeout: 60_000 }, async () => {
+    // Wrong if a real held operation is reported absent, a pending press
+    // writes, or the confirmed-not-applied retry uses another identity.
+    const acc = await newAccount("web-pending372"); account.set(acc.id);
+    expect((await actions(acc.jwt, { action: "plan_prepare", goal: GOAL, items: SUGGESTION.items })).status).toBe(200);
+    const holder = spawn("docker", ["exec", "-i", DB_CONTAINER, "psql", "-v", "ON_ERROR_STOP=1", "-qAt", "-U", "postgres", "-d", "postgres"]);
+    let output = "", errors = "";
+    holder.stderr.on("data", chunk => { errors += String(chunk); });
+    const closed = new Promise<number | null>((resolve, reject) => { holder.once("close", resolve); holder.once("error", reject); });
+    const writes: string[] = [];
+    hook = async (body, forward) => {
+      if (body.action === "plan_apply") {
+        writes.push(String(body.operation_id));
+        if (writes.length === 1) {
+          await new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error(`Owned lock setup failed: ${errors}`)), 10_000);
+            holder.stdout.on("data", chunk => {
+              output += String(chunk);
+              if (output.includes("372_WEB_LOCK_HELD")) { clearTimeout(timer); resolve(); }
+            });
+            holder.stdin.write(`begin; select pg_advisory_xact_lock(public.companion_op_lock_key('${acc.id}', '${body.operation_id}'));\n\\echo 372_WEB_LOCK_HELD\n`);
+          });
+          throw new TypeError("372 transport unavailable while operation is locked");
+        }
+      }
+      return forward();
+    };
+    try {
+      mount();
+      fireEvent.click(await screen.findByRole("button", { name: new RegExp(`Draft plan, ${GOAL}`) }, { timeout: 10_000 }));
+      const drawer = await screen.findByRole("dialog");
+      fireEvent.click(await enabledButton(within(drawer), "Approve and add 1 task"));
+      await within(drawer).findByText(en.taskActions.pending);
+      const approve = within(drawer).getByRole("button", { name: "Approve and add 1 task" });
+      expect(approve.getAttribute("aria-disabled")).toBe("true"); fireEvent.click(approve);
+      fireEvent.click(within(drawer).getByRole("button", { name: "Check again" }));
+      await within(drawer).findByText(en.taskActions.pending);
+      expect(writes).toHaveLength(1); expect(await customTasks(acc.jwt)).toEqual([]);
+      expect(psql(`select count(*) from companion_action_receipts where user_id='${acc.id}' and operation_id='${writes[0]}';`)).toBe("0");
+      holder.stdin.end("commit;\n"); expect(await closed).toBe(0);
+      fireEvent.click(within(drawer).getByRole("button", { name: "Check again" }));
+      await within(drawer).findByText(en.taskActions.notApplied);
+      expect(writes).toHaveLength(1);
+      fireEvent.click(await enabledButton(within(drawer), "Try again"));
+      await within(drawer).findByText("Added 1 task. Reused 2 tasks you already had.");
+      expect(writes).toEqual([writes[0], writes[0]]); expect((await customTasks(acc.jwt)).map(t => t.title)).toEqual([PHONE]);
+    } finally {
+      if (!holder.stdin.writableEnded) holder.stdin.end("rollback;\n");
+      await closed;
+    }
+  });
+
+  const itRestart = process.env.ACTIONS_RECOVERY_RESTART_STAGE ? it : it.skip;
+  itRestart("recovers a failed lookup after Web process restart before any receipt exists", { timeout: 60_000 }, async () => {
+    const base = process.env.ACTIONS_RECOVERY_RESTART_DIR!;
+    const file = path.join(base, "web-intent.json"), storageFile = path.join(base, "web-storage.json");
+    const creating = process.env.ACTIONS_RECOVERY_RESTART_STAGE === "create";
+    const acc = creating ? await newAccount("web-restart372") : JSON.parse(fs.readFileSync(file, "utf8")).account;
+    account.set(acc.id); jwts.set(acc.id, acc.jwt);
+    if (creating) {
+      localStorage.removeItem("companion-plan-recovery-v1");
+      expect((await actions(acc.jwt, { action: "plan_prepare", goal: GOAL, items: SUGGESTION.items })).status).toBe(200);
+    } else localStorage.setItem("companion-plan-recovery-v1", fs.readFileSync(storageFile, "utf8"));
+    const writes: string[] = [], lookups: string[] = [];
+    let failLookup = true;
+    hook = async (body, forward) => {
+      if (body.action === "plan_status") {
+        lookups.push(String(body.operation_id));
+        if (failLookup) throw new TypeError("372 lookup unavailable");
+      }
+      if (body.action === "plan_apply") {
+        writes.push(String(body.operation_id));
+        if (creating) throw new TypeError("372 failed before send");
+      }
+      return forward();
+    };
+    mount();
+    fireEvent.click(await screen.findByRole("button", { name: new RegExp(`Draft plan, ${GOAL}`) }, { timeout: 10_000 }));
+    const drawer = await screen.findByRole("dialog");
+    if (creating) {
+      fireEvent.click(await enabledButton(within(drawer), "Approve and add 1 task"));
+      await within(drawer).findByText(en.taskActions.lookupFailed, {}, { timeout: 10_000 });
+      expect(writes).toHaveLength(1);
+      fs.mkdirSync(base, { recursive: true });
+      fs.writeFileSync(file, JSON.stringify({ account: acc, operationId: writes[0] }));
+      fs.writeFileSync(storageFile, localStorage.getItem("companion-plan-recovery-v1")!);
+    } else {
+      const original = JSON.parse(fs.readFileSync(file, "utf8")).operationId;
+      await within(drawer).findByText(en.taskActions.lookupFailed, {}, { timeout: 10_000 });
+      const approve = within(drawer).getByRole("button", { name: "Approve and add 1 task" });
+      expect(approve.getAttribute("aria-disabled")).toBe("true");
+      fireEvent.click(approve);
+      fireEvent.click(within(drawer).getByRole("button", { name: "Check again" }));
+      await within(drawer).findByText(en.taskActions.lookupFailed);
+      expect(writes).toEqual([]); expect(lookups).toEqual([original]);
+      expect(await customTasks(acc.jwt)).toEqual([]);
+      failLookup = false;
+      fireEvent.click(within(drawer).getByRole("button", { name: "Check again" }));
+      await within(drawer).findByText(en.taskActions.notApplied);
+      expect(writes).toEqual([]);
+      fireEvent.click(await enabledButton(within(drawer), "Try again"));
+      await within(drawer).findByText("Added 1 task. Reused 2 tasks you already had.", {}, { timeout: 10_000 });
+      expect(writes).toEqual([original]); expect(lookups).toEqual([original, original]);
+      expect((await actions(acc.jwt, { action: "plan_status", operation_id: original })).json.receipt.operation_id).toBe(original);
+    }
+  });
+});

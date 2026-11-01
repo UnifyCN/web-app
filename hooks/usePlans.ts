@@ -5,12 +5,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAccountId } from "@/hooks/useAccountId";
 import { TASKS_KEY } from "@/hooks/useChecklist";
 import { companionActionsTransportFor, useOnline } from "@/hooks/useTaskActions";
-import { ownAccountWork, type AccountOwner } from "@/lib/accountSession";
+import { ownAccountWork, stillOwned, type AccountOwner } from "@/lib/accountSession";
 import { trackCompanionActionResult } from "@/lib/analytics";
 import {
   buildPlanResultProperties,
   type TaskActionSurface,
 } from "@/lib/companionActions/analytics";
+import { planRecoveryFor } from "@/lib/companionActions/planRecovery";
 import { createPlanClient, type PlanClient } from "@/lib/companionActions/planClient";
 import type { PlanProposal, PlanView } from "@/lib/companionActions/planContract";
 import {
@@ -141,7 +142,10 @@ export function usePlanStore(surface: TaskActionSurface): PlanStore | null {
   const queryClient = useQueryClient();
   return useMemo(() => {
     if (!userId) return null;
+    const owner = { accountId: userId, epoch };
     return planStoreFor(userId, {
+      ownerGeneration: epoch,
+      recovery: planRecoveryFor(userId, () => stillOwned(owner)),
       client: planClientFor({ accountId: userId, epoch }),
       newOperationId: () => crypto.randomUUID(),
       onChanged: () => {

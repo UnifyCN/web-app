@@ -45,7 +45,7 @@ const PRIMARY =
   "press inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg bg-ink-secondary px-4 text-sm font-semibold text-white hover:bg-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-60";
 
 /** A write in flight: shown only after the shared 300ms delay. */
-const isTransient = (phase: PlanPhase) => phase.phase === "saving" || phase.phase === "checking";
+const isTransient = (phase: PlanPhase) => phase.phase === "saving" || phase.phase === "checking" || phase.phase === "restoring";
 
 /**
  * Review and resume of a settlement plan (mobile-app#364) in the direction B overlay
@@ -389,6 +389,8 @@ function SavedPlan({
   const view = useTaskProgress();
   const plan = plans.plans.find((p) => p.planId === planId) ?? fallback;
   const receipt = plan?.receipt ?? given;
+  const original = usePlanProposal(plan?.proposalId ?? null);
+  const excluded = original.data?.items.filter(item => item.kind === "new" && !item.include) ?? [];
   const undoKey = receipt ? receiptKey(receipt.operationId) : null;
   const phase = usePlanPhase(store, undoKey);
   const compensation = phase.phase === "undo_review" ? phase.proposal : null;
@@ -454,6 +456,11 @@ function SavedPlan({
             <p role="status" tabIndex={-1} data-drawer-focus="" className="text-sm font-semibold text-ink">
               {planReceiptSummary(t, receipt)}
             </p>
+            {excluded.map((item, index) => (
+              <p key={index} role="status" className="text-sm text-ink-secondary">
+                {t("plans.receiptLeftOut", { titles: item.kind === "new" ? item.title : "" })}
+              </p>
+            ))}
             {retried && <p className="text-sm text-ink-secondary">{planReceiptSummary(t, retried)}</p>}
             {!receipt.undoneBy &&
               reviews.map((review) => (
@@ -697,6 +704,7 @@ function PhaseLine({
       return text(phase.reason === "task_removed" ? t("taskActions.removed") : t("taskActions.refused"), true);
     case "already_undone":
       return text(t("plans.alreadyUndone"));
+    case "recovery_failed":
     case "unavailable":
       return text(t("taskActions.unavailable"), true);
     case "signed_out":

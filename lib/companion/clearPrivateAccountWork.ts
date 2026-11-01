@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { AccountOwner } from "@/lib/accountSession";
+import { ownAccountWork, type AccountOwner } from "@/lib/accountSession";
 import { TASKS_KEY } from "@/lib/checklistQueryKeys";
 import { CURRENT_USER_KEY } from "@/lib/profileQueryKeys";
 import {
@@ -19,6 +19,7 @@ import {
   TASK_PROPOSAL_ROOT,
 } from "@/lib/companionActions/queryKeys";
 import { clearTaskActionStores } from "@/lib/companionActions/taskActionStore";
+import { clearPlanRecoveryExcept } from "@/lib/companionActions/planRecovery";
 import { clearPlanStores } from "@/lib/companionActions/planStore";
 
 /** Remove private local work. With no kept account, clear the complete scope. */
@@ -29,6 +30,10 @@ export function clearPrivateAccountWork(
 ) {
   clearTaskActionStores(keepAccountId);
   clearPlanStores(keepAccountId);
+  if (keepAccountId === undefined && !preservePendingOwner)
+    void clearPlanRecoveryExcept(null, () => true).catch(() => {});
+  else
+    void clearPlanRecoveryExcept(keepAccountId === undefined ? ownAccountWork().accountId : keepAccountId).catch(() => {});
   clearComposerDrafts(keepAccountId, preservePendingOwner);
   // This legacy key has no account part. Clear it only on a full reset,
   // not when another consumer keeps the current account's data.

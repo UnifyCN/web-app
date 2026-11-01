@@ -3224,7 +3224,7 @@
     "reviewRestored": "عادت هذه المسودة بعد انقطاع في الخدمة. راجعها مرة أخرى قبل الموافقة.",
     "changedElsewhere": "حُفظت هذه الخطة من قبل. تظهر نتيجتها.",
     "receiptSaved": "{{added}}. {{reused}}.",
-    "receiptFailed": "تعذّرت إضافة: {{titles}}. حُفظ كل ما عدا ذلك.",
+    "receiptFailed": "تعذّرت إضافة: {{titles}}.",
     "receiptNeedsReview": "لم تُضف لأن شيئًا تغيّر: {{titles}}.",
     "receiptRetried": "أُضيفت عند إعادة المحاولة: {{titles}}.",
     "receiptReviewed": "أُضيفت بعد مراجعتك: {{titles}}.",
