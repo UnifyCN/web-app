@@ -2,9 +2,11 @@
   "name": "web-app",
   "version": "0.1.0",
   "private": true,
+  "engines": { "node": "22.x" },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "prepare:companion-push": "node supabase/workers/companion-push/prepare-runtime.mjs",
     "start": "next start",
     "lint": "eslint",
     "check-i18n": "node scripts/check-i18n-parity.mjs",

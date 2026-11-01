@@ -78,6 +78,7 @@ export function ReceiptBlock({
             {
               remindAt: receipt.reminder.remindAt,
               timeZone: receipt.reminder.timeZone,
+              wallTime: receipt.reminder.wallTime,
             },
             i18n.language,
           )
