@@ -1,0 +1,12 @@
+[
+  {
+    "path": "hooks/useAccountId.ts",
+    "base_sha256": "cf2b2b5670f71e7c90f21680d55013c943946cfed3ee1292e3c09e856d1232fc",
+    "sha256": "7131114669aff16049adf41d30b8cafe37d81ca07074b284f7df3ef498f26245"
+  },
+  {
+    "path": "components/companion/tasks/TaskSelectionAccountSession.test.tsx",
+    "base_sha256": "3756263f1b5818be569655eafa65ef243916fa962f47d11b57a8892af0040553",
+    "sha256": "7cc456d8d4cbafd09c5610569682f69741f2087ae263d692584297b97fe7672c"
+  }
+]

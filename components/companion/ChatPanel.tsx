@@ -1,33 +1,50 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { PanelLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn, RTL_FLIP } from "@/lib/utils";
+import { useAccountId } from "@/hooks/useAccountId";
+import { accountEpoch, stillOwned } from "@/lib/accountSession";
+import {
+  composerDraft,
+  setComposerDraft,
+  subscribeComposerDrafts,
+} from "@/lib/companion/composerDrafts";
 import { StarterPromptChips } from "./StarterPromptChips";
 import { MessageBubble } from "./MessageBubble";
 import { ChatInput } from "./ChatInput";
 import { FreeTierIndicator } from "./FreeTierIndicator";
+import { CompanionContextDrawer } from "./CompanionContextDrawer";
+import type { CompanionContext } from "@/lib/companionContext";
 import type { CompanionInputSource } from "@/lib/companionAnalytics";
-import type {
-  ChatMessage,
-  Conversation,
-  UserOnboardingProfile,
-} from "@/types";
+import type { ChatMessage, ChatbotUsage, Conversation, UserOnboardingProfile } from "@/types";
 
 interface ChatPanelProps {
   conversation: Conversation | null;
   messages: ChatMessage[];
   isTyping: boolean;
-  freeTierRemaining: number;
+  freeTierRemaining?: number;
+  allowance?: ChatbotUsage;
   /** Non-blocking send error (e.g. daily-limit reached) shown above the input. */
   errorMessage?: string | null;
-  onSend: (text: string, inputSource: CompanionInputSource) => void;
+  onSend: (text: string, inputSource: CompanionInputSource) => void | boolean | Promise<void | boolean>;
   onboarding: UserOnboardingProfile | null;
   /** Mobile master/detail: is the chat the visible pane (vs the list)? */
   mobileActive: boolean;
   /** Mobile-only: open the conversation list. */
   onOpenList: () => void;
+  /** Compact entry to saved task progress, shown above the conversation. */
+  taskEntry?: ReactNode;
+  /** Cards that belong to a message (#363 task drafts and command results). */
+  renderAfterMessage?: (message: ChatMessage) => ReactNode;
 }
 
 function TypingIndicator() {
@@ -51,26 +68,61 @@ export function ChatPanel({
   conversation,
   messages,
   isTyping,
-  freeTierRemaining,
+  allowance,
   errorMessage,
   onSend,
   onboarding,
   mobileActive,
   onOpenList,
+  taskEntry,
+  renderAfterMessage,
 }: ChatPanelProps) {
   const { t } = useTranslation();
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [draft, setDraft] = useState("");
+  // The unsent message lives outside this panel, per account, so panels,
+  // navigation, resize and losing access to a conversation keep it (#361).
+  const accountId = useAccountId();
+  const epoch = accountEpoch();
+  const draft = useSyncExternalStore(
+    subscribeComposerDrafts,
+    () => composerDraft(accountId ?? null),
+    () => "",
+  );
+  const setDraft = useCallback(
+    (text: string) => setComposerDraft(accountId ?? null, text, epoch),
+    [accountId, epoch],
+  );
+  // The answer whose sources and context are open in the drawer. The drawer
+  // overlays the conversation, so the draft and scroll position stay put. It
+  // shows that answer only while it is still in this conversation: another
+  // account's conversation, a conversation this account can no longer read
+  // or one the user left closes it.
+  const [openContextFor, setOpenContextFor] = useState<{
+    conversationId: string;
+    messageId: number;
+  } | null>(null);
+  const openContext: CompanionContext | null =
+    openContextFor && conversation?.id === openContextFor.conversationId
+      ? (messages.find((m) => m.id === openContextFor.messageId)
+          ?.companionContext ?? null)
+      : null;
   const firstName = onboarding?.firstName?.trim();
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, isTyping]);
 
-  function handleSubmit(text: string, inputSource: CompanionInputSource) {
-    onSend(text, inputSource);
+  async function handleSubmit(text: string, inputSource: CompanionInputSource) {
+    const owner = { accountId: accountId ?? null, epoch };
+    if (!accountId || !stillOwned(owner) || isTyping) return;
     setDraft("");
+    try {
+      const sent = await onSend(text, inputSource);
+      if (sent === false && stillOwned(owner) && !composerDraft(accountId)) setDraft(text);
+    } catch {
+      if (stillOwned(owner) && !composerDraft(accountId)) setDraft(text);
+    }
   }
 
   // A follow-up chip auto-sends immediately.
@@ -109,6 +161,8 @@ export function ChatPanel({
         </header>
       )}
 
+      {taskEntry}
+
       {conversation ? (
         <div className="scrollbar-thin flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-3xl px-6 py-6">
@@ -116,14 +170,22 @@ export function ChatPanel({
               const prev = messages[index - 1];
               const next = messages[index + 1];
               return (
-                <MessageBubble
-                  key={message.id}
-                  message={message}
-                  groupedWithPrev={prev?.role === message.role}
-                  groupedWithNext={next?.role === message.role}
-                  isLast={index === messages.length - 1}
-                  onSuggestionClick={pickSuggestion}
-                />
+                <div key={message.id}>
+                  <MessageBubble
+                    message={message}
+                    groupedWithPrev={prev?.role === message.role}
+                    groupedWithNext={next?.role === message.role}
+                    isLast={index === messages.length - 1}
+                    onSuggestionClick={pickSuggestion}
+                    onOpenContext={(m) =>
+                      setOpenContextFor({
+                        conversationId: conversation.id,
+                        messageId: m.id,
+                      })
+                    }
+                  />
+                  {renderAfterMessage?.(message)}
+                </div>
               );
             })}
             {isTyping && <TypingIndicator />}
@@ -147,6 +209,7 @@ export function ChatPanel({
             <StarterPromptChips
               onSelect={(question) => handleSubmit(question, "starter_prompt")}
               onboarding={onboarding}
+              disabled={!accountId}
             />
           </div>
         </div>
@@ -168,13 +231,19 @@ export function ChatPanel({
             onValueChange={setDraft}
             onSend={(text) => handleSubmit(text, "typed")}
             inputRef={inputRef}
+            sendDisabled={!accountId}
           />
-          <FreeTierIndicator remaining={freeTierRemaining} />
+          <FreeTierIndicator allowance={allowance} />
           <p className="text-center text-xs text-ink-placeholder">
             {t("companion.disclaimer")}
           </p>
         </div>
       </div>
+
+      <CompanionContextDrawer
+        context={openContext}
+        onClose={() => setOpenContextFor(null)}
+      />
     </div>
   );
 }

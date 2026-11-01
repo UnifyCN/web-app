@@ -131,7 +131,7 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
   const computedStage = onb
     ? resolveProfileStage(onb.arrival_date, onb.stage)
     : null;
-  if (onb) void syncStageCache(user.id, onb.stage, computedStage);
+  if (onb) void syncStageCache(user.id, onb.arrival_date, onb.stage, computedStage);
 
   return {
     id: row.id,
@@ -171,19 +171,28 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
  * Keep the user's stored `stage` in line with the stage computed from their
  * arrival date (mobile's `syncStageCache`): mobile reads it on other screens
  * and in edge functions. Writes only when it differs, only the user's own row
- * (own-row RLS), and never throws: a failed write just retries on the next read.
+ * (own-row RLS), while the arrival date and cache still match the read. It never
+ * throws: a failed write just retries on the next read.
  */
 async function syncStageCache(
   userId: string,
+  arrivalDate: string | null,
   storedStage: unknown,
   computedStage: Stage | null,
 ): Promise<void> {
   if (stageCacheIsCurrent(storedStage, computedStage)) return;
   try {
-    const { error } = await createClient()
+    let update = createClient()
       .from("user_onboarding_profiles")
       .update({ stage: computedStage === null ? null : String(computedStage) })
       .eq("id", userId);
+    update = arrivalDate == null
+      ? update.is("arrival_date", null)
+      : update.eq("arrival_date", arrivalDate);
+    update = storedStage == null
+      ? update.is("stage", null)
+      : update.eq("stage", String(storedStage));
+    const { error } = await update;
     if (error) console.warn("syncStageCache: update failed", error);
   } catch (error) {
     console.warn("syncStageCache: update failed", error);

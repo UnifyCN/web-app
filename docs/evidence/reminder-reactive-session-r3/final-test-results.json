@@ -1,0 +1,12 @@
+[
+  {
+    "name": "full-tests-final",
+    "exit": 0,
+    "seconds": 6.588
+  },
+  {
+    "name": "types-final",
+    "exit": 0,
+    "seconds": 5.69
+  }
+]

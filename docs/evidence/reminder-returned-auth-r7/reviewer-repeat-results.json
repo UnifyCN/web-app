@@ -1,0 +1,16 @@
+[
+  {
+    "name": "reviewer-repeat-base",
+    "exit": 1,
+    "seconds": 1.7907400420008344,
+    "passed": 0,
+    "failed": 2
+  },
+  {
+    "name": "reviewer-repeat-candidate",
+    "exit": 0,
+    "seconds": 1.2243729580004583,
+    "passed": 2,
+    "failed": 0
+  }
+]

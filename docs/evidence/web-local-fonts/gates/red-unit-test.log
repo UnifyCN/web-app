@@ -1,0 +1,25 @@
+
+ RUN  v3.2.7 /private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  app/fonts/fonts.test.ts [ app/fonts/fonts.test.ts ]
+Error: ENOENT: no such file or directory, open '/private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/app/fonts/fonts.css'
+ ❯ read app/fonts/fonts.test.ts:13:32
+     11| 
+     12| const dir = join(process.cwd(), "app/fonts");
+     13| const read = (file: string) => readFileSync(join(dir, file), "utf8");
+       |                                ^
+     14| const unquote = (value: string) => value.trim().replace(/^['"]|['"]$/g…
+     15| 
+ ❯ app/fonts/fonts.test.ts:27:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  14:57:30
+   Duration  253ms (transform 21ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 43ms)
+

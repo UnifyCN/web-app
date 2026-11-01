@@ -1,0 +1,57 @@
+{
+  "command": [
+    "sandbox-exec",
+    "-f",
+    "/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/build/local-fonts-work/blocker/deny-remote.sb",
+    "npm",
+    "run",
+    "build"
+  ],
+  "cwd": "/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05",
+  "start_utc": "2026-10-27T21:54:01.480424+00:00",
+  "timeout_s": 300,
+  "removed_environment_names": [],
+  "mock": null,
+  "blocked": true,
+  "pid": 57446,
+  "pgid": 57446,
+  "exit_code": 1,
+  "timed_out": false,
+  "remaining_group_term_sent": false,
+  "elapsed_s": 5.197,
+  "end_utc": "2026-10-27T21:54:06.677311+00:00",
+  "log_bytes": 3319,
+  "proxy_requests": [
+    {
+      "t": "2026-10-27T21:54:02.851Z",
+      "kind": "connect",
+      "method": "CONNECT",
+      "target": "fonts.googleapis.com:443",
+      "status": 403
+    },
+    {
+      "t": "2026-10-27T21:54:02.852Z",
+      "kind": "connect",
+      "method": "CONNECT",
+      "target": "fonts.googleapis.com:443",
+      "status": 403
+    },
+    {
+      "t": "2026-10-27T21:54:02.853Z",
+      "kind": "connect",
+      "method": "CONNECT",
+      "target": "fonts.googleapis.com:443",
+      "status": 403
+    },
+    {
+      "t": "2026-10-27T21:54:02.853Z",
+      "kind": "connect",
+      "method": "CONNECT",
+      "target": "fonts.googleapis.com:443",
+      "status": 403
+    }
+  ],
+  "sandbox_network_denials": [
+    "2026-10-27 14:54:08.705 Df log[57485:21431ed] [com.apple.log:] log run noninteractively, parent: 57444 (Python), args: '/usr/bin/log' 'show' '--start' '2026-10-27 14:54:01' '--predicate' 'eventMessage CONTAINS \"deny(1) network-outbound\"' '--style' 'compact'"
+  ]
+}

@@ -1,3 +1,4 @@
+import type { CompanionContext } from "@/lib/companionContext";
 /* ------------------------------------------------------------------ *
  * Unify shared types.
  *
@@ -260,6 +261,8 @@ export interface ChatMessage {
   sources: ChatSource[] | null;
   /** Model-suggested follow-up questions (assistant messages); absent otherwise. */
   suggestedNextSteps?: string[] | null;
+  /** What the answer read and checked (ticket #362); null for older answers. */
+  companionContext?: CompanionContext | null;
   createdAt: string;
 }
 
@@ -271,6 +274,11 @@ export interface Conversation {
 }
 
 export interface ChatbotUsage {
+  dailyLimit: number;
+  remaining: number | null;
+  isPremium: boolean;
+  resetsAt: string;
+  observedAt: string;
   messageCount: number;
   lastMessageAt: string | null;
 }

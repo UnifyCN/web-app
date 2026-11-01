@@ -1,0 +1,1 @@
+The first staged whitespace check reported four trailing spaces in line-numbered SDK blank lines. The raw snapshot is now compressed without changing its bytes. The compressed-record manifest records its hash and full byte count. No product or test source changed.

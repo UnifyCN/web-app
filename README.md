@@ -226,7 +226,7 @@ in CI by `npm run check-i18n`.
 | i18n | `i18next` / `react-i18next`, 6 languages incl. Arabic (RTL) + Canadian French |
 | Docs | PDF via `unpdf`, DOCX read via `mammoth`, DOCX export via `docx` |
 | DnD | `@dnd-kit` (checklist reorder) |
-| Fonts | Inter (`next/font/google`) |
+| Fonts | Inter + Noto Sans Devanagari / Arabic / Gurmukhi, self-hosted (`app/fonts/`) |
 | Utilities | clsx, tailwind-merge |
 
 ---

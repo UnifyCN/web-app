@@ -1,0 +1,102 @@
+
+> web-app@0.1.0 build
+> next build
+
+▲ Next.js 16.2.6 (Turbopack)
+- Experiments (use with caution):
+  · clientTraceMetadata
+
+  Creating an optimized production build ...
+Turbopack build encountered 4 warnings:
+[next]/internal/font/google/inter_c021551c.module.css
+Error while requesting resource
+There was an issue establishing a connection while requesting https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/inter_c021551c.module.css
+    [next]/internal/font/google/inter_c021551c.js
+    ./app/layout.tsx
+
+
+[next]/internal/font/google/noto_sans_arabic_2b6a365d.module.css
+Error while requesting resource
+There was an issue establishing a connection while requesting https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/noto_sans_arabic_2b6a365d.module.css
+    [next]/internal/font/google/noto_sans_arabic_2b6a365d.js
+    ./app/layout.tsx
+
+
+[next]/internal/font/google/noto_sans_devanagari_bd3e12f8.module.css
+Error while requesting resource
+There was an issue establishing a connection while requesting https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/noto_sans_devanagari_bd3e12f8.module.css
+    [next]/internal/font/google/noto_sans_devanagari_bd3e12f8.js
+    ./app/layout.tsx
+
+
+[next]/internal/font/google/noto_sans_gurmukhi_95f28006.module.css
+Error while requesting resource
+There was an issue establishing a connection while requesting https://fonts.googleapis.com/css2?family=Noto+Sans+Gurmukhi:wght@400;500;600;700&display=swap
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/noto_sans_gurmukhi_95f28006.module.css
+    [next]/internal/font/google/noto_sans_gurmukhi_95f28006.js
+    ./app/layout.tsx
+
+
+
+> Build error occurred
+Error: Turbopack build failed with 4 errors:
+[next]/internal/font/google/inter_c021551c.module.css
+next/font: error:
+Failed to fetch `Inter` from Google Fonts.
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/inter_c021551c.module.css
+    [next]/internal/font/google/inter_c021551c.js
+    ./app/layout.tsx
+
+
+[next]/internal/font/google/noto_sans_arabic_2b6a365d.module.css
+next/font: error:
+Failed to fetch `Noto Sans Arabic` from Google Fonts.
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/noto_sans_arabic_2b6a365d.module.css
+    [next]/internal/font/google/noto_sans_arabic_2b6a365d.js
+    ./app/layout.tsx
+
+
+[next]/internal/font/google/noto_sans_devanagari_bd3e12f8.module.css
+next/font: error:
+Failed to fetch `Noto Sans Devanagari` from Google Fonts.
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/noto_sans_devanagari_bd3e12f8.module.css
+    [next]/internal/font/google/noto_sans_devanagari_bd3e12f8.js
+    ./app/layout.tsx
+
+
+[next]/internal/font/google/noto_sans_gurmukhi_95f28006.module.css
+next/font: error:
+Failed to fetch `Noto Sans Gurmukhi` from Google Fonts.
+
+Import trace:
+  Server Component:
+    [next]/internal/font/google/noto_sans_gurmukhi_95f28006.module.css
+    [next]/internal/font/google/noto_sans_gurmukhi_95f28006.js
+    ./app/layout.tsx
+
+
+    at ignore-listed frames

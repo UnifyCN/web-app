@@ -1,0 +1,98 @@
+import { createServer } from "node:http";
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import * as esbuild from "esbuild";
+import postcss from "postcss";
+import tailwind from "@tailwindcss/postcss";
+import { chromium } from "playwright";
+
+const root = process.cwd();
+const out = process.env.PENDING_BROWSER_OUT || join(root, "docs/evidence/reminder-returned-auth-r7/browser.json");
+const port = Number(process.env.PENDING_BROWSER_PORT || 3478);
+const actual = (path) => JSON.stringify(join(root, path));
+const modules = {
+  "@/lib/supabase/client": `export const isSupabaseConfigured=()=>true;export const createClient=()=>({auth:window.fixture.auth});export const getAuthUserId=async()=>{throw new Error("unexpected unmocked service read");};`,
+  "@/lib/posthog": `export const isPostHogConfigured=()=>false;export const posthog={capture(){}};`,
+  "@/services/checklist": `export * from ${actual("services/checklist.ts")};export const getTasks=async()=>window.fixture.tasks();`,
+  "@/services/profile": `export * from ${actual("services/profile.ts")};export const getCurrentUser=async()=>({id:window.fixture.user().id,onboarding:null,isPremium:false});`,
+  "@/services/companion": `export * from ${actual("services/companion.ts")};export const getConversations=async()=>window.fixture.conversations();export const getMessages=async(id)=>window.fixture.messages(id);export const getChatbotUsage=async()=>({messageCount:0,isPremium:false});export const createConversation=async()=>window.fixture.create();export const saveMessage=async(input)=>window.fixture.save(input);export const generateReply=async()=>window.fixture.reply();`,
+};
+const entry = String.raw`
+import React,{useState} from "react";
+import {createRoot} from "react-dom/client";
+import {QueryClient,QueryClientProvider} from "@tanstack/react-query";
+import {I18nextProvider} from "react-i18next";
+import CompanionPage from "@/app/(main)/companion/page";
+import ChecklistPage from "@/app/(main)/checklist/page";
+import {testI18n,scriptedServer} from "@/components/companion/tasks/taskActionsTestHarness";
+import {ownAccountWork} from "@/lib/accountSession";
+import {AuthRetryableFetchError} from "@supabase/supabase-js";
+let user={id:"browser-a"},ready=false,resolveSession,rejectSession;
+let pending=new Promise((resolve,reject)=>{resolveSession=resolve;rejectSession=reject;});
+const listeners=new Set();const query=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:Infinity}}});
+let server=scriptedServer({"custom:1":{revision:1}});
+const rows=[],threads=[];let serial=100;const calls={create:0,save:0,model:0,tasks:0};
+const at="2026-10-30T00:00:00Z";
+window.fetch=(url,init)=>server.fetch(url,init);
+function event(name,id){user={id};if(id==="browser-b")server=scriptedServer({});for(const f of [...listeners])f(name,id?{user:{id}}:null);}
+window.fixture={
+ auth:{getSession:()=>ready?Promise.resolve({data:{session:{user}}}):pending,onAuthStateChange:f=>{listeners.add(f);return{data:{subscription:{unsubscribe:()=>listeners.delete(f)}}};}},
+ user:()=>user,tasks:()=>{calls.tasks++;return user.id==="browser-a"?[{id:"1",title:"Browser A task",description:"",priority:"Do now",isCustom:true,completed:false,completedAt:null,dismissedAt:null}]:[];},
+ conversations:()=>threads.filter(x=>x.owner===user.id),messages:id=>rows.filter(x=>x.conversationId===id&&x.owner===user.id),
+ create:()=>{calls.create++;const row={id:"browser-conversation-1",title:"Browser conversation",updatedAt:at,owner:user.id};threads.push(row);return row;},
+ save:input=>{calls.save++;const row={id:++serial,conversationId:input.conversationIdentifier,role:input.role,content:input.content,sources:input.sources??null,createdAt:at,owner:user.id};rows.push(row);return row;},
+ reply:()=>{calls.model++;return{answer:"Fixture answer",sources:[]};},
+ ready:(id="browser-a")=>{ready=true;event("INITIAL_SESSION",id);resolveSession({data:{session:{user}}});},
+ event,view:()=>({owner:ownAccountWork(),status:query.getQueryState(["auth-user"])?.status,fetching:query.isFetching(),calls:{...calls},nullTasks:query.getQueryData(["tasks","en",null])}),
+ pause:()=>{ready=false;pending=new Promise((a,b)=>{resolveSession=a;rejectSession=b;});void query.resetQueries({queryKey:["auth-user"]});},
+ fail:()=>rejectSession(new Error("fixture session unavailable")),
+ returnedError:()=>resolveSession({data:{session:null},error:new AuthRetryableFetchError("Fixture returned session error",503)}),
+};
+function App(){const [route,setRoute]=useState("companion");window.fixture.navigate=setRoute;return <QueryClientProvider client={query}><I18nextProvider i18n={testI18n()}>{route==="companion"?<CompanionPage/>:<ChecklistPage/>}</I18nextProvider></QueryClientProvider>;}
+createRoot(document.getElementById("root")).render(<App/>);
+`;
+const bundle = await esbuild.build({stdin:{contents:entry,resolveDir:root,loader:"tsx",sourcefile:"pending-browser-entry.tsx"},bundle:true,write:false,format:"iife",platform:"browser",jsx:"automatic",loader:{".json":"json"},define:{"process.env.NODE_ENV":'"production"',"process.env":"{}"},logLevel:"error",plugins:[{name:"external-fixtures",setup(b){b.onResolve({filter:/^@\/(lib\/supabase\/client|lib\/posthog|services\/(checklist|profile|companion))$/},args=>({path:args.path,namespace:"fixture"}));b.onLoad({filter:/.*/,namespace:"fixture"},args=>({contents:modules[args.path],loader:"js",resolveDir:root}));}}]});
+const cssFrom=join(root,"app/globals.css");
+const css=(await postcss([tailwind({base:root})]).process(await readFile(cssFrom,"utf8"),{from:cssFrom})).css;
+const html='<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/app.css"></head><body><div id="root" class="h-dvh"></div><script src="/app.js"></script></body></html>';
+const server=createServer((req,res)=>{const path=new URL(req.url,`http://127.0.0.1:${port}`).pathname;const [type,body]=path==="/app.js"?["text/javascript",bundle.outputFiles[0].text]:path==="/app.css"?["text/css",css]:["text/html",html];res.writeHead(200,{"content-type":type});res.end(body);});
+await new Promise(resolve=>server.listen(port,"127.0.0.1",resolve));
+const browser=await chromium.launch({headless:true});const checks=[],errors=[],pageErrors=[];
+function check(name,ok,detail){checks.push({name,ok,detail});if(!ok){const e=new Error(name);e.name="AssertionError";throw e;}}
+const context=await browser.newContext({viewport:{width:1280,height:900}});const page=await context.newPage();page.on("pageerror",e=>pageErrors.push(String(e)));
+const state=()=>page.evaluate(()=>window.fixture.view());
+const settled=()=>page.waitForFunction(()=>window.fixture.view().fetching===0);
+try{
+ await page.goto(`http://127.0.0.1:${port}`);const input=page.getByRole("textbox",{name:"Message Companion"});await input.waitFor();
+ check("Auth is pending",(await state()).status==="pending");check("textarea stays editable",await input.isEnabled());
+ await input.fill("Browser pending draft");await input.focus();await page.evaluate(()=>window.originalInput=document.querySelector("textarea"));
+ check("keyboard text remains while Auth is pending",await input.inputValue()==="Browser pending draft",await input.inputValue());
+ check("Send is disabled while pending",await page.getByRole("button",{name:"Send message",exact:true}).isDisabled());
+ await input.press("Enter");check("Enter keeps pending text",await input.inputValue()==="Browser pending draft");check("pending Enter calls no model or create",(await state()).calls.model===0&&(await state()).calls.create===0);
+ await page.evaluate(()=>window.fixture.navigate("checklist"));await page.getByRole("heading",{name:"Checklist",exact:true}).waitFor();
+ await page.evaluate(()=>window.fixture.navigate("companion"));await input.waitFor();check("fixture route return keeps pending text",await input.inputValue()==="Browser pending draft");
+ await input.focus();await page.evaluate(()=>window.originalInput=document.querySelector("textarea"));await page.evaluate(()=>window.fixture.ready());await settled();
+ check("first INITIAL_SESSION confirms A at epoch zero",(await state()).owner.accountId==="browser-a"&&(await state()).owner.epoch===0);
+ check("first confirmation keeps pending text",await input.inputValue()==="Browser pending draft");check("confirmation keeps input and focus",await page.evaluate(()=>document.querySelector("textarea")===window.originalInput&&document.activeElement===window.originalInput));
+ check("known account enables Send",await page.getByRole("button",{name:"Send message",exact:true}).isEnabled());
+ await page.getByRole("button",{name:"Send message",exact:true}).click();await page.waitForFunction(()=>window.fixture.view().calls.model===1);await settled();
+ check("ready Send creates and generates once",(await state()).calls.create===1&&(await state()).calls.model===1);check("explicit Send clears the text",await input.inputValue()==="");
+ await input.fill("Refresh text");await input.focus();await page.evaluate(()=>window.originalInput=document.querySelector("textarea"));const before=(await state()).owner;
+ await page.evaluate(()=>window.fixture.event("TOKEN_REFRESHED","browser-a"));await settled();check("token refresh keeps epoch, node, focus and text",JSON.stringify((await state()).owner)===JSON.stringify(before)&&await input.inputValue()==="Refresh text"&&await page.evaluate(()=>document.activeElement===window.originalInput&&document.querySelector("textarea")===window.originalInput));
+ await page.evaluate(()=>{window.fixture.event("SIGNED_OUT",null);window.fixture.event("SIGNED_IN","browser-a");});await settled();check("batched sign-out/sign-in clears text",await input.inputValue()===""&&(await state()).owner.epoch===before.epoch+2);
+ await input.fill("Temporary A text");const aba=(await state()).owner.epoch;await page.evaluate(()=>{window.fixture.event("SIGNED_IN","browser-b");window.fixture.event("SIGNED_IN","browser-a");});await settled();check("batched A/B/A clears text",await input.inputValue()===""&&(await state()).owner.epoch===aba+2);
+ await input.fill("Prior account text");await page.evaluate(()=>window.fixture.pause());await page.waitForFunction(()=>window.fixture.view().status==="pending");check("unverified old account text stays hidden",await input.inputValue()==="");
+ await input.fill("Draft during read failure");await input.focus();await page.evaluate(()=>window.originalInput=document.querySelector("textarea"));const prior=(await state()).owner;await page.evaluate(()=>window.fixture.fail());await page.waitForFunction(()=>window.fixture.view().status==="error");await settled();
+ check("failed read retains owner and typed text",JSON.stringify((await state()).owner)===JSON.stringify(prior)&&await input.inputValue()==="Draft during read failure");check("failed read keeps node and focus",await page.evaluate(()=>document.activeElement===window.originalInput&&document.querySelector("textarea")===window.originalInput));check("failed read starts no null-account Checklist read",(await state()).nullTasks===undefined);
+ await page.evaluate(()=>window.fixture.ready());await settled();check("same-account recovery keeps text",await input.inputValue()==="Draft during read failure");
+ await page.evaluate(()=>window.fixture.pause());await page.waitForFunction(()=>window.fixture.view().status==="pending");await input.fill("Draft during returned error");await input.focus();await page.evaluate(()=>window.originalInput=document.querySelector("textarea"));const errorOwner=(await state()).owner;
+ await page.evaluate(()=>window.fixture.returnedError());await page.waitForFunction(()=>window.fixture.view().status==="error");await settled();
+ check("returned SDK error keeps owner and new text",JSON.stringify((await state()).owner)===JSON.stringify(errorOwner)&&await input.inputValue()==="Draft during returned error");
+ check("returned SDK error keeps input and focus",await page.evaluate(()=>document.activeElement===window.originalInput&&document.querySelector("textarea")===window.originalInput));
+ check("returned SDK error leaves Send disabled",await page.getByRole("button",{name:"Send message",exact:true}).isDisabled());
+ check("returned SDK error starts no null-account Checklist read",(await state()).nullTasks===undefined);
+ await page.evaluate(()=>window.fixture.ready());await settled();check("same-account recovery after returned error keeps text",await input.inputValue()==="Draft during returned error"&&JSON.stringify((await state()).owner)===JSON.stringify(errorOwner));
+ await page.evaluate(()=>window.fixture.event("SIGNED_IN","browser-b"));await settled();check("account replacement clears private text",await input.inputValue()===""&&(await state()).owner.accountId==="browser-b");check("only the explicit ready Send generated an answer",(await state()).calls.model===1);
+}catch(e){if(e.name!=="AssertionError")errors.push(String(e.stack||e));}
+finally{await context.close();await browser.close();await new Promise(resolve=>server.close(resolve));}
+await writeFile(out,JSON.stringify({checks,errors,pageErrors,port},null,2));console.log(JSON.stringify({passed:checks.filter(c=>c.ok).length,failed:checks.filter(c=>!c.ok).length,errors,pageErrors}));process.exit(checks.some(c=>!c.ok)||errors.length||pageErrors.length?1:0);

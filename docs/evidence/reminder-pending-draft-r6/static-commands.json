@@ -1,0 +1,56 @@
+[
+  {
+    "name": "types",
+    "argv": [
+      "npx",
+      "tsc",
+      "--noEmit",
+      "--incremental",
+      "false"
+    ],
+    "exit": 0,
+    "seconds": 9.937912459001382
+  },
+  {
+    "name": "changed-lint",
+    "argv": [
+      "npx",
+      "eslint",
+      "lib/companion/composerDrafts.ts",
+      "lib/companion/clearPrivateAccountWork.ts",
+      "hooks/useAuthUser.ts",
+      "hooks/useAccountId.ts",
+      "hooks/useChecklist.ts",
+      "components/companion/ChatInput.tsx",
+      "components/companion/ChatPanel.tsx",
+      "components/companion/StarterPromptChips.tsx",
+      "components/learn/help/InLessonChat.tsx",
+      "components/companion/tasks/ComposerPendingSession.test.tsx"
+    ],
+    "exit": 0,
+    "seconds": 2.2342328330014425
+  },
+  {
+    "name": "i18n",
+    "argv": [
+      "npm",
+      "run",
+      "check-i18n"
+    ],
+    "exit": 0,
+    "seconds": 0.13385379200190073
+  },
+  {
+    "name": "full-lint",
+    "argv": [
+      "npx",
+      "eslint",
+      "-f",
+      "json",
+      "-o",
+      "docs/evidence/reminder-pending-draft-r6/full-lint.json"
+    ],
+    "exit": 1,
+    "seconds": 9.469884250000177
+  }
+]

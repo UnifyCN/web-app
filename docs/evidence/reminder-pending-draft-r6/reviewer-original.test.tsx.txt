@@ -1,0 +1,254 @@
+// @vitest-environment jsdom
+// Fresh real-hook and real-editor proof with scripted Auth callbacks.
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { I18nextProvider } from "react-i18next";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { useAccountGeneration } from "@/hooks/useAccountId";
+import { useCurrentUser } from "@/hooks/useProfile";
+import { AUTH_USER_KEY } from "@/hooks/useAuthUser";
+import { ownAccountWork, noteAccount } from "@/lib/accountSession";
+import { clearTaskActionStores } from "@/lib/companionActions/taskActionStore";
+import { TaskActionsDrawer } from "@/components/companion/tasks/TaskActionsDrawer";
+import {
+  testI18n,
+  scriptedServer,
+} from "@/components/companion/tasks/taskActionsTestHarness";
+import en from "@/lib/i18n/locales/en/translation.json";
+import { clearComposerDrafts } from "@/lib/companion/composerDrafts";
+import { TASK_PROGRESS_ROOT } from "@/lib/companionActions/queryKeys";
+const scrollDescriptor = Object.getOwnPropertyDescriptor(
+  HTMLElement.prototype,
+  "scrollIntoView",
+);
+const auth = vi.hoisted(() => ({
+  user: { id: "real-auth-a" },
+  listeners: new Set<(event: string, session: unknown) => void>(),
+  reads: 0,
+  profile: null as Promise<{
+    id: string;
+    onboarding: null;
+    isPremium: boolean;
+  }> | null,
+  reply: null as
+    | (() => Promise<{ data: { session: { user: { id: string } } } }>)
+    | null,
+}));
+vi.mock("@/lib/supabase/client", () => ({
+  isSupabaseConfigured: () => true,
+  createClient: () => ({
+    auth: {
+      getSession: async () => {
+        auth.reads++;
+        if (auth.reply) return auth.reply();
+        return { data: { session: { user: { ...auth.user } } } };
+      },
+      onAuthStateChange: (f: (event: string, session: unknown) => void) => {
+        auth.listeners.add(f);
+        return {
+          data: {
+            subscription: { unsubscribe: () => auth.listeners.delete(f) },
+          },
+        };
+      },
+    },
+  }),
+}));
+vi.mock("@/lib/posthog", () => ({
+  isPostHogConfigured: () => false,
+  posthog: { capture: () => {} },
+}));
+vi.mock("@/services/checklist", async (original) => ({
+  ...(await original<typeof import("@/services/checklist")>()),
+  getTasks: async () =>
+    auth.user.id === "real-auth-a"
+      ? [
+          {
+            id: "1",
+            title: "Private drawer task",
+            description: "",
+            priority: "Do now",
+            isCustom: true,
+            completed: false,
+            dismissedAt: null,
+            completedAt: null,
+          },
+        ]
+      : [],
+}));
+vi.mock("@/services/profile", async (original) => ({
+  ...(await original<typeof import("@/services/profile")>()),
+  getCurrentUser: async () =>
+    auth.profile ?? { id: auth.user.id, onboarding: null, isPremium: false },
+}));
+vi.mock("@/services/companion", async (original) => ({
+  ...(await original<typeof import("@/services/companion")>()),
+  getConversations: async () => [],
+  getMessages: async () => [],
+  getChatbotUsage: async () => ({ messageCount: 0, isPremium: false }),
+}));
+import CompanionPage from "@/app/(main)/companion/page";
+import ChecklistPage from "@/app/(main)/checklist/page";
+let query: QueryClient;
+function Caller() {
+  return <TaskActionsDrawer open onClose={() => {}} surface="companion" />;
+}
+beforeEach(() => {
+  const server = scriptedServer({ "custom:1": { revision: 1 } });
+  vi.stubGlobal("fetch", async (url: RequestInfo | URL, init: RequestInit) => {
+    const response = await server.fetch(url, init);
+    if (JSON.parse(String(init.body)).action === "read") {
+      const body = await response.json();
+      body.reminders = {
+        scheduler: "ready",
+        items: [
+          {
+            reminder_id: "r1",
+            task_ref: "custom:1",
+            title: "Private drawer task",
+            remind_at: "2027-11-07T05:30:00Z",
+            time_zone: "America/New_York",
+            wall_time: "2027-11-07T01:30:00",
+            revision: 1,
+            status: "pending",
+            due: true,
+            due_at: "2027-11-07T05:30:01Z",
+            cancelled_reason: null,
+            history: [],
+          },
+        ],
+      };
+      return new Response(JSON.stringify(body), {
+        status: response.status,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return response;
+  });
+  clearTaskActionStores();
+  clearComposerDrafts();
+  auth.reads = 0;
+  auth.profile = null;
+  auth.reply = null;
+  auth.user = { id: "real-auth-a" };
+  noteAccount(auth.user.id);
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: vi.fn(),
+  });
+  query = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+  });
+});
+afterEach(() => {
+  cleanup();
+  query.clear();
+  clearTaskActionStores();
+  auth.listeners.clear();
+  vi.unstubAllGlobals();
+  if (scrollDescriptor)
+    Object.defineProperty(
+      HTMLElement.prototype,
+      "scrollIntoView",
+      scrollDescriptor,
+    );
+  else Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+});
+
+import { HelpDrawer } from "@/components/learn/help/HelpDrawer";
+import { InLessonChat } from "@/components/learn/help/InLessonChat";
+import { renderToString } from "react-dom/server";
+import { hydrateRoot } from "react-dom/client";
+vi.mock("@/hooks/useDiscussions", () => ({
+  useModuleDiscussionStats: () => ({ data: { discussionCount: 0 } }),
+}));
+const lessonContext = {
+  moduleId: "m", submoduleId: "s", lessonId: "l", pageId: null,
+  moduleTitle: "Settlement", submoduleTitle: "First week", lessonTitle: "Tasks",
+};
+const closeHelp = () => {};
+function ui(node: React.ReactNode) {
+  return <QueryClientProvider client={query}><I18nextProvider i18n={testI18n()}>{node}</I18nextProvider></QueryClientProvider>;
+}
+async function settled() {
+  await waitFor(() => expect(query.getQueryData<{id:string}>(AUTH_USER_KEY)?.id).toBe(auth.user.id));
+  await waitFor(() => expect(query.isFetching()).toBe(0));
+}
+function event(name: string, id: string|null) {
+  for (const f of [...auth.listeners]) f(name, id ? {user:{id}} : null);
+}
+it.each(["refresh", "replacement", "sign-out/sign-in", "A/B/A"])(
+  "the actual Auth and HelpDrawer preserve or reset the lesson composer on %s", async mode => {
+    render(ui(<HelpDrawer open lessonContext={lessonContext} onClose={closeHelp}/>));
+    await settled();
+    fireEvent.click(screen.getByRole("button", {name:/AI Companion/}));
+    const input = await screen.findByLabelText("Message Companion") as HTMLTextAreaElement;
+    fireEvent.change(input, {target:{value:"Private lesson draft"}});
+    input.focus();
+    const before=ownAccountWork();
+    await act(async () => {
+      if (mode === "refresh") event("TOKEN_REFRESHED", auth.user.id);
+      else if (mode === "replacement") {
+        auth.user={id:"real-auth-b"};
+        event("SIGNED_IN",auth.user.id);
+      } else {
+        if(mode === "sign-out/sign-in") event("SIGNED_OUT",null);
+        else event("SIGNED_IN","real-auth-b");
+        event("SIGNED_IN",auth.user.id);
+      }
+    });
+    await settled();
+    const after=screen.getByLabelText("Message Companion") as HTMLTextAreaElement;
+    if (mode === "refresh") {
+      expect(ownAccountWork()).toEqual(before);
+      expect(after).toBe(input);
+      expect(after.value).toBe("Private lesson draft");
+      expect(document.activeElement).toBe(input);
+    } else {
+      expect(ownAccountWork().epoch).toBe(before.epoch+(mode === "replacement" ? 1 : 2));
+      expect(after).not.toBe(input);
+      expect(after.value).toBe("");
+      expect(screen.queryByDisplayValue("Private lesson draft")).toBeNull();
+    }
+  }
+);
+it.each(["companion", "lesson"])(
+  "the hydrated actual %s retains a typed draft and focus when pending Auth resolves", async surface => {
+    noteAccount("prior-draft-account");noteAccount("real-auth-a");
+    let resolveSession!: (value: {data:{session:{user:{id:string}}}})=>void;
+    const pending=new Promise<{data:{session:{user:{id:string}}}}>(resolve=>{resolveSession=resolve;});
+    auth.reply=()=>pending;
+    const node=ui(surface === "companion" ? <CompanionPage/> : <InLessonChat conversationId={null} onConversationCreated={()=>{}} lessonContext={lessonContext}/>);
+    const container=document.createElement("div");
+    container.innerHTML=renderToString(node);document.body.append(container);
+    const input=container.querySelector("textarea")!;
+    expect(input).toBeTruthy();input.focus();
+    const before=ownAccountWork();
+    const onRecoverableError=vi.fn();
+    let root: ReturnType<typeof hydrateRoot>|undefined;
+    try {
+      await act(async()=>{root=hydrateRoot(container,node,{onRecoverableError});});
+      expect(container.querySelector("textarea")).toBe(input);
+      fireEvent.change(input,{target:{value:"Private hydrated draft"}});
+      input.focus();
+      expect(query.getQueryState(AUTH_USER_KEY)?.status).toBe("pending");
+      await act(async()=>resolveSession({data:{session:{user:{id:"real-auth-a"}}}}));
+      await settled();
+      expect(ownAccountWork()).toEqual(before);
+      expect(container.querySelector("textarea")).toBe(input);
+      expect(input.value).toBe("Private hydrated draft");
+      expect(document.activeElement).toBe(input);
+      expect(onRecoverableError).not.toHaveBeenCalled();
+    } finally {
+      await act(async()=>root?.unmount());container.remove();
+    }
+  }
+);

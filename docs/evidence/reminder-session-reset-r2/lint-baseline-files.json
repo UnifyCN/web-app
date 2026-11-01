@@ -1,0 +1,17 @@
+[
+  {
+    "path": "supabase/probes/companion-context-362/context_rls_test.ts",
+    "sha256": "77990690f75f0774ad1cb3978108ec06847d07bf49a2e6ef36d996e7edea70f2",
+    "unchanged_from_base": true
+  },
+  {
+    "path": "supabase/tests/companion-actions/rollback_test.ts",
+    "sha256": "398b254f7e37b96123e908b75549836d4697f80806589740082256858d6bdc4a",
+    "unchanged_from_base": true
+  },
+  {
+    "path": "supabase/tests/companion-actions/support.ts",
+    "sha256": "d61674fc8173631bf7c7c9936f797f28a3c8f487924febbd4fc820f5afe40e9c",
+    "unchanged_from_base": true
+  }
+]

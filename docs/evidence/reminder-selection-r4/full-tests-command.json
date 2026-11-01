@@ -1,0 +1,1 @@
+{"argv": ["npm", "test", "--", "--reporter=json", "--outputFile=docs/evidence/reminder-selection-r4/full-tests.json"], "exit": 1, "seconds": 7.4311419160003425}

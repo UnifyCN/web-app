@@ -1,0 +1,115 @@
+{
+  "passed": 772,
+  "failed": 0,
+  "skipped": 13,
+  "files": 72,
+  "browser": {
+    "checks": [
+      {
+        "name": "Auth is pending",
+        "ok": true
+      },
+      {
+        "name": "textarea stays editable",
+        "ok": true
+      },
+      {
+        "name": "keyboard text remains while Auth is pending",
+        "ok": true,
+        "detail": "Browser pending draft"
+      },
+      {
+        "name": "Send is disabled while pending",
+        "ok": true
+      },
+      {
+        "name": "Enter keeps pending text",
+        "ok": true
+      },
+      {
+        "name": "pending Enter calls no model or create",
+        "ok": true
+      },
+      {
+        "name": "fixture route return keeps pending text",
+        "ok": true
+      },
+      {
+        "name": "first INITIAL_SESSION confirms A at epoch zero",
+        "ok": true
+      },
+      {
+        "name": "first confirmation keeps pending text",
+        "ok": true
+      },
+      {
+        "name": "confirmation keeps input and focus",
+        "ok": true
+      },
+      {
+        "name": "known account enables Send",
+        "ok": true
+      },
+      {
+        "name": "ready Send creates and generates once",
+        "ok": true
+      },
+      {
+        "name": "explicit Send clears the text",
+        "ok": true
+      },
+      {
+        "name": "token refresh keeps epoch, node, focus and text",
+        "ok": true
+      },
+      {
+        "name": "batched sign-out/sign-in clears text",
+        "ok": true
+      },
+      {
+        "name": "batched A/B/A clears text",
+        "ok": true
+      },
+      {
+        "name": "unverified old account text stays hidden",
+        "ok": true
+      },
+      {
+        "name": "failed read retains owner and typed text",
+        "ok": true
+      },
+      {
+        "name": "failed read keeps node and focus",
+        "ok": true
+      },
+      {
+        "name": "failed read starts no null-account Checklist read",
+        "ok": true
+      },
+      {
+        "name": "same-account recovery keeps text",
+        "ok": true
+      },
+      {
+        "name": "account replacement clears private text",
+        "ok": true
+      },
+      {
+        "name": "only the explicit ready Send generated an answer",
+        "ok": true
+      }
+    ],
+    "errors": [],
+    "pageErrors": [],
+    "port": 3472
+  },
+  "build": {
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 16.225809166000545
+  }
+}

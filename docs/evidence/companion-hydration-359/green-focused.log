@@ -1,0 +1,39 @@
+
+ RUN  v3.2.7 /private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05
+
+ ✓ components/companion/tasks/TaskProgressHydration.test.tsx > Companion task entry hydration > keeps a draft and focus when the browser is online=true 28ms
+ ✓ components/companion/tasks/TaskProgressHydration.test.tsx > Companion task entry hydration > keeps a draft and focus when the browser is online=false 6ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > Checklist task progress (web) > saves Waiting with a reason from explicit controls, shows the exact receipt, restores focus, and the row shows it 346ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > Checklist task progress (web) > Undo names its own receipt and restores the earlier state and waiting reason 82ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > Checklist task progress (web) > Undo after a newer edit elsewhere keeps the newer state and offers a reviewed change 70ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > Checklist task progress (web) > a lost response is looked up before any retry and shows the recorded receipt 46ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > Checklist task progress (web) > pending and failed lookups stay unresolved and never write; not applied retries the same operation 58ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > Checklist task progress (web) > offline: controls are off and nothing is sent; reconnecting reads current progress first 47ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > Checklist task progress (web) > an account change drops the previous account's drafts and receipts 43ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > Checklist task progress (web) > a shown receipt becomes historical after a newer change elsewhere, and its Undo stays tied to it 53ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > Checklist task progress (web) > sign-out clears unsaved drafts and results; signing in again does not bring them back 49ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > Checklist task progress (web) > reports allowlisted action results without private text 40ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > Companion task entry and drawer (web) > opens saved tasks from a compact entry, changes one in the drawer, keeps the typed message, and can open Checklist 214ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > review corrections (web) > F1: after an account change, neither Checklist nor Companion shows the previous account's tasks or message draft 73ms
+stderr | components/companion/tasks/TaskActions.test.tsx > review corrections (web) > F3: the composer draft survives opening Checklist from the drawer and coming back
+Error: Not implemented: navigation (except hash changes)
+    at module.exports (/private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/node_modules/jsdom/lib/jsdom/browser/not-implemented.js:9:17)
+    at navigateFetch (/private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/node_modules/jsdom/lib/jsdom/living/window/navigation.js:77:3)
+    at exports.navigate (/private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/node_modules/jsdom/lib/jsdom/living/window/navigation.js:55:3)
+    at Timeout._onTimeout (/private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/node_modules/jsdom/lib/jsdom/living/nodes/HTMLHyperlinkElementUtils-impl.js:80:7)
+    at listOnTimeout (node:internal/timers:585:17)
+    at processTimers (node:internal/timers:521:7) undefined
+
+ ✓ components/companion/tasks/TaskActions.test.tsx > review corrections (web) > F2: offline, Try again and Apply this change send nothing 90ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > review corrections (web) > F3: the composer draft survives opening Checklist from the drawer and coming back 39ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > review corrections (web) > F4: a refused waiting-reason save keeps the typed reason 42ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > review corrections (web) > F5: focus stays inside the drawer after keyboard task selection and after a compensating change 70ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > review corrections (web) > F6: completing a task in Checklist refreshes its progress before the controls allow a change 28ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > review r2 corrections (web) > F4: a save reply that arrives after newer typing keeps the newer waiting draft 40ms
+ ✓ components/companion/tasks/TaskActions.test.tsx > review r2 corrections (web) > F5: a task opened before the drawer's first frame keeps focus on the task heading 90ms
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+   Start at  11:07:36
+   Duration  2.57s (transform 334ms, setup 0ms, collect 1.02s, tests 1.56s, environment 557ms, prepare 67ms)
+

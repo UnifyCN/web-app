@@ -176,9 +176,11 @@ function buildCandidates(onboarding: UserOnboardingProfile | null): Candidate[] 
 export function StarterPromptChips({
   onSelect,
   onboarding = null,
+  disabled = false,
 }: {
   onSelect: (question: string) => void;
   onboarding?: UserOnboardingProfile | null;
+  disabled?: boolean;
 }) {
   const { t } = useTranslation();
   const city = onboarding?.city?.trim();
@@ -214,7 +216,8 @@ export function StarterPromptChips({
             key={starter.topicKey}
             type="button"
             onClick={() => onSelect(question)}
-            className="flex cursor-pointer items-start gap-3 rounded-card border border-border-card bg-surface p-3 text-left press hover:shadow-md"
+            disabled={disabled}
+            className="flex cursor-pointer items-start gap-3 rounded-card border border-border-card bg-surface p-3 text-left press hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span
               className={cn(

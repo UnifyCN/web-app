@@ -1,0 +1,1 @@
+The first root RED observer files were overwritten by the first GREEN run. The RED assertion log and JSON survive. The original reviewer evidence is unchanged. A new RED/GREEN pair uses separate observer directories and preserves both complete states. Only observer paths changed in those repeated copies.

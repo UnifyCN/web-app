@@ -1,0 +1,22 @@
+{
+  "@supabase/supabase-js": {
+    "version": "2.105.4",
+    "package_json_sha256": "b5975abae4bcd22be88c7119631d2b1ee48250acfe601b299facd985a586d874"
+  },
+  "@supabase/auth-js": {
+    "version": "2.105.4",
+    "package_json_sha256": "43151ea0f7e18d3e584e3346401329c94d2ab050e7c715dc62c2d034075fdef9"
+  },
+  "@tanstack/react-query": {
+    "version": "5.100.10",
+    "package_json_sha256": "f014385702ae4a049b2b25575d3766e162eac9a68b1252d9fede4e50c87dcb15"
+  },
+  "react": {
+    "version": "19.2.4",
+    "package_json_sha256": "e60b92f6031f023907bbfab8f96e63e44307776ec1488f310ba61d41b8cda8cc"
+  },
+  "vitest": {
+    "version": "3.2.7",
+    "package_json_sha256": "3f3dc1ef7acc6ffac8d0a7f10c4460f98e36026837b57f774426d962d546d740"
+  }
+}

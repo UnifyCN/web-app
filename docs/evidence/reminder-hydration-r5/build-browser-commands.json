@@ -1,0 +1,23 @@
+[
+  {
+    "name": "build",
+    "argv": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit": 0,
+    "seconds": 13.904492207999283
+  },
+  {
+    "name": "browser fixture",
+    "argv": [
+      "npm",
+      "run",
+      "test:companion-drawer"
+    ],
+    "exit": 0,
+    "seconds": 7.982896166999126,
+    "port": 3452
+  }
+]

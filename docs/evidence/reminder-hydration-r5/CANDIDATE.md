@@ -1,0 +1,19 @@
+R368-SPEC-5 is corrected in this candidate. Independent reviewers must check this candidate. No ticket, native criterion, integration or release is accepted.
+
+Base: 1a5885549d7e9f850ff20a07ca090c6a8faa3490. The earlier R5 SPEC review closes R368-SPEC-4 and requests the hydration correction. The R5 STANDARDS review approves that base. I read both completed reviews and held both tasks before I applied the source. The prepared runtime and its evidence remain preserved. README.md and ROOT_CONTINUATION.json are historical preparation records. This file and the candidate-prefixed records describe the applied candidate.
+
+The only production change is in useAccountGeneration. It keeps useAccountId and its existing account/Auth subscriptions. It returns the synchronous owner epoch for keys. The React subscription still requests updates. Its initial server snapshot update does not remount a page when ownership is unchanged. Real and batched account changes still reset local state. All production consumers were checked: Companion, Checklist, task drawer, lesson chat and its parent HelpDrawer.
+
+This candidate adds six hydration cases to the existing actual-caller file. No old test line or assertion is removed or changed. They cover zero, nonzero, epoch changes before hydration, pending Auth, Checklist focus and lesson input focus. The exact earlier reviewer reproduction is preserved with its observer path adapted only. Its pre-fix node assertion fails. Three deliberate faults fail at assertions. I wrote the six new cases after the fix. The original-hook fault shows that they detect the regression. It does not prove test-first order.
+
+Fresh applied-candidate checks: 760 tests pass,13 skip, 71 files. The expanded caller file has 15 passes. Normal TypeScript, translation parity, changed-file lint and build exit0 naturally. Full lint exits1 with the same 12 errors in 3 unchanged files, distributed 7/1/4. Candidate preservation checks pass 1445/1445: all 1,255 archived input files match the tested runtime after the two exact prepared-source updates; all 163 service inputs and 21 mirrors remain exact; native/mobile candidate and both integration references stay pinned and clean.
+
+Supplied proof retained: the owned internal runtime also passes 760 tests, build, types, translations and changed lint. Its existing browser component harness passes 50 checks. Its data hooks are substituted, so it does not prove real Auth or Next.js cold loading. Both browser and all check processes exited. The runtime and build caches remain owned and retained. Its copied raw records and source snapshots preserve their bytes; source snapshots end in .txt and do not execute in the application suite.
+
+Mounted and hydration subsystem: actual pages, Auth, cache, generation, panels, renderToString and hydrateRoot execute under scripted SDK/services/endpoint replies. They prove the listed rendered node, focus and ownership conditions. They do not establish provider event order, hosted authorization, Next.js cold-load failure or native behavior.
+
+Service/native subsystem: no new service, Cron, race, rollback, simulator or device execution occurred. Source equality retains the earlier service proof inputs. Native criterion 8 and tickets 367/370/368 remain unaccepted. No SQL, migration, service, request, locale, motion, palette, dependency, hosted or integration change occurred. Impeccable stays 3.9.1.
+
+Falsifiers are retained from the preparation: lost node/focus without an account change, private state after a real reset, a missed batched generation, a changed service/mirror input, or an untested constant-key workaround. The final original-hook, constant-key and missing-subscription fault records each contain assertion failures. The initial observer overwrite is disclosed in the preserved preparation README; the repeated original-hook run saves distinct observer records.
+
+COMPANION_REMINDER_368_HYDRATION_CORRECTION_R5_CANDIDATE_DONE

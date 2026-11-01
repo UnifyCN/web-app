@@ -1,0 +1,123 @@
+(node:81710) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+> web-app@0.1.0 build
+> next build
+
+(node:81728) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▲ Next.js 16.2.6 (Turbopack)
+- Experiments (use with caution):
+  · clientTraceMetadata
+
+  Creating an optimized production build ...
+(node:81728) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:81731) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:81732) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:81732) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:81740) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ Compiled successfully in 4.6s
+  Running next.config.js provided runAfterProductionCompile ...
+✓ Completed runAfterProductionCompile in 123ms
+  Running TypeScript ...
+(node:81998) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  Finished TypeScript in 5.4s ...
+  Collecting page data using 11 workers ...
+(node:82407) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82412) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82406) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82414) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82410) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82409) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82415) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82416) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82408) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82413) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:82411) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  Generating static pages using 11 workers (0/41) ...
+  Generating static pages using 11 workers (10/41) 
+  Generating static pages using 11 workers (20/41) 
+  Generating static pages using 11 workers (30/41) 
+✓ Generating static pages using 11 workers (41/41) in 293ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /admin/events
+├ ƒ /admin/events/[id]
+├ ƒ /admin/events/new
+├ ƒ /api/account
+├ ƒ /api/companion
+├ ƒ /api/companion/actions
+├ ƒ /api/cover-letter
+├ ƒ /api/cover-letter/job-posting
+├ ƒ /api/cron/sentry-snapshot
+├ ƒ /api/documents/extract
+├ ƒ /api/learning-destination
+├ ƒ /api/moderation
+├ ƒ /api/onboarding-profile
+├ ƒ /api/resume
+├ ƒ /api/resume/job-posting
+├ ƒ /api/storage
+├ ƒ /api/storage/image
+├ ƒ /api/translate
+├ ƒ /auth/callback
+├ ƒ /before-you-continue
+├ ƒ /checklist
+├ ƒ /community
+├ ƒ /community/[groupId]
+├ ƒ /community/event/[eventId]
+├ ƒ /companion
+├ ƒ /cover-letter
+├ ƒ /cover-letter/[letterId]
+├ ƒ /forgot-password
+├ ƒ /home
+├ ƒ /learn
+├ ƒ /learn/[moduleId]
+├ ƒ /learn/[moduleId]/[submoduleId]
+├ ƒ /learn/[moduleId]/[submoduleId]/[lessonId]
+├ ƒ /learn/[moduleId]/[submoduleId]/practice
+├ ƒ /login
+├ ƒ /onboarding
+├ ○ /opengraph-image
+├ ƒ /post/[postId]
+├ ƒ /profile
+├ ƒ /profile/[userId]
+├ ƒ /profile/[userId]/followers
+├ ƒ /reset-password
+├ ƒ /resources
+├ ƒ /resources/[slug]
+├ ƒ /resources/category/[key]
+├ ƒ /resume
+├ ƒ /resume/[draftId]
+├ ○ /robots.txt
+├ ƒ /settings
+├ ƒ /signup
+├ ○ /sitemap.xml
+├ ƒ /verify-email
+└ ƒ /welcome
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

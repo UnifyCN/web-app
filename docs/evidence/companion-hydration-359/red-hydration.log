@@ -1,0 +1,135 @@
+
+ RUN  v3.2.7 /private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05
+
+ × components/companion/tasks/TaskProgressHydration.test.tsx > Companion task entry hydration > keeps a draft and its focus when Node has no online value 40ms
+   → expected "spy" to not be called at all, but actually been called 1 times
+
+Received: 
+
+  1st spy call:
+
+    Array [
+      [Error: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+    
+    - A server/client branch `if (typeof window !== 'undefined')`.
+    - Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+    - Date formatting in a user's locale which doesn't match the server.
+    - External changing data without sending a snapshot of it along with the HTML.
+    - Invalid HTML tag nesting.
+    
+    It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+    
+    https://react.dev/link/hydration-mismatch
+    
+      <QueryClientProvider client={{}}>
+        <I18nextProvider i18n={{observers:{}, ...}}>
+          <main>
+            <CompanionTasksEntry onOpen={function onOpen}>
+              <div className="border-b b...">
+                <div className="mx-auto fl...">
+                  <div className="min-w-0 fl...">
+                    <p>
+                    <p
+    +                 className="truncate text-xs text-ink-muted loading-delayed"
+    -                 className="truncate text-xs text-ink-muted"
+                    >
+    +                 Loading task progress…
+    -                 In progress: 0 · Waiting: 0
+                  ...
+            ...
+    ],
+      Object {
+        "componentStack": "
+        at p (<anonymous>)
+        at div (<anonymous>)
+        at div (<anonymous>)
+        at div (<anonymous>)
+        at CompanionTasksEntry (/private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/components/companion/tasks/TaskActionsDrawer.tsx:282:32)
+        at main (<anonymous>)
+        at I18nextProvider (file:///private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/node_modules/.deno/react-i18next@15.7.4/node_modules/react-i18next/dist/es/I18nextProvider.js:4:3)
+        at QueryClientProvider (file:///private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/node_modules/.deno/@tanstack+react-query@5.104.5/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:41:32)",
+      },
+      undefined,
+      undefined,
+      undefined,
+    ]
+
+
+Number of calls: 1
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  components/companion/tasks/TaskProgressHydration.test.tsx > Companion task entry hydration > keeps a draft and its focus when Node has no online value
+AssertionError: expected "spy" to not be called at all, but actually been called 1 times
+
+Received: 
+
+  1st spy call:
+
+    Array [
+      [Error: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+    
+    - A server/client branch `if (typeof window !== 'undefined')`.
+    - Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+    - Date formatting in a user's locale which doesn't match the server.
+    - External changing data without sending a snapshot of it along with the HTML.
+    - Invalid HTML tag nesting.
+    
+    It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+    
+    https://react.dev/link/hydration-mismatch
+    
+      <QueryClientProvider client={{}}>
+        <I18nextProvider i18n={{observers:{}, ...}}>
+          <main>
+            <CompanionTasksEntry onOpen={function onOpen}>
+              <div className="border-b b...">
+                <div className="mx-auto fl...">
+                  <div className="min-w-0 fl...">
+                    <p>
+                    <p
+    +                 className="truncate text-xs text-ink-muted loading-delayed"
+    -                 className="truncate text-xs text-ink-muted"
+                    >
+    +                 Loading task progress…
+    -                 In progress: 0 · Waiting: 0
+                  ...
+            ...
+    ],
+      Object {
+        "componentStack": "
+        at p (<anonymous>)
+        at div (<anonymous>)
+        at div (<anonymous>)
+        at div (<anonymous>)
+        at CompanionTasksEntry (/private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/components/companion/tasks/TaskActionsDrawer.tsx:282:32)
+        at main (<anonymous>)
+        at I18nextProvider (file:///private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/node_modules/.deno/react-i18next@15.7.4/node_modules/react-i18next/dist/es/I18nextProvider.js:4:3)
+        at QueryClientProvider (file:///private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/node_modules/.deno/@tanstack+react-query@5.104.5/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:41:32)",
+      },
+      undefined,
+      undefined,
+      undefined,
+    ]
+
+
+Number of calls: 1
+
+ ❯ CompanionTasksEntry components/companion/tasks/TaskActionsDrawer.tsx:282:32
+    267|     </div>
+    268|   );
+    269| }
+       |  ^
+    270| 
+ ❯ I18nextProvider node_modules/.deno/react-i18next@15.7.4/node_modules/react-i18next/dist/es/I18nextProvider.js:4:3
+ ❯ components/companion/tasks/TaskProgressHydration.test.tsx:89:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  10:30:55
+   Duration  1.40s (transform 223ms, setup 0ms, collect 711ms, tests 41ms, environment 331ms, prepare 45ms)
+

@@ -1,0 +1,29 @@
+{
+  "command": [
+    "sandbox-exec",
+    "-f",
+    "/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/build/local-fonts-work/blocker/deny-remote.sb",
+    "npm",
+    "run",
+    "build"
+  ],
+  "cwd": "/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05",
+  "start_utc": "2026-10-27T22:08:15.332406+00:00",
+  "timeout_s": 300,
+  "removed_environment_names": [],
+  "mock": null,
+  "blocked": true,
+  "extra_env": [],
+  "pid": 21294,
+  "pgid": 21294,
+  "exit_code": 0,
+  "timed_out": false,
+  "remaining_group_term_sent": false,
+  "elapsed_s": 11.051,
+  "end_utc": "2026-10-27T22:08:26.383233+00:00",
+  "log_bytes": 2197,
+  "proxy_requests": [],
+  "sandbox_network_denials": [
+    "2026-10-27 15:08:28.978 E  kernel[0:20f80b6] (Sandbox) 3 duplicate reports for Sandbox: node(21312) deny(1) network-outbound remote:*:443"
+  ]
+}

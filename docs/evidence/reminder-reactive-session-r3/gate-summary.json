@@ -1,0 +1,18 @@
+{
+  "web": {
+    "passed": 745,
+    "skipped": 13,
+    "files": 70,
+    "browser_checks": 50,
+    "full_lint_errors": 12
+  },
+  "mobile": {
+    "passed": 1532,
+    "skipped": 24,
+    "dst": 13,
+    "ci_natural_exit": 0
+  },
+  "service_inputs_unchanged": 163,
+  "mirrors_unchanged": 21,
+  "native_combination": "NOT RUN"
+}

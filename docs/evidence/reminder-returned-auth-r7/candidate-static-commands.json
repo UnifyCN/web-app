@@ -1,0 +1,49 @@
+[
+  {
+    "name": "types",
+    "argv": [
+      "npx",
+      "tsc",
+      "--noEmit",
+      "--incremental",
+      "false"
+    ],
+    "exit": 0,
+    "seconds": 9.188869709003484
+  },
+  {
+    "name": "changed-lint",
+    "argv": [
+      "npx",
+      "eslint",
+      "services/auth.ts",
+      "components/companion/tasks/ComposerPendingSession.test.tsx",
+      "docs/evidence/reminder-returned-auth-r7/verify-browser.mjs"
+    ],
+    "exit": 0,
+    "seconds": 1.8193151250015944
+  },
+  {
+    "name": "i18n",
+    "argv": [
+      "npm",
+      "run",
+      "check-i18n"
+    ],
+    "exit": 0,
+    "seconds": 0.1184041669985163
+  },
+  {
+    "name": "full-lint",
+    "argv": [
+      "npx",
+      "eslint",
+      "-f",
+      "json",
+      "-o",
+      "docs/evidence/reminder-returned-auth-r7/candidate-full-lint.json"
+    ],
+    "exit": 1,
+    "seconds": 8.829579416000342
+  }
+]

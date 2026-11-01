@@ -1,0 +1,284 @@
+[
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/hydration-nonzero-state.json.gz",
+    "stored": "hydration-nonzero-state.json.gz",
+    "bytes": 132,
+    "sha256": "349c920f229dd97cd82f403744013a19d1299cb4e84371df6385d26fef2532e4"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/server-snapshot-as-key-hydration-zero-state.json.gz",
+    "stored": "server-snapshot-as-key-hydration-zero-state.json.gz",
+    "bytes": 133,
+    "sha256": "3efccb64c4c1f1bca7f1e5f9a7567de19ba890d495c4c33da0df35316f7d5da5"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/compressed-records.json",
+    "stored": "compressed-records.json",
+    "bytes": 5016,
+    "sha256": "9ebe5fa42ec2bd46e6cb98e32242bf5198858625b0173614efab02590185c6dc"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/static-command-results.json",
+    "stored": "static-command-results.json",
+    "bytes": 567,
+    "sha256": "0c52208409bbd29d5b5fd276756b24e863eb18029661e9a180f329356c516113"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/first-green-hydration-zero-state.json.gz",
+    "stored": "first-green-hydration-zero-state.json.gz",
+    "bytes": 133,
+    "sha256": "3efccb64c4c1f1bca7f1e5f9a7567de19ba890d495c4c33da0df35316f7d5da5"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/changed-lint.log.gz",
+    "stored": "changed-lint.log.gz",
+    "bytes": 20,
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/build.log.gz",
+    "stored": "build.log.gz",
+    "bytes": 871,
+    "sha256": "20dd5dc29c551a7f0d4e91d521aa49ab738118993836fab17097967250fb0f8d"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/reproduction-copy.json",
+    "stored": "reproduction-copy.json",
+    "bytes": 400,
+    "sha256": "71999cc151874869eb5aacf9a005deca947066765edc46ab2d3b98170ffe2164"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/permanent-green.log.gz",
+    "stored": "permanent-green.log.gz",
+    "bytes": 117,
+    "sha256": "69e8fe453a816dc8eefba8fa0be92a6e5aed7e4f791fbc8cefce11e4e1549179"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/full-tests.json.gz",
+    "stored": "full-tests.json.gz",
+    "bytes": 33230,
+    "sha256": "3fbdfd1b6f1e5b27f6fb291c414c4e1148666d1d4e638b9285f6a818124c3c7e"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/no-generation-subscription-hydration-zero-state.json.gz",
+    "stored": "no-generation-subscription-hydration-zero-state.json.gz",
+    "bytes": 133,
+    "sha256": "3efccb64c4c1f1bca7f1e5f9a7567de19ba890d495c4c33da0df35316f7d5da5"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/hydration-zero-state.json.gz",
+    "stored": "hydration-zero-state.json.gz",
+    "bytes": 133,
+    "sha256": "3efccb64c4c1f1bca7f1e5f9a7567de19ba890d495c4c33da0df35316f7d5da5"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/never-reset-account-key-hydration-zero-state.json.gz",
+    "stored": "never-reset-account-key-hydration-zero-state.json.gz",
+    "bytes": 133,
+    "sha256": "3efccb64c4c1f1bca7f1e5f9a7567de19ba890d495c4c33da0df35316f7d5da5"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/npm-ci.log.gz",
+    "stored": "npm-ci.log.gz",
+    "bytes": 307,
+    "sha256": "24ca4269f14329464a2977a3b424390b7d6cea9aa35fb6716befc08db6316733"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/runtime-initial-source-manifest.json.gz",
+    "stored": "runtime-initial-source-manifest.json.gz",
+    "bytes": 62002,
+    "sha256": "601d4f3655b2ac4b5d2506d40bd291a786080fc35766c7037c6dc1d0f330343a"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/no-generation-subscription.json.gz",
+    "stored": "no-generation-subscription.json.gz",
+    "bytes": 4302,
+    "sha256": "bacef99d82b3c6ec5178f60540bb035bc0a5bbf8e8c982e4c82db2e1f350cea6"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/reviewer-red.log.gz",
+    "stored": "reviewer-red.log.gz",
+    "bytes": 115,
+    "sha256": "78340e55b6442aaf1815a6ec1f2449a97d984f09d8692b8c792ae8bc83d5709d"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/reviewer-executable.test.tsx.txt",
+    "stored": "reviewer-executable.test.tsx.txt",
+    "bytes": 6989,
+    "sha256": "6e61e163024018db5056568b94deec408cee7ac1192fd428de3b9b8a8ad1abbf"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/runtime-green.log.gz",
+    "stored": "runtime-green.log.gz",
+    "bytes": 116,
+    "sha256": "5be487d2f692446f487b7aae345cee495c288c8ace5b21cd170a97f2cd7e1dc8"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/server-snapshot-as-key.json.gz",
+    "stored": "server-snapshot-as-key.json.gz",
+    "bytes": 1958,
+    "sha256": "2fbc943569f6f850b6c4ff91461dfcd2921ef19d6cd052ce321b9a29d3deb8b9"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/README.md",
+    "stored": "README.md",
+    "bytes": 4548,
+    "sha256": "7911b347977c55dee7548c8915192190fc064d10008e6b87e57a1656ebbbe08a"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/reviewer-hydration-original.test.tsx.txt",
+    "stored": "reviewer-hydration-original.test.tsx.txt",
+    "bytes": 7042,
+    "sha256": "fdb19eb62f57ca2f481b888f680689f43d340754d366eb16ef74f10e062079aa"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/full-tests-command.json",
+    "stored": "full-tests-command.json",
+    "bytes": 190,
+    "sha256": "05373fec869de97e6c05b698f8a4d620f71e4fa204e2f5757a4359d944cb38c8"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/build-browser-commands.json",
+    "stored": "build-browser-commands.json",
+    "bytes": 326,
+    "sha256": "d846028dd9b60e679dadcd4d396b7d5e0f7b64e02790f6e7549ec0f5d3cdcccb"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/browser-context.log.gz",
+    "stored": "browser-context.log.gz",
+    "bytes": 971,
+    "sha256": "7abad056908c5181ca67a5e239a944449e7ef9870954bcb9bb61409f1088730f"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/prepared-correction.patch",
+    "stored": "prepared-correction.patch",
+    "bytes": 6750,
+    "sha256": "b262604dc3c24dd314af2f8b12a78dfeb0396d7472e5537fd3b35c148e512ef1"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/never-reset-account-key.json.gz",
+    "stored": "never-reset-account-key.json.gz",
+    "bytes": 4266,
+    "sha256": "9fdb282cd98c236fc7d02429a354039a655e9633b8a66be561bbce5251c73ac2"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/never-reset-account-key.log.gz",
+    "stored": "never-reset-account-key.log.gz",
+    "bytes": 122,
+    "sha256": "4713ebc89df983ff050b35f8a8fa4a02c282e27d596264e2a3dc36f313747c55"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/correction-source-hashes.json",
+    "stored": "correction-source-hashes.json",
+    "bytes": 473,
+    "sha256": "956d5d0dc7bf9f9d4be853bb4aeeabbb5a3d8c69416b8f2769e8f36b2ece9104"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/permanent-green.json.gz",
+    "stored": "permanent-green.json.gz",
+    "bytes": 1003,
+    "sha256": "281e62dd8d1ae5435d4d34348e7bee50ca4c5d6d9f05d12f01b173a6e69e128c"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/server-snapshot-as-key.log.gz",
+    "stored": "server-snapshot-as-key.log.gz",
+    "bytes": 121,
+    "sha256": "4489e2b94aeb119d1fbf51d88f72a77c5c7a2e153d0a3ef8eebf44bd67dc2012"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/types.log.gz",
+    "stored": "types.log.gz",
+    "bytes": 20,
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/runtime-green.json.gz",
+    "stored": "runtime-green.json.gz",
+    "bytes": 3670,
+    "sha256": "9766307f523085960ca16667903db90aeae51fb7704e360db2a675c36fb5e92a"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/server-snapshot-as-key-hydration-nonzero-state.json.gz",
+    "stored": "server-snapshot-as-key-hydration-nonzero-state.json.gz",
+    "bytes": 134,
+    "sha256": "660100b23964a3a0411692650de1518fbbed0061ade2131dbc6fee36e7be9a39"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/first-green-hydration-nonzero-state.json.gz",
+    "stored": "first-green-hydration-nonzero-state.json.gz",
+    "bytes": 132,
+    "sha256": "349c920f229dd97cd82f403744013a19d1299cb4e84371df6385d26fef2532e4"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/no-generation-subscription-hydration-nonzero-state.json.gz",
+    "stored": "no-generation-subscription-hydration-nonzero-state.json.gz",
+    "bytes": 132,
+    "sha256": "349c920f229dd97cd82f403744013a19d1299cb4e84371df6385d26fef2532e4"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/final-recount.json",
+    "stored": "final-recount.json",
+    "bytes": 635,
+    "sha256": "7a31e7adbc66e804ed0f77cd3d900206b3d458bb05edd6a8b2f7ea15d0ce872f"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/reviewer-red.json.gz",
+    "stored": "reviewer-red.json.gz",
+    "bytes": 736,
+    "sha256": "d7a9f10547bc10ccca4606d2141aa87d69a66c61477002da51789159200473b6"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/no-generation-subscription.log.gz",
+    "stored": "no-generation-subscription.log.gz",
+    "bytes": 122,
+    "sha256": "b3743d34588c0486055d76943f349e436199bb30668003f84b8229c7d7260427"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/full-tests.log.gz",
+    "stored": "full-tests.log.gz",
+    "bytes": 161,
+    "sha256": "005f09737cea9ee5f47c41d862bc059349243ab9974017794d5fef4ad19e3aa7"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/ROOT_CONTINUATION.json",
+    "stored": "ROOT_CONTINUATION.json",
+    "bytes": 2285,
+    "sha256": "156566097007a6f3101b1be2f009c22dde3d8f32c52c5c3e78fbf0b5a3dd478d"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/never-reset-account-key-hydration-nonzero-state.json.gz",
+    "stored": "never-reset-account-key-hydration-nonzero-state.json.gz",
+    "bytes": 132,
+    "sha256": "349c920f229dd97cd82f403744013a19d1299cb4e84371df6385d26fef2532e4"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/i18n.log.gz",
+    "stored": "i18n.log.gz",
+    "bytes": 142,
+    "sha256": "daddbb9bcd793befe13144d37bdbb2c93b63a02294ec365c6ea32d764bc14edf"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/mutation-results.json",
+    "stored": "mutation-results.json",
+    "bytes": 13466,
+    "sha256": "39971dfec537fc2400e03601b946bc718cfa4a103e4072b47c4f485cd7e09003"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/browser-context.json.gz",
+    "stored": "browser-context.json.gz",
+    "bytes": 1718,
+    "sha256": "0af368903fca5bf83587615b62ebbe236b03a371339260b19423599cbee8d9fa"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/prepared-source/hooks/useAccountId.ts",
+    "stored": "prepared-source/hooks/useAccountId.ts.txt",
+    "bytes": 1289,
+    "sha256": "7131114669aff16049adf41d30b8cafe37d81ca07074b284f7df3ef498f26245"
+  },
+  {
+    "from": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5/prepared-source/components/companion/tasks/TaskSelectionAccountSession.test.tsx",
+    "stored": "prepared-source/components/companion/tasks/TaskSelectionAccountSession.test.tsx.txt",
+    "bytes": 20104,
+    "sha256": "7cc456d8d4cbafd09c5610569682f69741f2087ae263d692584297b97fe7672c"
+  }
+]

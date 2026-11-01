@@ -1,0 +1,16 @@
+{
+  "exit": 1,
+  "seconds": 3.966264415998012,
+  "passed": 14,
+  "failed": 2,
+  "failures": [
+    {
+      "name": "keeps companion text, owner and focus when the SDK returns a session error",
+      "message": "AssertionError: expected 'success' to be 'error' // Object.is equality\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body>\u001b[39m\n    \u001b[36m<div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex h-[calc(100dvh_-_3.5rem_-_env(safe-area-inset-bottom))] md:h-dvh\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<aside\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"w-full shrink-0 flex-col border-e border-border-card bg-surface md:flex md:w-[240px] hidden\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"space-y-3 p-3\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[36m<button\u001b[39m\n              \u001b[33mclass\u001b[39m=\u001b[32m\"flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-dark\"\u001b[39m\n              \u001b[33mtype\u001b[39m=\u001b[32m\"button\"\u001b[39m\n     "
+    },
+    {
+      "name": "keeps lesson text, owner and focus when the SDK returns a session error",
+      "message": "AssertionError: expected 'success' to be 'error' // Object.is equality\n\nIgnored nodes: comments, script, style\n\u001b[36m<html>\u001b[39m\n  \u001b[36m<head />\u001b[39m\n  \u001b[36m<body>\u001b[39m\n    \u001b[36m<div>\u001b[39m\n      \u001b[36m<div\u001b[39m\n        \u001b[33mclass\u001b[39m=\u001b[32m\"flex min-h-0 flex-1 flex-col\"\u001b[39m\n      \u001b[36m>\u001b[39m\n        \u001b[36m<div\u001b[39m\n          \u001b[33mclass\u001b[39m=\u001b[32m\"border-b border-border-card px-5 py-3\"\u001b[39m\n        \u001b[36m>\u001b[39m\n          \u001b[36m<div\u001b[39m\n            \u001b[33mclass\u001b[39m=\u001b[32m\"flex items-start gap-2 rounded-card bg-teal-50 px-3 py-2 text-xs text-teal-800\"\u001b[39m\n          \u001b[36m>\u001b[39m\n            \u001b[36m<svg\u001b[39m\n              \u001b[33maria-hidden\u001b[39m=\u001b[32m\"true\"\u001b[39m\n              \u001b[33mclass\u001b[39m=\u001b[32m\"lucide lucide-book-open mt-0.5 h-3.5 w-3.5 shrink-0\"\u001b[39m\n              \u001b[33mfill\u001b[39m=\u001b[32m\"none\"\u001b[39m\n              \u001b[33mheight\u001b[39m=\u001b[32m\"24\"\u001b[39m\n              \u001b[33mstroke\u001b[39m=\u001b[32m\"currentColor\"\u001b[39m\n "
+    }
+  ]
+}

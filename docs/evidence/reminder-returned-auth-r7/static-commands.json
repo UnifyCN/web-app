@@ -1,0 +1,49 @@
+[
+  {
+    "name": "types",
+    "argv": [
+      "npx",
+      "tsc",
+      "--noEmit",
+      "--incremental",
+      "false"
+    ],
+    "exit": 0,
+    "seconds": 8.802259208998294
+  },
+  {
+    "name": "changed-lint",
+    "argv": [
+      "npx",
+      "eslint",
+      "services/auth.ts",
+      "components/companion/tasks/ComposerPendingSession.test.tsx",
+      "docs/evidence/reminder-returned-auth-r7/verify-browser.mjs"
+    ],
+    "exit": 0,
+    "seconds": 1.602493709004193
+  },
+  {
+    "name": "i18n",
+    "argv": [
+      "npm",
+      "run",
+      "check-i18n"
+    ],
+    "exit": 0,
+    "seconds": 0.11628987499716459
+  },
+  {
+    "name": "full-lint",
+    "argv": [
+      "npx",
+      "eslint",
+      "-f",
+      "json",
+      "-o",
+      "/Users/savargupta/.t3/companion-359-root-evidence/returned-auth-r7/full-lint.json"
+    ],
+    "exit": 1,
+    "seconds": 8.84249550000095
+  }
+]

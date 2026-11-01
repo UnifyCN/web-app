@@ -1,0 +1,1 @@
+The first passing driver waited for the expected error status before it checked preservation. The final driver waits only for the request to settle. This lets unchanged code reach the text/owner assertion instead of timing out on its incorrect success status. No product code changed.

@@ -1,10 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import {
-  Inter,
-  Noto_Sans_Devanagari,
-  Noto_Sans_Arabic,
-  Noto_Sans_Gurmukhi,
-} from "next/font/google";
 import { cookies, headers } from "next/headers";
 import { preconnect } from "react-dom";
 import { Analytics } from "@vercel/analytics/next";
@@ -22,36 +16,11 @@ import {
   type SupportedLanguage,
 } from "@/lib/i18n/config";
 import { motionCssVars } from "@/lib/motion";
+import { preloadFonts } from "./fonts/preload";
+// Self-hosted Inter + Noto script faces (see app/fonts/README.md). Before
+// globals.css so its --font-sans chain finds the variables already defined.
+import "./fonts/fonts.css";
 import "./globals.css";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin", "vietnamese"],
-});
-
-// Devanagari (Hindi) glyph coverage — Inter has none. Loaded as a fall-through
-// font behind Inter in the --font-sans chain (see globals.css).
-const notoDevanagari = Noto_Sans_Devanagari({
-  variable: "--font-noto-devanagari",
-  subsets: ["devanagari"],
-  weight: ["400", "500", "600", "700"],
-});
-
-// Arabic glyph coverage — Inter/Noto Devanagari have none. Fall-through behind
-// them in the --font-sans chain; only rendered when Arabic (RTL) is active.
-const notoArabic = Noto_Sans_Arabic({
-  variable: "--font-noto-arabic",
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
-});
-
-// Gurmukhi (Punjabi) glyph coverage — none of the above have it. Fall-through
-// behind them in the --font-sans chain; only rendered when Punjabi is active.
-const notoGurmukhi = Noto_Sans_Gurmukhi({
-  variable: "--font-noto-gurmukhi",
-  subsets: ["gurmukhi"],
-  weight: ["400", "500", "600", "700"],
-});
 
 export const metadata: Metadata = {
   // Resolves relative metadata URLs (incl. the auto-injected opengraph-image
@@ -139,12 +108,13 @@ export default async function RootLayout({
 }>) {
   const initialLocale = await resolveInitialLocale();
   preconnectDataHosts();
+  preloadFonts();
 
   return (
     <html
       lang={initialLocale}
       dir={dirForLanguage(initialLocale)}
-      className={`${inter.variable} ${notoDevanagari.variable} ${notoArabic.variable} ${notoGurmukhi.variable} h-full antialiased`}
+      className="h-full antialiased"
       // Motion tokens for CSS, from the same config Framer Motion reads.
       style={motionCssVars}
     >

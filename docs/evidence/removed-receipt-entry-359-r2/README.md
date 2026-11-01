@@ -1,0 +1,13 @@
+# RRE-1 web caller correction
+
+The independent review approved the mobile correction and Standards, but rejected web behavior: its View task callback discarded the task reference prefix and the drawer required an active Checklist row or a row seen during that mount. A removed custom task has neither after reload. The first card-only test did not prove the complete path.
+
+The new regression renders the ACTUAL CompanionPage, TaskActionCards, TaskActionsDrawer, TaskStatePanel and ReceiptBlock. Account, conversation, Checklist and progress data are controlled inputs. The chat shell and unrelated panels are simplified. The old code opens an empty task list and fails the missing task heading assertion. Before the product fix, the new test's final Undo call shape was corrected to the existing store API. Both earlier and final red logs remain saved. The valid final red still fails at the missing heading. No existing test assertion changed.
+
+The page now carries a full task reference and display title into the drawer. An explicit target absent from Checklist can select its panel only if it exists in the current account progress. Full task references select any matching live row; a Sanity task with the same numeric ID cannot replace a custom task. Legacy Checklist task-id entry remains supported. The existing fresh read, disabled editing of removed tasks, exact receipt and Undo revision checks are unchanged.
+
+The complete-page case passes after the fix. Its same-ID collision control also passes; this control was added after the product fix. It asserts that no removal or Undo occurs from opening, then an explicit Undo click names custom:1 and current-removal. These checks prove rendered routing and request dispatch, not backend writes or native speech. The separate card regression still passes. Fresh full web suite passes713 with13 skips. Types, changed-file lint and build exit0 naturally. These results are recorded in the paired mobile evidence raw directory under web-rre2-*.
+
+Mobile candidate61a4134c is unchanged and retains the independent mobile SPEC/STANDARDS approval. Native restore of the original retained task is pending on that approved mobile correction. iOS and full native criterion8 remain incomplete. No server, SQL, locale, styling, analytics, dependency or lockfile change occurred. No candidate is integrated or pushed by this correction.
+
+Logs are retained unchanged at /Users/savargupta/.t3/worktrees/Unify/t3-64fec96b/DOCS/companion-actions/evidence/removed-receipt-entry-359-r1/raw/. Original review and probes are /Users/savargupta/.t3/worktrees/Unify/t3-eb134260/DOCS/companion-actions/evidence/review-removed-receipt-entry-359-r1/.

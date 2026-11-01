@@ -1,0 +1,6947 @@
+{
+  "block": "",
+  "builds": [
+    {
+      "label": "original-today",
+      "dir": "/private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/build/local-fonts-work/baseline-next"
+    },
+    {
+      "label": "candidate",
+      "dir": "/private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/.next"
+    },
+    {
+      "label": "original-v30-reconstructed",
+      "dir": "/private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/build/local-fonts-work/original-v30-reconstructed"
+    }
+  ],
+  "samples": {
+    "en": "Ask me anything. Social Community Companion Checklist Learn Resources Resume Cover Letter Job tools",
+    "fr-CA": "Posez-moi n'importe quelle question. Social Communauté Compagnon Liste Apprendre Outils emploi Ressources CV Lettre de présentation",
+    "es": "Pregúntame lo que sea. Social Comunidad Asistente Lista Aprender Recursos Currículum Carta de presentación Empleo",
+    "vi": "Hỏi tôi bất cứ điều gì. Xã hội Cộng đồng Trợ lý Danh sách Học Tài nguyên Hồ sơ Thư xin việc Công cụ việc làm",
+    "hi": "मुझसे कुछ भी पूछें। सोशल समुदाय सहायक चेकलिस्ट सीखें संसाधन रिज़्यूमे कवर लेटर जॉब टूल्स",
+    "ar": "اسألني أي شيء. اجتماعي المجتمع المرافق قائمة المهام تعلّم أدوات العمل الموارد السيرة الذاتية خطاب التقديم",
+    "pa": "ਮੈਨੂੰ ਕੁਝ ਵੀ ਪੁੱਛੋ। ਸੋਸ਼ਲ ਕਮਿਊਨਿਟੀ ਕੰਪੈਨੀਅਨ ਚੈੱਕਲਿਸਟ ਲਰਨ ਸਰੋਤ ਰੈਜ਼ਿਊਮੇ ਕਵਰ ਲੈਟਰ ਨੌਕਰੀ ਟੂਲ"
+  },
+  "results": [
+    {
+      "build": "original-today",
+      "lang": "en",
+      "weight": 100,
+      "mode": "stack",
+      "rect": {
+        "width": 1539.359375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "en",
+      "weight": 100,
+      "mode": "direct",
+      "rect": {
+        "width": 1539.359375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "en",
+      "weight": 900,
+      "mode": "stack",
+      "rect": {
+        "width": 1700.8125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "en",
+      "weight": 900,
+      "mode": "direct",
+      "rect": {
+        "width": 1700.8125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "en",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1612.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "en",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1612.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "en",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1628.640625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "en",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1628.640625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "en",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1644.484375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "en",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1644.484375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "en",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1660.328125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "en",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1660.328125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "fr-CA",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 2106.53125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "fr-CA",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 2106.53125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "fr-CA",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 2128.234375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "fr-CA",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 2128.234375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "fr-CA",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 2149.921875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "fr-CA",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 2149.921875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "fr-CA",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 2171.625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "fr-CA",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 2171.625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "es",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1811.796875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "es",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1811.796875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "es",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1830.125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "es",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1830.125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "es",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1848.453125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "es",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1848.453125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "es",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1866.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "es",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1866.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "vi",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1667.078125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "vi",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1667.078125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "vi",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1676.265625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "vi",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1676.265625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "vi",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1685.4375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "vi",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1685.4375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "vi",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1694.609375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "vi",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1694.609375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "hi",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1104.703125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 68
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr",
+        "0u~1~h5xe65~a"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/e92fa6abd9c612ef-s.p.0u~1~h5xe65~a.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "hi",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1095.171875,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 82
+        }
+      ],
+      "files": [
+        "0kanwx_27rmat",
+        "0q-301v4kxxnr",
+        "0u~1~h5xe65~a"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/e92fa6abd9c612ef-s.p.0u~1~h5xe65~a.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/8b8596bd16cf8eee-s.0kanwx_27rmat.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "hi",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1123.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 68
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr",
+        "0u~1~h5xe65~a"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/e92fa6abd9c612ef-s.p.0u~1~h5xe65~a.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "hi",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1120.875,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 82
+        }
+      ],
+      "files": [
+        "0kanwx_27rmat",
+        "0q-301v4kxxnr",
+        "0u~1~h5xe65~a"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/e92fa6abd9c612ef-s.p.0u~1~h5xe65~a.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/8b8596bd16cf8eee-s.0kanwx_27rmat.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "hi",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1145.71875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 68
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr",
+        "0u~1~h5xe65~a"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/e92fa6abd9c612ef-s.p.0u~1~h5xe65~a.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "hi",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1149.4375,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 82
+        }
+      ],
+      "files": [
+        "0kanwx_27rmat",
+        "0q-301v4kxxnr",
+        "0u~1~h5xe65~a"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/e92fa6abd9c612ef-s.p.0u~1~h5xe65~a.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/8b8596bd16cf8eee-s.0kanwx_27rmat.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "hi",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1171.953125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 68
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr",
+        "0u~1~h5xe65~a"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/e92fa6abd9c612ef-s.p.0u~1~h5xe65~a.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "hi",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1182.265625,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 82
+        }
+      ],
+      "files": [
+        "0kanwx_27rmat",
+        "0q-301v4kxxnr",
+        "0u~1~h5xe65~a"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/e92fa6abd9c612ef-s.p.0u~1~h5xe65~a.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/8b8596bd16cf8eee-s.0kanwx_27rmat.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "ar",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1168.890625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Arial",
+          "custom": false,
+          "glyphs": 89
+        },
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 16
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "ar",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1371.6875,
+        "height": 68
+      },
+      "families": [
+        {
+          "family": "Noto Sans Arabic",
+          "custom": true,
+          "glyphs": 136
+        }
+      ],
+      "files": [
+        "09hsst~r~20t2",
+        "0p-f7yd42daun",
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/3fd1b3eda9c5392f-s.p.0p-f7yd42daun.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/14a9d8930cac1a04-s.09hsst~r~20t2.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "ar",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1161.96875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Arial",
+          "custom": false,
+          "glyphs": 89
+        },
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 16
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "ar",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1412.171875,
+        "height": 68
+      },
+      "families": [
+        {
+          "family": "Noto Sans Arabic",
+          "custom": true,
+          "glyphs": 136
+        }
+      ],
+      "files": [
+        "09hsst~r~20t2",
+        "0p-f7yd42daun",
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/3fd1b3eda9c5392f-s.p.0p-f7yd42daun.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/14a9d8930cac1a04-s.09hsst~r~20t2.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "ar",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1155.046875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Arial",
+          "custom": false,
+          "glyphs": 89
+        },
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 16
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "ar",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1457.171875,
+        "height": 68
+      },
+      "families": [
+        {
+          "family": "Noto Sans Arabic",
+          "custom": true,
+          "glyphs": 136
+        }
+      ],
+      "files": [
+        "09hsst~r~20t2",
+        "0p-f7yd42daun",
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/14a9d8930cac1a04-s.09hsst~r~20t2.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/3fd1b3eda9c5392f-s.p.0p-f7yd42daun.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "ar",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1148.125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Arial",
+          "custom": false,
+          "glyphs": 89
+        },
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 16
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "ar",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1508.90625,
+        "height": 68
+      },
+      "families": [
+        {
+          "family": "Noto Sans Arabic",
+          "custom": true,
+          "glyphs": 136
+        }
+      ],
+      "files": [
+        "09hsst~r~20t2",
+        "0p-f7yd42daun",
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/3fd1b3eda9c5392f-s.p.0p-f7yd42daun.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/14a9d8930cac1a04-s.09hsst~r~20t2.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "pa",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1112.65625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 1
+        },
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 71
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0u~1~h5xe65~a"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/e92fa6abd9c612ef-s.p.0u~1~h5xe65~a.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "pa",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1103.140625,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 86
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0v_m56w~.1urz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/beb4bb68d3ecc8bd-s.0v_m56w~.1urz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "pa",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1127.0625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 1
+        },
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 71
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0u~1~h5xe65~a"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/e92fa6abd9c612ef-s.p.0u~1~h5xe65~a.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "pa",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1124.109375,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 86
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0v_m56w~.1urz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/beb4bb68d3ecc8bd-s.0v_m56w~.1urz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "pa",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1143.796875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 1
+        },
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 71
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0u~1~h5xe65~a"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/e92fa6abd9c612ef-s.p.0u~1~h5xe65~a.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "pa",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1147.40625,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 86
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0v_m56w~.1urz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/beb4bb68d3ecc8bd-s.0v_m56w~.1urz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "pa",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1164.03125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 1
+        },
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 71
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0u~1~h5xe65~a"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/e92fa6abd9c612ef-s.p.0u~1~h5xe65~a.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-today",
+      "lang": "pa",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1174.1875,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 86
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0v_m56w~.1urz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/beb4bb68d3ecc8bd-s.0v_m56w~.1urz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-today/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "en",
+      "weight": 100,
+      "mode": "stack",
+      "rect": {
+        "width": 1539.359375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "en",
+      "weight": 100,
+      "mode": "direct",
+      "rect": {
+        "width": 1539.359375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "en",
+      "weight": 900,
+      "mode": "stack",
+      "rect": {
+        "width": 1700.8125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "en",
+      "weight": 900,
+      "mode": "direct",
+      "rect": {
+        "width": 1700.8125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "en",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1612.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "en",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1612.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "en",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1628.640625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "en",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1628.640625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "en",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1644.484375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "en",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1644.484375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "en",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1660.328125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "en",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1660.328125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "fr-CA",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 2106.53125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "fr-CA",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 2106.53125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "fr-CA",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 2128.234375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "fr-CA",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 2128.234375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "fr-CA",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 2149.921875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "fr-CA",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 2149.921875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "fr-CA",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 2171.625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "fr-CA",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 2171.625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "es",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1811.796875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "es",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1811.796875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "es",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1830.125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "es",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1830.125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "es",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1848.453125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "es",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1848.453125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "es",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1866.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "es",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1866.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "vi",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1667.078125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-vietnamese.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin-ext.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "vi",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1667.078125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-vietnamese.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin-ext.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "vi",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1676.265625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-vietnamese.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin-ext.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "vi",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1676.265625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-vietnamese.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin-ext.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "vi",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1685.4375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-vietnamese.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin-ext.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "vi",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1685.4375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-vietnamese.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin-ext.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "vi",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1694.609375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-vietnamese.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin-ext.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "vi",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1694.609375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-vietnamese.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin-ext.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "hi",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1104.703125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 68
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "hi",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1095.171875,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 82
+        }
+      ],
+      "files": [
+        "07i2tzufpn7tg",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-latin.07i2tzufpn7tg.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "hi",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1123.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 68
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "hi",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1120.875,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 82
+        }
+      ],
+      "files": [
+        "07i2tzufpn7tg",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-latin.07i2tzufpn7tg.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "hi",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1145.71875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 68
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "hi",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1149.4375,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 82
+        }
+      ],
+      "files": [
+        "07i2tzufpn7tg",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-latin.07i2tzufpn7tg.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "hi",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1171.953125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 68
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "hi",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1182.265625,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 82
+        }
+      ],
+      "files": [
+        "07i2tzufpn7tg",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-latin.07i2tzufpn7tg.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "ar",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1168.890625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Arial",
+          "custom": false,
+          "glyphs": 89
+        },
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 16
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "ar",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1371.6875,
+        "height": 68
+      },
+      "families": [
+        {
+          "family": "Noto Sans Arabic",
+          "custom": true,
+          "glyphs": 136
+        }
+      ],
+      "files": [
+        "09hsst~r~20t2",
+        "0p-f7yd42daun",
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-arabic-arabic.0p-f7yd42daun.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-arabic-latin.09hsst~r~20t2.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "ar",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1161.96875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Arial",
+          "custom": false,
+          "glyphs": 89
+        },
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 16
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "ar",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1412.171875,
+        "height": 68
+      },
+      "families": [
+        {
+          "family": "Noto Sans Arabic",
+          "custom": true,
+          "glyphs": 136
+        }
+      ],
+      "files": [
+        "09hsst~r~20t2",
+        "0p-f7yd42daun",
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-arabic-arabic.0p-f7yd42daun.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-arabic-latin.09hsst~r~20t2.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "ar",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1155.046875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Arial",
+          "custom": false,
+          "glyphs": 89
+        },
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 16
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "ar",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1457.171875,
+        "height": 68
+      },
+      "families": [
+        {
+          "family": "Noto Sans Arabic",
+          "custom": true,
+          "glyphs": 136
+        }
+      ],
+      "files": [
+        "09hsst~r~20t2",
+        "0p-f7yd42daun",
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-arabic-arabic.0p-f7yd42daun.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-arabic-latin.09hsst~r~20t2.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "ar",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1148.125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Arial",
+          "custom": false,
+          "glyphs": 89
+        },
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 16
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "ar",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1508.90625,
+        "height": 68
+      },
+      "families": [
+        {
+          "family": "Noto Sans Arabic",
+          "custom": true,
+          "glyphs": 136
+        }
+      ],
+      "files": [
+        "09hsst~r~20t2",
+        "0p-f7yd42daun",
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-arabic-arabic.0p-f7yd42daun.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-arabic-latin.09hsst~r~20t2.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "pa",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1112.65625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 1
+        },
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 71
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-gurmukhi-gurmukhi.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "pa",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1103.140625,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 86
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0v_m56w~.1urz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-gurmukhi-gurmukhi.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-gurmukhi-latin.0v_m56w~.1urz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "pa",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1127.0625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 1
+        },
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 71
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-gurmukhi-gurmukhi.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "pa",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1124.109375,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 86
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0v_m56w~.1urz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-gurmukhi-gurmukhi.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-gurmukhi-latin.0v_m56w~.1urz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "pa",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1143.796875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 1
+        },
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 71
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-gurmukhi-gurmukhi.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "pa",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1147.40625,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 86
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0v_m56w~.1urz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-gurmukhi-gurmukhi.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-gurmukhi-latin.0v_m56w~.1urz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "pa",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1164.03125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 1
+        },
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 71
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-gurmukhi-gurmukhi.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-devanagari-devanagari.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "candidate",
+      "lang": "pa",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1174.1875,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 86
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0v_m56w~.1urz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-gurmukhi-gurmukhi.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/noto-sans-gurmukhi-latin.0v_m56w~.1urz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/candidate/_next/static/media/inter-latin.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 100,
+      "mode": "stack",
+      "rect": {
+        "width": 1539.359375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 100,
+      "mode": "direct",
+      "rect": {
+        "width": 1539.359375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 900,
+      "mode": "stack",
+      "rect": {
+        "width": 1700.8125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 900,
+      "mode": "direct",
+      "rect": {
+        "width": 1700.8125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1612.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1612.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1628.640625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1628.640625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1644.484375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1644.484375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1660.328125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1660.328125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 99
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 2106.53125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 2106.53125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 2128.234375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 2128.234375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 2149.921875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 2149.921875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 2171.625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 2171.625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 131
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1811.796875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1811.796875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1830.125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1830.125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1848.453125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1848.453125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1866.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1866.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 113
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1667.078125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1667.078125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1676.265625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1676.265625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1685.4375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1685.4375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1694.609375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1694.609375,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 108
+        }
+      ],
+      "files": [
+        "067x_6k0k23tk",
+        "0q-301v4kxxnr",
+        "16ipb6fqu393i"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/2bbe8d2671613f1f-s.p.067x_6k0k23tk.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/1bffadaabf893a1e-s.16ipb6fqu393i.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1104.703125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 68
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/e92fa6abd9c612ef-s.p.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1095.171875,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 82
+        }
+      ],
+      "files": [
+        "07i2tzufpn7tg",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/e92fa6abd9c612ef-s.p.0z52yf238t5rz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/8b8596bd16cf8eee-s.07i2tzufpn7tg.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1123.78125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 68
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/e92fa6abd9c612ef-s.p.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1120.875,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 82
+        }
+      ],
+      "files": [
+        "07i2tzufpn7tg",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/e92fa6abd9c612ef-s.p.0z52yf238t5rz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/8b8596bd16cf8eee-s.07i2tzufpn7tg.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1145.71875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 68
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/e92fa6abd9c612ef-s.p.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1149.4375,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 82
+        }
+      ],
+      "files": [
+        "07i2tzufpn7tg",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/e92fa6abd9c612ef-s.p.0z52yf238t5rz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/8b8596bd16cf8eee-s.07i2tzufpn7tg.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1171.953125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 68
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/e92fa6abd9c612ef-s.p.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1182.265625,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 82
+        }
+      ],
+      "files": [
+        "07i2tzufpn7tg",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/8b8596bd16cf8eee-s.07i2tzufpn7tg.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/e92fa6abd9c612ef-s.p.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1168.890625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Arial",
+          "custom": false,
+          "glyphs": 89
+        },
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 16
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1371.6875,
+        "height": 68
+      },
+      "families": [
+        {
+          "family": "Noto Sans Arabic",
+          "custom": true,
+          "glyphs": 136
+        }
+      ],
+      "files": [
+        "09hsst~r~20t2",
+        "0p-f7yd42daun",
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/3fd1b3eda9c5392f-s.p.0p-f7yd42daun.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/14a9d8930cac1a04-s.09hsst~r~20t2.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1161.96875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Arial",
+          "custom": false,
+          "glyphs": 89
+        },
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 16
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1412.171875,
+        "height": 68
+      },
+      "families": [
+        {
+          "family": "Noto Sans Arabic",
+          "custom": true,
+          "glyphs": 136
+        }
+      ],
+      "files": [
+        "09hsst~r~20t2",
+        "0p-f7yd42daun",
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/14a9d8930cac1a04-s.09hsst~r~20t2.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/3fd1b3eda9c5392f-s.p.0p-f7yd42daun.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1155.046875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Arial",
+          "custom": false,
+          "glyphs": 89
+        },
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 16
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1457.171875,
+        "height": 68
+      },
+      "families": [
+        {
+          "family": "Noto Sans Arabic",
+          "custom": true,
+          "glyphs": 136
+        }
+      ],
+      "files": [
+        "09hsst~r~20t2",
+        "0p-f7yd42daun",
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/14a9d8930cac1a04-s.09hsst~r~20t2.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/3fd1b3eda9c5392f-s.p.0p-f7yd42daun.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1148.125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Arial",
+          "custom": false,
+          "glyphs": 89
+        },
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 16
+        }
+      ],
+      "files": [
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1508.90625,
+        "height": 68
+      },
+      "families": [
+        {
+          "family": "Noto Sans Arabic",
+          "custom": true,
+          "glyphs": 136
+        }
+      ],
+      "files": [
+        "09hsst~r~20t2",
+        "0p-f7yd42daun",
+        "0q-301v4kxxnr"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/3fd1b3eda9c5392f-s.p.0p-f7yd42daun.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/14a9d8930cac1a04-s.09hsst~r~20t2.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 400,
+      "mode": "stack",
+      "rect": {
+        "width": 1112.65625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 1
+        },
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 71
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/e92fa6abd9c612ef-s.p.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 400,
+      "mode": "direct",
+      "rect": {
+        "width": 1103.140625,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 86
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0v_m56w~.1urz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/beb4bb68d3ecc8bd-s.0v_m56w~.1urz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 500,
+      "mode": "stack",
+      "rect": {
+        "width": 1127.0625,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 1
+        },
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 71
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/e92fa6abd9c612ef-s.p.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 500,
+      "mode": "direct",
+      "rect": {
+        "width": 1124.109375,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 86
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0v_m56w~.1urz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/beb4bb68d3ecc8bd-s.0v_m56w~.1urz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 600,
+      "mode": "stack",
+      "rect": {
+        "width": 1143.796875,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 1
+        },
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 71
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/e92fa6abd9c612ef-s.p.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 600,
+      "mode": "direct",
+      "rect": {
+        "width": 1147.40625,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 86
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0v_m56w~.1urz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/beb4bb68d3ecc8bd-s.0v_m56w~.1urz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 700,
+      "mode": "stack",
+      "rect": {
+        "width": 1164.03125,
+        "height": 39
+      },
+      "families": [
+        {
+          "family": "Inter",
+          "custom": true,
+          "glyphs": 14
+        },
+        {
+          "family": "Noto Sans Devanagari",
+          "custom": true,
+          "glyphs": 1
+        },
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 71
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0z52yf238t5rz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/e92fa6abd9c612ef-s.p.0z52yf238t5rz.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 700,
+      "mode": "direct",
+      "rect": {
+        "width": 1174.1875,
+        "height": 42
+      },
+      "families": [
+        {
+          "family": "Noto Sans Gurmukhi",
+          "custom": true,
+          "glyphs": 86
+        }
+      ],
+      "files": [
+        "0_pmoeof9fjg0",
+        "0q-301v4kxxnr",
+        "0v_m56w~.1urz"
+      ],
+      "requests": [
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/8488462fcb6e6108-s.p.0_pmoeof9fjg0.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/beb4bb68d3ecc8bd-s.0v_m56w~.1urz.woff2",
+          "status": 200
+        },
+        {
+          "url": "http://127.0.0.1:3126/b/original-v30-reconstructed/_next/static/media/83afe278b6a6bb3c-s.p.0q-301v4kxxnr.woff2",
+          "status": 200
+        }
+      ],
+      "failures": []
+    }
+  ],
+  "comparisons": [
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "en",
+      "weight": 100,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "en",
+      "weight": 100,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "en",
+      "weight": 900,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "en",
+      "weight": 900,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "en",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "en",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "en",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "en",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "en",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "en",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "en",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "en",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "fr-CA",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "fr-CA",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "fr-CA",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "fr-CA",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "fr-CA",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "fr-CA",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "fr-CA",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "fr-CA",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "es",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "es",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "es",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "es",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "es",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "es",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "es",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "es",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "vi",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "vi",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "vi",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "vi",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "vi",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "vi",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "vi",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "vi",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "hi",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": [
+        "files 0q-301v4kxxnr,0u~1~h5xe65~a vs 0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "hi",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": [
+        "files 0kanwx_27rmat,0q-301v4kxxnr,0u~1~h5xe65~a vs 07i2tzufpn7tg,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "hi",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": [
+        "files 0q-301v4kxxnr,0u~1~h5xe65~a vs 0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "hi",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": [
+        "files 0kanwx_27rmat,0q-301v4kxxnr,0u~1~h5xe65~a vs 07i2tzufpn7tg,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "hi",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": [
+        "files 0q-301v4kxxnr,0u~1~h5xe65~a vs 0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "hi",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": [
+        "files 0kanwx_27rmat,0q-301v4kxxnr,0u~1~h5xe65~a vs 07i2tzufpn7tg,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "hi",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": [
+        "files 0q-301v4kxxnr,0u~1~h5xe65~a vs 0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "hi",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": [
+        "files 0kanwx_27rmat,0q-301v4kxxnr,0u~1~h5xe65~a vs 07i2tzufpn7tg,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "ar",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "ar",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "ar",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "ar",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "ar",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "ar",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "ar",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "ar",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "pa",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": [
+        "files 0_pmoeof9fjg0,0q-301v4kxxnr,0u~1~h5xe65~a vs 0_pmoeof9fjg0,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "pa",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "pa",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": [
+        "files 0_pmoeof9fjg0,0q-301v4kxxnr,0u~1~h5xe65~a vs 0_pmoeof9fjg0,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "pa",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "pa",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": [
+        "files 0_pmoeof9fjg0,0q-301v4kxxnr,0u~1~h5xe65~a vs 0_pmoeof9fjg0,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "pa",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "pa",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": [
+        "files 0_pmoeof9fjg0,0q-301v4kxxnr,0u~1~h5xe65~a vs 0_pmoeof9fjg0,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "candidate",
+      "lang": "pa",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 100,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 100,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 900,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 900,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "en",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "fr-CA",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "es",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "vi",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": [
+        "files 0q-301v4kxxnr,0u~1~h5xe65~a vs 0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": [
+        "files 0kanwx_27rmat,0q-301v4kxxnr,0u~1~h5xe65~a vs 07i2tzufpn7tg,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": [
+        "files 0q-301v4kxxnr,0u~1~h5xe65~a vs 0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": [
+        "files 0kanwx_27rmat,0q-301v4kxxnr,0u~1~h5xe65~a vs 07i2tzufpn7tg,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": [
+        "files 0q-301v4kxxnr,0u~1~h5xe65~a vs 0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": [
+        "files 0kanwx_27rmat,0q-301v4kxxnr,0u~1~h5xe65~a vs 07i2tzufpn7tg,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": [
+        "files 0q-301v4kxxnr,0u~1~h5xe65~a vs 0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "hi",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": [
+        "files 0kanwx_27rmat,0q-301v4kxxnr,0u~1~h5xe65~a vs 07i2tzufpn7tg,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "ar",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 400,
+      "mode": "stack",
+      "diffs": [
+        "files 0_pmoeof9fjg0,0q-301v4kxxnr,0u~1~h5xe65~a vs 0_pmoeof9fjg0,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 400,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 500,
+      "mode": "stack",
+      "diffs": [
+        "files 0_pmoeof9fjg0,0q-301v4kxxnr,0u~1~h5xe65~a vs 0_pmoeof9fjg0,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 500,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 600,
+      "mode": "stack",
+      "diffs": [
+        "files 0_pmoeof9fjg0,0q-301v4kxxnr,0u~1~h5xe65~a vs 0_pmoeof9fjg0,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 600,
+      "mode": "direct",
+      "diffs": []
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 700,
+      "mode": "stack",
+      "diffs": [
+        "files 0_pmoeof9fjg0,0q-301v4kxxnr,0u~1~h5xe65~a vs 0_pmoeof9fjg0,0q-301v4kxxnr,0z52yf238t5rz"
+      ]
+    },
+    {
+      "ref": "original-today",
+      "other": "original-v30-reconstructed",
+      "lang": "pa",
+      "weight": 700,
+      "mode": "direct",
+      "diffs": []
+    }
+  ],
+  "variable": [
+    {
+      "build": "original-today",
+      "widths": {
+        "100": 1539.359375,
+        "400": 1612.78125,
+        "900": 1700.8125
+      },
+      "ok": true
+    },
+    {
+      "build": "candidate",
+      "widths": {
+        "100": 1539.359375,
+        "400": 1612.78125,
+        "900": 1700.8125
+      },
+      "ok": true
+    },
+    {
+      "build": "original-v30-reconstructed",
+      "widths": {
+        "100": 1539.359375,
+        "400": 1612.78125,
+        "900": 1700.8125
+      },
+      "ok": true
+    }
+  ]
+}

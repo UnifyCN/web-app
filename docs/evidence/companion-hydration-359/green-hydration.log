@@ -1,0 +1,10 @@
+
+ RUN  v3.2.7 /private/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05
+
+ ✓ components/companion/tasks/TaskProgressHydration.test.tsx > Companion task entry hydration > keeps a draft and its focus when Node has no online value 25ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  11:05:43
+   Duration  1.08s (transform 204ms, setup 0ms, collect 531ms, tests 25ms, environment 254ms, prepare 45ms)
+

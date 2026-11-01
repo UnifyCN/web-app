@@ -1,0 +1,53 @@
+[
+  {
+    "name": "types",
+    "argv": [
+      "npx",
+      "tsc",
+      "--noEmit",
+      "--incremental",
+      "false"
+    ],
+    "exit": 0,
+    "seconds": 8.451190916999622
+  },
+  {
+    "name": "i18n",
+    "argv": [
+      "npm",
+      "run",
+      "check-i18n"
+    ],
+    "exit": 0,
+    "seconds": 0.12247616699823993
+  },
+  {
+    "name": "changed-lint",
+    "argv": [
+      "npx",
+      "eslint",
+      "app/(main)/companion/page.tsx",
+      "app/(main)/checklist/page.tsx",
+      "components/companion/tasks/TaskActionsDrawer.tsx",
+      "hooks/useAccountId.ts",
+      "hooks/useProfile.ts",
+      "lib/profileQueryKeys.ts",
+      "lib/companion/clearPrivateAccountWork.ts",
+      "components/companion/tasks/TaskSelectionAccountSession.test.tsx",
+      "components/companion/tasks/RemovedReceiptPage.test.tsx",
+      "components/companion/tasks/TaskActions.test.tsx"
+    ],
+    "exit": 0,
+    "seconds": 2.0138496670006134
+  },
+  {
+    "name": "full-lint",
+    "argv": [
+      "npm",
+      "run",
+      "lint"
+    ],
+    "exit": 1,
+    "seconds": 8.511549166996701
+  }
+]

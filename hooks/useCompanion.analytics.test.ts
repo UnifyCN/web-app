@@ -25,6 +25,7 @@ vi.mock("@/services/companion", () => ({
 }));
 
 import { messagesKey, useSendMessage } from "./useCompanion";
+import { ownAccountWork } from "@/lib/accountSession";
 import type { ChatMessage } from "@/types";
 
 type SendMessage = ReturnType<typeof useSendMessage>;
@@ -62,7 +63,8 @@ function eventProps(name: string) {
 beforeEach(() => {
   vi.stubGlobal("window", {});
   mocks.capture.mockReset();
-  mocks.saveMessage.mockReset().mockResolvedValue(undefined);
+  // saveMessage returns the saved row; the send reads its id (#363).
+  mocks.saveMessage.mockReset().mockResolvedValue(message(101, "user"));
   mocks.generateReply.mockReset().mockResolvedValue({
     answer: "Look on rental sites.",
     sources: [{ title: "Renting", url: "https://example.org" }],
@@ -85,6 +87,7 @@ describe("useSendMessage analytics", () => {
       text: "How do I rent?",
       inputSource: "starter_prompt",
       isNewConversation: true,
+      owner: ownAccountWork(),
     });
     expect(eventProps("companion_message_sent")).toEqual({
       message_length: 14,
@@ -107,6 +110,7 @@ describe("useSendMessage analytics", () => {
       text: "And the deposit?",
       inputSource: "suggestion",
       isNewConversation: false,
+      owner: ownAccountWork(),
     });
     expect(eventProps("companion_message_sent")).toMatchObject({
       turn_number: 3,
@@ -122,6 +126,7 @@ describe("useSendMessage analytics", () => {
       text: "And the deposit?",
       inputSource: "typed",
       isNewConversation: false,
+      owner: ownAccountWork(),
     });
     const props = eventProps("companion_message_sent");
     expect(props).toEqual({
@@ -140,6 +145,7 @@ describe("useSendMessage analytics", () => {
       text: "How do I rent?",
       inputSource: "typed",
       isNewConversation: true,
+      owner: ownAccountWork(),
     });
     const props = eventProps("companion_response_received");
     expect(props).toMatchObject({

@@ -1,0 +1,251 @@
+// @vitest-environment jsdom
+// Fresh real-hook and real-editor proof with scripted Auth callbacks.
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { I18nextProvider } from "react-i18next";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { AUTH_USER_KEY } from "@/hooks/useAuthUser";
+import { ownAccountWork, noteAccount } from "@/lib/accountSession";
+import { clearTaskActionStores } from "@/lib/companionActions/taskActionStore";
+import {
+  testI18n,
+  scriptedServer,
+} from "@/components/companion/tasks/taskActionsTestHarness";
+import en from "@/lib/i18n/locales/en/translation.json";
+import {
+  clearComposerDrafts,
+  setComposerDraft,
+} from "@/lib/companion/composerDrafts";
+import { ChatPanel } from "@/components/companion/ChatPanel";
+import { InLessonChat } from "@/components/learn/help/InLessonChat";
+import type { ReactNode } from "react";
+const scrollDescriptor = Object.getOwnPropertyDescriptor(
+  HTMLElement.prototype,
+  "scrollIntoView",
+);
+const auth = vi.hoisted(() => ({
+  user: { id: "real-auth-a" },
+  listeners: new Set<(event: string, session: unknown) => void>(),
+  reads: 0,
+  profile: null as Promise<{
+    id: string;
+    onboarding: null;
+    isPremium: boolean;
+  }> | null,
+  reply: null as
+    | (() => Promise<{ data: { session: { user: { id: string } } | null }; error?: Error }>)
+    | null,
+}));
+vi.mock("@/lib/supabase/client", () => ({
+  isSupabaseConfigured: () => true,
+  createClient: () => ({
+    auth: {
+      getSession: async () => {
+        auth.reads++;
+        if (auth.reply) return auth.reply();
+        return { data: { session: { user: { ...auth.user } } } };
+      },
+      onAuthStateChange: (f: (event: string, session: unknown) => void) => {
+        auth.listeners.add(f);
+        return {
+          data: {
+            subscription: { unsubscribe: () => auth.listeners.delete(f) },
+          },
+        };
+      },
+    },
+  }),
+}));
+vi.mock("@/lib/posthog", () => ({
+  isPostHogConfigured: () => false,
+  posthog: { capture: () => {} },
+}));
+vi.mock("@/services/checklist", async (original) => ({
+  ...(await original<typeof import("@/services/checklist")>()),
+  getTasks: async () =>
+    auth.user.id === "real-auth-a"
+      ? [
+          {
+            id: "1",
+            title: "Private drawer task",
+            description: "",
+            priority: "Do now",
+            isCustom: true,
+            completed: false,
+            dismissedAt: null,
+            completedAt: null,
+          },
+        ]
+      : [],
+}));
+vi.mock("@/services/profile", async (original) => ({
+  ...(await original<typeof import("@/services/profile")>()),
+  getCurrentUser: async () =>
+    auth.profile ?? { id: auth.user.id, onboarding: null, isPremium: false },
+}));
+vi.mock("@/services/companion", async (original) => ({
+  ...(await original<typeof import("@/services/companion")>()),
+  getConversations: async () => [],
+  getMessages: async () => [],
+  getChatbotUsage: async () => ({ messageCount: 0, isPremium: false }),
+}));
+import CompanionPage from "@/app/(main)/companion/page";
+import ChecklistPage from "@/app/(main)/checklist/page";
+let query: QueryClient;
+beforeEach(() => {
+  const server = scriptedServer({ "custom:1": { revision: 1 } });
+  vi.stubGlobal("fetch", async (url: RequestInfo | URL, init: RequestInit) => {
+    const response = await server.fetch(url, init);
+    if (JSON.parse(String(init.body)).action === "read") {
+      const body = await response.json();
+      body.reminders = {
+        scheduler: "ready",
+        items: [
+          {
+            reminder_id: "r1",
+            task_ref: "custom:1",
+            title: "Private drawer task",
+            remind_at: "2027-11-07T05:30:00Z",
+            time_zone: "America/New_York",
+            wall_time: "2027-11-07T01:30:00",
+            revision: 1,
+            status: "pending",
+            due: true,
+            due_at: "2027-11-07T05:30:01Z",
+            cancelled_reason: null,
+            history: [],
+          },
+        ],
+      };
+      return new Response(JSON.stringify(body), {
+        status: response.status,
+        headers: { "content-type": "application/json" },
+      });
+    }
+    return response;
+  });
+  clearTaskActionStores();
+  clearComposerDrafts();
+  auth.reads = 0;
+  auth.profile = null;
+  auth.reply = null;
+  auth.user = { id: "real-auth-a" };
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: vi.fn(),
+  });
+  query = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+  });
+});
+afterEach(() => {
+  cleanup();
+  query.clear();
+  clearTaskActionStores();
+  auth.listeners.clear();
+  vi.unstubAllGlobals();
+  if (scrollDescriptor)
+    Object.defineProperty(
+      HTMLElement.prototype,
+      "scrollIntoView",
+      scrollDescriptor,
+    );
+  else Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+});
+
+const lesson = {
+  moduleId: "m",
+  submoduleId: "s",
+  lessonId: "l",
+  pageId: null,
+  moduleTitle: "Settlement",
+  submoduleTitle: "First week",
+  lessonTitle: "Tasks",
+};
+function ui(node: ReactNode) {
+  return (
+    <QueryClientProvider client={query}>
+      <I18nextProvider i18n={testI18n()}>{node}</I18nextProvider>
+    </QueryClientProvider>
+  );
+}
+function holdSession() {
+  let resolve!: (value: {
+    data: { session: { user: { id: string } } };
+  }) => void;
+  let reject!: (error: Error) => void;
+  const promise = new Promise<{ data: { session: { user: { id: string } } | null }; error?: Error }>(
+    (a, b) => {
+      resolve = a;
+      reject = b;
+    },
+  );
+  auth.reply = () => promise;
+  return {
+    resolve: (id = "real-auth-a") => {
+      auth.user = { id };
+      resolve({ data: { session: { user: { id } } } });
+    },
+    reject,
+  };
+}
+function knownAccount() {
+  noteAccount("previous-account");
+  noteAccount("real-auth-a");
+}
+function emit(event: string, id: string | null) {
+  for (const f of [...auth.listeners]) f(event, id ? { user: { id } } : null);
+}
+const composer = () =>
+  screen.getByLabelText(en.companion.messageInputAria) as HTMLTextAreaElement;
+async function settled(id = "real-auth-a") {
+  await waitFor(() =>
+    expect(query.getQueryData<{ id: string }>(AUTH_USER_KEY)?.id).toBe(id),
+  );
+  await waitFor(() => expect(query.isFetching()).toBe(0));
+}
+function type(text: string) {
+  fireEvent.change(composer(), { target: { value: text } });
+}
+
+
+import { AuthRetryableFetchError } from "@supabase/auth-js";
+import { writeFileSync } from "node:fs";
+it.each(["companion", "lesson"])(
+  "retains pending %s text and unknown Auth when getSession returns an SDK error", async surface => {
+    knownAccount();
+    let reply!: (value: {data:{session:null},error:Error}) => void;
+    const pending = new Promise<{data:{session:null},error:Error}>(resolve => { reply=resolve; });
+    auth.reply=()=>pending;
+    render(ui(surface === "companion" ? <CompanionPage/> : <InLessonChat conversationId={null} onConversationCreated={()=>{}} lessonContext={lesson}/>));
+    await waitFor(()=>expect(auth.reads).toBeGreaterThan(0));
+    type("Retain after returned Auth error");
+    const input=composer();input.focus();
+    const before=ownAccountWork();
+    expect(input.disabled).toBe(false);
+    expect(input.value).toBe("Retain after returned Auth error");
+    expect(query.getQueryState(AUTH_USER_KEY)?.status).toBe("pending");
+    const error=new AuthRetryableFetchError("Session read temporarily unavailable",503);
+    await act(async()=>reply({data:{session:null},error}));
+    await waitFor(()=>expect(query.isFetching()).toBe(0));
+    const after=composer();
+    writeFileSync("/Users/savargupta/.t3/companion-359-root-evidence/returned-auth-r7/reviewer-repeat-base"+"/returned-error-"+surface+"-state.json",JSON.stringify({
+      before,after:ownAccountWork(),authStatus:query.getQueryState(AUTH_USER_KEY)?.status,
+      authData:query.getQueryData(AUTH_USER_KEY),oldInputValue:input.value,currentInputValue:after.value,
+      sameInput:after===input,focusRetained:document.activeElement===input,
+      nullAccountTasks:query.getQueryData(["tasks","en",null]),sdkError:{name:error.name,status:error.status,message:error.message}
+    },null,2));
+    expect(after.value).toBe("Retain after returned Auth error");
+    expect(after).toBe(input);
+    expect(document.activeElement).toBe(input);
+    expect(ownAccountWork()).toEqual(before);
+    expect(query.getQueryData(["tasks","en",null])).toBeUndefined();
+  }
+);

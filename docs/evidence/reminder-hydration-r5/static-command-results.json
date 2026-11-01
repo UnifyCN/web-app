@@ -1,0 +1,35 @@
+[
+  {
+    "name": "types",
+    "argv": [
+      "npx",
+      "tsc",
+      "--noEmit",
+      "--incremental",
+      "false"
+    ],
+    "exit": 0,
+    "seconds": 9.741787040999043
+  },
+  {
+    "name": "changed-lint",
+    "argv": [
+      "npx",
+      "eslint",
+      "hooks/useAccountId.ts",
+      "components/companion/tasks/TaskSelectionAccountSession.test.tsx"
+    ],
+    "exit": 0,
+    "seconds": 1.8538156670001626
+  },
+  {
+    "name": "i18n",
+    "argv": [
+      "npm",
+      "run",
+      "check-i18n"
+    ],
+    "exit": 0,
+    "seconds": 0.13268933400104288
+  }
+]

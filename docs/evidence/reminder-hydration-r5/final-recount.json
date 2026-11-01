@@ -1,0 +1,36 @@
+{
+  "web": {
+    "passed": 760,
+    "failed": 0,
+    "skipped": 13,
+    "files": 71
+  },
+  "browser": {
+    "passed": 50,
+    "failed": 0,
+    "recorded_errors": []
+  },
+  "mutations": [
+    {
+      "name": "server-snapshot-as-key",
+      "exit": 1,
+      "passed": 22,
+      "failed": 6,
+      "all_assertion_failures": true
+    },
+    {
+      "name": "never-reset-account-key",
+      "exit": 1,
+      "passed": 22,
+      "failed": 6,
+      "all_assertion_failures": true
+    },
+    {
+      "name": "no-generation-subscription",
+      "exit": 1,
+      "passed": 19,
+      "failed": 9,
+      "all_assertion_failures": true
+    }
+  ]
+}

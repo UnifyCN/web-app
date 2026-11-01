@@ -1,0 +1,27 @@
+{
+  "command": [
+    "sandbox-exec",
+    "-f",
+    "/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05/build/local-fonts-work/blocker/deny-remote.sb",
+    "npm",
+    "run",
+    "build"
+  ],
+  "cwd": "/tmp/unify-review-actions-361-web-r5-deno-candidate-9d05",
+  "start_utc": "2026-10-27T22:07:01.067712+00:00",
+  "timeout_s": 300,
+  "removed_environment_names": [],
+  "mock": "/tmp/unify-companion-359/web-font-build-r1-evidence/fixture-plain-extensionless.json",
+  "blocked": true,
+  "extra_env": [],
+  "pid": 19492,
+  "pgid": 19492,
+  "exit_code": 0,
+  "timed_out": false,
+  "remaining_group_term_sent": false,
+  "elapsed_s": 11.282,
+  "end_utc": "2026-10-27T22:07:12.349532+00:00",
+  "log_bytes": 2198,
+  "proxy_requests": [],
+  "sandbox_network_denials": []
+}

@@ -1,0 +1,60 @@
+[
+  {
+    "name": "full-tests",
+    "command": [
+      "npm",
+      "test"
+    ],
+    "exit": 0,
+    "seconds": 6.454
+  },
+  {
+    "name": "types",
+    "command": [
+      "npx",
+      "tsc",
+      "--noEmit",
+      "--incremental",
+      "false"
+    ],
+    "exit": 0,
+    "seconds": 5.401
+  },
+  {
+    "name": "i18n",
+    "command": [
+      "npm",
+      "run",
+      "check-i18n"
+    ],
+    "exit": 0,
+    "seconds": 0.123
+  },
+  {
+    "name": "changed-lint",
+    "command": [
+      "npx",
+      "eslint",
+      "lib/accountSession.ts",
+      "hooks/useAccountId.ts",
+      "hooks/useAuthUser.ts",
+      "hooks/useAccountScope.ts",
+      "hooks/useChecklist.ts",
+      "lib/companion/clearPrivateAccountWork.ts",
+      "lib/checklistQueryKeys.ts",
+      "components/companion/tasks/ReminderAccountSession.test.tsx"
+    ],
+    "exit": 0,
+    "seconds": 1.873
+  },
+  {
+    "name": "full-lint",
+    "command": [
+      "npm",
+      "run",
+      "lint"
+    ],
+    "exit": 1,
+    "seconds": 8.669
+  }
+]

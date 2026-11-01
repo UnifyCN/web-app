@@ -1,0 +1,14 @@
+{
+  "exit": 1,
+  "seconds": 2.619530957999814,
+  "passed": 0,
+  "failed": 2,
+  "failures": [
+    [
+      "AssertionError: expected '' to be 'Retain after returned Auth error' // Object.is equality\n    at /Users/savargupta/.t3/companion-359-root-evidence/returned-auth-r7/web-runtime/components/companion/tasks/ReviewReturnedAuthR7.test.tsx:245:25\n    at file:///Users/savargupta/.t3/companion-359-root-evidence/returned-auth-r7/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+    ],
+    [
+      "AssertionError: expected '' to be 'Retain after returned Auth error' // Object.is equality\n    at /Users/savargupta/.t3/companion-359-root-evidence/returned-auth-r7/web-runtime/components/companion/tasks/ReviewReturnedAuthR7.test.tsx:245:25\n    at file:///Users/savargupta/.t3/companion-359-root-evidence/returned-auth-r7/web-runtime/node_modules/@vitest/runner/dist/chunk-hooks.js:752:20"
+    ]
+  ]
+}

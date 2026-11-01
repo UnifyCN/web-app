@@ -1,12 +1,39 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+const companionPushFiles = [
+  "./supabase/workers/companion-push/.runtime/linux-x64/**",
+  "./supabase/workers/companion-push/content-source/**",
+  "./supabase/workers/companion-push/runtime-pins.json",
+  "./supabase/workers/companion-push/deno.lock",
+  "./supabase/workers/companion-push/supervisor.ts",
+  "./supabase/workers/companion-push/process.ts",
+  "./supabase/workers/companion-push/supabase-prod-ca-2021.crt",
+  "./supabase/workers/companion-push/worker.ts",
+  "./supabase/workers/companion-push/copy.ts",
+  "./supabase/workers/companion-push/readiness.ts",
+];
+
 const nextConfig: NextConfig = {
   // The opengraph-image route reads its font + logo binaries from app/_og-assets
   // at runtime via fs. Force the serverless bundle to include them — output file
   // tracing doesn't reliably follow process.cwd()-relative reads.
   outputFileTracingIncludes: {
+    "/api/cron/companion-push": companionPushFiles,
+    "/api/cron/companion-push-readiness": companionPushFiles,
     "/opengraph-image": ["./app/_og-assets/**"],
+  },
+  outputFileTracingExcludes: {
+    "/api/cron/companion-push": [
+      "**/supabase/workers/companion-push/.runtime/darwin-arm64/**",
+      "**/supabase/workers/companion-push/.runtime/sql-check-cache/**",
+      "**/supabase/workers/companion-push/*.test.*",
+    ],
+    "/api/cron/companion-push-readiness": [
+      "**/supabase/workers/companion-push/.runtime/darwin-arm64/**",
+      "**/supabase/workers/companion-push/.runtime/sql-check-cache/**",
+      "**/supabase/workers/companion-push/*.test.*",
+    ],
   },
   // Circles is paused on the shared DB (mobile #351) and removed from web. Old
   // Circles links land on Community instead of a 404 or a "group not found".

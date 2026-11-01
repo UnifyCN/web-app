@@ -1,0 +1,59 @@
+{
+  "status": "runtime_gates_pass_canonical_unchanged_waiting_existing_standards_completion",
+  "web_base": "1a5885549d7e9f850ff20a07ca090c6a8faa3490",
+  "canonical_web": "/Users/savargupta/.t3/worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root",
+  "owned_runtime": "/private/tmp/unify-companion-359/hydration-focus-r5-root/web-runtime",
+  "source_changes": [
+    {
+      "path": "hooks/useAccountId.ts",
+      "base_sha256": "cf2b2b5670f71e7c90f21680d55013c943946cfed3ee1292e3c09e856d1232fc",
+      "sha256": "7131114669aff16049adf41d30b8cafe37d81ca07074b284f7df3ef498f26245"
+    },
+    {
+      "path": "components/companion/tasks/TaskSelectionAccountSession.test.tsx",
+      "base_sha256": "3756263f1b5818be569655eafa65ef243916fa962f47d11b57a8892af0040553",
+      "sha256": "7cc456d8d4cbafd09c5610569682f69741f2087ae263d692584297b97fe7672c"
+    }
+  ],
+  "spec_review_r5": "completed_read_held_REQUEST_CHANGES_R368_SPEC_5",
+  "spec_report": "/Volumes/Lexar/Dev.noindex/t3-worktrees/Unify/t3-e0bef4b3/DOCS/companion-actions/evidence/review-368-selection-r5-SPEC/report.md",
+  "standards_review_r5": "separate_existing_run_not_polled_or_interrupted",
+  "next": "After Standards completion, read final and hold task. Verify canonical still clean at1a588554. Apply only these two changed files from runtime. Preserve this evidence. Run required checks at final candidate, commit clean, and request new independent reviews. No ticket/native/integration acceptance.",
+  "durable_evidence": "/Users/savargupta/.t3/companion-359-root-evidence/hydration-focus-r5",
+  "results": {
+    "web": {
+      "passed": 760,
+      "failed": 0,
+      "skipped": 13,
+      "files": 71
+    },
+    "browser": {
+      "passed": 50,
+      "failed": 0,
+      "recorded_errors": []
+    },
+    "mutations": [
+      {
+        "name": "server-snapshot-as-key",
+        "exit": 1,
+        "passed": 22,
+        "failed": 6,
+        "all_assertion_failures": true
+      },
+      {
+        "name": "never-reset-account-key",
+        "exit": 1,
+        "passed": 22,
+        "failed": 6,
+        "all_assertion_failures": true
+      },
+      {
+        "name": "no-generation-subscription",
+        "exit": 1,
+        "passed": 19,
+        "failed": 9,
+        "all_assertion_failures": true
+      }
+    ]
+  }
+}

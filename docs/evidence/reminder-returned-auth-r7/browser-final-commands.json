@@ -1,0 +1,28 @@
+{
+  "runs": [
+    {
+      "name": "browser-final",
+      "exit": 0,
+      "seconds": 1.227628624998033,
+      "passed": 28,
+      "failed": [],
+      "errors": [],
+      "pageErrors": []
+    },
+    {
+      "name": "browser-base",
+      "exit": 1,
+      "seconds": 0.81393520799611,
+      "passed": 21,
+      "failed": [
+        {
+          "name": "returned SDK error keeps owner and new text",
+          "ok": false
+        }
+      ],
+      "errors": [],
+      "pageErrors": []
+    }
+  ],
+  "restored_auth_sha256": "813cec68492a19a9b4eb24d80f333ca439117cf77d67383fc1f51443b4be770c"
+}

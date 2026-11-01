@@ -5,6 +5,7 @@ import type {
   CompanionInputSource,
   CompanionTopic,
 } from "@/lib/companionAnalytics";
+import type { TaskActionResultProperties } from "@/lib/companionActions/analytics";
 
 /**
  * Typed PostHog product-event helpers for the web app. Each function mirrors the
@@ -469,3 +470,12 @@ export const trackSocialSearchPerformed = (p: {
     tab: p.tab,
     result_count: p.resultCount,
   });
+
+/* ---- Companion task actions (mobile-app#361) --------------------------- */
+
+/** Same name and properties as mobile. Categorical values only: never a task
+ *  title, waiting reason, receipt id or message text. Built by
+ *  `buildTaskActionResultProperties`, which drops anything off the allowlist. */
+export const trackCompanionActionResult = (
+  properties: TaskActionResultProperties,
+) => capture("companion_action_result", { ...properties });

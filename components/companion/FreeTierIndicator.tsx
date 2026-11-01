@@ -1,15 +1,14 @@
 "use client";
-
-import { Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { ChatbotUsage } from "@/types";
 
-/** Small free-tier usage line shown near the chat input. */
-export function FreeTierIndicator({ remaining }: { remaining: number }) {
-  const { t } = useTranslation();
-  return (
-    <p className="flex items-center justify-center gap-1 text-xs text-ink-placeholder">
-      <Sparkles className="h-3 w-3" aria-hidden />
-      {t("companion.messagesPerDayRemaining", { count: remaining })}
-    </p>
-  );
+/** Availability comes from the server. Unknown never means a fresh allowance. */
+export function FreeTierIndicator({ allowance }: { allowance?: ChatbotUsage }) {
+  const { t, i18n } = useTranslation();
+  return <p role="status" className="text-center text-xs text-ink-muted">
+    {!allowance ? t("companion.allowanceUnavailable") : allowance.isPremium
+      ? t("companion.allowancePremium")
+      : t("companion.allowanceRemaining", { remaining: allowance.remaining,
+          reset: new Date(allowance.resetsAt).toLocaleString(i18n.language, { timeZoneName: "short" }) })}
+  </p>;
 }

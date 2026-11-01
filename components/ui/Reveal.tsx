@@ -12,17 +12,25 @@ import { revealMotion } from "@/lib/motion";
  */
 export function Reveal({
   open,
+  instant = false,
   className,
   children,
 }: {
   open: boolean;
+  /** Keyboard activation opens content without an entrance animation. */
+  instant?: boolean;
   className?: string;
   children: ReactNode;
 }) {
   return (
     <AnimatePresence initial={false}>
       {open && (
-        <motion.div key="reveal" className={className} {...revealMotion}>
+        <motion.div
+          key="reveal"
+          className={className}
+          {...revealMotion}
+          initial={instant ? false : revealMotion.initial}
+        >
           {children}
         </motion.div>
       )}

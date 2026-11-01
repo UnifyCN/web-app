@@ -1,0 +1,127 @@
+{
+  "full_web": {
+    "passed": 754,
+    "failed": 0,
+    "skipped": 13,
+    "files": 71
+  },
+  "new_cases": [
+    {
+      "name": "the actual page applies selected task ownership on account change",
+      "status": "passed"
+    },
+    {
+      "name": "the actual page applies selected task ownership on token refresh",
+      "status": "passed"
+    },
+    {
+      "name": "clears a task selected inside the drawer on replacement without a page owner",
+      "status": "passed"
+    },
+    {
+      "name": "clears a task selected inside the drawer on sign-out/sign-in without a page owner",
+      "status": "passed"
+    },
+    {
+      "name": "clears a task selected inside the drawer on A/B/A without a page owner",
+      "status": "passed"
+    },
+    {
+      "name": "closes the Checklist task view when its account changes",
+      "status": "passed"
+    },
+    {
+      "name": "removes the old profile while the replacement account profile is pending",
+      "status": "passed"
+    },
+    {
+      "name": "keeps the initial page input and focus when the first session read finishes",
+      "status": "passed"
+    },
+    {
+      "name": "does not display an earlier profile returned after account replacement",
+      "status": "passed"
+    }
+  ],
+  "faults": [
+    {
+      "name": "final-cases-on-base",
+      "passed": 2,
+      "failed": 7,
+      "exit": 1,
+      "all_failures_at_assertion": true
+    },
+    {
+      "name": "fault-drawer-keeps-selection",
+      "passed": 6,
+      "failed": 3,
+      "exit": 1,
+      "all_failures_at_assertion": true
+    },
+    {
+      "name": "fault-companion-keeps-open-view",
+      "passed": 8,
+      "failed": 1,
+      "exit": 1,
+      "all_failures_at_assertion": true
+    },
+    {
+      "name": "fault-checklist-keeps-open-view",
+      "passed": 8,
+      "failed": 1,
+      "exit": 1,
+      "all_failures_at_assertion": true
+    },
+    {
+      "name": "fault-profile-not-cleared",
+      "passed": 8,
+      "failed": 1,
+      "exit": 1,
+      "all_failures_at_assertion": true
+    },
+    {
+      "name": "fault-profile-owner-not-checked",
+      "passed": 8,
+      "failed": 1,
+      "exit": 1,
+      "all_failures_at_assertion": true
+    },
+    {
+      "name": "fault-pending-generation-zero",
+      "passed": 8,
+      "failed": 1,
+      "exit": 1,
+      "all_failures_at_assertion": true
+    }
+  ],
+  "browser": {
+    "passed": 50,
+    "failed": 0,
+    "recorded_page_errors": []
+  },
+  "lint": [
+    {
+      "path": "supabase/probes/companion-context-362/context_rls_test.ts",
+      "errors": 7
+    },
+    {
+      "path": "supabase/tests/companion-actions/rollback_test.ts",
+      "errors": 1
+    },
+    {
+      "path": "supabase/tests/companion-actions/support.ts",
+      "errors": 4
+    }
+  ],
+  "preservation": {
+    "service_inputs": 163,
+    "service_by_repo": {
+      "web": 140,
+      "mobile": 23
+    },
+    "mirrors": 21,
+    "sql_mirrors": 16,
+    "passed": 188,
+    "failed": 0
+  }
+}

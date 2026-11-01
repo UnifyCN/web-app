@@ -1,0 +1,15 @@
+{
+  "exit": 1,
+  "seconds": 2.1718197080008395,
+  "restored": {
+    "lib/companion/composerDrafts.ts": "1f445d92a6c4a3660a7ec37af95bf803f82361e6c3533e703ca41a92de57dc5b",
+    "lib/companion/clearPrivateAccountWork.ts": "f12cdb03f6199b641ca2673110587530dfbd3ac437fb2227b504e49cb43707e2",
+    "hooks/useAuthUser.ts": "3eb021df6a6c4977b9032871f3496f42114dee5b42a5e8a7c0ccde019dc67d3c",
+    "hooks/useAccountId.ts": "a9ad49b064ea1ec7ee48f76ded7b7e35c4822af3445060259e0bb2fd3e102a17",
+    "hooks/useChecklist.ts": "73635e1759c032f9b723bc9ab7344b6d99e8d512cf9dae444d44e843c5fb3237",
+    "components/companion/ChatInput.tsx": "471d942129d322eae001d971688c0a3670f0145bd9166ac8454dc51bffeaf106",
+    "components/companion/ChatPanel.tsx": "c6201e6ad5c3fa343bf18729e2ee60861d58e1750ef01ed69b92b183a35a3095",
+    "components/companion/StarterPromptChips.tsx": "2e10ede6ad91a2734cbc1aa9f52a7d3ad4d4dd35dc9a7b1591d4e332f2aa7b60",
+    "components/learn/help/InLessonChat.tsx": "09e31ba8ac4310f5ff9f1823e4d1aea1fb22c7b4676187619a308c778d3d1d82"
+  }
+}

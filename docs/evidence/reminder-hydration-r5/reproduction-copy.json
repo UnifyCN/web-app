@@ -1,0 +1,6 @@
+{
+  "original_sha256": "fdb19eb62f57ca2f481b888f680689f43d340754d366eb16ef74f10e062079aa",
+  "only_change": "observer output path",
+  "old": "/Volumes/Lexar/Dev.noindex/t3-worktrees/Unify/t3-e0bef4b3/DOCS/companion-actions/evidence/review-368-selection-r5-SPEC/hydration-${mode}-state.json",
+  "new": "/private/tmp/unify-companion-359/hydration-focus-r5-root/evidence/hydration-${mode}-state.json"
+}

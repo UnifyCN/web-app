@@ -1,0 +1,1 @@
+components/companion/tasks/ReminderPresentation.test.tsx(88,18): error TS2339: Property 'disabled' does not exist on type 'HTMLElement'.

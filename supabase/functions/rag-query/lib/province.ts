@@ -27,6 +27,7 @@ export type CanadianProvince = (typeof CANADIAN_PROVINCES)[number];
 const ALIAS_TABLE: Record<string, CanadianProvince> = {
   ab: 'Alberta',
   bc: 'British Columbia',
+  'b.c': 'British Columbia',
   mb: 'Manitoba',
   nb: 'New Brunswick',
   nl: 'Newfoundland and Labrador',

@@ -1,0 +1,20 @@
+{
+  "base": "5575275f5e688601b22abb12536c1d5156ac4c40",
+  "exit": 1,
+  "has_timeout": false,
+  "original_sha256": {
+    "lib/accountSession.ts": "cae92c21940538db3633791d2bf577a5074290ea0d9247c3c27c2186b288f17b",
+    "hooks/useAccountId.ts": "6f3b670c8d8a2d31b9e7eb5fef89a2da4392debb3bcf8d062b0af7901a9842c4",
+    "hooks/useAuthUser.ts": "470237b8c4b84aa53b0c08aa1d99980957daeaa99dadc25a5e975e81674dfe65",
+    "hooks/useAccountScope.ts": "011591c75bbe440b3434a13f552581a006dfb11fc09e654fe3eda739fe7764a4",
+    "hooks/useChecklist.ts": "7a5b5d2c25b7331ae05a243f8b31953d694ea62302d37d032c3ae3a73ac6a061"
+  },
+  "restored_sha256": {
+    "lib/accountSession.ts": "6c470879e505bf9fa94011c980302d004241c7d5c6333e37155de7911c00d14a",
+    "hooks/useAccountId.ts": "ba39af535aa5efbd2f60fa30f60dc643222133683526e66c9164d30d9b6e713f",
+    "hooks/useAuthUser.ts": "09d5c928ced795c6def89566c1f0f3a12a36d7717bbcc6c48e46ee0196e4ffc6",
+    "hooks/useAccountScope.ts": "9e6baf3a7634141afb4dfaceb0205368fd165696d4cf094747824ec319d9bb85",
+    "hooks/useChecklist.ts": "247c4abe4b3ce681c24eb4b6e8f638106c82c520ba85226937d4e422df28656e"
+  },
+  "new_helper_files_present_but_unused_by_base": true
+}

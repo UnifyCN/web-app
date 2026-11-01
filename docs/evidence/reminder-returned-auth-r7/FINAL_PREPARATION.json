@@ -1,0 +1,21 @@
+{
+  "source": "/Users/savargupta/.t3/worktrees/Unify-Web-App/fix-reminder-standards-368-r1-root",
+  "head": "aeb1ba96df61d36fe2c15eb3f75ed09d34276adb",
+  "clean": true,
+  "prepared_bytes_unchanged": true,
+  "browser_port_3478_free": true,
+  "runtime_retained_stopped": "/Users/savargupta/.t3/companion-359-root-evidence/returned-auth-r7/web-runtime",
+  "build": {
+    "exit": 0,
+    "seconds": 13.50919150000118
+  },
+  "full_tests": {
+    "exit": 0,
+    "seconds": 7.666663458003313,
+    "passed": 776,
+    "failed": 0,
+    "skipped": 13,
+    "files": 72
+  },
+  "canonical_applied": false
+}
