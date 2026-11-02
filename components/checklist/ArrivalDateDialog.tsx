@@ -15,6 +15,12 @@ import {
 } from "@/lib/onboarding/arrivalCountdown";
 import { trackArrivalDateChanged } from "@/lib/analytics";
 
+/** Mobile's `arrival_date_changed`: days from today to the new date. */
+export function trackSavedArrivalDate({ arrivalDate }: { arrivalDate: string }) {
+  const days = getDaysUntilArrival(arrivalDate);
+  if (days !== null) trackArrivalDateChanged(days);
+}
+
 type Parts = { year: number | null; month: number | null; day: number | null };
 
 function toParts(date: string): Parts {
@@ -44,7 +50,9 @@ export function ArrivalDateDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const mutation = useUpdateArrivalDate();
+  // Tracked from the mutation itself, so the event is sent before the dialog
+  // closes and even if the card unmounts because the new date hides it.
+  const mutation = useUpdateArrivalDate({ onSaved: trackSavedArrivalDate });
   // The parent remounts this dialog for every opening (`key`), so each one
   // starts from the saved date and belongs to the account it opened for.
   const [parts, setParts] = useState<Parts>(() => toParts(arrivalDate));
@@ -66,13 +74,7 @@ export function ArrivalDateDialog({
     if (!canSave || picked === null) return;
     mutation.mutate(
       { arrivalDate: picked, expectedUserId: ownerId },
-      {
-        onSuccess: () => {
-          const days = getDaysUntilArrival(picked);
-          if (days !== null) trackArrivalDateChanged(days);
-          onClose();
-        },
-      },
+      { onSuccess: onClose },
     );
   };
 
