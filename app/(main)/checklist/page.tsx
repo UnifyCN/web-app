@@ -6,6 +6,7 @@ import { OverallProgressBar } from "@/components/checklist/OverallProgressBar";
 import { PrioritySection } from "@/components/checklist/PrioritySection";
 import { AddCustomTask } from "@/components/checklist/AddCustomTask";
 import { DeleteTaskModal } from "@/components/checklist/DeleteTaskModal";
+import { ArrivalCountdownCard } from "@/components/checklist/ArrivalCountdownCard";
 import {
   useAddCustomTask,
   useDeleteCustomTask,
@@ -142,6 +143,7 @@ export default function ChecklistPage() {
 
         {!error && (
           <div className="mt-5 space-y-4">
+            <ArrivalCountdownCard />
             <OverallProgressBar
               completed={completedCount}
               total={activeTasks.length}

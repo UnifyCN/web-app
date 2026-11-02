@@ -502,7 +502,24 @@
     "subtitle": "دليلك خطوة بخطوة للاستقرار في كندا.",
     "taskDescriptionAria": "وصف المهمة",
     "taskNamePlaceholder": "اسم المهمة",
-    "yourProgress": "تقدّمك"
+    "yourProgress": "تقدّمك",
+    "arrivalCountdown": {
+      "preArrival": "تبقّى {{count}} يوم حتى وصولك",
+      "preArrival_plural": "تبقّى {{count}} يوم حتى وصولك",
+      "preArrival_0": "تبقّى {{count}} يوم حتى وصولك",
+      "preArrival_1": "تبقّى يوم واحد حتى وصولك",
+      "preArrival_2": "تبقّى يومان حتى وصولك",
+      "preArrival_3": "تبقّت {{count}} أيام حتى وصولك",
+      "preArrival_4": "تبقّى {{count}} يومًا حتى وصولك",
+      "preArrival_5": "تبقّى {{count}} يوم حتى وصولك",
+      "first30Days": "أول 30 يومًا لك",
+      "changeHint": "غيّر تاريخ وصولك"
+    },
+    "arrivalDate": {
+      "sheetTitle": "تاريخ الوصول",
+      "save": "حفظ",
+      "saveError": "تعذّر حفظ تاريخ وصولك. حاول مرة أخرى."
+    }
   },
   "companion": {
     "goBack": "رجوع",
@@ -1466,7 +1483,9 @@
       "ariaMonth": "شهر الوصول",
       "ariaYear": "سنة الوصول",
       "promptDescription": "أضف الشهر الذي تخطط للوصول فيه، أو الشهر الذي وصلت فيه، لتتوافق قائمة مهامك ودروسك مع مرحلتك.",
-      "promptLater": "ليس الآن"
+      "promptLater": "ليس الآن",
+      "dayLabel": "اليوم",
+      "ariaDay": "يوم الوصول"
     },
     "location": {
       "title": "أين أنت في كندا؟",

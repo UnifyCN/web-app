@@ -502,7 +502,18 @@
     "subtitle": "ਕੈਨੇਡਾ ਵਿੱਚ ਵਸਣ ਲਈ ਤੁਹਾਡੀ ਕਦਮ-ਦਰ-ਕਦਮ ਗਾਈਡ।",
     "taskDescriptionAria": "ਕੰਮ ਦਾ ਵੇਰਵਾ",
     "taskNamePlaceholder": "ਕੰਮ ਦਾ ਨਾਮ",
-    "yourProgress": "ਤੁਹਾਡੀ ਪ੍ਰਗਤੀ"
+    "yourProgress": "ਤੁਹਾਡੀ ਪ੍ਰਗਤੀ",
+    "arrivalCountdown": {
+      "preArrival": "ਤੁਹਾਡੇ ਪਹੁੰਚਣ ਵਿੱਚ {{count}} ਦਿਨ ਬਾਕੀ",
+      "preArrival_plural": "ਤੁਹਾਡੇ ਪਹੁੰਚਣ ਵਿੱਚ {{count}} ਦਿਨ ਬਾਕੀ",
+      "first30Days": "ਤੁਹਾਡੇ ਪਹਿਲੇ 30 ਦਿਨ",
+      "changeHint": "ਆਪਣੀ ਆਮਦ ਦੀ ਤਾਰੀਖ਼ ਬਦਲੋ"
+    },
+    "arrivalDate": {
+      "sheetTitle": "ਆਮਦ ਦੀ ਤਾਰੀਖ਼",
+      "save": "ਸੇਵ ਕਰੋ",
+      "saveError": "ਅਸੀਂ ਤੁਹਾਡੀ ਆਮਦ ਦੀ ਤਾਰੀਖ਼ ਸੇਵ ਨਹੀਂ ਕਰ ਸਕੇ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
+    }
   },
   "companion": {
     "goBack": "ਵਾਪਸ ਜਾਓ",
@@ -1466,7 +1477,9 @@
       "ariaMonth": "ਪਹੁੰਚਣ ਦਾ ਮਹੀਨਾ",
       "ariaYear": "ਪਹੁੰਚਣ ਦਾ ਸਾਲ",
       "promptDescription": "ਉਹ ਮਹੀਨਾ ਜੋੜੋ ਜਦੋਂ ਤੁਸੀਂ ਪਹੁੰਚਣ ਦੀ ਯੋਜਨਾ ਬਣਾ ਰਹੇ ਹੋ, ਜਾਂ ਜਦੋਂ ਤੁਸੀਂ ਪਹੁੰਚੇ ਸੀ, ਤਾਂ ਜੋ ਤੁਹਾਡੀ ਚੈਕਲਿਸਟ ਅਤੇ ਪਾਠ ਤੁਹਾਡੀ ਸਥਿਤੀ ਨਾਲ ਮੇਲ ਖਾਣ।",
-      "promptLater": "ਹੁਣ ਨਹੀਂ"
+      "promptLater": "ਹੁਣ ਨਹੀਂ",
+      "dayLabel": "ਦਿਨ",
+      "ariaDay": "ਆਮਦ ਦਾ ਦਿਨ"
     },
     "location": {
       "title": "ਤੁਸੀਂ ਕੈਨੇਡਾ ਵਿੱਚ ਕਿੱਥੇ ਹੋ?",

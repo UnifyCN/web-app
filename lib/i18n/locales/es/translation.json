@@ -502,7 +502,18 @@
     "subtitle": "Tu guía paso a paso para establecerte en Canadá.",
     "taskDescriptionAria": "Descripción de la tarea",
     "taskNamePlaceholder": "Nombre de la tarea",
-    "yourProgress": "Tu progreso"
+    "yourProgress": "Tu progreso",
+    "arrivalCountdown": {
+      "preArrival": "Falta {{count}} día para tu llegada",
+      "preArrival_plural": "Faltan {{count}} días para tu llegada",
+      "first30Days": "Tus primeros 30 días",
+      "changeHint": "Cambiar tu fecha de llegada"
+    },
+    "arrivalDate": {
+      "sheetTitle": "Fecha de llegada",
+      "save": "Guardar",
+      "saveError": "No pudimos guardar tu fecha de llegada. Inténtalo de nuevo."
+    }
   },
   "companion": {
     "goBack": "Regresar",
@@ -1466,7 +1477,9 @@
       "ariaMonth": "Mes de llegada",
       "ariaYear": "Año de llegada",
       "promptDescription": "Añade el mes en que planeas llegar, o el mes en que llegaste, para que tu lista de tareas y tus lecciones coincidan con tu situación.",
-      "promptLater": "Ahora no"
+      "promptLater": "Ahora no",
+      "dayLabel": "Día",
+      "ariaDay": "Día de llegada"
     },
     "location": {
       "title": "¿En qué parte de Canadá estás?",
