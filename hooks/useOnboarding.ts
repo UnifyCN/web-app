@@ -1,7 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as onboarding from "@/services/onboarding";
-import { calculateUserStage } from "@/lib/onboarding/calculateUserStage";
-import type { UserProfile } from "@/types";
+import {
+  arrivalDateMutationOptions,
+  type ArrivalDateVars,
+} from "@/lib/onboarding/arrivalDateMutation";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
 import { TASKS_KEY } from "@/hooks/useChecklist";
 import { LEARNING_PROGRESS_KEY, MODULES_KEY } from "@/hooks/useLearn";
@@ -44,32 +46,22 @@ export function useUpdateLearningReminders() {
 }
 
 /**
- * Save the arrival month from the one-time prompt; refreshes everything the
- * stage feeds (profile, checklist, Learn).
+ * Save the arrival date (one-time prompt, countdown dialog). Shows the new
+ * date and stage at once for the account it was saved for, then refreshes
+ * everything the stage feeds (profile, checklist, Learn). `onSaved` runs even
+ * if the caller has unmounted by then (see arrivalDateMutationOptions).
  */
-export function useUpdateArrivalDate() {
+export function useUpdateArrivalDate(
+  { onSaved }: { onSaved?: (vars: ArrivalDateVars) => void } = {},
+) {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: onboarding.updateArrivalDate,
-    onSuccess: (_data, { arrivalDate }) => {
-      // Show the new date and stage at once (the countdown card reads them),
-      // then refetch to confirm.
-      queryClient.setQueryData<UserProfile | null>(CURRENT_USER_KEY, (old) =>
-        old?.onboarding
-          ? {
-              ...old,
-              onboarding: {
-                ...old.onboarding,
-                arrivalDate,
-                stage: calculateUserStage(arrivalDate),
-              },
-            }
-          : old,
-      );
-      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
-      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
-      queryClient.invalidateQueries({ queryKey: MODULES_KEY });
-      queryClient.invalidateQueries({ queryKey: LEARNING_PROGRESS_KEY });
-    },
-  });
+  return useMutation(
+    arrivalDateMutationOptions({
+      queryClient,
+      mutationFn: onboarding.updateArrivalDate,
+      currentUserKey: CURRENT_USER_KEY,
+      invalidateKeys: [TASKS_KEY, MODULES_KEY, LEARNING_PROGRESS_KEY],
+      onSaved,
+    }),
+  );
 }

@@ -1,4 +1,5 @@
 import { getDaysUntilArrival } from "@/lib/onboarding/arrivalStage";
+import { calculateUserStage } from "@/lib/onboarding/calculateUserStage";
 
 /*
  * The Checklist's arrival countdown, as on mobile
@@ -71,4 +72,58 @@ export function claimCountdownShown(userId: string, day: string): boolean {
     // Storage blocked: the in-memory claim above still limits it to once.
   }
   return true;
+}
+
+/**
+ * Cross-tab version of claimCountdownShown. Two tabs of the same user can
+ * both read an empty marker before either writes it, so the read and write
+ * run inside an exclusive Web Lock shared by every tab of this origin
+ * (Chrome 69+, Firefox 96+, Safari 15.4+). Without the Locks API it falls back
+ * to claimCountdownShown.
+ */
+export async function claimCountdownShownAcrossTabs(
+  userId: string,
+  day: string,
+): Promise<boolean> {
+  const locks =
+    typeof navigator !== "undefined" ? navigator.locks : undefined;
+  if (!locks?.request) return claimCountdownShown(userId, day);
+  try {
+    return await locks.request(`${SHOWN_PREFIX}:${userId}`, () =>
+      claimCountdownShown(userId, day),
+    );
+  } catch {
+    return claimCountdownShown(userId, day);
+  }
+}
+
+/**
+ * Whether the stage (and so the checklist) differs between two local days,
+ * e.g. the night the user arrives (stage 0 -> 1). Days are YYYY-MM-DD.
+ */
+export function stageChangedOvernight(
+  arrivalDate: string | null | undefined,
+  previousDay: string,
+  nextDay: string,
+): boolean {
+  if (!arrivalDate) return false;
+  const at = (d: string) => {
+    const [y, m, dd] = d.split("-").map(Number);
+    return new Date(y, m - 1, dd, 12);
+  };
+  return (
+    calculateUserStage(arrivalDate, at(previousDay)) !==
+    calculateUserStage(arrivalDate, at(nextDay))
+  );
+}
+
+/**
+ * The countdown's date dialog is open only while the account it was opened
+ * for is still the signed-in one; a different account closes it.
+ */
+export function isDialogOpenFor(
+  editingFor: string | null,
+  signedInUserId: string | null,
+): boolean {
+  return editingFor !== null && editingFor === signedInUserId;
 }
