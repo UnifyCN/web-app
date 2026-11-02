@@ -13,6 +13,7 @@ import {
   formatLocalDate,
   getArrivalCountdown,
   isDialogOpenFor,
+  shouldClearEditingFor,
   stageChangedOvernight,
 } from "@/lib/onboarding/arrivalCountdown";
 import { trackArrivalCountdownShown } from "@/lib/analytics";
@@ -38,6 +39,10 @@ export function ArrivalCountdownCard() {
   const [opening, setOpening] = useState(0);
 
   const userId = user?.id ?? null;
+  // Another account signed in: forget the owner (adjusting state during
+  // render, React's pattern for state derived from props), so switching back
+  // never reopens the dialog without a click.
+  if (shouldClearEditingFor(editingFor, userId)) setEditingFor(null);
   const dialogOpen = isDialogOpenFor(editingFor, userId);
   const arrivalDate = user?.onboarding?.arrivalDate ?? null;
   const countdown = useMemo(
@@ -48,13 +53,11 @@ export function ArrivalCountdownCard() {
 
   useEffect(() => {
     if (!userId || countdown.state === "hidden") return;
-    let current = true;
-    void claimCountdownShownAcrossTabs(userId, day).then((claimed) => {
-      if (claimed && current) trackArrivalCountdownShown(countdown);
-    });
-    return () => {
-      current = false;
-    };
+    // The event is sent inside the claim, so it is never lost if this effect
+    // cleans up while the cross-tab lock is still queued.
+    void claimCountdownShownAcrossTabs(userId, day, () =>
+      trackArrivalCountdownShown(countdown),
+    );
   }, [userId, day, countdown]);
 
   // When the local day rolls over into a new stage (e.g. arrival day), the

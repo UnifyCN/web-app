@@ -5,6 +5,7 @@ import { MutationObserver, QueryClient } from "@tanstack/react-query";
 import type { UserProfile } from "@/types";
 import {
   isDialogOpenFor,
+  shouldClearEditingFor,
   stageChangedOvernight,
 } from "./arrivalCountdown";
 import {
@@ -93,6 +94,13 @@ describe("3. the dialog closes if another account signs in", () => {
     expect(isDialogOpenFor("a", null)).toBe(false);
     expect(isDialogOpenFor(null, "a")).toBe(false);
   });
+
+  it("forgets the owner once another account signs in, so it never reopens by itself", () => {
+    expect(shouldClearEditingFor("a", "b")).toBe(true);
+    expect(shouldClearEditingFor("a", null)).toBe(true);
+    expect(shouldClearEditingFor("a", "a")).toBe(false);
+    expect(shouldClearEditingFor(null, "b")).toBe(false);
+  });
 });
 
 describe("4. the profile cache is patched only for the account that saved", () => {
@@ -169,6 +177,12 @@ describe("5. 'countdown shown' is claimed once across tabs", () => {
     ]);
     expect(results.filter(Boolean)).toHaveLength(1);
     expect(names).toEqual(["arrival_countdown_shown:u1", "arrival_countdown_shown:u1"]);
+    // The event callback runs with the winning claim, inside the lock, even if
+    // the caller is gone before the promise settles.
+    const sent = vi.fn();
+    void tab1.claimCountdownShownAcrossTabs("u3", "2026-11-02", sent);
+    void tab2.claimCountdownShownAcrossTabs("u3", "2026-11-02", sent);
+    await vi.waitFor(() => expect(sent).toHaveBeenCalledTimes(1));
     // Next day it can be claimed again.
     expect(await tab2.claimCountdownShownAcrossTabs("u1", "2026-11-03")).toBe(true);
   });

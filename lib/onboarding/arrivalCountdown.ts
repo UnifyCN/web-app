@@ -84,16 +84,28 @@ export function claimCountdownShown(userId: string, day: string): boolean {
 export async function claimCountdownShownAcrossTabs(
   userId: string,
   day: string,
+  onClaimed?: () => void,
 ): Promise<boolean> {
+  // `onClaimed` runs in the same step as the marker write, so a claimed day
+  // always sends its event, even if the caller has gone away by then.
+  const claim = () => {
+    const claimed = claimCountdownShown(userId, day);
+    if (claimed && onClaimed) {
+      try {
+        onClaimed();
+      } catch (err) {
+        console.warn("[arrivalCountdown] shown event failed", err);
+      }
+    }
+    return claimed;
+  };
   const locks =
     typeof navigator !== "undefined" ? navigator.locks : undefined;
-  if (!locks?.request) return claimCountdownShown(userId, day);
+  if (!locks?.request) return claim();
   try {
-    return await locks.request(`${SHOWN_PREFIX}:${userId}`, () =>
-      claimCountdownShown(userId, day),
-    );
+    return await locks.request(`${SHOWN_PREFIX}:${userId}`, claim);
   } catch {
-    return claimCountdownShown(userId, day);
+    return claim();
   }
 }
 
@@ -115,6 +127,17 @@ export function stageChangedOvernight(
     calculateUserStage(arrivalDate, at(previousDay)) !==
     calculateUserStage(arrivalDate, at(nextDay))
   );
+}
+
+/**
+ * Once another account (or no account) is signed in, the dialog's owner is
+ * forgotten, so switching back never reopens it by itself.
+ */
+export function shouldClearEditingFor(
+  editingFor: string | null,
+  signedInUserId: string | null,
+): boolean {
+  return editingFor !== null && editingFor !== signedInUserId;
 }
 
 /**
