@@ -502,7 +502,18 @@
     "subtitle": "Your step-by-step guide to settling into Canada.",
     "taskDescriptionAria": "Task description",
     "taskNamePlaceholder": "Task name",
-    "yourProgress": "Your progress"
+    "yourProgress": "Your progress",
+    "arrivalCountdown": {
+      "preArrival": "{{count}} day until you land",
+      "preArrival_plural": "{{count}} days until you land",
+      "first30Days": "Your first 30 days",
+      "changeHint": "Change your arrival date"
+    },
+    "arrivalDate": {
+      "sheetTitle": "Arrival date",
+      "save": "Save",
+      "saveError": "We couldn't save your arrival date. Please try again."
+    }
   },
   "companion": {
     "goBack": "Go back",
@@ -1466,7 +1477,9 @@
       "ariaMonth": "Arrival month",
       "ariaYear": "Arrival year",
       "promptDescription": "Add the month you plan to arrive, or the month you arrived, so your checklist and lessons match where you are.",
-      "promptLater": "Not now"
+      "promptLater": "Not now",
+      "dayLabel": "Day",
+      "ariaDay": "Arrival day"
     },
     "location": {
       "title": "Where in Canada are you?",

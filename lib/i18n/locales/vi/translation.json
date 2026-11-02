@@ -502,7 +502,18 @@
     "subtitle": "Hướng dẫn từng bước để bạn ổn định cuộc sống tại Canada.",
     "taskDescriptionAria": "Mô tả nhiệm vụ",
     "taskNamePlaceholder": "Tên nhiệm vụ",
-    "yourProgress": "Tiến trình của bạn"
+    "yourProgress": "Tiến trình của bạn",
+    "arrivalCountdown": {
+      "preArrival": "Còn {{count}} ngày nữa bạn sẽ đến",
+      "preArrival_plural": "Còn {{count}} ngày nữa bạn sẽ đến",
+      "first30Days": "30 ngày đầu tiên của bạn",
+      "changeHint": "Đổi ngày đến của bạn"
+    },
+    "arrivalDate": {
+      "sheetTitle": "Ngày đến",
+      "save": "Lưu",
+      "saveError": "Không thể lưu ngày đến của bạn. Vui lòng thử lại."
+    }
   },
   "companion": {
     "goBack": "Quay lại",
@@ -1466,7 +1477,9 @@
       "ariaMonth": "Tháng đến",
       "ariaYear": "Năm đến",
       "promptDescription": "Hãy thêm tháng bạn dự định đến, hoặc tháng bạn đã đến, để danh sách việc cần làm và bài học phù hợp với giai đoạn của bạn.",
-      "promptLater": "Để sau"
+      "promptLater": "Để sau",
+      "dayLabel": "Ngày",
+      "ariaDay": "Ngày đến (ngày)"
     },
     "location": {
       "title": "Bạn đang ở đâu tại Canada?",

@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as onboarding from "@/services/onboarding";
+import { calculateUserStage } from "@/lib/onboarding/calculateUserStage";
+import type { UserProfile } from "@/types";
 import { CURRENT_USER_KEY } from "@/hooks/useProfile";
 import { TASKS_KEY } from "@/hooks/useChecklist";
 import { LEARNING_PROGRESS_KEY, MODULES_KEY } from "@/hooks/useLearn";
@@ -49,7 +51,21 @@ export function useUpdateArrivalDate() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: onboarding.updateArrivalDate,
-    onSuccess: () => {
+    onSuccess: (_data, { arrivalDate }) => {
+      // Show the new date and stage at once (the countdown card reads them),
+      // then refetch to confirm.
+      queryClient.setQueryData<UserProfile | null>(CURRENT_USER_KEY, (old) =>
+        old?.onboarding
+          ? {
+              ...old,
+              onboarding: {
+                ...old.onboarding,
+                arrivalDate,
+                stage: calculateUserStage(arrivalDate),
+              },
+            }
+          : old,
+      );
       queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
       queryClient.invalidateQueries({ queryKey: TASKS_KEY });
       queryClient.invalidateQueries({ queryKey: MODULES_KEY });

@@ -502,7 +502,18 @@
     "subtitle": "कनाडा में बसने के लिए आपकी चरण-दर-चरण गाइड।",
     "taskDescriptionAria": "कार्य विवरण",
     "taskNamePlaceholder": "कार्य का नाम",
-    "yourProgress": "आपकी प्रगति"
+    "yourProgress": "आपकी प्रगति",
+    "arrivalCountdown": {
+      "preArrival": "आपके पहुँचने में {{count}} दिन बाकी",
+      "preArrival_plural": "आपके पहुँचने में {{count}} दिन बाकी",
+      "first30Days": "आपके पहले 30 दिन",
+      "changeHint": "अपनी आगमन तिथि बदलें"
+    },
+    "arrivalDate": {
+      "sheetTitle": "आगमन तिथि",
+      "save": "सहेजें",
+      "saveError": "हम आपकी आगमन तिथि सहेज नहीं सके। कृपया फिर से कोशिश करें।"
+    }
   },
   "companion": {
     "goBack": "वापस जाएं",
@@ -1466,7 +1477,9 @@
       "ariaMonth": "आगमन का महीना",
       "ariaYear": "आगमन का वर्ष",
       "promptDescription": "वह महीना जोड़ें जब आप पहुँचने की योजना बना रहे हैं, या जब आप पहुँचे थे, ताकि आपकी चेकलिस्ट और पाठ आपकी स्थिति के अनुसार हों।",
-      "promptLater": "अभी नहीं"
+      "promptLater": "अभी नहीं",
+      "dayLabel": "दिन",
+      "ariaDay": "आगमन का दिन"
     },
     "location": {
       "title": "आप कनाडा में कहां हैं?",

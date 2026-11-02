@@ -502,7 +502,18 @@
     "subtitle": "Votre guide étape par étape pour vous établir au Canada.",
     "taskDescriptionAria": "Description de la tâche",
     "taskNamePlaceholder": "Nom de la tâche",
-    "yourProgress": "Votre progression"
+    "yourProgress": "Votre progression",
+    "arrivalCountdown": {
+      "preArrival": "{{count}} jour avant votre arrivée",
+      "preArrival_plural": "{{count}} jours avant votre arrivée",
+      "first30Days": "Vos 30 premiers jours",
+      "changeHint": "Modifier votre date d'arrivée"
+    },
+    "arrivalDate": {
+      "sheetTitle": "Date d'arrivée",
+      "save": "Enregistrer",
+      "saveError": "Nous n'avons pas pu enregistrer votre date d'arrivée. Veuillez réessayer."
+    }
   },
   "companion": {
     "goBack": "Retour",
@@ -1466,7 +1477,9 @@
       "ariaMonth": "Mois d'arrivée",
       "ariaYear": "Année d'arrivée",
       "promptDescription": "Indiquez le mois où vous prévoyez arriver, ou celui où vous êtes arrivé, pour que votre liste de tâches et vos leçons correspondent à votre situation.",
-      "promptLater": "Pas maintenant"
+      "promptLater": "Pas maintenant",
+      "dayLabel": "Jour",
+      "ariaDay": "Jour d'arrivée"
     },
     "location": {
       "title": "Où êtes-vous au Canada?",

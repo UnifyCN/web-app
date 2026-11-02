@@ -310,6 +310,21 @@ export const trackQuizCompleted = (p: {
 
 /* ---- Checklist -------------------------------------------------------- */
 
+/** Mobile's `arrival_countdown_shown`: at most once per user per local day. */
+export const trackArrivalCountdownShown = (
+  p: { state: "pre_arrival"; days: number } | { state: "first_30_days" },
+) =>
+  capture(
+    "arrival_countdown_shown",
+    p.state === "pre_arrival"
+      ? { state: p.state, days_until_arrival: p.days }
+      : { state: p.state },
+  );
+
+/** Mobile's `arrival_date_changed`; negative when the new date is past. */
+export const trackArrivalDateChanged = (daysUntilArrival: number) =>
+  capture("arrival_date_changed", { days_until_arrival: daysUntilArrival });
+
 export const trackChecklistTaskCompleted = (p: {
   taskTitle: string;
   taskPriority: string;
