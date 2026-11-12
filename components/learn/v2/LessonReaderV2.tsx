@@ -19,11 +19,11 @@ import {
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { SelectableLessonContent } from "@/components/learn/SelectableLessonContent";
 import { ExplainTermModal } from "@/components/learn/ExplainTermModal";
-import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import type { SanityBlock } from "@/types";
 import type { LessonStep } from "@/lib/learn/v2/types";
 import { ProgressBar } from "./BackLink";
 import { LessonSectionsV2 } from "./LessonSectionsV2";
+import { ActivityStepV2 } from "./ActivityStepV2";
 
 export interface ActivityRenderProps {
   step: LessonStep;
@@ -221,7 +221,7 @@ export function LessonReaderV2({
             <h1 className="text-2xl font-bold tracking-tight text-ink-secondary md:text-[32px] md:leading-tight">
               {lesson.title}
             </h1>
-            {step.title && step.title !== lesson.title && (
+            {!step.activity && step.title && step.title !== lesson.title && (
               <p className="text-base font-semibold text-ink-tertiary">
                 {step.title}
               </p>
@@ -229,10 +229,11 @@ export function LessonReaderV2({
           </header>
 
           {step.activity ? (
-            <ReadOnlyActivity
+            <ActivityStepV2
               key={step._key}
               step={step}
               onReady={onActivityReady}
+              ids={ids}
             />
           ) : (
             <LessonSectionsV2
@@ -277,22 +278,6 @@ export function LessonReaderV2({
         term={askTerm}
         lessonContext={lesson?.title}
         onClose={() => setAskTerm(null)}
-      />
-    </div>
-  );
-}
-
-/** Fallback activity view: the instructions as text, Next open. */
-function ReadOnlyActivity({ step, onReady }: ActivityRenderProps) {
-  useEffect(() => onReady(true), [onReady]);
-  return (
-    <div className="text-sm leading-6">
-      <PortableTextRenderer
-        value={
-          (step.activity?.instructions ?? []).filter(
-            (b) => (b as { _type?: string })._type === "block",
-          ) as SanityBlock[]
-        }
       />
     </div>
   );
