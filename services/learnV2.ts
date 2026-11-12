@@ -203,10 +203,27 @@ export async function getLessonV2(
 const PROGRESS_COLUMNS =
   "sanity_lesson_id, sanity_submodule_id, sanity_module_id, is_completed, is_in_progress, progress_percent, total_pages, completed_pages, current_page_type, current_page_number, current_quiz_id, current_question_number, last_accessed_at";
 
-/** The signed-in user's lesson progress rows. Empty when signed out or when
- * Supabase isn't configured. */
+/**
+ * In-memory progress for the env-not-configured (local dev / mock profile)
+ * path, so the reader, resume card and percentages work end to end without a
+ * database. Real persistence uses `user_lesson_progress` whenever Supabase is
+ * configured. Same merge rule as an upsert: later fields win.
+ */
+const mockProgress = new Map<string, LessonProgressRow>();
+
+function writeMockProgress(body: Record<string, unknown>): boolean {
+  const id = body.sanity_lesson_id as string;
+  mockProgress.set(id, {
+    ...mockProgress.get(id),
+    ...body,
+  } as LessonProgressRow);
+  return true;
+}
+
+/** The signed-in user's lesson progress rows. Empty when signed out; the
+ * in-memory rows when Supabase isn't configured. */
 export async function getLessonProgressRows(): Promise<LessonProgressRow[]> {
-  if (!isSupabaseConfigured()) return [];
+  if (!isSupabaseConfigured()) return [...mockProgress.values()];
   const userId = await getAuthUserId();
   if (!userId) return [];
   const { data, error } = await createClient()
@@ -243,7 +260,7 @@ async function upsertProgress(
   lessonId: string,
   build: (userId: string) => Record<string, unknown>,
 ): Promise<boolean> {
-  if (!isSupabaseConfigured()) return false;
+  if (!isSupabaseConfigured()) return writeMockProgress(build("mock-user"));
   // Read the user when the write is requested, not when its turn comes.
   const userIdPromise = getAuthUserId();
   return enqueueLessonWrite(lessonId, async () => {
