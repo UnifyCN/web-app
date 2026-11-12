@@ -293,7 +293,8 @@
     "announcementBody": "Mantén presionada cualquier palabra o frase en una lección para resaltarla o pedirle a la IA que la explique. Tus resaltados se guardan en 'Guardado de Aprender' en tu perfil.",
     "module": {
       "errorLoading": "Error al cargar el módulo: {{message}}",
-      "section": "Sección {{number}}"
+      "section": "Sección {{number}}",
+      "introduction": "Introducción"
     },
     "submodule": {
       "learnTitle": "Aprender",
@@ -438,7 +439,27 @@
       "correct": "Correcto",
       "tryAgain": "Inténtalo de nuevo",
       "nextLesson": "Siguiente lección",
-      "sections": "Secciones de la lección"
+      "sections": "Secciones de la lección",
+      "lessonNumber": "Lección {{number}}",
+      "moduleNumber": "Módulo {{number}}"
+    },
+    "home": {
+      "heading": "Establécete con confianza",
+      "subtitle": "Lecciones prácticas para ayudarte a prepararte para la vida en Canadá.",
+      "continue": "Continuar aprendiendo",
+      "moreLessons": "Más lecciones en curso",
+      "courses": "Cursos",
+      "all": "Todos",
+      "started": "Iniciados",
+      "emptyStarted": "Tus cursos iniciados aparecerán aquí.",
+      "modules": "Módulos",
+      "moduleCount": "Módulos: {{count}}",
+      "lessonCount": "Lecciones: {{count}}",
+      "lessonSummary": "{{count}} lecciones · {{done}} completadas",
+      "upNext": "A continuación",
+      "close": "Cerrar",
+      "tabLabel": "Aprender",
+      "completionSummary": "{{completed}} de {{total}} lecciones completadas"
     }
   },
   "checklist": {

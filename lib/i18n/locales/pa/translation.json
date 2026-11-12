@@ -293,7 +293,8 @@
     "announcementBody": "ਪਾਠ ਵਿੱਚ ਕਿਸੇ ਵੀ ਸ਼ਬਦ ਜਾਂ ਵਾਕੰਸ਼ ਨੂੰ ਹਾਈਲਾਈਟ ਕਰਨ ਜਾਂ AI ਤੋਂ ਸਮਝਾਉਣ ਲਈ ਪੁੱਛਣ ਵਾਸਤੇ ਲੰਬੀ ਦਬਾਓ। ਤੁਹਾਡੀਆਂ ਹਾਈਲਾਈਟਸ ਤੁਹਾਡੀ ਪ੍ਰੋਫਾਈਲ ਵਿੱਚ 'Learn ਤੋਂ ਸੇਵ ਕੀਤਾ' ਹੇਠ ਸੇਵ ਹੁੰਦੀਆਂ ਹਨ।",
     "module": {
       "errorLoading": "ਮੌਡਿਊਲ ਲੋਡ ਕਰਨ ਵਿੱਚ ਗੜਬੜ: {{message}}",
-      "section": "ਸੈਕਸ਼ਨ {{number}}"
+      "section": "ਸੈਕਸ਼ਨ {{number}}",
+      "introduction": "ਜਾਣ-ਪਛਾਣ"
     },
     "submodule": {
       "learnTitle": "ਸਿੱਖੋ",
@@ -438,7 +439,27 @@
       "correct": "ਸਹੀ",
       "tryAgain": "ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
       "nextLesson": "ਅਗਲਾ ਪਾਠ",
-      "sections": "ਪਾਠ ਦੇ ਭਾਗ"
+      "sections": "ਪਾਠ ਦੇ ਭਾਗ",
+      "lessonNumber": "ਪਾਠ {{number}}",
+      "moduleNumber": "ਮੋਡੀਊਲ {{number}}"
+    },
+    "home": {
+      "heading": "ਭਰੋਸੇ ਨਾਲ ਵੱਸੋ",
+      "subtitle": "ਕੈਨੇਡਾ ਵਿੱਚ ਜੀਵਨ ਦੀ ਤਿਆਰੀ ਵਿੱਚ ਤੁਹਾਡੀ ਮਦਦ ਕਰਨ ਲਈ ਵਿਹਾਰਕ ਪਾਠ।",
+      "continue": "ਸਿੱਖਣਾ ਜਾਰੀ ਰੱਖੋ",
+      "moreLessons": "ਹੋਰ ਜਾਰੀ ਪਾਠ",
+      "courses": "ਕੋਰਸ",
+      "all": "ਸਾਰੇ",
+      "started": "ਸ਼ੁਰੂ ਕੀਤੇ",
+      "emptyStarted": "ਤੁਹਾਡੇ ਸ਼ੁਰੂ ਕੀਤੇ ਕੋਰਸ ਇੱਥੇ ਦਿਖਾਈ ਦੇਣਗੇ।",
+      "modules": "ਮੋਡੀਊਲ",
+      "moduleCount": "ਮੋਡੀਊਲ: {{count}}",
+      "lessonCount": "ਪਾਠ: {{count}}",
+      "lessonSummary": "{{count}} ਪਾਠ · {{done}} ਪੂਰੇ",
+      "upNext": "ਅੱਗੇ",
+      "close": "ਬੰਦ ਕਰੋ",
+      "tabLabel": "ਸਿੱਖੋ",
+      "completionSummary": "{{total}} ਵਿੱਚੋਂ {{completed}} ਪਾਠ ਪੂਰੇ ਹੋਏ"
     }
   },
   "checklist": {

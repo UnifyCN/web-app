@@ -258,3 +258,64 @@ export const LESSON_QUIZ_QUERY = `*[_type == "quiz" && lesson._ref == $lessonId 
   ${QUIZ_QUESTION_FIELDS},
   ${i18nOverlay(`title, description, ${QUIZ_QUESTION_FIELDS}`)}
 }`;
+
+/* ---- Learn v2 (behind NEXT_PUBLIC_LEARN_V2) ---------------------------- */
+
+/** Lesson stub for v2 lists: block-aware step counts (mobile
+ * `services/sanity/modules.ts`), the steps' reading data, and quiz question
+ * counts, which together give the progress denominator. */
+const LESSON_V2_STUB = `_id,
+      _type,
+      title,
+      slug,
+      description,
+      order,
+      "lesson_page_count": select(count(content_blocks) > 0 => count(content_blocks), count(pages)),
+      "activity_page_count": select(count(content_blocks) > 0 => 0, count(activity_pages)),
+      "ending_page_count": select(count(content_blocks) > 0 => 0, count(ending_pages)),
+      "steps": select(count(content_blocks) > 0 => content_blocks[_type == "lesson_content"]{ content, sections, readingMinutes }, pages[]{ content, sections, readingMinutes }),
+      "quizzes": *[_type == "quiz" && references(^._id) && ${BASE_LANG}] | order(order_number) { _id, "question_count": count(questions) },
+      ${i18nOverlay("title, description")}`;
+
+/** One course (Sanity `module`) with its modules (`submodule`) and lesson
+ * stubs, for the v2 course, module and home screens. Params: `$moduleId`, `$lang`. */
+export const COURSE_V2_QUERY = `*[_type == "module" && _id == $moduleId][0] {
+  _id,
+  _type,
+  title,
+  description,
+  icon,
+  province,
+  ${i18nOverlay("title, description")},
+  "submodules": *[_type == "submodule" && references(^._id) && ${BASE_LANG}] | order(order) {
+    _id,
+    _type,
+    title,
+    description,
+    order,
+    "practice_count": count(*[_type == "practice" && submodule._ref == ^._id && ${BASE_LANG}]),
+    "intro_page_count": count(intro_pages),
+    ${i18nOverlay("title, description")},
+    "lessons": *[_type == "lesson" && references(^._id) && ${BASE_LANG}] | order(order) {
+      ${LESSON_V2_STUB}
+    }
+  }
+}`;
+
+/** A lesson with its ordered `content_blocks` and the legacy arrays (for old
+ * resume positions), with the language overlay. Params: `$lessonId`, `$lang`. */
+export const LESSON_V2_QUERY = `*[_type == "lesson" && _id == $lessonId && ${BASE_LANG}][0] {
+  _id,
+  _type,
+  title,
+  slug,
+  description,
+  submodule,
+  order,
+  content_blocks,
+  pages,
+  activity_pages,
+  ending_pages,
+  "quizzes": *[_type == "quiz" && references(^._id) && ${BASE_LANG}] | order(order_number) { _id, "question_count": count(questions) },
+  ${i18nOverlay("title, description, content_blocks, pages, activity_pages, ending_pages")}
+}`;

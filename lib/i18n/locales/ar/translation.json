@@ -293,7 +293,8 @@
     "announcementBody": "اضغط مطوّلًا على أي كلمة أو عبارة في الدرس لتظليلها أو لتطلب من الذكاء الاصطناعي شرحها. تُحفظ تظليلاتك ضمن 'محفوظات من التعلّم' في ملفك الشخصي.",
     "module": {
       "errorLoading": "خطأ في تحميل الوحدة: {{message}}",
-      "section": "القسم {{number}}"
+      "section": "القسم {{number}}",
+      "introduction": "مقدمة"
     },
     "submodule": {
       "learnTitle": "تعلّم",
@@ -438,7 +439,27 @@
       "correct": "صحيح",
       "tryAgain": "حاول مرة أخرى",
       "nextLesson": "الدرس التالي",
-      "sections": "أقسام الدرس"
+      "sections": "أقسام الدرس",
+      "lessonNumber": "الدرس {{number}}",
+      "moduleNumber": "الوحدة {{number}}"
+    },
+    "home": {
+      "heading": "استقر بثقة",
+      "subtitle": "دروس عملية تساعدك على الاستعداد للحياة في كندا.",
+      "continue": "متابعة التعلّم",
+      "moreLessons": "دروس أخرى قيد التعلّم",
+      "courses": "الدورات",
+      "all": "الكل",
+      "started": "بدأت",
+      "emptyStarted": "ستظهر الدورات التي بدأتها هنا.",
+      "modules": "الوحدات",
+      "moduleCount": "الوحدات: {{count}}",
+      "lessonCount": "الدروس: {{count}}",
+      "lessonSummary": "{{count}} دروس · {{done}} مكتملة",
+      "upNext": "التالي",
+      "close": "إغلاق",
+      "tabLabel": "تعلّم",
+      "completionSummary": "اكتمل {{completed}} من أصل {{total}} درسًا"
     }
   },
   "checklist": {
