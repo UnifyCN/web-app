@@ -19,6 +19,7 @@ import {
 import { useLessonQuiz, useLessonQuizProgress } from "@/hooks/useLearn";
 import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
 import { cn, RTL_FLIP } from "@/lib/utils";
+import { trackLessonCompleted, trackLessonPageViewed } from "@/lib/analytics";
 import { SelectableLessonContent } from "@/components/learn/SelectableLessonContent";
 import { ExplainTermModal } from "@/components/learn/ExplainTermModal";
 import type { SanityBlock } from "@/types";
@@ -63,6 +64,8 @@ export function LessonReaderV2({
   const lesson = lessonQuery.data;
   const steps = useMemo(() => lesson?.pages ?? [], [lesson]);
   const stepCount = steps.length;
+  // On the Quick Check (`?quiz=`) the reader sits after the last block.
+  const urlQuiz = searchParams.has("quiz");
   // An old resume position (`?legacy=activity|ending&page=N`, from lists that
   // don't load blocks) maps to its block's step here, as mobile's legacy
   // routes do (#353); unmatched falls back to step 1.
@@ -77,9 +80,11 @@ export function LessonReaderV2({
       : undefined;
   const requested =
     legacyStep ?? Number.parseInt(searchParams.get("step") ?? "1", 10);
-  const stepNumber = Number.isFinite(requested)
-    ? Math.min(Math.max(requested, 1), Math.max(stepCount, 1))
-    : 1;
+  const stepNumber = urlQuiz
+    ? Math.max(stepCount, 1)
+    : Number.isFinite(requested)
+      ? Math.min(Math.max(requested, 1), Math.max(stepCount, 1))
+      : 1;
   const step = steps[stepNumber - 1];
   const isLast = stepNumber === stepCount;
 
@@ -90,7 +95,10 @@ export function LessonReaderV2({
   );
   const firstQuizId = quizQuery.data?.[0]?._id;
   const hasQuiz = quizQuestions.length > 0 && !!firstQuizId;
-  const onQuiz = hasQuiz && searchParams.has("quiz");
+  const onQuiz = hasQuiz && urlQuiz;
+  // Until the quiz query answers, the last step can't know whether a Quick
+  // Check follows, so Next waits instead of completing the lesson early.
+  const quizUnknown = quizQuery.isPending;
   const quizProgress = useLessonQuizProgress(lessonId, hasQuiz);
 
   const course = courseQuery.data;
@@ -108,16 +116,30 @@ export function LessonReaderV2({
   );
   const totalPages = lesson?.totalPages ?? stepCount;
 
-  // Opening a step saves where the user is (position only).
+  // Opening a step saves where the user is (position only). Not on the quiz:
+  // its position is saved when it opens, and a step save would overwrite it.
   const { mutate: saveResumeMutate } = saveResume;
   // Writes wait until the course confirms this lesson belongs to this module,
   // so a mismatched URL can't store the wrong parent ids on the user's row.
   const inModule = !!stub;
   useEffect(() => {
-    if (!step || !inModule) return;
+    if (!step || !inModule || urlQuiz) return;
     saveResumeMutate({ ...ids, pageType: "lesson", pageNumber: stepNumber });
+    trackLessonPageViewed({
+      ...ids,
+      pageNumber: stepNumber,
+      totalPages: stepCount,
+    });
     window.scrollTo({ top: 0 });
-  }, [step, stepNumber, inModule, ids, saveResumeMutate]);
+  }, [step, stepNumber, stepCount, inModule, urlQuiz, ids, saveResumeMutate]);
+
+  const sections = useMemo(() => (step ? stepSections(step) : []), [step]);
+
+  const finish = () =>
+    complete.mutate(
+      { ...ids, totalPages },
+      { onSuccess: () => trackLessonCompleted(ids) },
+    );
 
   // Activities gate Next until submitted (mobile `activityReady`). Readiness
   // is kept per step key, so a new step starts gated without an effect.
@@ -166,7 +188,7 @@ export function LessonReaderV2({
       });
       return;
     }
-    complete.mutate({ ...ids, totalPages });
+    finish();
     router.push(
       nextLesson
         ? `/learn/${courseId}/${moduleId}/${nextLesson._id}`
@@ -215,7 +237,7 @@ export function LessonReaderV2({
             aria-live="polite"
             dir="ltr"
           >
-            {stepCount > 0 && `${stepNumber} / ${stepCount}`}
+            {stepCount > 0 && !onQuiz && `${stepNumber} / ${stepCount}`}
           </p>
         </div>
         <ProgressBar
@@ -251,11 +273,14 @@ export function LessonReaderV2({
             <h1 className="text-2xl font-bold tracking-tight text-ink-secondary md:text-[32px] md:leading-tight">
               {lesson.title}
             </h1>
-            {!step.activity && step.title && step.title !== lesson.title && (
-              <p className="text-base font-semibold text-ink-tertiary">
-                {step.title}
-              </p>
-            )}
+            {!onQuiz &&
+              !step.activity &&
+              step.title &&
+              step.title !== lesson.title && (
+                <p className="text-base font-semibold text-ink-tertiary">
+                  {step.title}
+                </p>
+              )}
           </header>
 
           {onQuiz ? (
@@ -273,7 +298,7 @@ export function LessonReaderV2({
                 }
                 questions={quizQuestions}
                 colorHex="#f68b26"
-                onLessonComplete={() => complete.mutate({ ...ids, totalPages })}
+                onLessonComplete={finish}
                 sectionHref={moduleHref}
                 initialProgress={quizProgress.data ?? null}
               />
@@ -288,7 +313,7 @@ export function LessonReaderV2({
           ) : (
             <LessonSectionsV2
               key={step._key}
-              sections={stepSections(step)}
+              sections={sections}
               renderRich={renderRich}
             />
           )}
@@ -308,7 +333,7 @@ export function LessonReaderV2({
               <button
                 type="button"
                 onClick={next}
-                disabled={!activityReady}
+                disabled={!activityReady || (isLast && quizUnknown)}
                 className={cn(
                   "press inline-flex min-h-11 items-center justify-center gap-1 rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark",
                   "disabled:cursor-not-allowed disabled:bg-primary-disabled",

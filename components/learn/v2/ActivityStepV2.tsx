@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
 import {
   ACTIVITY_QUESTION_PREFIX,
@@ -27,6 +31,70 @@ import type { ActivityRenderProps } from "./LessonReaderV2";
 
 const DRAFT_DELAY_MS = 600;
 
+const activityKey = (lessonId: string) => ["learn-v2", "activity", lessonId];
+
+/**
+ * Pending text drafts, kept outside the component (mobile `pendingDrafts`) so
+ * leaving the step flushes them instead of dropping the last edit.
+ */
+const pendingDrafts = new Map<
+  string,
+  { timer: ReturnType<typeof setTimeout>; run: () => void }
+>();
+
+function flushDrafts(scope: string) {
+  for (const [key, draft] of [...pendingDrafts]) {
+    if (!key.startsWith(scope)) continue;
+    clearTimeout(draft.timer);
+    pendingDrafts.delete(key);
+    draft.run();
+  }
+}
+
+function dropDrafts(scope: string) {
+  for (const [key, draft] of [...pendingDrafts]) {
+    if (!key.startsWith(scope)) continue;
+    clearTimeout(draft.timer);
+    pendingDrafts.delete(key);
+  }
+}
+
+/** Keep the cached answers in step with what was saved, so going Back to a
+ * submitted activity shows it submitted. */
+function cacheSaved(
+  queryClient: QueryClient,
+  lessonId: string,
+  activity: string,
+  field: string,
+  value: string,
+  submitted: boolean,
+) {
+  queryClient.setQueryData<Record<string, SavedActivity>>(
+    activityKey(lessonId),
+    (old) => {
+      const page: SavedActivity = old?.[activity] ?? {
+        inputValues: {},
+        questionAnswers: {},
+        submittedFields: {},
+        isSubmitted: false,
+      };
+      const next: SavedActivity = {
+        inputValues: { ...page.inputValues },
+        questionAnswers: { ...page.questionAnswers },
+        submittedFields: { ...page.submittedFields, [field]: submitted },
+        isSubmitted: page.isSubmitted || submitted,
+      };
+      if (field.startsWith(ACTIVITY_QUESTION_PREFIX)) {
+        next.questionAnswers[field.slice(ACTIVITY_QUESTION_PREFIX.length)] =
+          JSON.parse(value);
+      } else {
+        next.inputValues[field] = value;
+      }
+      return { ...old, [activity]: next };
+    },
+  );
+}
+
 function rich(value: SanityBlock[] | string | undefined) {
   if (!value) return null;
   if (typeof value === "string") return <p>{value}</p>;
@@ -45,7 +113,7 @@ export function ActivityStepV2(
 ) {
   const { t } = useTranslation();
   const saved = useQuery({
-    queryKey: ["learn-v2", "activity", props.ids.lessonId],
+    queryKey: activityKey(props.ids.lessonId),
     queryFn: () => getActivityInputs(props.ids.lessonId),
     staleTime: 0,
   });
@@ -74,7 +142,9 @@ function ActivityForm({
   stored: SavedActivity | undefined;
 }) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const activity = step.activity as LessonActivityBlock;
+  const scope = `${ids.lessonId}|${activity._key}|`;
   const instructions = (activity.instructions ?? []) as ActivityItem[];
   const answerBox = activity.answer_box as unknown as
     | { title?: string; content?: SanityBlock[]; showAfterSubmit?: boolean }
@@ -93,24 +163,40 @@ function ActivityForm({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
-  const drafts = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  // Edits since the last submit started: an edit during the save means the
+  // learner must submit again (mobile `edits`).
+  const edits = useRef(0);
 
   useEffect(() => {
     onReady(submitted);
   }, [submitted, onReady]);
 
-  useEffect(() => {
-    const timers = drafts.current;
-    return () => timers.forEach((timer) => clearTimeout(timer));
-  }, []);
+  // Leaving the step saves any draft still waiting for its delay.
+  useEffect(() => () => flushDrafts(scope), [scope]);
 
   const persist = (field: string, value: string, isSubmit = false) =>
-    enqueueLessonWrite(
-      `activity|${ids.lessonId}|${activity._key}|${field}`,
-      () => saveActivityInput(ids, activity._key, field, value, isSubmit),
-    );
+    enqueueLessonWrite(`activity|${scope}${field}`, async () => {
+      const ok = await saveActivityInput(
+        ids,
+        activity._key,
+        field,
+        value,
+        isSubmit,
+      );
+      if (ok)
+        cacheSaved(
+          queryClient,
+          ids.lessonId,
+          activity._key,
+          field,
+          value,
+          isSubmit,
+        );
+      return ok;
+    });
 
   const edited = () => {
+    edits.current += 1;
     setSubmitted(false);
     setError(false);
   };
@@ -118,14 +204,17 @@ function ActivityForm({
   const onInput = (key: string, value: string) => {
     setInputs((c) => ({ ...c, [key]: value }));
     edited();
-    clearTimeout(drafts.current.get(key));
-    drafts.current.set(
-      key,
-      setTimeout(
-        () => void persist(key, value).catch(() => {}),
-        DRAFT_DELAY_MS,
-      ),
-    );
+    const draftKey = scope + key;
+    const existing = pendingDrafts.get(draftKey);
+    if (existing) clearTimeout(existing.timer);
+    const run = () => void persist(key, value).catch(() => {});
+    pendingDrafts.set(draftKey, {
+      run,
+      timer: setTimeout(() => {
+        pendingDrafts.delete(draftKey);
+        run();
+      }, DRAFT_DELAY_MS),
+    });
   };
 
   const onAnswer = (key: string, value: string | string[]) => {
@@ -141,15 +230,22 @@ function ActivityForm({
   async function submit() {
     if (!canSubmit || saving) return;
     setSaving(true);
-    drafts.current.forEach((timer) => clearTimeout(timer));
-    drafts.current.clear();
+    const editsAtSubmit = edits.current;
+    dropDrafts(scope);
     try {
-      await Promise.all([
+      const results = await Promise.all([
         ...Object.entries(inputs).map(([k, v]) => persist(k, v, true)),
         ...Object.entries(answers).map(([k, v]) =>
           persist(ACTIVITY_QUESTION_PREFIX + k, JSON.stringify(v), true),
         ),
       ]);
+      // A save that wrote nothing (e.g. signed out) is a failure, and an edit
+      // made while saving was not part of this submit.
+      if (results.some((ok) => !ok)) {
+        setError(true);
+        return;
+      }
+      if (edits.current !== editsAtSubmit) return;
       setSubmitted(true);
     } catch {
       setError(true);
@@ -242,6 +338,7 @@ function ActivityBlock({
               rows={block._type === "large_input_box" ? 6 : 3}
               value={inputs[block._key] ?? ""}
               placeholder={block.placeholder}
+              aria-label={block.label ? undefined : block.placeholder}
               onChange={(e) => onInput(block._key, e.target.value)}
               className="rounded-lg border border-border bg-surface px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-primary"
             />
@@ -250,6 +347,7 @@ function ActivityBlock({
               id={id}
               value={inputs[block._key] ?? ""}
               placeholder={block.placeholder}
+              aria-label={block.label ? undefined : block.placeholder}
               onChange={(e) => onInput(block._key, e.target.value)}
               className="min-h-11 rounded-lg border border-border bg-surface px-3 text-sm focus-visible:outline-2 focus-visible:outline-primary"
             />
