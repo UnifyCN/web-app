@@ -172,7 +172,10 @@ export default function SubmoduleLandingPage({
                     : t("learnWeb.section.continueWhereLeft")}
                 </p>
               </div>
-              <ArrowRight className={cn("h-5 w-5 shrink-0", RTL_FLIP)} aria-hidden />
+              <ArrowRight
+                className={cn("h-5 w-5 shrink-0", RTL_FLIP)}
+                aria-hidden
+              />
             </Link>
           )}
 
