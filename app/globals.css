@@ -66,6 +66,37 @@
   --color-priority-optional: #5e8651;
   --color-priority-optional-bg: #cde9d2;
 
+  /* Learn course topic tiles (Learn v2). Copied from the mobile app's
+   * components/learn/CategorySymbol.tsx; foreground icon on a tinted tile. */
+  --color-topic-documentation: #8f3e31;
+  --color-topic-documentation-bg: #edd6d2;
+  --color-topic-employment: #2c4976;
+  --color-topic-employment-bg: #d1dae8;
+  --color-topic-housing: #8d573b;
+  --color-topic-housing-bg: #f3e0d4;
+  --color-topic-healthcare: #853c70;
+  --color-topic-healthcare-bg: #e9d7e3;
+  --color-topic-safety: #805b25;
+  --color-topic-safety-bg: #efe2c7;
+  --color-topic-education: #786020;
+  --color-topic-education-bg: #eee5cb;
+  --color-topic-finance: #35664f;
+  --color-topic-finance-bg: #d9e8df;
+  --color-topic-culture: #8c503e;
+  --color-topic-culture-bg: #eeddd3;
+  --color-topic-immigration: #8f3e31;
+  --color-topic-immigration-bg: #edd6d2;
+  --color-topic-mental-health: #6c5187;
+  --color-topic-mental-health-bg: #e5dded;
+  --color-topic-taxes: #44624d;
+  --color-topic-taxes-bg: #e0e8db;
+  --color-topic-transport: #326c70;
+  --color-topic-transport-bg: #d7e8e8;
+  --color-topic-university: #65528b;
+  --color-topic-university-bg: #e3ddef;
+  --color-topic-fallback: #58616d;
+  --color-topic-fallback-bg: #e5e8ed;
+
   /* Logo mark circles — used ONLY inside UnifyLogo.tsx */
   --color-logo-orange: #f68b26;
   --color-logo-blue: #4a90d9;

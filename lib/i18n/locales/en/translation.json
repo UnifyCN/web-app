@@ -293,7 +293,8 @@
     "announcementBody": "Long press any word or phrase in a lesson to highlight it or ask AI to explain it. Your highlights are saved under 'Saved from Learn' in your profile.",
     "module": {
       "errorLoading": "Error loading module: {{message}}",
-      "section": "Section {{number}}"
+      "section": "Section {{number}}",
+      "introduction": "Introduction"
     },
     "submodule": {
       "learnTitle": "Learn",
@@ -438,7 +439,27 @@
       "correct": "Correct",
       "tryAgain": "Try again",
       "nextLesson": "Next lesson",
-      "sections": "Lesson sections"
+      "sections": "Lesson sections",
+      "lessonNumber": "Lesson {{number}}",
+      "moduleNumber": "Module {{number}}"
+    },
+    "home": {
+      "heading": "Settle in with confidence",
+      "subtitle": "Practical lessons to help you prepare for life in Canada.",
+      "continue": "Continue learning",
+      "moreLessons": "More lessons in progress",
+      "courses": "Courses",
+      "all": "All",
+      "started": "Started",
+      "emptyStarted": "Your started courses will appear here.",
+      "modules": "Modules",
+      "moduleCount": "Modules: {{count}}",
+      "lessonCount": "Lessons: {{count}}",
+      "lessonSummary": "{{count}} lessons · {{done}} done",
+      "upNext": "Up next",
+      "close": "Close",
+      "tabLabel": "Learn",
+      "completionSummary": "{{completed}} of {{total}} lessons completed"
     }
   },
   "checklist": {

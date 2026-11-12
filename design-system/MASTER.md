@@ -78,6 +78,27 @@
 
 Priority order is fixed everywhere: **Do now → Do soon → Explore & connect → Optional/later**.
 
+### Learn Course Topics (Learn v2)
+
+Course icon tiles. Copied from the mobile app (`components/learn/CategorySymbol.tsx`); use only for the course icon tile, never as UI colours.
+
+| Topic | Icon | Tile |
+|---|---|---|
+| documentation | `#8F3E31` | `#EDD6D2` |
+| employment | `#2C4976` | `#D1DAE8` |
+| housing | `#8D573B` | `#F3E0D4` |
+| healthcare | `#853C70` | `#E9D7E3` |
+| safety | `#805B25` | `#EFE2C7` |
+| education | `#786020` | `#EEE5CB` |
+| finance | `#35664F` | `#D9E8DF` |
+| culture | `#8C503E` | `#EEDDD3` |
+| immigration | `#8F3E31` | `#EDD6D2` |
+| mental-health | `#6C5187` | `#E5DDED` |
+| taxes | `#44624D` | `#E0E8DB` |
+| transport | `#326C70` | `#D7E8E8` |
+| university | `#65528B` | `#E3DDEF` |
+| fallback | `#58616D` | `#E5E8ED` |
+
 ### Resources directory (scoped to `components/resources/*` only)
 
 Ported from mobile `constants/ResourceTheme.ts` (Figma 8681:503/643/851), using

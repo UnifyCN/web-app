@@ -293,7 +293,8 @@
     "announcementBody": "Maintenez enfoncé n'importe quel mot ou expression dans une leçon pour le surligner ou demander à l'IA de l'expliquer. Vos surlignements sont enregistrés sous « Enregistré depuis Apprendre » dans votre profil.",
     "module": {
       "errorLoading": "Erreur de chargement du module : {{message}}",
-      "section": "Section {{number}}"
+      "section": "Section {{number}}",
+      "introduction": "Introduction"
     },
     "submodule": {
       "learnTitle": "Apprendre",
@@ -438,7 +439,27 @@
       "correct": "Bonne réponse",
       "tryAgain": "Réessayez",
       "nextLesson": "Leçon suivante",
-      "sections": "Sections de la leçon"
+      "sections": "Sections de la leçon",
+      "lessonNumber": "Leçon {{number}}",
+      "moduleNumber": "Module {{number}}"
+    },
+    "home": {
+      "heading": "Installez-vous en toute confiance",
+      "subtitle": "Des leçons pratiques pour vous préparer à la vie au Canada.",
+      "continue": "Continuer à apprendre",
+      "moreLessons": "Autres leçons en cours",
+      "courses": "Cours",
+      "all": "Tous",
+      "started": "Commencés",
+      "emptyStarted": "Vos cours commencés apparaîtront ici.",
+      "modules": "Modules",
+      "moduleCount": "Modules : {{count}}",
+      "lessonCount": "Leçons : {{count}}",
+      "lessonSummary": "{{count}} leçons · {{done}} terminées",
+      "upNext": "À suivre",
+      "close": "Fermer",
+      "tabLabel": "Apprendre",
+      "completionSummary": "{{completed}} leçons terminées sur {{total}}"
     }
   },
   "checklist": {

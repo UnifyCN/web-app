@@ -293,7 +293,8 @@
     "announcementBody": "किसी भी शब्द या वाक्यांश को हाइलाइट करने या AI से समझाने के लिए पाठ में लंबे समय तक दबाएं। आपकी हाइलाइट्स आपकी प्रोफ़ाइल में 'सीखें से सहेजा गया' में सहेजी जाती हैं।",
     "module": {
       "errorLoading": "मॉड्यूल लोड करने में त्रुटि: {{message}}",
-      "section": "अनुभाग {{number}}"
+      "section": "अनुभाग {{number}}",
+      "introduction": "परिचय"
     },
     "submodule": {
       "learnTitle": "सीखें",
@@ -438,7 +439,27 @@
       "correct": "सही",
       "tryAgain": "फिर से प्रयास करें",
       "nextLesson": "अगला पाठ",
-      "sections": "पाठ के खंड"
+      "sections": "पाठ के खंड",
+      "lessonNumber": "पाठ {{number}}",
+      "moduleNumber": "मॉड्यूल {{number}}"
+    },
+    "home": {
+      "heading": "आत्मविश्वास के साथ बसें",
+      "subtitle": "कनाडा में जीवन की तैयारी में आपकी मदद करने वाले व्यावहारिक पाठ।",
+      "continue": "सीखना जारी रखें",
+      "moreLessons": "अन्य जारी पाठ",
+      "courses": "पाठ्यक्रम",
+      "all": "सभी",
+      "started": "शुरू किए गए",
+      "emptyStarted": "आपके शुरू किए गए पाठ्यक्रम यहाँ दिखाई देंगे।",
+      "modules": "मॉड्यूल",
+      "moduleCount": "मॉड्यूल: {{count}}",
+      "lessonCount": "पाठ: {{count}}",
+      "lessonSummary": "{{count}} पाठ · {{done}} पूरे",
+      "upNext": "अगला",
+      "close": "बंद करें",
+      "tabLabel": "सीखें",
+      "completionSummary": "{{total}} में से {{completed}} पाठ पूरे हुए"
     }
   },
   "checklist": {
