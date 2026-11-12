@@ -46,12 +46,17 @@ const count = (n: unknown) =>
  * counts are 0 (they are steps). Every writer of `total_pages` must use this,
  * or the same lesson gets different totals depending on which screen wrote it.
  */
-export function getLessonTotalPages(lesson: {
-  lesson_page_count?: number | null;
-  activity_page_count?: number | null;
-  ending_page_count?: number | null;
-  quizzes?: LessonQuizStub[] | null;
-} | null | undefined): number {
+export function getLessonTotalPages(
+  lesson:
+    | {
+        lesson_page_count?: number | null;
+        activity_page_count?: number | null;
+        ending_page_count?: number | null;
+        quizzes?: LessonQuizStub[] | null;
+      }
+    | null
+    | undefined,
+): number {
   if (!lesson) return 0;
   const quizPages = (lesson.quizzes ?? []).reduce(
     (sum, quiz) => sum + count(quiz?.question_count),
@@ -140,8 +145,8 @@ export function buildCompletion(ids: LessonIds, totalPages: number, now: Date) {
 export function isResumable(row?: LessonProgressRow | null): boolean {
   return Boolean(
     row &&
-      !row.is_completed &&
-      (row.is_in_progress || (row.completed_pages ?? 0) > 0),
+    !row.is_completed &&
+    (row.is_in_progress || (row.completed_pages ?? 0) > 0),
   );
 }
 

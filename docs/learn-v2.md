@@ -27,6 +27,9 @@ redeploy.
 
 ## Launch steps
 
+Run these only after the web screen PRs (home, course, module, lesson, activities) are merged and
+deployed. The flag on its own changes nothing until those screens exist.
+
 1. Make sure Savar's mobile build with the new Learn is released, or releasing the same day.
 2. In Vercel (Production), set `NEXT_PUBLIC_LEARN_V2=true`.
 3. Redeploy production. The variable is read at build time.

@@ -19,11 +19,18 @@ describe("getLessonTotalPages", () => {
         lesson_page_count: 4,
         activity_page_count: 0,
         ending_page_count: 0,
-        quizzes: [{ _id: "q1", question_count: 3 }, { _id: "q2", question_count: 2 }],
+        quizzes: [
+          { _id: "q1", question_count: 3 },
+          { _id: "q2", question_count: 2 },
+        ],
       }),
     ).toBe(9);
     expect(
-      getLessonTotalPages({ lesson_page_count: 2, activity_page_count: 1, ending_page_count: 1 }),
+      getLessonTotalPages({
+        lesson_page_count: 2,
+        activity_page_count: 1,
+        ending_page_count: 1,
+      }),
     ).toBe(4);
   });
 
@@ -32,7 +39,10 @@ describe("getLessonTotalPages", () => {
     expect(
       getLessonTotalPages({
         lesson_page_count: 3,
-        quizzes: [{ _id: "q", question_count: null }, { _id: "r", question_count: Number.NaN }],
+        quizzes: [
+          { _id: "q", question_count: null },
+          { _id: "r", question_count: Number.NaN },
+        ],
       }),
     ).toBe(3);
   });
@@ -59,15 +69,24 @@ describe("progress payloads (same columns and values as mobile)", () => {
       completed_pages: 3,
       progress_percent: 100,
     });
-    expect(buildPageProgress(ids, "lesson", 1, 3, now).progress_percent).toBe(33);
-    expect(buildPageProgress(ids, "lesson", 1, 0, now).progress_percent).toBe(0);
+    expect(buildPageProgress(ids, "lesson", 1, 3, now).progress_percent).toBe(
+      33,
+    );
+    expect(buildPageProgress(ids, "lesson", 1, 0, now).progress_percent).toBe(
+      0,
+    );
   });
 
   it("adds the quiz position only when given", () => {
     expect(
-      buildPageProgress(ids, "quiz", 5, 6, now, { quizId: "qz", questionNumber: 2 }),
+      buildPageProgress(ids, "quiz", 5, 6, now, {
+        quizId: "qz",
+        questionNumber: 2,
+      }),
     ).toMatchObject({ current_quiz_id: "qz", current_question_number: 2 });
-    expect(buildPageProgress(ids, "lesson", 1, 2, now)).not.toHaveProperty("current_quiz_id");
+    expect(buildPageProgress(ids, "lesson", 1, 2, now)).not.toHaveProperty(
+      "current_quiz_id",
+    );
   });
 
   it("a resume save never touches the percentage or completion", () => {
@@ -111,16 +130,30 @@ describe("progress payloads (same columns and values as mobile)", () => {
 
 describe("resume", () => {
   it("is resumable when started and not finished", () => {
-    expect(isResumable({ sanity_lesson_id: "L", is_in_progress: true })).toBe(true);
-    expect(isResumable({ sanity_lesson_id: "L", completed_pages: 1 })).toBe(true);
-    expect(isResumable({ sanity_lesson_id: "L", is_completed: true, is_in_progress: true })).toBe(false);
+    expect(isResumable({ sanity_lesson_id: "L", is_in_progress: true })).toBe(
+      true,
+    );
+    expect(isResumable({ sanity_lesson_id: "L", completed_pages: 1 })).toBe(
+      true,
+    );
+    expect(
+      isResumable({
+        sanity_lesson_id: "L",
+        is_completed: true,
+        is_in_progress: true,
+      }),
+    ).toBe(false);
     expect(isResumable({ sanity_lesson_id: "L" })).toBe(false);
     expect(isResumable(undefined)).toBe(false);
   });
 
   it("resumes a step, a quiz question, or the module intro", () => {
     expect(
-      lessonResumeHref(ids, { sanity_lesson_id: "L", current_page_type: "lesson", current_page_number: 3 }),
+      lessonResumeHref(ids, {
+        sanity_lesson_id: "L",
+        current_page_type: "lesson",
+        current_page_number: 3,
+      }),
     ).toBe("/learn/M/S/L?step=3");
     expect(
       lessonResumeHref(ids, {
@@ -131,20 +164,36 @@ describe("resume", () => {
       }),
     ).toBe("/learn/M/S/L?quiz=q%201&q=2");
     expect(
-      lessonResumeHref(ids, { sanity_lesson_id: "L", current_page_type: "intro", current_page_number: 2 }),
+      lessonResumeHref(ids, {
+        sanity_lesson_id: "L",
+        current_page_type: "intro",
+        current_page_number: 2,
+      }),
     ).toBe("/learn/M/S");
     expect(lessonResumeHref(ids, null)).toBe("/learn/M/S/L?step=1");
     expect(
-      lessonResumeHref(ids, { sanity_lesson_id: "L", current_page_type: "lesson", current_page_number: -4 }),
+      lessonResumeHref(ids, {
+        sanity_lesson_id: "L",
+        current_page_type: "lesson",
+        current_page_number: -4,
+      }),
     ).toBe("/learn/M/S/L?step=1");
   });
 
   it("maps an old activity or ending position through the block keys", () => {
-    const row = { sanity_lesson_id: "L", current_page_type: "ending", current_page_number: 1 };
-    expect(lessonResumeHref(ids, row, (type, page) => (type === "ending" && page === 1 ? 4 : undefined))).toBe(
-      "/learn/M/S/L?step=4",
+    const row = {
+      sanity_lesson_id: "L",
+      current_page_type: "ending",
+      current_page_number: 1,
+    };
+    expect(
+      lessonResumeHref(ids, row, (type, page) =>
+        type === "ending" && page === 1 ? 4 : undefined,
+      ),
+    ).toBe("/learn/M/S/L?step=4");
+    expect(lessonResumeHref(ids, row, () => undefined)).toBe(
+      "/learn/M/S/L?step=1",
     );
-    expect(lessonResumeHref(ids, row, () => undefined)).toBe("/learn/M/S/L?step=1");
   });
 });
 

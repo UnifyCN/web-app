@@ -13,7 +13,8 @@ vi.mock("@/lib/supabase/client", () => ({
 }));
 
 vi.mock("@/lib/sanity", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/sanity")>("@/lib/sanity");
+  const actual =
+    await vi.importActual<typeof import("@/lib/sanity")>("@/lib/sanity");
   return {
     ...actual,
     isSanityConfigured: () => true,
@@ -37,7 +38,8 @@ const ids = { lessonId: "L", submoduleId: "S", moduleId: "M" };
 function table(result: { data?: unknown; error?: unknown } = {}) {
   const resolved = { data: result.data ?? null, error: result.error ?? null };
   const builder: Record<string, unknown> = {};
-  for (const name of ["select", "eq", "in"]) builder[name] = vi.fn(() => builder);
+  for (const name of ["select", "eq", "in"])
+    builder[name] = vi.fn(() => builder);
   builder.maybeSingle = vi.fn(async () => resolved);
   builder.upsert = vi.fn(async () => ({ error: null }));
   builder.then = (ok: (v: unknown) => unknown, bad?: (e: unknown) => unknown) =>
@@ -91,13 +93,15 @@ describe("progress writes", () => {
   it("runs one lesson's writes strictly in call order", async () => {
     const order: string[] = [];
     let releaseFirst: (() => void) | undefined;
-    const first = enqueueLessonWrite("queue-order", () =>
-      new Promise<void>((resolve) => {
-        releaseFirst = () => {
-          order.push("first");
-          resolve();
-        };
-      }),
+    const first = enqueueLessonWrite(
+      "queue-order",
+      () =>
+        new Promise<void>((resolve) => {
+          releaseFirst = () => {
+            order.push("first");
+            resolve();
+          };
+        }),
     );
     const second = enqueueLessonWrite("queue-order", async () => {
       order.push("second");
@@ -114,7 +118,9 @@ describe("progress writes", () => {
       throw new Error("network");
     });
     await expect(failed).rejects.toThrow("network");
-    await expect(enqueueLessonWrite("L2", async () => "ok")).resolves.toBe("ok");
+    await expect(enqueueLessonWrite("L2", async () => "ok")).resolves.toBe(
+      "ok",
+    );
   });
 
   it("completes a lesson then checks the course", async () => {
@@ -135,7 +141,11 @@ describe("progress writes", () => {
     });
     await vi.waitFor(() => expect(course.upsert).toHaveBeenCalled());
     expect(course.upsert.mock.calls[0]).toEqual([
-      expect.objectContaining({ user_id: "user-1", module_id: "M", status: "completed" }),
+      expect.objectContaining({
+        user_id: "user-1",
+        module_id: "M",
+        status: "completed",
+      }),
       { onConflict: "user_id,module_id" },
     ]);
   });
@@ -165,7 +175,13 @@ describe("maybeMarkCourseCompleted", () => {
 describe("content", () => {
   it("orders a translated lesson's blocks and uses its sections", async () => {
     const blocks = [
-      { _key: "a", _type: "lesson_content", content: [], contentVersion: 2, sections: [{ _type: "lessonConcept", _key: "en", content: [] }] },
+      {
+        _key: "a",
+        _type: "lesson_content",
+        content: [],
+        contentVersion: 2,
+        sections: [{ _type: "lessonConcept", _key: "en", content: [] }],
+      },
       { _key: "b", _type: "lesson_activity", title: "Act" },
     ];
     mocks.fetch.mockResolvedValue({
@@ -178,7 +194,10 @@ describe("content", () => {
       i18n: {
         title: "Leçon",
         content_blocks: [
-          { ...blocks[0], sections: [{ _type: "lessonConcept", _key: "fr", content: [] }] },
+          {
+            ...blocks[0],
+            sections: [{ _type: "lessonConcept", _key: "fr", content: [] }],
+          },
           blocks[1],
         ],
       },
@@ -217,7 +236,42 @@ describe("content", () => {
     });
     const course = await getCourseV2("M", "fr-CA");
     expect(course?.title).toBe("Emploi");
-    expect(course?.submodules[0].lessons[0]).toMatchObject({ readingMinutes: 2, totalPages: 3 });
+    expect(course?.submodules[0].lessons[0]).toMatchObject({
+      readingMinutes: 2,
+      totalPages: 3,
+    });
     expect(course?.submodules[0].lessons[0]).not.toHaveProperty("steps");
+  });
+});
+
+describe("lessons without blocks", () => {
+  it("counts the legacy pages for the progress total", async () => {
+    mocks.fetch.mockResolvedValue({
+      _id: "L",
+      _type: "lesson",
+      title: "Old",
+      order: 1,
+      pages: [
+        { _key: "a", order: 1, content: [] },
+        { _key: "b", order: 2, content: [] },
+      ],
+      ending_pages: [{ _key: "e", order: 1, content: [] }],
+      quizzes: [],
+    });
+    const lesson = await getLessonV2("L", "en");
+    expect(lesson?.totalPages).toBe(3);
+  });
+});
+
+describe("course completion write failure", () => {
+  it("throws so the caller can log it", async () => {
+    const progress = table({ data: [{ sanity_lesson_id: "a" }] });
+    const course = table({ data: null });
+    course.upsert.mockResolvedValue({ error: new Error("denied") });
+    mocks.from.mockImplementation((name: string) =>
+      name === "learn_progress" ? course : progress,
+    );
+    mocks.fetch.mockResolvedValue({ lessonIds: ["a"] });
+    await expect(maybeMarkCourseCompleted("M")).rejects.toThrow("denied");
   });
 });

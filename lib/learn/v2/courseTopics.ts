@@ -100,9 +100,7 @@ const TOPIC_BY_ICON: Record<string, CourseTopic> = {
 /** The base document id: drafts prefix and language suffix removed, so a
  * translated or draft course maps like its English original. */
 export function baseSanityId(id: string): string {
-  return id
-    .replace(/^drafts\./, "")
-    .replace(/-(ar|es|fr-CA|hi|pa|vi)$/, "");
+  return id.replace(/^drafts\./, "").replace(/-(ar|es|fr-CA|hi|pa|vi)$/, "");
 }
 
 export function courseTopic(course: {
@@ -117,7 +115,10 @@ export function courseTopic(course: {
 }
 
 /** Tailwind classes for a topic's tile (background) and icon (foreground). */
-export function topicClasses(topic: CourseTopic): { tile: string; icon: string } {
+export function topicClasses(topic: CourseTopic): {
+  tile: string;
+  icon: string;
+} {
   return { tile: TILE[topic], icon: ICON[topic] };
 }
 

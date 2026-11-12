@@ -149,27 +149,10 @@ export function localizeLesson(
     pages: merged.pages?.map(
       withTranslatedSections(overlay?.pages as SectionedPage[] | undefined),
     ),
-    content_blocks: merged.content_blocks?.map(
-      (block): LessonBlock =>
-        block._type === "lesson_content" ? translateBlock(block) : block,
+    content_blocks: merged.content_blocks?.map((block): LessonBlock =>
+      block._type === "lesson_content" ? translateBlock(block) : block,
     ),
   });
-}
-
-/**
- * The sections a step renders. A step with v2 sections uses them; otherwise its
- * whole legacy content becomes one Concept section keyed `${_key}-concept`
- * (mobile `pages/[pageNum].tsx`).
- */
-export function stepSections(step: LessonStep | SanityLessonPage): LessonSection[] {
-  if (step.contentVersion === 2 && step.sections?.length) return step.sections;
-  return [
-    {
-      _type: "lessonConcept",
-      _key: `${step._key}-concept`,
-      content: (step.content ?? []) as LessonRichContent,
-    },
-  ];
 }
 
 const SECTION_TYPES = new Set([
@@ -180,6 +163,31 @@ const SECTION_TYPES = new Set([
   "lessonFaq",
   "lessonCitations",
 ]);
+
+/**
+ * The sections a step renders. A step with v2 sections uses them; otherwise its
+ * whole legacy content becomes one Concept section keyed `${_key}-concept`
+ * (mobile `pages/[pageNum].tsx`).
+ */
+export function stepSections(
+  step: LessonStep | SanityLessonPage,
+): LessonSection[] {
+  // v2 only when at least one section is a type the reader knows; otherwise
+  // the legacy content stays readable.
+  if (
+    step.contentVersion === 2 &&
+    step.sections?.some((s) => SECTION_TYPES.has(s._type))
+  ) {
+    return step.sections;
+  }
+  return [
+    {
+      _type: "lessonConcept",
+      _key: `${step._key}-concept`,
+      content: (step.content ?? []) as LessonRichContent,
+    },
+  ];
+}
 
 /** Sections of a type the reader knows. Unknown types are skipped, and Sanity
  * omits empty arrays, so list fields are filled in as empty. */
@@ -231,7 +239,11 @@ export function lessonPresentation(sections: LessonSection[]): {
       if (section._type !== "lessonConcept") return section;
       const content = (section.content ?? []).filter((block) => {
         const raw = block as unknown as RawBlock;
-        if (example && raw._type === "example_box" && Array.isArray(raw.content)) {
+        if (
+          example &&
+          raw._type === "example_box" &&
+          Array.isArray(raw.content)
+        ) {
           examples.push(...(raw.content as LessonRichContent));
           return false;
         }

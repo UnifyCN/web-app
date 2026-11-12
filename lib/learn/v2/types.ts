@@ -30,7 +30,10 @@ export interface LessonActivityBlock {
 export type LessonBlock = LessonContentBlock | LessonActivityBlock;
 
 /** One step of the v2 reader: a teaching page, or an activity. */
-export interface LessonStep extends Omit<SanityLessonPage, "_type" | "content"> {
+export interface LessonStep extends Omit<
+  SanityLessonPage,
+  "_type" | "content"
+> {
   _type?: SanityLessonPage["_type"];
   content: SanityBlock[];
   markDefs?: unknown[];

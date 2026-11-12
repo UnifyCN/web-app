@@ -26,7 +26,8 @@ export function useCourseV2(courseId: string) {
   const { currentLanguage } = useLanguage();
   return useQuery({
     queryKey: [...COURSE_V2_KEY, currentLanguage, courseId],
-    queryFn: () => learnV2.getCourseV2(courseId, currentLanguage),
+    queryFn: async () =>
+      (await learnV2.getCourseV2(courseId, currentLanguage)) ?? null,
     enabled: !!courseId,
   });
 }
@@ -35,7 +36,8 @@ export function useLessonV2(lessonId: string) {
   const { currentLanguage } = useLanguage();
   return useQuery({
     queryKey: [...LESSON_V2_KEY, currentLanguage, lessonId],
-    queryFn: () => learnV2.getLessonV2(lessonId, currentLanguage),
+    queryFn: async () =>
+      (await learnV2.getLessonV2(lessonId, currentLanguage)) ?? null,
     enabled: !!lessonId,
   });
 }
@@ -69,7 +71,13 @@ export interface SaveLessonPageInput extends LessonRef {
 export function useSaveLessonPage() {
   const invalidate = useInvalidateProgress();
   return useMutation({
-    mutationFn: ({ pageType, pageNumber, totalPages, quiz, ...ids }: SaveLessonPageInput) =>
+    mutationFn: ({
+      pageType,
+      pageNumber,
+      totalPages,
+      quiz,
+      ...ids
+    }: SaveLessonPageInput) =>
       learnV2.saveLessonPage(ids, pageType, pageNumber, totalPages, quiz),
     onSuccess: invalidate,
   });
@@ -81,7 +89,12 @@ export type SaveResumePositionInput = Omit<SaveLessonPageInput, "totalPages">;
  * success, so opening steps doesn't refetch every list. */
 export function useSaveResumePosition() {
   return useMutation({
-    mutationFn: ({ pageType, pageNumber, quiz, ...ids }: SaveResumePositionInput) =>
+    mutationFn: ({
+      pageType,
+      pageNumber,
+      quiz,
+      ...ids
+    }: SaveResumePositionInput) =>
       learnV2.saveResumePosition(ids, pageType, pageNumber, quiz),
   });
 }
@@ -103,11 +116,12 @@ export function prefetchCourseV2(
 ) {
   return queryClient.prefetchQuery({
     queryKey: [...COURSE_V2_KEY, language, courseId],
-    queryFn: () =>
-      learnV2.getCourseV2(
+    // React Query rejects `undefined` data, so a missing course is null.
+    queryFn: async () =>
+      (await learnV2.getCourseV2(
         courseId,
         language as Parameters<typeof learnV2.getCourseV2>[1],
-      ),
+      )) ?? null,
   });
 }
 

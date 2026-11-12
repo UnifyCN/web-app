@@ -102,7 +102,9 @@ function sectionBlocks(section: LessonSection): SanityBlock[] {
  * Reading minutes for a lesson: each step's `readingMinutes` when set,
  * otherwise its words / 200 (mobile `StructuredLesson`). At least 1.
  */
-export function lessonReadingMinutes(steps: StepText[] | null | undefined): number {
+export function lessonReadingMinutes(
+  steps: StepText[] | null | undefined,
+): number {
   let minutes = 0;
   let words = 0;
   for (const step of steps ?? []) {
@@ -129,9 +131,13 @@ function toLessonStub(raw: WithI18n<RawLessonStub>): LessonStubV2 {
 
 type RawCourse = WithI18n<
   Omit<CourseV2, "submodules"> & {
-    submodules?: WithI18n<Omit<ModuleV2, "lessons"> & {
-      lessons?: WithI18n<RawLessonStub>[] | null;
-    }>[] | null;
+    submodules?:
+      | WithI18n<
+          Omit<ModuleV2, "lessons"> & {
+            lessons?: WithI18n<RawLessonStub>[] | null;
+          }
+        >[]
+      | null;
   }
 >;
 
@@ -163,7 +169,9 @@ type RawLesson = WithI18n<LessonV2 & { quizzes?: LessonQuizStub[] }>;
 export async function getLessonV2(
   lessonId: string,
   language: SupportedLanguage = "en",
-): Promise<(LessonV2 & { quizzes: LessonQuizStub[]; totalPages: number }) | undefined> {
+): Promise<
+  (LessonV2 & { quizzes: LessonQuizStub[]; totalPages: number }) | undefined
+> {
   if (!isSanityConfigured()) return undefined;
   const row = await sanityClient.fetch<RawLesson | null>(LESSON_V2_QUERY, {
     lessonId,
@@ -173,10 +181,20 @@ export async function getLessonV2(
   const overlay = row.i18n;
   const lesson = localizeLesson(mergeI18nOverlay(row), overlay, language);
   const quizzes = row.quizzes ?? [];
+  // A lesson without blocks keeps its legacy arrays; count them (blocks set
+  // their own counts in withOrderedLessonBlocks).
+  const counts = lesson.content_blocks?.length
+    ? lesson
+    : {
+        lesson_page_count: lesson.pages?.length ?? 0,
+        activity_page_count: lesson.activity_pages?.length ?? 0,
+        ending_page_count: lesson.ending_pages?.length ?? 0,
+      };
   return {
     ...lesson,
+    ...counts,
     quizzes,
-    totalPages: getLessonTotalPages({ ...lesson, quizzes }),
+    totalPages: getLessonTotalPages({ ...counts, quizzes }),
   };
 }
 
@@ -284,7 +302,11 @@ export async function completeLesson(
   const saved = await upsertProgress(ids.lessonId, () =>
     buildCompletion(ids, totalPages, new Date()),
   );
-  if (saved) void maybeMarkCourseCompleted(ids.moduleId).catch(() => {});
+  if (saved) {
+    void maybeMarkCourseCompleted(ids.moduleId).catch((error) =>
+      console.error("[learnV2] course completion check failed", error),
+    );
+  }
   return saved;
 }
 
@@ -297,9 +319,11 @@ const COURSE_LESSON_IDS_QUERY = `*[_type == "module" && _id == $moduleId && (lan
 /**
  * Mark a course `completed` in `learn_progress` once all its lessons are
  * complete (mobile `maybeMarkModuleCompleted`). Never downgrades a completed
- * course. Errors are swallowed: this must never block lesson completion.
+ * course. A failed write throws; `completeLesson` logs it without blocking.
  */
-export async function maybeMarkCourseCompleted(moduleId: string): Promise<void> {
+export async function maybeMarkCourseCompleted(
+  moduleId: string,
+): Promise<void> {
   if (!isSupabaseConfigured() || !isSanityConfigured()) return;
   const userId = await getAuthUserId();
   if (!userId) return;
@@ -329,12 +353,14 @@ export async function maybeMarkCourseCompleted(moduleId: string): Promise<void> 
     .in("sanity_lesson_id", lessonIds);
   if (error) return;
   const done = new Set(
-    ((rows ?? []) as { sanity_lesson_id: string }[]).map((r) => r.sanity_lesson_id),
+    ((rows ?? []) as { sanity_lesson_id: string }[]).map(
+      (r) => r.sanity_lesson_id,
+    ),
   );
   if (done.size < new Set(lessonIds).size) return;
 
   const at = new Date().toISOString();
-  await supabase.from("learn_progress").upsert(
+  const { error: upsertError } = await supabase.from("learn_progress").upsert(
     {
       user_id: userId,
       module_id: moduleId,
@@ -344,4 +370,5 @@ export async function maybeMarkCourseCompleted(moduleId: string): Promise<void> 
     },
     { onConflict: "user_id,module_id" },
   );
+  if (upsertError) throw upsertError;
 }

@@ -26,7 +26,11 @@ const concept = (key: string, text: string): LessonSection => ({
   content: [para(`${key}-p`, text)],
 });
 
-const legacyPage = (key: string, order: number, text = key): SanityLessonPage => ({
+const legacyPage = (
+  key: string,
+  order: number,
+  text = key,
+): SanityLessonPage => ({
   _key: key,
   _type: "page",
   order,
@@ -139,34 +143,65 @@ describe("getOrderedLegacyPageNumber", () => {
 
   it("maps an old ending position to its block step", () => {
     expect(
-      getOrderedLegacyPageNumber({ lesson: ordered, pageType: "ending", pageNumber: 1 }),
+      getOrderedLegacyPageNumber({
+        lesson: ordered,
+        pageType: "ending",
+        pageNumber: 1,
+      }),
     ).toBe(3);
   });
 
   it("maps an old activity position to its block step", () => {
     expect(
-      getOrderedLegacyPageNumber({ lesson: ordered, pageType: "activity", pageNumber: 1 }),
+      getOrderedLegacyPageNumber({
+        lesson: ordered,
+        pageType: "activity",
+        pageNumber: 1,
+      }),
     ).toBe(2);
   });
 
   it("is undefined when the page or block is missing or the type differs", () => {
     expect(
-      getOrderedLegacyPageNumber({ lesson: ordered, pageType: "ending", pageNumber: 2 }),
+      getOrderedLegacyPageNumber({
+        lesson: ordered,
+        pageType: "ending",
+        pageNumber: 2,
+      }),
     ).toBeUndefined(); // "other" has no block
     expect(
-      getOrderedLegacyPageNumber({ lesson: ordered, pageType: "ending", pageNumber: 9 }),
+      getOrderedLegacyPageNumber({
+        lesson: ordered,
+        pageType: "ending",
+        pageNumber: 9,
+      }),
     ).toBeUndefined();
     expect(
-      getOrderedLegacyPageNumber({ lesson: ordered, pageType: "activity", pageNumber: 0 }),
+      getOrderedLegacyPageNumber({
+        lesson: ordered,
+        pageType: "activity",
+        pageNumber: 0,
+      }),
     ).toBeUndefined();
     const wrongType = withOrderedLessonBlocks(
-      lesson({ content_blocks: blocks, activity_pages: [legacyPage("teach", 1)] }),
+      lesson({
+        content_blocks: blocks,
+        activity_pages: [legacyPage("teach", 1)],
+      }),
     );
     expect(
-      getOrderedLegacyPageNumber({ lesson: wrongType, pageType: "activity", pageNumber: 1 }),
+      getOrderedLegacyPageNumber({
+        lesson: wrongType,
+        pageType: "activity",
+        pageNumber: 1,
+      }),
     ).toBeUndefined();
     expect(
-      getOrderedLegacyPageNumber({ lesson: lesson(), pageType: "ending", pageNumber: 1 }),
+      getOrderedLegacyPageNumber({
+        lesson: lesson(),
+        pageType: "ending",
+        pageNumber: 1,
+      }),
     ).toBeUndefined();
   });
 });
@@ -174,7 +209,12 @@ describe("getOrderedLegacyPageNumber", () => {
 describe("translations", () => {
   it("uses a translated page's own v2 sections", () => {
     const apply = withTranslatedSections([
-      { _key: "teach", contentVersion: 2, sections: [concept("fr", "Bonjour")], readingMinutes: 4 },
+      {
+        _key: "teach",
+        contentVersion: 2,
+        sections: [concept("fr", "Bonjour")],
+        readingMinutes: 4,
+      },
     ]);
     const result = apply({
       _key: "teach",
@@ -188,14 +228,22 @@ describe("translations", () => {
 
   it("drops sections when the translation has none, so its legacy content shows", () => {
     const apply = withTranslatedSections([{ _key: "teach" }]);
-    const result = apply({ _key: "teach", contentVersion: 2, sections: [concept("en", "Hello")] });
+    const result = apply({
+      _key: "teach",
+      contentVersion: 2,
+      sections: [concept("en", "Hello")],
+    });
     expect(result.sections).toBeUndefined();
     expect(result.contentVersion).toBeUndefined();
   });
 
   it("never merges English sections into a translated page", () => {
     const apply = withTranslatedSections(undefined);
-    const result = apply({ _key: "teach", contentVersion: 2, sections: [concept("en", "Hello")] });
+    const result = apply({
+      _key: "teach",
+      contentVersion: 2,
+      sections: [concept("en", "Hello")],
+    });
     expect(result.sections).toBeUndefined();
   });
 
@@ -211,16 +259,28 @@ describe("translations", () => {
       { _key: "act", _type: "lesson_activity", title: "Essayez" },
     ];
     const merged = lesson({ content_blocks: frBlocks });
-    const result = localizeLesson(merged, { content_blocks: frBlocks }, "fr-CA");
+    const result = localizeLesson(
+      merged,
+      { content_blocks: frBlocks },
+      "fr-CA",
+    );
     expect(result.pages?.map((p) => p._key)).toEqual(["teach", "act"]);
     expect(result.pages?.[0].sections?.[0]._key).toBe("teach-fr");
   });
 
   it("falls back to legacy content when a translated block has no sections", () => {
     const viBlocks: LessonBlock[] = [
-      { _key: "teach", _type: "lesson_content", content: [para("t1", "Nội dung")] },
+      {
+        _key: "teach",
+        _type: "lesson_content",
+        content: [para("t1", "Nội dung")],
+      },
     ];
-    const result = localizeLesson(lesson({ content_blocks: viBlocks }), { content_blocks: viBlocks }, "vi");
+    const result = localizeLesson(
+      lesson({ content_blocks: viBlocks }),
+      { content_blocks: viBlocks },
+      "vi",
+    );
     expect(result.pages?.[0].sections).toBeUndefined();
     expect(stepSections(result.pages![0])[0]).toMatchObject({
       _type: "lessonConcept",
@@ -229,7 +289,11 @@ describe("translations", () => {
   });
 
   it("leaves English untouched apart from ordering", () => {
-    const result = localizeLesson(lesson({ content_blocks: blocks }), null, "en");
+    const result = localizeLesson(
+      lesson({ content_blocks: blocks }),
+      null,
+      "en",
+    );
     expect(result.pages?.[0].sections?.[0]._key).toBe("teach-c");
   });
 });
@@ -238,7 +302,10 @@ describe("sections", () => {
   it("wraps legacy content in one Concept section keyed after the step", () => {
     const sections = stepSections(legacyPage("p1", 1, "Old text"));
     expect(sections).toHaveLength(1);
-    expect(sections[0]).toMatchObject({ _type: "lessonConcept", _key: "p1-concept" });
+    expect(sections[0]).toMatchObject({
+      _type: "lessonConcept",
+      _key: "p1-concept",
+    });
   });
 
   it("skips unknown section types and fills omitted lists", () => {
@@ -247,7 +314,10 @@ describe("sections", () => {
       { _type: "lessonMystery", _key: "m" } as unknown as LessonSection,
       { _type: "lessonCitations", _key: "c" } as unknown as LessonSection,
     ]);
-    expect(sections.map((s) => s._type)).toEqual(["lessonFaq", "lessonCitations"]);
+    expect(sections.map((s) => s._type)).toEqual([
+      "lessonFaq",
+      "lessonCitations",
+    ]);
     expect(sections[0]).toMatchObject({ items: [] });
     expect(sections[1]).toMatchObject({ sources: [] });
   });
@@ -263,8 +333,17 @@ describe("sections", () => {
       content: [para("ex-p", "Amir checked Canada.ca")],
     } as unknown as SanityBlock;
     const { sections, citationContent } = lessonPresentation([
-      { _type: "lessonConcept", _key: "c", content: [para("keep", "Keep me"), exampleBox, citation] },
-      { _type: "lessonExample", _key: "e", theory: [], practice: [para("prac", "Existing")] },
+      {
+        _type: "lessonConcept",
+        _key: "c",
+        content: [para("keep", "Keep me"), exampleBox, citation],
+      },
+      {
+        _type: "lessonExample",
+        _key: "e",
+        theory: [],
+        practice: [para("prac", "Existing")],
+      },
       {
         _type: "lessonCitations",
         _key: "s",
@@ -275,17 +354,48 @@ describe("sections", () => {
       },
     ]);
     const [c, e, s] = sections;
-    expect(c._type === "lessonConcept" && c.content.map((b) => b._key)).toEqual(["keep"]);
-    expect(e._type === "lessonExample" && e.practice.map((b) => b._key)).toEqual(["ex-p", "prac"]);
-    expect(s._type === "lessonCitations" && s.sources.map((x) => x._key)).toEqual(["b"]);
+    expect(c._type === "lessonConcept" && c.content.map((b) => b._key)).toEqual(
+      ["keep"],
+    );
+    expect(
+      e._type === "lessonExample" && e.practice.map((b) => b._key),
+    ).toEqual(["ex-p", "prac"]);
+    expect(
+      s._type === "lessonCitations" && s.sources.map((x) => x._key),
+    ).toEqual(["b"]);
     expect(citationContent.map((b) => b._key)).toEqual(["cite"]);
   });
 
   it("leaves examples in place when the step has no Example section", () => {
-    const exampleBox = { _key: "ex", _type: "example_box", content: [] } as unknown as SanityBlock;
+    const exampleBox = {
+      _key: "ex",
+      _type: "example_box",
+      content: [],
+    } as unknown as SanityBlock;
     const { sections } = lessonPresentation([
       { _type: "lessonConcept", _key: "c", content: [exampleBox] },
     ]);
-    expect(sections[0]._type === "lessonConcept" && sections[0].content).toHaveLength(1);
+    expect(
+      sections[0]._type === "lessonConcept" && sections[0].content,
+    ).toHaveLength(1);
+  });
+});
+
+describe("stepSections with only unknown section types", () => {
+  it("falls back to the legacy content", () => {
+    const sections = stepSections({
+      _key: "p",
+      _type: "page",
+      order: 0,
+      content: [para("p1", "Legacy")],
+      contentVersion: 2,
+      sections: [
+        { _type: "lessonMystery", _key: "m" } as unknown as LessonSection,
+      ],
+    });
+    expect(sections[0]).toMatchObject({
+      _type: "lessonConcept",
+      _key: "p-concept",
+    });
   });
 });
