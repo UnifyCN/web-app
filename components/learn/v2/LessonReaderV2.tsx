@@ -16,6 +16,8 @@ import {
   getOrderedLegacyPageNumber,
   stepSections,
 } from "@/lib/learn/v2/contentBlocks";
+import { useLessonQuiz, useLessonQuizProgress } from "@/hooks/useLearn";
+import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { SelectableLessonContent } from "@/components/learn/SelectableLessonContent";
 import { ExplainTermModal } from "@/components/learn/ExplainTermModal";
@@ -81,6 +83,16 @@ export function LessonReaderV2({
   const step = steps[stepNumber - 1];
   const isLast = stepNumber === stepCount;
 
+  // Quick Check quiz documents play after the blocks (mobile), at `?quiz=`.
+  const quizQuery = useLessonQuiz(lessonId);
+  const quizQuestions = (quizQuery.data ?? []).flatMap(
+    (q) => q.questions ?? [],
+  );
+  const firstQuizId = quizQuery.data?.[0]?._id;
+  const hasQuiz = quizQuestions.length > 0 && !!firstQuizId;
+  const onQuiz = hasQuiz && searchParams.has("quiz");
+  const quizProgress = useLessonQuizProgress(lessonId, hasQuiz);
+
   const course = courseQuery.data;
   const modIndex =
     course?.submodules.findIndex((s) => s._id === moduleId) ?? -1;
@@ -134,6 +146,24 @@ export function LessonReaderV2({
         totalPages,
       });
       goTo(stepNumber + 1);
+      return;
+    }
+    if (hasQuiz) {
+      savePage.mutate({
+        ...ids,
+        pageType: "lesson",
+        pageNumber: stepNumber,
+        totalPages,
+      });
+      saveResumeMutate({
+        ...ids,
+        pageType: "quiz",
+        pageNumber: stepCount + 1,
+        quiz: { quizId: firstQuizId!, questionNumber: 1 },
+      });
+      router.push(`?quiz=${encodeURIComponent(firstQuizId!)}&q=1`, {
+        scroll: false,
+      });
       return;
     }
     complete.mutate({ ...ids, totalPages });
@@ -228,7 +258,27 @@ export function LessonReaderV2({
             )}
           </header>
 
-          {step.activity ? (
+          {onQuiz ? (
+            quizProgress.isPending ? (
+              <p className="loading-delayed text-sm text-ink-muted">
+                {t("common.loading")}
+              </p>
+            ) : (
+              <LessonQuiz
+                lessonId={lessonId}
+                moduleId={courseId}
+                submoduleId={moduleId}
+                title={
+                  quizQuery.data?.[0]?.title ?? t("learn.structured.quickCheck")
+                }
+                questions={quizQuestions}
+                colorHex="#f68b26"
+                onLessonComplete={() => complete.mutate({ ...ids, totalPages })}
+                sectionHref={moduleHref}
+                initialProgress={quizProgress.data ?? null}
+              />
+            )
+          ) : step.activity ? (
             <ActivityStepV2
               key={step._key}
               step={step}
@@ -243,34 +293,36 @@ export function LessonReaderV2({
             />
           )}
 
-          <nav
-            className="mt-4 grid grid-cols-2 gap-3"
-            aria-label={t("learnWeb.pager.nextUp")}
-          >
-            <button
-              type="button"
-              onClick={back}
-              className="press min-h-11 rounded-lg border border-border-card bg-surface px-4 text-sm font-semibold text-ink-secondary hover:bg-surface-card"
+          {!onQuiz && (
+            <nav
+              className="mt-4 grid grid-cols-2 gap-3"
+              aria-label={lesson.title}
             >
-              {t("common.back")}
-            </button>
-            <button
-              type="button"
-              onClick={next}
-              disabled={!activityReady}
-              className={cn(
-                "press inline-flex min-h-11 items-center justify-center gap-1 rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark",
-                "disabled:cursor-not-allowed disabled:bg-primary-disabled",
-              )}
-            >
-              {isLast
-                ? nextLesson
-                  ? t("learn.structured.nextLesson")
-                  : t("common.done")
-                : t("common.next")}
-              <ChevronRight className={cn("size-4", RTL_FLIP)} aria-hidden />
-            </button>
-          </nav>
+              <button
+                type="button"
+                onClick={back}
+                className="press min-h-11 rounded-lg border border-border-card bg-surface px-4 text-sm font-semibold text-ink-secondary hover:bg-surface-card"
+              >
+                {t("common.back")}
+              </button>
+              <button
+                type="button"
+                onClick={next}
+                disabled={!activityReady}
+                className={cn(
+                  "press inline-flex min-h-11 items-center justify-center gap-1 rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark",
+                  "disabled:cursor-not-allowed disabled:bg-primary-disabled",
+                )}
+              >
+                {isLast && !hasQuiz
+                  ? nextLesson
+                    ? t("learn.structured.nextLesson")
+                    : t("common.done")
+                  : t("common.next")}
+                <ChevronRight className={cn("size-4", RTL_FLIP)} aria-hidden />
+              </button>
+            </nav>
+          )}
         </article>
       )}
 
