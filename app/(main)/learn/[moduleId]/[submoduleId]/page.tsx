@@ -1,5 +1,7 @@
 "use client";
 
+import { ModulePageV2 } from "@/components/learn/v2/ModulePageV2";
+import { isLearnV2Enabled } from "@/lib/learn/v2/flag";
 import { use } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, Target } from "lucide-react";
@@ -18,7 +20,7 @@ import {
   usePracticeProgress,
 } from "@/hooks/useLearn";
 
-export default function SubmoduleLandingPage({
+function SubmoduleLandingPageV1({
   params,
 }: {
   params: Promise<{ moduleId: string; submoduleId: string }>;
@@ -243,4 +245,15 @@ export default function SubmoduleLandingPage({
       )}
     </div>
   );
+}
+
+/** Learn v2 (Courses redesign) behind the build-time flag; with the flag off
+ * the page above is unchanged. */
+export default function SubmoduleLandingPage(props: {
+  params: Promise<{ moduleId: string; submoduleId: string }>;
+}) {
+  const { moduleId, submoduleId } = use(props.params);
+  if (isLearnV2Enabled())
+    return <ModulePageV2 courseId={moduleId} moduleId={submoduleId} />;
+  return <SubmoduleLandingPageV1 params={props.params} />;
 }
