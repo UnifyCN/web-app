@@ -1,6 +1,8 @@
 "use client";
 
-import { use } from "react";
+import { LessonReaderV2 } from "@/components/learn/v2/LessonReaderV2";
+import { isLearnV2Enabled } from "@/lib/learn/v2/flag";
+import { Suspense, use } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
@@ -16,7 +18,7 @@ import {
 } from "@/hooks/useLearn";
 import { trackLessonCompleted } from "@/lib/analytics";
 
-export default function LessonDetailPage({
+function LessonDetailPageV1({
   params,
 }: {
   params: Promise<{ moduleId: string; submoduleId: string; lessonId: string }>;
@@ -188,4 +190,25 @@ export default function LessonDetailPage({
       </div>
     </div>
   );
+}
+
+/** Learn v2 (Courses redesign) behind the build-time flag; with the flag off
+ * the page above is unchanged. */
+export default function LessonDetailPage(props: {
+  params: Promise<{ moduleId: string; submoduleId: string; lessonId: string }>;
+}) {
+  const { moduleId, submoduleId, lessonId } = use(props.params);
+  if (isLearnV2Enabled()) {
+    // The reader reads `?step=` with useSearchParams, which needs Suspense.
+    return (
+      <Suspense>
+        <LessonReaderV2
+          courseId={moduleId}
+          moduleId={submoduleId}
+          lessonId={lessonId}
+        />
+      </Suspense>
+    );
+  }
+  return <LessonDetailPageV1 params={props.params} />;
 }
