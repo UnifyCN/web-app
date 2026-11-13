@@ -60,6 +60,8 @@ export function LessonReaderV2({
   const complete = useCompleteLesson();
   const [askTerm, setAskTerm] = useState<string | null>(null);
   const [readyKey, setReadyKey] = useState<string | null>(null);
+  const [completeError, setCompleteError] = useState(false);
+  const [completing, setCompleting] = useState(false);
 
   const lesson = lessonQuery.data;
   const steps = useMemo(() => lesson?.pages ?? [], [lesson]);
@@ -103,6 +105,16 @@ export function LessonReaderV2({
   const quizFailed = quizQuery.isError && !quizQuery.data;
   const quizUnknown = quizQuery.isPending || quizFailed;
   const quizProgress = useLessonQuizProgress(lessonId, hasQuiz);
+  // The quiz opens at the question the link names (`q`): it comes from the
+  // lesson's resume position, which either app saves as each question opens,
+  // so it is the latest place, also after going back. Saved web answers are
+  // kept; only the starting question follows the link.
+  const urlQuestion = Number.parseInt(searchParams.get("q") ?? "", 10);
+  const linkedIndex =
+    Number.isFinite(urlQuestion) && urlQuestion >= 1
+      ? Math.min(urlQuestion, Math.max(quizQuestions.length, 1)) - 1
+      : undefined;
+  const savedQuiz = quizProgress.data ?? null;
 
   const course = courseQuery.data;
   const modIndex =
@@ -164,7 +176,7 @@ export function LessonReaderV2({
       { scroll: false },
     );
 
-  function next() {
+  async function next() {
     if (!step || !inModule) return;
     if (!isLast) {
       savePage.mutate({
@@ -177,24 +189,26 @@ export function LessonReaderV2({
       return;
     }
     if (hasQuiz) {
-      savePage.mutate({
-        ...ids,
-        pageType: "lesson",
-        pageNumber: stepNumber,
-        totalPages,
-      });
-      saveResumeMutate({
-        ...ids,
-        pageType: "quiz",
-        pageNumber: stepCount + 1,
-        quiz: { quizId: firstQuizId!, questionNumber: 1 },
-      });
+      // As mobile: no page save for the last step here, and the quiz position
+      // is saved per question as it opens (page = question number).
       router.push(`?quiz=${encodeURIComponent(firstQuizId!)}&q=1`, {
         scroll: false,
       });
       return;
     }
-    void finish().catch(() => {});
+    // Leave only once the lesson is saved as complete (mobile waits too).
+    // Next and Back stay disabled meanwhile, so it can't repeat or race.
+    if (completing) return;
+    setCompleteError(false);
+    setCompleting(true);
+    try {
+      await finish();
+    } catch {
+      setCompleteError(true);
+      return;
+    } finally {
+      setCompleting(false);
+    }
     router.push(
       nextLesson
         ? `/learn/${courseId}/${moduleId}/${nextLesson._id}`
@@ -203,6 +217,7 @@ export function LessonReaderV2({
   }
 
   function back() {
+    if (completing) return;
     if (stepNumber > 1) goTo(stepNumber - 1);
     else router.push(moduleHref);
   }
@@ -309,7 +324,18 @@ export function LessonReaderV2({
                 colorHex="#f68b26"
                 onLessonComplete={finish}
                 sectionHref={moduleHref}
-                initialProgress={quizProgress.data ?? null}
+                initialProgress={savedQuiz}
+                startIndex={linkedIndex}
+                saveReady={inModule}
+                onQuestionChange={(index) =>
+                  inModule &&
+                  saveResumeMutate({
+                    ...ids,
+                    pageType: "quiz",
+                    pageNumber: index + 1,
+                    quiz: { quizId: firstQuizId!, questionNumber: index + 1 },
+                  })
+                }
               />
             )
           ) : step.activity ? (
@@ -332,6 +358,11 @@ export function LessonReaderV2({
               className="mt-4 grid grid-cols-2 gap-3"
               aria-label={lesson.title}
             >
+              {completeError && (
+                <div className="col-span-2">
+                  <RetryLine onRetry={() => void next()} />
+                </div>
+              )}
               {isLast && quizFailed && (
                 <div className="col-span-2">
                   <RetryLine onRetry={() => quizQuery.refetch()} />
@@ -340,14 +371,17 @@ export function LessonReaderV2({
               <button
                 type="button"
                 onClick={back}
+                disabled={completing}
                 className="press min-h-11 rounded-lg border border-border-card bg-surface px-4 text-sm font-semibold text-ink-secondary hover:bg-surface-card"
               >
                 {t("common.back")}
               </button>
               <button
                 type="button"
-                onClick={next}
-                disabled={!activityReady || (isLast && quizUnknown)}
+                onClick={() => void next()}
+                disabled={
+                  completing || !activityReady || (isLast && quizUnknown)
+                }
                 className={cn(
                   "press inline-flex min-h-11 items-center justify-center gap-1 rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark",
                   "disabled:cursor-not-allowed disabled:bg-primary-disabled",

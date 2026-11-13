@@ -14,6 +14,7 @@ import {
 import type { SupportedLanguage } from "@/lib/i18n/config";
 import { wordCountOfBlocks } from "@/lib/learn/readTime";
 import { localizeLesson } from "@/lib/learn/v2/contentBlocks";
+import { mergeTranslatedLesson } from "@/lib/learn/v2/i18nMerge";
 import {
   buildCompletion,
   buildPageProgress,
@@ -185,7 +186,13 @@ export async function getLessonV2(
   });
   if (!row) return undefined;
   const overlay = row.i18n;
-  const lesson = localizeLesson(mergeI18nOverlay(row), overlay, language);
+  const lesson = localizeLesson(
+    // Mobile's merge: a translation can't change block order, keys or
+    // response structure (lib/learn/v2/i18nMerge.ts).
+    mergeTranslatedLesson(row),
+    overlay,
+    language,
+  );
   const quizzes = row.quizzes ?? [];
   // A lesson without blocks keeps its legacy arrays; count them (blocks set
   // their own counts in withOrderedLessonBlocks).

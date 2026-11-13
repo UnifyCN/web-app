@@ -275,3 +275,32 @@ describe("course completion write failure", () => {
     await expect(maybeMarkCourseCompleted("M")).rejects.toThrow("denied");
   });
 });
+
+describe("translated lessons keep the English structure (mobile parity)", () => {
+  it("keeps base block order and keys when a translation reorders or drops blocks", async () => {
+    const base = [
+      { _key: "a", _type: "lesson_content", title: "A", content: [] },
+      { _key: "b", _type: "lesson_activity", title: "B" },
+      { _key: "c", _type: "lesson_content", title: "C", content: [] },
+    ];
+    mocks.fetch.mockResolvedValue({
+      _id: "L",
+      _type: "lesson",
+      title: "Lesson",
+      order: 1,
+      content_blocks: base,
+      quizzes: [],
+      i18n: {
+        content_blocks: [
+          { _key: "c", _type: "lesson_content", title: "C-fr", content: [] },
+          { _key: "a", _type: "lesson_content", title: "A-fr", content: [] },
+          { _key: "x", _type: "lesson_content", title: "extra", content: [] },
+        ],
+      },
+    });
+    const lesson = await getLessonV2("L", "fr-CA");
+    expect(lesson?.pages?.map((p) => p._key)).toEqual(["a", "b", "c"]);
+    expect(lesson?.pages?.map((p) => p.title)).toEqual(["A-fr", "B", "C-fr"]);
+    expect(lesson?.totalPages).toBe(3);
+  });
+});

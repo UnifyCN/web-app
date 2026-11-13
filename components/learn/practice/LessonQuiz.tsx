@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
@@ -20,6 +20,15 @@ interface LessonQuizProps {
   colorHex: string;
   /** Marks the lesson complete — fired when the quiz is finished (Done). */
   onLessonComplete: () => void | Promise<unknown>;
+  /** Called with the question index each time a question opens (Learn v2
+   * saves it as the lesson's resume position, as mobile does). */
+  onQuestionChange?: (index: number) => void;
+  /** When false, question changes aren't reported yet; the current question
+   * is reported once it turns true. Defaults to true. */
+  saveReady?: boolean;
+  /** The question to open first, when it differs from the saved position
+   * (Learn v2 resume links). Locks still come from `initialProgress`. */
+  startIndex?: number;
   /** The submodule page — finishing navigates here (never the next lesson). */
   sectionHref: string;
   /** Saved progress so answers survive unmount (exit/re-enter, or paging the
@@ -44,6 +53,9 @@ export function LessonQuiz({
   questions,
   colorHex,
   onLessonComplete,
+  onQuestionChange,
+  saveReady = true,
+  startIndex,
   sectionHref,
   initialProgress,
 }: LessonQuizProps) {
@@ -52,11 +64,21 @@ export function LessonQuiz({
   const upsert = useUpsertLessonQuizProgress();
   const total = questions.length;
 
+  // The saved boundary decides which questions are already submitted; the
+  // question shown first can differ (startIndex).
   const initialIndex = Math.min(
     initialProgress?.currentQuestionIndex ?? 0,
     Math.max(0, total - 1),
   );
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [currentIndex, setCurrentIndex] = useState(() =>
+    Math.min(startIndex ?? initialIndex, Math.max(0, total - 1)),
+  );
+  useEffect(() => {
+    if (saveReady) onQuestionChange?.(currentIndex);
+    // A new question, or saving becoming possible, reports it; the callback
+    // identity changes every render, so it is left out.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, saveReady]);
   // Finishing awaits the result save and then the lesson completion; the
   // buttons stay disabled across both so neither runs twice or navigates midway.
   const [finishing, setFinishing] = useState(false);
