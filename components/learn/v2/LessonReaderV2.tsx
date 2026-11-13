@@ -60,6 +60,7 @@ export function LessonReaderV2({
   const complete = useCompleteLesson();
   const [askTerm, setAskTerm] = useState<string | null>(null);
   const [readyKey, setReadyKey] = useState<string | null>(null);
+  const [completeError, setCompleteError] = useState(false);
 
   const lesson = lessonQuery.data;
   const steps = useMemo(() => lesson?.pages ?? [], [lesson]);
@@ -103,6 +104,22 @@ export function LessonReaderV2({
   const quizFailed = quizQuery.isError && !quizQuery.data;
   const quizUnknown = quizQuery.isPending || quizFailed;
   const quizProgress = useLessonQuizProgress(lessonId, hasQuiz);
+  // With no saved web quiz row (e.g. started on mobile), start at the question
+  // the resume link names (`q`, saved by either app) instead of question 1.
+  const urlQuestion = Number.parseInt(searchParams.get("q") ?? "1", 10);
+  const quizStartFromUrl =
+    Number.isFinite(urlQuestion) && urlQuestion > 1
+      ? {
+          lessonId,
+          answers: {},
+          currentQuestionIndex: Math.min(urlQuestion, quizQuestions.length) - 1,
+          currentSubmitted: false,
+          isCompleted: false,
+          score: null,
+          totalQuestions: quizQuestions.length,
+          updatedAt: "",
+        }
+      : null;
 
   const course = courseQuery.data;
   const modIndex =
@@ -164,7 +181,7 @@ export function LessonReaderV2({
       { scroll: false },
     );
 
-  function next() {
+  async function next() {
     if (!step || !inModule) return;
     if (!isLast) {
       savePage.mutate({
@@ -177,24 +194,21 @@ export function LessonReaderV2({
       return;
     }
     if (hasQuiz) {
-      savePage.mutate({
-        ...ids,
-        pageType: "lesson",
-        pageNumber: stepNumber,
-        totalPages,
-      });
-      saveResumeMutate({
-        ...ids,
-        pageType: "quiz",
-        pageNumber: stepCount + 1,
-        quiz: { quizId: firstQuizId!, questionNumber: 1 },
-      });
+      // As mobile: no page save for the last step here, and the quiz position
+      // is saved per question as it opens (page = question number).
       router.push(`?quiz=${encodeURIComponent(firstQuizId!)}&q=1`, {
         scroll: false,
       });
       return;
     }
-    void finish().catch(() => {});
+    // Leave only once the lesson is saved as complete (mobile waits too).
+    setCompleteError(false);
+    try {
+      await finish();
+    } catch {
+      setCompleteError(true);
+      return;
+    }
     router.push(
       nextLesson
         ? `/learn/${courseId}/${moduleId}/${nextLesson._id}`
@@ -309,7 +323,16 @@ export function LessonReaderV2({
                 colorHex="#f68b26"
                 onLessonComplete={finish}
                 sectionHref={moduleHref}
-                initialProgress={quizProgress.data ?? null}
+                initialProgress={quizProgress.data ?? quizStartFromUrl}
+                onQuestionChange={(index) =>
+                  inModule &&
+                  saveResumeMutate({
+                    ...ids,
+                    pageType: "quiz",
+                    pageNumber: index + 1,
+                    quiz: { quizId: firstQuizId!, questionNumber: index + 1 },
+                  })
+                }
               />
             )
           ) : step.activity ? (
@@ -332,6 +355,11 @@ export function LessonReaderV2({
               className="mt-4 grid grid-cols-2 gap-3"
               aria-label={lesson.title}
             >
+              {completeError && (
+                <div className="col-span-2">
+                  <RetryLine onRetry={() => void next()} />
+                </div>
+              )}
               {isLast && quizFailed && (
                 <div className="col-span-2">
                   <RetryLine onRetry={() => quizQuery.refetch()} />
@@ -346,7 +374,7 @@ export function LessonReaderV2({
               </button>
               <button
                 type="button"
-                onClick={next}
+                onClick={() => void next()}
                 disabled={!activityReady || (isLast && quizUnknown)}
                 className={cn(
                   "press inline-flex min-h-11 items-center justify-center gap-1 rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark",
