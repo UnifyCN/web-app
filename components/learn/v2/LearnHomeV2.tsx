@@ -28,6 +28,7 @@ export function LearnHomeV2() {
   const modules = useModules();
   const progress = useLessonProgressRows();
   const rows = useMemo(() => progress.data ?? [], [progress.data]);
+  const progressFailed = progress.isError && !progress.data;
 
   const summaries = useMemo(
     () => courseSummaries(modules.data ?? [], rows),
@@ -49,6 +50,24 @@ export function LearnHomeV2() {
       </header>
 
       {resume.length > 0 && <ResumeCard entries={resume} />}
+
+      {/* A failed progress read is not an empty history: say so, offer a
+          retry, and hide the percentages instead of showing 0%. */}
+      {progressFailed && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-lg border border-border-card bg-surface-card px-4 py-3 text-sm text-ink-muted"
+        >
+          <span>{t("common.errorGeneric")}</span>
+          <button
+            type="button"
+            onClick={() => progress.refetch()}
+            className="press min-h-11 shrink-0 px-2 font-semibold text-primary"
+          >
+            {t("common.retry")}
+          </button>
+        </div>
+      )}
 
       <section
         className="flex flex-col gap-3"
@@ -119,9 +138,11 @@ export function LearnHomeV2() {
                       {t("learn.home.lessonCount", { count: lessonCount })}
                     </span>
                   </span>
-                  <span className="shrink-0 text-xs font-semibold text-ink-secondary tabular-nums">
-                    {percentFormat.format(percent / 100)}
-                  </span>
+                  {!progressFailed && (
+                    <span className="shrink-0 text-xs font-semibold text-ink-secondary tabular-nums">
+                      {percentFormat.format(percent / 100)}
+                    </span>
+                  )}
                 </Link>
               </li>
             ))}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
+import { isLearnV2Enabled } from "@/lib/learn/v2/flag";
+import { prefetchLessonProgressRows } from "@/hooks/useLearnV2";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { prefetchChecklist } from "@/hooks/useChecklist";
 import { prefetchCommunity, prefetchNews } from "@/hooks/useCommunity";
@@ -33,7 +35,14 @@ const TAB_PREFETCHERS: Record<string, TabPrefetcher> = {
       // The Learning progress widget reads the module list.
       prefetchLearn(queryClient, language),
     ]),
-  "/learn": prefetchLearn,
+  // Learn v2 also reads the lesson progress rows (Continue card, percentages).
+  "/learn": (queryClient, language) =>
+    isLearnV2Enabled()
+      ? Promise.all([
+          prefetchLearn(queryClient, language),
+          prefetchLessonProgressRows(queryClient),
+        ])
+      : prefetchLearn(queryClient, language),
   "/checklist": prefetchChecklist,
   "/companion": prefetchCompanion,
   "/resume": (queryClient) =>
