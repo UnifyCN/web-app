@@ -23,6 +23,9 @@ interface LessonQuizProps {
   /** Called with the question index each time a question opens (Learn v2
    * saves it as the lesson's resume position, as mobile does). */
   onQuestionChange?: (index: number) => void;
+  /** When false, question changes aren't reported yet; the current question
+   * is reported once it turns true. Defaults to true. */
+  saveReady?: boolean;
   /** The submodule page — finishing navigates here (never the next lesson). */
   sectionHref: string;
   /** Saved progress so answers survive unmount (exit/re-enter, or paging the
@@ -48,6 +51,7 @@ export function LessonQuiz({
   colorHex,
   onLessonComplete,
   onQuestionChange,
+  saveReady = true,
   sectionHref,
   initialProgress,
 }: LessonQuizProps) {
@@ -62,10 +66,11 @@ export function LessonQuiz({
   );
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   useEffect(() => {
-    onQuestionChange?.(currentIndex);
-    // Only a new question should save; the callback identity may change.
+    if (saveReady) onQuestionChange?.(currentIndex);
+    // A new question, or saving becoming possible, reports it; the callback
+    // identity changes every render, so it is left out.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex]);
+  }, [currentIndex, saveReady]);
   // Finishing awaits the result save and then the lesson completion; the
   // buttons stay disabled across both so neither runs twice or navigates midway.
   const [finishing, setFinishing] = useState(false);
