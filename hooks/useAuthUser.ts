@@ -25,8 +25,15 @@ export function useAuthUser() {
     const supabase = createClient();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
+    } = supabase.auth.onAuthStateChange((event) => {
       queryClient.invalidateQueries({ queryKey: AUTH_USER_KEY });
+      // Learn v2 caches per-user progress and activity answers under keys
+      // without the user id; drop them on sign-out so the next account in this
+      // tab never sees them, whichever path signed out.
+      if (event === "SIGNED_OUT") {
+        queryClient.removeQueries({ queryKey: ["learn-v2", "progress"] });
+        queryClient.removeQueries({ queryKey: ["learn-v2", "activity"] });
+      }
     });
     return () => subscription.unsubscribe();
   }, [queryClient]);

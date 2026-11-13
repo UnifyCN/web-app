@@ -16,14 +16,17 @@ import {
   getOrderedLegacyPageNumber,
   stepSections,
 } from "@/lib/learn/v2/contentBlocks";
+import { useLessonQuiz, useLessonQuizProgress } from "@/hooks/useLearn";
+import { LessonQuiz } from "@/components/learn/practice/LessonQuiz";
 import { cn, RTL_FLIP } from "@/lib/utils";
+import { trackLessonCompleted, trackLessonPageViewed } from "@/lib/analytics";
 import { SelectableLessonContent } from "@/components/learn/SelectableLessonContent";
 import { ExplainTermModal } from "@/components/learn/ExplainTermModal";
-import { PortableTextRenderer } from "@/components/learn/PortableTextRenderer";
 import type { SanityBlock } from "@/types";
 import type { LessonStep } from "@/lib/learn/v2/types";
 import { ProgressBar } from "./BackLink";
 import { LessonSectionsV2 } from "./LessonSectionsV2";
+import { ActivityStepV2 } from "./ActivityStepV2";
 
 export interface ActivityRenderProps {
   step: LessonStep;
@@ -61,6 +64,8 @@ export function LessonReaderV2({
   const lesson = lessonQuery.data;
   const steps = useMemo(() => lesson?.pages ?? [], [lesson]);
   const stepCount = steps.length;
+  // On the Quick Check (`?quiz=`) the reader sits after the last block.
+  const urlQuiz = searchParams.has("quiz");
   // An old resume position (`?legacy=activity|ending&page=N`, from lists that
   // don't load blocks) maps to its block's step here, as mobile's legacy
   // routes do (#353); unmatched falls back to step 1.
@@ -75,11 +80,29 @@ export function LessonReaderV2({
       : undefined;
   const requested =
     legacyStep ?? Number.parseInt(searchParams.get("step") ?? "1", 10);
-  const stepNumber = Number.isFinite(requested)
-    ? Math.min(Math.max(requested, 1), Math.max(stepCount, 1))
-    : 1;
+  const stepNumber = urlQuiz
+    ? Math.max(stepCount, 1)
+    : Number.isFinite(requested)
+      ? Math.min(Math.max(requested, 1), Math.max(stepCount, 1))
+      : 1;
   const step = steps[stepNumber - 1];
   const isLast = stepNumber === stepCount;
+
+  // Quick Check quiz documents play after the blocks (mobile), at `?quiz=`.
+  const quizQuery = useLessonQuiz(lessonId);
+  const quizQuestions = (quizQuery.data ?? []).flatMap(
+    (q) => q.questions ?? [],
+  );
+  const firstQuizId = quizQuery.data?.[0]?._id;
+  const hasQuiz = quizQuestions.length > 0 && !!firstQuizId;
+  const onQuiz = hasQuiz && urlQuiz;
+  // Until the quiz query answers, the last step can't know whether a Quick
+  // Check follows, so Next waits instead of completing the lesson early.
+  // A failed lookup is not "no quiz": it would complete the lesson without
+  // its Quick Check, so it counts as unknown and offers a retry.
+  const quizFailed = quizQuery.isError && !quizQuery.data;
+  const quizUnknown = quizQuery.isPending || quizFailed;
+  const quizProgress = useLessonQuizProgress(lessonId, hasQuiz);
 
   const course = courseQuery.data;
   const modIndex =
@@ -96,16 +119,33 @@ export function LessonReaderV2({
   );
   const totalPages = lesson?.totalPages ?? stepCount;
 
-  // Opening a step saves where the user is (position only).
+  // Opening a step saves where the user is (position only). Not on the quiz:
+  // its position is saved when it opens, and a step save would overwrite it.
   const { mutate: saveResumeMutate } = saveResume;
   // Writes wait until the course confirms this lesson belongs to this module,
   // so a mismatched URL can't store the wrong parent ids on the user's row.
   const inModule = !!stub;
   useEffect(() => {
-    if (!step || !inModule) return;
+    if (!step || !inModule || urlQuiz) return;
     saveResumeMutate({ ...ids, pageType: "lesson", pageNumber: stepNumber });
+    trackLessonPageViewed({
+      ...ids,
+      pageNumber: stepNumber,
+      totalPages: stepCount,
+    });
     window.scrollTo({ top: 0 });
-  }, [step, stepNumber, inModule, ids, saveResumeMutate]);
+  }, [step, stepNumber, stepCount, inModule, urlQuiz, ids, saveResumeMutate]);
+
+  const sections = useMemo(() => (step ? stepSections(step) : []), [step]);
+
+  // Awaitable, so the Quick Check stays open (with its retry) until the
+  // lesson is saved as complete. Guarded like next(): nothing is written for
+  // a lesson outside the URL's module.
+  const finish = async () => {
+    if (!inModule) return;
+    await complete.mutateAsync({ ...ids, totalPages });
+    trackLessonCompleted(ids);
+  };
 
   // Activities gate Next until submitted (mobile `activityReady`). Readiness
   // is kept per step key, so a new step starts gated without an effect.
@@ -136,7 +176,25 @@ export function LessonReaderV2({
       goTo(stepNumber + 1);
       return;
     }
-    complete.mutate({ ...ids, totalPages });
+    if (hasQuiz) {
+      savePage.mutate({
+        ...ids,
+        pageType: "lesson",
+        pageNumber: stepNumber,
+        totalPages,
+      });
+      saveResumeMutate({
+        ...ids,
+        pageType: "quiz",
+        pageNumber: stepCount + 1,
+        quiz: { quizId: firstQuizId!, questionNumber: 1 },
+      });
+      router.push(`?quiz=${encodeURIComponent(firstQuizId!)}&q=1`, {
+        scroll: false,
+      });
+      return;
+    }
+    void finish().catch(() => {});
     router.push(
       nextLesson
         ? `/learn/${courseId}/${moduleId}/${nextLesson._id}`
@@ -185,7 +243,7 @@ export function LessonReaderV2({
             aria-live="polite"
             dir="ltr"
           >
-            {stepCount > 0 && `${stepNumber} / ${stepCount}`}
+            {stepCount > 0 && !onQuiz && `${stepNumber} / ${stepCount}`}
           </p>
         </div>
         <ProgressBar
@@ -221,55 +279,89 @@ export function LessonReaderV2({
             <h1 className="text-2xl font-bold tracking-tight text-ink-secondary md:text-[32px] md:leading-tight">
               {lesson.title}
             </h1>
-            {step.title && step.title !== lesson.title && (
-              <p className="text-base font-semibold text-ink-tertiary">
-                {step.title}
-              </p>
-            )}
+            {!onQuiz &&
+              !step.activity &&
+              step.title &&
+              step.title !== lesson.title && (
+                <p className="text-base font-semibold text-ink-tertiary">
+                  {step.title}
+                </p>
+              )}
           </header>
 
-          {step.activity ? (
-            <ReadOnlyActivity
+          {onQuiz ? (
+            quizProgress.isPending ? (
+              <p className="loading-delayed text-sm text-ink-muted">
+                {t("common.loading")}
+              </p>
+            ) : quizProgress.isError && !quizProgress.data ? (
+              // Unknown saved answers would restart the quiz at question 1.
+              <RetryLine onRetry={() => quizProgress.refetch()} />
+            ) : (
+              <LessonQuiz
+                lessonId={lessonId}
+                moduleId={courseId}
+                submoduleId={moduleId}
+                title={
+                  quizQuery.data?.[0]?.title ?? t("learn.structured.quickCheck")
+                }
+                questions={quizQuestions}
+                colorHex="#f68b26"
+                onLessonComplete={finish}
+                sectionHref={moduleHref}
+                initialProgress={quizProgress.data ?? null}
+              />
+            )
+          ) : step.activity ? (
+            <ActivityStepV2
               key={step._key}
               step={step}
               onReady={onActivityReady}
+              ids={ids}
             />
           ) : (
             <LessonSectionsV2
               key={step._key}
-              sections={stepSections(step)}
+              sections={sections}
               renderRich={renderRich}
             />
           )}
 
-          <nav
-            className="mt-4 grid grid-cols-2 gap-3"
-            aria-label={t("learnWeb.pager.nextUp")}
-          >
-            <button
-              type="button"
-              onClick={back}
-              className="press min-h-11 rounded-lg border border-border-card bg-surface px-4 text-sm font-semibold text-ink-secondary hover:bg-surface-card"
+          {!onQuiz && (
+            <nav
+              className="mt-4 grid grid-cols-2 gap-3"
+              aria-label={lesson.title}
             >
-              {t("common.back")}
-            </button>
-            <button
-              type="button"
-              onClick={next}
-              disabled={!activityReady}
-              className={cn(
-                "press inline-flex min-h-11 items-center justify-center gap-1 rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark",
-                "disabled:cursor-not-allowed disabled:bg-primary-disabled",
+              {isLast && quizFailed && (
+                <div className="col-span-2">
+                  <RetryLine onRetry={() => quizQuery.refetch()} />
+                </div>
               )}
-            >
-              {isLast
-                ? nextLesson
-                  ? t("learn.structured.nextLesson")
-                  : t("common.done")
-                : t("common.next")}
-              <ChevronRight className={cn("size-4", RTL_FLIP)} aria-hidden />
-            </button>
-          </nav>
+              <button
+                type="button"
+                onClick={back}
+                className="press min-h-11 rounded-lg border border-border-card bg-surface px-4 text-sm font-semibold text-ink-secondary hover:bg-surface-card"
+              >
+                {t("common.back")}
+              </button>
+              <button
+                type="button"
+                onClick={next}
+                disabled={!activityReady || (isLast && quizUnknown)}
+                className={cn(
+                  "press inline-flex min-h-11 items-center justify-center gap-1 rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark",
+                  "disabled:cursor-not-allowed disabled:bg-primary-disabled",
+                )}
+              >
+                {isLast && !hasQuiz
+                  ? nextLesson
+                    ? t("learn.structured.nextLesson")
+                    : t("common.done")
+                  : t("common.next")}
+                <ChevronRight className={cn("size-4", RTL_FLIP)} aria-hidden />
+              </button>
+            </nav>
+          )}
         </article>
       )}
 
@@ -282,18 +374,21 @@ export function LessonReaderV2({
   );
 }
 
-/** Fallback activity view: the instructions as text, Next open. */
-function ReadOnlyActivity({ step, onReady }: ActivityRenderProps) {
-  useEffect(() => onReady(true), [onReady]);
+function RetryLine({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation();
   return (
-    <div className="text-sm leading-6">
-      <PortableTextRenderer
-        value={
-          (step.activity?.instructions ?? []).filter(
-            (b) => (b as { _type?: string })._type === "block",
-          ) as SanityBlock[]
-        }
-      />
+    <div
+      role="alert"
+      className="flex items-center justify-between gap-3 rounded-lg border border-border-card bg-surface-card px-4 py-3 text-sm text-ink-muted"
+    >
+      <span>{t("common.errorGeneric")}</span>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="press min-h-11 shrink-0 px-2 font-semibold text-primary"
+      >
+        {t("common.retry")}
+      </button>
     </div>
   );
 }

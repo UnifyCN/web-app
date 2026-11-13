@@ -19,7 +19,7 @@ interface LessonQuizProps {
   questions: SanityQuizQuestion[];
   colorHex: string;
   /** Marks the lesson complete — fired when the quiz is finished (Done). */
-  onLessonComplete: () => void;
+  onLessonComplete: () => void | Promise<unknown>;
   /** The submodule page — finishing navigates here (never the next lesson). */
   sectionHref: string;
   /** Saved progress so answers survive unmount (exit/re-enter, or paging the
@@ -57,6 +57,9 @@ export function LessonQuiz({
     Math.max(0, total - 1),
   );
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  // Finishing awaits the result save and then the lesson completion; the
+  // buttons stay disabled across both so neither runs twice or navigates midway.
+  const [finishing, setFinishing] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string[]>>(
     initialProgress?.answers ?? {},
   );
@@ -109,7 +112,7 @@ export function LessonQuiz({
   const primaryDisabled = !isSubmitted && !answeredEnough;
   // A write is in flight — disable nav so a stale fire-and-forget persist() can't
   // resolve after and overwrite the completion (Done) save with intermediate state.
-  const busy = upsert.isPending;
+  const busy = upsert.isPending || finishing;
   const primaryBtnDisabled = primaryDisabled || busy;
 
   function handleAnswerChange(next: string[]) {
@@ -134,6 +137,16 @@ export function LessonQuiz({
       );
       return;
     }
+    if (finishing) return;
+    setFinishing(true);
+    try {
+      await finishQuiz();
+    } finally {
+      setFinishing(false);
+    }
+  }
+
+  async function finishQuiz() {
     const score = scoreToSave(questions, answers);
     try {
       await upsert.mutateAsync({
@@ -152,7 +165,13 @@ export function LessonQuiz({
     }
     trackQuizCompleted({ lessonId, submoduleId, moduleId, quizTitle: title });
     // Finishing the quiz is what completes the lesson (not merely reaching it).
-    onLessonComplete();
+    // A caller may return a promise; if completing fails, stay on the quiz so
+    // the user can retry instead of leaving with the lesson unfinished.
+    try {
+      await onLessonComplete();
+    } catch {
+      return;
+    }
     // No results screen — finishing always returns to the section page.
     router.push(sectionHref);
   }

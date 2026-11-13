@@ -23,6 +23,12 @@ import {
   type LessonProgressRow,
 } from "@/lib/learn/v2/progress";
 import type { LessonQuizStub, LessonV2 } from "@/lib/learn/v2/types";
+import {
+  buildActivityInput,
+  groupActivityInputs,
+  type ActivityInputRow,
+  type SavedActivity,
+} from "@/lib/learn/v2/activity";
 import type { SanityBlock } from "@/types";
 import type { LessonSection } from "@/types/lessonSections";
 
@@ -388,4 +394,68 @@ export async function maybeMarkCourseCompleted(
     { onConflict: "user_id,module_id" },
   );
   if (upsertError) throw upsertError;
+}
+
+/* ---- Activity answers ------------------------------------------------ */
+
+const mockActivityInputs = new Map<
+  string,
+  ActivityInputRow & { sanity_lesson_id: string }
+>();
+
+/** The user's stored activity answers for one lesson, grouped by block. */
+export async function getActivityInputs(
+  lessonId: string,
+): Promise<Record<string, SavedActivity>> {
+  if (!isSupabaseConfigured()) {
+    return groupActivityInputs(
+      [...mockActivityInputs.values()].filter(
+        (r) => r.sanity_lesson_id === lessonId,
+      ),
+    );
+  }
+  const userId = await getAuthUserId();
+  if (!userId) return {};
+  const { data, error } = await createClient()
+    .from("user_activity_inputs")
+    .select("activity_page_key, input_field_key, input_value, is_submitted")
+    .eq("user_id", userId)
+    .eq("sanity_lesson_id", lessonId);
+  if (error) throw error;
+  return groupActivityInputs((data ?? []) as ActivityInputRow[]);
+}
+
+/** Save one activity field (a draft, or with `submitted` a submit). */
+export async function saveActivityInput(
+  ids: LessonRef,
+  activityKey: string,
+  fieldKey: string,
+  value: string,
+  submitted: boolean,
+): Promise<boolean> {
+  const body = buildActivityInput(
+    ids,
+    activityKey,
+    fieldKey,
+    value,
+    submitted,
+    new Date(),
+  );
+  if (!isSupabaseConfigured()) {
+    mockActivityInputs.set(`${ids.lessonId}|${activityKey}|${fieldKey}`, body);
+    return true;
+  }
+  const userId = await getAuthUserId();
+  if (!userId) return false;
+  const { error } = await createClient()
+    .from("user_activity_inputs")
+    .upsert(
+      { user_id: userId, ...body },
+      {
+        onConflict:
+          "user_id,sanity_lesson_id,activity_page_key,input_field_key",
+      },
+    );
+  if (error) throw error;
+  return true;
 }
