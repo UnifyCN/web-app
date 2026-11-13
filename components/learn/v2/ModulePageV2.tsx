@@ -30,8 +30,9 @@ export function ModulePageV2({
   // Lesson links resume at the saved step, so they wait for the progress rows:
   // a link built from missing progress would open step 1 and overwrite the
   // saved position.
-  const progressReady = progress.isSuccess;
-  const progressFailed = progress.isError && !progress.data;
+  // Rows already loaded stay usable even if a later background refetch fails.
+  const progressReady = progress.data !== undefined;
+  const progressFailed = progress.isError;
   const course = courseQuery.data;
   const mod = course?.submodules.find((s) => s._id === moduleId);
 
@@ -114,7 +115,7 @@ export function ModulePageV2({
                 </button>
               </div>
             )}
-            {!progressReady && !progressFailed ? (
+            {progress.isPending ? (
               <div aria-hidden className="flex flex-col gap-2">
                 {lessons.map((l) => (
                   <span
