@@ -27,6 +27,11 @@ export function ModulePageV2({
   const courseQuery = useCourseV2(courseId);
   const progress = useLessonProgressRows();
   const rows = useMemo(() => progress.data ?? [], [progress.data]);
+  // Lesson links resume at the saved step, so they wait for the progress rows:
+  // a link built from missing progress would open step 1 and overwrite the
+  // saved position.
+  const progressReady = progress.isSuccess;
+  const progressFailed = progress.isError && !progress.data;
   const course = courseQuery.data;
   const mod = course?.submodules.find((s) => s._id === moduleId);
 
@@ -94,70 +99,95 @@ export function ModulePageV2({
             >
               {t("learnWeb.home.lessonsHeading")}
             </h2>
-            <ol className="overflow-hidden rounded-xl border border-border-card bg-surface">
-              {lessons.map((lesson, i) => {
-                const state = states[i];
-                const row = rows.find((r) => r.sanity_lesson_id === lesson._id);
-                // A saved `intro` position belongs to this page, so it opens the
-                // lesson's first step instead of linking here again.
-                const href =
-                  state === "done" || row?.current_page_type === "intro"
-                    ? `/learn/${courseId}/${moduleId}/${lesson._id}`
-                    : lessonResumeHref(
-                        {
-                          lessonId: lesson._id,
-                          submoduleId: moduleId,
-                          moduleId: courseId,
-                        },
-                        row,
-                      );
-                return (
-                  <li
-                    key={lesson._id}
-                    className="border-b border-border-card last:border-b-0"
-                  >
-                    <Link
-                      href={href}
-                      className="press-dim flex min-h-16 items-center gap-4 px-4 py-3 hover:bg-surface-card"
+            {progressFailed && (
+              <div
+                role="alert"
+                className="flex items-center justify-between gap-3 rounded-lg border border-border-card bg-surface-card px-4 py-3 text-sm text-ink-muted"
+              >
+                <span>{t("common.errorGeneric")}</span>
+                <button
+                  type="button"
+                  onClick={() => progress.refetch()}
+                  className="press min-h-11 shrink-0 px-2 font-semibold text-primary"
+                >
+                  {t("common.retry")}
+                </button>
+              </div>
+            )}
+            {!progressReady && !progressFailed ? (
+              <div aria-hidden className="flex flex-col gap-2">
+                {lessons.map((l) => (
+                  <span
+                    key={l._id}
+                    className="h-16 animate-pulse rounded-lg bg-surface-gray"
+                  />
+                ))}
+              </div>
+            ) : (
+              <ol className="overflow-hidden rounded-xl border border-border-card bg-surface">
+                {lessons.map((lesson, i) => {
+                  const state = states[i];
+                  const row = rows.find(
+                    (r) => r.sanity_lesson_id === lesson._id,
+                  );
+                  // A saved `intro` position belongs to this page, so it opens the
+                  // lesson's first step instead of linking here again.
+                  const href =
+                    state === "done" || row?.current_page_type === "intro"
+                      ? `/learn/${courseId}/${moduleId}/${lesson._id}`
+                      : lessonResumeHref(
+                          {
+                            lessonId: lesson._id,
+                            submoduleId: moduleId,
+                            moduleId: courseId,
+                          },
+                          row,
+                        );
+                  return (
+                    <li
+                      key={lesson._id}
+                      className="border-b border-border-card last:border-b-0"
                     >
-                      <StateMark state={state} />
-                      <span className="min-w-0 flex-1">
-                        <span
-                          className={cn(
-                            "block text-base font-semibold leading-5",
-                            state === "todo"
-                              ? "text-ink-tertiary"
-                              : "text-ink-secondary",
-                          )}
-                        >
-                          {lesson.title}
+                      <LessonRowLink href={progressReady ? href : undefined}>
+                        <StateMark state={state} />
+                        <span className="min-w-0 flex-1">
+                          <span
+                            className={cn(
+                              "block text-base font-semibold leading-5",
+                              state === "todo"
+                                ? "text-ink-tertiary"
+                                : "text-ink-secondary",
+                            )}
+                          >
+                            {lesson.title}
+                          </span>
+                          <span className="mt-1 block text-xs text-ink-muted">
+                            {state === "done" && `${t("common.done")} · `}
+                            {state === "next" && `${t("learn.home.upNext")} · `}
+                            {t("learn.structured.readingMinutes", {
+                              count: lesson.readingMinutes,
+                            })}
+                          </span>
                         </span>
-                        <span className="mt-1 block text-xs text-ink-muted">
-                          {state === "done" && `${t("common.done")} · `}
-                          {state === "next" && `${t("learn.home.upNext")} · `}
-                          {t("learn.structured.readingMinutes", {
-                            count: lesson.readingMinutes,
-                          })}
-                        </span>
-                      </span>
-                      {state === "next" ? (
-                        <span className="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-white">
-                          {t("common.start")}
-                        </span>
-                      ) : (
-                        <ChevronRight
-                          className={cn(
-                            "size-4 shrink-0 text-ink-placeholder",
-                            RTL_FLIP,
-                          )}
-                          aria-hidden
-                        />
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ol>
+                        {state === "next" ? (
+                          <span className="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-white">
+                            {t("common.start")}
+                          </span>
+                        ) : (
+                          <ChevronRight
+                            className={cn(
+                              "size-4 shrink-0 text-ink-placeholder",
+                              RTL_FLIP,
+                            )}
+                            aria-hidden
+                          />
+                        )}
+                      </LessonRowLink>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
           </section>
 
           {(mod.practice_count ?? 0) > 0 && (
@@ -200,5 +230,27 @@ function StateMark({ state }: { state: LessonState }) {
   }
   return (
     <span className="size-7 shrink-0 rounded-full border-2 border-border-card" />
+  );
+}
+
+/** A lesson row: a link once its resume position is known, otherwise a
+ * plain row (progress failed to load), so it can't open the wrong step. */
+function LessonRowLink({
+  href,
+  children,
+}: {
+  href: string | undefined;
+  children: React.ReactNode;
+}) {
+  const className = "flex min-h-16 items-center gap-4 px-4 py-3";
+  if (!href)
+    return <div className={cn(className, "opacity-70")}>{children}</div>;
+  return (
+    <Link
+      href={href}
+      className={cn(className, "press-dim hover:bg-surface-card")}
+    >
+      {children}
+    </Link>
   );
 }
