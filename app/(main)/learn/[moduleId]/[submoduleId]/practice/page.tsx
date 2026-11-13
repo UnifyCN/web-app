@@ -3,11 +3,7 @@
 import { use, useMemo } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import {
-  useModule,
-  usePractices,
-  usePracticeProgress,
-} from "@/hooks/useLearn";
+import { useModule, usePractices, usePracticeProgress } from "@/hooks/useLearn";
 import { PracticeQuiz } from "@/components/learn/practice/PracticeQuiz";
 import { flattenPractices } from "@/components/learn/practice/flattenPractices";
 
@@ -72,9 +68,7 @@ export default function PracticePage({
   if (flat.length === 0) {
     return (
       <div className="mx-auto max-w-[760px] px-6 py-16 text-center">
-        <p className="text-sm text-ink-muted">
-          {t("learnWeb.practice.empty")}
-        </p>
+        <p className="text-sm text-ink-muted">{t("learnWeb.practice.empty")}</p>
         <Link
           href={`/learn/${moduleId}/${submoduleId}`}
           className="mt-3 inline-block text-sm font-semibold text-primary"

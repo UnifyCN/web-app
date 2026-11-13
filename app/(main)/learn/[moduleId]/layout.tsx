@@ -41,7 +41,9 @@ export default function ModuleLayout({
           role="alert"
           className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-2 bg-surface p-6 text-center"
         >
-          <p className="text-sm text-ink-secondary">{t("common.errorGeneric")}</p>
+          <p className="text-sm text-ink-secondary">
+            {t("common.errorGeneric")}
+          </p>
           <button
             type="button"
             onClick={retry}

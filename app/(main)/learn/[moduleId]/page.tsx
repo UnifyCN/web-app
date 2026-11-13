@@ -1,5 +1,7 @@
 "use client";
 
+import { CoursePageV2 } from "@/components/learn/v2/CoursePageV2";
+import { isLearnV2Enabled } from "@/lib/learn/v2/flag";
 import { use, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -20,7 +22,7 @@ import {
 } from "@/hooks/useLearn";
 import { trackModuleViewed } from "@/lib/analytics";
 
-export default function ModuleDetailPage({
+function ModuleDetailPageV1({
   params,
 }: {
   params: Promise<{ moduleId: string }>;
@@ -97,12 +99,18 @@ export default function ModuleDetailPage({
   return (
     <div className="mx-auto max-w-[860px] px-6 py-6">
       <Breadcrumb
-        items={[{ label: t("tabs.learn"), href: "/learn" }, { label: mod.title }]}
+        items={[
+          { label: t("tabs.learn"), href: "/learn" },
+          { label: mod.title },
+        ]}
       />
 
       <div
         className="relative mt-4 overflow-hidden rounded-card p-6 text-white shadow-sm"
-        style={{ backgroundColor: mod.colorTheme?.hex ?? "var(--color-ink-placeholder)" }}
+        style={{
+          backgroundColor:
+            mod.colorTheme?.hex ?? "var(--color-ink-placeholder)",
+        }}
       >
         <Blob
           color="#ffffff"
@@ -174,4 +182,14 @@ export default function ModuleDetailPage({
       )}
     </div>
   );
+}
+
+/** Learn v2 (Courses redesign) behind the build-time flag; with the flag off
+ * the page above is unchanged. */
+export default function ModuleDetailPage(props: {
+  params: Promise<{ moduleId: string }>;
+}) {
+  const { moduleId } = use(props.params);
+  if (isLearnV2Enabled()) return <CoursePageV2 courseId={moduleId} />;
+  return <ModuleDetailPageV1 params={props.params} />;
 }
