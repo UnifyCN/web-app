@@ -98,7 +98,10 @@ export function LessonReaderV2({
   const onQuiz = hasQuiz && urlQuiz;
   // Until the quiz query answers, the last step can't know whether a Quick
   // Check follows, so Next waits instead of completing the lesson early.
-  const quizUnknown = quizQuery.isPending;
+  // A failed lookup is not "no quiz": it would complete the lesson without
+  // its Quick Check, so it counts as unknown and offers a retry.
+  const quizFailed = quizQuery.isError && !quizQuery.data;
+  const quizUnknown = quizQuery.isPending || quizFailed;
   const quizProgress = useLessonQuizProgress(lessonId, hasQuiz);
 
   const course = courseQuery.data;
@@ -135,11 +138,14 @@ export function LessonReaderV2({
 
   const sections = useMemo(() => (step ? stepSections(step) : []), [step]);
 
-  const finish = () =>
-    complete.mutate(
-      { ...ids, totalPages },
-      { onSuccess: () => trackLessonCompleted(ids) },
-    );
+  // Awaitable, so the Quick Check stays open (with its retry) until the
+  // lesson is saved as complete. Guarded like next(): nothing is written for
+  // a lesson outside the URL's module.
+  const finish = async () => {
+    if (!inModule) return;
+    await complete.mutateAsync({ ...ids, totalPages });
+    trackLessonCompleted(ids);
+  };
 
   // Activities gate Next until submitted (mobile `activityReady`). Readiness
   // is kept per step key, so a new step starts gated without an effect.
@@ -188,7 +194,7 @@ export function LessonReaderV2({
       });
       return;
     }
-    finish();
+    void finish().catch(() => {});
     router.push(
       nextLesson
         ? `/learn/${courseId}/${moduleId}/${nextLesson._id}`
@@ -288,6 +294,9 @@ export function LessonReaderV2({
               <p className="loading-delayed text-sm text-ink-muted">
                 {t("common.loading")}
               </p>
+            ) : quizProgress.isError && !quizProgress.data ? (
+              // Unknown saved answers would restart the quiz at question 1.
+              <RetryLine onRetry={() => quizProgress.refetch()} />
             ) : (
               <LessonQuiz
                 lessonId={lessonId}
@@ -323,6 +332,11 @@ export function LessonReaderV2({
               className="mt-4 grid grid-cols-2 gap-3"
               aria-label={lesson.title}
             >
+              {isLast && quizFailed && (
+                <div className="col-span-2">
+                  <RetryLine onRetry={() => quizQuery.refetch()} />
+                </div>
+              )}
               <button
                 type="button"
                 onClick={back}
@@ -356,6 +370,25 @@ export function LessonReaderV2({
         lessonContext={lesson?.title}
         onClose={() => setAskTerm(null)}
       />
+    </div>
+  );
+}
+
+function RetryLine({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div
+      role="alert"
+      className="flex items-center justify-between gap-3 rounded-lg border border-border-card bg-surface-card px-4 py-3 text-sm text-ink-muted"
+    >
+      <span>{t("common.errorGeneric")}</span>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="press min-h-11 shrink-0 px-2 font-semibold text-primary"
+      >
+        {t("common.retry")}
+      </button>
     </div>
   );
 }

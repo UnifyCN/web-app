@@ -19,7 +19,7 @@ interface LessonQuizProps {
   questions: SanityQuizQuestion[];
   colorHex: string;
   /** Marks the lesson complete — fired when the quiz is finished (Done). */
-  onLessonComplete: () => void;
+  onLessonComplete: () => void | Promise<unknown>;
   /** The submodule page — finishing navigates here (never the next lesson). */
   sectionHref: string;
   /** Saved progress so answers survive unmount (exit/re-enter, or paging the
@@ -152,7 +152,13 @@ export function LessonQuiz({
     }
     trackQuizCompleted({ lessonId, submoduleId, moduleId, quizTitle: title });
     // Finishing the quiz is what completes the lesson (not merely reaching it).
-    onLessonComplete();
+    // A caller may return a promise; if completing fails, stay on the quiz so
+    // the user can retry instead of leaving with the lesson unfinished.
+    try {
+      await onLessonComplete();
+    } catch {
+      return;
+    }
     // No results screen — finishing always returns to the section page.
     router.push(sectionHref);
   }

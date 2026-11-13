@@ -182,6 +182,8 @@ function ActivityForm({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
+  // A draft that didn't save: shown with a retry, never silently dropped.
+  const [draftFailed, setDraftFailed] = useState(false);
   // Edits since the last submit started: an edit during the save means the
   // learner must submit again (mobile `edits`).
   const edits = useRef(0);
@@ -214,6 +216,40 @@ function ActivityForm({
       return ok;
     });
 
+  /**
+   * Save one draft. On failure (an error or nothing written), the edit is kept
+   * in the cache as unsubmitted, so coming back shows it and asks for a submit
+   * instead of restoring the old answer as complete, and a retry is offered.
+   */
+  const saveDraft = (field: string, value: string) =>
+    persist(field, value)
+      .then((ok) => ok)
+      .catch(() => false)
+      .then((ok) => {
+        if (!ok) {
+          cacheSaved(
+            queryClient,
+            ids.lessonId,
+            activity._key,
+            field,
+            value,
+            false,
+          );
+          setDraftFailed(true);
+        }
+        return ok;
+      });
+
+  async function retryDrafts() {
+    const results = await Promise.all([
+      ...Object.entries(inputs).map(([k, v]) => saveDraft(k, v)),
+      ...Object.entries(answers).map(([k, v]) =>
+        saveDraft(ACTIVITY_QUESTION_PREFIX + k, JSON.stringify(v)),
+      ),
+    ]);
+    if (results.every(Boolean)) setDraftFailed(false);
+  }
+
   const edited = () => {
     edits.current += 1;
     setSubmitted(false);
@@ -226,7 +262,7 @@ function ActivityForm({
     const draftKey = scope + key;
     const existing = pendingDrafts.get(draftKey);
     if (existing) clearTimeout(existing.timer);
-    const run = () => void persist(key, value).catch(() => {});
+    const run = () => void saveDraft(key, value);
     pendingDrafts.set(draftKey, {
       run,
       timer: setTimeout(() => {
@@ -239,9 +275,7 @@ function ActivityForm({
   const onAnswer = (key: string, value: string | string[]) => {
     setAnswers((c) => ({ ...c, [key]: value }));
     edited();
-    void persist(ACTIVITY_QUESTION_PREFIX + key, JSON.stringify(value)).catch(
-      () => {},
-    );
+    void saveDraft(ACTIVITY_QUESTION_PREFIX + key, JSON.stringify(value));
   };
 
   const canSubmit = canSubmitLessonActivity(instructions, inputs, answers);
@@ -265,6 +299,8 @@ function ActivityForm({
         return;
       }
       if (edits.current !== editsAtSubmit) return;
+      // Every field was just saved, so earlier draft failures are resolved.
+      setDraftFailed(false);
       setSubmitted(true);
     } catch {
       setError(true);
@@ -299,6 +335,21 @@ function ActivityForm({
             </p>
           )}
           {rich(answerBox.content)}
+        </div>
+      )}
+      {draftFailed && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-3 rounded-lg border border-border-card bg-surface-card px-4 py-3 text-sm text-ink-muted"
+        >
+          <span>{t("common.errorGeneric")}</span>
+          <button
+            type="button"
+            onClick={() => void retryDrafts()}
+            className="press min-h-11 shrink-0 px-2 font-semibold text-primary"
+          >
+            {t("common.retry")}
+          </button>
         </div>
       )}
       {error && (
