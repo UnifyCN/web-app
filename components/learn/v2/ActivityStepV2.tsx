@@ -124,6 +124,25 @@ export function ActivityStepV2(
       </p>
     );
   }
+  // Unknown saved answers aren't "no answers": an empty form would make a
+  // learner who already submitted redo it, and drafts could overwrite theirs.
+  if (saved.isError && !saved.data) {
+    return (
+      <div
+        role="alert"
+        className="flex items-center justify-between gap-3 rounded-lg border border-border-card bg-surface-card px-4 py-3 text-sm text-ink-muted"
+      >
+        <span>{t("common.errorGeneric")}</span>
+        <button
+          type="button"
+          onClick={() => saved.refetch()}
+          className="press min-h-11 shrink-0 px-2 font-semibold text-primary"
+        >
+          {t("common.retry")}
+        </button>
+      </div>
+    );
+  }
   return (
     <ActivityForm
       {...props}
