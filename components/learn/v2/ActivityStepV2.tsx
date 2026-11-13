@@ -240,7 +240,21 @@ function ActivityForm({
         return ok;
       });
 
+  const [retrying, setRetrying] = useState(false);
+
+  // Retry and Submit never overlap: an unsubmitted retry write queued behind a
+  // submit would otherwise undo it.
   async function retryDrafts() {
+    if (saving || retrying) return;
+    setRetrying(true);
+    try {
+      await retryDraftWrites();
+    } finally {
+      setRetrying(false);
+    }
+  }
+
+  async function retryDraftWrites() {
     const results = await Promise.all([
       ...Object.entries(inputs).map(([k, v]) => saveDraft(k, v)),
       ...Object.entries(answers).map(([k, v]) =>
@@ -281,7 +295,7 @@ function ActivityForm({
   const canSubmit = canSubmitLessonActivity(instructions, inputs, answers);
 
   async function submit() {
-    if (!canSubmit || saving) return;
+    if (!canSubmit || saving || retrying) return;
     setSaving(true);
     const editsAtSubmit = edits.current;
     dropDrafts(scope);
@@ -346,6 +360,7 @@ function ActivityForm({
           <button
             type="button"
             onClick={() => void retryDrafts()}
+            disabled={saving || retrying}
             className="press min-h-11 shrink-0 px-2 font-semibold text-primary"
           >
             {t("common.retry")}
@@ -360,7 +375,7 @@ function ActivityForm({
       <button
         type="button"
         onClick={submit}
-        disabled={saving || submitted || !canSubmit}
+        disabled={saving || retrying || submitted || !canSubmit}
         className="press min-h-11 self-start rounded-lg bg-ink-secondary px-6 text-sm font-semibold text-white disabled:opacity-50"
       >
         {submitted ? t("common.done") : t("common.submit")}
