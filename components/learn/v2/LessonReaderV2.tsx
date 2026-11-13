@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronRight, X } from "lucide-react";
 import {
@@ -48,12 +42,10 @@ export function LessonReaderV2({
   courseId,
   moduleId,
   lessonId,
-  renderActivity = ReadOnlyActivity,
 }: {
   courseId: string;
   moduleId: string;
   lessonId: string;
-  renderActivity?: (props: ActivityRenderProps) => ReactNode;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -106,11 +98,14 @@ export function LessonReaderV2({
 
   // Opening a step saves where the user is (position only).
   const { mutate: saveResumeMutate } = saveResume;
+  // Writes wait until the course confirms this lesson belongs to this module,
+  // so a mismatched URL can't store the wrong parent ids on the user's row.
+  const inModule = !!stub;
   useEffect(() => {
-    if (!step) return;
+    if (!step || !inModule) return;
     saveResumeMutate({ ...ids, pageType: "lesson", pageNumber: stepNumber });
     window.scrollTo({ top: 0 });
-  }, [step, stepNumber, ids, saveResumeMutate]);
+  }, [step, stepNumber, inModule, ids, saveResumeMutate]);
 
   // Activities gate Next until submitted (mobile `activityReady`). Readiness
   // is kept per step key, so a new step starts gated without an effect.
@@ -121,10 +116,16 @@ export function LessonReaderV2({
     [stepKey],
   );
 
-  const goTo = (n: number) => router.push(`?step=${n}`, { scroll: false });
+  // Search arrivals keep their term highlighted across steps (as v1 does).
+  const highlightQuery = searchParams.get("highlight") ?? undefined;
+  const goTo = (n: number) =>
+    router.push(
+      `?step=${n}${highlightQuery ? `&highlight=${encodeURIComponent(highlightQuery)}` : ""}`,
+      { scroll: false },
+    );
 
   function next() {
-    if (!step) return;
+    if (!step || !inModule) return;
     if (!isLast) {
       savePage.mutate({
         ...ids,
@@ -159,6 +160,7 @@ export function LessonReaderV2({
         submoduleId={moduleId}
         submoduleTitle={mod?.title ?? ""}
         onAskAI={setAskTerm}
+        highlightQuery={highlightQuery}
       />
     ) : null;
 
@@ -227,7 +229,11 @@ export function LessonReaderV2({
           </header>
 
           {step.activity ? (
-            renderActivity({ step, onReady: onActivityReady })
+            <ReadOnlyActivity
+              key={step._key}
+              step={step}
+              onReady={onActivityReady}
+            />
           ) : (
             <LessonSectionsV2
               key={step._key}
