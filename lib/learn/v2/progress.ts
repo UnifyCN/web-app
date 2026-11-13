@@ -171,7 +171,12 @@ export function lessonResumeHref(
     return `${base}?quiz=${encodeURIComponent(row.current_quiz_id)}&q=${positive(row.current_question_number)}`;
   }
   if (type === "activity" || type === "ending") {
-    return `${base}?step=${mapLegacy?.(type, page) ?? 1}`;
+    // Mapping needs the lesson's blocks. Without them (lists), hand the old
+    // position to the reader, which maps it as mobile's legacy routes do.
+    const mapped = mapLegacy?.(type, page);
+    return mapped !== undefined
+      ? `${base}?step=${mapped}`
+      : `${base}?legacy=${type}&page=${page}`;
   }
   if (type === "intro") return `/learn/${ids.moduleId}/${ids.submoduleId}`;
   return `${base}?step=${page}`;

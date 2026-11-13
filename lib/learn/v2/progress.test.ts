@@ -191,9 +191,17 @@ describe("resume", () => {
         type === "ending" && page === 1 ? 4 : undefined,
       ),
     ).toBe("/learn/M/S/L?step=4");
+    // Unmapped here (no blocks): the reader maps it on open.
     expect(lessonResumeHref(ids, row, () => undefined)).toBe(
-      "/learn/M/S/L?step=1",
+      "/learn/M/S/L?legacy=ending&page=1",
     );
+    expect(
+      lessonResumeHref(ids, {
+        sanity_lesson_id: "L",
+        current_page_type: "activity",
+        current_page_number: 2,
+      }),
+    ).toBe("/learn/M/S/L?legacy=activity&page=2");
   });
 });
 
