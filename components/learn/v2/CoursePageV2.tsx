@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronRight } from "lucide-react";
 import { useCourseV2, useLessonProgressRows } from "@/hooks/useLearnV2";
@@ -26,21 +26,30 @@ export function CoursePageV2({ courseId }: { courseId: string }) {
     () => progressSets(progress.data ?? []),
     [progress.data],
   );
+  // A failed progress read is not "nothing done": hide the counts and offer a
+  // retry instead of showing 0%.
+  const progressFailed = progress.isError && !progress.data;
   const percentFormat = useMemo(
     () => new Intl.NumberFormat(i18n.language, { style: "percent" }),
     [i18n.language],
   );
   const course = courseQuery.data;
 
-  // Same `module_viewed` event as the v1 page, once per course load.
+  // Same `module_viewed` event as the v1 page: once per course, keyed by its
+  // id so a language switch (a new course object) doesn't fire it again.
+  const viewedCourseId = course?._id;
+  const viewed = useRef<string | null>(null);
   useEffect(() => {
-    if (!course) return;
+    if (!course || viewed.current === course._id) return;
+    viewed.current = course._id;
     trackModuleViewed({
       moduleId: course._id,
       moduleTitle: course.title,
       submoduleCount: course.submodules.length,
     });
-  }, [course]);
+    // Only the id decides whether this is a new view.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewedCourseId]);
 
   return (
     <div className="mx-auto flex w-full max-w-[820px] flex-col gap-6 px-4 py-4 md:px-6 md:py-10">
@@ -76,6 +85,21 @@ export function CoursePageV2({ courseId }: { courseId: string }) {
             >
               {t("learn.home.modules")}
             </h2>
+            {progressFailed && (
+              <div
+                role="alert"
+                className="flex items-center justify-between gap-3 rounded-lg border border-border-card bg-surface-card px-4 py-3 text-sm text-ink-muted"
+              >
+                <span>{t("common.errorGeneric")}</span>
+                <button
+                  type="button"
+                  onClick={() => progress.refetch()}
+                  className="press min-h-11 shrink-0 px-2 font-semibold text-primary"
+                >
+                  {t("common.retry")}
+                </button>
+              </div>
+            )}
             <ol className="flex flex-col gap-4">
               {course.submodules.map((mod, index) => {
                 const ids = mod.lessons.map((l) => l._id);
@@ -110,10 +134,14 @@ export function CoursePageV2({ courseId }: { courseId: string }) {
                             {mod.title}
                           </span>
                           <span className="mt-0.5 block text-xs text-ink-muted">
-                            {t("learn.home.lessonSummary", {
-                              count: ids.length,
-                              done,
-                            })}
+                            {progressFailed
+                              ? t("learn.home.lessonCount", {
+                                  count: ids.length,
+                                })
+                              : t("learn.home.lessonSummary", {
+                                  count: ids.length,
+                                  done,
+                                })}
                           </span>
                         </span>
                         <ChevronRight
@@ -124,12 +152,14 @@ export function CoursePageV2({ courseId }: { courseId: string }) {
                           aria-hidden
                         />
                       </span>
-                      <span className="flex items-center gap-3">
-                        <ProgressBar percent={percent} label={mod.title} />
-                        <span className="w-10 shrink-0 text-end text-xs text-ink-muted tabular-nums">
-                          {percentFormat.format(percent / 100)}
+                      {!progressFailed && (
+                        <span className="flex items-center gap-3">
+                          <ProgressBar percent={percent} label={mod.title} />
+                          <span className="w-10 shrink-0 text-end text-xs text-ink-muted tabular-nums">
+                            {percentFormat.format(percent / 100)}
+                          </span>
                         </span>
-                      </span>
+                      )}
                     </Link>
                   </li>
                 );
