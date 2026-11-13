@@ -46,8 +46,8 @@ is in the stores (or releasing the same day).
 1. In Vercel, open the web-app project, then Settings > Environment Variables.
 2. Add `NEXT_PUBLIC_LEARN_V2` with value `true`, scoped to **Production** only (also Preview if
    you want previews to show it). Exactly `true`, lowercase; any other value keeps it off.
-3. Redeploy production (Deployments > latest production > Redeploy, without build cache not
-   needed). The variable is inlined at build time, so it has no effect until a new build.
+3. Redeploy production (Deployments > latest production > Redeploy). The build cache can stay on;
+   the variable is inlined at build time, so it has no effect until a new build.
 4. On production, signed in, check `/learn`, a course, a module, a lesson with sections, an
    activity (submit it) and a lesson with a Quick Check, in English and in Arabic (RTL).
 5. Open the same lesson on the mobile build: it resumes at the same step (shared
