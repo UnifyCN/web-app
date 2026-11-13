@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { getSessionUser } from "@/services/auth";
 
 /**
@@ -20,6 +20,8 @@ export function useAuthUser() {
   // onAuthStateChange is a subscription, not a one-shot call, so it stays on
   // the client directly. The services layer exposes one-shot calls only.
   useEffect(() => {
+    // Mock mode (no Supabase env): there is no session to watch.
+    if (!isSupabaseConfigured()) return;
     const supabase = createClient();
     const {
       data: { subscription },

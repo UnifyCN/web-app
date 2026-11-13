@@ -3,6 +3,8 @@
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { LearnHomeV2 } from "@/components/learn/v2/LearnHomeV2";
+import { isLearnV2Enabled } from "@/lib/learn/v2/flag";
 import { LearnSidePanel } from "@/components/learn/LearnSidePanel";
 import { LessonSearchResult } from "@/components/learn/LessonSearchResult";
 import { ModuleGridCard } from "@/components/learn/ModuleGridCard";
@@ -161,7 +163,9 @@ function LearnPageContent() {
   // --- Resume hero (first incomplete lesson of each in-progress module) ----
   const resumeEntries = useMemo<ResumeEntry[]>(() => {
     const out: ResumeEntry[] = [];
-    for (const m of decoratedModules.filter((x) => x.status === "in_progress")) {
+    for (const m of decoratedModules.filter(
+      (x) => x.status === "in_progress",
+    )) {
       const subs = m.submodules ?? [];
       for (let i = 0; i < subs.length; i++) {
         const lessons = subs[i].lessons ?? [];
@@ -194,7 +198,11 @@ function LearnPageContent() {
   // `.test()` across items keeps no lastIndex state.
   const { moduleHits, lessonHits } = useMemo(() => {
     const wordRe = isSearching ? buildWordMatcher(query) : null;
-    if (!wordRe) return { moduleHits: [] as LearnModuleView[], lessonHits: [] as LessonHit[] };
+    if (!wordRe)
+      return {
+        moduleHits: [] as LearnModuleView[],
+        lessonHits: [] as LessonHit[],
+      };
     // Search within the same set the sidebar filters apply to.
     const pool = decoratedModules.filter(
       (m) =>
@@ -331,7 +339,9 @@ function LearnPageContent() {
               moduleId={startHere._id}
               moduleTitle={startHere.title}
               reason={whyTag(startHere, profile, t) || undefined}
-              colorHex={startHere.colorTheme?.hex ?? "var(--color-ink-placeholder)"}
+              colorHex={
+                startHere.colorTheme?.hex ?? "var(--color-ink-placeholder)"
+              }
             />
           )}
 
@@ -418,6 +428,9 @@ function LearnPageContent() {
 // useSearchParams() forces a client-side-rendering bailout, which Next requires
 // be wrapped in a Suspense boundary or `next build` fails prerendering /learn.
 export default function LearnPage() {
+  // Learn v2 (Courses redesign) is a separate tree behind the build-time flag;
+  // with the flag off this page is unchanged.
+  if (isLearnV2Enabled()) return <LearnHomeV2 />;
   return (
     <Suspense>
       <LearnPageContent />

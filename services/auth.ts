@@ -1,5 +1,5 @@
 import type { AuthError, PostgrestError, User } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { ensureUserRow } from "@/lib/supabase/ensureUserRow";
 import { clearAllAuthEmails } from "@/lib/authEmailHandoff";
 import { clearRecoveryPending } from "@/lib/recoveryPending";
@@ -41,6 +41,7 @@ export async function signOut(): Promise<{ error: AuthError | null }> {
  * which makes every other Supabase call wait behind it.
  */
 export async function getSessionUser(): Promise<User | null> {
+  if (!isSupabaseConfigured()) return null;
   const supabase = createClient();
   const {
     data: { session },

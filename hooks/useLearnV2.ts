@@ -85,10 +85,13 @@ export function useSaveLessonPage() {
 
 export type SaveResumePositionInput = Omit<SaveLessonPageInput, "totalPages">;
 
-/** A step was opened: saves only the resume position. Not invalidated on
- * success, so opening steps doesn't refetch every list. */
+/** A step was opened: saves only the resume position. Only the progress rows
+ * refresh (for the Continue card and the Started filter), not every list. */
 export function useSaveResumePosition() {
+  const queryClient = useQueryClient();
   return useMutation({
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: LESSON_PROGRESS_ROWS_KEY }),
     mutationFn: ({
       pageType,
       pageNumber,
