@@ -115,22 +115,6 @@ export function LessonReaderV2({
       ? Math.min(urlQuestion, Math.max(quizQuestions.length, 1)) - 1
       : undefined;
   const savedQuiz = quizProgress.data ?? null;
-  const quizStart =
-    linkedIndex === undefined
-      ? savedQuiz
-      : {
-          lessonId,
-          answers: savedQuiz?.answers ?? {},
-          currentQuestionIndex: linkedIndex,
-          currentSubmitted:
-            !!savedQuiz &&
-            savedQuiz.currentQuestionIndex === linkedIndex &&
-            savedQuiz.currentSubmitted,
-          isCompleted: savedQuiz?.isCompleted ?? false,
-          score: savedQuiz?.score ?? null,
-          totalQuestions: quizQuestions.length,
-          updatedAt: savedQuiz?.updatedAt ?? "",
-        };
 
   const course = courseQuery.data;
   const modIndex =
@@ -340,7 +324,8 @@ export function LessonReaderV2({
                 colorHex="#f68b26"
                 onLessonComplete={finish}
                 sectionHref={moduleHref}
-                initialProgress={quizStart}
+                initialProgress={savedQuiz}
+                startIndex={linkedIndex}
                 saveReady={inModule}
                 onQuestionChange={(index) =>
                   inModule &&

@@ -26,6 +26,9 @@ interface LessonQuizProps {
   /** When false, question changes aren't reported yet; the current question
    * is reported once it turns true. Defaults to true. */
   saveReady?: boolean;
+  /** The question to open first, when it differs from the saved position
+   * (Learn v2 resume links). Locks still come from `initialProgress`. */
+  startIndex?: number;
   /** The submodule page — finishing navigates here (never the next lesson). */
   sectionHref: string;
   /** Saved progress so answers survive unmount (exit/re-enter, or paging the
@@ -52,6 +55,7 @@ export function LessonQuiz({
   onLessonComplete,
   onQuestionChange,
   saveReady = true,
+  startIndex,
   sectionHref,
   initialProgress,
 }: LessonQuizProps) {
@@ -60,11 +64,15 @@ export function LessonQuiz({
   const upsert = useUpsertLessonQuizProgress();
   const total = questions.length;
 
+  // The saved boundary decides which questions are already submitted; the
+  // question shown first can differ (startIndex).
   const initialIndex = Math.min(
     initialProgress?.currentQuestionIndex ?? 0,
     Math.max(0, total - 1),
   );
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [currentIndex, setCurrentIndex] = useState(() =>
+    Math.min(startIndex ?? initialIndex, Math.max(0, total - 1)),
+  );
   useEffect(() => {
     if (saveReady) onQuestionChange?.(currentIndex);
     // A new question, or saving becoming possible, reports it; the callback
