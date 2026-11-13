@@ -18,7 +18,10 @@ import {
   useSaveLessonPage,
   useSaveResumePosition,
 } from "@/hooks/useLearnV2";
-import { stepSections } from "@/lib/learn/v2/contentBlocks";
+import {
+  getOrderedLegacyPageNumber,
+  stepSections,
+} from "@/lib/learn/v2/contentBlocks";
 import { cn, RTL_FLIP } from "@/lib/utils";
 import { SelectableLessonContent } from "@/components/learn/SelectableLessonContent";
 import { ExplainTermModal } from "@/components/learn/ExplainTermModal";
@@ -66,7 +69,20 @@ export function LessonReaderV2({
   const lesson = lessonQuery.data;
   const steps = useMemo(() => lesson?.pages ?? [], [lesson]);
   const stepCount = steps.length;
-  const requested = Number.parseInt(searchParams.get("step") ?? "1", 10);
+  // An old resume position (`?legacy=activity|ending&page=N`, from lists that
+  // don't load blocks) maps to its block's step here, as mobile's legacy
+  // routes do (#353); unmatched falls back to step 1.
+  const legacyType = searchParams.get("legacy");
+  const legacyStep =
+    lesson && (legacyType === "activity" || legacyType === "ending")
+      ? (getOrderedLegacyPageNumber({
+          lesson,
+          pageType: legacyType,
+          pageNumber: Number.parseInt(searchParams.get("page") ?? "", 10),
+        }) ?? 1)
+      : undefined;
+  const requested =
+    legacyStep ?? Number.parseInt(searchParams.get("step") ?? "1", 10);
   const stepNumber = Number.isFinite(requested)
     ? Math.min(Math.max(requested, 1), Math.max(stepCount, 1))
     : 1;
