@@ -15,6 +15,7 @@ import {
   closeQuizAttempt,
   getOpenQuizAttempt,
   getOrCreateQuizAttempt,
+  hasQuizAttempt,
   saveQuizResponse,
 } from "./learnV2";
 import { loadQuizAnswers } from "@/hooks/useLearnV2";
@@ -156,7 +157,27 @@ describe("Quick Check answers in mobile's tables", () => {
       answers: { q1: ["a"], q2: ["x", "y"] },
     });
 
-    fakeDb({ user_quiz_attempts: [{ data: [] }] });
+    fakeDb({ user_quiz_attempts: [{ data: [] }, { data: [] }] });
     expect(await loadQuizAnswers([quiz])).toBeNull();
+  });
+
+  it("starts fresh, without the legacy fallback, once the shared attempt is finished", async () => {
+    fakeDb({
+      user_quiz_attempts: [
+        { data: [] }, // no open attempt
+        { data: [{ id: "att-1" }] }, // but a finished one exists
+      ],
+    });
+    const quiz = {
+      _id: "quiz-1",
+      questions: [{ _key: "q1", question_type: "multiple_choice_single" }],
+    } as never;
+    expect(await loadQuizAnswers([quiz])).toEqual({ answers: {} });
+  });
+
+  it("reports whether any attempt exists for the quiz", async () => {
+    fakeDb({ user_quiz_attempts: [{ data: [{ id: "a" }] }, { data: [] }] });
+    expect(await hasQuizAttempt("quiz-1")).toBe(true);
+    expect(await hasQuizAttempt("quiz-1")).toBe(false);
   });
 });

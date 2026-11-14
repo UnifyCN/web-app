@@ -131,8 +131,10 @@ export function LessonReaderV2({
   );
 
   // Quick Check answers live in mobile's quiz tables, so they move between
-  // apps. Web's old user_lesson_quiz_progress is only a read fallback (for
-  // an unfinished quiz with no open mobile attempt); nothing writes it here.
+  // apps. Web's old user_lesson_quiz_progress is only a read fallback, for
+  // an unfinished quiz the user never started in mobile's tables (once a
+  // shared attempt exists, even a finished one, it's stale); nothing writes
+  // it here.
   const quizSync = useQuizAnswerSync(ids, hasQuiz ? quizQuery.data : undefined);
   const savedQuiz = useMemo(() => {
     const total = quizQuestions.length;

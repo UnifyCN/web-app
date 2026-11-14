@@ -92,6 +92,9 @@ export function LessonQuiz({
   // Finishing awaits the result save and then the lesson completion; the
   // buttons stay disabled across both so neither runs twice or navigates midway.
   const [finishing, setFinishing] = useState(false);
+  // An answer save to the injected store failed: shown with a Retry, and
+  // cleared by the next save that succeeds (failed answers are resent).
+  const [saveFailed, setSaveFailed] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string[]>>(
     initialProgress?.answers ?? {},
   );
@@ -121,7 +124,10 @@ export function LessonQuiz({
     currentSubmitted: boolean,
   ) {
     if (persistence) {
-      void persistence.save({ answers: ans, completed }).catch(() => {});
+      persistence.save({ answers: ans, completed }).then(
+        () => setSaveFailed(false),
+        () => setSaveFailed(true),
+      );
       return;
     }
     upsert.mutate({
@@ -187,6 +193,7 @@ export function LessonQuiz({
     try {
       if (persistence) {
         await persistence.save({ answers, completed: true });
+        setSaveFailed(false);
       } else {
         await upsert.mutateAsync({
           lessonId,
@@ -263,6 +270,24 @@ export function LessonQuiz({
           {primaryLabel}
         </button>
       </div>
+
+      {saveFailed && (
+        <div
+          role="alert"
+          className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-border-card bg-surface-card px-4 py-3 text-sm text-ink-muted"
+        >
+          <span>{t("common.errorGeneric")}</span>
+          <button
+            type="button"
+            onClick={() =>
+              persist(currentIndex, answers, false, !!submitted[currentKey])
+            }
+            className="press min-h-11 shrink-0 px-2 font-semibold text-primary"
+          >
+            {t("common.retry")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

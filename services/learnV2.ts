@@ -529,6 +529,24 @@ export async function getOpenQuizAttempt(
   return { attemptId, responses };
 }
 
+/** Whether the user has ever started this quiz in mobile's tables (an open
+ * or a finished attempt). Once one exists, web's old progress row is stale. */
+export async function hasQuizAttempt(quizId: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    return [...mockAttempts.values()].some((a) => a.quizId === quizId);
+  }
+  const userId = await getAuthUserId();
+  if (!userId) return false;
+  const { data, error } = await createClient()
+    .from("user_quiz_attempts")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("sanity_quiz_id", quizId)
+    .limit(1);
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
+}
+
 /** The open attempt's id, starting a new attempt if none is open (mobile
  * `getOrCreateInProgressQuizAttempt`, including its re-read after a race). */
 export async function getOrCreateQuizAttempt(
