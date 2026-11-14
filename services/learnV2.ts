@@ -466,3 +466,193 @@ export async function saveActivityInput(
   if (error) throw error;
   return true;
 }
+
+/* ---- Quick Check answers (shared with mobile) ------------------------- */
+
+// `ownerId` (optional) is the account a queued save belongs to. It is used
+// as the row's user_id, so own-row RLS rejects the write if another account
+// is signed in by the time it runs.
+
+/*
+ * Mirrors mobile services/progress/progressService.ts: one in-progress
+ * attempt per user + quiz in `user_quiz_attempts` (completed_at null), its
+ * answers in `user_quiz_responses` keyed by question `_key`. Finishing the
+ * quiz closes the attempt, so the next visit starts fresh, as on mobile.
+ */
+
+export interface QuizAttemptState {
+  attemptId: string;
+  /** Stored answers by question `_key`, in mobile's format. */
+  responses: Record<string, unknown>;
+}
+
+const mockAttempts = new Map<
+  string,
+  QuizAttemptState & { quizId: string; open: boolean }
+>();
+
+/** The open attempt for a quiz and its answers, or null when none is open. */
+export async function getOpenQuizAttempt(
+  quizId: string,
+  ownerId?: string | null,
+): Promise<QuizAttemptState | null> {
+  if (!isSupabaseConfigured()) {
+    const open = [...mockAttempts.values()].find(
+      (a) => a.quizId === quizId && a.open,
+    );
+    return open
+      ? { attemptId: open.attemptId, responses: { ...open.responses } }
+      : null;
+  }
+  const userId = ownerId ?? (await getAuthUserId());
+  if (!userId) return null;
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_quiz_attempts")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("sanity_quiz_id", quizId)
+    .is("completed_at", null)
+    .order("attempt_number", { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  const attemptId = (data?.[0] as { id?: string } | undefined)?.id;
+  if (!attemptId) return null;
+  const { data: rows, error: rowsError } = await supabase
+    .from("user_quiz_responses")
+    .select("sanity_question_id, user_answer")
+    .eq("user_id", userId)
+    .eq("quiz_attempt_id", attemptId);
+  if (rowsError) throw rowsError;
+  const responses: Record<string, unknown> = {};
+  for (const row of (rows ?? []) as {
+    sanity_question_id: string;
+    user_answer: unknown;
+  }[]) {
+    responses[row.sanity_question_id] = row.user_answer;
+  }
+  return { attemptId, responses };
+}
+
+/** Whether the user has ever started this quiz in mobile's tables (an open
+ * or a finished attempt). Once one exists, web's old progress row is stale. */
+export async function hasQuizAttempt(quizId: string): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    return [...mockAttempts.values()].some((a) => a.quizId === quizId);
+  }
+  const userId = await getAuthUserId();
+  if (!userId) return false;
+  const { data, error } = await createClient()
+    .from("user_quiz_attempts")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("sanity_quiz_id", quizId)
+    .limit(1);
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
+}
+
+/** The open attempt's id, starting a new attempt if none is open (mobile
+ * `getOrCreateInProgressQuizAttempt`, including its re-read after a race). */
+export async function getOrCreateQuizAttempt(
+  quizId: string,
+  ids: LessonRef,
+  ownerId?: string | null,
+): Promise<string | null> {
+  if (!isSupabaseConfigured()) {
+    const open = [...mockAttempts.values()].find(
+      (a) => a.quizId === quizId && a.open,
+    );
+    if (open) return open.attemptId;
+    const attemptId = `mock-${quizId}-${mockAttempts.size + 1}`;
+    mockAttempts.set(attemptId, {
+      attemptId,
+      quizId,
+      responses: {},
+      open: true,
+    });
+    return attemptId;
+  }
+  const existing = await getOpenQuizAttempt(quizId, ownerId);
+  if (existing) return existing.attemptId;
+  const userId = ownerId ?? (await getAuthUserId());
+  if (!userId) return null;
+  const supabase = createClient();
+  const { data: last } = await supabase
+    .from("user_quiz_attempts")
+    .select("attempt_number")
+    .eq("user_id", userId)
+    .eq("sanity_quiz_id", quizId)
+    .order("attempt_number", { ascending: false })
+    .limit(1);
+  const lastNumber = (last?.[0] as { attempt_number?: number } | undefined)
+    ?.attempt_number;
+  const { data, error } = await supabase
+    .from("user_quiz_attempts")
+    .insert({
+      user_id: userId,
+      sanity_quiz_id: quizId,
+      sanity_lesson_id: ids.lessonId,
+      sanity_submodule_id: ids.submoduleId,
+      sanity_module_id: ids.moduleId,
+      attempt_number: lastNumber ? lastNumber + 1 : 1,
+      total_questions: 0,
+    })
+    .select("id")
+    .single();
+  if (!error && data) return (data as { id: string }).id;
+  // Lost a race to another tab or app creating the same attempt: re-read once.
+  return (await getOpenQuizAttempt(quizId, ownerId))?.attemptId ?? null;
+}
+
+/** Save one answer on an attempt (mobile `submitQuizAnswer`). */
+export async function saveQuizResponse(
+  attemptId: string,
+  questionId: string,
+  questionType: string,
+  answer: string | string[],
+  isCorrect: boolean,
+  ownerId?: string | null,
+): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    const attempt = mockAttempts.get(attemptId);
+    if (attempt) attempt.responses[questionId] = answer;
+    return true;
+  }
+  const userId = ownerId ?? (await getAuthUserId());
+  if (!userId) return false;
+  const { error } = await createClient().from("user_quiz_responses").upsert(
+    {
+      user_id: userId,
+      quiz_attempt_id: attemptId,
+      sanity_question_id: questionId,
+      question_type: questionType,
+      user_answer: answer,
+      is_correct: isCorrect,
+      answered_at: new Date().toISOString(),
+    },
+    { onConflict: "quiz_attempt_id,sanity_question_id" },
+  );
+  if (error) throw error;
+  return true;
+}
+
+/** Close an attempt so the next visit starts fresh (mobile
+ * `markQuizAttemptComplete`). */
+export async function closeQuizAttempt(
+  attemptId: string,
+  ownerId?: string | null,
+): Promise<void> {
+  if (!isSupabaseConfigured()) {
+    const attempt = mockAttempts.get(attemptId);
+    if (attempt) attempt.open = false;
+    return;
+  }
+  const { error } = await createClient()
+    .from("user_quiz_attempts")
+    .update({ completed_at: new Date().toISOString() })
+    .eq("id", attemptId)
+    .eq("user_id", ownerId ?? (await getAuthUserId()) ?? "")
+    .is("completed_at", null);
+  if (error) throw error;
+}

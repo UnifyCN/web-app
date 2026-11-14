@@ -29,6 +29,15 @@ interface LessonQuizProps {
   /** The question to open first, when it differs from the saved position
    * (Learn v2 resume links). Locks still come from `initialProgress`. */
   startIndex?: number;
+  /** Where answers are saved instead of `user_lesson_quiz_progress`
+   * (Learn v2 saves them in mobile's quiz tables). `completed` closes the quiz;
+   * a rejected save on completion keeps the quiz open for a retry. */
+  persistence?: {
+    save: (input: {
+      answers: Record<string, string[]>;
+      completed: boolean;
+    }) => Promise<unknown>;
+  };
   /** The submodule page — finishing navigates here (never the next lesson). */
   sectionHref: string;
   /** Saved progress so answers survive unmount (exit/re-enter, or paging the
@@ -56,6 +65,7 @@ export function LessonQuiz({
   onQuestionChange,
   saveReady = true,
   startIndex,
+  persistence,
   sectionHref,
   initialProgress,
 }: LessonQuizProps) {
@@ -82,6 +92,9 @@ export function LessonQuiz({
   // Finishing awaits the result save and then the lesson completion; the
   // buttons stay disabled across both so neither runs twice or navigates midway.
   const [finishing, setFinishing] = useState(false);
+  // An answer save to the injected store failed: shown with a Retry, and
+  // cleared by the next save that succeeds (failed answers are resent).
+  const [saveFailed, setSaveFailed] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string[]>>(
     initialProgress?.answers ?? {},
   );
@@ -110,6 +123,21 @@ export function LessonQuiz({
     completed: boolean,
     currentSubmitted: boolean,
   ) {
+    if (persistence) {
+      // Only submitted answers go to the shared store: a stored answer reads
+      // back as submitted (locked), so an unsubmitted draft must stay local.
+      const done = { ...submitted };
+      if (currentSubmitted && questions[index])
+        done[questions[index]._key] = true;
+      const submittedAnswers = Object.fromEntries(
+        Object.entries(ans).filter(([key]) => done[key]),
+      );
+      persistence.save({ answers: submittedAnswers, completed }).then(
+        () => setSaveFailed(false),
+        () => setSaveFailed(true),
+      );
+      return;
+    }
     upsert.mutate({
       lessonId,
       answers: ans,
@@ -171,15 +199,20 @@ export function LessonQuiz({
   async function finishQuiz() {
     const score = scoreToSave(questions, answers);
     try {
-      await upsert.mutateAsync({
-        lessonId,
-        answers,
-        currentQuestionIndex: currentIndex,
-        currentSubmitted: true,
-        isCompleted: true,
-        score,
-        totalQuestions: total,
-      });
+      if (persistence) {
+        await persistence.save({ answers, completed: true });
+        setSaveFailed(false);
+      } else {
+        await upsert.mutateAsync({
+          lessonId,
+          answers,
+          currentQuestionIndex: currentIndex,
+          currentSubmitted: true,
+          isCompleted: true,
+          score,
+          totalQuestions: total,
+        });
+      }
     } catch {
       // Persisting the result failed — stay on the quiz so the user can retry
       // rather than navigating away on a failed write.
@@ -245,6 +278,27 @@ export function LessonQuiz({
           {primaryLabel}
         </button>
       </div>
+
+      {saveFailed && (
+        <div
+          role="alert"
+          className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-border-card bg-surface-card px-4 py-3 text-sm text-ink-muted"
+        >
+          <span>{t("common.errorGeneric")}</span>
+          <button
+            type="button"
+            onClick={() => {
+              // Never queue a partial save behind a completion in flight.
+              if (busy) return;
+              persist(currentIndex, answers, false, !!submitted[currentKey]);
+            }}
+            disabled={busy}
+            className="press min-h-11 shrink-0 px-2 font-semibold text-primary disabled:opacity-50"
+          >
+            {t("common.retry")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

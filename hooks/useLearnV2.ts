@@ -7,8 +7,16 @@ import {
 import * as learnV2 from "@/services/learnV2";
 import type { LessonRef } from "@/services/learnV2";
 import type { LessonPageType } from "@/lib/learn/v2/progress";
+import { useMemo, useState } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
+import type { SanityQuizQuestion } from "@/types";
+import {
+  fromStoredAnswer,
+  gradeQuizAnswer,
+  toStoredAnswer,
+} from "@/lib/learn/v2/quizAnswer";
 import { LEARNING_PROGRESS_KEY, MODULES_KEY } from "@/hooks/useLearn";
+import { getAuthUserId, isSupabaseConfigured } from "@/lib/supabase/client";
 
 /**
  * React Query hooks for Learn v2 (behind NEXT_PUBLIC_LEARN_V2). Content keys
@@ -134,4 +142,230 @@ export function prefetchLessonProgressRows(queryClient: QueryClient) {
     queryKey: LESSON_PROGRESS_ROWS_KEY,
     queryFn: learnV2.getLessonProgressRows,
   });
+}
+
+/* ---- Quick Check answers shared with mobile --------------------------- */
+
+export const QUIZ_ANSWERS_KEY = ["learn-v2", "quiz-answers"] as const;
+
+interface SyncQuiz {
+  _id: string;
+  questions?: SanityQuizQuestion[] | null;
+}
+
+type QuizSave = { answers: Record<string, string[]>; completed: boolean };
+type QuizAnswersData = { answers: Record<string, string[]> } | null;
+
+/**
+ * Quick Check answers in mobile's tables (`user_quiz_attempts` /
+ * `user_quiz_responses`). `data` is the open attempts' answers in web's form
+ * (empty once a shared attempt has been finished, so the quiz starts fresh),
+ * or null when the user never started the quiz there (the reader then falls
+ * back to web's old `user_lesson_quiz_progress`, read-only). `persistence`
+ * writes changed answers to mobile's tables, one save at a time, and closes
+ * the attempts when the quiz is finished.
+ */
+export function useQuizAnswerSync(
+  ids: LessonRef,
+  quizzes: SyncQuiz[] | undefined,
+) {
+  const queryClient = useQueryClient();
+  const enabled = !!quizzes && quizzes.length > 0;
+  const quizIds = (quizzes ?? []).map((q) => q._id).join(",");
+  const queryKey = useMemo(
+    () => [...QUIZ_ANSWERS_KEY, ids.lessonId, quizIds],
+    [ids.lessonId, quizIds],
+  );
+  const query = useQuery({
+    queryKey,
+    enabled,
+    staleTime: 0,
+    queryFn: () => loadQuizAnswers(quizzes ?? []),
+  });
+
+  // Kept across rebuilds (a quiz refetch hands over a new array).
+  // A mutable holder, made once per mount (not React state that renders).
+  const [state] = useState<QuizSaveState>(newQuizSaveState);
+  const persistence = useMemo(
+    () =>
+      createQuizPersistence({
+        quizzes: quizzes ?? [],
+        ids,
+        state,
+        queryClient,
+        queryKey,
+      }),
+    // Rebuilt only when the lesson's quizzes or ids change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      quizzes,
+      ids.lessonId,
+      ids.submoduleId,
+      ids.moduleId,
+      queryClient,
+      queryKey,
+    ],
+  );
+
+  return { ...query, persistence };
+}
+
+/** Per-account save state: which attempt each quiz writes to, which answers
+ * are already stored, and whether this run's attempts were closed. */
+export interface QuizSaveState {
+  owner: string | null | undefined;
+  attemptIds: Map<string, string>;
+  saved: Map<string, string>;
+  finished: boolean;
+  chain: Promise<unknown>;
+}
+
+export function newQuizSaveState(): QuizSaveState {
+  return {
+    owner: undefined,
+    attemptIds: new Map(),
+    saved: new Map(),
+    finished: false,
+    chain: Promise.resolve(),
+  };
+}
+
+/** Writes Quick Check answers to mobile's tables, one save at a time. */
+export function createQuizPersistence({
+  quizzes,
+  ids,
+  state,
+  queryClient,
+  queryKey,
+}: {
+  quizzes: SyncQuiz[];
+  ids: LessonRef;
+  state: QuizSaveState;
+  queryClient: QueryClient;
+  queryKey: readonly unknown[];
+}) {
+  // The signed-in account (a fixed owner in mock mode, which has no session).
+  const currentOwner = async () =>
+    isSupabaseConfigured() ? await getAuthUserId() : "mock";
+  // Mock mode has no account: the services then ignore the owner.
+  const owned = (userId: string | null) =>
+    userId === "mock" ? undefined : userId;
+  const reset = () => {
+    state.attemptIds.clear();
+    state.saved.clear();
+    state.finished = false;
+  };
+  const attemptFor = async (quizId: string, userId: string | null) => {
+    const known = state.attemptIds.get(quizId);
+    if (known) return known;
+    const id = await learnV2.getOrCreateQuizAttempt(quizId, ids, owned(userId));
+    if (!id) throw new Error("No quiz attempt");
+    state.attemptIds.set(quizId, id);
+    return id;
+  };
+  // Each save belongs to the account that queued it: if another account is
+  // signed in by the time it runs (or during a write), it fails instead of
+  // writing under, or reporting success to, the wrong account.
+  const assertOwner = async (userId: string | null) => {
+    if ((await currentOwner()) !== userId) {
+      throw new Error("Account changed during quiz save");
+    }
+  };
+  const saveNow = async (
+    { answers, completed }: QuizSave,
+    userId: string | null,
+  ) => {
+    await assertOwner(userId);
+    // A different account signed in while the reader stayed open.
+    if (state.owner !== userId) {
+      state.owner = userId;
+      reset();
+    }
+    if (state.finished) {
+      // A retry after the attempts were closed (lesson completion failed):
+      // nothing more to write, and no new attempt.
+      if (completed) return;
+      // Answering again after finishing starts a fresh attempt, as mobile.
+      reset();
+    }
+    for (const quiz of quizzes) {
+      for (const question of quiz.questions ?? []) {
+        const value = toStoredAnswer(question, answers[question._key]);
+        if (value === undefined) continue;
+        const marker = JSON.stringify(value);
+        if (state.saved.get(question._key) === marker) continue;
+        await assertOwner(userId);
+        const attemptId = await attemptFor(quiz._id, userId);
+        await assertOwner(userId);
+        const ok = await learnV2.saveQuizResponse(
+          attemptId,
+          question._key,
+          question.question_type,
+          value,
+          gradeQuizAnswer(question, value),
+          owned(userId),
+        );
+        if (!ok) throw new Error("Quiz answer not saved");
+        // Signed out or switched account while the write was in flight:
+        // don't put this account's answers in the (user-less) cache key.
+        await assertOwner(userId);
+        state.saved.set(question._key, marker);
+        // Keep the cached answers current, so reopening the quiz while the
+        // reader stays mounted shows what was just saved.
+        const answer = answers[question._key];
+        queryClient.setQueryData<QuizAnswersData>(queryKey, (old) => ({
+          answers: { ...(old?.answers ?? {}), [question._key]: answer },
+        }));
+      }
+    }
+    if (completed) {
+      await assertOwner(userId);
+      for (const quiz of quizzes) {
+        const attemptId =
+          state.attemptIds.get(quiz._id) ??
+          (await learnV2.getOpenQuizAttempt(quiz._id, owned(userId)))
+            ?.attemptId;
+        if (attemptId) {
+          await learnV2.closeQuizAttempt(attemptId, owned(userId));
+        }
+      }
+      // An account change during completion rejects it, so the quiz doesn't
+      // report success (and complete the lesson) for another account.
+      await assertOwner(userId);
+      state.finished = true;
+      await queryClient.invalidateQueries({ queryKey: QUIZ_ANSWERS_KEY });
+      await assertOwner(userId);
+    }
+  };
+  return {
+    save(input: QuizSave) {
+      // The owner is read when the save is queued, not when it runs.
+      const owner = currentOwner();
+      const run = state.chain.then(async () => saveNow(input, await owner));
+      state.chain = run.catch(() => undefined);
+      return run;
+    },
+  };
+}
+
+/** Open attempts' answers in web form. Empty when the shared attempts were
+ * all finished; null when the user never started these quizzes there. */
+export async function loadQuizAnswers(
+  quizzes: SyncQuiz[],
+): Promise<QuizAnswersData> {
+  const answers: Record<string, string[]> = {};
+  let found = false;
+  for (const quiz of quizzes) {
+    const open = await learnV2.getOpenQuizAttempt(quiz._id);
+    if (!open) {
+      if (await learnV2.hasQuizAttempt(quiz._id)) found = true;
+      continue;
+    }
+    found = true;
+    for (const question of quiz.questions ?? []) {
+      const value = fromStoredAnswer(question, open.responses[question._key]);
+      if (value) answers[question._key] = value;
+    }
+  }
+  return found ? { answers } : null;
 }
