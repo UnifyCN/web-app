@@ -81,7 +81,7 @@ describe("Quick Check persistence", () => {
     const { persistence } = setup();
     const answers = { q1: ["a"], q2: ["b"] };
     await persistence.save({ answers, completed: true });
-    expect(mocks.closeQuizAttempt).toHaveBeenCalledWith("att-1");
+    expect(mocks.closeQuizAttempt).toHaveBeenCalledWith("att-1", "user-1");
     await persistence.save({ answers, completed: true });
     expect(mocks.getOrCreateQuizAttempt).toHaveBeenCalledTimes(1);
     expect(mocks.saveQuizResponse).toHaveBeenCalledTimes(2);
@@ -100,6 +100,7 @@ describe("Quick Check persistence", () => {
       "multiple_choice_single",
       "a",
       false,
+      "user-2",
     );
   });
 
@@ -153,6 +154,27 @@ describe("Quick Check persistence", () => {
     const { persistence } = setup();
     await persistence.save({ answers: { q1: ["a"] }, completed: true });
     expect(mocks.saveQuizResponse).toHaveBeenCalledTimes(1);
-    expect(mocks.closeQuizAttempt).toHaveBeenCalledWith("att-1");
+    // Mock mode has no account, so no owner is passed on.
+    expect(mocks.closeQuizAttempt).toHaveBeenCalledWith("att-1", undefined);
+  });
+
+  it("binds attempt creation to the account that queued the save", async () => {
+    const { persistence } = setup();
+    await persistence.save({ answers: { q1: ["a"] }, completed: false });
+    expect(mocks.getOrCreateQuizAttempt).toHaveBeenCalledWith(
+      "quiz-1",
+      ids,
+      "user-1",
+    );
+  });
+
+  it("rejects completion when the account changes while attempts close", async () => {
+    const { persistence } = setup();
+    mocks.closeQuizAttempt.mockImplementationOnce(async () => {
+      mocks.userId = "user-2";
+    });
+    await expect(
+      persistence.save({ answers: { q1: ["a"], q2: ["b"] }, completed: true }),
+    ).rejects.toThrow("Account changed");
   });
 });

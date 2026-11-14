@@ -180,4 +180,12 @@ describe("Quick Check answers in mobile's tables", () => {
     expect(await hasQuizAttempt("quiz-1")).toBe(true);
     expect(await hasQuizAttempt("quiz-1")).toBe(false);
   });
+
+  it("writes with the queued owner's user_id, not the current session", async () => {
+    mocks.getAuthUserId.mockResolvedValue("someone-else");
+    const calls = fakeDb({ user_quiz_responses: [{ error: null }] });
+    await saveQuizResponse("att-1", "q1", "short_answer", "x", false, "user-1");
+    const upsert = calls.find((c) => c.op === "upsert");
+    expect(upsert?.args[0]).toMatchObject({ user_id: "user-1" });
+  });
 });

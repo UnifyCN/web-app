@@ -469,6 +469,10 @@ export async function saveActivityInput(
 
 /* ---- Quick Check answers (shared with mobile) ------------------------- */
 
+// `ownerId` (optional) is the account a queued save belongs to. It is used
+// as the row's user_id, so own-row RLS rejects the write if another account
+// is signed in by the time it runs.
+
 /*
  * Mirrors mobile services/progress/progressService.ts: one in-progress
  * attempt per user + quiz in `user_quiz_attempts` (completed_at null), its
@@ -490,6 +494,7 @@ const mockAttempts = new Map<
 /** The open attempt for a quiz and its answers, or null when none is open. */
 export async function getOpenQuizAttempt(
   quizId: string,
+  ownerId?: string | null,
 ): Promise<QuizAttemptState | null> {
   if (!isSupabaseConfigured()) {
     const open = [...mockAttempts.values()].find(
@@ -499,7 +504,7 @@ export async function getOpenQuizAttempt(
       ? { attemptId: open.attemptId, responses: { ...open.responses } }
       : null;
   }
-  const userId = await getAuthUserId();
+  const userId = ownerId ?? (await getAuthUserId());
   if (!userId) return null;
   const supabase = createClient();
   const { data, error } = await supabase
@@ -552,6 +557,7 @@ export async function hasQuizAttempt(quizId: string): Promise<boolean> {
 export async function getOrCreateQuizAttempt(
   quizId: string,
   ids: LessonRef,
+  ownerId?: string | null,
 ): Promise<string | null> {
   if (!isSupabaseConfigured()) {
     const open = [...mockAttempts.values()].find(
@@ -567,9 +573,9 @@ export async function getOrCreateQuizAttempt(
     });
     return attemptId;
   }
-  const existing = await getOpenQuizAttempt(quizId);
+  const existing = await getOpenQuizAttempt(quizId, ownerId);
   if (existing) return existing.attemptId;
-  const userId = await getAuthUserId();
+  const userId = ownerId ?? (await getAuthUserId());
   if (!userId) return null;
   const supabase = createClient();
   const { data: last } = await supabase
@@ -596,7 +602,7 @@ export async function getOrCreateQuizAttempt(
     .single();
   if (!error && data) return (data as { id: string }).id;
   // Lost a race to another tab or app creating the same attempt: re-read once.
-  return (await getOpenQuizAttempt(quizId))?.attemptId ?? null;
+  return (await getOpenQuizAttempt(quizId, ownerId))?.attemptId ?? null;
 }
 
 /** Save one answer on an attempt (mobile `submitQuizAnswer`). */
@@ -606,13 +612,14 @@ export async function saveQuizResponse(
   questionType: string,
   answer: string | string[],
   isCorrect: boolean,
+  ownerId?: string | null,
 ): Promise<boolean> {
   if (!isSupabaseConfigured()) {
     const attempt = mockAttempts.get(attemptId);
     if (attempt) attempt.responses[questionId] = answer;
     return true;
   }
-  const userId = await getAuthUserId();
+  const userId = ownerId ?? (await getAuthUserId());
   if (!userId) return false;
   const { error } = await createClient().from("user_quiz_responses").upsert(
     {
@@ -632,7 +639,10 @@ export async function saveQuizResponse(
 
 /** Close an attempt so the next visit starts fresh (mobile
  * `markQuizAttemptComplete`). */
-export async function closeQuizAttempt(attemptId: string): Promise<void> {
+export async function closeQuizAttempt(
+  attemptId: string,
+  ownerId?: string | null,
+): Promise<void> {
   if (!isSupabaseConfigured()) {
     const attempt = mockAttempts.get(attemptId);
     if (attempt) attempt.open = false;
@@ -642,6 +652,7 @@ export async function closeQuizAttempt(attemptId: string): Promise<void> {
     .from("user_quiz_attempts")
     .update({ completed_at: new Date().toISOString() })
     .eq("id", attemptId)
+    .eq("user_id", ownerId ?? (await getAuthUserId()) ?? "")
     .is("completed_at", null);
   if (error) throw error;
 }

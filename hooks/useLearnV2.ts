@@ -247,15 +247,18 @@ export function createQuizPersistence({
   // The signed-in account (a fixed owner in mock mode, which has no session).
   const currentOwner = async () =>
     isSupabaseConfigured() ? await getAuthUserId() : "mock";
+  // Mock mode has no account: the services then ignore the owner.
+  const owned = (userId: string | null) =>
+    userId === "mock" ? undefined : userId;
   const reset = () => {
     state.attemptIds.clear();
     state.saved.clear();
     state.finished = false;
   };
-  const attemptFor = async (quizId: string) => {
+  const attemptFor = async (quizId: string, userId: string | null) => {
     const known = state.attemptIds.get(quizId);
     if (known) return known;
-    const id = await learnV2.getOrCreateQuizAttempt(quizId, ids);
+    const id = await learnV2.getOrCreateQuizAttempt(quizId, ids, owned(userId));
     if (!id) throw new Error("No quiz attempt");
     state.attemptIds.set(quizId, id);
     return id;
@@ -292,13 +295,15 @@ export function createQuizPersistence({
         const marker = JSON.stringify(value);
         if (state.saved.get(question._key) === marker) continue;
         await assertOwner(userId);
-        const attemptId = await attemptFor(quiz._id);
+        const attemptId = await attemptFor(quiz._id, userId);
+        await assertOwner(userId);
         const ok = await learnV2.saveQuizResponse(
           attemptId,
           question._key,
           question.question_type,
           value,
           gradeQuizAnswer(question, value),
+          owned(userId),
         );
         if (!ok) throw new Error("Quiz answer not saved");
         // Signed out or switched account while the write was in flight:
@@ -318,11 +323,18 @@ export function createQuizPersistence({
       for (const quiz of quizzes) {
         const attemptId =
           state.attemptIds.get(quiz._id) ??
-          (await learnV2.getOpenQuizAttempt(quiz._id))?.attemptId;
-        if (attemptId) await learnV2.closeQuizAttempt(attemptId);
+          (await learnV2.getOpenQuizAttempt(quiz._id, owned(userId)))
+            ?.attemptId;
+        if (attemptId) {
+          await learnV2.closeQuizAttempt(attemptId, owned(userId));
+        }
       }
+      // An account change during completion rejects it, so the quiz doesn't
+      // report success (and complete the lesson) for another account.
+      await assertOwner(userId);
       state.finished = true;
       await queryClient.invalidateQueries({ queryKey: QUIZ_ANSWERS_KEY });
+      await assertOwner(userId);
     }
   };
   return {
