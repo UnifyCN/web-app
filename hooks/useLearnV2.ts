@@ -7,7 +7,14 @@ import {
 import * as learnV2 from "@/services/learnV2";
 import type { LessonRef } from "@/services/learnV2";
 import type { LessonPageType } from "@/lib/learn/v2/progress";
+import { useMemo, useRef } from "react";
 import { useLanguage } from "@/hooks/useLanguage";
+import type { SanityQuizQuestion } from "@/types";
+import {
+  fromStoredAnswer,
+  gradeQuizAnswer,
+  toStoredAnswer,
+} from "@/lib/learn/v2/quizAnswer";
 import { LEARNING_PROGRESS_KEY, MODULES_KEY } from "@/hooks/useLearn";
 
 /**
@@ -134,4 +141,113 @@ export function prefetchLessonProgressRows(queryClient: QueryClient) {
     queryKey: LESSON_PROGRESS_ROWS_KEY,
     queryFn: learnV2.getLessonProgressRows,
   });
+}
+
+/* ---- Quick Check answers shared with mobile --------------------------- */
+
+export const QUIZ_ANSWERS_KEY = ["learn-v2", "quiz-answers"] as const;
+
+interface SyncQuiz {
+  _id: string;
+  questions?: SanityQuizQuestion[] | null;
+}
+
+type QuizSave = { answers: Record<string, string[]>; completed: boolean };
+
+/**
+ * Quick Check answers in mobile's tables (`user_quiz_attempts` /
+ * `user_quiz_responses`). `data` is the open attempts' answers in web's form,
+ * or null when no quiz has an open attempt (the reader then falls back to
+ * web's old `user_lesson_quiz_progress`, read-only). `persistence` writes
+ * changed answers to mobile's tables, one save at a time, and closes the
+ * attempts when the quiz is finished.
+ */
+export function useQuizAnswerSync(
+  ids: LessonRef,
+  quizzes: SyncQuiz[] | undefined,
+) {
+  const queryClient = useQueryClient();
+  const enabled = !!quizzes && quizzes.length > 0;
+  const quizIds = (quizzes ?? []).map((q) => q._id).join(",");
+  const query = useQuery({
+    queryKey: [...QUIZ_ANSWERS_KEY, ids.lessonId, quizIds],
+    enabled,
+    staleTime: 0,
+    queryFn: () => loadQuizAnswers(quizzes ?? []),
+  });
+
+  const attemptIds = useRef(new Map<string, string>());
+  const saved = useRef(new Map<string, string>());
+  const chain = useRef<Promise<unknown>>(Promise.resolve());
+
+  const persistence = useMemo(() => {
+    const saveNow = async ({ answers, completed }: QuizSave) => {
+      const attemptFor = async (quizId: string) => {
+        const known = attemptIds.current.get(quizId);
+        if (known) return known;
+        const id = await learnV2.getOrCreateQuizAttempt(quizId, ids);
+        if (!id) throw new Error("No quiz attempt");
+        attemptIds.current.set(quizId, id);
+        return id;
+      };
+      for (const quiz of quizzes ?? []) {
+        for (const question of quiz.questions ?? []) {
+          const value = toStoredAnswer(question, answers[question._key]);
+          if (value === undefined) continue;
+          const marker = JSON.stringify(value);
+          if (saved.current.get(question._key) === marker) continue;
+          const attemptId = await attemptFor(quiz._id);
+          const ok = await learnV2.saveQuizResponse(
+            attemptId,
+            question._key,
+            question.question_type,
+            value,
+            gradeQuizAnswer(question, value),
+          );
+          if (!ok) throw new Error("Quiz answer not saved");
+          saved.current.set(question._key, marker);
+        }
+      }
+      if (completed) {
+        for (const quiz of quizzes ?? []) {
+          const attemptId =
+            attemptIds.current.get(quiz._id) ??
+            (await learnV2.getOpenQuizAttempt(quiz._id))?.attemptId;
+          if (attemptId) await learnV2.closeQuizAttempt(attemptId);
+          attemptIds.current.delete(quiz._id);
+        }
+        saved.current.clear();
+        await queryClient.invalidateQueries({ queryKey: QUIZ_ANSWERS_KEY });
+      }
+    };
+    return {
+      save(input: QuizSave) {
+        const run = chain.current.then(() => saveNow(input));
+        chain.current = run.catch(() => undefined);
+        return run;
+      },
+    };
+    // Rebuilt only when the lesson's quizzes or ids change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quizzes, ids.lessonId, ids.submoduleId, ids.moduleId, queryClient]);
+
+  return { ...query, persistence };
+}
+
+/** Open attempts' answers in web form, or null when no quiz has one. */
+export async function loadQuizAnswers(
+  quizzes: SyncQuiz[],
+): Promise<{ answers: Record<string, string[]> } | null> {
+  const answers: Record<string, string[]> = {};
+  let found = false;
+  for (const quiz of quizzes) {
+    const open = await learnV2.getOpenQuizAttempt(quiz._id);
+    if (!open) continue;
+    found = true;
+    for (const question of quiz.questions ?? []) {
+      const value = fromStoredAnswer(question, open.responses[question._key]);
+      if (value) answers[question._key] = value;
+    }
+  }
+  return found ? { answers } : null;
 }

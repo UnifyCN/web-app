@@ -33,6 +33,7 @@ export function useAuthUser() {
       if (event === "SIGNED_OUT") {
         queryClient.removeQueries({ queryKey: ["learn-v2", "progress"] });
         queryClient.removeQueries({ queryKey: ["learn-v2", "activity"] });
+        queryClient.removeQueries({ queryKey: ["learn-v2", "quiz-answers"] });
       }
     });
     return () => subscription.unsubscribe();

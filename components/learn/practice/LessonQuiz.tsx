@@ -29,6 +29,15 @@ interface LessonQuizProps {
   /** The question to open first, when it differs from the saved position
    * (Learn v2 resume links). Locks still come from `initialProgress`. */
   startIndex?: number;
+  /** Where answers are saved instead of `user_lesson_quiz_progress`
+   * (Learn v2 saves them in mobile's quiz tables). `completed` closes the quiz;
+   * a rejected save on completion keeps the quiz open for a retry. */
+  persistence?: {
+    save: (input: {
+      answers: Record<string, string[]>;
+      completed: boolean;
+    }) => Promise<unknown>;
+  };
   /** The submodule page — finishing navigates here (never the next lesson). */
   sectionHref: string;
   /** Saved progress so answers survive unmount (exit/re-enter, or paging the
@@ -56,6 +65,7 @@ export function LessonQuiz({
   onQuestionChange,
   saveReady = true,
   startIndex,
+  persistence,
   sectionHref,
   initialProgress,
 }: LessonQuizProps) {
@@ -110,6 +120,10 @@ export function LessonQuiz({
     completed: boolean,
     currentSubmitted: boolean,
   ) {
+    if (persistence) {
+      void persistence.save({ answers: ans, completed }).catch(() => {});
+      return;
+    }
     upsert.mutate({
       lessonId,
       answers: ans,
@@ -171,15 +185,19 @@ export function LessonQuiz({
   async function finishQuiz() {
     const score = scoreToSave(questions, answers);
     try {
-      await upsert.mutateAsync({
-        lessonId,
-        answers,
-        currentQuestionIndex: currentIndex,
-        currentSubmitted: true,
-        isCompleted: true,
-        score,
-        totalQuestions: total,
-      });
+      if (persistence) {
+        await persistence.save({ answers, completed: true });
+      } else {
+        await upsert.mutateAsync({
+          lessonId,
+          answers,
+          currentQuestionIndex: currentIndex,
+          currentSubmitted: true,
+          isCompleted: true,
+          score,
+          totalQuestions: total,
+        });
+      }
     } catch {
       // Persisting the result failed — stay on the quiz so the user can retry
       // rather than navigating away on a failed write.

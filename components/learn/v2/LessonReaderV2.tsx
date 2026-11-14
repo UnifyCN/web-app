@@ -11,6 +11,7 @@ import {
   useLessonV2,
   useSaveLessonPage,
   useSaveResumePosition,
+  useQuizAnswerSync,
 } from "@/hooks/useLearnV2";
 import {
   getOrderedLegacyPageNumber,
@@ -114,7 +115,6 @@ export function LessonReaderV2({
     Number.isFinite(urlQuestion) && urlQuestion >= 1
       ? Math.min(urlQuestion, Math.max(quizQuestions.length, 1)) - 1
       : undefined;
-  const savedQuiz = quizProgress.data ?? null;
 
   const course = courseQuery.data;
   const modIndex =
@@ -129,6 +129,36 @@ export function LessonReaderV2({
     () => ({ lessonId, submoduleId: moduleId, moduleId: courseId }),
     [lessonId, moduleId, courseId],
   );
+
+  // Quick Check answers live in mobile's quiz tables, so they move between
+  // apps. Web's old user_lesson_quiz_progress is only a read fallback (for
+  // an unfinished quiz with no open mobile attempt); nothing writes it here.
+  const quizSync = useQuizAnswerSync(ids, hasQuiz ? quizQuery.data : undefined);
+  const savedQuiz = useMemo(() => {
+    const total = quizQuestions.length;
+    const shared = quizSync.data;
+    if (shared) {
+      // Questions answered in order from the start are done (locked).
+      let done = 0;
+      while (done < total && shared.answers[quizQuestions[done]._key]) done++;
+      return {
+        lessonId,
+        answers: shared.answers,
+        currentQuestionIndex: Math.min(done, Math.max(total - 1, 0)),
+        currentSubmitted: done >= total,
+        isCompleted: false,
+        score: null,
+        totalQuestions: total,
+        updatedAt: "",
+      };
+    }
+    const legacy = quizProgress.data;
+    return legacy && !legacy.isCompleted ? legacy : null;
+  }, [quizSync.data, quizProgress.data, quizQuestions, lessonId]);
+  const quizLoading = quizProgress.isPending || (hasQuiz && quizSync.isPending);
+  const quizStateFailed =
+    (quizProgress.isError && !quizProgress.data) ||
+    (quizSync.isError && quizSync.data === undefined);
   const totalPages = lesson?.totalPages ?? stepCount;
 
   // Opening a step saves where the user is (position only). Not on the quiz:
@@ -305,13 +335,18 @@ export function LessonReaderV2({
           </header>
 
           {onQuiz ? (
-            quizProgress.isPending ? (
+            quizLoading ? (
               <p className="loading-delayed text-sm text-ink-muted">
                 {t("common.loading")}
               </p>
-            ) : quizProgress.isError && !quizProgress.data ? (
+            ) : quizStateFailed ? (
               // Unknown saved answers would restart the quiz at question 1.
-              <RetryLine onRetry={() => quizProgress.refetch()} />
+              <RetryLine
+                onRetry={() => {
+                  void quizProgress.refetch();
+                  void quizSync.refetch();
+                }}
+              />
             ) : (
               <LessonQuiz
                 lessonId={lessonId}
@@ -326,6 +361,7 @@ export function LessonReaderV2({
                 sectionHref={moduleHref}
                 initialProgress={savedQuiz}
                 startIndex={linkedIndex}
+                persistence={quizSync.persistence}
                 saveReady={inModule}
                 onQuestionChange={(index) =>
                   inModule &&
