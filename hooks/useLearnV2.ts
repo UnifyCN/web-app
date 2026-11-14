@@ -16,7 +16,7 @@ import {
   toStoredAnswer,
 } from "@/lib/learn/v2/quizAnswer";
 import { LEARNING_PROGRESS_KEY, MODULES_KEY } from "@/hooks/useLearn";
-import { getAuthUserId } from "@/lib/supabase/client";
+import { getAuthUserId, isSupabaseConfigured } from "@/lib/supabase/client";
 
 /**
  * React Query hooks for Learn v2 (behind NEXT_PUBLIC_LEARN_V2). Content keys
@@ -244,6 +244,9 @@ export function createQuizPersistence({
   queryClient: QueryClient;
   queryKey: readonly unknown[];
 }) {
+  // The signed-in account (a fixed owner in mock mode, which has no session).
+  const currentOwner = async () =>
+    isSupabaseConfigured() ? await getAuthUserId() : "mock";
   const reset = () => {
     state.attemptIds.clear();
     state.saved.clear();
@@ -259,7 +262,7 @@ export function createQuizPersistence({
   };
   const saveNow = async ({ answers, completed }: QuizSave) => {
     // A different account signed in while the reader stayed open.
-    const userId = await getAuthUserId();
+    const userId = await currentOwner();
     if (state.owner !== userId) {
       state.owner = userId;
       reset();
@@ -286,6 +289,9 @@ export function createQuizPersistence({
           gradeQuizAnswer(question, value),
         );
         if (!ok) throw new Error("Quiz answer not saved");
+        // Signed out or switched account while the write was in flight:
+        // don't put this account's answers in the (user-less) cache key.
+        if ((await currentOwner()) !== userId) return;
         state.saved.set(question._key, marker);
         // Keep the cached answers current, so reopening the quiz while the
         // reader stays mounted shows what was just saved.

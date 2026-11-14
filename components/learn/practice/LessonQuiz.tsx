@@ -124,7 +124,15 @@ export function LessonQuiz({
     currentSubmitted: boolean,
   ) {
     if (persistence) {
-      persistence.save({ answers: ans, completed }).then(
+      // Only submitted answers go to the shared store: a stored answer reads
+      // back as submitted (locked), so an unsubmitted draft must stay local.
+      const done = { ...submitted };
+      if (currentSubmitted && questions[index])
+        done[questions[index]._key] = true;
+      const submittedAnswers = Object.fromEntries(
+        Object.entries(ans).filter(([key]) => done[key]),
+      );
+      persistence.save({ answers: submittedAnswers, completed }).then(
         () => setSaveFailed(false),
         () => setSaveFailed(true),
       );
@@ -279,10 +287,13 @@ export function LessonQuiz({
           <span>{t("common.errorGeneric")}</span>
           <button
             type="button"
-            onClick={() =>
-              persist(currentIndex, answers, false, !!submitted[currentKey])
-            }
-            className="press min-h-11 shrink-0 px-2 font-semibold text-primary"
+            onClick={() => {
+              // Never queue a partial save behind a completion in flight.
+              if (busy) return;
+              persist(currentIndex, answers, false, !!submitted[currentKey]);
+            }}
+            disabled={busy}
+            className="press min-h-11 shrink-0 px-2 font-semibold text-primary disabled:opacity-50"
           >
             {t("common.retry")}
           </button>

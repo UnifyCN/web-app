@@ -3,6 +3,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 const mocks = vi.hoisted(() => ({
   userId: "user-1" as string | null,
+  configured: true,
   getOrCreateQuizAttempt: vi.fn(),
   saveQuizResponse: vi.fn(),
   closeQuizAttempt: vi.fn(),
@@ -11,8 +12,11 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({}),
-  getAuthUserId: async () => mocks.userId,
-  isSupabaseConfigured: () => true,
+  getAuthUserId: async () => {
+    if (!mocks.configured) throw new Error("no Supabase client");
+    return mocks.userId;
+  },
+  isSupabaseConfigured: () => mocks.configured,
 }));
 vi.mock("@/services/learnV2", () => ({
   getOrCreateQuizAttempt: mocks.getOrCreateQuizAttempt,
@@ -51,6 +55,7 @@ function setup() {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.userId = "user-1";
+  mocks.configured = true;
   let n = 0;
   mocks.getOrCreateQuizAttempt.mockImplementation(async () => `att-${++n}`);
   mocks.saveQuizResponse.mockResolvedValue(true);
@@ -106,5 +111,23 @@ describe("Quick Check persistence", () => {
     ).rejects.toThrow("offline");
     await persistence.save({ answers: { q1: ["a"] }, completed: false });
     expect(mocks.saveQuizResponse).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not cache answers when the account changed during the save", async () => {
+    const { persistence, queryClient } = setup();
+    mocks.saveQuizResponse.mockImplementationOnce(async () => {
+      mocks.userId = null; // signed out while the write was in flight
+      return true;
+    });
+    await persistence.save({ answers: { q1: ["a"] }, completed: false });
+    expect(queryClient.getQueryData(queryKey)).toBeUndefined();
+  });
+
+  it("works without Supabase (mock mode has no session)", async () => {
+    mocks.configured = false;
+    const { persistence } = setup();
+    await persistence.save({ answers: { q1: ["a"] }, completed: true });
+    expect(mocks.saveQuizResponse).toHaveBeenCalledTimes(1);
+    expect(mocks.closeQuizAttempt).toHaveBeenCalledWith("att-1");
   });
 });
