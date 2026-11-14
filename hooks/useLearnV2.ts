@@ -289,6 +289,28 @@ export function createQuizPersistence({
       reset();
     }
     for (const quiz of quizzes) {
+      // Another client (mobile, another tab) may have finished the shared
+      // attempt while this reader stayed open. Before writing to a cached
+      // attempt, confirm it is still the open one; if not, forget it and this
+      // quiz's save markers, so every answer goes to the current attempt.
+      const cached = state.attemptIds.get(quiz._id);
+      const pending = (quiz.questions ?? []).some((question) => {
+        const value = toStoredAnswer(question, answers[question._key]);
+        return (
+          value !== undefined &&
+          state.saved.get(question._key) !== JSON.stringify(value)
+        );
+      });
+      if (cached && (pending || completed)) {
+        const open = await learnV2.getOpenQuizAttempt(quiz._id, owned(userId));
+        await assertOwner(userId);
+        if (open?.attemptId !== cached) {
+          state.attemptIds.delete(quiz._id);
+          for (const question of quiz.questions ?? []) {
+            state.saved.delete(question._key);
+          }
+        }
+      }
       for (const question of quiz.questions ?? []) {
         const value = toStoredAnswer(question, answers[question._key]);
         if (value === undefined) continue;

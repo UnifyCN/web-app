@@ -4,6 +4,7 @@ import { QueryClient } from "@tanstack/react-query";
 const mocks = vi.hoisted(() => ({
   userId: "user-1" as string | null,
   configured: true,
+  open: null as string | null, // the open attempt, as the database sees it
   getOrCreateQuizAttempt: vi.fn(),
   saveQuizResponse: vi.fn(),
   closeQuizAttempt: vi.fn(),
@@ -56,11 +57,19 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.userId = "user-1";
   mocks.configured = true;
+  mocks.open = null;
   let n = 0;
-  mocks.getOrCreateQuizAttempt.mockImplementation(async () => `att-${++n}`);
+  mocks.getOrCreateQuizAttempt.mockImplementation(async () => {
+    mocks.open ??= `att-${++n}`;
+    return mocks.open;
+  });
   mocks.saveQuizResponse.mockResolvedValue(true);
-  mocks.closeQuizAttempt.mockResolvedValue(undefined);
-  mocks.getOpenQuizAttempt.mockResolvedValue(null);
+  mocks.closeQuizAttempt.mockImplementation(async () => {
+    mocks.open = null;
+  });
+  mocks.getOpenQuizAttempt.mockImplementation(async () =>
+    mocks.open ? { attemptId: mocks.open, responses: {} } : null,
+  );
 });
 
 describe("Quick Check persistence", () => {
@@ -92,6 +101,7 @@ describe("Quick Check persistence", () => {
     const { persistence } = setup();
     await persistence.save({ answers: { q1: ["a"] }, completed: false });
     mocks.userId = "user-2";
+    mocks.open = null; // user-2 has no open attempt of their own
     await persistence.save({ answers: { q1: ["a"] }, completed: false });
     expect(mocks.getOrCreateQuizAttempt).toHaveBeenCalledTimes(2);
     expect(mocks.saveQuizResponse).toHaveBeenLastCalledWith(
@@ -176,5 +186,41 @@ describe("Quick Check persistence", () => {
     await expect(
       persistence.save({ answers: { q1: ["a"], q2: ["b"] }, completed: true }),
     ).rejects.toThrow("Account changed");
+  });
+
+  it("moves to a new attempt when another client closed the cached one", async () => {
+    const { persistence } = setup();
+    await persistence.save({ answers: { q1: ["a"] }, completed: false });
+    // Mobile finished att-1 meanwhile: no open attempt any more.
+    mocks.open = null;
+    await persistence.save({
+      answers: { q1: ["a"], q2: ["b"] },
+      completed: false,
+    });
+    expect(mocks.getOrCreateQuizAttempt).toHaveBeenCalledTimes(2);
+    // Both answers are rewritten into the new attempt.
+    const calls = mocks.saveQuizResponse.mock.calls.slice(1);
+    expect(calls.map((c) => [c[0], c[1]])).toEqual([
+      ["att-2", "q1"],
+      ["att-2", "q2"],
+    ]);
+  });
+
+  it("keeps writing to the cached attempt while it is still open", async () => {
+    const { persistence } = setup();
+    await persistence.save({ answers: { q1: ["a"] }, completed: false });
+    await persistence.save({
+      answers: { q1: ["a"], q2: ["b"] },
+      completed: false,
+    });
+    expect(mocks.getOrCreateQuizAttempt).toHaveBeenCalledTimes(1);
+    expect(mocks.saveQuizResponse).toHaveBeenLastCalledWith(
+      "att-1",
+      "q2",
+      "multiple_choice_single",
+      "b",
+      false,
+      "user-1",
+    );
   });
 });
