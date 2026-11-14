@@ -1,15 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { CalendarDays, ChevronRight, PlaneLanding } from "lucide-react";
-import { useCurrentUser } from "@/hooks/useProfile";
+import { CURRENT_USER_KEY, useCurrentUser } from "@/hooks/useProfile";
+import { TASKS_KEY } from "@/hooks/useChecklist";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { ArrivalDateDialog } from "@/components/checklist/ArrivalDateDialog";
 import {
-  claimCountdownShown,
+  claimCountdownShownAcrossTabs,
   formatLocalDate,
   getArrivalCountdown,
+  isDialogOpenFor,
+  shouldClearEditingFor,
+  stageChangedOvernight,
 } from "@/lib/onboarding/arrivalCountdown";
 import { trackArrivalCountdownShown } from "@/lib/analytics";
 import { cn, RTL_FLIP } from "@/lib/utils";
@@ -25,11 +30,20 @@ export function ArrivalCountdownCard() {
   const { t } = useTranslation();
   const { data: user } = useCurrentUser();
   const today = useLocalToday();
-  const [editing, setEditing] = useState(false);
+  const queryClient = useQueryClient();
+  // The account the dialog was opened for. The dialog is open only while that
+  // is still the signed-in account: if another account signs in meanwhile, it
+  // closes instead of saving to (or showing the date of) the wrong account.
+  const [editingFor, setEditingFor] = useState<string | null>(null);
   // Bumped per opening; remounts the dialog so it starts fresh each time.
   const [opening, setOpening] = useState(0);
 
   const userId = user?.id ?? null;
+  // Another account signed in: forget the owner (adjusting state during
+  // render, React's pattern for state derived from props), so switching back
+  // never reopens the dialog without a click.
+  if (shouldClearEditingFor(editingFor, userId)) setEditingFor(null);
+  const dialogOpen = isDialogOpenFor(editingFor, userId);
   const arrivalDate = user?.onboarding?.arrivalDate ?? null;
   const countdown = useMemo(
     () => getArrivalCountdown(arrivalDate, today),
@@ -39,10 +53,49 @@ export function ArrivalCountdownCard() {
 
   useEffect(() => {
     if (!userId || countdown.state === "hidden") return;
-    if (claimCountdownShown(userId, day)) trackArrivalCountdownShown(countdown);
+    // The event is sent inside the claim, so it is never lost if this effect
+    // cleans up while the cross-tab lock is still queued.
+    void claimCountdownShownAcrossTabs(userId, day, () =>
+      trackArrivalCountdownShown(countdown),
+    );
   }, [userId, day, countdown]);
 
-  if (!userId || !arrivalDate || countdown.state === "hidden") return null;
+  // When the local day rolls over into a new stage (e.g. arrival day), the
+  // checklist and profile switch to it at once instead of on the next refetch.
+  const previousDay = useRef<{ day: string; userId: string | null } | null>(null);
+  useEffect(() => {
+    const prev = previousDay.current;
+    previousDay.current = { day, userId };
+    if (!prev || prev.userId !== userId || prev.day === day) return;
+    if (stageChangedOvernight(arrivalDate, prev.day, day)) {
+      queryClient.invalidateQueries({ queryKey: TASKS_KEY });
+      queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
+    }
+  }, [day, userId, arrivalDate, queryClient]);
+
+  const dialog =
+    userId && arrivalDate ? (
+      <ArrivalDateDialog
+        key={opening}
+        open={dialogOpen}
+        userId={userId}
+        arrivalDate={arrivalDate}
+        onClose={() => setEditingFor(null)}
+      />
+    ) : null;
+
+  // The card hides when the countdown does, but the dialog stays mounted in
+  // the same place (e.g. midnight passes day 30 while the user is picking a
+  // date), so an open dialog keeps its picks.
+  // Same children in the same slots either way, so React never remounts it.
+  if (!userId || !arrivalDate || countdown.state === "hidden") {
+    return (
+      <>
+        {null}
+        {dialog}
+      </>
+    );
+  }
 
   const title =
     countdown.state === "pre_arrival"
@@ -56,7 +109,7 @@ export function ArrivalCountdownCard() {
         type="button"
         onClick={() => {
           setOpening((n) => n + 1);
-          setEditing(true);
+          setEditingFor(userId);
         }}
         aria-label={`${title}. ${t("checklist.arrivalCountdown.changeHint")}`}
         className="press flex w-full cursor-pointer items-center gap-3 rounded-card border border-border-card bg-surface p-3 text-start transition-colors hover:bg-surface-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
@@ -77,13 +130,7 @@ export function ArrivalCountdownCard() {
           aria-hidden
         />
       </button>
-      <ArrivalDateDialog
-        key={opening}
-        open={editing}
-        userId={userId}
-        arrivalDate={arrivalDate}
-        onClose={() => setEditing(false)}
-      />
+      {dialog}
     </>
   );
 }
