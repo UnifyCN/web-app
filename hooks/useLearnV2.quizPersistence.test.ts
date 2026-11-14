@@ -223,4 +223,63 @@ describe("Quick Check persistence", () => {
       "user-1",
     );
   });
+
+  it("retries a part-way completion without reopening a closed quiz", async () => {
+    const queryClient = new QueryClient();
+    const state = newQuizSaveState();
+    const opens = new Map<string, string>();
+    let n = 0;
+    mocks.getOrCreateQuizAttempt.mockImplementation(async (quizId: string) => {
+      if (!opens.has(quizId)) opens.set(quizId, `att-${++n}`);
+      return opens.get(quizId);
+    });
+    mocks.getOpenQuizAttempt.mockImplementation(async (quizId: string) =>
+      opens.has(quizId)
+        ? { attemptId: opens.get(quizId), responses: {} }
+        : null,
+    );
+    mocks.closeQuizAttempt.mockImplementation(async (attemptId: string) => {
+      if (attemptId === "att-2" && !failedOnce) {
+        failedOnce = true;
+        throw new Error("network");
+      }
+      for (const [quizId, id] of opens)
+        if (id === attemptId) opens.delete(quizId);
+    });
+    let failedOnce = false;
+    const twoQuizzes = [
+      {
+        _id: "quiz-1",
+        questions: [
+          { _key: "q1", question_type: "multiple_choice_single", options: [] },
+        ],
+      },
+      {
+        _id: "quiz-2",
+        questions: [
+          { _key: "q2", question_type: "multiple_choice_single", options: [] },
+        ],
+      },
+    ] as never;
+    const persistence = createQuizPersistence({
+      quizzes: twoQuizzes,
+      ids,
+      state,
+      queryClient,
+      queryKey,
+    });
+    const answers = { q1: ["a"], q2: ["b"] };
+    await expect(
+      persistence.save({ answers, completed: true }),
+    ).rejects.toThrow("network");
+    await persistence.save({ answers, completed: true });
+    // quiz-1 was closed on the first try and is not reopened by the retry.
+    expect(mocks.getOrCreateQuizAttempt).toHaveBeenCalledTimes(2);
+    expect(mocks.saveQuizResponse).toHaveBeenCalledTimes(2);
+    expect(mocks.closeQuizAttempt.mock.calls.map((c) => c[0])).toEqual([
+      "att-1",
+      "att-2",
+      "att-2",
+    ]);
+  });
 });

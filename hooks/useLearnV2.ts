@@ -217,6 +217,9 @@ export interface QuizSaveState {
   attemptIds: Map<string, string>;
   saved: Map<string, string>;
   finished: boolean;
+  /** Quizzes whose attempt this run already closed (a completion that failed
+   * part-way is retried without reopening them). */
+  closed: Set<string>;
   chain: Promise<unknown>;
 }
 
@@ -226,6 +229,7 @@ export function newQuizSaveState(): QuizSaveState {
     attemptIds: new Map(),
     saved: new Map(),
     finished: false,
+    closed: new Set(),
     chain: Promise.resolve(),
   };
 }
@@ -254,6 +258,7 @@ export function createQuizPersistence({
     state.attemptIds.clear();
     state.saved.clear();
     state.finished = false;
+    state.closed.clear();
   };
   const attemptFor = async (quizId: string, userId: string | null) => {
     const known = state.attemptIds.get(quizId);
@@ -288,7 +293,11 @@ export function createQuizPersistence({
       // Answering again after finishing starts a fresh attempt, as mobile.
       reset();
     }
+    // Answering again after a part-way completion also starts fresh.
+    if (!completed && state.closed.size > 0) reset();
     for (const quiz of quizzes) {
+      // Closed by this run's completion, which is being retried: leave it.
+      if (state.closed.has(quiz._id)) continue;
       // Another client (mobile, another tab) may have finished the shared
       // attempt while this reader stayed open. Before writing to a cached
       // attempt, confirm it is still the open one; if not, forget it and this
@@ -343,6 +352,7 @@ export function createQuizPersistence({
     if (completed) {
       await assertOwner(userId);
       for (const quiz of quizzes) {
+        if (state.closed.has(quiz._id)) continue;
         const attemptId =
           state.attemptIds.get(quiz._id) ??
           (await learnV2.getOpenQuizAttempt(quiz._id, owned(userId)))
@@ -350,6 +360,7 @@ export function createQuizPersistence({
         if (attemptId) {
           await learnV2.closeQuizAttempt(attemptId, owned(userId));
         }
+        state.closed.add(quiz._id);
       }
       // An account change during completion rejects it, so the quiz doesn't
       // report success (and complete the lesson) for another account.
