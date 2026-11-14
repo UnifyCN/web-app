@@ -119,8 +119,33 @@ describe("Quick Check persistence", () => {
       mocks.userId = null; // signed out while the write was in flight
       return true;
     });
-    await persistence.save({ answers: { q1: ["a"] }, completed: false });
+    await expect(
+      persistence.save({ answers: { q1: ["a"] }, completed: false }),
+    ).rejects.toThrow("Account changed");
     expect(queryClient.getQueryData(queryKey)).toBeUndefined();
+  });
+
+  it("does not write a queued save under an account that signed in later", async () => {
+    const { persistence } = setup();
+    let release!: () => void;
+    mocks.saveQuizResponse.mockImplementationOnce(
+      () => new Promise<boolean>((r) => (release = () => r(true))),
+    );
+    const first = persistence.save({
+      answers: { q1: ["a"] },
+      completed: false,
+    });
+    await vi.waitFor(() => expect(release).toBeDefined());
+    // Queued by user-1, then user-2 signs in before it runs.
+    const queued = persistence.save({
+      answers: { q1: ["a"], q2: ["b"] },
+      completed: false,
+    });
+    mocks.userId = "user-2";
+    release();
+    await expect(first).rejects.toThrow("Account changed");
+    await expect(queued).rejects.toThrow("Account changed");
+    expect(mocks.saveQuizResponse).toHaveBeenCalledTimes(1);
   });
 
   it("works without Supabase (mock mode has no session)", async () => {

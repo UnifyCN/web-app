@@ -260,9 +260,20 @@ export function createQuizPersistence({
     state.attemptIds.set(quizId, id);
     return id;
   };
-  const saveNow = async ({ answers, completed }: QuizSave) => {
+  // Each save belongs to the account that queued it: if another account is
+  // signed in by the time it runs (or during a write), it fails instead of
+  // writing under, or reporting success to, the wrong account.
+  const assertOwner = async (userId: string | null) => {
+    if ((await currentOwner()) !== userId) {
+      throw new Error("Account changed during quiz save");
+    }
+  };
+  const saveNow = async (
+    { answers, completed }: QuizSave,
+    userId: string | null,
+  ) => {
+    await assertOwner(userId);
     // A different account signed in while the reader stayed open.
-    const userId = await currentOwner();
     if (state.owner !== userId) {
       state.owner = userId;
       reset();
@@ -280,6 +291,7 @@ export function createQuizPersistence({
         if (value === undefined) continue;
         const marker = JSON.stringify(value);
         if (state.saved.get(question._key) === marker) continue;
+        await assertOwner(userId);
         const attemptId = await attemptFor(quiz._id);
         const ok = await learnV2.saveQuizResponse(
           attemptId,
@@ -291,7 +303,7 @@ export function createQuizPersistence({
         if (!ok) throw new Error("Quiz answer not saved");
         // Signed out or switched account while the write was in flight:
         // don't put this account's answers in the (user-less) cache key.
-        if ((await currentOwner()) !== userId) return;
+        await assertOwner(userId);
         state.saved.set(question._key, marker);
         // Keep the cached answers current, so reopening the quiz while the
         // reader stays mounted shows what was just saved.
@@ -302,6 +314,7 @@ export function createQuizPersistence({
       }
     }
     if (completed) {
+      await assertOwner(userId);
       for (const quiz of quizzes) {
         const attemptId =
           state.attemptIds.get(quiz._id) ??
@@ -314,7 +327,9 @@ export function createQuizPersistence({
   };
   return {
     save(input: QuizSave) {
-      const run = state.chain.then(() => saveNow(input));
+      // The owner is read when the save is queued, not when it runs.
+      const owner = currentOwner();
+      const run = state.chain.then(async () => saveNow(input, await owner));
       state.chain = run.catch(() => undefined);
       return run;
     },
